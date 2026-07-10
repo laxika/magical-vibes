@@ -562,6 +562,11 @@ public class SpellCastTriggerCollectorService {
         if (trigger.onlyDuringOpponentTurn()
                 && match.controllerId().equals(match.gameData().activePlayerId)) return false;
 
+        // "Whenever an opponent casts a spell during your turn" — the source's controller must be
+        // the active player when the spell is cast (Eyes of the Wisent).
+        if (trigger.onlyDuringControllerTurn()
+                && !match.controllerId().equals(match.gameData().activePlayerId)) return false;
+
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 

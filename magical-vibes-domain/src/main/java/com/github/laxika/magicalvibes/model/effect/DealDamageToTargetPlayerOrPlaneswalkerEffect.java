@@ -1,14 +1,23 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
- * Deals a fixed amount of damage to target player or planeswalker.
+ * Deals damage to target player or planeswalker.
  * Unlike {@link DealDamageToTargetOpponentOrPlaneswalkerEffect}, any player may be
  * chosen (including the controller); planeswalker permanents are also valid targets.
- * Used by Boggart Shenanigans and similar cards.
+ * The amount is any {@link DynamicAmount} evaluated at resolution — a {@link Fixed}
+ * constant (Boggart Shenanigans) or a cost-snapshotted value such as an {@code XValue}
+ * (Brion Stoutarm's sacrificed creature's power).
  *
- * @param damage the amount of damage to deal
+ * @param amount the amount of damage to deal
  */
-public record DealDamageToTargetPlayerOrPlaneswalkerEffect(int damage) implements CardEffect {
+public record DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount amount) implements CardEffect {
+
+    public DealDamageToTargetPlayerOrPlaneswalkerEffect(int damage) {
+        this(new Fixed(damage));
+    }
 
     @Override
     public boolean canTargetPlayer() {

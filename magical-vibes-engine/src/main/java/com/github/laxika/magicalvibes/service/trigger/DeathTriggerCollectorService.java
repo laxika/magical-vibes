@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -239,7 +240,16 @@ public class DeathTriggerCollectorService {
     boolean handleAllyCreatureMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), may, null, match.permanent().getId());
+        // Colfenor's Urn: bind the exile-and-track effect to the specific dying creature card so
+        // resolution knows which graveyard card to exile with this artifact.
+        MayEffect resolvedMay = may;
+        if (may.wrapped() instanceof ExileTriggeringCreatureAndTrackWithSourceEffect exile
+                && exile.dyingCardId() == null && cd.dyingCard() != null) {
+            resolvedMay = new MayEffect(
+                    new ExileTriggeringCreatureAndTrackWithSourceEffect(cd.dyingCard().getId()),
+                    may.prompt());
+        }
+        match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), resolvedMay, null, match.permanent().getId());
         return true;
     }
 

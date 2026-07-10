@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -64,6 +65,7 @@ public class CastingPermissionService {
                 || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
+        if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
@@ -134,6 +136,30 @@ public class CastingPermissionService {
             }
         }
         return restricted;
+    }
+
+    /**
+     * Returns true if a global {@link NoncreatureSpellsCantBeCastEffect} (e.g. Gaddock Teeg) on any
+     * player's battlefield prevents this noncreature spell from being cast. Symmetric — the source's
+     * own controller is restricted too.
+     */
+    public boolean isNoncreatureSpellCastRestricted(GameData gameData, Card card) {
+        if (card.hasType(CardType.CREATURE)) return false;
+        int manaValue = card.getManaValue();
+        boolean hasX = card.getParsedManaCost() != null && card.getParsedManaCost().hasX();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof NoncreatureSpellsCantBeCastEffect restriction) {
+                        if (manaValue >= restriction.minManaValue()) return true;
+                        if (restriction.restrictXSpells() && hasX) return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {

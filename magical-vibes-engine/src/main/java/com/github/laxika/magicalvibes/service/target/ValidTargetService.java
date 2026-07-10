@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -376,6 +377,22 @@ public class ValidTargetService {
         return true;
     }
 
+    /**
+     * Filters a list of candidate players down to those legal under the given target filter.
+     * Used by the upkeep player-target pipeline so that "target opponent" triggers
+     * (e.g. Nath of the Gilt-Leaf) do not offer the controller as a valid target.
+     * A {@code null} filter leaves the candidates unrestricted (e.g. Bloodgift Demon's "target player").
+     */
+    public List<UUID> filterValidPlayerTargets(GameData gameData, TargetFilter targetFilter, List<UUID> candidates, UUID controllerId) {
+        List<UUID> result = new ArrayList<>();
+        for (UUID playerId : candidates) {
+            if (isValidPlayerTarget(gameData, targetFilter, playerId, controllerId)) {
+                result.add(playerId);
+            }
+        }
+        return result;
+    }
+
     private boolean isValidPlayerTarget(GameData gameData, TargetFilter targetFilter, UUID playerId, UUID controllerId) {
         // Player shroud
         if (gameQueryService.playerHasShroud(gameData, playerId)) {
@@ -630,6 +647,8 @@ public class ValidTargetService {
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
+        } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
             return c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE);

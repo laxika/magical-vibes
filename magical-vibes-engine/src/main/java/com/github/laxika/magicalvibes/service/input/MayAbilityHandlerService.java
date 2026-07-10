@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -305,6 +306,16 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromGraveyardEffect != null) {
             mayCastHandlerService.handleCastFromGraveyardChoice(gameData, player, accepted, ability, castFromGraveyardEffect);
+            return;
+        }
+
+        // Play-from-graveyard-without-paying — e.g. Horde of Notions
+        PlayTargetCardFromGraveyardWithoutPayingManaCostEffect playFromGraveyardEffect = ability.effects().stream()
+                .filter(e -> e instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect)
+                .map(e -> (PlayTargetCardFromGraveyardWithoutPayingManaCostEffect) e)
+                .findFirst().orElse(null);
+        if (playFromGraveyardEffect != null) {
+            mayCastHandlerService.handlePlayFromGraveyardChoice(gameData, player, accepted, ability, playFromGraveyardEffect);
             return;
         }
 

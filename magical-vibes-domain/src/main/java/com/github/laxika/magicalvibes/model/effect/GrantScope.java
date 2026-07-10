@@ -29,5 +29,12 @@ public enum GrantScope {
     ENCHANTED_PLAYER_CREATURES,
     OWN_LANDS,
     /** All lands on the battlefield, regardless of controller (Natural Affinity). */
-    ALL_LANDS
+    ALL_LANDS,
+    /**
+     * The tokens created by earlier effects in this same resolution (read from
+     * {@code StackEntry.createdPermanentIds}). Use for "those tokens gain [keyword]" clauses that
+     * follow a token-creation effect on the same spell/ability, e.g. Gilt-Leaf Ambush's clash-win
+     * deathtouch grant.
+     */
+    TOKENS_CREATED_THIS_RESOLUTION
 }

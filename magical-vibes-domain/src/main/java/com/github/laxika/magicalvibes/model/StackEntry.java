@@ -52,6 +52,13 @@ public class StackEntry {
      */
     @Setter private Permanent sourcePermanentSnapshot;
     private final List<UUID> targetIds;
+    /**
+     * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
+     * by the token-creation handlers and read back by a later effect on the same entry that acts on
+     * "those tokens" — e.g. Gilt-Leaf Ambush grants deathtouch on a clash win to the tokens it just
+     * created via {@code GrantScope.TOKENS_CREATED_THIS_RESOLUTION}.
+     */
+    private final List<UUID> createdPermanentIds = new ArrayList<>();
 
     /**
      * A card referenced by a stack entry is live game state shared with AI simulation copies —

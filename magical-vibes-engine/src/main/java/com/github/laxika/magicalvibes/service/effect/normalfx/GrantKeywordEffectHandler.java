@@ -128,6 +128,8 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             if (ids.isEmpty() && entry.getTargetId() != null) {
                 ids = List.of(entry.getTargetId());
             }
+        } else if (grant.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
+            ids = List.copyOf(entry.getCreatedPermanentIds());
         } else {
             return;
         }

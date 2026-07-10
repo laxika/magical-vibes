@@ -40,6 +40,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         if (amount <= 0) {
             return;
         }
-        permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), e, amount, entry.getCard().getSetCode());
+        entry.getCreatedPermanentIds().addAll(
+                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), e, amount, entry.getCard().getSetCode()));
     }
 }

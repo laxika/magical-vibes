@@ -23,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -44,15 +46,20 @@ public class PermanentControlSupport {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
         if (!(token.amount() instanceof Fixed fixed)) {
             throw new IllegalStateException("Dynamic token counts must be evaluated before applyCreateToken: " + token.amount());
         }
-        applyCreateToken(gameData, controllerId, token, fixed.value(), sourceSetCode);
+        return applyCreateToken(gameData, controllerId, token, fixed.value(), sourceSetCode);
     }
 
-    /** Creates {@code amount} tokens from the blueprint; the count is already evaluated by the caller. */
-    public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode) {
+    /**
+     * Creates {@code amount} tokens from the blueprint; the count is already evaluated by the caller.
+     * Returns the ids of the created token permanents (used by callers that must act on the new
+     * tokens later in the same resolution, e.g. Gilt-Leaf Ambush's clash-win deathtouch grant).
+     */
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode) {
+        List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         int totalAmount = amount * tokenMultiplier;
@@ -117,6 +124,7 @@ public class PermanentControlSupport {
                         CounterType.PLUS_ONE_PLUS_ONE, token.initialPlusOnePlusOneCounters());
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            createdIds.add(tokenPermanent.getId());
 
             if (token.tappedAndAttacking()) {
                 tokenPermanent.tap();
@@ -163,5 +171,6 @@ public class PermanentControlSupport {
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
+        return createdIds;
     }
 }

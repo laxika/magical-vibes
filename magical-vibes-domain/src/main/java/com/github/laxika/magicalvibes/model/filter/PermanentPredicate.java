@@ -41,6 +41,7 @@ public sealed interface PermanentPredicate permits
         PermanentPowerAtMostControlledCreatureCountPredicate,
         PermanentPowerAtMostPredicate,
         PermanentPowerAtMostXPredicate,
+        PermanentToughnessAtLeastPredicate,
         PermanentToughnessAtMostPredicate,
         PermanentToughnessLessThanSourcePowerPredicate,
         PermanentTruePredicate {

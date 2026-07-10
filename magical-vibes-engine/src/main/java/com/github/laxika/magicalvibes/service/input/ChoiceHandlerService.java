@@ -56,6 +56,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -149,6 +150,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.StorageMatrixUntapChoice ctx) {
             handleStorageMatrixUntapChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.NameCardMillGainLifeChoice ctx) {
+            handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -828,6 +833,44 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
+                                                  ChoiceContext.NameCardMillGainLifeChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
+                gameData.id, player.getUsername(), cardName);
+
+        // Peek the card that is about to be milled so we can inspect it after the mill resolves.
+        List<Card> deck = gameData.playerDecks.get(ctx.targetPlayerId());
+        Card topCard = (deck != null && !deck.isEmpty()) ? deck.getFirst() : null;
+
+        graveyardService.resolveMillPlayer(gameData, ctx.targetPlayerId(), 1);
+
+        // "If a card with the chosen name was milled this way" — the card must have both matched the
+        // chosen name and actually reached the graveyard (a replacement effect could redirect it).
+        if (topCard != null && topCard.getName().equals(cardName)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(ctx.targetPlayerId());
+            boolean reachedGraveyard = graveyard != null
+                    && graveyard.stream().anyMatch(c -> c.getId().equals(topCard.getId()));
+            if (reachedGraveyard) {
+                int manaValue = topCard.getManaValue();
+                lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
+                String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+                String lifeLog = controllerName + " gains " + manaValue + " life.";
+                gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                log.info("Game {} - {} milled the named card {}, {} gains {} life",
+                        gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
+                        topCard.getName(), controllerName, manaValue);
+            }
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     private List<String> collectAllCardNamesInGame(GameData gameData) {

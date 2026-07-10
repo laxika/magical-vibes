@@ -157,8 +157,10 @@ or permanent), **that is an engine change**. The work required is:
 
 ### `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))`
 
-Card says "target opponent". Honoured only in **Death / Attack / End-step** pipelines (`Options.DEATH`,
-`ATTACK`, `END_STEP`). Any other pipeline will offer the controller as a valid target too — **that's a
+Card says "target opponent". Honoured in the **Death / Attack / End-step** pipelines (`Options.DEATH`,
+`ATTACK`, `END_STEP`) and in the single-player **upkeep** pipeline (`UpkeepPlayerTargetTrigger`, which
+filters candidates through `ValidTargetService.filterValidPlayerTargets` using the card's target filter —
+e.g. Nath of the Gilt-Leaf). Any other pipeline that offers the controller as a valid target too is **a
 bug** and must be fixed in the pipeline, not papered over at the card level.
 
 When used with an effect that also sets `canTargetPermanent()` to `true`, the opponent-only restriction

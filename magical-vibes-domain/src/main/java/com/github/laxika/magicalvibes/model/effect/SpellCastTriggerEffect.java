@@ -25,6 +25,10 @@ import java.util.List;
  * <p>
  * If {@code onlyDuringOpponentTurn} is true, the trigger only fires when the spell is cast on a
  * turn other than the source's controller's (e.g. Glen Elendra Pranksters).
+ * <p>
+ * If {@code onlyDuringControllerTurn} is true, the trigger only fires when the spell is cast during
+ * the source controller's own turn (e.g. Eyes of the Wisent — "an opponent casts a blue spell
+ * during your turn"). Use the {@link #duringYourTurn} factory to build these.
  *
  * @param spellFilter               what spells trigger this (null = any spell)
  * @param resolvedEffects           effects to put on the stack when this triggers
@@ -32,6 +36,7 @@ import java.util.List;
  * @param targetFilter              optional target filter for triggered abilities that target (null = no targeting)
  * @param castSpellTargetCondition  optional predicate on the cast spell's stack entry / targets (null = no condition)
  * @param onlyDuringOpponentTurn    only fire when cast during an opponent's turn
+ * @param onlyDuringControllerTurn  only fire when cast during the source controller's own turn
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
@@ -39,37 +44,43 @@ public record SpellCastTriggerEffect(
         String manaCost,
         TargetFilter targetFilter,
         StackEntryPredicate castSpellTargetCondition,
-        boolean onlyDuringOpponentTurn
+        boolean onlyDuringOpponentTurn,
+        boolean onlyDuringControllerTurn
 ) implements CardEffect {
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null, null, null, false);
+        this(spellFilter, resolvedEffects, null, null, null, false, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost) {
-        this(spellFilter, resolvedEffects, manaCost, null, null, false);
+        this(spellFilter, resolvedEffects, manaCost, null, null, false, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter) {
-        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false);
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false, false);
     }
 
     /** Trigger gated on the cast spell's targets (e.g. Repartee — "spell that targets a creature"). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false);
+        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false, false);
     }
 
     /** Targets-gated trigger whose resolved effect itself targets (e.g. Graduation Day). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false);
+        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false, false);
     }
 
     /** Trigger that only fires when the spell is cast during an opponent's turn (e.g. Glen Elendra Pranksters). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   boolean onlyDuringOpponentTurn) {
-        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn);
+        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn, false);
+    }
+
+    /** Trigger that only fires when the spell is cast during the source controller's own turn (e.g. Eyes of the Wisent). */
+    public static SpellCastTriggerEffect duringYourTurn(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
+        return new SpellCastTriggerEffect(spellFilter, resolvedEffects, null, null, null, false, true);
     }
 }

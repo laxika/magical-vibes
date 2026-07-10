@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -351,6 +352,12 @@ public class PredicateEvaluationService {
                     yield permanent.getEffectiveToughness() <= toughnessAtMostPredicate.maxToughness();
                 }
                 yield gameQueryService.getEffectiveToughness(gameData, permanent) <= toughnessAtMostPredicate.maxToughness();
+            }
+            case PermanentToughnessAtLeastPredicate toughnessAtLeastPredicate -> {
+                if (gameData == null) {
+                    yield permanent.getEffectiveToughness() >= toughnessAtLeastPredicate.minToughness();
+                }
+                yield gameQueryService.getEffectiveToughness(gameData, permanent) >= toughnessAtLeastPredicate.minToughness();
             }
             case PermanentHasSupertypePredicate hasSupertypePredicate ->
                     permanent.getCard().getSupertypes().contains(hasSupertypePredicate.supertype());

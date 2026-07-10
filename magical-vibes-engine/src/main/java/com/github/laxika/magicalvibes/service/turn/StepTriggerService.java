@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
@@ -63,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffec
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -117,6 +119,7 @@ public class StepTriggerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
     private final ParadigmService paradigmService;
+    private final ValidTargetService validTargetService;
 
     public StepTriggerService(DrawService drawService,
                               GameQueryService gameQueryService,
@@ -129,7 +132,8 @@ public class StepTriggerService {
                               GraveyardTargetingService graveyardTargetingService,
                               TriggerCollectionService triggerCollectionService,
                               TriggerTargetCollector triggerTargetCollector,
-                              @Lazy ParadigmService paradigmService) {
+                              @Lazy ParadigmService paradigmService,
+                              ValidTargetService validTargetService) {
         this.drawService = drawService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -142,6 +146,7 @@ public class StepTriggerService {
         this.triggerCollectionService = triggerCollectionService;
         this.triggerTargetCollector = triggerTargetCollector;
         this.paradigmService = paradigmService;
+        this.validTargetService = validTargetService;
     }
 
     /**
@@ -713,7 +718,11 @@ public class StepTriggerService {
 
         PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
 
-        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+        // Honour the trigger's target filter (e.g. "target opponent") so the controller is not
+        // offered as a valid target. A null filter (e.g. "target player") leaves all players eligible.
+        List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargets(
+                gameData, trigger.sourceCard().getTargetFilter(),
+                new ArrayList<>(gameData.orderedPlayerIds), trigger.controllerId());
 
         gameData.interaction.setPermanentChoiceContext(trigger);
         playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
@@ -1443,6 +1452,26 @@ public class StepTriggerService {
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
+                    } else if (effect instanceof SacrificeSelfAndReturnCardsExiledWithSourceEffect sacReturn) {
+                        // Intervening-if: only trigger if N or more cards have been exiled with the
+                        // source permanent (CR 603.4). Re-checked again at resolution.
+                        if (gameData.getCardsExiledByPermanent(perm.getId()).size() < sacReturn.minCount()) {
+                            log.info("Game {} - {} end-step trigger skipped (fewer than {} cards exiled)",
+                                    gameData.id, perm.getCard().getName(), sacReturn.minCount());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} end-step sacrifice-and-return trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof NotKicked) {
                         // Intervening-if: only trigger if the permanent was NOT kicked (CR 603.4)

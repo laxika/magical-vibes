@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "183")
 @CardRegistration(set = "M11", collectorNumber = "175")
+@CardRegistration(set = "LRW", collectorNumber = "213")
 public class GarrukWildspeaker extends Card {
 
     public GarrukWildspeaker() {

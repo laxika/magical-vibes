@@ -43,6 +43,7 @@ All paths relative to `cards/`.
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
+| Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) |
 | Limit spells (all players) | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
 | Limit spells (enchanted player) | `c/CurseOfExhaustion.java` | STATIC LimitSpellsForEnchantedPlayerEffect |
 | Tax attackers | `w/WindbornMuse.java` | STATIC RequirePaymentToAttackEffect |
@@ -66,6 +67,7 @@ All paths relative to `cards/`.
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) — all your creatures assign combat damage equal to toughness |
+| Toughness as combat damage (global) | `d/DoranTheSiegeTower.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_CREATURES) — every creature assigns combat damage equal to toughness |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |

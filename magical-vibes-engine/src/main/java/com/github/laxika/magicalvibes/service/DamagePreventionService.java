@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAt
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
@@ -138,6 +139,15 @@ public class DamagePreventionService {
                 }
                 return 0;
             }
+            // Vigor: "If damage would be dealt to another creature you control, prevent that damage.
+            // Put a +1/+1 counter on that creature for each 1 damage prevented this way." The effect
+            // lives on a different permanent (Vigor) controlled by this creature's controller.
+            if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent)) {
+                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + damage);
+                }
+                return 0;
+            }
             damage = applyGlobalPreventionShield(gameData, damage);
             int shield = permanent.getDamagePreventionShield();
             if (shield <= 0 || damage <= 0) return damage;
@@ -146,6 +156,23 @@ public class DamagePreventionService {
             return damage - prevented;
         }
         return damage;
+    }
+
+    /**
+     * Vigor-style protection: returns true when the given creature's controller controls some other
+     * permanent (i.e. not the creature itself — "another creature you control") carrying
+     * {@link PreventDamageToOtherCreaturesAndAddPlusCountersEffect}. Such damage is fully prevented and
+     * replaced with +1/+1 counters by the caller.
+     */
+    private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .filter(p -> !p.getId().equals(creature.getId()))
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(e -> e instanceof PreventDamageToOtherCreaturesAndAddPlusCountersEffect);
     }
 
     /**

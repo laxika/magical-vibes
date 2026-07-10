@@ -151,6 +151,19 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears protection from colors on permanents whose only modifier is that protection")
+        void clearsProtectionFromColors() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.getProtectionFromColorsUntilEndOfTurn().add(com.github.laxika.magicalvibes.model.CardColor.RED);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears cantBeBlocked flag on permanents")
         void clearsCantBeBlocked() {
             Card card = createCardWithName("Grizzly Bears");

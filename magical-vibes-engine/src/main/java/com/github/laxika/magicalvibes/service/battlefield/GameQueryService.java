@@ -862,6 +862,11 @@ public class GameQueryService {
         int power = getEffectivePower(gameData, creature);
         int toughness = getEffectiveToughness(gameData, creature);
 
+        // Global-scoped: every creature uses toughness (e.g. Doran, the Siege Tower)
+        if (hasGlobalToughnessAssignEffect(gameData)) {
+            return Math.max(0, toughness);
+        }
+
         // Controller-scoped: always use toughness (e.g. Belligerent Brontodon)
         if (hasControllerToughnessAssignEffect(gameData, creature)) {
             return Math.max(0, toughness);
@@ -897,6 +902,25 @@ public class GameQueryService {
      * with an {@link AssignCombatDamageWithToughnessEffect} whose scope covers this creature
      * ({@link GrantScope#OWN_CREATURES} or {@link GrantScope#ALL_OWN_CREATURES}).
      */
+    /**
+     * Returns {@code true} if any player controls a permanent on the battlefield with an
+     * {@link AssignCombatDamageWithToughnessEffect} scoped to {@link GrantScope#ALL_CREATURES}
+     * (e.g. Doran, the Siege Tower — "each creature assigns combat damage equal to its toughness").
+     */
+    private boolean hasGlobalToughnessAssignEffect(GameData gameData) {
+        for (List<Permanent> bf : gameData.playerBattlefields.values()) {
+            for (Permanent p : bf) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof AssignCombatDamageWithToughnessEffect acdt
+                            && acdt.scope() == GrantScope.ALL_CREATURES) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     private boolean hasControllerToughnessAssignEffect(GameData gameData, Permanent creature) {
         UUID controllerId = findPermanentController(gameData, creature.getId());
         if (controllerId == null) return false;

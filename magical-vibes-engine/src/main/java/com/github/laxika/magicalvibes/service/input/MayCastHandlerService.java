@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -344,6 +345,120 @@ public class MayCastHandlerService {
             log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Handles the "you may play target [type] card from your graveyard without paying its mana cost"
+     * choice (e.g. Horde of Notions). If accepted: a land is put onto the battlefield, any other card
+     * is cast without paying its mana cost. Restricted to the controller's own graveyard.
+     */
+    public void handlePlayFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability,
+                                              PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            String logEntry = playerName + " declines to play " + cardToPlay.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to play {} from graveyard", gameData.id, playerName, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Non-land cards can't be cast from graveyards if a permanent forbids it (e.g. Ashes of the Abhorrent).
+        if (!cardToPlay.hasType(CardType.LAND)
+                && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+            String logEntry = cardToPlay.getName() + " can't be cast from the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Verify the card is still in the controller's own graveyard and matches the filter.
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToPlay.getId());
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToPlay.getId());
+        if (graveyardCard == null || graveyardOwnerId == null || !graveyardOwnerId.equals(player.getId())
+                || !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String logEntry = cardToPlay.getName() + " is no longer a legal target in your graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, cardToPlay.getId());
+
+        if (cardToPlay.hasType(CardType.LAND)) {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+
+            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} plays {} (land) from graveyard", gameData.id, playerName, cardToPlay.getName());
+
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntryType spellType = switch (cardToPlay.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + cardToPlay.getType());
+        };
+
+        // Permanent spells have empty SPELL effects — ETB is processed on battlefield entry.
+        boolean isPermanentSpell = cardToPlay.hasType(CardType.CREATURE)
+                || cardToPlay.hasType(CardType.ARTIFACT)
+                || cardToPlay.hasType(CardType.ENCHANTMENT)
+                || cardToPlay.hasType(CardType.PLANESWALKER);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(cardToPlay)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
+
+            if (validTargets.isEmpty()) {
+                // No valid targets — card goes back to owner's graveyard.
+                graveyardService.addCardToGraveyard(gameData, player.getId(), cardToPlay);
+                String logEntry = cardToPlay.getName() + " has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} play-from-graveyard has no valid targets", gameData.id, cardToPlay.getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                    "Choose a target for " + cardToPlay.getName() + ".");
+
+            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost — choosing target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToPlay.getName());
+            return; // Wait for target choice
+        }
+
+        gameData.stack.add(new StackEntry(
+                spellType, cardToPlay, player.getId(), cardToPlay.getName(),
+                spellEffects, 0, (UUID) null, null
+        ));
+        gameData.recordSpellCast(player.getId(), cardToPlay);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} from graveyard without paying mana", gameData.id, playerName, cardToPlay.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

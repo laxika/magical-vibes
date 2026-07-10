@@ -108,6 +108,12 @@ public sealed interface ChoiceContext {
     record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ChoiceContext {}
 
     /**
+     * Lammastide Weave: the controller names a card, then the target player mills one card. If the
+     * milled card matches the chosen name, the controller gains life equal to its mana value.
+     */
+    record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),
      * then all cards of that type are returned from the controller's graveyard.
      */

@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -124,6 +125,7 @@ class StepTriggerServiceTest {
         // opponent-filter / valid-target logic is exercised by several tests in this class, so a
         // mock would silently return nulls and break them.
         TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
+        ValidTargetService validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
@@ -136,7 +138,8 @@ class StepTriggerServiceTest {
                 graveyardTargetingService,
                 triggerCollectionService,
                 triggerTargetCollector,
-                paradigmService);
+                paradigmService,
+                validTargetService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

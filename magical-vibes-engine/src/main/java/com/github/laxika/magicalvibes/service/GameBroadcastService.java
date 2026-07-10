@@ -445,6 +445,9 @@ public class GameBroadcastService {
         if (castingPermissionService.isSpellRestricted(card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
             return false;
         }
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {
+            return false;
+        }
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
                 ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())) {
             return false;
@@ -803,6 +806,7 @@ public class GameBroadcastService {
 
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
             if (castingPermissionService.isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
+            if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
@@ -886,6 +890,7 @@ public class GameBroadcastService {
 
         if (spellLimitReached || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, topCard)) return playable;
 
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 

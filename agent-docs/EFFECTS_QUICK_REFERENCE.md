@@ -96,7 +96,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetCreatureEffect(DynamicAmount, boolean unpreventable)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — target creature. Amounts: `Fixed`, `XValue`, `SourceToughness`, `PermanentCount` (subtype counts), `ManaSpentToCast`
 - `DealDamageToTargetCreatureOrPlaneswalkerEffect(int)` — creature or planeswalker
 - `DealDamageToTargetOpponentOrPlaneswalkerEffect(int)` — opponent or planeswalker
-- `DealDamageToTargetPlayerOrPlaneswalkerEffect(int)` — any player (incl. controller) or planeswalker (Boggart Shenanigans)
+- `DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount)` / `(int)` — any player (incl. controller) or planeswalker (Boggart Shenanigans; Brion Stoutarm's sacrificed-power `XValue`)
 - `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
@@ -118,6 +118,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventSpellDamageToOpponentAndCreateTokensEffect(CreateTokenEffect token)` — STATIC: if a spell you control would deal damage to an opponent, prevent it and create one `token` per 1 damage prevented (Hostility). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
+- `PreventDamageToOtherCreaturesAndAddPlusCountersEffect()` — STATIC: prevent all damage (combat or noncombat, any source) to *another* creature you control and put a +1/+1 counter on it per 1 damage prevented (Vigor). Checked in `DamagePreventionService.applyCreaturePreventionShield`; the effect is on a different permanent than the one being damaged
 - `PreventNextDamageFromChosenColoredSourceEffect(CardColor color)` — one-shot: prevent the *next* damage event a chosen source of that color would deal to you this turn (Circle of Protection cycle). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield`
 - `PreventNextDamageFromChosenSourceAndGainLifeEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to you this turn and gain that much life (Reverse Damage). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields` with `gainLife=true`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield` (which grants the life via `LifeSupport`)
 - `PreventNextDamageFromChosenSourceToAnyTargetEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to **any** target this turn — player, planeswalker, or creature, combat or noncombat (Sanctum Guardian; usually an activated ability with `SacrificeSelfCost`). Source chosen on resolution; shield (source ID) in `GameData.sourceNextDamageToAnyTargetShields`, consumed by `DamagePreventionService.applyChosenSourceNextDamageToAnyTargetShield` (hooked in `DamageSupport` and `CombatDamageService` player/creature/planeswalker paths)
@@ -254,6 +255,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
 - `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` — exile a targeted instant/sorcery from an opponent's graveyard; controller may cast it **this turn**, spending mana of any type, and it is exiled instead of going to a graveyard (Nita, Forum Conciliator). Uses `exilePlayPermissions` + `exilePlayPermissionsExpireEndOfTurn` + `exilePlayAnyManaType` + `exileInsteadOfGraveyard`. Targets graveyard (`canTargetGraveyard()`/`canTargetAnyGraveyard()`)
+- `PlayTargetCardFromGraveyardWithoutPayingManaCostEffect(CardPredicate filter)` — "you may play target [filter] card from your **own** graveyard without paying its mana cost" (Horde of Notions). On resolution offers a may-play: land → battlefield, else cast for free. Targets graveyard (own-only via `targetsControllersGraveyardOnly()`); routed by `MayCastHandlerService.handlePlayFromGraveyardChoice`
 - `ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes[, List<CardType> includedTypes], HandChoiceDestination destination[, boolean returnOnSourceLeave])` — reveal target's hand, caster chooses N card(s) → `DISCARD` / `EXILE` / `TOP_OF_LIBRARY` (Duress, Kitesail Freebooter, Agonizing Memories)
 - `RevealCardsChooseOneToDiscardEffect(PermanentPredicate countFilter)` — target reveals X cards **of their choice** (X = number of the caster's permanents matching `countFilter`), then the caster picks one for the target to discard (Thieving Sprite, `PermanentHasAnySubtypePredicate(FAERIE)`). Unlike `ChooseCardsFromTargetHandEffect` the rest of the hand stays hidden; two-phase interaction (`RevealCardsFromHandChoice` → `ChooseRevealedCardToDiscardChoice`), phase 1 skipped when the hand is already ≤ X
 - `TargetRevealsCardsControllerChoosesDiscardEffect(int revealCount)` — target player reveals `revealCount` cards **of their choice** from hand (whole hand if fewer); the controller sees only those and picks one for the target to discard (Blackmail). Two-stage `RevealCardsDiscardChoice` interaction; `canTargetPlayer()`. Contrast `ChooseCardsFromTargetHandEffect` (whole hand revealed, controller chooses)
@@ -292,6 +294,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MillControllerAndMayPlayFromGraveyardThisTurnEffect()` — mill 1, grant play-from-graveyard permission until end of turn
 - `PlayAdditionalLandsEffect(int count)` — grant controller `count` extra land plays this turn (Summer Bloom)
 - `MillHalfLibraryEffect()` — mill half (target player)
+- `NameCardMillTargetGainLifeEffect()` — controller names a card, target player mills 1; if the milled card matches the name, controller gains life = its mana value (Lammastide Weave; targets a player)
 
 ## Exile
 
@@ -393,6 +396,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MustAttackEffect()` — must attack (static)
 - `MustBeBlockedIfAbleEffect()` — must be blocked (static)
 - `MustBeBlockedByAllCreaturesEffect()` — Lure (static)
+- `MustBlockTargetCreatureEffect()` — two-target spell: blocker group (0) must block blocked group (1) this turn if able (Hunt Down)
 - `EnchantedCreatureCantAttackOrBlockEffect()` — Pacifism (static)
 - `MakeCreatureUnblockableEffect()` — target unblockable this turn
 - `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
@@ -484,6 +488,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
 - `CantSearchLibrariesEffect()` — can't search (static)
+- `NoncreatureSpellsCantBeCastEffect(int minManaValue, boolean restrictXSpells)` — global/symmetric: no player can cast a noncreature spell with mana value >= `minManaValue`, or (if `restrictXSpells`) with `{X}` in its cost (static, Gaddock Teeg `(4, true)`)
 - `AlternativeCostForSpellsEffect(String, CardPredicate)` — alternative cast cost
 - `PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones)` — no player can cast from any zone in `zones` (static, global; only `GRAVEYARD`/`LIBRARY` enforced — Ashes of the Abhorrent passes `Set.of(GRAVEYARD)`, Grafdigger's Cage passes `Set.of(GRAVEYARD, LIBRARY)`)
 - `CardsCantEnterBattlefieldFromZonesEffect(CardPredicate filter, Set<Zone> zones)` — cards matching `filter` (null = all) can't enter the battlefield from any zone in `zones`; blocks reanimation/undying/library-search-to-battlefield (static, global; only `GRAVEYARD`/`LIBRARY` enforced — Grafdigger's Cage passes `CardTypePredicate(CREATURE)` and `Set.of(GRAVEYARD, LIBRARY)`)
