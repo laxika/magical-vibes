@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -261,13 +263,45 @@ public class LayerSystemService {
         return pass != null && pass.gameData == gameData ? pass : null;
     }
 
-    /** Computes the layered board state and registers it as the active pass on this thread. */
+    /**
+     * The memoized finished board for one {@code GameData}, stored in the opaque
+     * {@code GameData.layeredBoardCache} slot and valid while the structural fingerprint of
+     * every input the pass reads still matches (see {@link #computeBoardFingerprint} and
+     * agent-docs/LAYER_SYSTEM.md "Board cache"). Immutable entry, published by a volatile
+     * write; a finished {@link LayeredBoardState} is never mutated again, so it is safe to
+     * share across queries and threads. AI simulation copies get a fresh {@code GameData}
+     * whose slot starts {@code null} — real game and simulation never share a board.
+     */
+    private record BoardCache(long fingerprint, LayeredBoardState board) {
+    }
+
+    /** Escape hatch: {@code -DdisableLayerBoardCache=true} turns the cross-query board cache
+     *  off (every external query recomputes the board — the pre-cache behavior). Also used by
+     *  {@code LayerPassBenchmarkTest} to measure before/after from one build. */
+    private static final boolean CACHE_DISABLED = Boolean.getBoolean("disableLayerBoardCache");
+
+    /**
+     * Registers a pass for the given game state on this thread and provides its layered board:
+     * reused from the {@code GameData}-level cache when the board fingerprint is unchanged
+     * since the last computation, recomputed (and cached) otherwise.
+     */
     public Pass beginPass(GameData gameData) {
         Pass pass = new Pass(gameData, ACTIVE_PASS.get());
         ACTIVE_PASS.set(pass);
         boolean computed = false;
         try {
-            computeBoardState(gameData, pass);
+            if (CACHE_DISABLED) {
+                computeBoardState(gameData, pass);
+            } else {
+                long fingerprint = computeBoardFingerprint(gameData);
+                if (gameData.layeredBoardCache instanceof BoardCache cached
+                        && cached.fingerprint() == fingerprint) {
+                    pass.board = cached.board();
+                } else {
+                    computeBoardState(gameData, pass);
+                    gameData.layeredBoardCache = new BoardCache(fingerprint, pass.board);
+                }
+            }
             pass.boardReady = true;
             computed = true;
         } finally {
@@ -286,6 +320,196 @@ public class LayerSystemService {
                 ACTIVE_PASS.remove();
             }
         }
+    }
+
+    // ===== board cache fingerprint =====
+
+    /**
+     * Structural fingerprint of every game-state input {@link #computeBoardState} reads. The
+     * cache is valid exactly while this value is unchanged — there is deliberately NO mutation
+     * counter to bump at write sites: the engine has many direct {@code Permanent} field
+     * writers with no funnel (see LAYER_SYSTEM.md step 12), and tests mutate battlefields and
+     * permanents directly, so the honest invalidation contract is "re-derive from the inputs
+     * themselves on every query". Covered inputs (extend this method whenever the pass starts
+     * reading something new — the invalidation contract lives here):
+     *
+     * <ul>
+     * <li>battlefield composition and order per player (L2 control is physical membership;
+     *     position is the equal-timestamp fallback), each permanent's identity, timestamp and
+     *     every mutable field the pass seeds from or applies with — tap state
+     *     ({@code OWN_TAPPED_CREATURES}, tapped-scope filters), attachment, chosen values,
+     *     counters (P/T predicate leaves, AWAKENING animation), P/T modifiers and overrides,
+     *     animation state, granted/removed keywords, colors, subtypes, card types, the
+     *     transient land-type override, lose-all flags, text replacements and persistent
+     *     granted activated abilities;</li>
+     * <li>the permanent's current {@code Card} identity (L1 copy swaps) plus its printed
+     *     stats/types/keywords and STATIC-effect count as insurance for tests that mutate an
+     *     unfrozen card in place ({@code TestCards.mutableCard});</li>
+     * <li>the floating continuous effects (immutable records — identity suffices);</li>
+     * <li>graveyard and exile contents (CDA inputs: the Cairn Wanderer family scans
+     *     graveyards, {@code GainActivatedAbilitiesOfExiledCards} scans exile) and hand sizes
+     *     (cheap insurance — no L4-L6 input reads hands today);</li>
+     * <li>{@code timestampCounter} as stamp-event insurance.</li>
+     * </ul>
+     *
+     * <p>NOT covered (assembly-only inputs — the per-target {@code StaticBonus} is rebuilt on
+     * every query and only the finished board is cached): emblems, conditional-wrapper
+     * conditions, life totals, turn/step state, amount evaluation beyond the fields above.
+     *
+     * <p>Known gap: mutating the one unfrozen runtime copy card in place after a query was
+     * cached (Cryptoplasm/Evil Twin exception baking happens inside the same resolution as the
+     * copy swap, so no query can intervene today).
+     */
+    private static long computeBoardFingerprint(GameData gameData) {
+        long h = 0x9E3779B97F4A7C15L;
+        h = mix(h, gameData.timestampCounter);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            h = mix(h, playerId.hashCode());
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null) {
+                h = mix(h, battlefield.size());
+                for (Permanent permanent : battlefield) {
+                    h = hashPermanent(h, permanent);
+                }
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard != null) {
+                h = mix(h, graveyard.size());
+                for (Card card : graveyard) {
+                    h = mix(h, System.identityHashCode(card));
+                }
+            }
+            List<Card> hand = gameData.playerHands.get(playerId);
+            h = mix(h, hand == null ? -1 : hand.size());
+        }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                h = mix(h, System.identityHashCode(floating));
+                h = mix(h, floating.timestamp());
+            }
+        }
+        synchronized (gameData.exiledCards) {
+            for (ExiledCardEntry entry : gameData.exiledCards) {
+                h = mix(h, System.identityHashCode(entry.card()));
+            }
+        }
+        return h;
+    }
+
+    private static long hashPermanent(long h, Permanent p) {
+        h = mix(h, System.identityHashCode(p));
+        h = mix(h, p.getId().hashCode());
+        h = mix(h, p.getTimestamp());
+        h = hashCard(h, p.getCard());
+
+        long flags = 0;
+        flags = flags << 1 | (p.isTapped() ? 1 : 0);
+        flags = flags << 1 | (p.isColorOverridden() ? 1 : 0);
+        flags = flags << 1 | (p.isBasePowerToughnessOverriddenUntilEndOfTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isAnimatedUntilEndOfTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isAnimatedUntilEndOfCombat() ? 1 : 0);
+        flags = flags << 1 | (p.isAnimatedUntilNextTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isPermanentlyAnimated() ? 1 : 0);
+        flags = flags << 1 | (p.isBasePowerOverriddenPermanently() ? 1 : 0);
+        flags = flags << 1 | (p.isBaseToughnessOverriddenPermanently() ? 1 : 0);
+        flags = flags << 1 | (p.isLosesAllAbilitiesUntilEndOfTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isLosesAllCreatureTypesUntilEndOfTurn() ? 1 : 0);
+        flags = flags << 1 | (p.isTransformed() ? 1 : 0);
+        h = mix(h, flags);
+
+        h = mix(h, p.getAttachedTo() == null ? 0 : p.getAttachedTo().hashCode());
+        h = mix(h, enumOrdinal(p.getChosenColor()));
+        h = mix(h, enumOrdinal(p.getChosenSubtype()));
+        h = mix(h, enumOrdinal(p.getChosenManaValueParity()));
+        h = mix(h, p.getChosenName() == null ? 0 : p.getChosenName().hashCode());
+        h = mix(h, p.getChosenPermanentId() == null ? 0 : p.getChosenPermanentId().hashCode());
+
+        for (Map.Entry<CounterType, Integer> counter : p.getCounters().entrySet()) {
+            h = mix(h, counter.getKey().ordinal());
+            h = mix(h, counter.getValue());
+        }
+        h = mix(h, p.getPowerModifier());
+        h = mix(h, p.getToughnessModifier());
+        h = mix(h, p.getBasePowerOverride());
+        h = mix(h, p.getBaseToughnessOverride());
+        h = mix(h, p.getAnimatedPower());
+        h = mix(h, p.getAnimatedToughness());
+        h = mix(h, enumOrdinal(p.getAnimatedColor()));
+        h = mix(h, p.getPermanentAnimatedPower());
+        h = mix(h, p.getPermanentAnimatedToughness());
+        h = mix(h, p.getUntilNextTurnAnimatedPower());
+        h = mix(h, p.getUntilNextTurnAnimatedToughness());
+        h = mix(h, p.getPermanentBasePowerOverride());
+        h = mix(h, p.getPermanentBasePowerOverrideTimestamp());
+        h = mix(h, p.getPermanentBaseToughnessOverride());
+        h = mix(h, p.getPermanentBaseToughnessOverrideTimestamp());
+
+        h = hashEnums(h, p.getGrantedKeywords());
+        h = hashEnums(h, p.getRemovedKeywords());
+        h = hashEnums(h, p.getUntilNextTurnKeywords());
+        h = hashEnums(h, p.getTransientColors());
+        h = hashEnums(h, p.getGrantedColors());
+        h = hashEnums(h, p.getTransientSubtypes());
+        h = hashEnums(h, p.getGrantedSubtypes());
+        h = hashEnums(h, p.getUntilNextTurnSubtypes());
+        h = hashEnums(h, p.getGrantedCardTypes());
+        h = hashEnums(h, p.getPersistentGrantedCardTypes());
+        h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
+
+        for (TextReplacement replacement : p.getTextReplacements()) {
+            h = mix(h, System.identityHashCode(replacement));
+        }
+        for (Object ability : p.getPersistentGrantedActivatedAbilities()) {
+            h = mix(h, System.identityHashCode(ability));
+        }
+        return h;
+    }
+
+    /**
+     * The card identity (L1 copy swaps change the instance) plus the printed values the pass
+     * seeds from, as insurance for tests that mutate an unfrozen card in place.
+     */
+    private static long hashCard(long h, Card card) {
+        h = mix(h, System.identityHashCode(card));
+        h = mix(h, card.getPower() == null ? -1 : card.getPower());
+        h = mix(h, card.getToughness() == null ? -1 : card.getToughness());
+        h = mix(h, enumOrdinal(card.getType()));
+        h = mix(h, enumOrdinal(card.getColor()));
+        h = mix(h, card.getManaValue());
+        h = hashEnums(h, card.getSubtypes());
+        h = hashEnums(h, card.getKeywords());
+        h = hashEnums(h, card.getAdditionalTypes());
+        h = hashEnums(h, card.getSupertypes());
+        h = mix(h, card.getEffects(EffectSlot.STATIC).size());
+        return h;
+    }
+
+    /** Order-independent enum-collection hash: HashSet iteration order must not affect it. */
+    private static long hashEnums(long h, Iterable<? extends Enum<?>> values) {
+        long sum = 0;
+        int count = 0;
+        for (Enum<?> value : values) {
+            sum += mix64(value.ordinal() + 1);
+            count++;
+        }
+        h = mix(h, sum);
+        return mix(h, count);
+    }
+
+    private static int enumOrdinal(Enum<?> value) {
+        return value == null ? -1 : value.ordinal();
+    }
+
+    /** One 64-bit accumulation step: order-dependent, splitmix64-mixed. */
+    private static long mix(long h, long value) {
+        h ^= mix64(value);
+        return h * 0x9E3779B97F4A7C15L + 0x2545F4914F6CDD1DL;
+    }
+
+    private static long mix64(long z) {
+        z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+        z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+        return z ^ (z >>> 31);
     }
 
     /**

@@ -188,8 +188,10 @@ seeds the legacy fields (a legacy lose-all flag = removal-before-everything) and
 the floating instance at its real timestamp, which is what drives ordering. Remaining direct
 `Permanent.getEffectiveColor()` uses to clean up later: `ai/BoardEvaluator` (heuristics),
 `PermanentViewFactory`'s legacy transient-color branch, `Permanent.hasKeyword` direct callers
-in null-`GameData` predicate fallbacks. There is **no cross-call cache** yet (no GameData
-modification counter) — a dedicated perf step comes later. CR 613.8 dependency is implemented
+in null-`GameData` predicate fallbacks. The finished board is **memoized per `GameData` across
+external queries** since step 13 (see §10 "Board cache" for the structural-fingerprint
+invalidation contract); the per-target `StaticBonus` assembly still runs on every external
+query. CR 613.8 dependency is implemented
 for layers 4-6 since step 11 (see §8): a Xenograft grant with an earlier timestamp DOES apply
 to an artifact a later March of the Machines animates, and existence-removals (Blood Moon on
 an ability-granting land, a lose-all on a lord) beat timestamps; the changeling L4+L6 dual
@@ -554,6 +556,71 @@ timestamps ✅, (2) `FloatingContinuousEffect` storage on `GameData` + creation/
 plumbing, (3+) layer-by-layer migration of effect families, flipping SevenLayerTest groups
 green as each layer's ordering semantics land. Keep `computeStaticBonus` callers working at
 every step; the layered engine replaces its internals incrementally.
+
+## 10. Board cache (cross-query memoization, step 13)
+
+Every external `computeStaticBonus`/`landTypeOverrideFor` call runs `LayerSystemService.beginPass`,
+which used to recompute the whole-battlefield board every time — the AI (MCTS simulation,
+`BoardEvaluator`, `CombatSimulator`) hammers these queries. The finished
+`LayeredBoardState` is now **memoized per `GameData`**: `beginPass` computes a structural
+fingerprint of every input the board computation reads and reuses the cached board
+(`LayerSystemService.BoardCache(fingerprint, board)`, stored in the opaque
+`GameData.layeredBoardCache` slot — the domain module cannot reference the engine type) when
+the fingerprint is unchanged. What is **NOT cached**: the per-target `StaticBonus` assembly
+(and the per-`Pass` `bonusMemo`) still runs on every external query — assembly reads inputs the
+fingerprint deliberately does not cover (emblems, conditional-wrapper conditions, life totals,
+turn/step state, amount evaluation), so caching it would be dishonest; shrinking scope to the
+board only is the correctness-first trade.
+
+### Invalidation contract
+
+There is **no mutation counter to bump** — this is a deliberate deviation from the original
+"modCount in the mutation funnels" plan: step 12 documented many direct `Permanent` field
+writers with no funnel (bucket-only keyword grants, animation flags, ...), and tests
+(SevenLayerTest included) mutate battlefield lists and permanents directly. The honest scheme
+is to **re-derive validity from the inputs themselves on every query**: the fingerprint hashes
+battlefield composition/order, every pass-read `Permanent` field (tap state, attachments,
+counters, chosen values, P/T modifiers/overrides, animation state, granted/removed
+keywords/colors/subtypes/types, lose-all flags, text replacements, persistent granted
+activated abilities), the current `Card` identity (L1 copy swaps) plus printed values
+(insurance for `TestCards.mutableCard`), the floating effects, graveyard/exile contents (CDA
+scan inputs) and hand sizes, and `timestampCounter`. **The canonical input list lives in the
+`computeBoardFingerprint` javadoc — extend it whenever the pass starts reading a new input.**
+A stale fingerprint can only produce a false MISS (safe recompute); a false HIT requires a
+64-bit hash collision on the same `GameData`. The fingerprint is O(board) cheap field reads
+(~40 mixes per permanent), orders of magnitude cheaper than the pass it guards.
+
+### Safety invariants
+
+- **The finished board is read-only.** `l4FilterVerdicts` and the states are only written
+  while `computeBoardState` runs; dependency trials swap in throwaway trial boards; assembly
+  and predicate leaves only read. That is what makes sharing one board across queries (and
+  threads — immutable entry, `volatile` publish, racing fillers overwrite benignly) sound.
+- **AI simulation copies start cold**: `simulationCopy()` builds a fresh `GameData` and never
+  copies the slot, so a simulated board can never be served to the real game or vice versa
+  (the shared-`Card` leak precedent). Pinned by `LayeredBoardCacheTest`.
+- **Escape hatch**: `-DdisableLayerBoardCache=true` restores the recompute-every-query
+  behavior (also how the benchmark measures before/after from one build).
+- **Known gap**: mutating the one unfrozen runtime copy card in place after a query was
+  cached would not invalidate (identity + printed values are hashed, added abilities only by
+  STATIC-effect count); today Cryptoplasm/Evil Twin exception baking happens inside the same
+  resolution as the copy swap, so no query can intervene.
+
+### Benchmark
+
+`LayerPassBenchmarkTest` (application `layers/`, run with `-DlayerBench=true`, add
+`-DdisableLayerBoardCache=true` for the pre-cache baseline): 24-permanent static-heavy board
+(anthems, lords, Blood Moon, March, Maro, Nightmare, Lignify/Dub attachments), sweeps of 4
+layered queries per permanent (96 external queries/sweep), time-boxed. 2026-07-10 numbers
+(dev machine, test JVM `-XX:TieredStopAtLevel=1`; ratios are what matter):
+
+| Scenario | before (cache off) | after (cache on) | speedup |
+|---|---|---|---|
+| steady state (no mutation between sweeps) | 6.2 sweeps/s ≈ 595 queries/s | 280.9 sweeps/s ≈ 26 970 queries/s | ~45× |
+| one tap-toggle per sweep (recompute every sweep) | 6.2 sweeps/s ≈ 593 queries/s | 163.3 sweeps/s ≈ 15 678 queries/s | ~26× |
+
+The mutating case still wins big because a sweep is 96 queries: before, every query recomputed
+the board; after, only the first query after the mutation does.
 
 ---
 
@@ -1062,3 +1129,41 @@ and any deviations from this document.
     TurnCleanupServiceTest, TurnProgressionServiceTest, GameQueryServiceTest,
     PredicateEvaluationServiceTest, CreatureControlServiceTest,
     BecomeCopyOfTargetCreatureEffectHandlerTest — all green.
+
+13. **2026-07-10 — Step 13: per-GameData board cache (perf).** The whole-board computation now
+    runs once per board state instead of once per external query: `LayerSystemService.beginPass`
+    memoizes the finished `LayeredBoardState` in the new opaque `GameData.layeredBoardCache`
+    slot, keyed by a structural fingerprint of every input `computeBoardState` reads — see the
+    new §10 "Board cache" for the full invalidation contract. **Deviation from the step's
+    "modification counter in the mutation funnels" plan:** no counter exists at all — the
+    fingerprint is recomputed from the inputs themselves on every query (O(board) cheap field
+    reads), because step 12's audit showed many direct `Permanent` writers with no funnel, and
+    SevenLayerTest-style setups mutate battlefield lists and permanents directly; a
+    counter-with-funnels scheme could not keep those honest, while re-derivation makes false
+    HITs impossible short of a 64-bit hash collision (false misses just recompute). The
+    canonical input list lives in the `computeBoardFingerprint` javadoc; CLAUDE.md now tells
+    future work to extend it when the pass reads new inputs. Cache scope is the BOARD ONLY
+    (correctness-first): the per-target `StaticBonus` assembly and per-`Pass` bonus memo still
+    run per external query, because assembly reads inputs the fingerprint deliberately omits
+    (emblems, conditional wrappers, life totals, turn/step, amounts). The finished board was
+    verified read-only (verdict/state writes happen only during the pass; dependency trials
+    swap in trial boards), the cache entry is immutable and volatile-published, and
+    `simulationCopy()` does not copy the slot — AI copies start cold (LayeredBoardCacheTest
+    pins cold-start + no-leak both directions). Escape hatch: `-DdisableLayerBoardCache=true`.
+    **Benchmark** (new `LayerPassBenchmarkTest`, `-DlayerBench=true`, time-boxed sweeps of 4
+    layered queries × 24 permanents on a static-heavy board; before measured from the same
+    build via the escape hatch): steady-state 595 → 26 970 queries/s (~45×); with one
+    tap-toggle mutation per sweep 593 → 15 678 queries/s (~26×) — numbers also in §10.
+    New tests: `layers/LayeredBoardCacheTest` (6: reuse of the cached entry, direct
+    battlefield-list mutation, direct permanent-field mutation behind a lord filter, direct
+    attachment mutation, floating-effect add/expiry, simulation-copy cold start + isolation).
+    SevenLayerTest stays **100 green**. Ran SevenLayerTest, LayerDependencyTest,
+    FloatingEffectLifecycleTest, LayeredBoardCacheTest, the staticfx suite +
+    TextChangeTransformerTest, GameQueryServiceTest, PredicateEvaluationServiceTest,
+    PermanentTimestampTest, TurnCleanupServiceTest, TurnProgressionServiceTest,
+    CreatureControlServiceTest, a layer-affected card-test batch (BloodMoon, Lignify,
+    DeepFreeze, Xenograft, ElvishChampion, GoblinKing, MarchOfTheMachines, Nightmare, Maro,
+    CairnWanderer, WingsOfVelisVel, MerfolkTrickster, Incite, NimDeathmantle, BludgeonBrawl,
+    MindBend, Clone, TilonallisSkinshifter, Shapesharer, Threaten, SowerOfTemptation,
+    TideshaperMystic, AmoeboidChangeling), the full AI module suite, and a 2-game
+    RandomAiFuzzTest run — all green.

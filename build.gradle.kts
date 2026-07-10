@@ -57,7 +57,8 @@ subprojects {
             forkEvery = 2000
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames",
-                    "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed").forEach { prop ->
+                    "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
+                    "layerBench", "disableLayerBoardCache").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {

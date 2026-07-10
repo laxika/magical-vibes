@@ -480,6 +480,16 @@ public class GameData {
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
     /**
+     * Opaque slot for the engine's memoized CR 613 layered board
+     * ({@code LayerSystemService.BoardCache} — the engine owns the type, this module cannot
+     * reference it; see {@code agent-docs/LAYER_SYSTEM.md} "Board cache"). Deliberately NOT
+     * copied by {@link #simulationCopy()}: AI simulation copies must start with a cold cache so
+     * a simulated board can never be served for the real game or vice versa. Holds an immutable
+     * entry published by a volatile write; concurrent fillers race benignly (last write wins).
+     */
+    public transient volatile Object layeredBoardCache;
+
+    /**
      * Stamps the given floating effect with the next CR 613.7 timestamp, stores it, and returns
      * the stamped instance (the passed-in effect's own timestamp is ignored).
      */
