@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,8 +61,18 @@ public class TurnCleanupService {
      */
     public void resetEndOfTurnModifiers(GameData gameData) {
         // CR 613 layer engine: "until end of turn" floating continuous effects wear off here,
-        // before the legacy per-permanent modifier reset below.
-        gameData.expireEndOfTurnFloatingEffects();
+        // before the legacy per-permanent modifier reset below. An expiring layer-1 copy effect
+        // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
+        // official ruling pins this to the same moment damage is removed (the cleanup step).
+        for (FloatingContinuousEffect expired : gameData.expireEndOfTurnFloatingEffects()) {
+            if (expired.effect() instanceof BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
+                    && expired.affectedPermanentId() != null) {
+                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
+                if (copy != null) {
+                    copy.revertEndOfTurnCopy();
+                }
+            }
+        }
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
@@ -71,7 +83,7 @@ public class TurnCleanupService {
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
-                    || p.isCopyUntilEndOfTurn() || !p.getTemporaryTriggeredEffects().isEmpty()
+                    || !p.getTemporaryTriggeredEffects().isEmpty()
                     || p.isLosesAllAbilitiesUntilEndOfTurn()
                     || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
                     || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()) {
@@ -147,6 +159,19 @@ public class TurnCleanupService {
                 manaPool.clearPersistentMana();
             }
         }
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(permanentId)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
     /**

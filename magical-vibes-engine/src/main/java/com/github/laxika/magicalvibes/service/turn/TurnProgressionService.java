@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -212,15 +214,21 @@ public class TurnProgressionService {
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
         }
-        gameData.expireFloatingEffectsAtTurnStart(nextActive);
-
-        // Revert "until your next turn" copies (e.g. Shapesharer) belonging to the player whose
-        // turn is beginning. The copied permanent may be on any player's battlefield.
-        gameData.forEachPermanent((ownerId, p) -> {
-            if (p.isCopyUntilControllerNextTurn() && nextActive.equals(p.getCopyUntilNextTurnControllerId())) {
-                p.revertUntilNextTurnCopy();
+        // "Until your next turn" floating continuous effects controlled by the player whose turn
+        // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
+        // the copied permanent's card — which may sit on any player's battlefield. A newer copy
+        // effect overwrites {@code copyUntilNextTurnControllerId}, so an older effect expiring
+        // first must not revert the card out from under the still-active newer one.
+        for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtTurnStart(nextActive)) {
+            if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
+                    && expired.affectedPermanentId() != null) {
+                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
+                if (copy != null && copy.isCopyUntilControllerNextTurn()
+                        && nextActive.equals(copy.getCopyUntilNextTurnControllerId())) {
+                    copy.revertUntilNextTurnCopy();
+                }
             }
-        });
+        }
 
         // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
         // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
@@ -256,6 +264,19 @@ public class TurnProgressionService {
         }
 
         completeTurnAdvance(gameData);
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(permanentId)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
     /**

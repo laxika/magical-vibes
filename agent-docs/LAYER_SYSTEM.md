@@ -309,6 +309,41 @@ rewriting. A text-changed filter that is shared across an ability's parts (CR 61
 its layer-4 verdict recorded under the TRANSFORMED filter instance; the legacy funnel asks with
 the original, misses, and re-evaluates — acceptable drift, no current card hits it.
 
+**Implementation status (step 10 — layer 1 copy effects audited & integrated):** L1 stays
+card-swap-based and is applied BEFORE the pass by construction: every copy application funnels
+through `PermanentCopierService.applyCloneCopy`, which builds the runtime copy card from the
+target's CURRENT `Card` only — the printed card as modified by other copy effects (a copy of a
+copy picks up the first copy's card), never counters, never `Permanent` modifiers, never layered
+state (CR 707.2) — and `CharacteristicState` seeds from `Permanent.card`, so copies re-enter the
+pass with the copied identity automatically. "Copy with exceptions" is baked into the copy card
+as part of the copiable value: Quicksilver Gargantuan's 7/7 override (with the CR 707.9d skip of
+P/T-defining CDAs), Phyrexian Metamorph's added ARTIFACT type, Evil Twin's added ability
+(`CloneService`), Cryptoplasm's retained upkeep ability (`MayCopyHandlerService`) — so a Clone
+of a Quicksilver Gargantuan copy is a 7/7 (`QuicksilverGargantuanTest`). The two DURATION copies
+— `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (Tilonalli's Skinshifter) and
+`MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` (Shapesharer) — register a floating
+`L1_COPY` effect alongside the card swap, and the revert is driven by the step-2 lifecycle:
+`TurnCleanupService.resetEndOfTurnModifiers` reverts permanents whose expired floating effect
+wraps the become-copy effect (`Permanent.revertEndOfTurnCopy()`, extracted out of
+`resetModifiers()`), and `TurnProgressionService.advanceTurn` reverts until-next-turn copies off
+the `expireFloatingEffectsAtTurnStart` result, guarded on `copyUntilNextTurnControllerId` so an
+OLDER effect expiring cannot revert a NEWER still-active copy — same game moments as the old
+ad-hoc timing (revert at cleanup happens alongside damage removal, per the official Tilonalli
+ruling), pinned by the card tests. Cryptoplasm's copy is INDEFINITE (official ruling: "lasts
+indefinitely") and correctly gets no duration marker. CR 611.2c verified against the official
+Tilonalli ruling (2017-09-29): an effect that began to apply before the permanent became a copy
+continues to apply — true structurally because pre-copy effects live on the `Permanent` (7c
+modifiers/counters) or in `GameData.floatingEffects`, not on the swapped card
+(`pumpBeforeCopyPersistsOnTheCopy` in `TilonallisSkinshifterTest`). **Out of scope / known
+gaps:** face-down/manifest copying, tokens copying permanents, "enters as a copy"
+replacement-effect timing beyond the current implementation
+(`CloneService.prepareCloneReplacementEffect` resolves the choice mid-entry), stacking a UEOT
+copy and an until-next-turn copy on the SAME permanent (the per-duration pre-copy card fields
+don't compose as layered L1 timestamps would), and the runtime copy card is never re-frozen
+after exception baking (`Card.freeze` hardening gap — the original card froze on `Permanent`
+construction; the swap-in copy stays mutable so Cryptoplasm/Evil Twin can bake their extra
+abilities after `applyCloneCopy`).
+
 ## 6. Sources of continuous effects
 
 Each source is classified into one or more layers:
@@ -402,7 +437,8 @@ Reasoning behind the non-obvious mappings:
   branches, since which branch applies is game-state-dependent. Their declared
   `possibleLayers` union is L4–L7d (conditions never wrap copy/control/text effects here).
 - **One-shot continuous effects** (future floating effects) are classified alongside the
-  statics: copy (`BecomeCopyOfTargetCreature*`, `CopyPermanentOnEnterEffect`) → L1; control
+  statics: copy (`BecomeCopyOfTargetCreature*`,
+  `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CopyPermanentOnEnterEffect`) → L1; control
   (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
   `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
   `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
@@ -784,3 +820,39 @@ and any deviations from this document.
    MarchOfTheMachines, CairnWanderer, AmoeboidChangeling, WingsOfVelisVel, MerfolkTrickster,
    GrandArchitect, Incite, NimDeathmantle, BludgeonBrawl, FavorOfTheMighty, TideshaperMystic,
    Maro) and the full AI module suite — all green.
+
+10. **2026-07-10 — Step 10: layer 1 copy effects audited & integrated with the lifecycle.**
+    Audit outcome (no rules bugs found — see the new §5 step-10 status note): every copy path
+    funnels through `PermanentCopierService.applyCloneCopy`, which reads the target's CURRENT
+    `Card` only (CR 707.2 copiable values; copy-of-copy inherits baked exceptions), exceptions
+    are baked into the L1 copy card (Quicksilver 7/7 with the CR 707.9d CDA skip, Metamorph
+    ARTIFACT, Evil Twin/Cryptoplasm extra abilities), and `CharacteristicState` seeding from
+    `Permanent.card` already makes copies re-enter the pass as their copied identity.
+    Integration: the two duration copies now ALSO register a floating `L1_COPY` effect
+    (`BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` → `UNTIL_END_OF_TURN`;
+    `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` → `UNTIL_YOUR_NEXT_TURN`, newly
+    registered in `LayerClassifier`), and the card revert moved from the ad-hoc timing to the
+    step-2 lifecycle: `Permanent.resetModifiers()` no longer reverts copies —
+    `TurnCleanupService.resetEndOfTurnModifiers` processes the `expireEndOfTurnFloatingEffects()`
+    result and calls the new `Permanent.revertEndOfTurnCopy()`; `TurnProgressionService`'s
+    per-permanent until-next-turn revert loop was replaced by processing the
+    `expireFloatingEffectsAtTurnStart` result (guarded on `copyUntilNextTurnControllerId`, so an
+    older expiring effect cannot revert a newer still-active copy — matches the old
+    latest-writer-wins field semantics). Same game moments as before; the card tests pin it.
+    **Rules verification (live Scryfall rulings):** Cryptoplasm's copy "lasts indefinitely" →
+    no duration marker (deviation from this step's prompt, which grouped Cryptoplasm with the
+    duration copies); Tilonalli 2017-09-29 confirms CR 611.2c ("an effect that began to apply
+    before it became a copy will continue to apply") and that the UEOT revert coincides with
+    cleanup damage removal. New tests: `QuicksilverGargantuanTest.cloneOfGargantuanCopyIsSevenSeven`
+    (Clone of a Gargantuan copy is 7/7 — exception is copiable),
+    `TilonallisSkinshifterTest.pumpBeforeCopyPersistsOnTheCopy` (Giant Growth before the copy →
+    5/5 copy, CR 611.2c), and two `TurnCleanupServiceTest` pins (expiry-driven revert;
+    departed-permanent expiry no-op). Out-of-scope noted in §5: face-down/manifest, token
+    copying, enters-as-copy replacement timing, UEOT+until-next-turn copy stacking on one
+    permanent, and the unfrozen runtime copy card (`Card.freeze` hardening gap). SevenLayerTest
+    stays **100 green** (all ten Layer1Copy included). Ran SevenLayerTest, the copy card tests
+    (Clone, CloneShell, Cryptoplasm, EvilTwin, PhyrexianMetamorph, QuicksilverGargantuan,
+    SculptingSteel, TilonallisSkinshifter, Shapesharer, NaruMehaMasterWizard),
+    TurnCleanupServiceTest, TurnProgressionServiceTest, LayerClassifierTest,
+    FloatingEffectLifecycleTest, BecomeCopyOfTargetCreatureEffectHandlerTest and the full AI
+    module suite — all green.

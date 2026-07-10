@@ -183,7 +183,8 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
-     *  At the cleanup step, the card reverts to {@link #preCopyCard}.
+     *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
+     *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
      *  Used by Tilonalli's Skinshifter and similar shapeshifters. */
     @Setter private boolean copyUntilEndOfTurn;
     /** The card to revert to when the temporary copy effect ends.
@@ -615,11 +616,20 @@ public class Permanent {
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.temporaryActivatedAbilities.clear();
+    }
+
+    /**
+     * Reverts an "until end of turn" copy (e.g. Tilonalli's Skinshifter) back to the permanent's
+     * pre-copy card. Driven by the expiry of the copy's floating layer-1 effect at the cleanup
+     * step (CR 613 layer engine), not by {@link #resetModifiers()}. Safe to call more than once
+     * per turn — a second expired copy effect on the same permanent finds the flag cleared.
+     */
+    public void revertEndOfTurnCopy() {
         if (this.copyUntilEndOfTurn && this.preCopyCard != null) {
             this.card = this.preCopyCard;
-            this.copyUntilEndOfTurn = false;
-            this.preCopyCard = null;
         }
+        this.copyUntilEndOfTurn = false;
+        this.preCopyCard = null;
     }
 
     /**

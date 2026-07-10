@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -80,6 +82,30 @@ class TilonallisSkinshifterTest extends BaseCardTest {
 
         // Should have the target's keywords (Grizzly Bears is vanilla, so no keywords)
         assertThat(skinshifter.getCard().getKeywords()).isEqualTo(bears.getCard().getKeywords());
+    }
+
+    // ===== Effects applied before the copy persist (CR 611.2c) =====
+
+    @Test
+    @DisplayName("A pump resolved before becoming a copy continues to apply (CR 611.2c)")
+    void pumpBeforeCopyPersistsOnTheCopy() {
+        Permanent skinshifter = addReadySkinshifter(player1);
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+
+        // Giant Growth resolves on the Skinshifter before it becomes a copy.
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, skinshifter.getId());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        // Official ruling (2017-09-29): an effect that began to apply before the Skinshifter
+        // became a copy continues to apply — the 2/2 Bears copy is 5/5.
+        assertThat(skinshifter.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, skinshifter)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, skinshifter)).isEqualTo(5);
     }
 
     // ===== Until end of turn revert =====

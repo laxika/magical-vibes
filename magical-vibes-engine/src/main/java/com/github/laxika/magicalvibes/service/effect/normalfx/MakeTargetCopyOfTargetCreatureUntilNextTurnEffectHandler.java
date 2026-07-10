@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -50,6 +52,13 @@ public class MakeTargetCopyOfTargetCreatureUntilNextTurnEffectHandler implements
         permanentCopierService.applyCloneCopy(shapeshifter, creature, null, null);
         shapeshifter.setCopyUntilControllerNextTurn(true);
         shapeshifter.setCopyUntilNextTurnControllerId(entry.getControllerId());
+        // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
+        // swap above stores the copiable values; the floating effect carries the CR 613.7
+        // timestamp and drives the revert when it expires at the ability controller's turn start.
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                entry.getControllerId(), effect, shapeshifter.getId(), null, null,
+                EffectDuration.UNTIL_YOUR_NEXT_TURN, 0));
 
         String targetName = creature.getCard().getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until its controller's next turn.";

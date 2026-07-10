@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -150,6 +151,7 @@ public final class LayerClassifier {
         // Layer 1 — copy effects (CR 613.2a).
         map.put(BecomeCopyOfTargetCreatureEffect.class, fixed(Layer.L1_COPY));
         map.put(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class, fixed(Layer.L1_COPY));
+        map.put(MakeTargetCopyOfTargetCreatureUntilNextTurnEffect.class, fixed(Layer.L1_COPY));
         map.put(CopyPermanentOnEnterEffect.class, fixed(Layer.L1_COPY));
 
         // Layer 2 — control-changing effects (CR 613.2b).

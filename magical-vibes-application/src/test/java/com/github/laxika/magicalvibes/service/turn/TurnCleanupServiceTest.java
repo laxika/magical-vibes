@@ -12,9 +12,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -448,6 +451,40 @@ class TurnCleanupServiceTest {
             sut.resetEndOfTurnModifiers(gd);
 
             assertThat(gd.playersSilencedThisTurn).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Expiring layer-1 copy floating effect reverts the permanent to its pre-copy card")
+        void revertsEndOfTurnCopyWhenFloatingEffectExpires() {
+            Permanent perm = new Permanent(createCardWithName("Tilonalli's Skinshifter"));
+            perm.setPreCopyCard(perm.getCard());
+            perm.setCard(createCardWithName("Grizzly Bears"));
+            perm.setCopyUntilEndOfTurn(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Tilonalli's Skinshifter", perm.getId(), player1Id,
+                    new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), perm.getId(), null, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getCard().getName()).isEqualTo("Tilonalli's Skinshifter");
+            assertThat(perm.isCopyUntilEndOfTurn()).isFalse();
+            assertThat(perm.getPreCopyCard()).isNull();
+            assertThat(gd.floatingEffects).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Expired copy effect whose permanent has left the battlefield is a no-op")
+        void expiredCopyEffectForDepartedPermanentIsNoOp() {
+            gd.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(), "Tilonalli's Skinshifter", UUID.randomUUID(), player1Id,
+                    new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), UUID.randomUUID(), null, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.floatingEffects).isEmpty();
         }
 
         @Test
