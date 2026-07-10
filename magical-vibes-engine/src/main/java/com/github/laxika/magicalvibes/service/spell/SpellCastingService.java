@@ -819,7 +819,7 @@ public class SpellCastingService {
                 if (creature.isTapped()) {
                     throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
                 }
-                CardColor creatureColor = creature.getEffectiveColor();
+                CardColor creatureColor = gameQueryService.getEffectiveColor(gameData, creature);
                 contributions.add(creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null);
                 validatedCreatures.add(creature);
             }

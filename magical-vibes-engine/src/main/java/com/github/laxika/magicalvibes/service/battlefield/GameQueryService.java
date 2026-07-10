@@ -78,9 +78,11 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -695,17 +697,59 @@ public class GameQueryService {
     // --- Keyword & effect checking ---
 
     /**
-     * Returns {@code true} if the permanent has the given keyword, either intrinsically
-     * or granted by static effects from other permanents.
+     * Returns {@code true} if the permanent has the given keyword after the CR 613 layered
+     * computation: {@code bonus.keywords()} is the complete final keyword set (printed keywords
+     * included, layer-6 grants added and removals/ability loss applied in timestamp order).
+     * {@link StaticBonus#NONE} means no continuous effect touched the permanent — the intrinsic
+     * answer stands.
      */
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
         StaticBonus bonus = computeStaticBonus(gameData, permanent);
-        if (bonus.removedKeywords().contains(keyword)) return false;
-        if (bonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            // Creature has lost all its own abilities; only keywords granted by static effects apply
-            return bonus.keywords().contains(keyword);
+        if (bonus == StaticBonus.NONE) {
+            return permanent.hasKeyword(keyword);
         }
-        return permanent.hasKeyword(keyword) || bonus.keywords().contains(keyword);
+        if (bonus.removedKeywords().contains(keyword)) return false;
+        return bonus.keywords().contains(keyword);
+    }
+
+    /**
+     * Returns the permanent's colors after the CR 613 layer-5 computation: the natural color
+     * plus additive grants, or the replacement set when a color-setting effect ("becomes red")
+     * applied. Prefer this over {@link Permanent#getEffectiveColor()} in engine code — the
+     * legacy accessor does not see layered color changes.
+     */
+    public Set<CardColor> getEffectiveColors(GameData gameData, Permanent permanent) {
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.colorOverriding()) {
+            return bonus.grantedColors();
+        }
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        CardColor natural = permanent.getEffectiveColor();
+        if (natural != null) {
+            colors.add(natural);
+        }
+        colors.addAll(permanent.getGrantedColors());
+        colors.addAll(bonus.grantedColors());
+        return colors;
+    }
+
+    /** Returns {@code true} if the permanent currently has the given color (layer-5 aware). */
+    public boolean hasColor(GameData gameData, Permanent permanent, CardColor color) {
+        return color != null && getEffectiveColors(gameData, permanent).contains(color);
+    }
+
+    /**
+     * Layer-5 aware replacement for {@link Permanent#getEffectiveColor()} at call sites that
+     * need a single color (legacy single-color APIs like the color damage-prevention counters):
+     * a color-setting effect's replacement color when one applies, otherwise the intrinsic
+     * answer. Multicolor-sensitive checks should iterate {@link #getEffectiveColors} instead.
+     */
+    public CardColor getEffectiveColor(GameData gameData, Permanent permanent) {
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (bonus.colorOverriding() && !bonus.grantedColors().isEmpty()) {
+            return bonus.grantedColors().iterator().next();
+        }
+        return permanent.getEffectiveColor();
     }
 
     /**
@@ -971,6 +1015,12 @@ public class GameQueryService {
         // handlers while assembling bonuses, together with a per-pass bonus memo.
         LayerSystemService.Pass active = layerSystemService.activePass(gameData);
         if (active != null) {
+            // The memo is only valid once the layered board is finished: nested calls made by
+            // handlers WHILE the layer 5/6 passes are still applying see partial states and
+            // must not cache their answers.
+            if (!active.isBoardReady()) {
+                return assembleStaticBonus(gameData, active.board(), target);
+            }
             StaticBonus memoized = active.bonusMemo().get(target.getId());
             if (memoized != null) {
                 return memoized;
@@ -1029,7 +1079,20 @@ public class GameQueryService {
                 }
                 StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
                 if (handler != null) {
-                    handler.apply(context, effect, accumulator);
+                    // Layer 5/6 outputs of pass-managed instances were applied in timestamp
+                    // order by the layered pass and merged in below; the handler still runs for
+                    // its other-layer outputs (a lord's 7c boost) with those adds discarded.
+                    boolean layeredManaged = board.isManagedL56(effect);
+                    if (layeredManaged) {
+                        accumulator.setLayeredOutputsSuppressed(true);
+                    }
+                    try {
+                        handler.apply(context, effect, accumulator);
+                    } finally {
+                        if (layeredManaged) {
+                            accumulator.setLayeredOutputsSuppressed(false);
+                        }
+                    }
                 }
                 // CR 613.4: the animation's MV-based base P/T is a 7b entry with the animating
                 // permanent's timestamp — a later-timestamp base-P/T setter overrides it.
@@ -1066,11 +1129,32 @@ public class GameQueryService {
         }
 
         // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
+        CharacteristicState state = board.states().get(target.getId());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
             if (selfHandler != null) {
-                StaticEffectContext selfContext = new StaticEffectContext(target, target, true, gameData);
-                selfHandler.apply(selfContext, effect, accumulator);
+                // CR 613.4a: an object whose own static abilities were removed in layer 6
+                // ("loses all abilities") contributes no characteristic-defining P/T in 7a —
+                // Maro under Merfolk Trickster is 0/0. The removal is NOT retroactive on
+                // layers 2-5: type/color contributions the removed abilities already made in
+                // earlier layers stay applied (CR 613 layers apply in order; see
+                // agent-docs/LAYER_SYSTEM.md §3).
+                if (effect instanceof SetPowerToughnessToAmountEffect
+                        && state != null && state.isLosesAllAbilities()) {
+                    continue;
+                }
+                boolean layeredManaged = board.isManagedL56(effect);
+                if (layeredManaged) {
+                    accumulator.setLayeredOutputsSuppressed(true);
+                }
+                try {
+                    StaticEffectContext selfContext = new StaticEffectContext(target, target, true, gameData);
+                    selfHandler.apply(selfContext, effect, accumulator);
+                } finally {
+                    if (layeredManaged) {
+                        accumulator.setLayeredOutputsSuppressed(false);
+                    }
+                }
             }
         }
 
@@ -1082,10 +1166,12 @@ public class GameQueryService {
             accumulator.setLandSubtypeOverriding(true);
         }
 
+        boolean layeredTouched = state != null && board.l56Touched().contains(target.getId());
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilEndOfCombat() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
+                && !layeredTouched
                 && accumulator.getKeywords().isEmpty()
                 && accumulator.getGrantedActivatedAbilities().isEmpty()
                 && accumulator.getProtectionColors().isEmpty()
@@ -1095,10 +1181,81 @@ public class GameQueryService {
             return StaticBonus.NONE;
         }
 
+        // Merge the layered layer 5/6 results (applied in CR 613.7 timestamp order by the pass)
+        // with the unmanaged legacy accumulator outputs (emblems, conditional wrappers), which
+        // stay additive outside timestamp order. bonus.keywords() becomes the COMPLETE keyword
+        // set (printed included); bonus.removedKeywords() reports the seeded keywords the
+        // layered pass removed, so consumers and views see removals and re-grants correctly.
+        Set<Keyword> keywords = accumulator.getKeywords();
+        Set<Keyword> removedKeywords = accumulator.getRemovedKeywords();
+        Set<CardColor> grantedColors = accumulator.getGrantedColors();
+        boolean colorOverriding = accumulator.isColorOverriding();
+        Set<CardColor> protectionColors = accumulator.getProtectionColors();
+        List<ActivatedAbility> grantedActivatedAbilities = accumulator.getGrantedActivatedAbilities();
+        List<CardEffect> grantedEffects = accumulator.getGrantedEffects();
+        boolean losesAllAbilities = accumulator.isLosesAllAbilities();
+        if (state != null) {
+            Set<Keyword> mergedKeywords = new HashSet<>(state.getKeywords());
+            mergedKeywords.addAll(accumulator.getKeywords());
+            mergedKeywords.removeAll(accumulator.getRemovedKeywords());
+            keywords = mergedKeywords;
+            Set<Keyword> mergedRemoved = new HashSet<>(accumulator.getRemovedKeywords());
+            for (Keyword seeded : state.getSeededKeywords()) {
+                if (!mergedKeywords.contains(seeded)) {
+                    mergedRemoved.add(seeded);
+                }
+            }
+            removedKeywords = mergedRemoved;
+            Set<CardColor> mergedColors = EnumSet.noneOf(CardColor.class);
+            mergedColors.addAll(state.getColors());
+            if (state.isColorsOverridden()) {
+                colorOverriding = true;
+            } else {
+                mergedColors.removeAll(state.getSeededColors());
+            }
+            mergedColors.addAll(accumulator.getGrantedColors());
+            grantedColors = mergedColors;
+            Set<CardColor> mergedProtection = EnumSet.noneOf(CardColor.class);
+            mergedProtection.addAll(state.getProtectionColors());
+            mergedProtection.addAll(accumulator.getProtectionColors());
+            protectionColors = mergedProtection;
+            List<ActivatedAbility> mergedAbilities = new ArrayList<>(state.getGrantedActivatedAbilities());
+            mergedAbilities.addAll(accumulator.getGrantedActivatedAbilities());
+            grantedActivatedAbilities = mergedAbilities;
+            List<CardEffect> mergedEffects = new ArrayList<>(state.getGrantedStaticEffects());
+            mergedEffects.addAll(accumulator.getGrantedEffects());
+            grantedEffects = mergedEffects;
+            losesAllAbilities = state.isLosesAllAbilities() || accumulator.isLosesAllAbilities();
+        } else {
+            // The target is not on a battlefield (AI hypothetical evaluation of an uncast
+            // permanent), so the layered pass carries no state for it. bonus.keywords() must
+            // still be the complete set — reconstruct it with the legacy Permanent.hasKeyword
+            // semantics plus the accumulator's grants.
+            Set<Keyword> mergedKeywords = new HashSet<>(accumulator.getKeywords());
+            if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
+                mergedKeywords.addAll(target.getCard().getKeywords());
+                mergedKeywords.addAll(target.getGrantedKeywords());
+                mergedKeywords.addAll(target.getUntilNextTurnKeywords());
+                mergedKeywords.removeAll(target.getRemovedKeywords());
+                if (target.isLosesAllCreatureTypesUntilEndOfTurn()) {
+                    mergedKeywords.remove(Keyword.CHANGELING);
+                }
+            }
+            mergedKeywords.removeAll(accumulator.getRemovedKeywords());
+            keywords = mergedKeywords;
+        }
+
         // The animation's MV-based P/T is applied as a timestamp-ordered 7b base override in the
         // source loop above (CR 613.4), not added on top of the accumulator's power/toughness.
-        return accumulator.toStaticBonus(accumulator.getPower(), accumulator.getToughness(),
-                accumulator.isAnimatedCreature() || isSelfAnimated);
+        return new StaticBonus(accumulator.getPower(), accumulator.getToughness(), keywords,
+                protectionColors, accumulator.isAnimatedCreature() || isSelfAnimated,
+                grantedActivatedAbilities, grantedEffects, grantedColors,
+                accumulator.getGrantedSubtypes(), accumulator.getGrantedCardTypes(),
+                accumulator.getGrantedSupertypes(), colorOverriding,
+                accumulator.isSubtypeOverriding(), accumulator.isLandSubtypeOverriding(),
+                removedKeywords, accumulator.isBasePTOverridden(),
+                accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
+                losesAllAbilities);
     }
 
     // --- CR 614.12 replacement-effect lookahead ---
@@ -1166,14 +1323,19 @@ public class GameQueryService {
      */
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
         if (sourceColor == null) return false;
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromColorsEffect protection
-                    && protection.scope() == null
-                    && protection.colors().contains(sourceColor)) {
-                return true;
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus == StaticBonus.NONE) {
+            // No continuous effect touched the permanent: its own printed protection stands.
+            for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ProtectionFromColorsEffect protection
+                        && protection.scope() == null
+                        && protection.colors().contains(sourceColor)) {
+                    return true;
+                }
             }
         }
-        StaticBonus bonus = computeStaticBonus(gameData, target);
+        // Layered layer-6 protection state: own printed protection (removable by a
+        // later-timestamp "loses all abilities") plus protection grants.
         if (bonus.protectionColors().contains(sourceColor)) {
             return true;
         }
@@ -1351,8 +1513,13 @@ public class GameQueryService {
      * checking color-based, card-type-based, subtype-based, and non-subtype-creature protection.
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source) {
-        return hasProtectionFrom(gameData, target, source.getEffectiveColor())
-                || hasProtectionFromSourceCardTypes(gameData, target, source)
+        // Layer-5 aware: protection applies if the source has ANY protected color.
+        for (CardColor sourceColor : getEffectiveColors(gameData, source)) {
+            if (hasProtectionFrom(gameData, target, sourceColor)) {
+                return true;
+            }
+        }
+        return hasProtectionFromSourceCardTypes(gameData, target, source)
                 || hasProtectionFromSourceSubtypes(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source);
     }
@@ -1775,12 +1942,12 @@ public class GameQueryService {
         }
         if (hasKeyword(gameData, attacker, Keyword.FEAR)
                 && !isArtifact(blocker)
-                && blocker.getEffectiveColor() != CardColor.BLACK) {
+                && !hasColor(gameData, blocker, CardColor.BLACK)) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (fear)");
         }
         if (hasKeyword(gameData, attacker, Keyword.INTIMIDATE)
                 && !isArtifact(blocker)
-                && blocker.getEffectiveColor() != attacker.getEffectiveColor()) {
+                && Collections.disjoint(getEffectiveColors(gameData, blocker), getEffectiveColors(gameData, attacker))) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (intimidate)");
         }
         for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
@@ -2102,7 +2269,7 @@ public class GameQueryService {
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
         if (hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || isDamageFromSourcePrevented(gameData, creature.getEffectiveColor())
+                || getEffectiveColors(gameData, creature).stream().anyMatch(color -> isDamageFromSourcePrevented(gameData, color))
                 || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId())) {
             return true;
         }

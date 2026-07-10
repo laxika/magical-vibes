@@ -50,7 +50,8 @@ class WingsOfVelisVelTest extends BaseCardTest {
         assertThat(bears.isBasePowerToughnessOverriddenUntilEndOfTurn()).isTrue();
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(4);
-        assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+        // The flying grant is a floating CR 613 layer-6 effect, visible through the query layer.
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 
     @Test

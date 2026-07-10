@@ -241,7 +241,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.playerColorDamagePreventionCount.put(playerId, new ConcurrentHashMap<>());
 
             if (gameData.playerBattlefields.get(playerId) == null) {
-                gameData.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
+                gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             }
         }
 

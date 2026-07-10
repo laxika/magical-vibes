@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -13,11 +15,17 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChos
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -44,13 +52,20 @@ import java.util.UUID;
 /**
  * The CR 613 layered computation engine (see {@code agent-docs/LAYER_SYSTEM.md}).
  *
- * <p>Current migration state: {@link #computeBoardState} runs a whole-battlefield <b>layer 4</b>
- * pass with real CR 613 semantics — one {@link CharacteristicState} per permanent, type-changing
- * effects collected from every source (static abilities, floating effects) and applied across the
- * whole board in CDA-first, then timestamp order (CR 613.2b/613.7, position fallback for equal
- * timestamps). Layers 5–7 still run through the legacy {@code StaticBonusAccumulator} in
- * {@link GameQueryService#computeStaticBonus}, but their scope/filter checks read the
- * L4-corrected states via {@link #activeStateFor} while a pass is active.
+ * <p>Current migration state: the whole-battlefield pass runs real CR 613 semantics for
+ * <b>layer 4</b> (types), <b>layer 5</b> (colors), and <b>layer 6</b> (ability adding/removing) —
+ * one {@link CharacteristicState} per permanent, effects collected from every source (static
+ * abilities, floating effects) and applied across the whole board in CDA-first, then timestamp
+ * order (CR 613.2b/613.7, battlefield-position fallback for equal timestamps). Layer 5/6 static
+ * effects are applied by invoking their legacy staticfx handlers into a throwaway accumulator and
+ * harvesting the result into the states, so all scope/filter logic stays in one place; the
+ * static-bonus assembly then suppresses those handlers' layered outputs (they are "managed") and
+ * merges the finished states into the {@code StaticBonus}. Layer 7 still runs through the legacy
+ * {@code StaticBonusAccumulator} in {@link GameQueryService#computeStaticBonus}, with scope and
+ * filter checks reading the layered states via {@link #activeStateFor} while a pass is active.
+ *
+ * <p>Unmanaged layer 5/6 sources (conditional wrappers, emblems) keep their legacy additive
+ * behavior: their grants union in on top of the layered result, outside timestamp order.
  *
  * <p>Dependency (CR 613.8) is NOT implemented yet — ordering is timestamp-only.
  */
@@ -76,6 +91,15 @@ public class LayerSystemService {
     @Autowired
     @Lazy
     private PredicateEvaluationService predicateEvaluationService;
+
+    /**
+     * The legacy staticfx handlers, reused by the layer 5/6 passes to compute one effect's
+     * per-target contribution (scope matching, filters, chosen-color/parity lookups) into a
+     * throwaway accumulator. Injected lazily: handlers depend on {@code GameQueryService}.
+     */
+    @Autowired
+    @Lazy
+    private StaticEffectHandlerRegistry staticEffectRegistry;
 
     /**
      * The type-changing decision one layer-4 effect made for one permanent, expressed as the
@@ -109,24 +133,36 @@ public class LayerSystemService {
     }
 
     /**
-     * The finished layer-4 board computation: per-permanent characteristic states, the resolved
+     * The finished layered board computation: per-permanent characteristic states, the resolved
      * land-type override per permanent (drives the land's intrinsic mana ability per CR 305.7),
      * the permanents animated by an {@link AnimateNoncreatureArtifactsEffect} (whose MV-based
-     * base P/T is consumed as a 7b entry by the legacy accumulator assembly), and the recorded
+     * base P/T is consumed as a 7b entry by the legacy accumulator assembly), the recorded
      * per-target decisions of the purely-type-changing effects the pass took over from the
-     * legacy handlers (identity-keyed by effect instance).
+     * legacy handlers (identity-keyed by effect instance), the layer 5/6 effect instances whose
+     * color/ability outputs the pass applied in timestamp order ({@code managedL56Effects} —
+     * their legacy handlers run with layered outputs suppressed during assembly), and the ids of
+     * permanents whose layer 5/6 characteristics were modified ({@code l56Touched} — vetoes the
+     * assembly's {@code StaticBonus.NONE} early-out).
      */
     public record LayeredBoardState(Map<UUID, CharacteristicState> states,
                                     Map<UUID, CardSubtype> landTypeOverrides,
                                     Set<UUID> marchAnimatedIds,
                                     Set<CardEffect> managedL4Effects,
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
-                                    Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts) {
+                                    Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
+                                    Set<CardEffect> managedL56Effects,
+                                    Set<UUID> l56Touched) {
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
          *  must be skipped and {@link #replayL4Contribution} used instead. */
         public boolean isManagedL4(CardEffect effect) {
             return managedL4Effects.contains(effect);
+        }
+
+        /** True if the layer 5/6 pass applied this effect's color/ability contribution — the
+         *  legacy handler must run with layered accumulator outputs suppressed. */
+        public boolean isManagedL56(CardEffect effect) {
+            return managedL56Effects.contains(effect);
         }
 
         /** Replays the layer-4 pass's decision of the given effect for the given permanent
@@ -142,25 +178,31 @@ public class LayerSystemService {
     }
 
     /**
-     * One in-flight layered computation for a {@code GameData}. Registered on a ThreadLocal so
-     * nested {@code computeStaticBonus} calls (handlers evaluating predicates on other permanents)
-     * reuse the board state and memoized bonuses instead of recomputing, and so predicate leaf
-     * checks can answer type questions from the L4-corrected states ({@link #activeStateFor}).
+     * One in-flight layered computation for a {@code GameData}. Registered on a ThreadLocal
+     * <em>before</em> the board is computed so nested {@code computeStaticBonus} calls made by
+     * handlers during the layer 5/6 passes reuse the in-flight board (reading the states as of
+     * the layers applied so far) instead of starting a recursive pass. The bonus memo is only
+     * consulted once the board is finished ({@code boardReady}) — mid-pass results reflect
+     * partially applied layers and must not be cached.
      */
     public static final class Pass {
         private final GameData gameData;
-        private final LayeredBoardState board;
-        private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
         private final Pass parent;
+        private LayeredBoardState board;
+        private boolean boardReady;
+        private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
 
-        private Pass(GameData gameData, LayeredBoardState board, Pass parent) {
+        private Pass(GameData gameData, Pass parent) {
             this.gameData = gameData;
-            this.board = board;
             this.parent = parent;
         }
 
         public LayeredBoardState board() {
             return board;
+        }
+
+        public boolean isBoardReady() {
+            return boardReady;
         }
 
         public Map<UUID, GameQueryService.StaticBonus> bonusMemo() {
@@ -174,10 +216,20 @@ public class LayerSystemService {
         return pass != null && pass.gameData == gameData ? pass : null;
     }
 
-    /** Computes the layer-4 board state and registers it as the active pass on this thread. */
+    /** Computes the layered board state and registers it as the active pass on this thread. */
     public Pass beginPass(GameData gameData) {
-        Pass pass = new Pass(gameData, computeBoardState(gameData), ACTIVE_PASS.get());
+        Pass pass = new Pass(gameData, ACTIVE_PASS.get());
         ACTIVE_PASS.set(pass);
+        boolean computed = false;
+        try {
+            computeBoardState(gameData, pass);
+            pass.boardReady = true;
+            computed = true;
+        } finally {
+            if (!computed) {
+                endPass(pass);
+            }
+        }
         return pass;
     }
 
@@ -192,13 +244,14 @@ public class LayerSystemService {
     }
 
     /**
-     * Ambient hook for predicate evaluation: the L4-corrected state of the given permanent while
-     * a layered pass is active on this thread, or {@code null} outside a pass. Subtype/type leaf
-     * predicates route through this so layer 5–7 filters see the types decided in layer 4.
+     * Ambient hook for predicate evaluation: the layered state of the given permanent while a
+     * pass is active on this thread, or {@code null} outside a pass. Subtype/color/keyword leaf
+     * predicates route through this so later-layer filters see the characteristics decided in
+     * earlier layers (during the pass itself, the state as of the layers applied so far).
      */
     public static CharacteristicState activeStateFor(UUID permanentId) {
         Pass pass = ACTIVE_PASS.get();
-        return pass == null ? null : pass.board.states().get(permanentId);
+        return pass == null || pass.board == null ? null : pass.board.states().get(permanentId);
     }
 
     /**
@@ -207,9 +260,16 @@ public class LayerSystemService {
      * if no such effect applies. Determines the land's mana ability per CR 305.7.
      */
     public CardSubtype landTypeOverrideFor(GameData gameData, UUID permanentId) {
-        Pass pass = activePass(gameData);
-        LayeredBoardState board = pass != null ? pass.board : computeBoardState(gameData);
-        return board.landTypeOverrides().get(permanentId);
+        Pass active = activePass(gameData);
+        if (active != null && active.board != null) {
+            return active.board.landTypeOverrides().get(permanentId);
+        }
+        Pass pass = beginPass(gameData);
+        try {
+            return pass.board.landTypeOverrides().get(permanentId);
+        } finally {
+            endPass(pass);
+        }
     }
 
     // ===== board computation =====
@@ -218,26 +278,35 @@ public class LayerSystemService {
     }
 
     /**
-     * A layer-4 effect instance: one continuous effect from one source, carrying the CR 613.7
-     * timestamp it applies with. {@code floating} is non-null for effects created by resolved
-     * spells/abilities ({@code GameData.floatingEffects}); otherwise the effect comes from
-     * {@code source}'s STATIC slot.
+     * One continuous-effect instance from one source, carrying the CR 613.7 timestamp it applies
+     * with. {@code floating} is non-null for effects created by resolved spells/abilities
+     * ({@code GameData.floatingEffects}); otherwise the effect comes from {@code source}'s
+     * STATIC slot.
      */
-    private record L4Instance(PermanentSlot source, CardEffect effect,
-                              FloatingContinuousEffect floating,
-                              boolean characteristicDefining, long timestamp, int position) {
+    private record EffectInstance(PermanentSlot source, CardEffect effect,
+                                  FloatingContinuousEffect floating,
+                                  boolean characteristicDefining, long timestamp, int position) {
     }
 
     /**
-     * Runs the whole-battlefield layer-4 pass: seeds one {@link CharacteristicState} per
+     * Runs the whole-battlefield layer 4-6 passes: seeds one {@link CharacteristicState} per
      * permanent from its current (post-copy) card plus the permanent's persisted grants, then
-     * applies every type-changing effect in CDA-first, timestamp, position order. Setting
-     * effects clear the relevant type class before adding (later-timestamp setters win).
+     * applies each layer's effects in CDA-first, timestamp, position order across the whole
+     * board before moving to the next layer. Setting effects clear the relevant characteristic
+     * class before adding (later-timestamp setters win).
      */
-    public LayeredBoardState computeBoardState(GameData gameData) {
+    private void computeBoardState(GameData gameData, Pass pass) {
         List<PermanentSlot> slots = orderedPermanents(gameData);
         Map<UUID, CharacteristicState> states = new HashMap<>();
         Map<UUID, PermanentSlot> slotsById = new HashMap<>();
+        LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
+                Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
+                new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
+                new HashSet<>());
+        // Publish the in-flight board immediately: nested queries made by handlers during the
+        // layer 5/6 passes read the states as of the layers applied so far.
+        pass.board = board;
+
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             CharacteristicState state = new CharacteristicState(permanent.getCard(), permanent);
@@ -250,51 +319,15 @@ public class LayerSystemService {
             for (CardSubtype granted : permanent.getTransientSubtypes()) {
                 state.addSubtype(granted);
             }
+            // Legacy one-shot color/keyword state is seeded before ANY layer runs so filter
+            // leaves answering from the states never see less than the intrinsic values
+            // (colors and keywords are untouched by layer 4).
+            seedLegacyColorAndAbilityState(permanent, state);
             states.put(permanent.getId(), state);
             slotsById.put(permanent.getId(), slot);
         }
 
-        List<L4Instance> instances = new ArrayList<>();
-        for (PermanentSlot slot : slots) {
-            for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
-                LayerClassifier.LayerClassification classification = classifyOrNull(effect);
-                if (classification == null || !classification.layers().contains(Layer.L4_TYPE)) {
-                    continue;
-                }
-                instances.add(new L4Instance(slot, effect, null,
-                        classification.characteristicDefining(),
-                        slot.permanent().getTimestamp(), slot.position()));
-            }
-        }
-        synchronized (gameData.floatingEffects) {
-            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
-                LayerClassifier.LayerClassification classification = classifyOrNull(floating.effect());
-                if (classification == null || !classification.layers().contains(Layer.L4_TYPE)) {
-                    continue;
-                }
-                PermanentSlot source = floating.sourcePermanentId() != null
-                        ? slotsById.get(floating.sourcePermanentId()) : null;
-                instances.add(new L4Instance(source, floating.effect(), floating,
-                        classification.characteristicDefining(),
-                        floating.timestamp(), Integer.MAX_VALUE));
-            }
-        }
-        // CR 613.2b: characteristic-defining instances first, then timestamp order (CR 613.7);
-        // battlefield position breaks ties (test setups add permanents with timestamp 0).
-        instances.sort(Comparator.comparing((L4Instance i) -> !i.characteristicDefining())
-                .thenComparingLong(L4Instance::timestamp)
-                .thenComparingInt(L4Instance::position));
-
-        Map<UUID, CardSubtype> landTypeOverrides = new HashMap<>();
-        Set<UUID> marchAnimatedIds = new HashSet<>();
-        Set<CardEffect> managedL4Effects = Collections.newSetFromMap(new IdentityHashMap<>());
-        Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions = new IdentityHashMap<>();
-        Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts = new IdentityHashMap<>();
-        LayeredBoardState board = new LayeredBoardState(states, landTypeOverrides, marchAnimatedIds,
-                managedL4Effects, l4Contributions, l4FilterVerdicts);
-        for (L4Instance instance : instances) {
-            applyL4Instance(instance, slots, slotsById, states, board);
-        }
+        applyLayer4(gameData, slots, slotsById, states, board);
 
         // Runtime one-shot type state not yet migrated to floating effects, applied with legacy
         // precedence: the transient "becomes the basic land type of your choice" self-override
@@ -305,14 +338,17 @@ public class LayerSystemService {
             CardSubtype transientOverride = permanent.getTransientLandTypeOverride();
             if (transientOverride != null) {
                 setLandType(states.get(permanent.getId()), permanent.getId(),
-                        transientOverride, landTypeOverrides);
+                        transientOverride, board.landTypeOverrides());
             }
             if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
                 states.get(permanent.getId()).removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
             }
         }
 
-        return board;
+        // Layers 5 (colors) and 6 (abilities): the classified instances in CDA-first,
+        // timestamp order.
+        applyLayer5(gameData, slots, slotsById, states, board);
+        applyLayer6(gameData, slots, slotsById, states, board);
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -338,7 +374,66 @@ public class LayerSystemService {
         return slots;
     }
 
-    private void applyL4Instance(L4Instance instance, List<PermanentSlot> slots,
+    /**
+     * Collects every effect instance classified into the given layer from all STATIC slots and
+     * floating effects, ordered per CR 613.2b/613.7: characteristic-defining instances first,
+     * then timestamp order; battlefield position breaks ties (test setups may still add
+     * permanents with timestamp 0). Within one object's equal-timestamp effects, ability
+     * removals apply before grants: an aura's "loses all other abilities" must not eat the
+     * keyword the same aura grants (Deep Freeze's defender — the printed text says "other").
+     */
+    private List<EffectInstance> collectInstances(GameData gameData, List<PermanentSlot> slots,
+                                                  Map<UUID, PermanentSlot> slotsById, Layer layer) {
+        List<EffectInstance> instances = new ArrayList<>();
+        for (PermanentSlot slot : slots) {
+            for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
+                LayerClassifier.LayerClassification classification = classifyOrNull(effect);
+                if (classification == null || !classification.layers().contains(layer)) {
+                    continue;
+                }
+                instances.add(new EffectInstance(slot, effect, null,
+                        classification.characteristicDefining(),
+                        slot.permanent().getTimestamp(), slot.position()));
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                LayerClassifier.LayerClassification classification = classifyOrNull(floating.effect());
+                if (classification == null || !classification.layers().contains(layer)) {
+                    continue;
+                }
+                PermanentSlot source = floating.sourcePermanentId() != null
+                        ? slotsById.get(floating.sourcePermanentId()) : null;
+                instances.add(new EffectInstance(source, floating.effect(), floating,
+                        classification.characteristicDefining(),
+                        floating.timestamp(), Integer.MAX_VALUE));
+            }
+        }
+        instances.sort(Comparator.comparing((EffectInstance i) -> !i.characteristicDefining())
+                .thenComparingLong(EffectInstance::timestamp)
+                .thenComparingInt(EffectInstance::position)
+                .thenComparingInt(i -> abilityRemovalRank(i.effect())));
+        return instances;
+    }
+
+    /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
+    private static int abilityRemovalRank(CardEffect effect) {
+        if (effect instanceof LosesAllAbilitiesEffect) return 0;
+        if (effect instanceof RemoveKeywordEffect) return 1;
+        return 2;
+    }
+
+    // ===== layer 4 =====
+
+    private void applyLayer4(GameData gameData, List<PermanentSlot> slots,
+                             Map<UUID, PermanentSlot> slotsById,
+                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L4_TYPE)) {
+            applyL4Instance(instance, slots, slotsById, states, board);
+        }
+    }
+
+    private void applyL4Instance(EffectInstance instance, List<PermanentSlot> slots,
                                  Map<UUID, PermanentSlot> slotsById,
                                  Map<UUID, CharacteristicState> states,
                                  LayeredBoardState board) {
@@ -449,6 +544,18 @@ public class LayerSystemService {
                             .removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
                 }
             }
+            case GrantKeywordEffect grant -> {
+                // Only changeling grants are classified into layer 4: "gains all creature
+                // types" defines the object's creature types (CR 702.73a), so the keyword is
+                // made visible to later-layer subtype filters here — an Elf lord with an
+                // EARLIER timestamp still boosts the target (no CR 613.8 dependency needed).
+                // The keyword itself is (re-)applied and removable in layer 6.
+                if (instance.floating() != null && grant.keywords().contains(Keyword.CHANGELING)) {
+                    for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                        states.get(target.permanent().getId()).addKeyword(Keyword.CHANGELING);
+                    }
+                }
+            }
             // Wrappers (ConditionalEffect, EnchantedPermanentConditionalEffect) never wrap
             // layer-4 effects today; they keep applying through the legacy handlers only.
             default -> {
@@ -458,13 +565,13 @@ public class LayerSystemService {
 
     /** Marks a static-sourced pure-L4 effect as owned by the pass: the legacy handler is
      *  skipped during assembly and the recorded contributions are replayed instead. */
-    private static void manage(LayeredBoardState board, L4Instance instance) {
+    private static void manage(LayeredBoardState board, EffectInstance instance) {
         if (instance.floating() == null) {
             board.managedL4Effects().add(instance.effect());
         }
     }
 
-    private static void record(LayeredBoardState board, L4Instance instance, PermanentSlot target,
+    private static void record(LayeredBoardState board, EffectInstance instance, PermanentSlot target,
                                L4Contribution contribution) {
         if (instance.floating() != null) {
             return;
@@ -489,11 +596,11 @@ public class LayerSystemService {
         state.addSubtype(subtype);
     }
 
-    private static boolean isSource(L4Instance instance, PermanentSlot target) {
+    private static boolean isSource(EffectInstance instance, PermanentSlot target) {
         return instance.source() != null && instance.source().permanent() == target.permanent();
     }
 
-    private List<PermanentSlot> scopeTargets(L4Instance instance, GrantScope scope,
+    private List<PermanentSlot> scopeTargets(EffectInstance instance, GrantScope scope,
                                              PermanentPredicate filter, List<PermanentSlot> slots,
                                              Map<UUID, PermanentSlot> slotsById,
                                              LayeredBoardState board) {
@@ -558,7 +665,7 @@ public class LayerSystemService {
         return targets;
     }
 
-    private List<PermanentSlot> floatingTargets(L4Instance instance, List<PermanentSlot> slots,
+    private List<PermanentSlot> floatingTargets(EffectInstance instance, List<PermanentSlot> slots,
                                                 Map<UUID, PermanentSlot> slotsById,
                                                 LayeredBoardState board) {
         FloatingContinuousEffect floating = instance.floating();
@@ -610,7 +717,7 @@ public class LayerSystemService {
      */
     public static Boolean activeL4FilterVerdict(PermanentPredicate filter, UUID permanentId) {
         Pass pass = ACTIVE_PASS.get();
-        if (pass == null) return null;
+        if (pass == null || pass.board == null) return null;
         Map<UUID, Boolean> verdicts = pass.board.l4FilterVerdicts().get(filter);
         return verdicts == null ? null : verdicts.get(permanentId);
     }
@@ -631,5 +738,212 @@ public class LayerSystemService {
                 || permanent.isAnimatedUntilNextTurn()
                 || permanent.isPermanentlyAnimated()
                 || permanent.getCounterCount(CounterType.AWAKENING) > 0;
+    }
+
+    // ===== layers 5 and 6 =====
+
+    /**
+     * Seeds the legacy one-shot color and ability state that has not been migrated to floating
+     * effects yet, then snapshots the seeded baseline. Mirrors {@code Permanent.getEffectiveColor}
+     * and {@code Permanent.hasKeyword}: animation colors replace, the awakening counter makes
+     * the land green, granted/until-next-turn keywords add, removed keywords subtract, the
+     * legacy "loses all abilities until end of turn" flag clears everything at seed time (so
+     * later-timestamp layered grants still apply, matching the old accumulator behavior).
+     */
+    private void seedLegacyColorAndAbilityState(Permanent permanent, CharacteristicState state) {
+        if ((permanent.isAnimatedUntilEndOfTurn() || permanent.isAnimatedUntilEndOfCombat())
+                && permanent.getAnimatedColor() != null) {
+            state.replaceSeedColors(Set.of(permanent.getAnimatedColor()));
+        } else if (permanent.getCounterCount(CounterType.AWAKENING) > 0) {
+            state.replaceSeedColors(Set.of(CardColor.GREEN));
+        } else if (permanent.isColorOverridden() && !permanent.getTransientColors().isEmpty()) {
+            // Legacy one-shot color override (pre-migration state, e.g. AI simulation copies).
+            state.replaceSeedColors(permanent.getTransientColors());
+        } else {
+            permanent.getTransientColors().forEach(state::addColor);
+        }
+
+        // The object's own printed protection is an ability: a layer-6 "loses all abilities"
+        // with any timestamp removes it (protection grants applied later re-add).
+        for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
+                state.addProtectionColors(protection.colors());
+            }
+        }
+
+        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            // Legacy one-shot lose-all flag (no timestamp): treat as applied before every
+            // layered instance, so static grants still stick — the old accumulator behavior.
+            state.loseAllAbilities(0);
+        } else {
+            state.addKeywords(permanent.getGrantedKeywords());
+            state.addKeywords(permanent.getUntilNextTurnKeywords());
+            permanent.getRemovedKeywords().forEach(state::removeKeyword);
+        }
+        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
+            // Losing all creature types nullifies the Changeling grant (legacy semantics).
+            state.removeKeyword(Keyword.CHANGELING);
+        }
+
+        state.snapshotSeededCharacteristics();
+    }
+
+    /**
+     * Layer 5 (CR 613.2e): color-changing effects in timestamp order. Additive grants
+     * ("in addition to its other colors" — Deep Freeze) add to the color set; setting effects
+     * ("becomes red" — Incite, "is a black Zombie" — Nim Deathmantle) replace it (CR 105.3),
+     * so of several setters the latest timestamp wins and earlier additive grants are wiped.
+     */
+    private void applyLayer5(GameData gameData, List<PermanentSlot> slots,
+                             Map<UUID, PermanentSlot> slotsById,
+                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L5_COLOR)) {
+            if (instance.floating() != null) {
+                CardColor color = switch (instance.effect()) {
+                    case GrantColorUntilEndOfTurnEffect becomes -> becomes.color();
+                    case GrantColorEffect grant -> grant.color();
+                    default -> null;
+                };
+                if (color == null) continue;
+                boolean setting = LayerClassifier.classify(instance.effect(), false).colorSetting();
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    if (setting) {
+                        state.overrideColors(Set.of(color));
+                    } else {
+                        state.addColor(color);
+                    }
+                    board.l56Touched().add(target.permanent().getId());
+                }
+                continue;
+            }
+            applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+                if (harvested.getGrantedColors().isEmpty()) {
+                    return;
+                }
+                CharacteristicState state = states.get(target.permanent().getId());
+                if (harvested.isColorOverriding()) {
+                    state.overrideColors(harvested.getGrantedColors());
+                } else {
+                    harvested.getGrantedColors().forEach(state::addColor);
+                }
+                board.l56Touched().add(target.permanent().getId());
+            });
+        }
+    }
+
+    /**
+     * Layer 6 (CR 613.2f): ability adding/removing effects, characteristic-defining self-scans
+     * (Cairn Wanderer family) first, then timestamp order. Grants add; a keyword removal removes
+     * as of its timestamp (a later grant re-adds); "loses all abilities" clears every ability
+     * accumulated so far and records its timestamp on the state so 7a can suppress the object's
+     * own CDAs — without retroactively undoing contributions the removed abilities already made
+     * in layers 2-5 (CR 613: layers apply in order; a changeling under a lose-all keeps its
+     * creature types).
+     */
+    private void applyLayer6(GameData gameData, List<PermanentSlot> slots,
+                             Map<UUID, PermanentSlot> slotsById,
+                             Map<UUID, CharacteristicState> states, LayeredBoardState board) {
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES)) {
+            // An unattached scope-less protection static is the object's OWN printed protection
+            // ability — already seeded into its state (and removable by a lose-all there); the
+            // attachment handler would no-op anyway.
+            if (instance.effect() instanceof ProtectionFromColorsEffect protection
+                    && protection.scope() == null && instance.source() != null
+                    && !instance.source().permanent().isAttached()) {
+                continue;
+            }
+            if (instance.floating() != null) {
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    switch (instance.effect()) {
+                        case LosesAllAbilitiesEffect ignored -> state.loseAllAbilities(instance.timestamp());
+                        case RemoveKeywordEffect remove -> state.removeKeyword(remove.keyword());
+                        case GrantKeywordEffect grant -> state.addKeywords(grant.keywords());
+                        default -> {
+                            continue;
+                        }
+                    }
+                    board.l56Touched().add(target.permanent().getId());
+                }
+                continue;
+            }
+            applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+                CharacteristicState state = states.get(target.permanent().getId());
+                boolean touched = false;
+                // Removal before grants within one harvested instance: "loses all other
+                // abilities" never eats what the same printed ability grants.
+                if (harvested.isLosesAllAbilities()) {
+                    state.loseAllAbilities(instance.timestamp());
+                    touched = true;
+                }
+                for (Keyword removed : harvested.getRemovedKeywords()) {
+                    state.removeKeyword(removed);
+                    touched = true;
+                }
+                if (!harvested.getKeywords().isEmpty()) {
+                    state.addKeywords(harvested.getKeywords());
+                    touched = true;
+                }
+                if (!harvested.getProtectionColors().isEmpty()) {
+                    state.addProtectionColors(harvested.getProtectionColors());
+                    touched = true;
+                }
+                if (!harvested.getGrantedActivatedAbilities().isEmpty()) {
+                    harvested.getGrantedActivatedAbilities().forEach(state::addActivatedAbility);
+                    touched = true;
+                }
+                if (!harvested.getGrantedEffects().isEmpty()) {
+                    harvested.getGrantedEffects().forEach(state::addStaticEffect);
+                    touched = true;
+                }
+                if (touched) {
+                    board.l56Touched().add(target.permanent().getId());
+                }
+            });
+        }
+    }
+
+    @FunctionalInterface
+    private interface HarvestConsumer {
+        void accept(PermanentSlot target, StaticBonusAccumulator harvested);
+    }
+
+    /**
+     * Applies one static-slot layer 5/6 instance by invoking its legacy staticfx handler(s)
+     * against every potential target into a throwaway accumulator (reusing all scope/filter
+     * logic), handing each per-target result to {@code harvest}. Marks the effect instance as
+     * managed so the static-bonus assembly suppresses the same handler's layered outputs —
+     * other-layer outputs (a lord boost's 7c power) still run there.
+     */
+    private void applyStaticInstanceViaHandlers(GameData gameData, EffectInstance instance,
+                                                List<PermanentSlot> slots, LayeredBoardState board,
+                                                HarvestConsumer harvest) {
+        StaticEffectHandler handler = staticEffectRegistry.getHandler(instance.effect());
+        StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(instance.effect());
+        if (handler == null && selfHandler == null) {
+            return;
+        }
+        board.managedL56Effects().add(instance.effect());
+        PermanentSlot source = instance.source();
+        if (source == null) {
+            return;
+        }
+        if (handler != null) {
+            for (PermanentSlot target : slots) {
+                if (target.permanent() == source.permanent()) continue;
+                StaticBonusAccumulator harvested = new StaticBonusAccumulator();
+                handler.apply(new StaticEffectContext(source.permanent(), target.permanent(),
+                        source.controllerId().equals(target.controllerId()), gameData),
+                        instance.effect(), harvested);
+                harvest.accept(target, harvested);
+            }
+        }
+        if (selfHandler != null) {
+            StaticBonusAccumulator harvested = new StaticBonusAccumulator();
+            selfHandler.apply(new StaticEffectContext(source.permanent(), source.permanent(), true, gameData),
+                    instance.effect(), harvested);
+            harvest.accept(source, harvested);
+        }
     }
 }

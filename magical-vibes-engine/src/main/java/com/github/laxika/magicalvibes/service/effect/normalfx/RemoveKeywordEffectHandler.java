@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +45,14 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // CR 613 layer engine: a one-shot keyword removal is a floating layer-6 effect with
+        // its own timestamp — a later-timestamp grant of the same keyword re-adds it. The
+        // legacy field is still written for direct Permanent.hasKeyword callers; the layered
+        // pass seeds it and then replays this removal at its real timestamp.
         target.getRemovedKeywords().add(remove.keyword());
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), null, entry.getControllerId(), remove,
+                target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
         String keywordName = remove.keyword().name().charAt(0) + remove.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " loses " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

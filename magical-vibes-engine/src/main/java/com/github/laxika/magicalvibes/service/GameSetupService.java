@@ -126,7 +126,7 @@ public class GameSetupService {
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
-            gameData.playerBattlefields.put(playerId, new ArrayList<>());
+            gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.playerLifeTotals.put(playerId, 20);

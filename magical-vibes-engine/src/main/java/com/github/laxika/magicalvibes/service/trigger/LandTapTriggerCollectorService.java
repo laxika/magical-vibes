@@ -48,10 +48,11 @@ public class LandTapTriggerCollectorService {
         log.info("Game {} - {} triggers on land tap, dealing {} damage to {}",
                 gameData.id, cardName, damage, gameData.playerIdToName.get(tappingPlayerId));
 
-        if (!gameQueryService.isDamageFromSourcePrevented(gameData, match.permanent().getEffectiveColor())
+        CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
+        if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                 && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, tappingPlayerId, match.permanent().getId())
                 && !gameData.permanentsPreventedFromDealingDamage.contains(match.permanent().getId())
-                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, match.permanent().getEffectiveColor())) {
+                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, tappingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, tappingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, tappingPlayerId, effectiveDamage, cardName);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, tappingPlayerId)) {

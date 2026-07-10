@@ -375,6 +375,17 @@ public class PredicateEvaluationService {
             case PermanentHasSupertypePredicate hasSupertypePredicate ->
                     permanent.getCard().getSupertypes().contains(hasSupertypePredicate.supertype());
             case PermanentColorInPredicate colorInPredicate -> {
+                // While a CR 613 layered pass is active, colors come from the layer-5 state
+                // (answering from the state also avoids recursing into computeStaticBonus for
+                // the permanent whose bonus is being assembled right now).
+                CharacteristicState layeredColors = LayerSystemService.activeStateFor(permanent.getId());
+                if (layeredColors != null) {
+                    yield layeredColors.getColors().stream().anyMatch(colorInPredicate.colors()::contains);
+                }
+                if (gameData != null) {
+                    yield gameQueryService.getEffectiveColors(gameData, permanent).stream()
+                            .anyMatch(colorInPredicate.colors()::contains);
+                }
                 if (permanent.isColorOverridden()) {
                     yield permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains);
                 }
@@ -520,9 +531,9 @@ public class PredicateEvaluationService {
                     yield false;
                 }
                 yield state.hasSubtype(p.subtype())
-                        || (creatureSubtype && (gameData == null
+                        || (creatureSubtype && (state.hasKeyword(Keyword.CHANGELING) || (gameData == null
                         ? permanent.hasKeyword(Keyword.CHANGELING)
-                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
+                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
             }
             case PermanentHasAnySubtypePredicate p -> {
                 Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
@@ -532,9 +543,9 @@ public class PredicateEvaluationService {
                         : p.subtypes();
                 boolean hasSubtype = wanted.stream().anyMatch(state::hasSubtype);
                 boolean canUseChangeling = wanted.stream().anyMatch(gameQueryService::isCreatureSubtype);
-                yield hasSubtype || (canUseChangeling && (gameData == null
+                yield hasSubtype || (canUseChangeling && (state.hasKeyword(Keyword.CHANGELING) || (gameData == null
                         ? permanent.hasKeyword(Keyword.CHANGELING)
-                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
+                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING))));
             }
             case PermanentNotPredicate p ->
                     !matchesPermanentPredicate(state, permanent, p.predicate(), filterContext);

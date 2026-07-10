@@ -45,8 +45,8 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.isColorOverridden()).isTrue();
-        assertThat(target.getEffectiveColor()).isEqualTo(CardColor.RED);
+        // "Becomes red" replaces the colors (CR 105.3), applied by the CR 613 layer engine.
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
     }
 
     @Test
@@ -74,8 +74,7 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(target.isColorOverridden()).isTrue();
-        assertThat(target.getEffectiveColor()).isEqualTo(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
         assertThat(target.isMustAttackThisTurn()).isTrue();
     }
 

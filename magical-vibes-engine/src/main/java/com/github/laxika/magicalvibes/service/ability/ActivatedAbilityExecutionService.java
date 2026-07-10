@@ -481,10 +481,11 @@ public class ActivatedAbilityExecutionService {
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0, false));
                 if (gameQueryService.isDamagePreventable(gameData)) {
-                    if (gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
+                    CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
+                    if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                             || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                             || gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                            || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
+                            || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                         damage = 0;
                     } else {
                         // One-shot Circle-of-Protection shields may prevent only part of the damage
@@ -548,10 +549,11 @@ public class ActivatedAbilityExecutionService {
         String cardName = permanent.getCard().getName();
         String playerName = gameData.playerIdToName.get(playerId);
         if (gameQueryService.isDamagePreventable(gameData)) {
-            if (gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
+            CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, permanent);
+            if (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                     || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                     || gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
+                    || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor)) {
                 damage = 0;
             } else {
                 // One-shot Circle-of-Protection shields may prevent only part of the damage

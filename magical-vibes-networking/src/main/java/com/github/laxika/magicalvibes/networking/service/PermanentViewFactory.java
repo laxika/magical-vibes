@@ -66,6 +66,9 @@ public class PermanentViewFactory {
         if (losesAllAbilities) {
             allRemovedKeywords.addAll(p.getCard().getKeywords());
         }
+        // A keyword granted again after the removal/ability loss (later CR 613.7 timestamp) is
+        // present in the final layered keyword set and must not be displayed as removed.
+        allRemovedKeywords.removeAll(bonusKeywords);
         allKeywords.removeAll(allRemovedKeywords);
         CardView cardView = cardViewFactory.create(p.getCard());
         cardView = applyTextReplacements(cardView, p);

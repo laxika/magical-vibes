@@ -83,11 +83,20 @@ State these explicitly because the old accumulator got them wrong:
   and attach are the same event there.
 - A **continuous effect created by a resolving spell/ability** (a
   `FloatingContinuousEffect`) gets its timestamp at creation (introduced in step 2).
-- **Equal-timestamp fallback:** tests frequently add permanents to battlefield lists directly,
-  bypassing the stamping funnel, leaving `timestamp == 0`. The layered engine MUST fall back
-  to **battlefield position order** (owner order, then list index) when two timestamps are
-  equal — SevenLayerTest simulates timestamps by insertion order. Do not "fix" the tests to
-  stamp manually; the fallback is part of the contract.
+- **Battlefield lists stamp direct insertions** (step 5): every battlefield list is created
+  via `GameData.newBattlefieldList()`, which stamps any still-unstamped permanent
+  (`timestamp == 0`) with `nextTimestamp()` on insertion. The engine's entry funnel stamps
+  before adding (no-op there); test setups adding permanents by hand get real
+  insertion-order timestamps automatically — this is what lets one-shot floating effects and
+  hand-built permanents/attachments order correctly against each other (SevenLayerTest
+  simulates timestamps by insertion order). Control-change moves re-insert already-stamped
+  permanents and keep their stamp (CR 613.7c). Creation sites: `GameSetupService`,
+  `DraftService`, `KarnRestartGameEffectHandler`, `GameData.simulationCopy`.
+- **Equal-timestamp fallback:** when two timestamps ARE equal (both 0 in unit tests that
+  replace the battlefield lists themselves), the layered engine falls back to **battlefield
+  position order** (owner order, then list index). Within one object's equal-timestamp
+  effects, ability removals apply before grants (an aura's "loses all OTHER abilities" must
+  not eat the keyword the same aura grants — Deep Freeze's defender).
 - `GameData.timestampCounter` is monotonic, never reset, and copied by
   `GameData.simulationCopy()` so AI simulations continue the sequence.
 
@@ -114,25 +123,51 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
 5. State-based actions and all queries (`getEffectivePower`, `hasKeyword`, `isCreature`, ...)
    read the finished states.
 
-**Implementation status (step 4):** `LayerSystemService` (engine, `service/effect/`) runs the
-whole-battlefield pass for **layer 4 only** (`computeBoardState(GameData)` →
-`LayeredBoardState`: per-permanent `CharacteristicState`s, the resolved per-land type override,
-the March-animated permanent set, the managed-effect replay records, and the per-filter-instance
-layer-4 verdicts consumed per CR 613.6). Layers 5–7 still run through the legacy
-`StaticBonusAccumulator` in `GameQueryService.computeStaticBonus`, with three corrections:
-sources apply in timestamp order (so 7b base-P/T last-write-wins is timestamp-correct), the
-`AnimateNoncreatureArtifactsEffect` MV-based base P/T is a 7b entry at the animating
-permanent's timestamp (the old "add MV to power/toughness" hack is gone), and subtype filter
-leaves (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`) are answered from
-the L4-corrected states — both in `PredicateEvaluationService` (which grew a
-`CharacteristicState` overload) and in `StaticEffectSupport.matchesStaticFilter` — while a
-pass is active (`LayerSystemService.activeStateFor`, ThreadLocal). One pass per external
-`computeStaticBonus`/`getOverriddenLandManaColor` call; nested calls made by handlers reuse
-the pass's board state and a per-pass bonus memo. There is **no cross-call cache** yet (no
-GameData modification counter) — a dedicated perf step comes later. CR 613.8 dependency is
-not implemented: layer 4 is pure timestamp order (consequence: e.g. a Xenograft grant with an
-earlier timestamp does not apply to an artifact a later March of the Machines animates,
-although dependency would reorder them).
+**Implementation status (step 5):** `LayerSystemService` (engine, `service/effect/`) runs the
+whole-battlefield pass for **layers 4, 5, and 6** (`LayeredBoardState`: per-permanent
+`CharacteristicState`s, the resolved per-land type override, the March-animated permanent set,
+the managed-L4 replay records, the per-filter-instance layer-4 verdicts consumed per CR 613.6,
+the managed-L5/L6 effect instances, and the set of permanents whose color/ability state the
+pass touched). Layer 4 is applied with hand-written semantics as in step 4. **Layers 5 and 6**
+apply their classified instances (STATIC slots + floating effects) in CDA-first, then
+(timestamp, position) order by invoking the legacy staticfx handlers into a throwaway
+accumulator and harvesting the per-target result into the states (`applyStaticInstanceViaHandlers`
+— all scope/filter logic stays in the handlers); floating one-shots (Incite, Merfolk
+Trickster, Wings of Velis Vel grants, one-shot keyword removals) apply directly per affected
+permanent. L5: additive grants add to the color set, setting effects replace it. L6: grants
+add; removals remove as of their timestamp; `LosesAllAbilitiesEffect` clears keywords,
+protection, activated abilities and granted effects and records its timestamp; the object's
+own `*/*` CDA is suppressed in 7a when its abilities were lost (Maro → 0/0) WITHOUT undoing
+its earlier-layer contributions. The static-bonus assembly runs the legacy handlers with
+**layered outputs suppressed** for pass-managed instances (`StaticBonusAccumulator.setLayeredOutputsSuppressed`
+— a lord's 7c boost still lands) and merges the finished states into the `StaticBonus`:
+`keywords()` is now the COMPLETE final keyword set (printed included), `removedKeywords()` the
+seeded keywords the pass removed, `grantedColors()`/`colorOverriding()`/`protectionColors()`/
+`grantedActivatedAbilities()`/`grantedEffects()`/`losesAllAbilities()` come from the states.
+Off-battlefield targets (AI hypothetical scoring) have no state and fall back to legacy
+intrinsic reconstruction. **Unmanaged L5/L6 sources stay legacy-additive outside timestamp
+order:** conditional wrappers (`ConditionalEffect`, `EnchantedPermanentConditionalEffect`) and
+emblems. `GameQueryService.hasKeyword` answers from `bonus.keywords()`;
+`getEffectiveColors`/`getEffectiveColor(GameData, Permanent)`/`hasColor` are the layered color
+queries used by protection (`hasProtectionFromSource` checks every source color), fear/
+intimidate, color predicates, chosen-color boosts, convoke, and color-based damage prevention.
+The pass registers itself on the ThreadLocal BEFORE computing (nested `computeStaticBonus`
+calls made by handlers during L5/L6 read the states as of the layers applied so far; the bonus
+memo is only used once the board is finished). **One-shot migrated handlers dual-write:** the
+normalfx `GrantColorUntilEndOfTurn`/`GrantKeyword` (SELF/TARGET/TOKENS paths)/`RemoveKeyword`/
+`LosesAllAbilities` handlers still write the legacy `Permanent` fields for direct
+`Permanent.hasKeyword`/`getEffectiveColor` callers AND create the floating effect; the pass
+seeds the legacy fields (a legacy lose-all flag = removal-before-everything) and then replays
+the floating instance at its real timestamp, which is what drives ordering. Remaining direct
+`Permanent.getEffectiveColor()` uses to clean up later: `ai/BoardEvaluator` (heuristics),
+`PermanentViewFactory`'s legacy transient-color branch, `Permanent.hasKeyword` direct callers
+in null-`GameData` predicate fallbacks. There is **no cross-call cache** yet (no GameData
+modification counter) — a dedicated perf step comes later. CR 613.8 dependency is not
+implemented: ordering is pure timestamp order (known consequences: a Xenograft grant with an
+earlier timestamp does not apply to an artifact a later March of the Machines animates; a
+lord's L6 keyword grant does not apply to a creature whose matching subtype arrives from a
+LATER-timestamp L6-only source — changeling grants sidestep this by also being classified
+into L4, see §7).
 
 ## 6. Sources of continuous effects
 
@@ -189,12 +224,22 @@ Reasoning behind the non-obvious mappings:
   one-shot) → 7b. `SetBasePowerToughnessEffect` ("has base power and toughness X/Y") is
   ALWAYS 7b, even self-applied.
 - **Color additive vs setting** (`colorSetting` on the classification): `GrantColorEffect`
-  follows its existing `overriding` flag. Verified against Scryfall oracle text 2026-07-10:
-  Deep Freeze is "is a blue Wall **in addition to** its other colors and types" → ADDITIVE
-  (the migration plan's earlier assumption that Deep Freeze is setting was wrong; the card
-  class's `overriding=false` matches the oracle). Incite "becomes red" and Grand Architect
-  "becomes blue" replace colors (CR 105.3) → `GrantColorUntilEndOfTurnEffect` is always
-  setting. Nim Deathmantle "is black" (no "in addition") → setting (`overriding=true`).
+  follows its existing `overriding` flag. Verified against Scryfall oracle text 2026-07-10
+  (cache AND live API): Deep Freeze is "is a blue Wall **in addition to** its other colors
+  and types" → ADDITIVE (the migration plan's earlier assumption that Deep Freeze is setting
+  was wrong; the card class's `overriding=false` matches the oracle — SevenLayerTest's
+  `colorSetterReplacesNaturalColor` was corrected in step 5 to use Nim Deathmantle, the true
+  setter, instead). Incite "becomes red" and Grand Architect "becomes blue" replace colors
+  (CR 105.3) → `GrantColorUntilEndOfTurnEffect` is always setting. Nim Deathmantle "is black"
+  (no "in addition") → setting (`overriding=true`).
+- **Changeling keyword grants are L4 + L6** (`GrantKeywordEffect` whose keywords contain
+  `CHANGELING` → both layers, one timestamp): "gains all creature types" defines the object's
+  creature types (CR 702.73a), a layer-4 contribution — so an Elf lord with an EARLIER
+  timestamp still boosts a creature that gains changeling later (Amoeboid Changeling, Wings
+  of Velis Vel) without needing CR 613.8 dependency. Keywordless-changeling caveat: the
+  keyword itself remains removable in L6; a lose-all also hides the L4 contribution for
+  FLOATING changeling grants (subtype leaves check the state's keyword OR the intrinsic one —
+  a NATURAL changeling under a lose-all keeps its types via the intrinsic check, per §3).
 - **CDA flag on the Cairn Wanderer family** (`GainKeywordsOfCreatureCardsInAllGraveyards`,
   `GainActivatedAbilitiesOfCreatureCardsInAllGraveyards`, `GainActivatedAbilitiesOfExiledCards`
   → L6 + CDA): strictly, CR 604.3a limits CDAs to colors/subtypes/power/toughness — an
@@ -361,3 +406,56 @@ and any deviations from this document.
    Post-verification fix: `CharacteristicState`'s constructor now tolerates a null card type
    (bare `new Card()` test stand-ins carry only a name — Urza's land tests seat such cards;
    the constructor already guarded null color and null P/T the same way).
+
+5. **2026-07-10 — Step 5: first-class layers 5 (colors) and 6 (abilities).** The
+   whole-battlefield pass now applies L5 and L6 with real CR 613 semantics (see the rewritten
+   §5 status note for the architecture): instances collected from STATIC slots + floating
+   effects, CDA-first then (timestamp, position, removal-before-grant) order, static instances
+   applied by invoking their legacy staticfx handlers into a throwaway accumulator and
+   harvesting into `CharacteristicState` (which grew protection colors, a colors-overridden
+   flag, and seeded-color/keyword snapshots); the assembly suppresses managed handlers'
+   layered outputs and merges the finished states into `StaticBonus` (complete final keyword
+   set, diff-based removed keywords, layered colors/protection/abilities/effects/lose-all).
+   `hasKeyword`, `hasProtectionFrom(Source)`, fear/intimidate, color predicates, chosen-color
+   boosts, convoke, and color damage-prevention all read the layered answers
+   (`getEffectiveColors`/`hasColor`/`getEffectiveColor(GameData,·)` added). One-shot handlers
+   migrated to floating effects with DUAL-WRITE of the legacy fields (deviation from the plan's
+   "migrate away from Permanent fields": ~50 card tests and direct engine callers read
+   `Permanent.hasKeyword`/`getEffectiveColor`; the pass seeds the legacy state and replays the
+   floating instance at its real timestamp, so ordering is layered while intrinsic reads keep
+   working): Incite/Grand Architect color setters, Merfolk Trickster lose-all, one-shot keyword
+   removals, and the SELF/TARGET/TOKENS paths of the one-shot `GrantKeywordEffect` handler
+   (OWN_CREATURES/ALL_CREATURES/TARGET_PLAYERS_CREATURES stay bucket-only — locked-set effects,
+   later step). **New timestamp infrastructure:** battlefield lists stamp unstamped permanents
+   on insertion (`GameData.newBattlefieldList`, §4) — required because the Layer6 target tests
+   distinguish cross-battlefield INSERTION order, which the owner-order position fallback
+   cannot express. 7a suppression: the assembly skips the own `SetPowerToughnessToAmountEffect`
+   self handler when the state lost its abilities (CR 613.4a, not retroactive on L2–L5).
+   **Rules adjudications:** Deep Freeze re-verified additive (live Scryfall) —
+   `colorSetterReplacesNaturalColor` corrected to Nim Deathmantle (wrong card data, step-4
+   precedent); changeling keyword grants classified L4+L6 (CR 702.73a) so an earlier-timestamp
+   lord boosts a later changeling grant without CR 613.8 dependency (fixes what would have
+   been a regression in `allCreatureTypesGrantFeedsLordBoost`). SevenLayerTest 78 → **86 green
+   (14 red)**; flips: both Layer5 targets (`colorSetterReplacesNaturalColor`,
+   `laterAttachmentColorOverridesEarlier`) and all six red Layer6 targets
+   (`keywordGrantAfterLoseAllApplies`, `keywordGrantBeforeLoseAllIsRemoved`,
+   `keywordGrantAfterOneShotLoseAllApplies`, `loseAllRemovesPTDefiningCda`,
+   `lordGrantBeforeLoseAllIsRemoved`, `grantAfterRemovalApplies`); the other four Layer6
+   targets were already coincidentally green and stayed green. Remaining 14 red = L2 control
+   (3), L3 text (7), 7a/7b one-shot-flag precedence (3), 7d self-switch SBA (1) — all
+   future-step targets, verified identical to the pre-step baseline. Test updates: white-box
+   `transientColors`/`colorOverridden`/intrinsic-`hasKeyword` assertions in
+   Incite/GrandArchitect/WingsOfVelisVel tests replaced with layered queries;
+   MerfolkTrickster/GrandArchitect cleanup simulations now also call
+   `expireEndOfTurnFloatingEffects()`; GameQueryServiceTest/PredicateEvaluationServiceTest
+   inject the registry into their hand-built `LayerSystemService`;
+   AbilityActivationServiceTest sacrifice tests stub `getEffectiveColors`; new
+   battlefield-list stamping tests in `PermanentTimestampTest`. Ran SevenLayerTest, the
+   staticfx/battlefield/filter/turn/combat/spell/ability unit suites, the layer lifecycle
+   tests, ~20 affected card tests (DeepFreeze, MerfolkTrickster, MagebaneArmor, Incite,
+   NimDeathmantle, GoblinKing, ElvishChampion, KnightOfGrace, PaladinEnVec, VoiceOfAll,
+   WingsOfVelisVel, CairnWanderer, AshlingsPrerogative, GrandArchitect, AmoeboidChangeling,
+   Lignify, BloodMoon, Xenograft, changeling family, AdamantWill, AssaultStrobe,
+   BlessingOfBelzenlok, MarchOfTheMachines) and the full AI module suite — all green
+   (BoardEvaluator hypothetical scoring needed the off-battlefield keyword fallback in the
+   assembly).

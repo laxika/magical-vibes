@@ -101,6 +101,7 @@ class PredicateEvaluationServiceTest {
         ReflectionTestUtils.setField(gqs, "predicateEvaluationService", evaluator);
         LayerSystemService layerSystemService = new LayerSystemService();
         ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
+        ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
 
         player1Id = UUID.randomUUID();

@@ -38,6 +38,18 @@ public class StaticBonusAccumulator {
     private int basePowerOverride;
     private int baseToughnessOverride;
     private boolean losesAllAbilities;
+    /**
+     * While {@code true}, layer 5/6 outputs (colors, keywords, keyword removals, ability loss,
+     * protection, granted abilities/effects) are discarded: the CR 613 layered pass already
+     * applied the current effect's color/ability contribution in timestamp order, and only the
+     * handler's other-layer outputs (7c power/toughness, 7b base P/T) may land here. Toggled by
+     * the static-bonus assembly around handlers whose effect instance the pass manages.
+     */
+    private boolean layeredOutputsSuppressed;
+
+    public void setLayeredOutputsSuppressed(boolean layeredOutputsSuppressed) {
+        this.layeredOutputsSuppressed = layeredOutputsSuppressed;
+    }
 
     public void addPower(int amount) {
         power += amount;
@@ -48,10 +60,12 @@ public class StaticBonusAccumulator {
     }
 
     public void addKeyword(Keyword keyword) {
+        if (layeredOutputsSuppressed) return;
         keywords.add(keyword);
     }
 
     public void addKeywords(Set<Keyword> keywords) {
+        if (layeredOutputsSuppressed) return;
         this.keywords.addAll(keywords);
     }
 
@@ -84,6 +98,7 @@ public class StaticBonusAccumulator {
     }
 
     public void addProtectionColors(Set<CardColor> colors) {
+        if (layeredOutputsSuppressed) return;
         protectionColors.addAll(colors);
     }
 
@@ -92,6 +107,7 @@ public class StaticBonusAccumulator {
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {
+        if (layeredOutputsSuppressed) return;
         grantedActivatedAbilities.add(ability);
     }
 
@@ -100,6 +116,7 @@ public class StaticBonusAccumulator {
     }
 
     public void addGrantedEffect(CardEffect effect) {
+        if (layeredOutputsSuppressed) return;
         grantedEffects.add(effect);
     }
 
@@ -108,6 +125,7 @@ public class StaticBonusAccumulator {
     }
 
     public void addGrantedColor(CardColor color) {
+        if (layeredOutputsSuppressed) return;
         grantedColors.add(color);
     }
 
@@ -142,6 +160,7 @@ public class StaticBonusAccumulator {
     }
 
     public void removeKeyword(Keyword keyword) {
+        if (layeredOutputsSuppressed) return;
         removedKeywords.add(keyword);
     }
 
@@ -154,6 +173,7 @@ public class StaticBonusAccumulator {
     }
 
     public void setColorOverriding(boolean colorOverriding) {
+        if (layeredOutputsSuppressed) return;
         this.colorOverriding = colorOverriding;
     }
 
@@ -196,6 +216,7 @@ public class StaticBonusAccumulator {
     }
 
     public void setLosesAllAbilities(boolean losesAllAbilities) {
+        if (layeredOutputsSuppressed) return;
         this.losesAllAbilities = losesAllAbilities;
     }
 

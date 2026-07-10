@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -182,8 +183,15 @@ public final class LayerClassifier {
         map.put(GrantColorUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
 
-        // Layer 6 — ability adding/removing.
-        map.put(GrantKeywordEffect.class, fixed(Layer.L6_ABILITIES));
+        // Layer 6 — ability adding/removing. A changeling grant ("gains all creature types")
+        // is ALSO a layer-4 contribution: the keyword defines the object's creature types
+        // (CR 702.73a), so later-layer subtype filters (an Elf lord's grant with an earlier
+        // timestamp) must see it — one effect, two layers, one timestamp, like the
+        // animate-and-set-P/T split (CR 613.4).
+        map.put(GrantKeywordEffect.class, new Entry(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES),
+                (effect, fromOwnStaticSlot) -> ((GrantKeywordEffect) effect).keywords().contains(Keyword.CHANGELING)
+                        ? new LayerClassification(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES), false, false)
+                        : new LayerClassification(Set.of(Layer.L6_ABILITIES), false, false)));
         map.put(RemoveKeywordEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(LosesAllAbilitiesEffect.class, fixed(Layer.L6_ABILITIES));
         map.put(GrantActivatedAbilityEffect.class, fixed(Layer.L6_ABILITIES));

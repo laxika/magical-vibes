@@ -264,8 +264,10 @@ public class AbilityActivationService {
                 if (permanent.getCard().getTargetFilter() != null) {
                     predicateEvaluationService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
                 }
-                if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getEffectiveColor())) {
-                    throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getEffectiveColor().name().toLowerCase());
+                for (var sourceColor : gameQueryService.getEffectiveColors(gameData, permanent)) {
+                    if (gameQueryService.hasProtectionFrom(gameData, target, sourceColor)) {
+                        throw new IllegalStateException(target.getCard().getName() + " has protection from " + sourceColor.name().toLowerCase());
+                    }
                 }
                 if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, permanent)) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getCard().getType().getDisplayName().toLowerCase() + "s");

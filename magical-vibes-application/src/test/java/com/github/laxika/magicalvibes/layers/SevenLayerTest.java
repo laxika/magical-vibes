@@ -878,11 +878,14 @@ class SevenLayerTest extends BaseCardTest {
         @Test
         @DisplayName("A color setter replaces the natural color rather than adding to it")
         void colorSetterReplacesNaturalColor() {
+            // Oracle-verified 2026-07-10: Deep Freeze is "a blue Wall IN ADDITION TO its other
+            // colors and types" (additive, CR 105.3) — Nim Deathmantle "is a black Zombie" is
+            // the true color setter.
             Permanent bears = addReady(player1, new GrizzlyBears());
 
-            attach(player1, new DeepFreeze(), bears);
+            attach(player1, new NimDeathmantle(), bears);
 
-            assertThat(bonus(bears).grantedColors()).containsExactly(CardColor.BLUE);
+            assertThat(bonus(bears).grantedColors()).containsExactly(CardColor.BLACK);
             assertThat(bonus(bears).colorOverriding()).isTrue();
         }
 

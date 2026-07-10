@@ -278,6 +278,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
+            when(gameQueryService.getEffectiveColors(gameData, perm)).thenReturn(Set.of(CardColor.WHITE));
             when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
             when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);
@@ -337,6 +338,7 @@ class AbilityActivationServiceTest {
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
                     .thenReturn(false);
             when(gameQueryService.findPermanentById(gameData, targetId)).thenReturn(target);
+            when(gameQueryService.getEffectiveColors(gameData, perm)).thenReturn(Set.of(CardColor.WHITE));
             when(gameQueryService.hasProtectionFrom(eq(gameData), eq(target), any())).thenReturn(false);
             when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, perm)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, perm)).thenReturn(false);

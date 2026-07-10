@@ -41,7 +41,18 @@ public class CharacteristicState {
     private final List<CardSubtype> subtypes = new ArrayList<>();
     /** Always a set: the layer engine works on color sets even though {@link Card} holds one color. */
     private final Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+    /** True once a layer-5 color-setting effect ("becomes red", CR 105.3) replaced the colors. */
+    private boolean colorsOverridden;
+    /** The colors the state was seeded with (natural + persistent grants + legacy animation),
+     *  snapshotted by {@link #snapshotSeededCharacteristics()} before layer 5 runs so the query
+     *  layer can report additive color grants as the difference from this baseline. */
+    private final Set<CardColor> seededColors = EnumSet.noneOf(CardColor.class);
     private final Set<Keyword> keywords = new HashSet<>();
+    /** The keywords the state was seeded with (printed + persistent one-shot grants),
+     *  snapshotted by {@link #snapshotSeededCharacteristics()} before layer 6 runs. */
+    private final Set<Keyword> seededKeywords = new HashSet<>();
+    /** Protection-from-color abilities (own printed protection plus layer-6 grants). */
+    private final Set<CardColor> protectionColors = EnumSet.noneOf(CardColor.class);
     private final List<ActivatedAbility> grantedActivatedAbilities = new ArrayList<>();
     private final List<CardEffect> grantedStaticEffects = new ArrayList<>();
     @Setter private int basePower;
@@ -132,16 +143,39 @@ public class CharacteristicState {
         subtypes.removeIf(filter);
     }
 
+    /**
+     * Snapshots the seeded (pre-layer-5/6) colors and keywords so the query layer can later
+     * distinguish granted characteristics from the baseline. Called by the layer engine once
+     * seeding (constructor values plus engine-side legacy transient state) is complete.
+     */
+    public void snapshotSeededCharacteristics() {
+        seededColors.clear();
+        seededColors.addAll(colors);
+        seededKeywords.clear();
+        seededKeywords.addAll(keywords);
+    }
+
     // --- Layer 5 (colors) ---
 
     public void addColor(CardColor color) {
         colors.add(color);
     }
 
-    /** "Becomes [color]" override: replaces the existing colors (e.g. Incite, Deep Freeze). */
+    /**
+     * Replaces the colors during seeding (legacy animation state that predates the layered
+     * pass) WITHOUT marking a layer-5 override — {@link #isColorsOverridden()} must only report
+     * actual layer-5 setting effects.
+     */
+    public void replaceSeedColors(Collection<CardColor> replacement) {
+        colors.clear();
+        colors.addAll(replacement);
+    }
+
+    /** "Becomes [color]" override: replaces the existing colors (e.g. Incite, Nim Deathmantle). */
     public void overrideColors(Collection<CardColor> replacement) {
         colors.clear();
         colors.addAll(replacement);
+        this.colorsOverridden = true;
     }
 
     // --- Layer 6 (abilities) ---
@@ -150,8 +184,16 @@ public class CharacteristicState {
         keywords.add(keyword);
     }
 
+    public void addKeywords(Collection<Keyword> granted) {
+        keywords.addAll(granted);
+    }
+
     public void removeKeyword(Keyword keyword) {
         keywords.remove(keyword);
+    }
+
+    public void addProtectionColors(Collection<CardColor> colors) {
+        protectionColors.addAll(colors);
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {
@@ -164,11 +206,13 @@ public class CharacteristicState {
 
     /**
      * Applies a "loses all abilities" effect: clears every ability accumulated so far (printed
-     * and granted). Grants applied afterwards (later timestamps) stick. The timestamp is kept so
-     * layer 7a can suppress the object's own CDAs that were removed here.
+     * and granted, including protection). Grants applied afterwards (later timestamps) stick.
+     * The timestamp is kept so layer 7a can suppress the object's own CDAs that were removed
+     * here.
      */
     public void loseAllAbilities(long timestamp) {
         keywords.clear();
+        protectionColors.clear();
         grantedActivatedAbilities.clear();
         grantedStaticEffects.clear();
         this.losesAllAbilities = true;

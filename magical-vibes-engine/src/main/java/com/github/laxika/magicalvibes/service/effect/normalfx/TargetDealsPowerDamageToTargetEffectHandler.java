@@ -51,7 +51,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
 
         // Use the biting creature's color for protection checks (not the spell's color)
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, biter)) {
-            CardColor biterColor = biter.getEffectiveColor();
+            CardColor biterColor = gameQueryService.getEffectiveColor(gameData, biter);
             String logEntry = target.getCard().getName() + " has protection from " + (biterColor != null ? biterColor.name().toLowerCase() : "source") + " — damage prevented.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;

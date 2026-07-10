@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -147,12 +149,26 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
+            // CR 613 layer engine: one-shot keyword grants to explicit permanents are floating
+            // layer-6 effects with their own timestamp — a grant resolving after a "loses all
+            // abilities" or keyword removal survives it (and vice versa). The legacy bucket is
+            // still written for direct Permanent.hasKeyword callers; the layered pass seeds it
+            // and then replays this grant at its real timestamp.
             bucketFor(target, grant.duration()).addAll(grant.keywords());
+            gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                    entry.getCard().getName(), null, entry.getControllerId(), grant,
+                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
             String keywordNames = formatKeywords(grant.keywords());
             String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
         }
+    }
+
+    private EffectDuration floatingDurationFor(GrantDuration duration) {
+        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                ? EffectDuration.UNTIL_YOUR_NEXT_TURN
+                : EffectDuration.UNTIL_END_OF_TURN;
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {

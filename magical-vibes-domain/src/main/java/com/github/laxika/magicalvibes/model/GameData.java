@@ -4,6 +4,7 @@ package com.github.laxika.magicalvibes.model;
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -424,6 +425,51 @@ public class GameData {
     /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
     public long nextTimestamp() {
         return ++timestampCounter;
+    }
+
+    /**
+     * Creates a battlefield list that stamps any still-unstamped permanent (timestamp 0) with
+     * this game's next CR 613.7 timestamp as it is inserted. The engine's entry funnel
+     * ({@code BattlefieldEntryService.putPermanentOntoBattlefield}) stamps before adding, so
+     * this is a no-op there; it makes direct insertions (test setups building battlefields by
+     * hand) carry real insertion-order timestamps instead of relying on the position fallback.
+     * Control-change moves re-insert already-stamped permanents and keep their stamp
+     * (CR 613.7c).
+     */
+    public List<Permanent> newBattlefieldList() {
+        return Collections.synchronizedList(new TimestampingBattlefieldList());
+    }
+
+    private final class TimestampingBattlefieldList extends ArrayList<Permanent> {
+        @Override
+        public boolean add(Permanent permanent) {
+            stamp(permanent);
+            return super.add(permanent);
+        }
+
+        @Override
+        public void add(int index, Permanent permanent) {
+            stamp(permanent);
+            super.add(index, permanent);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends Permanent> permanents) {
+            permanents.forEach(this::stamp);
+            return super.addAll(permanents);
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends Permanent> permanents) {
+            permanents.forEach(this::stamp);
+            return super.addAll(index, permanents);
+        }
+
+        private void stamp(Permanent permanent) {
+            if (permanent.getTimestamp() == 0) {
+                permanent.setTimestamp(nextTimestamp());
+            }
+        }
     }
 
     /** Continuous effects created by resolved spells/abilities (CR 611.2), for the CR 613 layer
@@ -1068,9 +1114,11 @@ public class GameData {
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
-        this.playerBattlefields.forEach((k, v) ->
-                copy.playerBattlefields.put(k,
-                        v.stream().map(Permanent::new).collect(Collectors.toCollection(ArrayList::new))));
+        this.playerBattlefields.forEach((k, v) -> {
+            List<Permanent> battlefieldCopy = copy.newBattlefieldList();
+            v.stream().map(Permanent::new).forEach(battlefieldCopy::add);
+            copy.playerBattlefields.put(k, battlefieldCopy);
+        });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));

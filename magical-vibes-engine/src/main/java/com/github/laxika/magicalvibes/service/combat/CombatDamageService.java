@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -1334,10 +1335,11 @@ public class CombatDamageService {
             // Redirection is a replacement effect, not prevention, so it fires before prevention checks.
             damage = damagePreventionService.applySourceRedirectShields(gameData, defenderId, atk.getId(), damage);
             processSourceRedirectDamage(gameData);
+            CardColor attackerColor = gameQueryService.getEffectiveColor(gameData, atk);
             if (damage > 0
                     && !(gameQueryService.isDamagePreventable(gameData)
-                            && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, atk.getEffectiveColor()))
-                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, atk.getEffectiveColor())) {
+                            && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))
+                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
                 // Apply target+source-specific prevention shields (e.g. Healing Grace)

@@ -252,6 +252,12 @@ public class StaticEffectSupport {
             return layer4Verdict;
         }
         if (filter instanceof PermanentColorInPredicate p) {
+            // While a CR 613 layered pass is active, colors are answered from the layer-5
+            // state, so a color setter ("becomes red") is visible to later-layer filters.
+            CharacteristicState layeredColors = LayerSystemService.activeStateFor(target.getId());
+            if (layeredColors != null) {
+                return layeredColors.getColors().stream().anyMatch(p.colors()::contains);
+            }
             if (target.isColorOverridden()) {
                 return target.getTransientColors().stream().anyMatch(p.colors()::contains);
             }
@@ -267,8 +273,12 @@ public class StaticEffectSupport {
             // layer-4-corrected state, so lord/aura filters see type-changing effects.
             CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
             if (layered != null) {
+                // Changeling checked on the state (layer-6 grants like Wings of Velis Vel) OR
+                // intrinsically: a changeling that lost all abilities keeps its creature types
+                // (the ability's layer-4 contribution is not retroactively undone, CR 613).
                 return layered.hasSubtype(p.subtype())
-                        || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
+                        || (isCreatureSubtype(p.subtype())
+                        && (layered.hasKeyword(Keyword.CHANGELING) || target.hasKeyword(Keyword.CHANGELING)));
             }
             return target.getCard().getSubtypes().contains(p.subtype())
                     || target.getTransientSubtypes().contains(p.subtype())
@@ -283,7 +293,7 @@ public class StaticEffectSupport {
             if (layered != null) {
                 return wanted.stream().anyMatch(layered::hasSubtype)
                         || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
-                        && target.hasKeyword(Keyword.CHANGELING));
+                        && (layered.hasKeyword(Keyword.CHANGELING) || target.hasKeyword(Keyword.CHANGELING)));
             }
             return target.getCard().getSubtypes().stream().anyMatch(wanted::contains)
                     || target.getTransientSubtypes().stream().anyMatch(wanted::contains)
@@ -291,8 +301,15 @@ public class StaticEffectSupport {
                     || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
                     && target.hasKeyword(Keyword.CHANGELING));
         }
-        if (filter instanceof PermanentHasKeywordPredicate p)
+        if (filter instanceof PermanentHasKeywordPredicate p) {
+            // Layer-6-aware while a pass is active: the state holds the keywords as of the
+            // layers applied so far (grants added, removals and ability loss applied).
+            CharacteristicState layeredKeywords = LayerSystemService.activeStateFor(target.getId());
+            if (layeredKeywords != null) {
+                return layeredKeywords.hasKeyword(p.keyword());
+            }
             return target.hasKeyword(p.keyword());
+        }
         if (filter instanceof PermanentIsCreaturePredicate)
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()

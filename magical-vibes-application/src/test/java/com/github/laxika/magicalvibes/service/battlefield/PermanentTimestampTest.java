@@ -150,6 +150,44 @@ class PermanentTimestampTest {
     }
 
     @Nested
+    @DisplayName("Battlefield-list stamping (GameData.newBattlefieldList)")
+    class BattlefieldListStamping {
+
+        @Test
+        @DisplayName("Direct insertions are stamped in insertion order, across battlefields")
+        void directInsertionsAreStampedInOrder() {
+            List<Permanent> p1Battlefield = gd.newBattlefieldList();
+            List<Permanent> p2Battlefield = gd.newBattlefieldList();
+            Permanent first = createCreature("Grizzly Bears");
+            Permanent second = createCreature("Coral Merfolk");
+            Permanent third = createCreature("Raging Goblin");
+
+            p1Battlefield.add(first);
+            p2Battlefield.add(second);
+            p1Battlefield.add(third);
+
+            assertThat(first.getTimestamp()).isPositive();
+            assertThat(first.getTimestamp()).isLessThan(second.getTimestamp());
+            assertThat(second.getTimestamp()).isLessThan(third.getTimestamp());
+        }
+
+        @Test
+        @DisplayName("Re-inserting an already-stamped permanent keeps its stamp (CR 613.7c move)")
+        void reinsertionKeepsStamp() {
+            List<Permanent> p1Battlefield = gd.newBattlefieldList();
+            List<Permanent> p2Battlefield = gd.newBattlefieldList();
+            Permanent bears = createCreature("Grizzly Bears");
+            p1Battlefield.add(bears);
+            long stamp = bears.getTimestamp();
+
+            p1Battlefield.remove(bears);
+            p2Battlefield.add(bears);
+
+            assertThat(bears.getTimestamp()).isEqualTo(stamp);
+        }
+    }
+
+    @Nested
     @DisplayName("Copy semantics")
     class CopySemantics {
 
