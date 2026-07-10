@@ -84,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
+import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1058,6 +1059,106 @@ public class GameQueryService {
         }
     }
 
+    /**
+     * A {@link StaticBonus} plus its per-source display attribution: one {@link ModifierLine}
+     * per contributing source (7c boosts and unmanaged keyword grants diffed during assembly,
+     * layer-6/7b/7d contributions read from the board's provenance). Display-only — computed
+     * by the view-building path, never consulted by rules code.
+     */
+    public record ExplainedBonus(StaticBonus bonus, List<ModifierLine> lines) {
+    }
+
+    /** {@link #computeStaticBonus} plus the per-source attribution lines for the client's
+     *  hover breakdown. Runs its own assembly (bypassing the per-pass bonus memo) so the
+     *  accumulator diffs can be observed; the returned bonus is identical to
+     *  {@code computeStaticBonus}'s. */
+    public ExplainedBonus explainStaticBonus(GameData gameData, Permanent target) {
+        LayerSystemService.Pass active = layerSystemService.activePass(gameData);
+        if (active != null) {
+            return explainAgainstBoard(gameData, active.board(), target);
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            return explainAgainstBoard(gameData, pass.board(), target);
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
+    private ExplainedBonus explainAgainstBoard(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
+        List<ModifierLine> lines = new ArrayList<>();
+        StaticBonus bonus = assembleStaticBonus(gameData, board, target, lines);
+        // Board-recorded lines (layer 6 keyword grants/removals, 7b base setters in resolved
+        // order, 7d switches) follow the assembly lines: base lines must fold AFTER the 7a CDA
+        // line the assembly may have emitted, mirroring the merge in assembleStaticBonus.
+        List<ModifierLine> recorded = board.provenance().get(target.getId());
+        if (recorded != null) {
+            lines.addAll(recorded);
+        }
+        if (bonus == StaticBonus.NONE) {
+            return new ExplainedBonus(bonus, List.of());
+        }
+        return new ExplainedBonus(bonus, mergeModifierLines(lines));
+    }
+
+    /** Merges the additive/keyword lines of one source into a single display line; base-setting
+     *  and switch lines keep their identity and relative order (folding is order-sensitive). */
+    private static List<ModifierLine> mergeModifierLines(List<ModifierLine> lines) {
+        Map<String, ModifierLine> merged = new LinkedHashMap<>();
+        List<ModifierLine> orderSensitive = new ArrayList<>();
+        for (ModifierLine line : lines) {
+            if (line.basePower() != null || line.baseToughness() != null || line.switchesPt()) {
+                orderSensitive.add(line);
+                continue;
+            }
+            merged.merge(line.source(), line, (a, b) -> {
+                Set<Keyword> gained = new HashSet<>(a.gainedKeywords());
+                gained.addAll(b.gainedKeywords());
+                Set<Keyword> removed = new HashSet<>(a.removedKeywords());
+                removed.addAll(b.removedKeywords());
+                return new ModifierLine(a.source(), a.power() + b.power(), a.toughness() + b.toughness(),
+                        null, null, gained, removed, a.losesAllAbilities() || b.losesAllAbilities(), false);
+            });
+        }
+        List<ModifierLine> result = new ArrayList<>(merged.values());
+        result.addAll(orderSensitive);
+        return result;
+    }
+
+    /**
+     * The explain diff baseline: the accumulator's display-relevant state before one source's
+     * handlers ran. {@link #diff} turns the delta into that source's attribution line (base
+     * overrides are deliberately NOT diffed here — every 7b setter is already recorded with
+     * attribution by the layered pass; only the self-CDA section diffs the base).
+     */
+    private record AccumulatorSnapshot(int power, int toughness, Set<Keyword> keywords,
+                                       Set<Keyword> removedKeywords, boolean losesAllAbilities,
+                                       boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride) {
+        static AccumulatorSnapshot of(StaticBonusAccumulator accumulator) {
+            return new AccumulatorSnapshot(accumulator.getPower(), accumulator.getToughness(),
+                    Set.copyOf(accumulator.getKeywords()), Set.copyOf(accumulator.getRemovedKeywords()),
+                    accumulator.isLosesAllAbilities(), accumulator.isBasePTOverridden(),
+                    accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride());
+        }
+
+        ModifierLine diff(String source, StaticBonusAccumulator accumulator, boolean includeBase) {
+            Set<Keyword> gained = new HashSet<>(accumulator.getKeywords());
+            gained.removeAll(keywords);
+            Set<Keyword> removed = new HashSet<>(accumulator.getRemovedKeywords());
+            removed.removeAll(removedKeywords);
+            boolean baseChanged = includeBase && accumulator.isBasePTOverridden()
+                    && (!basePTOverridden
+                        || accumulator.getBasePowerOverride() != basePowerOverride
+                        || accumulator.getBaseToughnessOverride() != baseToughnessOverride);
+            return new ModifierLine(source,
+                    accumulator.getPower() - power, accumulator.getToughness() - toughness,
+                    baseChanged ? accumulator.getBasePowerOverride() : null,
+                    baseChanged ? accumulator.getBaseToughnessOverride() : null,
+                    gained, removed,
+                    !losesAllAbilities && accumulator.isLosesAllAbilities(), false);
+        }
+    }
+
     /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
     private record StaticSource(Permanent permanent, boolean sameBattlefieldAsTarget, long timestamp, int position) {
     }
@@ -1071,6 +1172,13 @@ public class GameQueryService {
      * {@code LayerSystemService.applyLayer7b}) is merged over the 7a CDA / intrinsic base.
      */
     private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
+        return assembleStaticBonus(gameData, board, target, null);
+    }
+
+    /** With a non-null {@code explain} list, additionally records one attribution line per
+     *  contributing source by diffing the accumulator around each source's handlers. Only the
+     *  view-building path passes a recorder; rules-code callers pay no diffing cost. */
+    private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target, List<ModifierLine> explain) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         List<StaticSource> sources = new ArrayList<>();
@@ -1097,6 +1205,7 @@ public class GameQueryService {
             boolean sourceAbilitiesGone = sourceState != null
                     && (sourceState.isLosesAllAbilities() || sourceState.isPrintedAbilitiesRemoved());
             StaticEffectContext context = new StaticEffectContext(source, target, sourceSlot.sameBattlefieldAsTarget(), gameData);
+            AccumulatorSnapshot beforeSource = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 // Purely type-changing effects were applied by the layer-4 pass (with filters
                 // evaluated as of each effect's own application); replay its recorded decision
@@ -1131,11 +1240,18 @@ public class GameQueryService {
                     }
                 }
             }
+            if (beforeSource != null) {
+                ModifierLine line = beforeSource.diff(source.getCard().getName(), accumulator, false);
+                if (!line.isEmpty()) {
+                    explain.add(line);
+                }
+            }
         }
         // Process emblem static effects
         for (Emblem emblem : gameData.emblems) {
             List<Permanent> ownerBf = gameData.playerBattlefields.get(emblem.controllerId());
             if (ownerBf == null || !ownerBf.contains(target)) continue;
+            AccumulatorSnapshot beforeEmblem = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof GrantActivatedAbilityEffect grant
                         && grant.scope() == GrantScope.OWN_PERMANENTS
@@ -1150,10 +1266,18 @@ public class GameQueryService {
                     accumulator.addKeywords(boost.grantedKeywords());
                 }
             }
+            if (beforeEmblem != null) {
+                String emblemName = emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem";
+                ModifierLine line = beforeEmblem.diff(emblemName, accumulator, false);
+                if (!line.isEmpty()) {
+                    explain.add(line);
+                }
+            }
         }
 
         // Handle characteristic-defining abilities (self-referencing static effects like */* P/T)
         CharacteristicState state = board.states().get(target.getId());
+        AccumulatorSnapshot beforeSelf = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
             StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(effect);
             if (selfHandler != null) {
@@ -1181,6 +1305,13 @@ public class GameQueryService {
                         accumulator.setLayeredOutputsSuppressed(false);
                     }
                 }
+            }
+        }
+        if (beforeSelf != null) {
+            // The 7a CDA base line — emitted before the board's 7b lines fold over it.
+            ModifierLine line = beforeSelf.diff(target.getCard().getName(), accumulator, true);
+            if (!line.isEmpty()) {
+                explain.add(line);
             }
         }
 

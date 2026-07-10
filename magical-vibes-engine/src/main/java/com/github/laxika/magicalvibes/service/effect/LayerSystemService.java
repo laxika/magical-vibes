@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
+import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -200,7 +201,18 @@ public class LayerSystemService {
                                     Set<CardEffect> managedL56Effects,
                                     Set<UUID> l56Touched,
                                     Map<UUID, BasePt> basePt7b,
-                                    Set<UUID> switchedPt7d) {
+                                    Set<UUID> switchedPt7d,
+                                    Map<UUID, List<ModifierLine>> provenance) {
+
+        /** Records one display-only attribution line for the given permanent — which source
+         *  contributed which keyword/base-P/T/switch during this pass. Written at the layer
+         *  6/7b/7d application sites (a pure function of the same fingerprinted inputs as the
+         *  rest of the board, so caching the board caches the provenance with it); read only
+         *  by {@code GameQueryService.explainStaticBonus} for the client's hover breakdown. */
+        public void recordProvenance(UUID targetId, ModifierLine line) {
+            if (line.isEmpty()) return;
+            provenance.computeIfAbsent(targetId, id -> new ArrayList<>()).add(line);
+        }
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
          *  must be skipped and {@link #replayL4Contribution} used instead. */
@@ -576,7 +588,7 @@ public class LayerSystemService {
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                new HashSet<>(), new HashMap<>(), new HashSet<>());
+                new HashSet<>(), new HashMap<>(), new HashSet<>(), new HashMap<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -889,7 +901,7 @@ public class LayerSystemService {
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
-                new HashSet<>(board.switchedPt7d()));
+                new HashSet<>(board.switchedPt7d()), new HashMap<>());
         LayeredBoardState saved = pass.board;
         pass.board = trialBoard;
         try {
@@ -1413,9 +1425,21 @@ public class LayerSystemService {
             for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
                 switch (instance.effect()) {
-                    case LosesAllAbilitiesEffect ignored -> state.loseAllAbilities(instance.timestamp());
-                    case RemoveKeywordEffect remove -> state.removeKeyword(remove.keyword());
-                    case GrantKeywordEffect grant -> state.addKeywords(grant.keywords());
+                    case LosesAllAbilitiesEffect ignored -> {
+                        state.loseAllAbilities(instance.timestamp());
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
+                    }
+                    case RemoveKeywordEffect remove -> {
+                        state.removeKeyword(remove.keyword());
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(remove.keyword()), false));
+                    }
+                    case GrantKeywordEffect grant -> {
+                        state.addKeywords(grant.keywords());
+                        board.recordProvenance(target.permanent().getId(),
+                                ModifierLine.abilities(provenanceSourceName(instance), grant.keywords(), Set.of(), false));
+                    }
                     default -> {
                         continue;
                     }
@@ -1441,6 +1465,9 @@ public class LayerSystemService {
                 state.addKeywords(harvested.getKeywords());
                 touched = true;
             }
+            board.recordProvenance(target.permanent().getId(),
+                    ModifierLine.abilities(provenanceSourceName(instance), harvested.getKeywords(),
+                            harvested.getRemovedKeywords(), harvested.isLosesAllAbilities()));
             if (!harvested.getProtectionColors().isEmpty()) {
                 state.addProtectionColors(harvested.getProtectionColors());
                 touched = true;
@@ -1462,8 +1489,10 @@ public class LayerSystemService {
     // ===== sublayer 7b =====
 
     /** One base-P/T-setting application collected for the 7b pass; a {@code null} component
-     *  leaves that component untouched (power-only exchanges). */
-    private record BasePtEntry(UUID targetId, Integer power, Integer toughness, long timestamp, int position) {
+     *  leaves that component untouched (power-only exchanges). {@code sourceName} is the
+     *  display attribution recorded as board provenance. */
+    private record BasePtEntry(UUID targetId, Integer power, Integer toughness, long timestamp, int position,
+                               String sourceName) {
     }
 
     /**
@@ -1488,11 +1517,13 @@ public class LayerSystemService {
             Permanent permanent = slot.permanent();
             if (permanent.isBasePowerOverriddenPermanently()) {
                 entries.add(new BasePtEntry(permanent.getId(), permanent.getPermanentBasePowerOverride(),
-                        null, permanent.getPermanentBasePowerOverrideTimestamp(), slot.position()));
+                        null, permanent.getPermanentBasePowerOverrideTimestamp(), slot.position(),
+                        "P/T exchange"));
             }
             if (permanent.isBaseToughnessOverriddenPermanently()) {
                 entries.add(new BasePtEntry(permanent.getId(), null, permanent.getPermanentBaseToughnessOverride(),
-                        permanent.getPermanentBaseToughnessOverrideTimestamp(), slot.position()));
+                        permanent.getPermanentBaseToughnessOverrideTimestamp(), slot.position(),
+                        "P/T exchange"));
             }
         }
 
@@ -1508,14 +1539,16 @@ public class LayerSystemService {
                     if (instance.floating() != null) {
                         for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                             entries.add(new BasePtEntry(target.permanent().getId(), setPt.power(),
-                                    setPt.toughness(), instance.timestamp(), instance.position()));
+                                    setPt.toughness(), instance.timestamp(), instance.position(),
+                                    provenanceSourceName(instance)));
                         }
                     } else {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false, (target, harvested) -> {
                             if (harvested.isBasePTOverridden()) {
                                 entries.add(new BasePtEntry(target.permanent().getId(),
                                         harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
-                                        instance.timestamp(), instance.position()));
+                                        instance.timestamp(), instance.position(),
+                                        provenanceSourceName(instance)));
                             }
                         });
                     }
@@ -1530,7 +1563,8 @@ public class LayerSystemService {
                                 && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
                             int manaValue = permanent.getCard().getManaValue();
                             entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
-                                    instance.timestamp(), instance.position()));
+                                    instance.timestamp(), instance.position(),
+                                    provenanceSourceName(instance)));
                         }
                     }
                 }
@@ -1547,6 +1581,9 @@ public class LayerSystemService {
             board.basePt7b().put(entry.targetId(), new BasePt(
                     entry.power() != null ? entry.power() : previous == null ? null : previous.power(),
                     entry.toughness() != null ? entry.toughness() : previous == null ? null : previous.toughness()));
+            // Provenance in resolved order: base lines fold last-wins per component downstream.
+            board.recordProvenance(entry.targetId(),
+                    ModifierLine.base(entry.sourceName(), entry.power(), entry.toughness()));
         }
     }
 
@@ -1575,7 +1612,22 @@ public class LayerSystemService {
             if (!board.switchedPt7d().add(affectedId)) {
                 board.switchedPt7d().remove(affectedId);
             }
+            // Every switch is recorded (not just the surviving parity): downstream display
+            // derives the parity from the count of switch lines.
+            board.recordProvenance(affectedId, ModifierLine.switchPt(provenanceSourceName(instance)));
         }
+    }
+
+    /** Display attribution for one layered instance: the resolved spell's card name for
+     *  floating effects, otherwise the source permanent's card name. */
+    private static String provenanceSourceName(EffectInstance instance) {
+        if (instance.floating() != null && instance.floating().sourceCardName() != null) {
+            return instance.floating().sourceCardName();
+        }
+        if (instance.source() != null) {
+            return instance.source().permanent().getCard().getName();
+        }
+        return "Effect";
     }
 
     @FunctionalInterface

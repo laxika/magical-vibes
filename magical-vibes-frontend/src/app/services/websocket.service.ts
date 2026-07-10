@@ -200,6 +200,22 @@ export interface ModalOptionView {
   targetCount: number;
 }
 
+/** One attributed contribution of a continuous effect to a permanent's characteristics —
+ * the per-source hover breakdown. Display-only; the aggregates on Permanent stay authoritative. */
+export interface ModifierLine {
+  source: string;
+  power: number;
+  toughness: number;
+  /** Non-null when this source SETS base power; base lines fold in list order, last non-null wins. */
+  basePower: number | null;
+  baseToughness: number | null;
+  gainedKeywords: string[];
+  removedKeywords: string[];
+  losesAllAbilities: boolean;
+  /** Sublayer 7d P/T switch — two switches cancel, only the parity of switch lines matters. */
+  switchesPt: boolean;
+}
+
 export interface Permanent {
   id: string;
   card: Card;
@@ -228,6 +244,9 @@ export interface Permanent {
   /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (a castable copy of its
    * prepare spell sits in exile). Not a transform — the front face stays; the prepare spell is shown inset. */
   prepared: boolean;
+  /** Per-source attribution of the continuous effects modifying this permanent (hover breakdown).
+   * Optional: absent in hand-built mock data (e.g. the tutorial). */
+  modifierLines?: ModifierLine[];
 }
 
 export interface StackEntry {

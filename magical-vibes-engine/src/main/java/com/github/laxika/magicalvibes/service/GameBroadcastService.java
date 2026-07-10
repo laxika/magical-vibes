@@ -150,7 +150,8 @@ public class GameBroadcastService {
             } else {
                 List<PermanentView> views = new ArrayList<>();
                 for (Permanent p : bf) {
-                    GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(data, p);
+                    GameQueryService.ExplainedBonus explained = gameQueryService.explainStaticBonus(data, p);
+                    GameQueryService.StaticBonus bonus = explained.bonus();
                     // Compute adjusted bonus P/T to account for static base P/T overrides (e.g. Deep Freeze)
                     int adjustedBonusPower = gameQueryService.getEffectivePower(p, bonus) - p.getEffectivePower();
                     int adjustedBonusToughness = gameQueryService.getEffectiveToughness(p, bonus) - p.getEffectiveToughness();
@@ -158,7 +159,7 @@ public class GameBroadcastService {
                     allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
                     allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
                     allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
-                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes()));
+                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines()));
                 }
                 battlefields.add(views);
             }

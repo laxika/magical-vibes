@@ -686,6 +686,25 @@ Jousting Lance).
   while `computeBoardState` runs; dependency trials swap in throwaway trial boards; assembly
   and predicate leaves only read. That is what makes sharing one board across queries (and
   threads — immutable entry, `volatile` publish, racing fillers overwrite benignly) sound.
+
+### Display provenance (`LayeredBoardState.provenance`)
+
+The board additionally records **per-source attribution lines** (`ModifierLine`, a domain
+record) for the client's hover breakdown: the layer-6 application sites record keyword
+grants/removals and lose-alls with their source's card name, `applyLayer7b` records every
+base setter in resolved order (base lines fold last-wins per component downstream), and
+`applyLayer7d` records each switch (parity derived from the line count). Provenance is a pure
+function of the same fingerprinted inputs as the rest of the board, so caching the board
+caches it too; trial boards get their own discarded map. The assembly side lives in
+`GameQueryService.explainStaticBonus`: it re-runs `assembleStaticBonus` with an explain
+recorder that diffs the accumulator around each source's handlers (7c boosts, emblems,
+conditional wrappers, the 7a self-CDA base), appends the board lines, and merges one line per
+source name (base/switch lines keep their order — folding is order-sensitive). Only
+`GameBroadcastService` calls it (per broadcast, per permanent); rules code and the AI never
+pay the diffing cost, and `PermanentView.modifierLines` carries the result to the client.
+One-shot pumps stored on the `Permanent` (`powerModifier`, until-EOT keyword buckets) are
+deliberately un-attributed — the client reconciles them as an "Other effects" remainder
+against the aggregate fields, which stay authoritative. Pinned by `ModifierExplanationTest`.
 - **AI simulation copies start cold**: `simulationCopy()` builds a fresh `GameData` and never
   copies the slot, so a simulated board can never be served to the real game or vice versa
   (the shared-`Card` leak precedent). Pinned by `LayeredBoardCacheTest`.
