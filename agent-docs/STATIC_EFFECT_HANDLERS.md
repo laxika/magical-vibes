@@ -1,6 +1,8 @@
 # Static Effect Handlers (`staticfx`)
 
-Static/continuous effects (P/T bonuses, keyword grants, conditionals computed during `computeStaticBonus()`) are resolved by one self-contained handler class per effect type in `magical-vibes-engine/.../service/effect/staticfx/` (the tests live in `magical-vibes-application/src/test/.../service/effect/staticfx/`).
+Static/continuous effects (P/T bonuses, keyword grants, conditionals) are resolved by one self-contained handler class per effect type in `magical-vibes-engine/.../service/effect/staticfx/` (the tests live in `magical-vibes-application/src/test/.../service/effect/staticfx/`).
+
+Handlers own the per-effect scope/filter/amount logic; **ordering and precedence across effects is decided by the CR 613 layered pass** (`LayerSystemService` — see `agent-docs/LAYER_SYSTEM.md`, the canonical reference). `GameQueryService.computeStaticBonus()` runs the whole-battlefield pass (layers 4–7d over `CharacteristicState`s, timestamp + dependency ordered), invoking each handler into a `StaticBonusAccumulator` — for pass-managed layers the handler's raw output is harvested/replayed at the effect's own timestamp rather than taken as-is — and assembles the finished `StaticBonus` that views and queries consume. A new handler therefore only says WHAT its effect does to WHICH permanents; it must also be classified in `LayerClassifier` (step 3 below) so the pass knows WHEN to apply it.
 
 ## Pattern
 
@@ -31,10 +33,12 @@ generic `BoostSelfSelfEffectHandler` (selfOnly), which evaluates the amounts via
 `SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` is the
 characteristic-defining (`*/*`) counterpart, handled by the single generic
 `SetPowerToughnessToAmountSelfEffectHandler` (selfOnly). It evaluates both amounts via
-`AmountEvaluationService` on the same `forStaticEffect` context and adds them to the 0/0 base
-(P/T-defining CDA creatures have base 0/0, so add == set, matching `BoostSelfSelfEffectHandler`).
-It replaced the entire per-derivation `PowerToughnessEqualTo*SelfEffectHandler` family and the
-ooze-token `BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler` — do NOT add new ones.
+`AmountEvaluationService` on the same `forStaticEffect` context and writes a **base-P/T
+override** (CR 613 sublayer 7a): any layer-7b setter (Lignify, Diminish, ...) overrides it in
+layer order regardless of timestamps, and a creature that lost all abilities loses its CDA
+(Maro under a lose-all is 0/0). It replaced the entire per-derivation
+`PowerToughnessEqualTo*SelfEffectHandler` family and the ooze-token
+`BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler` — do NOT add new ones.
 
 The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)`,
 handled by the single generic `AttachedBoostEffectHandler` (NOT selfOnly). It gates on
@@ -45,9 +49,15 @@ controller ("you"/"you control", CR 109.5), not the enchanted/equipped creature'
 NOT add per-derivation `BoostCreaturePer*` handlers.
 
 Both evaluate under `AmountContext.forStaticEffect` (static recursion guard). New count sources
-become new `model/amount/DynamicAmount` records with a case in `AmountEvaluationService.evaluate`
-(recursion-safe in static contexts: permanent predicates are matched with a null `FilterContext`,
-so two permanents counting each other cannot recurse infinitely).
+become new `model/amount/DynamicAmount` records with a case in `AmountEvaluationService.evaluate`.
+Recursion safety in static contexts is two mechanisms working together: while the layered pass
+is active, the subtype/color/keyword predicate leaves answer from each permanent's
+`CharacteristicState` **as of the layers already applied** (layer N never reads layer ≥N state,
+so there is nothing to recurse into — `LayerSystemService.activeStateFor`); the null
+`FilterContext` passed in static contexts remains the guard for the leaves the pass does not
+manage (power/toughness checks fall back to the permanent's intrinsic pre-switch values instead
+of re-entering `computeStaticBonus`). Two permanents counting each other therefore cannot
+recurse infinitely, but a static P/T-based filter reads layered-final P/T only OUTSIDE a pass.
 
 ## Conditional static effects
 

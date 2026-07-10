@@ -63,13 +63,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Target specification for the CR 613 layer system ("seven layers") migration.
+ * Regression specification for the CR 613 layer system ("seven layers").
  *
  * <p>Each nested class covers one layer (or layer-7 sublayer) with scenarios whose outcome
- * depends on layer ordering, timestamps (CR 613.7), or dependency (CR 613.8) — behavior the
- * current single-pass accumulator in {@code computeStaticBonus} cannot generally express.
- * Many of these tests are EXPECTED TO BE RED until the layered refactor lands; they define
- * the rules-correct end state, not the current engine behavior.
+ * depends on layer ordering, timestamps (CR 613.7), or dependency (CR 613.8). The layered
+ * refactor is complete: all 100 tests are GREEN and MUST STAY GREEN — this suite pins the
+ * rules-correct behavior of the layered pass ({@code LayerSystemService} and the floating
+ * continuous-effect lifecycle; see {@code agent-docs/LAYER_SYSTEM.md}). Never weaken an
+ * expectation to make a change pass; the only permitted corrections are oracle-wrong card
+ * data in a setup (verify against Scryfall first — step 4/5/7 precedent).
  *
  * <p>Timestamp conventions used by the setups: a permanent's timestamp is the order in which
  * it was added to a battlefield; an Aura/Equipment attached directly gets the timestamp of

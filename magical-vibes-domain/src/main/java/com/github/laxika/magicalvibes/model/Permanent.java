@@ -481,12 +481,12 @@ public class Permanent {
      * readers (views' raw term, last-known-information reads, predicate leaves).
      */
     public int getEffectivePower() {
-        return getRawPower();
+        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        return getRawToughness();
+        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     /**
@@ -541,14 +541,6 @@ public class Permanent {
             return 8;
         }
         return card.getToughness() != null ? card.getToughness() : 0;
-    }
-
-    private int getRawPower() {
-        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
-    }
-
-    private int getRawToughness() {
-        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     public CardColor getEffectiveColor() {

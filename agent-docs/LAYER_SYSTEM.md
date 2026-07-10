@@ -7,7 +7,9 @@ appending to the Progress Log at the bottom.
 
 The acceptance spec is `SevenLayerTest`
 (`magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/layers/SevenLayerTest.java`,
-100 tests). The red tests define the target behavior — never weaken them.
+100 tests). Since step 9 the suite is FULLY GREEN and serves as the layer-system regression
+spec — it must stay 100/100 green; never weaken an expectation (oracle-wrong card data in a
+setup may be corrected, Scryfall-verified — step 4/5/7 precedent).
 
 ## 1. Layer order (CR 613.1)
 
@@ -137,9 +139,14 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
 4. **Predicate evaluation during the pass:** when applying layer N, all predicates, filters,
    and dynamic counts evaluate against the `CharacteristicState`s **as of the layers already
    applied** — an Elf lord's "Elf" filter reads L4-resolved subtypes; Nightmare's 7a Swamp
-   count sees Evil Presence's L4 land-type override. This replaces the current
-   null-`FilterContext` recursion guard (`AmountEvaluationService` static contexts): there is
-   no recursion because layer N never reads layer ≥N state.
+   count sees Evil Presence's L4 land-type override. There is no recursion because layer N
+   never reads layer ≥N state. The null-`FilterContext` recursion guard
+   (`AmountEvaluationService` static contexts) is only PARTIALLY replaced (audited step 12):
+   subtype/color/keyword predicate leaves answer from the states while a pass is active, but
+   the P/T predicate leaves and toughness-based amounts still rely on the null-context
+   fallback to intrinsic `Permanent` reads (a static P/T-based filter must not re-enter
+   `computeStaticBonus` mid-pass) — the guard stays until 7b/7c state moves into
+   `CharacteristicState`.
 5. State-based actions and all queries (`getEffectivePower`, `hasKeyword`, `isCreature`, ...)
    read the finished states.
 
@@ -995,3 +1002,63 @@ and any deviations from this document.
     MindBend), the staticfx/battlefield/filter unit suites (incl. GameQueryServiceTest,
     PermanentTimestampTest, LayerClassifierTest, PredicateEvaluationServiceTest,
     TextChangeTransformerTest) and the full AI module suite — all green.
+
+12. **2026-07-10 — Step 12: cleanup audit of layer-replaced remnants.** Grepped every
+    candidate from the steps 4–10 cleanup-debt notes before touching anything. **Audit
+    outcome: NO `Permanent` field was deletable** — every candidate still has live main-code
+    writers, because the dual-write pattern is intentional (the floating effect drives layered
+    ordering; the field feeds direct intrinsic readers that cannot go layered). Confirmed
+    already-deleted: `powerToughnessSwitched` (step 7) and the four GameData steal sets
+    (step 8; `untilEndOfTurnStolenCreatures` survives only as a javadoc back-reference on
+    `isStolenUntilEndOfTurn`). **Remaining debt, per family, with the blocking readers/writers:**
+    `basePowerToughnessOverriddenUntilEndOfTurn`/`basePowerOverride`/`baseToughnessOverride`
+    (dual-written by both `SetBasePowerToughness*` handlers; read by the TurnCleanup reset
+    gate, LKI, the base-P/T fallback ladder, white-box card tests);
+    `losesAllAbilitiesUntilEndOfTurn` (dual-written by `LosesAllAbilitiesEffectHandler`; read
+    by TriggerCollectionService, GameQueryService, AbilityActivationService,
+    GameBroadcastService, pass seeding); `transientColors`/`colorOverridden` (dual-written by
+    `GrantColorUntilEndOfTurnEffectHandler`; read by `Permanent.getEffectiveColor`,
+    PermanentViewFactory's legacy branch, predicate/staticfx null-GameData fallbacks,
+    ActivatedAbilityExecutionService); `transientSubtypes` and `transientLandTypeOverride`
+    (NOT migrated — one-shot type state is still not floating effects; writers
+    AnimationSupport + `GrantBasicLandTypeToTargetEffectHandler`, readers throughout, the pass
+    seeds from them); `removedKeywords` (dual-written by `RemoveKeywordEffectHandler`);
+    `grantedKeywords` (many BUCKET-ONLY writers remain beyond the migrated SELF/TARGET/TOKENS
+    grant paths: haste riders in GraveyardReturnSupport/CardChoiceHandlerService/
+    GraveyardChoiceHandlerService/PutCreatureFromOpponentGraveyard...,
+    `GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler`, InnerFlameIgniter,
+    PermanentControlSupport token grants, ChoiceHandlerService, AnimationSupport incl. the
+    until-end-of-combat Jade Statue path); the animation flag families (dual-write by design,
+    step 6; `animatedUntilEndOfCombat` and the AWAKENING 8/8 still flag-only); all
+    `untilNextTurn*` fields (writers AnimationSupport/`GrantKeywordEffectHandler`/
+    `GrantActivatedAbilityEffectHandler`; readers `hasKeyword`, views, broadcast).
+    **Deleted:** the private `Permanent.getRawPower()/getRawToughness()` remnants (inlined
+    into `getEffectivePower()/getEffectiveToughness()` — the last pre-step-6 ladder names; the
+    `getBasePower()/getBaseToughness()` fallback ladder itself STAYS while the dual-written
+    fields exist, since its readers — LKI, mid-pass predicate leaves, null-GameData fallbacks —
+    cannot call the layered queries). No copy-constructor/field-count guard test exists for
+    `Permanent` (re-confirmed). **Kept with reasons:** the null-`FilterContext` recursion
+    guard is only PARTIALLY replaced by layered threading (subtype/color/keyword leaves read
+    `CharacteristicState` mid-pass; P/T leaves and toughness-based amounts still need the
+    null-context intrinsic fallback) — §5 point 4 rewritten accordingly;
+    `StaticBonusAccumulator` and the `StaticBonus` assembly remain the harvesting vehicle of
+    the pass (handlers write the accumulator; deletable only when handlers write
+    `CharacteristicState` directly). **Docs:** STATIC_EFFECT_HANDLERS.md intro rewritten
+    around the layered pass (handlers = what/who, pass = when) with a pointer to this doc;
+    its CDA paragraph corrected (7a base-P/T override since step 6, not add-on-0/0) and the
+    recursion-safety note updated. EFFECTS_INDEX.md entries updated to the layered mechanics:
+    `LosesAllAbilitiesEffect`, `SetBasePowerToughnessEffect`, `SwitchPowerToughnessEffect`,
+    `GrantColorUntilEndOfTurnEffect`, `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` (was
+    factually wrong — revert is floating-L1-expiry driven, not `resetModifiers()`),
+    `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `GrantBasicLandTypeToTargetEffect`,
+    `ChangeColorTextEffect`. CLAUDE.md's static-effects bullet now describes the layered pass.
+    The implement-card skill docs contain no accumulator references (grepped) — unchanged.
+    SevenLayerTest's javadoc and this doc's header rewritten: the suite is the layer-system
+    REGRESSION spec, 100/100 green, never to be weakened. Verification: full multi-module
+    compile; SevenLayerTest 100/100 green (10×10 groups), LayerDependencyTest 9/9,
+    FloatingEffectLifecycleTest 6/6; staticfx suite + TextChangeTransformerTest; the union of
+    the card tests named in the step 4–10 log entries (steal/control batch, animation/exchange
+    batch, setter/boost/CDA batch, text-change batch, copy batch) plus PermanentTimestampTest,
+    TurnCleanupServiceTest, TurnProgressionServiceTest, GameQueryServiceTest,
+    PredicateEvaluationServiceTest, CreatureControlServiceTest,
+    BecomeCopyOfTargetCreatureEffectHandlerTest — all green.
