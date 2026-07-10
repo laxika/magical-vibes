@@ -105,6 +105,27 @@ class LayeredBoardCacheTest extends BaseCardTest {
     }
 
     @Test
+    void conditionalStaticGrantsToggleWithoutInvalidatingTheBoard() {
+        // Conditional wrappers are excluded from the board computation (LayerSystemService
+        // skips them in collectInstances): their conditions read volatile inputs — life
+        // totals here — that the board fingerprint deliberately does not cover, and the
+        // static-bonus assembly evaluates them fresh on every query. The cached board entry
+        // must therefore be REUSED across the toggle while the answer still changes.
+        Permanent ascendant = add(player1, new com.github.laxika.magicalvibes.cards.s.SerraAscendant());
+
+        gd.playerLifeTotals.put(player1.getId(), 30);
+        assertThat(gqs.hasKeyword(gd, ascendant, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, ascendant)).isEqualTo(6);
+        Object cachedBoard = gd.layeredBoardCache;
+        assertThat(cachedBoard).isNotNull();
+
+        gd.playerLifeTotals.put(player1.getId(), 20);
+        assertThat(gqs.hasKeyword(gd, ascendant, Keyword.FLYING)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, ascendant)).isEqualTo(1);
+        assertThat(gd.layeredBoardCache).isSameAs(cachedBoard);
+    }
+
+    @Test
     void simulationCopyStartsColdAndNeverSharesTheCache() {
         add(player1, new GloriousAnthem());
         Permanent bear = add(player1, new GrizzlyBears());

@@ -65,10 +65,11 @@ class GutterGrimeTest extends BaseCardTest {
             assertThat(ooze.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(ooze.getCard().getSubtypes()).contains(CardSubtype.OOZE);
 
-            // Token base P/T is 0/0 but static effect gives it +1/+1
-            var bonus = gqs.computeStaticBonus(gd, ooze);
-            assertThat(ooze.getCard().getPower() + bonus.power()).isEqualTo(1);
-            assertThat(ooze.getCard().getToughness() + bonus.toughness()).isEqualTo(1);
+            // The token's "P/T equal to slime counters" ability is a characteristic-defining
+            // ability that SETS base P/T in layer 7a (CR 604.3, CR 613.3a) — it is a base
+            // override in the layered queries, not an additive bonus term.
+            assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(1);
         }
 
         @Test
@@ -107,11 +108,12 @@ class GutterGrimeTest extends BaseCardTest {
                     .toList();
             assertThat(oozes).hasSize(2);
 
-            // Both tokens should have P/T equal to 2 (current slime counter count)
+            // Both tokens should have P/T equal to 2 (current slime counter count) — the
+            // CDA sets base P/T in layer 7a (CR 604.3, CR 613.3a), so assert the layered
+            // queries rather than adding a bonus term onto the printed 0/0.
             for (Permanent ooze : oozes) {
-                var bonus = gqs.computeStaticBonus(gd, ooze);
-                assertThat(ooze.getCard().getPower() + bonus.power()).isEqualTo(2);
-                assertThat(ooze.getCard().getToughness() + bonus.toughness()).isEqualTo(2);
+                assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
             }
         }
 

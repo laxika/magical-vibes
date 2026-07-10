@@ -84,7 +84,11 @@ class BladesOfVelisVelTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
 
-        bears.resetModifiers(); // end-of-turn cleanup
+        // Simulate end-of-turn cleanup: the changeling grant is a floating CR 613 layer-4/6
+        // effect that expires with the until-end-of-turn floating effects, alongside the
+        // Permanent-level modifier reset.
+        bears.resetModifiers();
+        gd.expireEndOfTurnFloatingEffects();
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2); // no boost, no longer a Goblin
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);

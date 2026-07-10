@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
@@ -671,6 +673,16 @@ public class LayerSystemService {
         List<EffectInstance> instances = new ArrayList<>();
         for (PermanentSlot slot : slots) {
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
+                // Conditional wrappers are NEVER part of the board computation: their
+                // conditions read volatile game state (life totals, active player, poison,
+                // top of library, ...) that the board-cache fingerprint deliberately does not
+                // cover, so baking their result into the (memoized) board would go stale.
+                // They stay unmanaged — the static-bonus assembly evaluates the condition
+                // fresh on every query (legacy-additive, outside timestamp order; see
+                // LAYER_SYSTEM.md §5).
+                if (isConditionalWrapper(effect)) {
+                    continue;
+                }
                 LayerClassifier.LayerClassification classification = classifyOrNull(effect);
                 if (classification == null || !classification.layers().contains(layer)) {
                     continue;
@@ -687,6 +699,9 @@ public class LayerSystemService {
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (isConditionalWrapper(floating.effect())) {
+                    continue;
+                }
                 LayerClassifier.LayerClassification classification = classifyOrNull(floating.effect());
                 if (classification == null || !classification.layers().contains(layer)) {
                     continue;
@@ -703,6 +718,13 @@ public class LayerSystemService {
                 .thenComparingInt(EffectInstance::position)
                 .thenComparingInt(i -> abilityRemovalRank(i.effect())));
         return instances;
+    }
+
+    /** Conditional wrappers are excluded from the board computation (assembly-evaluated per
+     *  query instead) — the board must remain a pure function of the fingerprinted inputs. */
+    private static boolean isConditionalWrapper(CardEffect effect) {
+        return effect instanceof ConditionalEffect
+                || effect instanceof EnchantedPermanentConditionalEffect;
     }
 
     /** Equal-timestamp tie-break within one source: lose-all, then keyword removals, then grants. */
