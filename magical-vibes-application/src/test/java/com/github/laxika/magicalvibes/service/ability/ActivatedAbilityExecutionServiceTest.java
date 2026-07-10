@@ -1118,6 +1118,38 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
             verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
         }
+
+        @Test
+        @DisplayName("Each-opponent rider damage partially prevented by next-source shield deals only the remainder")
+        void riderDamagePartiallyPreventedByNextSourceShield() {
+            Card card = createCard("Test Rider Creature", CardType.CREATURE);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.RED, 1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {R}. When you do, deals 2 damage to each opponent.");
+
+            stubIsCreature(perm, true);
+            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player2Id), eq(perm.getId())))
+                    .thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player2Id), any()))
+                    .thenReturn(false);
+            // Opponent's shield absorbs 1 of the 2 damage
+            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player2Id, perm.getId(), 2))
+                    .thenReturn(1);
+            when(damagePreventionService.applyPlayerPreventionShield(gameData, player2Id, 1)).thenReturn(1);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player2Id), eq(1), anyString()))
+                    .thenReturn(1);
+            when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player2Id)).thenReturn(false);
+            when(gameQueryService.canPlayerLifeChange(gameData, player2Id)).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            // Only the unprevented remainder (1 of 2) hits the opponent; the controller is untouched
+            assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(19);
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player2Id, 1);
+        }
     }
 
     // =========================================================================
