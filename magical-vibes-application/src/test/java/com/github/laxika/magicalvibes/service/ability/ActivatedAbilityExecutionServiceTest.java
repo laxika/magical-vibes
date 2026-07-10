@@ -1071,6 +1071,8 @@ class ActivatedAbilityExecutionServiceTest {
                     .thenReturn(false);
             when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
                     .thenReturn(false);
+            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 1))
+                    .thenReturn(1);
             // Shield absorbs all 1 damage
             when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(0);
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(0), anyString()))
@@ -1082,6 +1084,38 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
             // 1 damage fully absorbed by shield
             assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(20);
+            verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
+        }
+
+        @Test
+        @DisplayName("Pain land damage partially prevented by next-source shield deals only the remainder")
+        void painLandDamagePartiallyPreventedByNextSourceShield() {
+            Card card = createCard("Test Pain Land", CardType.LAND);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 2 damage.");
+
+            stubIsCreature(perm, false);
+            when(gameQueryService.isDamagePreventable(gameData)).thenReturn(true);
+            when(gameQueryService.isDamageFromSourcePrevented(eq(gameData), any())).thenReturn(false);
+            when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gameData), eq(player1Id), eq(perm.getId())))
+                    .thenReturn(false);
+            when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
+                    .thenReturn(false);
+            // Shield absorbs 1 of the 2 damage
+            when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), 2))
+                    .thenReturn(1);
+            when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, 1)).thenReturn(1);
+            when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(1), anyString()))
+                    .thenReturn(1);
+            when(gameQueryService.shouldDamageBeDealtAsInfect(gameData, player1Id)).thenReturn(false);
+            when(gameQueryService.canPlayerLifeChange(gameData, player1Id)).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.playerManaPools.get(player1Id).get(ManaColor.WHITE)).isEqualTo(1);
+            // Only the unprevented remainder (1 of 2) is dealt
+            assertThat(gameData.playerLifeTotals.get(player1Id)).isEqualTo(19);
             verify(damagePreventionService).applyPlayerPreventionShield(gameData, player1Id, 1);
         }
     }
@@ -1276,6 +1310,8 @@ class ActivatedAbilityExecutionServiceTest {
                 .thenReturn(false);
         when(damagePreventionService.applyColorDamagePreventionForPlayer(eq(gameData), eq(player1Id), any()))
                 .thenReturn(false);
+        when(damagePreventionService.applyPlayerNextSourceDamageShield(gameData, player1Id, perm.getId(), damage))
+                .thenReturn(damage);
         when(damagePreventionService.applyPlayerPreventionShield(gameData, player1Id, damage)).thenReturn(damage);
         when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gameData), eq(player1Id), eq(damage), anyString()))
                 .thenReturn(damage);

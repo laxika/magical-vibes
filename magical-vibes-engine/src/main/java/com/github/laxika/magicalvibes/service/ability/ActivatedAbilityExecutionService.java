@@ -480,12 +480,18 @@ public class ActivatedAbilityExecutionService {
                 String cardName = permanent.getCard().getName();
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0, false));
-                if (!gameQueryService.isDamagePreventable(gameData)
-                        || (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
-                            && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
-                            && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                            && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())
-                            && damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage) > 0)) {
+                if (gameQueryService.isDamagePreventable(gameData)) {
+                    if (gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
+                            || damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                            || gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
+                            || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())) {
+                        damage = 0;
+                    } else {
+                        // One-shot Circle-of-Protection shields may prevent only part of the damage
+                        damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage);
+                    }
+                }
+                if (damage > 0) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {

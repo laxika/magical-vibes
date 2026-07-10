@@ -117,7 +117,9 @@ abstract class AbstractDamageHandlerTest {
 
     protected void stubCreatureSourceRedirects() {
         when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(eq(gd), any(), anyInt())).thenAnswer(inv -> inv.getArgument(2));
     }
 
     protected void stubLethalDamage(boolean isLethal) {
