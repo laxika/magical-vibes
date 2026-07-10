@@ -146,7 +146,61 @@ added for attachment-backed effects:
 (`CONTINUOUS` and `UNTIL_END_OF_COMBAT` also exist on the enum for its pre-existing users;
 floating effects may use `UNTIL_END_OF_COMBAT`, and `CONTINUOUS` is not valid for them.)
 
-## 7. Migration plan context
+## 7. Classification notes
+
+`LayerClassifier` (engine, `service/effect/LayerClassifier.java`, static registry) maps every
+continuous-effect type to the `Layer`s it contributes to:
+`classify(CardEffect, boolean fromOwnStaticSlot)` returns a `LayerClassification(layers,
+characteristicDefining, colorSetting)`; `possibleLayers(Class)` returns the per-type union for
+coverage checks. `fromOwnStaticSlot` means source == affected AND the effect comes from the
+object's own `EffectSlot.STATIC` — the CDA criterion. Nothing consumes it yet; the layered
+engine does next. **Every new static effect must be registered there** —
+`LayerClassifierTest` walks all `StaticEffectHandlerBean`s and fails on unclassified types.
+
+Reasoning behind the non-obvious mappings:
+
+- **One effect, several layers, ONE timestamp.** `StaticBoostEffect` with granted keywords →
+  L6 + 7c (keywordless → 7c only). `AnimateNoncreatureArtifactsEffect` (March of the
+  Machines) → L4 + 7b per CR 613.4: the artifact stays a creature via L4 even when a later 7b
+  setter (Lignify/Diminish) overrides the MV-based base P/T.
+- **7a vs 7b.** `SetPowerToughnessToAmountEffect` from the creature's own STATIC slot is the
+  `*/*` characteristic-defining ability → 7a with the CDA flag; anywhere else (granted,
+  one-shot) → 7b. `SetBasePowerToughnessEffect` ("has base power and toughness X/Y") is
+  ALWAYS 7b, even self-applied.
+- **Color additive vs setting** (`colorSetting` on the classification): `GrantColorEffect`
+  follows its existing `overriding` flag. Verified against Scryfall oracle text 2026-07-10:
+  Deep Freeze is "is a blue Wall **in addition to** its other colors and types" → ADDITIVE
+  (the migration plan's earlier assumption that Deep Freeze is setting was wrong; the card
+  class's `overriding=false` matches the oracle). Incite "becomes red" and Grand Architect
+  "becomes blue" replace colors (CR 105.3) → `GrantColorUntilEndOfTurnEffect` is always
+  setting. Nim Deathmantle "is black" (no "in addition") → setting (`overriding=true`).
+- **CDA flag on the Cairn Wanderer family** (`GainKeywordsOfCreatureCardsInAllGraveyards`,
+  `GainActivatedAbilitiesOfCreatureCardsInAllGraveyards`, `GainActivatedAbilitiesOfExiledCards`
+  → L6 + CDA): strictly, CR 604.3a limits CDAs to colors/subtypes/power/toughness — an
+  ability-adding effect is NOT a CR-legal CDA. The flag is a deliberate modeling decision from
+  the migration plan: these self-scans read out-of-battlefield zones only, so applying them
+  before the timestamp-ordered L6 effects cannot change any outcome (a later "loses all
+  abilities" strips the scanned keywords either way; ordering among grants is commutative).
+  All three members of the family are flagged for consistency.
+- **Blood Moon** (`NonbasicLandsBecomeTypeEffect`) is L4 ONLY: the affected land losing its
+  printed abilities is a consequence of the land-type override itself (CR 305.7), not a
+  separate L6 contribution.
+- **Ability grants are L6 regardless of the granted ability's content**:
+  `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
+  ability to the object; what that ability later does is the ability's business.
+- **Wrappers classify by what they wrap.** `ConditionalEffect` delegates to `wrapped()`
+  (passing `fromOwnStaticSlot` through); `EnchantedPermanentConditionalEffect` unions both
+  branches, since which branch applies is game-state-dependent. Their declared
+  `possibleLayers` union is L4–L7d (conditions never wrap copy/control/text effects here).
+- **One-shot continuous effects** (future floating effects) are classified alongside the
+  statics: copy (`BecomeCopyOfTargetCreature*`, `CopyPermanentOnEnterEffect`) → L1; control
+  (`GainControlOfTargetEffect`, `ControlEnchantedCreatureEffect`,
+  `GainControlOfEnchantedTargetEffect`, `GainControlOfTargetAuraEffect`,
+  `TargetPlayerGainsControlOfSourceCreatureEffect`) → L2; `ChangeColorTextEffect` (Mind Bend)
+  → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
+  `SwitchPowerToughnessEffect` → 7d.
+
+## 8. Migration plan context
 
 This document is step 1 of ~14. Rough sequence: (1) design doc + domain scaffolding +
 timestamps ✅, (2) `FloatingContinuousEffect` storage on `GameData` + creation/expiry
@@ -210,3 +264,20 @@ and any deviations from this document.
    New tests: `layers/FloatingEffectLifecycleTest` (stamping, cleanup-step expiry,
    destroyed-source expiry, unattach expiry, per-controller turn-start expiry, simulation-copy
    independence). SevenLayerTest unchanged at 69 green / 31 red.
+
+3. **2026-07-10 — Step 3: layer classification for every known continuous-effect type.**
+   Added `LayerClassifier` (engine `service/effect/`, static registry keyed by effect class —
+   no behavior change, nothing consumes it yet) covering every effect type registered in
+   `StaticEffectHandlerRegistry` plus the one-shot continuous effects SevenLayerTest exercises
+   (copy/control/text/type-loss/color/base-P/T/boost/switch). Full reasoning in the new §7
+   "Classification notes"; headline calls: `StaticBoostEffect` w/ keywords → L6+7c,
+   `AnimateNoncreatureArtifactsEffect` → L4+7b, `SetPowerToughnessToAmountEffect` own-STATIC-slot
+   → 7a CDA else 7b, Cairn-Wanderer-family self scans → L6 with a (rules-inexact, documented)
+   CDA flag, wrappers delegate to their wrapped effect. Deviation from the step's plan found by
+   oracle-text check: Deep Freeze's "is a blue Wall" is ADDITIVE ("in addition to its other
+   colors and types"), not setting — `GrantColorEffect` classifies by its `overriding` flag;
+   `GrantColorUntilEndOfTurnEffect` ("becomes red/blue") is always setting. New test:
+   `service/effect/staticfx/LayerClassifierTest` — walks every `StaticEffectHandlerBean` in the
+   engine context and asserts a non-empty layer set per handled effect type (enforces that new
+   static effects get classified), plus direct pins of the mappings above. SevenLayerTest
+   unchanged at 69 green / 31 red; staticfx suite green.

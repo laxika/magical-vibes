@@ -81,7 +81,11 @@ generic handlers — do NOT add per-condition handlers:
 
 1. Add the effect record in `magical-vibes-domain/.../model/effect/` if it does not exist.
 2. Create the handler class(es) in `staticfx/` following the naming convention above.
-3. Add card tests covering the static behavior.
+3. Register the effect type in `LayerClassifier` (`service/effect/LayerClassifier.java`) with
+   the CR 613 layer(s) it contributes to — `LayerClassifierTest` walks every registered handler
+   and fails on unclassified effect types. See `agent-docs/LAYER_SYSTEM.md` §7 for the
+   classification rules.
+4. Add card tests covering the static behavior.
 
 Verification after adding a handler:
 
