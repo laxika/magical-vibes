@@ -69,6 +69,7 @@ public class MayMiscHandlerService {
             Permanent equipPerm = gameQueryService.findPermanentById(gameData, equipId);
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (equipPerm != null && targetPerm != null) {
+                gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
                 // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                 equipPerm.setTimestamp(gameData.nextTimestamp());

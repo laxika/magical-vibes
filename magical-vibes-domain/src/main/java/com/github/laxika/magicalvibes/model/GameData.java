@@ -20,9 +20,11 @@ import java.util.stream.Collectors;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 public class GameData {
 
@@ -422,6 +424,73 @@ public class GameData {
     /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
     public long nextTimestamp() {
         return ++timestampCounter;
+    }
+
+    /** Continuous effects created by resolved spells/abilities (CR 611.2), for the CR 613 layer
+     *  engine (see {@code agent-docs/LAYER_SYSTEM.md}). Stamped via {@link #addFloatingEffect}
+     *  and expired by duration: {@code UNTIL_END_OF_TURN} at the cleanup step,
+     *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
+     *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
+     *  of the controller's next turn. */
+    public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Stamps the given floating effect with the next CR 613.7 timestamp, stores it, and returns
+     * the stamped instance (the passed-in effect's own timestamp is ignored).
+     */
+    public FloatingContinuousEffect addFloatingEffect(FloatingContinuousEffect effect) {
+        FloatingContinuousEffect stamped = effect.withTimestamp(nextTimestamp());
+        floatingEffects.add(stamped);
+        return stamped;
+    }
+
+    /** Removes and returns all floating effects with {@code UNTIL_END_OF_TURN} duration (cleanup step). */
+    public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN);
+    }
+
+    /**
+     * Removes and returns all floating effects that depended on the given source permanent still
+     * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD} and {@code WHILE_ATTACHED}).
+     * Called whenever a permanent leaves any battlefield.
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
+        return expireFloatingEffects(fe ->
+                (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                        || fe.duration() == EffectDuration.WHILE_ATTACHED)
+                        && sourcePermanentId.equals(fe.sourcePermanentId()));
+    }
+
+    /**
+     * Removes and returns all {@code WHILE_ATTACHED} floating effects sourced from the given
+     * Aura/Equipment. Called whenever the attachment becomes unattached or attaches to a new
+     * permanent (the old attachment's effects end either way).
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsForUnattachedSource(UUID sourcePermanentId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+                && sourcePermanentId.equals(fe.sourcePermanentId()));
+    }
+
+    /**
+     * Removes and returns all {@code UNTIL_YOUR_NEXT_TURN} floating effects controlled by the
+     * given player. Called when that player's turn begins.
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+                && playerId.equals(fe.controllerId()));
+    }
+
+    private List<FloatingContinuousEffect> expireFloatingEffects(Predicate<FloatingContinuousEffect> expired) {
+        List<FloatingContinuousEffect> removed = new ArrayList<>();
+        var it = floatingEffects.iterator();
+        while (it.hasNext()) {
+            FloatingContinuousEffect fe = it.next();
+            if (expired.test(fe)) {
+                removed.add(fe);
+                it.remove();
+            }
+        }
+        return removed;
     }
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
@@ -1086,6 +1155,9 @@ public class GameData {
 
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
+
+        // --- Floating continuous effects (immutable records, safe to share) ---
+        copy.floatingEffects.addAll(this.floatingEffects);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

@@ -56,6 +56,10 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void resetEndOfTurnModifiers(GameData gameData) {
+        // CR 613 layer engine: "until end of turn" floating continuous effects wear off here,
+        // before the legacy per-permanent modifier reset below.
+        gameData.expireEndOfTurnFloatingEffects();
+
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);

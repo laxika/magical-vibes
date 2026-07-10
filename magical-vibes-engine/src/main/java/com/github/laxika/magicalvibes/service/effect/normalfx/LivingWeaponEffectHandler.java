@@ -86,6 +86,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                 if (lastTokenPermanent != null) {
                     Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                     if (equipment != null) {
+                        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
                         equipment.setAttachedTo(lastTokenPermanent.getId());
                         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                         equipment.setTimestamp(gameData.nextTimestamp());

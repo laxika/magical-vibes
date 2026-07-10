@@ -212,6 +212,7 @@ public class TurnProgressionService {
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
         }
+        gameData.expireFloatingEffectsAtTurnStart(nextActive);
 
         // Revert "until your next turn" copies (e.g. Shapesharer) belonging to the player whose
         // turn is beginning. The copied permanent may be on any player's battlefield.

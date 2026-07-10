@@ -39,4 +39,11 @@ public record FloatingContinuousEffect(
         PermanentPredicate scope,
         EffectDuration duration,
         long timestamp) {
+
+    /** Returns a copy of this effect carrying the given CR 613.7 timestamp (used by
+     *  {@code GameData.addFloatingEffect} to stamp the effect on insertion). */
+    public FloatingContinuousEffect withTimestamp(long timestamp) {
+        return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp);
+    }
 }

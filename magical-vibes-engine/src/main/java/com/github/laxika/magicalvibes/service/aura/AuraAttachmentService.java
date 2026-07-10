@@ -62,11 +62,13 @@ public class AuraAttachmentService {
                     if (p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         // Equipment stays on the battlefield unattached when the equipped creature leaves
                         p.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                         String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         it.remove();
+                        gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                         String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -165,6 +167,7 @@ public class AuraAttachmentService {
                     if (creature.isAttached()
                             && creature.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                         creature.setAttachedTo(null);
+                        gameData.expireFloatingEffectsForUnattachedSource(creature.getId());
                         String unattachLog = creature.getCard().getName() + " becomes unattached.";
                         gameBroadcastService.logAndBroadcast(gameData, unattachLog);
                         log.info("Game {} - {} unattached on control change", gameData.id, creature.getCard().getName());

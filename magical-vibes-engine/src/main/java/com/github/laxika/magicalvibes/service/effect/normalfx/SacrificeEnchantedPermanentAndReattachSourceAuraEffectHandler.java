@@ -104,6 +104,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         }
 
         Permanent newTarget = gameQueryService.findPermanentById(gameData, validTargetIds.getFirst());
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(newTarget.getId());
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());

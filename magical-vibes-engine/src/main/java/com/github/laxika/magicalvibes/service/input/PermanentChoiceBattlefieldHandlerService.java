@@ -115,6 +115,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target permanent no longer exists");
         }
 
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(permanentId);
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
@@ -147,6 +148,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, playerName + " sacrifices " + toSacrifice.getCard().getName() + ".");
         }
 
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(permanentId);
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());

@@ -180,3 +180,33 @@ and any deviations from this document.
    unit tests: `service/battlefield/PermanentTimestampTest` (entry stamping, attach
    re-stamp, steal keeps stamp, copy semantics). SevenLayerTest unchanged at 69 green /
    31 red (no behavior change intended or made).
+
+2. **2026-07-10 — Step 2: floating-effect store + lifecycle plumbing.** Added
+   `GameData.floatingEffects` (`Collections.synchronizedList`, matching existing GameData
+   conventions) with `addFloatingEffect(...)` stamping `nextTimestamp()` on insertion (via a
+   new `FloatingContinuousEffect.withTimestamp(...)`; the record is immutable, so
+   `simulationCopy()` shares instances via `addAll`, list itself independent). Expiry helpers
+   on `GameData` (mirroring the `drainDelayedActions` pattern, each returns the removed
+   effects): `expireEndOfTurnFloatingEffects()` — called at the top of
+   `TurnCleanupService.resetEndOfTurnModifiers` BEFORE the `resetModifiers()` loop (covers
+   both the cleanup step and the "end the turn" effect via `TurnSupport`);
+   `expireFloatingEffectsForDepartedSource(id)` (WHILE_SOURCE_ON_BATTLEFIELD + WHILE_ATTACHED)
+   — called from `PermanentRemovalService.processRemovalCleanup` (the funnel both
+   `removeFromBattlefield` and `processAlreadyRemovedToGraveyard` converge on) AND from the
+   one leave-battlefield path outside the funnel found by grep:
+   `AuraAttachmentService.removeOrphanedAuras`'s orphaned-aura `it.remove()` (the other direct
+   `battlefield.remove(` sites are control-change moves or a lookahead that restores state);
+   `expireFloatingEffectsForUnattachedSource(id)` (WHILE_ATTACHED) — called at every
+   `setAttachedTo(null)` site (AuraAttachmentService equipment-orphan + control-change
+   unattach, AnimationSupport equipment-animation ×2 + transform-to-non-Equipment,
+   UnattachEquipmentFromTargetPermanentsEffectHandler) and, since reattaching ends the old
+   attachment's effects, immediately before the attach at the same ten CR 613.7e re-stamp
+   sites from step 1; `expireFloatingEffectsAtTurnStart(playerId)` (UNTIL_YOUR_NEXT_TURN) —
+   called next to the `clearUntilNextTurnEffects()` hook in `TurnProgressionService`. No
+   game-log entries for expiry (deviation from "log if obvious pattern": existing wear-offs —
+   `resetModifiers`, `clearUntilNextTurnEffects` — are not logged either, so there is no
+   pattern to follow). UNTIL_END_OF_COMBAT floating expiry is NOT plumbed yet — add it at
+   `clearCombatState` time when a consumer needs it. Nothing reads `floatingEffects` yet.
+   New tests: `layers/FloatingEffectLifecycleTest` (stamping, cleanup-step expiry,
+   destroyed-source expiry, unattach expiry, per-controller turn-start expiry, simulation-copy
+   independence). SevenLayerTest unchanged at 69 green / 31 red.

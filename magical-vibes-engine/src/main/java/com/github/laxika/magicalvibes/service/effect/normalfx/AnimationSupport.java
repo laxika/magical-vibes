@@ -197,6 +197,7 @@ public class AnimationSupport {
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     permanent.setAttachedTo(null);
+                    gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
                     String unattachLog = permanent.getCard().getName() + " becomes unattached.";
                     gameBroadcastService.logAndBroadcast(gameData, unattachLog);
                 }
@@ -237,6 +238,7 @@ public class AnimationSupport {
         // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
         if (target.isAttached() && target.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             target.setAttachedTo(null);
+            gameData.expireFloatingEffectsForUnattachedSource(target.getId());
             String unattachLog = target.getCard().getName() + " becomes unattached.";
             gameBroadcastService.logAndBroadcast(gameData, unattachLog);
             log.info("Game {} - {} unattached (equipment became creature)", gameData.id, target.getCard().getName());
@@ -318,6 +320,7 @@ public class AnimationSupport {
             return;
         }
 
+        gameData.expireFloatingEffectsForUnattachedSource(source.getId());
         source.setAttachedTo(target.getId());
         // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
         source.setTimestamp(gameData.nextTimestamp());
@@ -348,6 +351,7 @@ public class AnimationSupport {
         String frontName = self.getCard().getName();
         if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
             self.setAttachedTo(null);
+            gameData.expireFloatingEffectsForUnattachedSource(self.getId());
             String unattachLog = frontName + " becomes unattached.";
             gameBroadcastService.logAndBroadcast(gameData, unattachLog);
             log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);

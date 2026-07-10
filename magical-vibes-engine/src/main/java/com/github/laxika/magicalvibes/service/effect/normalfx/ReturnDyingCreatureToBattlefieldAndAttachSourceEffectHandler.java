@@ -62,6 +62,7 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         // Attach the source equipment to the returned creature
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (equipment != null) {
+            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
             // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
             equipment.setTimestamp(gameData.nextTimestamp());
