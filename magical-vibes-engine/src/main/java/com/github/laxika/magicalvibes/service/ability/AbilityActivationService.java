@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivate
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -738,6 +739,8 @@ public class AbilityActivationService {
                 .map(e -> (MillControllerCost) e)
                 .findFirst();
 
+        boolean discardHandCost = abilityEffects.stream().anyMatch(e -> e instanceof DiscardHandCost);
+
         Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
                 .map(e -> (RemoveChargeCountersFromSourceCost) e)
@@ -853,6 +856,11 @@ public class AbilityActivationService {
         // Pay mill-controller cost
         if (millControllerCost.isPresent()) {
             graveyardService.resolveMillPlayer(gameData, playerId, millControllerCost.get().count());
+        }
+
+        // Pay discard-your-hand cost
+        if (discardHandCost) {
+            payDiscardHandCost(gameData, player);
         }
 
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
@@ -1341,6 +1349,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if this creature is attacking");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT) {
+                if (!gameData.currentStep.isCombatPhase()) {
+                    throw new IllegalStateException("This ability can only be activated during combat");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_CREATURE) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
                     throw new IllegalStateException("This ability can only be activated while this permanent is a creature");
@@ -1407,6 +1420,11 @@ public class AbilityActivationService {
         if (ability.getTimingRestriction() == ActivationTimingRestriction.RAID) {
             if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) {
                 throw new IllegalStateException("Raid — activate only if you attacked this turn");
+            }
+        }
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
+            if (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.UPKEEP) {
+                throw new IllegalStateException("This ability can only be activated during your upkeep");
             }
         }
     }
@@ -1583,6 +1601,27 @@ public class AbilityActivationService {
         String logEntry = player.getUsername() + " discards " + discarded.getName() + " as an activation cost.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), discarded.getName());
+    }
+
+    private void payDiscardHandCost(GameData gameData, Player player) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            return;
+        }
+
+        List<Card> discarded = new ArrayList<>(hand);
+        hand.clear();
+        gameData.discardCausedByOpponent = false;
+        for (Card card : discarded) {
+            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+        }
+
+        String logEntry = player.getUsername() + " discards their hand (" + discarded.size()
+                + " card" + (discarded.size() != 1 ? "s" : "") + ") as an activation cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} discards hand of {} cards as activation cost", gameData.id, player.getUsername(), discarded.size());
     }
 
     private List<Integer> collectGraveyardIndicesForType(List<Card> graveyard, CardType requiredType, CardSubtype requiredSubtype) {

@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -23,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -57,6 +60,7 @@ public class MayPenaltyChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -483,6 +487,75 @@ public class MayPenaltyChoiceHandlerService {
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleForcedCostOrElseOptionalChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        ForcedCostOrElseEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof ForcedCostOrElseEffect)
+                .map(e -> (ForcedCostOrElseEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID controllerId = ability.controllerId();
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
+            ManaCost cost = new ManaCost(payCost.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(controllerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays " + payCost.manaCost() + ". (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), payCost.manaCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but can't actually pay — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()));
+            if (matchingIds.size() >= multiCost.count()) {
+                // sacrificePlayerMatchingPermanents sacrifices all when the count matches exactly, or
+                // begins a multi-select choice when the controller has more than needed. The choice's
+                // completion continues the game itself, so only auto-pass here when nothing is pending.
+                destructionSupport.sacrificePlayerMatchingPermanents(gameData, controllerId, multiCost.count(), multiCost.filter());
+                if (matchingIds.size() == multiCost.count()) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but no longer enough to sacrifice — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
+
+            if (matchingIds.size() == 1) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
+                if (perm != null) {
+                    destructionSupport.sacrificeAndLog(gameData, perm, controllerId);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+            } else if (matchingIds.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ForcedCostOrElse(controllerId, ability.sourcePermanentId(),
+                                ability.sourceCard(), effect));
+                playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
+                        "Choose a permanent to sacrifice (" + sacrificeCost.description() + ").");
+                return;
+            }
+            // Accepted but nothing left to sacrifice — fall through to the penalty.
+        }
+
+        // Declined (or unable to pay) — resolve the fallback/penalty effects.
+        StackEntry syntheticEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                ability.sourceCard().getName() + "'s ability", List.of(effect),
+                null, ability.sourcePermanentId());
+        destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

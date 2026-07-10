@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "296")
+@CardRegistration(set = "9ED", collectorNumber = "270")
 public class SeedbornMuse extends Card {
 
     public SeedbornMuse() {

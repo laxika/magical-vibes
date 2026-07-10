@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
@@ -207,6 +208,11 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
+            }
+            // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
+            // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
+            if (isCantAttackDefenderDueToRestriction(gameData, attacker, targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can't attack that player");
             }
             resolvedTargets.put(idx, targetId);
         }
@@ -593,6 +599,27 @@ public class CombatAttackService {
                     ctx = ConditionContext.forPermanent(creature, controllerId);
                 }
                 if (!conditionEvaluationService.isMet(gameData, condition, ctx)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Defender-scoped attack restriction (CR 508.1a): the attacked player controls a permanent with a
+     * {@link CreaturesCantAttackControllerUnlessPredicateEffect}, and the attacker does not match its
+     * exemption predicate (e.g. Form of the Dragon's "Creatures without flying can't attack you").
+     * Only players can carry this restriction, so it never applies to attacks aimed at a planeswalker.
+     */
+    private boolean isCantAttackDefenderDueToRestriction(GameData gameData, Permanent attacker, UUID targetId) {
+        if (!gameData.playerIds.contains(targetId)) return false;
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(targetId);
+        if (defenderBattlefield == null) return false;
+        for (Permanent perm : defenderBattlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
                     return true;
                 }
             }

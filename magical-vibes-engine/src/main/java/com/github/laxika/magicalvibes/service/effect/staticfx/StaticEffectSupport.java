@@ -133,6 +133,7 @@ public class StaticEffectSupport {
     public boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
@@ -271,6 +272,7 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentIsCreaturePredicate)
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
+                    || target.isAnimatedUntilEndOfCombat()
                     || target.isAnimatedUntilNextTurn()
                     || target.getCounterCount(CounterType.AWAKENING) > 0;
         if (filter instanceof PermanentIsArtifactPredicate)

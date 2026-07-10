@@ -384,7 +384,8 @@ public class GameBroadcastService {
     private boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool,
                                    int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
         boolean landPlayable = card.hasType(CardType.LAND)
-                && ctx.isActivePlayer() && ctx.isMainPhase() && ctx.landsPlayed() < 1 && ctx.stackEmpty();
+                && ctx.isActivePlayer() && ctx.isMainPhase()
+                && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty();
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -580,7 +581,7 @@ public class GameBroadcastService {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         boolean stackEmpty = gameData.stack.isEmpty();
 
-        if (!isActivePlayer || !isMainPhase || landsPlayed >= 1 || !stackEmpty) {
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty) {
             return playable;
         }
 
@@ -794,7 +795,7 @@ public class GameBroadcastService {
             }
 
             if (card.hasType(CardType.LAND)) {
-                if (isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+                if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty) {
                     playable.add(cardViewFactory.create(card));
                 }
                 continue;

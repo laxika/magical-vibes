@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "260")
+@CardRegistration(set = "9ED", collectorNumber = "237")
 public class ElvishBerserker extends Card {
 
     public ElvishBerserker() {

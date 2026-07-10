@@ -12,6 +12,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "207")
+@CardRegistration(set = "9ED", collectorNumber = "192")
 public class GoblinKing extends Card {
 
     public GoblinKing() {

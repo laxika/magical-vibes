@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "M11", collectorNumber = "140")
+@CardRegistration(set = "9ED", collectorNumber = "189")
 public class GoblinBalloonBrigade extends Card {
 
     public GoblinBalloonBrigade() {

@@ -51,6 +51,8 @@ public class GameData {
     public int turnNumber;
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
+    /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
+    public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
@@ -641,6 +643,11 @@ public class GameData {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
     }
 
+    /** Total lands the given player may play this turn: the normal one plus any additional grants. */
+    public int getMaxLandsThisTurn(UUID playerId) {
+        return 1 + additionalLandsThisTurn.getOrDefault(playerId, 0);
+    }
+
     /**
      * Returns an unmodifiable view of the spells the given player has cast this turn.
      */
@@ -945,6 +952,7 @@ public class GameData {
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->

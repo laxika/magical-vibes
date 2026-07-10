@@ -251,6 +251,10 @@ public class GameSimulator {
                     for (var kw : kgc.options()) {
                         actions.add(new SimulationAction.ChooseColor(kw.name()));
                     }
+                } else if (cc.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
+                    actions.add(new SimulationAction.ChooseColor("LAND"));
+                    actions.add(new SimulationAction.ChooseColor("CREATURE"));
+                    actions.add(new SimulationAction.ChooseColor("ARTIFACT"));
                 } else {
                     actions.add(new SimulationAction.ChooseColor("WHITE"));
                     actions.add(new SimulationAction.ChooseColor("BLUE"));
@@ -460,6 +464,8 @@ public class GameSimulator {
             case PendingInteraction.ColorChoice ccCtx -> {
                 if (ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     gameService.handleListChoice(gd, player, kgc.options().getFirst().name());
+                } else if (ccCtx.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
+                    gameService.handleListChoice(gd, player, "LAND");
                 } else {
                     gameService.handleListChoice(gd, player, "RED");
                 }

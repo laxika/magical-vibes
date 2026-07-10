@@ -68,6 +68,11 @@ public class Permanent {
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
     @Setter private boolean animatedUntilEndOfTurn;
+    /** When {@code true}, this permanent is animated as a creature until the combat phase ends
+     *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
+     *  {@link #animatedColor}/{@link #transientSubtypes} storage as {@link #animatedUntilEndOfTurn}.
+     *  Cleared by {@link #clearCombatState()} when combat ends. */
+    @Setter private boolean animatedUntilEndOfCombat;
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
     @Setter private CardColor animatedColor;
@@ -268,6 +273,7 @@ public class Permanent {
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
+        this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
         this.animatedToughness = source.animatedToughness;
         this.animatedColor = source.animatedColor;
@@ -377,6 +383,25 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
+        clearUntilEndOfCombatAnimation();
+    }
+
+    /**
+     * Reverts an "until end of combat" animation (e.g. Jade Statue) when the combat phase ends.
+     * Clears the shared animation storage that {@link #animatedUntilEndOfCombat} uses. No-op when
+     * the permanent is not animated until end of combat, so unrelated transient grants are preserved.
+     */
+    public void clearUntilEndOfCombatAnimation() {
+        if (!animatedUntilEndOfCombat) {
+            return;
+        }
+        this.animatedUntilEndOfCombat = false;
+        this.animatedPower = 0;
+        this.animatedToughness = 0;
+        this.animatedColor = null;
+        this.grantedKeywords.clear();
+        this.transientSubtypes.clear();
+        this.grantedCardTypes.clear();
     }
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {
@@ -457,7 +482,7 @@ public class Permanent {
         } else if (basePowerOverriddenPermanently) {
             // Layer 7b: permanent power override (e.g. Evra, Halcyon Witness exchange)
             basePower = permanentBasePowerOverride;
-        } else if (animatedUntilEndOfTurn) {
+        } else if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
             basePower = animatedPower;
         } else if (animatedUntilNextTurn) {
             basePower = untilNextTurnAnimatedPower;
@@ -479,7 +504,7 @@ public class Permanent {
         } else if (baseToughnessOverriddenPermanently) {
             // Layer 7b: permanent toughness override (e.g. Tree of Redemption exchange)
             baseToughness = permanentBaseToughnessOverride;
-        } else if (animatedUntilEndOfTurn) {
+        } else if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
             baseToughness = animatedToughness;
         } else if (animatedUntilNextTurn) {
             baseToughness = untilNextTurnAnimatedToughness;
@@ -497,7 +522,7 @@ public class Permanent {
         if (colorOverridden && !transientColors.isEmpty()) {
             return transientColors.iterator().next();
         }
-        if (animatedUntilEndOfTurn && animatedColor != null) {
+        if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
             return animatedColor;
         }
         if (getCounterCount(CounterType.AWAKENING) > 0) {
@@ -540,6 +565,7 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();
         this.animatedUntilEndOfTurn = false;
+        this.animatedUntilEndOfCombat = false;
         this.animatedPower = 0;
         this.animatedToughness = 0;
         this.animatedColor = null;

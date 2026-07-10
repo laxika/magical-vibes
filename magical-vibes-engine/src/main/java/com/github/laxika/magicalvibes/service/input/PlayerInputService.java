@@ -107,6 +107,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
+    public void beginDiscardChosenColorChoice(GameData gameData, UUID controllerId, UUID targetPlayerId) {
+        ChoiceContext.DiscardChosenColorChoice ctx = new ChoiceContext.DiscardChosenColorChoice(controllerId, targetPlayerId);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (discard all cards of that color)", gameData.id, playerName);
+    }
+
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
         ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
 
@@ -204,6 +215,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a basic land type to add", gameData.id, playerName);
+    }
+
+    public void beginStorageMatrixUntapChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.StorageMatrixUntapChoice choiceContext = new ChoiceContext.StorageMatrixUntapChoice(playerId);
+
+        List<String> options = List.of("ARTIFACT", "CREATURE", "LAND");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose artifact, creature, or land to untap."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
     }
 
     private static List<Integer> allHandIndices(List<Card> hand) {

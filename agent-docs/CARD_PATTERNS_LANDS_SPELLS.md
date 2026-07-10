@@ -11,6 +11,7 @@ All paths relative to `cards/`.
 | Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimatePermanentsEffect (5-arg SELF/UEOT) ability |
 | Creature land (artifact) | `i/InkmothNexus.java` | manland that becomes artifact creature (uses 6-arg AnimatePermanentsEffect with grantedCardTypes) |
 | Creature land + sub-ability | `s/SpawningPool.java` | manland + regenerate with `ONLY_WHILE_CREATURE` restriction |
+| Animate all lands (both players) | `n/NaturalAffinity.java` | SPELL `AnimatePermanentsEffect(2, 2, [], {}, null, {}, GrantScope.ALL_LANDS, UNTIL_END_OF_TURN)` — every land on the battlefield becomes a 2/2, still a land |
 | X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimatePermanentsEffect(0, 0, [ELEMENTAL], [HASTE], null, {}, TARGET, PERMANENT) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Check land | `d/DragonskullSummit.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate), new EntersTappedEffect())` + 2 mana abilities — enters tapped unless you control a matching permanent |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 3+ other lands |

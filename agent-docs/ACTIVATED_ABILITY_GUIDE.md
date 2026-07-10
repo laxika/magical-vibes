@@ -28,6 +28,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_YOUR_TURN` | Activate only during your turn (any phase/step, instant speed) |
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
+| `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
@@ -344,8 +345,10 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any |
+| `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Slate of Ancestry |
 | `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
+| `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java
 // {1}{R}, Sacrifice a Goblin: Deal 2 damage to any target
@@ -420,7 +423,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
 | `ON_TAP` | Permanent is tapped for mana (lands) |
 | `STATIC` | Continuous effect, always active while on battlefield |
-| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`) and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `requiredPlayerTargetCount() >= 2`) |
+| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/player) when an effect is true "any target" (`canTargetPlayer() && canTargetPermanent()`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `requiredPlayerTargetCount() >= 2`) |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |

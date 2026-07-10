@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,61 @@ public class LibrarySearchSupport {
                 return true;
             }
             // If search could not start (empty library, Leonin Arbiter, etc.), try the next player
+        }
+        return false;
+    }
+
+    /**
+     * Starts the next pending "each player may search for up to N creature cards to hand" search
+     * from the follow-up's remaining-searchers list; the advanced remainder rides the begun search.
+     * Each searcher may take up to {@code followUp.eachPlayerCreatureToHandCount()} creature cards,
+     * revealing them to hand, then shuffles. Returns true if a search was initiated, false if no
+     * searcher remains (empty library / no creatures / Leonin Arbiter players are skipped). Used by
+     * Weird Harvest.
+     */
+    public boolean startNextEachPlayerCreatureToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        int count = followUp.eachPlayerCreatureToHandCount();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerCreatureToHandSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            String playerName = gameData.playerIdToName.get(nextPlayerId);
+
+            if (isSearchPrevented(gameData, nextPlayerId)) {
+                continue;
+            }
+
+            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+            if (deck == null || deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " searches their library but it is empty. Library is shuffled.");
+                continue;
+            }
+
+            List<Card> creatures = deck.stream()
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .toList();
+
+            if (creatures.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " searches their library but finds no creature cards. Library is shuffled.");
+                continue;
+            }
+
+            String prompt = "You may search your library for up to " + count + " creature card"
+                    + (count == 1 ? "" : "s") + " to reveal and put into your hand.";
+            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(creatures))
+                    .reveals(true)
+                    .canFailToFind(true)
+                    .remainingCount(count)
+                    .destination(LibrarySearchDestination.HAND)
+                    .filterPredicate(new CardTypePredicate(CardType.CREATURE))
+                    .followUp(followUp.withRemainingEachPlayerCreatureToHandSearches(remaining))
+                    .build();
+
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " searches their library.");
+            return true;
         }
         return false;
     }

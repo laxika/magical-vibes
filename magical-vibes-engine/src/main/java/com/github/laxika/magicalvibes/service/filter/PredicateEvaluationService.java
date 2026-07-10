@@ -264,6 +264,7 @@ public class PredicateEvaluationService {
                 if (gameData == null) {
                     yield permanent.getCard().hasType(CardType.CREATURE)
                             || permanent.isAnimatedUntilEndOfTurn()
+                            || permanent.isAnimatedUntilEndOfCombat()
                             || permanent.isAnimatedUntilNextTurn()
                             || permanent.isPermanentlyAnimated()
                             || permanent.getCounterCount(CounterType.AWAKENING) > 0;

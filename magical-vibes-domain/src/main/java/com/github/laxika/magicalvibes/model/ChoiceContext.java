@@ -122,4 +122,16 @@ public sealed interface ChoiceContext {
      * @param attackerCount  the number of attacking creatures (amount of mana to add)
      */
     record AttackManaSplitChoice(UUID playerId, int attackerCount) implements ChoiceContext {}
+
+    /**
+     * The controller chooses a color at resolution, then {@code targetPlayerId} reveals their hand
+     * and discards every card of that color (Persecute).
+     */
+    record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,
+     * creature, or land; only permanents of the chosen type untap this step.
+     */
+    record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
 }

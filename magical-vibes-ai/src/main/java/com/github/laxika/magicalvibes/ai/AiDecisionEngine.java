@@ -241,7 +241,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
-        if (landsPlayed > 0) {
+        if (landsPlayed >= gameData.getMaxLandsThisTurn(aiPlayer.getId())) {
             return false;
         }
 

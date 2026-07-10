@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorcer
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsOpponentLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -449,6 +450,28 @@ public class ActivatedAbilityExecutionService {
                             + " but produces no mana (no colors among legendary creatures and planeswalkers).";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
+            } else if (effect instanceof AwardManaOfColorsOpponentLandsCouldProduceEffect) {
+                Set<CardColor> availableColors = collectColorsOpponentLandsCouldProduce(gameData, playerId);
+                if (availableColors.size() == 1) {
+                    CardColor onlyColor = availableColors.iterator().next();
+                    ManaColor manaColor = ManaColor.valueOf(onlyColor.name());
+                    gameData.playerManaPools.get(playerId).add(manaColor);
+                    String logEntry = player.getUsername() + " adds {" + onlyColor.getCode() + "} from " + permanent.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                } else if (availableColors.size() > 1) {
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
+                    List<String> colors = availableColors.stream()
+                            .map(Enum::name)
+                            .sorted()
+                            .toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana color from opponent lands' colors", gameData.id, player.getUsername());
+                } else {
+                    String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
+                            + " but produces no mana (no opponent land could produce colored mana).";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                }
             } else if (effect instanceof GainLifeEffect gain) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0, false));
@@ -582,6 +605,10 @@ public class ActivatedAbilityExecutionService {
                 if (!colors.isEmpty()) {
                     total += 1;
                 }
+            } else if (effect instanceof AwardManaOfColorsOpponentLandsCouldProduceEffect) {
+                if (!collectColorsOpponentLandsCouldProduce(gameData, playerId).isEmpty()) {
+                    total += 1;
+                }
             } else if (effect instanceof DoubleManaPoolEffect) {
                 total += gameData.playerManaPools.get(playerId).getTotal();
             }
@@ -611,6 +638,50 @@ public class ActivatedAbilityExecutionService {
             }
         }
         return colors;
+    }
+
+    /**
+     * Collects the colors of mana that any land an opponent controls could produce (CR: a land's
+     * mana abilities). Colorless is not a color and is excluded. Used by Fellwar Stone.
+     */
+    private Set<CardColor> collectColorsOpponentLandsCouldProduce(GameData gameData, UUID playerId) {
+        Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
+        for (UUID opponentId : gameData.orderedPlayerIds) {
+            if (opponentId.equals(playerId)) {
+                continue;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(opponentId);
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent p : battlefield) {
+                if (!p.getCard().hasType(CardType.LAND)) {
+                    continue;
+                }
+                collectManaColorsFromEffects(p.getCard().getEffects(EffectSlot.ON_TAP), colors);
+                for (ActivatedAbility ability : p.getCard().getActivatedAbilities()) {
+                    collectManaColorsFromEffects(ability.getEffects(), colors);
+                }
+            }
+        }
+        return colors;
+    }
+
+    private void collectManaColorsFromEffects(List<CardEffect> effects, Set<CardColor> colors) {
+        for (CardEffect effect : effects) {
+            if (effect instanceof AwardManaEffect award) {
+                ManaColor manaColor = award.color();
+                if (manaColor != null && manaColor != ManaColor.COLORLESS) {
+                    colors.add(CardColor.valueOf(manaColor.name()));
+                }
+            } else if (effect instanceof AwardAnyColorManaEffect) {
+                colors.add(CardColor.WHITE);
+                colors.add(CardColor.BLUE);
+                colors.add(CardColor.BLACK);
+                colors.add(CardColor.RED);
+                colors.add(CardColor.GREEN);
+            }
+        }
     }
 
     private void pushAbilityOnStack(GameData gameData,

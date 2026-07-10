@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "356")
+@CardRegistration(set = "9ED", collectorNumber = "323")
 public class Quicksand extends Card {
 
     public Quicksand() {

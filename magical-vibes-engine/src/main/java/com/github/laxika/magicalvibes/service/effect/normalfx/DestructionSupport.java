@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -58,6 +60,8 @@ public class DestructionSupport {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
 
     public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
@@ -176,6 +180,33 @@ public class DestructionSupport {
         String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
+    }
+
+    /**
+     * A single player sacrifices {@code count} permanents matching {@code filter}: if they control
+     * more than {@code count} they choose which (multi-select), otherwise all matching are sacrificed.
+     * Reuses the same {@link MultiPermanentChoiceContext.ForcedSacrifice} direct-select flow as the
+     * forced-sacrifice family. Callers must ensure at least {@code count} matching permanents exist.
+     */
+    public void sacrificePlayerMatchingPermanents(GameData gameData, UUID playerId, int count,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+        List<Permanent> matching = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .toList();
+        if (matching.size() <= count) {
+            for (Permanent perm : matching) {
+                sacrificeAndLog(gameData, perm, playerId);
+            }
+        } else {
+            List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+            playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
+                    new MultiPermanentChoiceContext.ForcedSacrifice(playerId, List.of(), List.of()),
+                    "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
+        }
     }
 
     public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
@@ -318,7 +349,7 @@ public class DestructionSupport {
         sacrificeAndLog(gameData, target, context.controllerId());
     }
 
-    void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
+    public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         for (var elseEffect : effect.elseEffects()) {
             if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
                 tapSourcePermanent(gameData, entry);
@@ -328,10 +359,27 @@ public class DestructionSupport {
                 dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
                         entry.getCard().getName(), entry.getCard().getColor());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof SacrificeSelfEffect) {
+                sacrificeSource(gameData, entry);
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());
             }
+        }
+    }
+
+    private void sacrificeSource(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
+            gameBroadcastService.logAndBroadcast(gameData, self.getCard().getName() + " is sacrificed.");
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 

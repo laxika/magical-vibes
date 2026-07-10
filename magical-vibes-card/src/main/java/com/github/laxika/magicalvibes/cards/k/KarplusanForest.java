@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "354")
+@CardRegistration(set = "9ED", collectorNumber = "321")
 public class KarplusanForest extends Card {
 
     public KarplusanForest() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "355")
+@CardRegistration(set = "9ED", collectorNumber = "322")
 public class LlanowarWastes extends Card {
 
     public LlanowarWastes() {

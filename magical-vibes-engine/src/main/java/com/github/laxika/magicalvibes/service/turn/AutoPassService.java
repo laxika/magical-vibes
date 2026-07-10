@@ -323,6 +323,12 @@ public class AutoPassService {
                     continue;
                 }
 
+                // Skip combat-only abilities when not in the combat phase
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT
+                        && !gameData.currentStep.isCombatPhase()) {
+                    continue;
+                }
+
                 // Skip mana abilities (any effect that produces mana makes the whole ability a mana ability per CR 605.1a)
                 boolean isManaAbility = ability.getEffects().stream()
                         .anyMatch(e -> e instanceof ManaProducingEffect);

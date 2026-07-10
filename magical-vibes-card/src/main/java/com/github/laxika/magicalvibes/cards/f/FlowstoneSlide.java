@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "203")
+@CardRegistration(set = "9ED", collectorNumber = "186")
 public class FlowstoneSlide extends Card {
 
     public FlowstoneSlide() {

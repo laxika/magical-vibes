@@ -79,7 +79,8 @@ class LibraryChoiceHandlerServiceTest {
                 graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
                 stateBasedActionService, gameBroadcastService, turnProgressionService,
                 playerInputService, effectResolutionService, exileService, registry,
-                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class));
+                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");

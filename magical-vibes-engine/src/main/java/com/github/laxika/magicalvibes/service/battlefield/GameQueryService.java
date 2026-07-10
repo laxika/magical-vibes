@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -533,6 +534,7 @@ public class GameQueryService {
     public boolean isCreature(GameData gameData, Permanent permanent) {
         if (hasCardType(permanent, CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
+        if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
@@ -980,7 +982,7 @@ public class GameQueryService {
             accumulator.setLandSubtypeOverriding(true);
         }
 
-        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
+        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilEndOfCombat() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated
@@ -2116,6 +2118,20 @@ public class GameQueryService {
                                 && p.getChosenSubtype() != null) {
                             return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
                                     p.getChosenSubtype());
+                        }
+                    }
+                }
+            }
+        }
+        // Global "nonbasic lands are [type]s" effects (e.g. Blood Moon) affect every nonbasic land.
+        if (permanent.getCard().hasType(CardType.LAND)
+                && !permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof NonbasicLandsBecomeTypeEffect landTypeEffect) {
+                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
+                                    landTypeEffect.subtype());
                         }
                     }
                 }

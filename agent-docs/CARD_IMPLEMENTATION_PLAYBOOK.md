@@ -496,6 +496,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |

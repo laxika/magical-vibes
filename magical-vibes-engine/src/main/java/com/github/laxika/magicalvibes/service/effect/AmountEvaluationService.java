@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
+import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
@@ -69,6 +70,8 @@ public class AmountEvaluationService {
                     f.value();
             case FixedIfControlledCreaturesTotalToughnessAtLeast a ->
                     totalToughnessOfControlledCreatures(gameData, ctx) >= a.minTotalToughness() ? a.amount() : 0;
+            case FixedIfControlsAllNamed a ->
+                    controlsAllNamed(gameData, a, ctx) ? a.amount() : a.otherwise();
             case XValue ignored ->
                     ctx.xValue();
             case ManaSpentToCast ignored ->
@@ -233,6 +236,17 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private boolean controlsAllNamed(GameData gameData, FixedIfControlsAllNamed amount, AmountContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return false;
+        for (String requiredName : amount.requiredNames()) {
+            boolean found = battlefield.stream()
+                    .anyMatch(permanent -> requiredName.equals(permanent.getCard().getName()));
+            if (!found) return false;
+        }
+        return true;
     }
 
     private int totalToughnessOfControlledCreatures(GameData gameData, AmountContext ctx) {

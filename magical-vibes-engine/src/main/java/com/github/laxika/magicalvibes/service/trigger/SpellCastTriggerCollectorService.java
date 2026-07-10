@@ -439,6 +439,12 @@ public class SpellCastTriggerCollectorService {
 
     // ── ON_OPPONENT_CASTS_SPELL ────────────────────────────────────────
 
+    @CollectsTrigger(value = SpellCastTriggerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleOpponentSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
     @CollectsTrigger(value = LoseLifeUnlessDiscardEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleLoseLifeUnlessDiscard(TriggerMatchContext match,
             LoseLifeUnlessDiscardEffect trigger, TriggerContext ctx) {

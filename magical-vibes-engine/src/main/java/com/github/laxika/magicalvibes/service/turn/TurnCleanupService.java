@@ -61,7 +61,7 @@ public class TurnCleanupService {
             p.setMarkedDamage(0);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
-                    || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()
+                    || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()

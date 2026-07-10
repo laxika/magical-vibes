@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "262")
+@CardRegistration(set = "9ED", collectorNumber = "239")
 @CardRegistration(set = "M10", collectorNumber = "177")
 public class ElvishPiper extends Card {
 

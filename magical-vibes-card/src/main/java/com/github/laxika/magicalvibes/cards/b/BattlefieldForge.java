@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "348")
+@CardRegistration(set = "9ED", collectorNumber = "318")
 public class BattlefieldForge extends Card {
 
     public BattlefieldForge() {

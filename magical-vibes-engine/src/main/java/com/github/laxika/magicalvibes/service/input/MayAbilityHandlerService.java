@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -397,6 +398,13 @@ public class MayAbilityHandlerService {
         boolean isSacrificeUnlessReturnPermanent = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect);
         if (isSacrificeUnlessReturnPermanent) {
             mayPenaltyChoiceHandlerService.handleSacrificeUnlessReturnOwnPermanentChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Optional "you may sacrifice ..., if you don't [penalty]" — e.g. Yawgmoth Demon
+        boolean isForcedCostOrElse = ability.effects().stream().anyMatch(e -> e instanceof ForcedCostOrElseEffect);
+        if (isForcedCostOrElse) {
+            mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(gameData, player, accepted, ability);
             return;
         }
 

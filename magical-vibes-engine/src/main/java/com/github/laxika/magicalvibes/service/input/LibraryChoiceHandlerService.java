@@ -71,6 +71,7 @@ public class LibraryChoiceHandlerService {
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -257,6 +258,7 @@ public class LibraryChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
+            if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -281,7 +283,38 @@ public class LibraryChoiceHandlerService {
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
-            exileService.exileCard(gameData, playerId, chosenCard);
+            exileService.exileCard(gameData, deckOwnerId, chosenCard);
+
+            // Multi-card exile (Jester's Cap): re-prompt for the next card until the count is
+            // spent or the library runs out. Only the final pick shuffles the library.
+            if (remainingCount > 1) {
+                int newRemaining = remainingCount - 1;
+                List<Card> newSearchCards = new ArrayList<>(deck);
+                if (newSearchCards.isEmpty()) {
+                    if (shuffleAfterSelection) {
+                        LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                    }
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            player.getUsername() + " exiles a card face down. Library is shuffled.");
+                    turnProgressionService.resolveAutoPass(gameData);
+                    return;
+                }
+                String exilePrompt = targetPlayerId != null
+                        ? "Search " + gameData.playerIdToName.get(targetPlayerId) + "'s library for a card to exile (" + newRemaining + " remaining)."
+                        : "Search your library for a card to exile (" + newRemaining + " remaining).";
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, newSearchCards)
+                                .targetPlayerId(targetPlayerId)
+                                .remainingCount(newRemaining)
+                                .canFailToFind(canFailToFind)
+                                .destination(LibrarySearchDestination.EXILE)
+                                .shuffleAfterSelection(shuffleAfterSelection)
+                                .build(),
+                        exilePrompt, canFailToFind));
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " exiles a card face down.");
+                return;
+            }
+
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
@@ -514,6 +547,7 @@ public class LibraryChoiceHandlerService {
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**

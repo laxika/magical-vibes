@@ -177,6 +177,7 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.additionalLandsThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
@@ -220,9 +221,34 @@ public class TurnProgressionService {
             }
         });
 
+        // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
+        // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
+        if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
+            playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
+
         untapStepService.untapPermanents(gameData, nextActive);
 
         // Process pending may-not-untap choices before continuing turn
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        completeTurnAdvance(gameData);
+    }
+
+    /**
+     * Resumes the paused untap step after the active player answers a Storage Matrix type choice.
+     * Only permanents matching {@code restrictPredicate} untap; the rest of the untap-step
+     * bookkeeping and turn advance then proceeds exactly as {@link #advanceTurn} would have.
+     */
+    public void resumeStorageMatrixUntap(GameData gameData, UUID activePlayerId,
+                                         com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrictPredicate) {
+        untapStepService.untapPermanents(gameData, activePlayerId, restrictPredicate);
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;
@@ -269,6 +295,10 @@ public class TurnProgressionService {
 
     public void applyCleanupResets(GameData gameData) {
         turnCleanupService.applyCleanupResets(gameData);
+    }
+
+    public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
+        stepTriggerService.processNextUpkeepAnyTargetTrigger(gameData);
     }
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {

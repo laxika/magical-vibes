@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "347")
+@CardRegistration(set = "9ED", collectorNumber = "317")
 public class AdarkarWastes extends Card {
 
     public AdarkarWastes() {

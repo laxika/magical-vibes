@@ -973,6 +973,60 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleUpkeepAnyTargetTrigger(GameData gameData, UUID chosenId,
+            PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                uat.sourceCard(),
+                uat.controllerId(),
+                uat.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(uat.effects()),
+                chosenId,
+                uat.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, chosenId);
+        String logEntry = uat.sourceCard().getName() + "'s ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep any-target trigger targets {}",
+                gameData.id, uat.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
+            turnProgressionService.processNextUpkeepAnyTargetTrigger(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
+            turnProgressionService.processNextUpkeepMultiPlayerTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
+            turnProgressionService.processNextUpkeepPlayerTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
+            turnProgressionService.processNextUpkeepCopyTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
+            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleBeginningOfCombatTrigger(GameData gameData, UUID permanentId,
             PermanentChoiceContext.BeginningOfCombatTriggerTarget boct) {
         StackEntry entry = new StackEntry(

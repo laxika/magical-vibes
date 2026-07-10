@@ -9,8 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -61,6 +63,19 @@ public class UntapStepService {
      * @param activePlayerId the player whose untap step is being processed
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId) {
+        untapPermanents(gameData, activePlayerId, null);
+    }
+
+    /**
+     * Performs the untap step, optionally restricting which of the active player's permanents may
+     * untap to those matching {@code restrictPredicate} (Storage Matrix). A {@code null} predicate
+     * means no restriction (the normal untap step). The restriction applies only to the active
+     * player's own permanents, not to "untap during each other player's step" effects (Seedborn
+     * Muse), which untap during a different player's untap step and so are unaffected.
+     *
+     * @param restrictPredicate only permanents matching this untap; {@code null} = untap all
+     */
+    public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate) {
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
 
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
@@ -98,9 +113,14 @@ public class UntapStepService {
                 // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
                 boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
 
+                boolean blockedByStorageMatrix = restrictPredicate != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
+
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
+                } else if (blockedByStorageMatrix) {
+                    // Storage Matrix: not the chosen permanent type — stays tapped this step
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
@@ -155,6 +175,23 @@ public class UntapStepService {
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });
+    }
+
+    /**
+     * Returns {@code true} if a Storage Matrix untap restriction is in force for the given active
+     * player: some untapped permanent (any controller) carries a {@link StorageMatrixEffect} and
+     * the active player has at least one tapped permanent to decide about. When there is nothing
+     * tapped, the choice would have no observable effect and is skipped.
+     */
+    public boolean storageMatrixRestrictionApplies(GameData gameData, UUID activePlayerId) {
+        boolean untappedMatrixPresent = gameData.anyPermanentMatches(p -> !p.isTapped()
+                && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof StorageMatrixEffect));
+        if (!untappedMatrixPresent) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        return battlefield != null && battlefield.stream().anyMatch(Permanent::isTapped);
     }
 
     /**

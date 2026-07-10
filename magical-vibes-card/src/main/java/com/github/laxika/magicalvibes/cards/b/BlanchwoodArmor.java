@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "10E", collectorNumber = "253")
+@CardRegistration(set = "9ED", collectorNumber = "232")
 public class BlanchwoodArmor extends Card {
 
     public BlanchwoodArmor() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "304")
+@CardRegistration(set = "9ED", collectorNumber = "276")
 public class TreetopBracers extends Card {
 
     public TreetopBracers() {

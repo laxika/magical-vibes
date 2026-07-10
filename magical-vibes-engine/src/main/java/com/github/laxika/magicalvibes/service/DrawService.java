@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -216,6 +218,45 @@ public class DrawService {
 
         checkControllerDrawTriggers(gameData, playerId);
         checkOpponentDrawTriggers(gameData, playerId);
+        checkBoobyTraps(gameData, playerId, drawn);
+    }
+
+    /**
+     * Booby Trap: an opponent's Booby Trap makes the drawing (chosen) player reveal each card they
+     * draw; when the revealed card's name matches the trap's chosen name, the trap is sacrificed and
+     * — if it was — deals 10 damage to that player. The chosen player is always an opponent of the
+     * trap's controller.
+     */
+    private void checkBoobyTraps(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            if (controllerId.equals(drawingPlayerId)) return;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                boolean isBoobyTrap = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof BoobyTrapEffect);
+                if (!isBoobyTrap) continue;
+
+                String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + ".");
+
+                if (drawn.getName().equals(perm.getChosenName())) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new SacrificeSelfThenDealDamageToTargetPlayerEffect(10))),
+                            drawingPlayerId,
+                            perm.getId()
+                    ));
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            perm.getCard().getName() + " triggers on " + drawerName + " drawing " + drawn.getName() + ".");
+                    log.info("Game {} - Booby Trap triggers on {} drawing {}",
+                            gameData.id, drawerName, drawn.getName());
+                }
+            }
+        });
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {

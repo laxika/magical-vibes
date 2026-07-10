@@ -53,7 +53,7 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
         if (topCard.hasType(CardType.LAND)) {
             boolean isControllersTurn = controllerId.equals(gameData.activePlayerId);
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
-            if (!isControllersTurn || landsPlayed >= 1) {
+            if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
                 // Can't play the land — exile it
                 deck.removeFirst();
                 exileService.exileCard(gameData, controllerId, topCard);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
+import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
@@ -168,6 +169,18 @@ public class StepTriggerService {
         for (Permanent perm : battlefield) {
             List<CardEffect> upkeepEffects = perm.getCard().getEffects(EffectSlot.UPKEEP_TRIGGERED);
             if (upkeepEffects == null || upkeepEffects.isEmpty()) continue;
+
+            // If any effect can target both a player and a permanent (i.e. "any target" —
+            // creature/planeswalker/player, e.g. Form of the Dragon's "deals 5 damage to any target"),
+            // route through the any-target pipeline so the controller may pick a permanent as well as a
+            // player. Creature-only targeted upkeep effects (e.g. become-a-copy) keep their own pipelines.
+            boolean hasAnyTarget = upkeepEffects.stream()
+                    .anyMatch(e -> e.canTargetPlayer() && e.canTargetPermanent());
+            if (hasAnyTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
+                        perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                continue;
+            }
 
             // If any effect targets a player, group all effects into a player-targeted trigger
             boolean hasPlayerTarget = upkeepEffects.stream().anyMatch(CardEffect::canTargetPlayer);
@@ -595,6 +608,12 @@ public class StepTriggerService {
             }
         }
 
+        // Process upkeep any-target triggers first (e.g. Form of the Dragon, CR 603.3d)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
+            processNextUpkeepAnyTargetTrigger(gameData);
+            return;
+        }
+
         // Process upkeep multi-player-targeted triggers first (e.g. Axis of Mortality, CR 603.3d)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
             processNextUpkeepMultiPlayerTarget(gameData);
@@ -628,6 +647,64 @@ public class StepTriggerService {
      *
      * @param gameData the current game state to modify
      */
+    /**
+     * Processes the next pending upkeep any-target trigger (e.g. Form of the Dragon's
+     * "deals 5 damage to any target"). Presents the controller with a choice among all valid
+     * players and permanents; when selected, the trigger is pushed onto the stack with the
+     * chosen target. Mandatory targeting at trigger time (CR 603.3d).
+     *
+     * @param gameData the current game state to modify
+     */
+    public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class)) {
+            processNextUpkeepMultiPlayerTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepAnyTargetTrigger trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
+
+        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                trigger.effects(),
+                targetFilter,
+                trigger.controllerId(),
+                trigger.sourceCard(),
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets();
+
+        if (validTargets.isEmpty()) {
+            String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} upkeep any-target trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextUpkeepAnyTargetTrigger(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+
+        String targetDescription;
+        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else if (result.canTargetPlayers() && result.canTargetPermanents()) {
+            targetDescription = "any target";
+        } else if (result.canTargetPlayers()) {
+            targetDescription = "target player";
+        } else {
+            targetDescription = "target permanent";
+        }
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger — choose " + targetDescription + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep any-target trigger awaiting target selection",
+                gameData.id, trigger.sourceCard().getName());
+    }
+
     public void processNextUpkeepPlayerTarget(GameData gameData) {
         if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
             processNextUpkeepCopyTarget(gameData);
@@ -1247,6 +1324,25 @@ public class StepTriggerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} delayed untap {} permanent(s) trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName(), pending.count());
+            }
+        }
+
+        // Process delayed token creations (e.g. Rukh Egg)
+        if (gameData.hasDelayedAction(DelayedCreateToken.class)) {
+            List<DelayedCreateToken> pendingTokens =
+                    gameData.drainDelayedActions(DelayedCreateToken.class);
+            for (DelayedCreateToken pending : pendingTokens) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        pending.sourceCard(),
+                        pending.controllerId(),
+                        pending.sourceCard().getName() + "'s delayed trigger — create token",
+                        new ArrayList<>(List.of(pending.tokenEffect()))
+                ));
+                String logEntry = pending.sourceCard().getName() + "'s delayed trigger — create token.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} delayed token creation trigger pushed onto stack",
+                        gameData.id, pending.sourceCard().getName());
             }
         }
 

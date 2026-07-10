@@ -121,6 +121,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepMultiPlayerFirstTarget(gameData, permanentId, umpt);
         } else if (context instanceof PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
             triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
+        } else if (context instanceof PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
+            triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {

@@ -39,6 +39,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case SELF -> resolveSelf(gameData, entry);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case OTHER_CONTROLLED_CREATURES -> resolveOtherControlledCreatures(gameData, entry, e);
+            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ATTACKED_CREATURES -> resolveAttackedCreatures(gameData, entry);
             default -> throw new IllegalStateException("Unsupported untap scope: " + e.scope());
         }
@@ -137,6 +138,34 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
+    }
+
+    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        UUID targetPlayerId = entry.getTargetId();
+        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        if (battlefield == null) return;
+
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+            if (!p.isTapped()) continue;
+
+            p.untap();
+            count++;
+        }
+
+        String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untaps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
     }
 
     private void resolveAttackedCreatures(GameData gameData, StackEntry entry) {

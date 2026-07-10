@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPer
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.DidntGainLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -106,6 +107,8 @@ public class ConditionEvaluationService {
                             && gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
+            case Enchanted ignored ->
+                    isSourceEnchanted(gameData, ctx);
             case GainedLifeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case DidntGainLifeThisTurn ignored ->
@@ -296,6 +299,22 @@ public class ConditionEvaluationService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && sourcePermanentId.equals(perm.getAttachedTo())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isSourceEnchanted(GameData gameData, ConditionContext ctx) {
+        UUID sourcePermanentId = ctx.sourcePermanentId();
+        if (sourcePermanentId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (perm.getCard().getSubtypes().contains(CardSubtype.AURA)
                         && sourcePermanentId.equals(perm.getAttachedTo())) {
                     return true;
                 }

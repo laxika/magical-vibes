@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "171")
+@CardRegistration(set = "9ED", collectorNumber = "157")
 public class RavenousRats extends Card {
 
     public RavenousRats() {

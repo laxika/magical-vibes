@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -52,7 +53,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof TargetPlayerGainsLifeEffect tp && tp.amount() == 3);
+                .anyMatch(e -> e instanceof TargetPlayerGainsLifeEffect tp && tp.amount().equals(new Fixed(3)));
     }
 
     // ===== Entering the battlefield with charge counters =====

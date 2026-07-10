@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "363")
+@CardRegistration(set = "9ED", collectorNumber = "330")
 public class YavimayaCoast extends Card {
 
     public YavimayaCoast() {

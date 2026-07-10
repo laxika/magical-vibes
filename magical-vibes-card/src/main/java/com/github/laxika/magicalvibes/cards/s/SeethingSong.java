@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
  * Blazing Firesinger (SOS 109) loads (see {@code BlazingFiresingerSeethingSong#getBackFaceClassName}). A copy of
  * this spell is created in exile while Blazing Firesinger is prepared and may be cast from there.
  */
+@CardRegistration(set = "9ED", collectorNumber = "216")
 public class SeethingSong extends Card {
 
     public SeethingSong() {

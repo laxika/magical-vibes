@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "179")
+@CardRegistration(set = "9ED", collectorNumber = "164")
 public class SoulFeast extends Card {
 
     public SoulFeast() {

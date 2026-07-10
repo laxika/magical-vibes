@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "357")
+@CardRegistration(set = "9ED", collectorNumber = "324")
 public class ShivanReef extends Card {
 
     public ShivanReef() {

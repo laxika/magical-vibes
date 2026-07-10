@@ -66,7 +66,12 @@ public class AnimationSupport {
                 ? (self.getCard().getToughness() != null ? self.getCard().getToughness() : 0)
                 : amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        self.setAnimatedUntilEndOfTurn(true);
+        boolean untilEndOfCombat = effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT;
+        if (untilEndOfCombat) {
+            self.setAnimatedUntilEndOfCombat(true);
+        } else {
+            self.setAnimatedUntilEndOfTurn(true);
+        }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
         self.setAnimatedColor(effect.animatedColor());
@@ -75,7 +80,8 @@ public class AnimationSupport {
         self.getGrantedKeywords().addAll(effect.grantedKeywords());
         self.getGrantedCardTypes().addAll(effect.grantedCardTypes());
 
-        String logEntry = self.getCard().getName() + " becomes a " + power + "/" + toughness + " creature until end of turn.";
+        String durationText = untilEndOfCombat ? "until end of combat" : "until end of turn";
+        String logEntry = self.getCard().getName() + " becomes a " + power + "/" + toughness + " creature " + durationText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes a {}/{} creature", gameData.id, self.getCard().getName(), power, toughness);
@@ -129,6 +135,38 @@ public class AnimationSupport {
         gameBroadcastService.logAndBroadcast(gameData,
                 "All lands you control become " + power + "/" + toughness
                         + " Elemental creatures with reach, indestructible, and haste " + durationText + ". They're still lands.");
+    }
+
+    /** ALL_LANDS scope — every land on the battlefield (both players), until end of turn (Natural Affinity). */
+    public void animateAllLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent perm : battlefield) {
+                if (!perm.getCard().hasType(CardType.LAND)) {
+                    continue;
+                }
+                perm.setAnimatedUntilEndOfTurn(true);
+                perm.setAnimatedPower(power);
+                perm.setAnimatedToughness(toughness);
+                perm.setAnimatedColor(effect.animatedColor());
+                perm.getTransientSubtypes().clear();
+                perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
+                perm.getGrantedKeywords().addAll(effect.grantedKeywords());
+                perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+
+                log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
+            }
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                "All lands become " + power + "/" + toughness
+                        + " creatures until end of turn. They're still lands.");
     }
 
     /**

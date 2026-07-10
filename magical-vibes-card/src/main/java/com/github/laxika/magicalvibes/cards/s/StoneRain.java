@@ -1,0 +1,20 @@
+package com.github.laxika.magicalvibes.cards.s;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+
+import com.github.laxika.magicalvibes.cards.CardRegistration;
+
+@CardRegistration(set = "9ED", collectorNumber = "221")
+public class StoneRain extends Card {
+
+    public StoneRain() {
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsLandPredicate(),
+                "Target must be a land"
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentEffect());
+    }
+}

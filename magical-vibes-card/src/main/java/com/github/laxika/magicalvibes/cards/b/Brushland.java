@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "349")
+@CardRegistration(set = "9ED", collectorNumber = "319")
 public class Brushland extends Card {
 
     public Brushland() {

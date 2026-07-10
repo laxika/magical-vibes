@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "310")
+@CardRegistration(set = "9ED", collectorNumber = "284")
 public class YavimayaEnchantress extends Card {
 
     public YavimayaEnchantress() {

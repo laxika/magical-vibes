@@ -127,6 +127,26 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.StorageMatrixUntapChoice) {
+            // Untap the type we have the most tapped permanents of; tie-break toward lands (mana).
+            List<Permanent> field = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+            long tappedLands = field.stream().filter(p -> p.isTapped() && p.getCard().hasType(CardType.LAND)).count();
+            long tappedCreatures = field.stream().filter(p -> p.isTapped() && p.getCard().hasType(CardType.CREATURE)).count();
+            long tappedArtifacts = field.stream().filter(p -> p.isTapped() && p.getCard().hasType(CardType.ARTIFACT)).count();
+            String chosenType = "LAND";
+            long best = tappedLands;
+            if (tappedCreatures > best) {
+                best = tappedCreatures;
+                chosenType = "CREATURE";
+            }
+            if (tappedArtifacts > best) {
+                chosenType = "ARTIFACT";
+            }
+            log.info("AI: Choosing {} for Storage Matrix untap in game {}", chosenType, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenType));
+            return;
+        }
+
         if (context instanceof ChoiceContext.ExileByNameChoice exile) {
             UUID targetId = exile.targetPlayerId();
             List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());

@@ -54,6 +54,7 @@ public class ChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
@@ -114,6 +115,10 @@ public class ChoiceHandlerService {
             handleMassProtectionColorChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.DiscardChosenColorChoice ctx) {
+            handleDiscardChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
@@ -140,6 +145,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice ctx) {
             handleSphinxAmbassadorNameChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.StorageMatrixUntapChoice ctx) {
+            handleStorageMatrixUntapChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -526,6 +535,57 @@ public class ChoiceHandlerService {
         resumeAndAutoPass(gameData);
     }
 
+    private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
+            ChoiceContext.DiscardChosenColorChoice ctx) {
+        CardColor color = CardColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String colorLabel = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " chooses " + colorLabel.toLowerCase()
+                    + ". " + targetName + " reveals an empty hand.");
+        } else {
+            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " chooses " + colorLabel.toLowerCase()
+                    + ". " + targetName + " reveals their hand: " + cardNames + ".");
+        }
+
+        // A card is "of that color" per its actual color (Scryfall colors array, honouring
+        // hybrid/multicolor). Lands are excluded: the oracle loader derives a colorless land's
+        // "colors" from its color identity (e.g. Forest -> green), but a Forest is a colorless card
+        // and must not be discarded. Genuinely colored lands (color indicator) don't exist this era.
+        List<Card> toDiscard = hand == null ? List.of()
+                : new ArrayList<>(hand.stream()
+                        .filter(c -> !c.hasType(CardType.LAND) && c.getColors().contains(color))
+                        .toList());
+        if (!toDiscard.isEmpty()) {
+            gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+            hand.removeAll(toDiscard);
+            for (Card card : toDiscard) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, targetName + " discards " + toDiscard.size()
+                    + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + ".");
+            log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
+                    gameData.id, targetName, toDiscard.size(), colorLabel.toLowerCase());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + " has no " + colorLabel.toLowerCase()
+                    + " cards to discard.");
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
     /**
      * Resumes resolving any remaining effects on the spell/ability that paused for this choice,
      * then continues the normal auto-pass flow.
@@ -674,6 +734,26 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleStorageMatrixUntapChoice(GameData gameData, Player player, String typeName,
+                                                ChoiceContext.StorageMatrixUntapChoice ctx) {
+        com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrict = switch (typeName) {
+            case "ARTIFACT" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate();
+            case "CREATURE" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate();
+            case "LAND" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate();
+            default -> throw new IllegalArgumentException("Invalid Storage Matrix untap choice: " + typeName);
+        };
+
+        gameData.interaction.clearAwaitingInput();
+
+        String playerName = gameData.playerIdToName.get(ctx.playerId());
+        String logEntry = playerName + " chooses " + typeName.toLowerCase() + " (Storage Matrix): only "
+                + typeName.toLowerCase() + " permanents untap this step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses {} for Storage Matrix untap", gameData.id, playerName, typeName);
+
+        turnProgressionService.resumeStorageMatrixUntap(gameData, ctx.playerId(), restrict);
     }
 
     private void handleEachPlayerCardNameRevealChoice(GameData gameData, Player player, String cardName,

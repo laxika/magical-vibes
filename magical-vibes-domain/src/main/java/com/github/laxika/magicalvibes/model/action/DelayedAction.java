@@ -28,6 +28,7 @@ public sealed interface DelayedAction permits
         DestroyAtEndStep,
         DelayedPlusOneCounters,
         DelayedUntapPermanents,
+        DelayedCreateToken,
         DelayedGraveyardToHandReturn,
         DelayedGraveyardToBattlefieldTransformedReturn,
         DelayedCombatDamageLoot,

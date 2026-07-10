@@ -33,6 +33,7 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
             default -> {
                 switch (e.scope()) {
                     case OWN_LANDS -> animationSupport.animateOwnLands(gameData, entry, e);
+                    case ALL_LANDS -> animationSupport.animateAllLands(gameData, entry, e);
                     case OWN_PERMANENTS -> animationSupport.animateControlledPermanents(gameData, entry, e);
                     default -> animationSupport.animateSingle(gameData, entry, e);
                 }

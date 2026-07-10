@@ -30,6 +30,7 @@ public sealed interface Condition permits
         DefendingPlayerPoisoned,
         DidntAttack,
         DidntGainLifeThisTurn,
+        Enchanted,
         Equipped,
         GainedLifeThisTurn,
         GraveyardCardThreshold,
