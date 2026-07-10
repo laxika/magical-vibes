@@ -785,8 +785,9 @@ class SevenLayerTest extends BaseCardTest {
             Permanent deathmantle = addPermanent(player1, new NimDeathmantle());
 
             assertThat(gqs.isCreature(gd, deathmantle)).isTrue();
-            assertThat(power(deathmantle)).isEqualTo(4);
-            assertThat(toughness(deathmantle)).isEqualTo(4);
+            // Nim Deathmantle costs {2} (Scryfall oracle), so the animation's base P/T is 2/2.
+            assertThat(power(deathmantle)).isEqualTo(2);
+            assertThat(toughness(deathmantle)).isEqualTo(2);
         }
 
         @Test
@@ -1201,8 +1202,10 @@ class SevenLayerTest extends BaseCardTest {
             Permanent bears = addReady(player1, new GrizzlyBears());
             attach(player1, new Lignify(), bears);
 
-            // The bear is now a Treefolk in layer 4, so the 7a count includes it: 3/3.
-            assertThat(power(dourbark)).isEqualTo(3);
+            // The bear is now a Treefolk in layer 4, and Lignify itself is a Kindred
+            // Enchantment — Treefolk permanent (CR 205.3f), so the 7a count is 1 Forest
+            // + 3 Treefolk (Dourbark, the bear, the Lignify aura) = 4/4.
+            assertThat(power(dourbark)).isEqualTo(4);
         }
 
         @Test
@@ -1329,7 +1332,7 @@ class SevenLayerTest extends BaseCardTest {
         void setterOverridesAnimationBasePT() {
             addPermanent(player1, new MarchOfTheMachines());
             Permanent deathmantle = addPermanent(player1, new NimDeathmantle());
-            assertThat(power(deathmantle)).isEqualTo(4); // sanity
+            assertThat(power(deathmantle)).isEqualTo(2); // sanity: MV of {2} Nim Deathmantle
 
             castDiminish(player2, deathmantle);
 

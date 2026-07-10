@@ -58,9 +58,9 @@ import java.util.Set;
 
 /**
  * Static registry mapping every continuous-effect type the engine knows to the CR 613 layer(s)
- * it contributes to. Classification only — nothing consumes it yet; the layered engine (the
- * next CR 613 migration step) will. Per-card reasoning for the non-obvious mappings lives in
- * {@code agent-docs/LAYER_SYSTEM.md} under "Classification notes".
+ * it contributes to. Consumed by {@link LayerSystemService}, which collects the effects
+ * classified into layer 4 for its whole-battlefield type pass. Per-card reasoning for the
+ * non-obvious mappings lives in {@code agent-docs/LAYER_SYSTEM.md} under "Classification notes".
  *
  * <p>One effect may contribute to several layers with a single timestamp: an anthem that also
  * grants keywords ({@link StaticBoostEffect}) contributes to layer 6 and sublayer 7c; an

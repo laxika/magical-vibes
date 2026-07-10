@@ -42,8 +42,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -240,6 +242,15 @@ public class StaticEffectSupport {
 
     public boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
         if (filter == null) return true;
+        // CR 613.6: when this exact filter instance was already evaluated by the layer-4 pass
+        // (effect parts of one printed ability share the filter object), every later-layer part
+        // applies to the layer-4-determined set — re-evaluating against the finished states
+        // would let a self-referencing filter (Bludgeon Brawl's "non-Equipment artifact")
+        // negate its own output.
+        Boolean layer4Verdict = LayerSystemService.activeL4FilterVerdict(filter, target.getId());
+        if (layer4Verdict != null) {
+            return layer4Verdict;
+        }
         if (filter instanceof PermanentColorInPredicate p) {
             if (target.isColorOverridden()) {
                 return target.getTransientColors().stream().anyMatch(p.colors()::contains);
@@ -252,6 +263,13 @@ public class StaticEffectSupport {
             // "Loses all creature types" removes every creature subtype (base, transient, granted) and
             // nullifies the Changeling grant (handled by hasKeyword).
             if (isCreatureSubtype(p.subtype()) && target.isLosesAllCreatureTypesUntilEndOfTurn()) return false;
+            // While a CR 613 layered pass is active, subtypes are answered from the
+            // layer-4-corrected state, so lord/aura filters see type-changing effects.
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return layered.hasSubtype(p.subtype())
+                        || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
+            }
             return target.getCard().getSubtypes().contains(p.subtype())
                     || target.getTransientSubtypes().contains(p.subtype())
                     || target.getGrantedSubtypes().contains(p.subtype())
@@ -261,6 +279,12 @@ public class StaticEffectSupport {
             Set<CardSubtype> wanted = target.isLosesAllCreatureTypesUntilEndOfTurn()
                     ? p.subtypes().stream().filter(st -> !isCreatureSubtype(st)).collect(java.util.stream.Collectors.toSet())
                     : p.subtypes();
+            CharacteristicState layered = LayerSystemService.activeStateFor(target.getId());
+            if (layered != null) {
+                return wanted.stream().anyMatch(layered::hasSubtype)
+                        || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
+                        && target.hasKeyword(Keyword.CHANGELING));
+            }
             return target.getCard().getSubtypes().stream().anyMatch(wanted::contains)
                     || target.getTransientSubtypes().stream().anyMatch(wanted::contains)
                     || target.getGrantedSubtypes().stream().anyMatch(wanted::contains)

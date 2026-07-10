@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,7 +82,11 @@ class GameQueryServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(gqs, "predicateEvaluationService", new PredicateEvaluationService(gqs));
+        PredicateEvaluationService evaluator = new PredicateEvaluationService(gqs);
+        ReflectionTestUtils.setField(gqs, "predicateEvaluationService", evaluator);
+        LayerSystemService layerSystemService = new LayerSystemService();
+        ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
+        ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -1957,7 +1963,11 @@ class GameQueryServiceTest {
             });
 
             lookaheadGqs = new GameQueryService(realRegistry);
-            ReflectionTestUtils.setField(lookaheadGqs, "predicateEvaluationService", new PredicateEvaluationService(lookaheadGqs));
+            PredicateEvaluationService lookaheadEvaluator = new PredicateEvaluationService(lookaheadGqs);
+            ReflectionTestUtils.setField(lookaheadGqs, "predicateEvaluationService", lookaheadEvaluator);
+            LayerSystemService lookaheadLayerSystem = new LayerSystemService();
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "predicateEvaluationService", lookaheadEvaluator);
+            ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
 
             playerId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -2409,6 +2419,36 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
             assertThat(gqs.getOverriddenLandManaColor(gd, otherLand)).isEqualTo(ManaColor.BLACK);
+        }
+
+        @Test
+        @DisplayName("of two land-type-setting auras, the later timestamp wins (CR 613.7)")
+        void laterLandTypeSetterWins() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+
+            Permanent first = addPermanent(player1Id, createAura("Sea's Claim",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND)));
+            first.setAttachedTo(land.getId());
+            Permanent second = addPermanent(player1Id, createAura("Evil Presence",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP)));
+            second.setAttachedTo(land.getId());
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.BLACK);
+        }
+
+        @Test
+        @DisplayName("a later-entering Blood Moon effect beats an earlier land-type aura (CR 613.7)")
+        void bloodMoonAfterAuraWins() {
+            Permanent land = addPermanent(player1Id, createLand("Nonbasic Land"));
+            Permanent aura = addPermanent(player1Id, createAura("Sea's Claim",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND)));
+            aura.setAttachedTo(land.getId());
+
+            Card bloodMoon = createEnchantment("Blood Moon");
+            bloodMoon.addEffect(EffectSlot.STATIC, new NonbasicLandsBecomeTypeEffect(CardSubtype.MOUNTAIN));
+            addPermanent(player2Id, bloodMoon);
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.RED);
         }
     }
 

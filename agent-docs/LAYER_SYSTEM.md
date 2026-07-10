@@ -114,6 +114,26 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
 5. State-based actions and all queries (`getEffectivePower`, `hasKeyword`, `isCreature`, ...)
    read the finished states.
 
+**Implementation status (step 4):** `LayerSystemService` (engine, `service/effect/`) runs the
+whole-battlefield pass for **layer 4 only** (`computeBoardState(GameData)` →
+`LayeredBoardState`: per-permanent `CharacteristicState`s, the resolved per-land type override,
+the March-animated permanent set, the managed-effect replay records, and the per-filter-instance
+layer-4 verdicts consumed per CR 613.6). Layers 5–7 still run through the legacy
+`StaticBonusAccumulator` in `GameQueryService.computeStaticBonus`, with three corrections:
+sources apply in timestamp order (so 7b base-P/T last-write-wins is timestamp-correct), the
+`AnimateNoncreatureArtifactsEffect` MV-based base P/T is a 7b entry at the animating
+permanent's timestamp (the old "add MV to power/toughness" hack is gone), and subtype filter
+leaves (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`) are answered from
+the L4-corrected states — both in `PredicateEvaluationService` (which grew a
+`CharacteristicState` overload) and in `StaticEffectSupport.matchesStaticFilter` — while a
+pass is active (`LayerSystemService.activeStateFor`, ThreadLocal). One pass per external
+`computeStaticBonus`/`getOverriddenLandManaColor` call; nested calls made by handlers reuse
+the pass's board state and a per-pass bonus memo. There is **no cross-call cache** yet (no
+GameData modification counter) — a dedicated perf step comes later. CR 613.8 dependency is
+not implemented: layer 4 is pure timestamp order (consequence: e.g. a Xenograft grant with an
+earlier timestamp does not apply to an artifact a later March of the Machines animates,
+although dependency would reorder them).
+
 ## 6. Sources of continuous effects
 
 Each source is classified into one or more layers:
@@ -153,8 +173,9 @@ continuous-effect type to the `Layer`s it contributes to:
 `classify(CardEffect, boolean fromOwnStaticSlot)` returns a `LayerClassification(layers,
 characteristicDefining, colorSetting)`; `possibleLayers(Class)` returns the per-type union for
 coverage checks. `fromOwnStaticSlot` means source == affected AND the effect comes from the
-object's own `EffectSlot.STATIC` — the CDA criterion. Nothing consumes it yet; the layered
-engine does next. **Every new static effect must be registered there** —
+object's own `EffectSlot.STATIC` — the CDA criterion. Consumed by `LayerSystemService`
+(currently for the layer-4 pass only; effect types that throw on classification are treated
+as legacy-only and skipped by the pass). **Every new static effect must be registered there** —
 `LayerClassifierTest` walks all `StaticEffectHandlerBean`s and fails on unclassified types.
 
 Reasoning behind the non-obvious mappings:
@@ -281,3 +302,62 @@ and any deviations from this document.
    engine context and asserts a non-empty layer set per handled effect type (enforces that new
    static effects get classified), plus direct pins of the mappings above. SevenLayerTest
    unchanged at 69 green / 31 red; staticfx suite green.
+
+4. **2026-07-10 — Step 4: whole-battlefield layer-4 pass + timestamp-ordered legacy 5–7.**
+   Added `LayerSystemService` (engine `service/effect/`): `computeBoardState(GameData)` seeds a
+   `CharacteristicState` per permanent (constructor seeding plus engine-side transient granted
+   card types and transient subtypes — one-shot type state is not yet floating effects), collects
+   every L4-classified effect from STATIC slots and `gameData.floatingEffects` into uniform
+   instances (source, effect, timestamp, CDA flag; unclassified types — e.g. the conditional
+   self-animations wrapping `AnimatePermanentsEffect` — are skipped and stay legacy-only), and
+   applies them CDA-first then (timestamp, battlefield position) order. Real L4 semantics:
+   additive grants append; creature-type setters (`GrantSubtypeEffect(overriding)`) clear the
+   creature-type class; land-type setters (`EnchantedPermanentBecomes[Chosen]TypeEffect`,
+   `NonbasicLandsBecomeTypeEffect`) clear the land types (incl. LOCUS per CR 305.7) and record
+   the per-land override that now drives `getOverriddenLandManaColor`/`tapPermanent`;
+   `AnimateNoncreatureArtifactsEffect` adds CREATURE and records the animated set. Tideshaper's
+   transient land override applies after all statics (legacy precedence), the
+   `losesAllCreatureTypes` flag strips creature types last. Scope filters during the pass are
+   evaluated via the new `PredicateEvaluationService.matchesPermanentPredicate(CharacteristicState, ...)`
+   overload with a **null FilterContext** — the pass must never recurse into
+   `computeStaticBonus`. Two hand-off mechanisms keep the legacy assembly consistent with the
+   pass (both born from Bludgeon Brawl's "each non-Equipment artifact is an Equipment"
+   self-negating when its filter was re-evaluated against the finished states): (a) effects the
+   pass fully applied are **managed** — the assembly skips their legacy handler and replays the
+   recorded per-target `L4Contribution` (same accumulator ops the handler would have done, but
+   with membership decided as of the effect's own application); (b) every filter evaluated
+   during L4 memoizes its per-permanent **verdict keyed by filter instance**, and
+   `StaticEffectSupport.matchesStaticFilter` returns that verdict when the same filter object
+   shows up in a later-layer part of the same ability (`GrantEquipByManaValueEffect` shares
+   Bludgeon Brawl's filter instance) — CR 613.6: all parts of one effect apply to the set
+   determined when the first part applied. Layers 5–7: `computeStaticBonus` wraps everything in a per-call "pass"
+   (ThreadLocal; nested calls reuse the board and a per-pass bonus memo) and assembles the
+   legacy accumulator with sources sorted by (timestamp, position) — 7b setter last-write-wins
+   is now timestamp-correct — plus the March MV base P/T injected as a 7b entry at March's
+   timestamp (the additive MV hack is deleted; gated off for self-animated artifacts). The two
+   subtype predicate leaves in `PredicateEvaluationService` and
+   `StaticEffectSupport.matchesStaticFilter` answer from the L4 states while a pass is active
+   (`LayerSystemService.activeStateFor`), so lord/aura filters and 7a CDA counts
+   (`AmountEvaluationService`'s null-context counting) see L4-decided types. `StaticBonus`
+   keeps its exact shape and its type fields keep their legacy-accumulated values (views
+   unchanged); only P/T base-override values and filter-driven contributions changed.
+   **Cache status:** one L4 board computation per external
+   `computeStaticBonus`/`getOverriddenLandManaColor` call, per-pass memo only — no cross-call
+   `GameData` modCount cache yet; that is the recorded perf follow-up (AI simulation calls
+   these constantly). CR 613.8 dependency not implemented (see §5 status note for the known
+   timestamp-only consequence). **Rules adjudications** (oracle checked via cache + live
+   Scryfall): Nim Deathmantle costs {2}, so the March tests' hard-coded 4/4 was wrong card
+   data — `marchAnimatesArtifact`/`setterOverridesAnimationBasePT` now expect MV 2/2 (the CR
+   semantics "base P/T = MV as a 7b entry" is unchanged and is what the tests pin); Lignify is
+   a Kindred Enchantment — Treefolk, so Dauntless Dourbark's CDA counts it (CR 205.3f) —
+   `cdaSeesLayer4TypeChanges` corrected from 3 to 4 (its baseline green at 3 was a
+   coincidence: the accumulator counted the kindred aura but missed the granted Treefolk type
+   on the enchanted bear). SevenLayerTest 69 → **78 green (22 red)**; the flips are exactly the
+   step's targets: `laterLandTypeOverrideWins` (both orders), `bloodMoonAfterAuraWins`,
+   `subtypeOverrideRemovesLordBoost`, `chosenSubtypeGrantFeedsLaterLayers`,
+   `marchAnimatesArtifact`, `laterSetterBeatsAnimationBasePT`, `cdaSeesLandTypeOverrides`,
+   `setterOverridesAnimationBasePT`. New unit tests: `GameQueryServiceTest`
+   `getOverriddenLandManaColor` timestamp-ordering pins (two auras; Blood Moon after aura).
+   Post-verification fix: `CharacteristicState`'s constructor now tolerates a null card type
+   (bare `new Card()` test stand-ins carry only a name — Urza's land tests seat such cards;
+   the constructor already guarded null color and null P/T the same way).

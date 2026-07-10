@@ -95,7 +95,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatur
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -234,6 +236,13 @@ public class PredicateEvaluationService {
                 yield gameQueryService.hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
             }
             case PermanentHasSubtypePredicate hasSubtypePredicate -> {
+                // While a CR 613 layered pass is active, subtype questions are answered from the
+                // layer-4-corrected characteristic state (types decided in layer 4 are visible
+                // to layer 5-7 filters and to CDA amount counts).
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield matchesPermanentPredicate(layered, permanent, hasSubtypePredicate, filterContext);
+                }
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
                 // "Loses all creature types" strips every creature subtype (base/transient/granted) and,
                 // via hasKeyword, the Changeling grant too.
@@ -248,6 +257,10 @@ public class PredicateEvaluationService {
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
             }
             case PermanentHasAnySubtypePredicate hasAnySubtypePredicate -> {
+                CharacteristicState layered = LayerSystemService.activeStateFor(permanent.getId());
+                if (layered != null) {
+                    yield matchesPermanentPredicate(layered, permanent, hasAnySubtypePredicate, filterContext);
+                }
                 Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
                         ? hasAnySubtypePredicate.subtypes().stream()
                                 .filter(st -> !gameQueryService.isCreatureSubtype(st))
@@ -480,6 +493,68 @@ public class PredicateEvaluationService {
                         .max().orElse(0);
                 yield gameQueryService.getEffectivePower(gameData, permanent) == maxPower;
             }
+        };
+    }
+
+    /**
+     * CR 613 layered-pass variant: answers type/subtype leaf predicates from the given
+     * {@link CharacteristicState} (the permanent's characteristics as computed by the layers
+     * applied so far) instead of the raw permanent, and delegates every other predicate to
+     * {@link #matchesPermanentPredicate(Permanent, PermanentPredicate, FilterContext)}.
+     * Composite predicates recurse with the state so nested type leaves stay state-answered.
+     */
+    public boolean matchesPermanentPredicate(CharacteristicState state,
+                                             Permanent permanent,
+                                             PermanentPredicate predicate,
+                                             FilterContext filterContext) {
+        if (predicate == null) return false;
+        if (state == null) return matchesPermanentPredicate(permanent, predicate, filterContext);
+        GameData gameData = filterContext != null ? filterContext.gameData() : null;
+
+        return switch (predicate) {
+            case PermanentHasSubtypePredicate p -> {
+                boolean creatureSubtype = gameQueryService.isCreatureSubtype(p.subtype());
+                // Legacy guard kept: "loses all creature types" is absolute and also nullifies
+                // the Changeling grant (the state already had its creature types stripped).
+                if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
+                    yield false;
+                }
+                yield state.hasSubtype(p.subtype())
+                        || (creatureSubtype && (gameData == null
+                        ? permanent.hasKeyword(Keyword.CHANGELING)
+                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
+            }
+            case PermanentHasAnySubtypePredicate p -> {
+                Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
+                        ? p.subtypes().stream()
+                                .filter(st -> !gameQueryService.isCreatureSubtype(st))
+                                .collect(java.util.stream.Collectors.toSet())
+                        : p.subtypes();
+                boolean hasSubtype = wanted.stream().anyMatch(state::hasSubtype);
+                boolean canUseChangeling = wanted.stream().anyMatch(gameQueryService::isCreatureSubtype);
+                yield hasSubtype || (canUseChangeling && (gameData == null
+                        ? permanent.hasKeyword(Keyword.CHANGELING)
+                        : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
+            }
+            case PermanentNotPredicate p ->
+                    !matchesPermanentPredicate(state, permanent, p.predicate(), filterContext);
+            case PermanentAllOfPredicate p -> {
+                for (PermanentPredicate nested : p.predicates()) {
+                    if (!matchesPermanentPredicate(state, permanent, nested, filterContext)) {
+                        yield false;
+                    }
+                }
+                yield true;
+            }
+            case PermanentAnyOfPredicate p -> {
+                for (PermanentPredicate nested : p.predicates()) {
+                    if (matchesPermanentPredicate(state, permanent, nested, filterContext)) {
+                        yield true;
+                    }
+                }
+                yield false;
+            }
+            default -> matchesPermanentPredicate(permanent, predicate, filterContext);
         };
     }
 

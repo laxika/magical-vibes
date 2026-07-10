@@ -64,7 +64,10 @@ public class CharacteristicState {
      */
     public CharacteristicState(Card card, Permanent permanent) {
         this.name = card.getName();
-        this.cardTypes.add(card.getType());
+        // Null-tolerant like the color/P/T seeding below: bare test cards carry only a name.
+        if (card.getType() != null) {
+            this.cardTypes.add(card.getType());
+        }
         this.cardTypes.addAll(card.getAdditionalTypes());
         this.cardTypes.addAll(permanent.getPersistentGrantedCardTypes());
         this.supertypes.addAll(card.getSupertypes());
@@ -118,6 +121,15 @@ public class CharacteristicState {
         for (CardSubtype subtype : replacement) {
             addSubtype(subtype);
         }
+    }
+
+    /**
+     * Removes every subtype matching the filter. Type-setting effects use this to clear one
+     * type class (creature types, land types) before adding the new type — the classification
+     * of subtypes into classes lives in the engine, not here.
+     */
+    public void removeSubtypesIf(java.util.function.Predicate<CardSubtype> filter) {
+        subtypes.removeIf(filter);
     }
 
     // --- Layer 5 (colors) ---

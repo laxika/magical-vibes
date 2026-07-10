@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -98,6 +99,9 @@ class PredicateEvaluationServiceTest {
         gqs = new GameQueryService(staticEffectRegistry);
         evaluator = new PredicateEvaluationService(gqs);
         ReflectionTestUtils.setField(gqs, "predicateEvaluationService", evaluator);
+        LayerSystemService layerSystemService = new LayerSystemService();
+        ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
+        ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

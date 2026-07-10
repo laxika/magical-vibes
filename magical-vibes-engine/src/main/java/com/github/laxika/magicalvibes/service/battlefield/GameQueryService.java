@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -124,6 +125,17 @@ public class GameQueryService {
     );
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
+
+    /**
+     * The CR 613 layered engine: computes the whole-battlefield layer-4 (type-changing) pass
+     * whose {@code CharacteristicState}s the legacy layer 5-7 accumulator below reads its
+     * type/subtype filter answers from. See {@code agent-docs/LAYER_SYSTEM.md}. Injected
+     * lazily like the other collaborators because it evaluates predicates, which query game
+     * state through this service.
+     */
+    @Autowired
+    @Lazy
+    private LayerSystemService layerSystemService;
 
     /**
      * Evaluates conditional static effects (e.g. metalcraft-animate checks). Injected lazily
@@ -954,21 +966,85 @@ public class GameQueryService {
      * permanent.
      */
     public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
+        // One layered pass per external query: the layer-4 board state is computed once and
+        // shared (via the thread-local pass) with every nested computeStaticBonus call made by
+        // handlers while assembling bonuses, together with a per-pass bonus memo.
+        LayerSystemService.Pass active = layerSystemService.activePass(gameData);
+        if (active != null) {
+            StaticBonus memoized = active.bonusMemo().get(target.getId());
+            if (memoized != null) {
+                return memoized;
+            }
+            StaticBonus bonus = assembleStaticBonus(gameData, active.board(), target);
+            active.bonusMemo().put(target.getId(), bonus);
+            return bonus;
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            return assembleStaticBonus(gameData, pass.board(), target);
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
+    /** A static-effect source with the CR 613.7 ordering key used by {@link #assembleStaticBonus}. */
+    private record StaticSource(Permanent permanent, boolean sameBattlefieldAsTarget, long timestamp, int position) {
+    }
+
+    /**
+     * Legacy layer 5-7 accumulator assembly for one permanent, running against the layer-4
+     * board state: sources apply in timestamp order (battlefield position for equal timestamps)
+     * so last-write-wins fields (7b base P/T setters) become timestamp-correct, subtype/type
+     * filters are answered from the L4-corrected {@code CharacteristicState}s via the active
+     * pass, and {@link AnimateNoncreatureArtifactsEffect} contributes its MV-based base P/T as
+     * a 7b entry at the animating permanent's timestamp instead of the old additive hack.
+     */
+    private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
-        gameData.forEachBattlefield((playerId, bf) -> {
+        List<StaticSource> sources = new ArrayList<>();
+        int position = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
             boolean targetOnSameBattlefield = bf.contains(target);
             for (Permanent source : bf) {
-                if (source == target) continue;
-                StaticEffectContext context = new StaticEffectContext(source, target, targetOnSameBattlefield, gameData);
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
-                    if (handler != null) {
-                        handler.apply(context, effect, accumulator);
+                sources.add(new StaticSource(source, targetOnSameBattlefield, source.getTimestamp(), position++));
+            }
+        }
+        sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
+        Boolean marchBasePtApplies = null;
+        for (StaticSource sourceSlot : sources) {
+            Permanent source = sourceSlot.permanent();
+            if (source == target) continue;
+            StaticEffectContext context = new StaticEffectContext(source, target, sourceSlot.sameBattlefieldAsTarget(), gameData);
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                // Purely type-changing effects were applied by the layer-4 pass (with filters
+                // evaluated as of each effect's own application); replay its recorded decision
+                // instead of re-running the handler against the finished states, which would
+                // let self-referencing filters negate their own output (Bludgeon Brawl).
+                if (board.isManagedL4(effect)) {
+                    board.replayL4Contribution(effect, target.getId(), accumulator);
+                    continue;
+                }
+                StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);
+                if (handler != null) {
+                    handler.apply(context, effect, accumulator);
+                }
+                // CR 613.4: the animation's MV-based base P/T is a 7b entry with the animating
+                // permanent's timestamp — a later-timestamp base-P/T setter overrides it.
+                if (effect instanceof AnimateNoncreatureArtifactsEffect
+                        && board.marchAnimatedIds().contains(target.getId())) {
+                    if (marchBasePtApplies == null) {
+                        marchBasePtApplies = !hasSelfBecomeCreatureEffect(gameData, target);
+                    }
+                    if (marchBasePtApplies) {
+                        int manaValue = target.getCard().getManaValue();
+                        accumulator.setBasePTOverride(manaValue, manaValue);
                     }
                 }
             }
-        });
+        }
         // Process emblem static effects
         for (Emblem emblem : gameData.emblems) {
             List<Permanent> ownerBf = gameData.playerBattlefields.get(emblem.controllerId());
@@ -1019,15 +1095,10 @@ public class GameQueryService {
             return StaticBonus.NONE;
         }
 
-        int power = accumulator.getPower();
-        int toughness = accumulator.getToughness();
-        if (accumulator.isAnimatedCreature() && !isSelfAnimated) {
-            int manaValue = target.getCard().getManaValue();
-            power += manaValue;
-            toughness += manaValue;
-        }
-
-        return accumulator.toStaticBonus(power, toughness, accumulator.isAnimatedCreature() || isSelfAnimated);
+        // The animation's MV-based P/T is applied as a timestamp-ordered 7b base override in the
+        // source loop above (CR 613.4), not added on top of the accumulator's power/toughness.
+        return accumulator.toStaticBonus(accumulator.getPower(), accumulator.getToughness(),
+                accumulator.isAnimatedCreature() || isSelfAnimated);
     }
 
     // --- CR 614.12 replacement-effect lookahead ---
@@ -2121,46 +2192,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the overridden mana color for a land whose type has been changed
-     * by an aura (e.g. Evil Presence, Convincing Mirage), or {@code null} if
-     * the land's type has not been overridden.
+     * Returns the overridden mana color for a land whose land types have been set by a
+     * type-changing effect (Evil Presence, Convincing Mirage, Blood Moon, Tideshaper Mystic, ...),
+     * or {@code null} if no land-type-setting effect applies. Resolved by the CR 613 layer-4
+     * pass, so of several setters the latest timestamp wins (CR 613.7).
      */
     public ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
-        // Transient self-override (e.g. Tideshaper Mystic) takes precedence over aura-based overrides.
-        if (permanent.getTransientLandTypeOverride() != null) {
-            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(permanent.getTransientLandTypeOverride());
-        }
-        for (UUID pid : gameData.orderedPlayerIds) {
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                if (p.isAttached() && p.getAttachedTo().equals(permanent.getId())) {
-                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof EnchantedPermanentBecomesTypeEffect landTypeEffect) {
-                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
-                                    landTypeEffect.subtype());
-                        }
-                        if (effect instanceof EnchantedPermanentBecomesChosenTypeEffect
-                                && p.getChosenSubtype() != null) {
-                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
-                                    p.getChosenSubtype());
-                        }
-                    }
-                }
-            }
-        }
-        // Global "nonbasic lands are [type]s" effects (e.g. Blood Moon) affect every nonbasic land.
-        if (permanent.getCard().hasType(CardType.LAND)
-                && !permanent.getCard().getSupertypes().contains(CardSupertype.BASIC)) {
-            for (UUID pid : gameData.orderedPlayerIds) {
-                for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                    for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof NonbasicLandsBecomeTypeEffect landTypeEffect) {
-                            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(
-                                    landTypeEffect.subtype());
-                        }
-                    }
-                }
-            }
-        }
-        return null;
+        CardSubtype override = layerSystemService.landTypeOverrideFor(gameData, permanent.getId());
+        return override == null ? null
+                : EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(override);
     }
 }
