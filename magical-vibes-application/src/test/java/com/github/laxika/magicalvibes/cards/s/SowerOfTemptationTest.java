@@ -36,7 +36,7 @@ class SowerOfTemptationTest extends BaseCardTest {
 
         // Tracked as source-dependent steal keyed to the Sower
         Permanent sower = findPermanent(player1, "Sower of Temptation");
-        assertThat(gd.sourceDependentStolenCreatures.get(bears.getId())).isEqualTo(sower.getId());
+        assertThat(gd.newestControlEffectFor(bears.getId()).sourcePermanentId()).isEqualTo(sower.getId());
     }
 
     @Test
@@ -67,7 +67,7 @@ class SowerOfTemptationTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(bears.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bears.getId()));
-        assertThat(gd.sourceDependentStolenCreatures).doesNotContainKey(bears.getId());
+        assertThat(gd.controlEffectsFor(bears.getId())).isEmpty();
     }
 
     @Test

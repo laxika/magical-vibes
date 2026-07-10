@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final CreatureControlService creatureControlService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -49,6 +51,13 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     String logEntry = casterName + " gains control of " + aura.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
+
+                    // A control Aura (e.g. In Bolas's Clutches) grants control to whoever controls
+                    // the Aura — its enchanted permanent follows the Aura's new controller.
+                    Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+                    if (enchanted != null) {
+                        creatureControlService.recomputeControl(gameData, enchanted);
+                    }
                 }
 
                 TargetFilter auraFilter = aura.getCard().getTargetFilter();

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -36,7 +36,7 @@ class EndTurnEffectHandlerTest {
 
     @Mock private CombatService combatService;
     @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private AuraAttachmentService auraAttachmentService;
+    @Mock private CreatureControlService creatureControlService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
     @InjectMocks
@@ -212,7 +212,7 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                verify(auraAttachmentService).returnStolenCreatures(gd, true);
+                verify(creatureControlService).reconcileControl(gd);
             }
 
             @Test

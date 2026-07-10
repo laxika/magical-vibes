@@ -497,7 +497,10 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(creatureControlService).stealPermanent(gd, PLAYER1_ID, targetPerm);
+            verify(creatureControlService).applyControlEffect(eq(gd), eq(PLAYER1_ID), eq(targetPerm),
+                    any(ControlEnchantedCreatureEffect.class),
+                    eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.WHILE_ATTACHED),
+                    any(UUID.class), eq("Control Aura"));
         }
 
         @Test

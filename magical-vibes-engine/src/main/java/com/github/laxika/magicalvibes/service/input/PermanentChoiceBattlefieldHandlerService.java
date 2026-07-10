@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -791,7 +792,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
             if (hasControlEffect) {
-                creatureControlService.stealPermanent(gameData, auraControllerId, enchantTarget);
+                creatureControlService.applyControlEffect(gameData, auraControllerId, enchantTarget,
+                        new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                        auraPerm.getId(), auraCard.getName());
             }
 
             String playerName = gameData.playerIdToName.get(auraControllerId);

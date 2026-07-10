@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model.layer;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
@@ -39,6 +42,14 @@ public record FloatingContinuousEffect(
         PermanentPredicate scope,
         EffectDuration duration,
         long timestamp) {
+
+    /** Whether this is a CR 613 layer-2 control-changing effect. All floating control effects
+     *  wrap one of these three effect types (see {@code CreatureControlService}). */
+    public boolean isControlEffect() {
+        return effect instanceof GainControlOfTargetEffect
+                || effect instanceof ControlEnchantedCreatureEffect
+                || effect instanceof GainControlOfEnchantedTargetEffect;
+    }
 
     /** Returns a copy of this effect carrying the given CR 613.7 timestamp (used by
      *  {@code GameData.addFloatingEffect} to stamp the effect on insertion). */

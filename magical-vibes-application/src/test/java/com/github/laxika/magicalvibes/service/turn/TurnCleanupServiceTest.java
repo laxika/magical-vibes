@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.verify;
 class TurnCleanupServiceTest {
 
     @Mock
-    private AuraAttachmentService auraAttachmentService;
+    private CreatureControlService creatureControlService;
 
     @InjectMocks
     private TurnCleanupService sut;
@@ -85,7 +85,7 @@ class TurnCleanupServiceTest {
             sut.applyCleanupResets(gd);
 
             assertThat(perm.getPowerModifier()).isZero();
-            verify(auraAttachmentService).returnStolenCreatures(gd, true);
+            verify(creatureControlService).reconcileControl(gd);
         }
     }
 

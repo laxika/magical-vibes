@@ -45,7 +45,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
+        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
 
         String tappedText = e.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);

@@ -3,18 +3,31 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * How long a {@link GainControlOfTargetEffect} keeps control of the stolen permanent.
  *
+ * <p>Each resolution creates a floating {@code L2_CONTROL} continuous effect (CR 613.2/613.7,
+ * see {@code GameData.floatingEffects}); the actual controller of a permanent is derived from
+ * the newest active control effect. {@link #toEffectDuration()} maps each value onto the
+ * floating effect's {@link EffectDuration}:
+ *
  * <ul>
- *   <li>{@code PERMANENT} — indefinite control (tracked via
- *       {@code GameData.permanentControlStolenCreatures}).</li>
- *   <li>{@code END_OF_TURN} — control reverts during the end-of-turn cleanup
- *       (tracked via {@code GameData.untilEndOfTurnStolenCreatures}).</li>
- *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — control lasts for as long as the
- *       controller keeps the source permanent; it reverts when the source leaves
- *       or changes controllers (tracked via {@code GameData.sourceDependentStolenCreatures}).</li>
+ *   <li>{@code PERMANENT} — indefinite control ({@code EffectDuration.PERMANENT}).</li>
+ *   <li>{@code END_OF_TURN} — the effect wears off during the cleanup step
+ *       ({@code EffectDuration.UNTIL_END_OF_TURN}).</li>
+ *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — the effect ends when the source permanent
+ *       leaves the battlefield or its creator stops controlling it
+ *       ({@code EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD}).</li>
  * </ul>
  */
 public enum ControlDuration {
     PERMANENT,
     END_OF_TURN,
-    WHILE_SOURCE_ON_BATTLEFIELD
+    WHILE_SOURCE_ON_BATTLEFIELD;
+
+    /** The {@link EffectDuration} of the floating control effect this duration creates. */
+    public EffectDuration toEffectDuration() {
+        return switch (this) {
+            case PERMANENT -> EffectDuration.PERMANENT;
+            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+        };
+    }
 }

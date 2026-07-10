@@ -30,6 +30,10 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -657,9 +661,17 @@ public class GraveyardReturnSupport {
     }
 
 
-    public void trackStolenCreature(GameData gameData, UUID permanentId, UUID originalOwnerId) {
+    /**
+     * Records that a permanent entered the battlefield under a non-owner's control (e.g. stolen
+     * from an opponent's graveyard): stamps the ownership record and creates the indefinite
+     * floating control effect that keeps it with {@code controllerId}.
+     */
+    public void trackStolenCreature(GameData gameData, UUID permanentId, UUID controllerId, UUID originalOwnerId) {
         gameData.stolenCreatures.put(permanentId, originalOwnerId);
-        gameData.permanentControlStolenCreatures.add(permanentId);
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), null, null, controllerId,
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                permanentId, null, null, EffectDuration.PERMANENT, 0));
     }
 
     public record StolenCreatureResult(Permanent permanent, Card card, UUID originalOwnerId) {}

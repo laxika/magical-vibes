@@ -102,7 +102,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
 
         // Creature should be tracked as stolen
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).contains(creature.getId());
+        assertThat(gd.newestControlEffectFor(creature.getId())).isNotNull();
     }
 
     // ===== Not enchanted: ability does nothing =====
@@ -183,7 +183,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
 
         // Tracking should be cleaned up
         assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(creature.getId());
+        assertThat(gd.controlEffectsFor(creature.getId())).isEmpty();
     }
 
     @Test
@@ -222,7 +222,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).contains(creature.getId());
+        assertThat(gd.newestControlEffectFor(creature.getId())).isNotNull();
     }
 
     // ===== Summoning sickness =====

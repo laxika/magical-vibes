@@ -359,7 +359,9 @@ public class AnimationSupport {
         boolean hasControlEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
         if (hasControlEffect) {
-            creatureControlService.stealPermanent(gameData, controllerId, target);
+            creatureControlService.applyControlEffect(gameData, controllerId, target,
+                    new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                    source.getId(), source.getCard().getName());
         }
     }
 

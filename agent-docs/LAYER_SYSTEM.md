@@ -109,8 +109,25 @@ A whole-battlefield, layer-by-layer pass replacing the per-permanent
    (`model/layer/CharacteristicState.java`) per permanent, seeded from the **post-copy card**
    (L1 applied to the card identity before the pass — clones already mutate
    `Permanent.card`) plus the permanent's persistent one-shot grants and counters.
-2. **L2 (control)** determines controller attribution for the rest of the pass (today control
-   is physical battlefield membership; the layered model computes it instead).
+2. **L2 (control)** determines controller attribution for the rest of the pass.
+   **Implemented (step 8), but OUTSIDE the per-query pass:** every control-changing effect is
+   a floating `L2_CONTROL` effect; the controller of a permanent is DERIVED — the newest
+   (highest CR 613.7 timestamp) active control effect wins (`GameData.deriveControllerOf`),
+   with none active the permanent belongs to its default controller
+   (`GameData.defaultControllerOf`: the `stolenCreatures` ownership record, else the card's
+   `ownerId` stamped at setup, else the battlefield it sits on — hand-built test permanents
+   and tokens carry no owner). Because the entire engine equates battlefield-list membership
+   with control, `CreatureControlService.recomputeControl` PHYSICALLY MOVES the permanent
+   between `playerBattlefields` lists eagerly whenever the derived controller changes (on
+   effect creation, expiry, and source/aura departure) instead of computing it per query —
+   the physical lists are thus always consistent with the derived answer, and the rest of
+   the pass keeps reading membership. Moves keep the permanent's timestamp (CR 613.7c, no
+   ETB) and set summoning sickness (CR 302.6). `CreatureControlService.reconcileControl`
+   (invoked from `removeOrphanedAuras` after every battlefield removal and at the cleanup
+   step) is the convergence point: it ensures every attached control Aura has its
+   `WHILE_ATTACHED` effect, expires effects whose "for as long as" condition failed
+   (source left / creator lost the source / no longer enchanted), and recomputes every
+   permanent touched by a control effect or ownership record.
 3. For each layer L3, L4, L5, L6, 7a, 7b, 7c, 7d **in order**: collect every continuous effect
    classified into that layer from all sources, order them per §2, and apply them **across
    ALL permanents** before moving to the next layer.
@@ -259,9 +276,12 @@ Each source is classified into one or more layers:
 3. **Floating effects** created by resolved spells/abilities (`FloatingContinuousEffect`,
    stored on `GameData` — introduced in step 2). These replace today's scattered
    `Permanent` fields (`powerModifier`, `grantedKeywords`, `basePowerToughnessOverriddenUntilEndOfTurn`,
-   `losesAllAbilitiesUntilEndOfTurn`, `transientColors`, steal tracking sets on `GameData`,
-   ...) and expire by duration instead of by `resetModifiers()` bucket.
-   (`powerToughnessSwitched` was the first field fully deleted this way — step 7.)
+   `losesAllAbilitiesUntilEndOfTurn`, `transientColors`, ...) and expire by duration instead
+   of by `resetModifiers()` bucket. (`powerToughnessSwitched` was the first field fully
+   deleted this way — step 7; the four steal tracking sets — `untilEndOfTurnStolenCreatures`,
+   `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
+   `permanentControlStolenCreatures` — were deleted in step 8, leaving only the
+   `stolenCreatures` OWNERSHIP record, maintained by `recomputeControl`.)
 
 ### Duration enum
 
@@ -620,3 +640,68 @@ and any deviations from this document.
    filter/ability/cast/combat/trigger/spell unit suites, FloatingEffectLifecycleTest, the
    setter/boost/CDA card tests (Diminish, Lignify, GiantGrowth, MarchOfTheMachines,
    DeepFreeze, WingsOfVelisVel, Maro, Nightmare) and the full AI module suite — all green.
+
+8. **2026-07-10 — Step 8: layer 2 control as floating effects; the four steal tracking sets
+   deleted.** Every control-changing effect is now a floating `L2_CONTROL` effect and the
+   controller of a permanent is DERIVED (newest active effect wins, CR 613.2/613.7; see the
+   rewritten §5 point 2 for the architecture — derivation lives on `GameData`
+   (`deriveControllerOf`/`defaultControllerOf`/`newestControlEffectFor`/
+   `resolveControlEffectController`), the eager physical battlefield-list move in
+   `CreatureControlService.recomputeControl`, and `reconcileControl` replaces
+   `returnStolenCreatures` at `removeOrphanedAuras`/cleanup time). Producers migrated to
+   `CreatureControlService.applyControlEffect` (which replaces `stealPermanent`):
+   `GainControlOfTargetEffectHandler` (all three `ControlDuration`s, via the new
+   `ControlDuration.toEffectDuration()`), the four control-Aura attach sites
+   (StackResolutionService, WarpWorldService, AnimationSupport transform-attach,
+   PermanentChoiceBattlefieldHandlerService — `WHILE_ATTACHED` keyed to the Aura;
+   `reconcileControl` additionally auto-creates missing Aura effects as the reattach safety
+   net, e.g. Aura Graft), `GainControlOfEnchantedTargetEffectHandler` (PERMANENT + the
+   while-enchanted condition enforced in reconcile, keyed on the wrapped effect type),
+   `TargetPlayerGainsControlOfSource`/`ClashForControl`/`DamageTriggerCollectorService`
+   (PERMANENT), and `GraveyardReturnSupport.trackStolenCreature` (now takes the controller,
+   creates the PERMANENT effect). GameData deletions: `untilEndOfTurnStolenCreatures`
+   (replaced by the derived `isStolenUntilEndOfTurn` — newest effect is UEOT AND control
+   would change once it expires; consumed by `CombatSimulator`),
+   `sourceDependentStolenCreatures`, `enchantmentDependentStolenCreatures`,
+   `permanentControlStolenCreatures`; `stolenCreatures` survives as the pure OWNERSHIP record
+   maintained by `recomputeControl` (put on first move away from the owner, removed on
+   arriving back). `processRemovalCleanup` and WarpWorld additionally drop control effects
+   AFFECTING a departed permanent (`expireControlEffectsForDepartedPermanent`); Karn's
+   restart clears `floatingEffects` wholesale. **Rules fixes over the old mechanism:** an
+   expiring/removed control effect falls back to the next most recent still-active effect
+   (the three step targets); a control effect on a creature you already control is still
+   created (Threaten your own Sower-stolen creature keeps it if Sower dies before cleanup);
+   stealing a control Aura (Aura Graft) moves the enchanted permanent with it —
+   `WHILE_ATTACHED` effects resolve to the Aura's CURRENT controller and the
+   `GainControlOfTargetAuraEffectHandler` recomputes after moving the Aura. **Deviations:**
+   `WHILE_SOURCE_ON_BATTLEFIELD` keeps the legacy "creator must still control the source"
+   condition on top of battlefield presence — right for Olivia Voldaren ("for as long as you
+   control Olivia"), strictly wrong for Sower of Temptation (oracle: battlefield presence
+   only; per the official ruling the steal survives Sower changing controllers) — kept to
+   match the pre-refactor engine, `ControlDuration`'s documented semantics, and the existing
+   card tests; distinguishing the two wordings needs a fourth duration flavor, deferred. The
+   legacy "attached Equipment becomes unattached when control reverts" behavior is preserved
+   only for reverts to the DEFAULT controller (no active effect), not for fallbacks to an
+   earlier effect. Summoning sickness preserved: every recompute move sets it (CR 302.6);
+   Threaten's haste rider is untouched, Sower grants none. SevenLayerTest 90 → **93 green
+   (7 red)**; flips are exactly the step targets: `expiredControlEffectFallsBackToEarlierEffect`,
+   `removedControlEffectLeavesLaterOneActive`, `temporaryStealOverridesAuraControlUntilCleanup`;
+   the other seven Layer2Control tests stayed green. Remaining 7 red = L3 text only. Test
+   updates: `CreatureControlServiceTest` rewritten around
+   `applyControlEffect`/`reconcileControl`/derived views; `AuraAttachmentServiceTest`'s
+   returnStolenCreatures sections folded into it; `GainControlOfTargetEffectHandlerTest`
+   verifies `applyControlEffect` (incl. a new lost-source-control fizzle pin); the ~15 card
+   tests asserting the deleted sets moved to `gd.isStolenUntilEndOfTurn`/
+   `newestControlEffectFor`/`controlEffectsFor`; `CombatSimulatorTest` gained a
+   `markStolenUntilEndOfTurn` helper (ownership record + floating effect). Ran SevenLayerTest,
+   all ~40 control-related card tests (Threaten, Sower, Clutches, Goatnapper,
+   MetallicMastery, KeldonOverseer, Olivia, ActOfTreason/Aggression, Hijack,
+   TraitorousBlood, CaptivatingCrew/Vampire/Glance, EntrancingMelody, Jace, Rootwater,
+   Persuasion, MindControl, Confiscate, Annex, Enslave, CorruptedConscience, VolitionReins,
+   SoulSeizer, BeguilerOfWills, Geth, GruesomeEncore, WarpWorld, GhastlyHaunting,
+   OgreGeargrabber, SleeperAgent, JinxedIdol, AdmiralBeckettBrass, SavingGrasp, Daydream,
+   SirensRuse, KarnLiberated), the affected unit suites (CreatureControl, AuraAttachment,
+   GainControlOfTargetEffectHandler, TurnCleanup, EndTurnEffectHandler, StackResolution,
+   DamageTriggerCollector, PermanentRemoval, PermanentTimestamp, FloatingEffectLifecycle,
+   Flicker, ReturnToHand, ExileUntilSourceLeaves, both graveyard-steal handlers) and the
+   full AI module suite — all green.

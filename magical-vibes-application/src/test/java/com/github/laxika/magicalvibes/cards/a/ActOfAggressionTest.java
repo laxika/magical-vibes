@@ -54,7 +54,7 @@ class ActOfAggressionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
     @Test
@@ -98,7 +98,7 @@ class ActOfAggressionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
     @Test

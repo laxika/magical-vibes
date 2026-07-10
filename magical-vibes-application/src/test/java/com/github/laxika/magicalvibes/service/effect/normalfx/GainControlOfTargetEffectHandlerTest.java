@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -98,7 +99,7 @@ class GainControlOfTargetEffectHandlerTest {
         // ----- Single-target (legacy path via getTargetId()) -----
 
         @Test
-        @DisplayName("Steals target permanent via single targetId")
+        @DisplayName("Creates a permanent-duration control effect for a single targetId")
         void stealsSingleTarget() {
             Card card = createCard("Entrancing Melody");
             Permanent target = createCreature("Grizzly Bears");
@@ -108,12 +109,11 @@ class GainControlOfTargetEffectHandlerTest {
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target);
-            assertThat(gd.permanentControlStolenCreatures).contains(target.getId());
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target,
+                    effect, EffectDuration.PERMANENT, null, "Entrancing Melody");
         }
 
         @Test
@@ -128,27 +128,7 @@ class GainControlOfTargetEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
-            assertThat(gd.permanentControlStolenCreatures).isEmpty();
-        }
-
-        @Test
-        @DisplayName("Does not steal when target is already controlled by the controller")
-        void doesNotStealOwnPermanent() {
-            Card card = createCard("Entrancing Melody");
-            Permanent target = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(target);
-
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
-
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
-
-            handler.resolve(gd, entry, effect);
-
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
-            assertThat(gd.permanentControlStolenCreatures).isEmpty();
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -162,11 +142,11 @@ class GainControlOfTargetEffectHandlerTest {
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target);
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target,
+                    effect, EffectDuration.PERMANENT, null, "Captivating Vampire");
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Grizzly Bears becomes a Vampire in addition to its other types."));
@@ -184,7 +164,6 @@ class GainControlOfTargetEffectHandlerTest {
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
@@ -195,7 +174,7 @@ class GainControlOfTargetEffectHandlerTest {
         // ----- Multi-target (via getTargetIds()) -----
 
         @Test
-        @DisplayName("Steals multiple targets via targetIds")
+        @DisplayName("Creates a control effect per target via targetIds")
         void stealsMultipleTargets() {
             Card card = createCard("Jace, Ingenious Mind-Mage");
             Permanent target1 = createCreature("Grizzly Bears");
@@ -212,17 +191,15 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
             when(gameQueryService.findPermanentById(gd, target3.getId())).thenReturn(target3);
-            when(gameQueryService.findPermanentController(gd, target1.getId())).thenReturn(player2Id);
-            when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
-            when(gameQueryService.findPermanentController(gd, target3.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target1);
-            verify(creatureControlService).stealPermanent(gd, player1Id, target2);
-            verify(creatureControlService).stealPermanent(gd, player1Id, target3);
-            assertThat(gd.permanentControlStolenCreatures)
-                    .containsExactlyInAnyOrder(target1.getId(), target2.getId(), target3.getId());
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target1,
+                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target2,
+                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target3,
+                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
         }
 
         @Test
@@ -242,16 +219,14 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
             when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
-            when(gameQueryService.findPermanentController(gd, target1.getId())).thenReturn(player2Id);
-            when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target1);
-            verify(creatureControlService).stealPermanent(gd, player1Id, target2);
-            verify(creatureControlService, times(2)).stealPermanent(any(), any(), any());
-            assertThat(gd.permanentControlStolenCreatures)
-                    .containsExactlyInAnyOrder(target1.getId(), target2.getId());
+            verify(creatureControlService, times(2)).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target1,
+                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target2,
+                    effect, EffectDuration.PERMANENT, null, "Jace, Ingenious Mind-Mage");
         }
 
         @Test
@@ -263,8 +238,7 @@ class GainControlOfTargetEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
-            assertThat(gd.permanentControlStolenCreatures).isEmpty();
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -282,39 +256,12 @@ class GainControlOfTargetEffectHandlerTest {
 
             when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
-            when(gameQueryService.findPermanentController(gd, target1.getId())).thenReturn(player2Id);
-            when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
             assertThat(target1.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             assertThat(target2.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), any());
-        }
-
-        @Test
-        @DisplayName("Multi-target skips targets already controlled by the controller")
-        void multiTargetSkipsOwnPermanents() {
-            Card card = createCard("Jace, Ingenious Mind-Mage");
-            Permanent ownCreature = createCreature("Grizzly Bears");
-            Permanent opponentCreature = createCreature("Hill Giant");
-            gd.playerBattlefields.get(player1Id).add(ownCreature);
-            gd.playerBattlefields.get(player2Id).add(opponentCreature);
-
-            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.PERMANENT);
-            List<UUID> targetIds = List.of(ownCreature.getId(), opponentCreature.getId());
-            StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), targetIds);
-
-            when(gameQueryService.findPermanentById(gd, ownCreature.getId())).thenReturn(ownCreature);
-            when(gameQueryService.findPermanentById(gd, opponentCreature.getId())).thenReturn(opponentCreature);
-            when(gameQueryService.findPermanentController(gd, ownCreature.getId())).thenReturn(player1Id);
-            when(gameQueryService.findPermanentController(gd, opponentCreature.getId())).thenReturn(player2Id);
-
-            handler.resolve(gd, entry, effect);
-
-            verify(creatureControlService, times(1)).stealPermanent(gd, player1Id, opponentCreature);
-            verify(creatureControlService, never()).stealPermanent(gd, player1Id, ownCreature);
-            assertThat(gd.permanentControlStolenCreatures).containsExactly(opponentCreature.getId());
         }
     }
 
@@ -326,7 +273,7 @@ class GainControlOfTargetEffectHandlerTest {
     class EndOfTurn {
 
         @Test
-        @DisplayName("Steals target until end of turn and tracks it for revert")
+        @DisplayName("Creates an until-end-of-turn control effect for the target")
         void stealsUntilEndOfTurn() {
             Card card = createCard("Threaten");
             Permanent target = createCreature("Grizzly Bears");
@@ -336,32 +283,26 @@ class GainControlOfTargetEffectHandlerTest {
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target);
-            assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
-            assertThat(gd.permanentControlStolenCreatures).isEmpty();
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target,
+                    effect, EffectDuration.UNTIL_END_OF_TURN, null, "Threaten");
         }
 
         @Test
-        @DisplayName("Does nothing when target already controlled by the controller")
-        void doesNothingForOwnPermanent() {
+        @DisplayName("Does nothing when the target is not found")
+        void doesNothingWhenTargetNotFound() {
             Card card = createCard("Threaten");
-            Permanent target = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(target);
-
+            UUID missingId = UUID.randomUUID();
             GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
-            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), missingId);
 
-            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
-            assertThat(gd.untilEndOfTurnStolenCreatures).isEmpty();
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
         }
     }
 
@@ -373,7 +314,7 @@ class GainControlOfTargetEffectHandlerTest {
     class WhileSource {
 
         @Test
-        @DisplayName("Steals target and maps it to the source permanent")
+        @DisplayName("Creates a while-source control effect keyed to the source permanent")
         void stealsWhileSourceControlled() {
             Card card = createCard("Olivia Voldaren");
             Permanent source = createCreature("Olivia Voldaren");
@@ -387,12 +328,11 @@ class GainControlOfTargetEffectHandlerTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
             when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player1Id);
-            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService).stealPermanent(gd, player1Id, target);
-            assertThat(gd.sourceDependentStolenCreatures).containsEntry(target.getId(), source.getId());
+            verify(creatureControlService).applyControlEffect(gd, player1Id, target,
+                    effect, EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, source.getId(), "Olivia Voldaren");
         }
 
         @Test
@@ -411,8 +351,28 @@ class GainControlOfTargetEffectHandlerTest {
 
             handler.resolve(gd, entry, effect);
 
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
-            assertThat(gd.sourceDependentStolenCreatures).isEmpty();
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Has no effect when the caster no longer controls the source")
+        void noEffectWhenSourceControlLost() {
+            Card card = createCard("Olivia Voldaren");
+            Permanent source = createCreature("Olivia Voldaren");
+            Permanent target = createCreature("Bloodghast");
+            gd.playerBattlefields.get(player2Id).add(source);
+            gd.playerBattlefields.get(player2Id).add(target);
+
+            GainControlOfTargetEffect effect = new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
+            StackEntry entry = entryWithTargetAndSource(card, player1Id, List.of(effect), target.getId(), source.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+            when(gameQueryService.findPermanentController(gd, source.getId())).thenReturn(player2Id);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
         }
     }
 }

@@ -174,8 +174,10 @@ class DamageTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(creatureControlService).stealPermanent(gd, player2Id, triggerPerm);
-            assertThat(gd.permanentControlStolenCreatures).contains(triggerPerm.getId());
+            verify(creatureControlService).applyControlEffect(eq(gd), eq(player2Id), eq(triggerPerm),
+                    any(com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect.class),
+                    eq(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT),
+                    any(), any());
         }
 
         @Test
@@ -191,7 +193,7 @@ class DamageTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, effect, ctx);
 
             assertThat(result).isFalse();
-            verify(creatureControlService, never()).stealPermanent(any(), any(), any());
+            verify(creatureControlService, never()).applyControlEffect(any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test

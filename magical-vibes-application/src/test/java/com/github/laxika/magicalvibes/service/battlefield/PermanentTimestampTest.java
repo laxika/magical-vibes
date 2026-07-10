@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AttachTargetToSourcePermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,8 +144,9 @@ class PermanentTimestampTest {
             battlefieldEntryService.putPermanentOntoBattlefield(gd, player2Id, bears);
             long entryStamp = bears.getTimestamp();
 
-            when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
-            controlService.stealPermanent(gd, player1Id, bears);
+            controlService.applyControlEffect(gd, player1Id, bears,
+                    new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                    EffectDuration.UNTIL_END_OF_TURN, null, "Threaten");
 
             assertThat(gd.playerBattlefields.get(player1Id)).contains(bears);
             assertThat(bears.getTimestamp()).isEqualTo(entryStamp);

@@ -153,9 +153,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.stack.clear();
         gameData.clearAllSourceTracking();
         gameData.stolenCreatures.clear();
-        gameData.untilEndOfTurnStolenCreatures.clear();
-        gameData.enchantmentDependentStolenCreatures.clear();
-        gameData.permanentControlStolenCreatures.clear();
+        gameData.floatingEffects.clear();
         gameData.clearDelayedActions(PendingExileReturn.class);
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();

@@ -1165,7 +1165,7 @@ public class CombatSimulator {
         // controller — they will be returned at end of turn regardless. Treat their combat loss
         // value as 0 so the AI doesn't incorrectly avoid attacking with them out of fear of
         // "losing" a creature that was never truly theirs to keep.
-        boolean isStolenUntilEndOfTurn = gameData.untilEndOfTurnStolenCreatures.contains(perm.getId());
+        boolean isStolenUntilEndOfTurn = gameData.isStolenUntilEndOfTurn(perm.getId());
         double score = isStolenUntilEndOfTurn ? 0
                 : boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId);
 

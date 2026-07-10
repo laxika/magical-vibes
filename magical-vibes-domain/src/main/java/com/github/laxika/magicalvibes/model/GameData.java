@@ -173,13 +173,12 @@ public class GameData {
      *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
      *  Keyed by source permanent id; reset at the start of each turn. */
     public final Map<UUID, Integer> permanentAbilityResolutionsThisTurn = new ConcurrentHashMap<>();
+    /** Maps a permanent that is not controlled by its owner to that owner (recorded on the first
+     *  control change away from the owner, removed when control reverts to the owner or the
+     *  permanent leaves the battlefield). This is the OWNERSHIP record used to route cards to the
+     *  right graveyard/hand/library on leave; which player CONTROLS the permanent is derived from
+     *  the floating {@code L2_CONTROL} effects (see {@link #deriveControllerOf}). */
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
-    public final Set<UUID> untilEndOfTurnStolenCreatures = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> permanentControlStolenCreatures = ConcurrentHashMap.newKeySet();
-    /** Maps stolen creature ID → source permanent ID for "gain control for as long as you control [source]" effects.
-     *  When the source permanent leaves the battlefield or changes controllers, the stolen creature is returned. */
-    public final Map<UUID, UUID> sourceDependentStolenCreatures = new ConcurrentHashMap<>();
     public boolean endTurnRequested;
     /**
      * Unified queue of pending player interactions (decisions awaiting player input).
@@ -537,6 +536,145 @@ public class GameData {
             }
         }
         return removed;
+    }
+
+    // ── Derived control state (CR 613.2/613.7 layer 2) ─────────────────────────────────────
+
+    /**
+     * Removes and returns all control-changing floating effects that apply to the given
+     * permanent. Called when the permanent leaves the battlefield (its control effects can
+     * never apply to a new object — CR 611.2c).
+     */
+    public List<FloatingContinuousEffect> expireControlEffectsForDepartedPermanent(UUID permanentId) {
+        return expireFloatingEffects(fe -> fe.isControlEffect()
+                && permanentId.equals(fe.affectedPermanentId()));
+    }
+
+    /** All active control-changing floating effects that apply to the given permanent. */
+    public List<FloatingContinuousEffect> controlEffectsFor(UUID permanentId) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.isControlEffect() && permanentId.equals(fe.affectedPermanentId())) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** The newest (highest CR 613.7 timestamp) active control effect for the permanent, or {@code null}. */
+    public FloatingContinuousEffect newestControlEffectFor(UUID permanentId) {
+        FloatingContinuousEffect newest = null;
+        for (FloatingContinuousEffect fe : controlEffectsFor(permanentId)) {
+            if (newest == null || fe.timestamp() > newest.timestamp()) {
+                newest = fe;
+            }
+        }
+        return newest;
+    }
+
+    /**
+     * The player a control effect gives control to. For attachment-backed effects
+     * ({@code WHILE_ATTACHED}, e.g. In Bolas's Clutches) this is the CURRENT controller of the
+     * source Aura — the static ability grants control to whoever controls the Aura right now;
+     * for everything else it is the controller of the spell/ability that created the effect.
+     */
+    public UUID resolveControlEffectController(FloatingContinuousEffect fe) {
+        if (fe.duration() == EffectDuration.WHILE_ATTACHED && fe.sourcePermanentId() != null) {
+            UUID auraController = findControllerOf(fe.sourcePermanentId());
+            if (auraController != null) {
+                return auraController;
+            }
+        }
+        return fe.controllerId();
+    }
+
+    /**
+     * The player who controls the given permanent per CR 613.2: the newest active control
+     * effect wins; with none active, the default controller (see {@link #defaultControllerOf}).
+     * Purely derived — moving the permanent between battlefield lists to match is
+     * {@code CreatureControlService.recomputeControl}'s job.
+     */
+    public UUID deriveControllerOf(UUID permanentId) {
+        FloatingContinuousEffect newest = newestControlEffectFor(permanentId);
+        if (newest != null) {
+            return resolveControlEffectController(newest);
+        }
+        return defaultControllerOf(permanentId);
+    }
+
+    /**
+     * Who controls the permanent when no control effect applies: its recorded original owner
+     * ({@link #stolenCreatures}), else the owner stamped on the card at game setup, else the
+     * battlefield it currently sits on (hand-built test permanents and tokens carry no owner).
+     */
+    public UUID defaultControllerOf(UUID permanentId) {
+        UUID recordedOwner = stolenCreatures.get(permanentId);
+        if (recordedOwner != null) {
+            return recordedOwner;
+        }
+        Permanent permanent = null;
+        UUID holder = null;
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(permanentId)) {
+                    permanent = p;
+                    holder = playerId;
+                    break;
+                }
+            }
+            if (permanent != null) break;
+        }
+        if (permanent != null) {
+            UUID cardOwner = permanent.getCard().getOwnerId();
+            if (cardOwner != null && playerIds.contains(cardOwner)) {
+                return cardOwner;
+            }
+        }
+        return holder;
+    }
+
+    /**
+     * Whether the permanent is currently held by a controller who only has it until end of
+     * turn: the newest active control effect is {@code UNTIL_END_OF_TURN} and control would
+     * fall to a different player once it expires. Derived replacement for the old
+     * {@code untilEndOfTurnStolenCreatures} set (used by the AI to zero a stolen attacker's
+     * loss value).
+     */
+    public boolean isStolenUntilEndOfTurn(UUID permanentId) {
+        FloatingContinuousEffect newest = newestControlEffectFor(permanentId);
+        if (newest == null || newest.duration() != EffectDuration.UNTIL_END_OF_TURN) {
+            return false;
+        }
+        UUID withEffect = resolveControlEffectController(newest);
+        FloatingContinuousEffect newestSurviving = null;
+        for (FloatingContinuousEffect fe : controlEffectsFor(permanentId)) {
+            if (fe.duration() == EffectDuration.UNTIL_END_OF_TURN) continue;
+            if (newestSurviving == null || fe.timestamp() > newestSurviving.timestamp()) {
+                newestSurviving = fe;
+            }
+        }
+        UUID withoutEffect = newestSurviving != null
+                ? resolveControlEffectController(newestSurviving)
+                : defaultControllerOf(permanentId);
+        return withEffect != null && !withEffect.equals(withoutEffect);
+    }
+
+    /** The player whose battlefield currently holds the permanent, or {@code null}. */
+    public UUID findControllerOf(UUID permanentId) {
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(permanentId)) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
     }
 
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
@@ -1052,9 +1190,6 @@ public class GameData {
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
-        copy.untilEndOfTurnStolenCreatures.addAll(this.untilEndOfTurnStolenCreatures);
-        copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
-        copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
@@ -1089,7 +1224,6 @@ public class GameData {
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
-        copy.sourceDependentStolenCreatures.putAll(this.sourceDependentStolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);

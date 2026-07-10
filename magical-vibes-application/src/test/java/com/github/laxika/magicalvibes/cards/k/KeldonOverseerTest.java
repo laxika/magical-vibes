@@ -85,7 +85,7 @@ class KeldonOverseerTest extends BaseCardTest {
                     .anyMatch(p -> p.getId().equals(target.getId()));
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getId().equals(target.getId()));
-            assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
+            assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
         }
 
         @Test
@@ -125,7 +125,7 @@ class KeldonOverseerTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .noneMatch(p -> p.getId().equals(target.getId()));
             assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-            assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(target.getId());
+            assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
         }
     }
 

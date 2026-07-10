@@ -160,8 +160,8 @@ class OliviaVoldarenTest extends BaseCardTest {
                     .noneMatch(p -> p.getId().equals(barony.getId()));
 
             // Tracked as source-dependent steal
-            assertThat(gd.sourceDependentStolenCreatures).containsKey(barony.getId());
-            assertThat(gd.sourceDependentStolenCreatures.get(barony.getId())).isEqualTo(olivia.getId());
+            assertThat(gd.newestControlEffectFor(barony.getId())).isNotNull();
+            assertThat(gd.newestControlEffectFor(barony.getId()).sourcePermanentId()).isEqualTo(olivia.getId());
         }
 
         @Test
@@ -251,7 +251,7 @@ class OliviaVoldarenTest extends BaseCardTest {
 
             // Tracking should be cleaned up
             assertThat(gd.stolenCreatures).doesNotContainKey(barony.getId());
-            assertThat(gd.sourceDependentStolenCreatures).doesNotContainKey(barony.getId());
+            assertThat(gd.controlEffectsFor(barony.getId())).isEmpty();
         }
 
         @Test

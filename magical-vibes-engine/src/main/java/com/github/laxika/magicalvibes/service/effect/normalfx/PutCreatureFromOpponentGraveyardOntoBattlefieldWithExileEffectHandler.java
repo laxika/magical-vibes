@@ -41,7 +41,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         result.permanent().setExileIfLeavesBattlefield(true);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
+        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
         gameData.queueDelayedAction(new ExileTokenAtEndStep(result.permanent().getId()));
 
         String playerName = gameData.playerIdToName.get(controllerId);

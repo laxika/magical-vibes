@@ -141,7 +141,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
 
         // Control is permanent
-        assertThat(gd.permanentControlStolenCreatures).contains(target.getId());
+        assertThat(gd.newestControlEffectFor(target.getId()).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
     }
 
     @Test

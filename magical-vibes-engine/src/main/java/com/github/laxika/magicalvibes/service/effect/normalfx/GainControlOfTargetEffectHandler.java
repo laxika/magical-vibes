@@ -14,9 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link GainControlOfTargetEffect} for all three {@code ControlDuration}s.
- * Each duration keeps its own tracking set so the corresponding revert mechanism
- * (end-of-turn cleanup / source-leaves-battlefield) stays intact.
+ * Resolves {@link GainControlOfTargetEffect} for all three {@code ControlDuration}s. Each
+ * resolution creates a floating layer-2 control effect (CR 613.2/613.7) whose duration maps via
+ * {@code ControlDuration.toEffectDuration()}; expiry and fallback to the next most recent
+ * still-active control effect are handled by {@code CreatureControlService}.
  */
 @Component
 @RequiredArgsConstructor
@@ -36,8 +37,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         var e = (GainControlOfTargetEffect) effect;
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
-            case END_OF_TURN -> resolveEndOfTurn(gameData, entry);
-            case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry);
+            case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
+            case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e);
         }
     }
 
@@ -50,11 +51,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
 
-            UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-            if (oldController != null && !oldController.equals(entry.getControllerId())) {
-                creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-                gameData.permanentControlStolenCreatures.add(target.getId());
-            }
+            creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                    e, e.duration().toEffectDuration(), null, entry.getCard().getName());
 
             if (e.grantedSubtype() != null && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
                 target.getGrantedSubtypes().add(e.grantedSubtype());
@@ -64,20 +62,15 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    private void resolveEndOfTurn(GameData gameData, StackEntry entry) {
+    private void resolveEndOfTurn(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
-        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (oldController == null || oldController.equals(entry.getControllerId())) {
-            return;
-        }
-
-        creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-        gameData.untilEndOfTurnStolenCreatures.add(target.getId());
+        creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                e, e.duration().toEffectDuration(), null, entry.getCard().getName());
     }
 
-    private void resolveWhileSource(GameData gameData, StackEntry entry) {
+    private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
 
@@ -99,10 +92,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        UUID oldController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (oldController != null && !oldController.equals(entry.getControllerId())) {
-            creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-            gameData.sourceDependentStolenCreatures.put(target.getId(), sourcePermanentId);
-        }
+        creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
     }
 }

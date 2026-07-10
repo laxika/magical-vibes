@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
@@ -83,8 +86,9 @@ public class DamageTriggerCollectorService {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, dc.sourcePermanentId());
         if (sourceControllerId == null || sourceControllerId.equals(dc.damagedPlayerId())) return false;
 
-        creatureControlService.stealPermanent(gameData, sourceControllerId, match.permanent());
-        gameData.permanentControlStolenCreatures.add(match.permanent().getId());
+        creatureControlService.applyControlEffect(gameData, sourceControllerId, match.permanent(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                EffectDuration.PERMANENT, null, match.permanent().getCard().getName());
 
         log.info("Game {} - {} triggers, {} gains control of {}",
                 gameData.id, match.permanent().getCard().getName(),

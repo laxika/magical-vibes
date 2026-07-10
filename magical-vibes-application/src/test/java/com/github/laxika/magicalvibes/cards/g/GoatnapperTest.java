@@ -73,7 +73,7 @@ class GoatnapperTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(goat.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getId().equals(goat.getId()));
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(goat.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isTrue();
     }
 
     @Test
@@ -94,7 +94,7 @@ class GoatnapperTest extends BaseCardTest {
                 .anyMatch(p -> p.getId().equals(goat.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(goat.getId()));
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(goat.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(goat.getId())).isFalse();
     }
 
     @Test

@@ -123,7 +123,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                         eq(Set.of()));
                 assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isNotEmpty();
                 assertThat(gd.stolenCreatures).isNotEmpty();
-                assertThat(gd.permanentControlStolenCreatures).isNotEmpty();
+                assertThat(gd.floatingEffects).anyMatch(fe -> fe.isControlEffect());
             }
 
             @Test

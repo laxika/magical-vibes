@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
@@ -287,11 +288,14 @@ public class StackResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
 
-                // Handle control-changing auras (e.g., Persuasion)
+                // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
+                // layer-2 control effect keyed to the aura permanent
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    creatureControlService.stealPermanent(gameData, controllerId, target);
+                    creatureControlService.applyControlEffect(gameData, controllerId, target,
+                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            perm.getId(), card.getName());
                 }
 
                 // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)

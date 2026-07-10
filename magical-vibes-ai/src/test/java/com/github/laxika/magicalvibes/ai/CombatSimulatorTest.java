@@ -17,10 +17,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 
 import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -55,6 +60,15 @@ class CombatSimulatorTest {
 
         gd.playerBattlefields.get(player1.getId()).clear();
         gd.playerBattlefields.get(player2.getId()).clear();
+    }
+
+    /** Marks a permanent on the AI's battlefield as stolen from the opponent until end of
+     *  turn — the ownership record plus the floating control effect Act of Treason creates. */
+    private void markStolenUntilEndOfTurn(Permanent perm) {
+        gd.stolenCreatures.put(perm.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Act of Treason",
+                null, player1.getId(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 
     @Test
@@ -332,8 +346,8 @@ class CombatSimulatorTest {
         serraAngel.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(serraAngel);
 
-        // Mark as stolen until end of turn (as Act of Treason would do)
-        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+
+        markStolenUntilEndOfTurn(serraAngel);
 
         CombatSimulator.CreatureInfo stolenInfo = simulator.buildCreatureInfo(
                 gd, serraAngel, 0, player1.getId(), player2.getId());
@@ -362,7 +376,7 @@ class CombatSimulatorTest {
         Permanent bears = new Permanent(new GrizzlyBears());
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bears);
-        gd.untilEndOfTurnStolenCreatures.add(bears.getId());
+        markStolenUntilEndOfTurn(bears);
 
         Permanent airElemental = new Permanent(new AirElemental());
         airElemental.setSummoningSick(false);
@@ -527,7 +541,7 @@ class CombatSimulatorTest {
         Permanent serraAngel = new Permanent(new SerraAngel());
         serraAngel.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(serraAngel);
-        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+        markStolenUntilEndOfTurn(serraAngel);
 
         // Opponent has Air Elemental (4/4 flying) — slightly lower score than Serra Angel
         // This means: without the fix, the opponent would block SA with AE and the trade

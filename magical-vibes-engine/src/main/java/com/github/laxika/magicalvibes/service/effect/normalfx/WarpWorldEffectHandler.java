@@ -71,9 +71,8 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
                     permanentsToShuffleByOwner.get(ownerId).add(permanent.getOriginalCard());
                 }
                 gameData.stolenCreatures.remove(permanent.getId());
-                gameData.untilEndOfTurnStolenCreatures.remove(permanent.getId());
-                gameData.enchantmentDependentStolenCreatures.remove(permanent.getId());
-                gameData.permanentControlStolenCreatures.remove(permanent.getId());
+                gameData.expireControlEffectsForDepartedPermanent(permanent.getId());
+                gameData.expireFloatingEffectsForDepartedSource(permanent.getId());
                 iterator.remove();
             }
         }

@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashForControlOfEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -52,9 +55,10 @@ public class ClashForControlOfEnchantedCreatureEffectHandler implements NormalEf
 
         UUID newControllerId = won ? controllerId : opponentId;
         if (newControllerId != null) {
-            creatureControlService.stealPermanent(gameData, newControllerId, enchantedCreature);
             // Indefinite control change (no stated duration) — never reverted at end of turn.
-            gameData.permanentControlStolenCreatures.add(enchantedCreature.getId());
+            creatureControlService.applyControlEffect(gameData, newControllerId, enchantedCreature,
+                    new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                    EffectDuration.PERMANENT, null, entry.getCard().getName());
         }
     }
 }

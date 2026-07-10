@@ -37,7 +37,7 @@ class EntrancingMelodyTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bearsId));
 
         // Control is permanent
-        assertThat(gd.permanentControlStolenCreatures).contains(bearsId);
+        assertThat(gd.newestControlEffectFor(bearsId).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
     }
 
     @Test

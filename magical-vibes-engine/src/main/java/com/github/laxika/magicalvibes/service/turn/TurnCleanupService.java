@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,9 @@ import java.util.UUID;
  *   <li>Computing each player's effective maximum hand size, accounting for
  *       effects that reduce it ({@link ReduceOpponentMaxHandSizeEffect}) or
  *       remove it entirely ({@link NoMaximumHandSizeEffect}).</li>
- *   <li>Returning stolen creatures at end of turn via {@link AuraAttachmentService}.</li>
+ *   <li>Reconciling control at end of turn via {@link CreatureControlService} — expired
+ *       until-end-of-turn control effects fall back to the next most recent still-active
+ *       control effect, or to the owner (CR 613.7).</li>
  * </ul>
  */
 @Slf4j
@@ -35,17 +37,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TurnCleanupService {
 
-    private final AuraAttachmentService auraAttachmentService;
+    private final CreatureControlService creatureControlService;
 
     /**
      * Performs the full cleanup-step reset: clears all "until end of turn"
-     * modifiers on every permanent and returns temporarily stolen creatures.
+     * modifiers on every permanent and recomputes control of temporarily stolen permanents.
      *
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
         resetEndOfTurnModifiers(gameData);
-        auraAttachmentService.returnStolenCreatures(gameData, true);
+        creatureControlService.reconcileControl(gameData);
     }
 
     /**

@@ -439,6 +439,7 @@ public class PermanentRemovalService {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         gameData.stolenCreatures.remove(target.getId());
         gameData.expireFloatingEffectsForDepartedSource(target.getId());
+        gameData.expireControlEffectsForDepartedPermanent(target.getId());
         handleSourceLinkedAnimationCleanup(gameData, target);
         handlePreparedSpellCleanup(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId);
