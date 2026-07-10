@@ -216,6 +216,12 @@ public class Permanent {
     @Setter private Card untilNextTurnPreCopyCard;
     /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
     @Setter private UUID copyUntilNextTurnControllerId;
+    /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
+     *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
+     *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
+     *  a battlefield directly in tests; the layered engine falls back to battlefield position
+     *  order for equal timestamps (see {@code agent-docs/LAYER_SYSTEM.md}). */
+    @Setter private long timestamp;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -325,6 +331,7 @@ public class Permanent {
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
+        this.timestamp = source.timestamp;
     }
 
     public Card getOriginalCard() {

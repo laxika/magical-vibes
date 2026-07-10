@@ -319,6 +319,8 @@ public class AnimationSupport {
         }
 
         source.setAttachedTo(target.getId());
+        // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
+        source.setTimestamp(gameData.nextTimestamp());
         String attachLog = source.getCard().getName() + " is attached to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, attachLog);
         log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());

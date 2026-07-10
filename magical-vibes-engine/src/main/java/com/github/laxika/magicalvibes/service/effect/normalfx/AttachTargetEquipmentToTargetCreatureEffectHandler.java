@@ -60,6 +60,8 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
         UUID oldAttachedTo = equipment.getAttachedTo();
 
         equipment.setAttachedTo(creature.getId());
+        // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+        equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = equipment.getCard().getName() + " is now attached to " + creature.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

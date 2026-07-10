@@ -63,6 +63,8 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (equipment != null) {
             equipment.setAttachedTo(creature.getId());
+            // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+            equipment.setTimestamp(gameData.nextTimestamp());
             String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, attachLog);
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());

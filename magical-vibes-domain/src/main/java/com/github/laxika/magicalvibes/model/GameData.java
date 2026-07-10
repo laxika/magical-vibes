@@ -414,6 +414,16 @@ public class GameData {
      *  (broadcasting, session messages, registry mutations, logging). */
     public boolean simulation;
 
+    /** Monotonic CR 613.7 timestamp source. Advanced via {@link #nextTimestamp()} whenever a
+     *  permanent enters a battlefield, an Aura/Equipment becomes attached (CR 613.7e), or a
+     *  resolving spell/ability creates a continuous effect. Never reset during a game. */
+    public long timestampCounter;
+
+    /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
+    public long nextTimestamp() {
+        return ++timestampCounter;
+    }
+
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
         this.gameName = gameName;
@@ -916,6 +926,7 @@ public class GameData {
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.timestampCounter = this.timestampCounter;
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);

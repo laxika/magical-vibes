@@ -148,6 +148,8 @@ public class BattlefieldEntryService {
         applyUnchosenParityEnterTapped(gameData, permanent);
         applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
         applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+        // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
+        permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())

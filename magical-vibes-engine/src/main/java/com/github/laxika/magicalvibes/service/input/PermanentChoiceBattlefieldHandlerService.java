@@ -116,6 +116,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         aura.setAttachedTo(permanentId);
+        // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
+        aura.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -146,6 +148,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         aura.setAttachedTo(permanentId);
+        // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
+        aura.setTimestamp(gameData.nextTimestamp());
         gameBroadcastService.logAndBroadcast(gameData,
                 aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".");
         log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,

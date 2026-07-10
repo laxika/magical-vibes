@@ -18,5 +18,10 @@ public enum EffectDuration {
     PERMANENT,
     /** One-shot effect that lasts for as long as the source permanent remains on the battlefield
      *  (e.g. Awakener Druid); removed when the source leaves. */
-    WHILE_SOURCE_ON_BATTLEFIELD
+    WHILE_SOURCE_ON_BATTLEFIELD,
+    /** Continuous effect that applies only while the source (an Aura or Equipment) remains
+     *  attached to the affected permanent. Used by the CR 613 layer engine for floating
+     *  continuous effects backed by an attachment (see
+     *  {@link com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect}). */
+    WHILE_ATTACHED
 }

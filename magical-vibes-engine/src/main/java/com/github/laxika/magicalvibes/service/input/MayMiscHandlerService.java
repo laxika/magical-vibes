@@ -70,6 +70,8 @@ public class MayMiscHandlerService {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (equipPerm != null && targetPerm != null) {
                 equipPerm.setAttachedTo(targetPerm.getId());
+                // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+                equipPerm.setTimestamp(gameData.nextTimestamp());
                 String attachLog = equipPerm.getCard().getName() + " is attached to " + targetPerm.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, attachLog);
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());

@@ -49,6 +49,8 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         UUID oldAttachedTo = equipment.getAttachedTo();
 
         equipment.setAttachedTo(target.getId());
+        // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+        equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
