@@ -81,7 +81,14 @@ import java.util.UUID;
  * <p>Unmanaged layer 5/6 sources (conditional wrappers, emblems) keep their legacy additive
  * behavior: their grants union in on top of the layered result, outside timestamp order.
  *
- * <p>Dependency (CR 613.8) is NOT implemented yet — ordering is timestamp-only.
+ * <p><b>Dependency (CR 613.8)</b> overrides timestamp order within layers 4, 5, and 6: before a
+ * layer's non-CDA instances apply, {@link #orderByDependency} trial-applies each ordered pair
+ * onto {@link RecordingCharacteristicState} copies and compares the per-permanent operation
+ * fingerprints — effect A depends on effect B when applying B first changes whether A exists
+ * (its source's abilities are gone, see {@link #staticSourceAbilitiesGone}), what A applies to,
+ * or what A attempts to do. Dependent effects apply after what they depend on (topological
+ * order, timestamp tie-break); dependency loops fall back to pure timestamp order (CR 613.8c).
+ * See agent-docs/LAYER_SYSTEM.md "Dependency" for the algorithm and its limits.
  */
 @Component
 public class LayerSystemService {
@@ -481,20 +488,202 @@ public class LayerSystemService {
         return 2;
     }
 
+    // ===== within-layer application: CDA first, then dependency-ordered (CR 613.2b/613.8) =====
+
+    /** Applies one collected instance of a layer against the given (real or trial) board. */
+    @FunctionalInterface
+    private interface InstanceApplier {
+        void apply(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                   Map<UUID, PermanentSlot> slotsById, LayeredBoardState board);
+    }
+
+    /**
+     * Applies a layer's collected instances: the characteristic-defining prefix first (CR
+     * 613.2b — {@link #collectInstances} sorts CDAs to the front), then the remaining
+     * instances in CR 613.8 dependency order (falling back to the collection's timestamp
+     * order for independent effects and dependency loops). The dependency computation runs
+     * against the states as of the CDA applications, matching when the non-CDA instances
+     * would apply.
+     */
+    private void applyInstances(GameData gameData, List<EffectInstance> instances,
+                                List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
+                                LayeredBoardState board, InstanceApplier applier) {
+        int split = 0;
+        while (split < instances.size() && instances.get(split).characteristicDefining()) {
+            applier.apply(gameData, instances.get(split), slots, slotsById, board);
+            split++;
+        }
+        List<EffectInstance> rest = instances.subList(split, instances.size());
+        for (EffectInstance instance : orderByDependency(gameData, rest, slots, slotsById, board, applier)) {
+            applier.apply(gameData, instance, slots, slotsById, board);
+        }
+    }
+
+    /**
+     * CR 613.8a "whether the effect exists": a STATIC-slot instance stops applying once its
+     * source's abilities are gone as of the layers (and same-layer instances) applied so far —
+     * a land-type-setting effect removed the source's printed abilities in layer 4 (CR 305.7),
+     * or, for layer 6 and later only, a "loses all abilities" hit the source ({@code
+     * includeLoseAll}; the removal happens in layer 6 and is not retroactive on layers 1-5, so
+     * layer 4/5 instances of a lose-all'd source still apply — a changeling under a lose-all
+     * keeps its types). Floating effects are the one-shot results of already-resolved
+     * spells/abilities and exist independently of their source.
+     */
+    private static boolean staticSourceAbilitiesGone(EffectInstance instance, LayeredBoardState board,
+                                                     boolean includeLoseAll) {
+        if (instance.floating() != null || instance.source() == null) {
+            return false;
+        }
+        CharacteristicState state = board.states().get(instance.source().permanent().getId());
+        if (state == null) {
+            return false;
+        }
+        return state.isPrintedAbilitiesRemoved() || (includeLoseAll && state.isLosesAllAbilities());
+    }
+
+    /**
+     * CR 613.8: orders a layer's non-CDA instances so every effect applies after the effects it
+     * depends on. The relation is computed by trial application against copies of the current
+     * states: instance A's fingerprint is the map of per-permanent operations it produces (see
+     * {@link RecordingCharacteristicState}); A depends on B when the fingerprint changes once B
+     * is applied first — covering existence (A's source's ability is gone and A produces
+     * nothing), the affected set (A's scope matches different permanents), and what A attempts
+     * to do. The relation is computed once against the layer-entry states (the CR strictly
+     * re-evaluates dependencies after each application; with the tiny per-layer instance counts
+     * the difference is theoretical) and topologically sorted; independent effects and ties
+     * keep timestamp order, and dependency loops fall back to pure timestamp order (CR 613.8c).
+     * Skipped entirely for 0 or 1 instances — the overwhelmingly common case.
+     */
+    private List<EffectInstance> orderByDependency(GameData gameData, List<EffectInstance> instances,
+                                                   List<PermanentSlot> slots,
+                                                   Map<UUID, PermanentSlot> slotsById,
+                                                   LayeredBoardState board, InstanceApplier applier) {
+        if (instances.size() <= 1) {
+            return instances;
+        }
+        Pass pass = ACTIVE_PASS.get();
+        if (pass == null || pass.board != board) {
+            // Trials must swap the active pass's board; without one (never the case in
+            // production — computeBoardState always runs under beginPass) keep timestamp order.
+            return instances;
+        }
+        Map<EffectInstance, Map<UUID, List<String>>> baseFingerprints = new IdentityHashMap<>();
+        for (EffectInstance instance : instances) {
+            baseFingerprints.put(instance,
+                    trialFingerprint(gameData, pass, instance, null, slots, slotsById, board, applier));
+        }
+        Map<EffectInstance, Set<EffectInstance>> dependsOn = new IdentityHashMap<>();
+        for (EffectInstance a : instances) {
+            for (EffectInstance b : instances) {
+                if (a == b) continue;
+                // An instance that produced no operations cannot change what another does.
+                if (baseFingerprints.get(b).isEmpty()) continue;
+                Map<UUID, List<String>> withB =
+                        trialFingerprint(gameData, pass, a, b, slots, slotsById, board, applier);
+                if (!withB.equals(baseFingerprints.get(a))) {
+                    dependsOn.computeIfAbsent(a, key -> Collections.newSetFromMap(new IdentityHashMap<>()))
+                            .add(b);
+                }
+            }
+        }
+        if (dependsOn.isEmpty()) {
+            return instances;
+        }
+        // Kahn's algorithm preferring the collection's (timestamp, position) order; when no
+        // remaining instance is dependency-free a loop exists — CR 613.8c ignores the
+        // dependencies and the earliest timestamp applies next.
+        List<EffectInstance> remaining = new ArrayList<>(instances);
+        Set<EffectInstance> remainingSet = Collections.newSetFromMap(new IdentityHashMap<>());
+        remainingSet.addAll(remaining);
+        List<EffectInstance> ordered = new ArrayList<>(instances.size());
+        while (!remaining.isEmpty()) {
+            EffectInstance pick = null;
+            for (EffectInstance candidate : remaining) {
+                Set<EffectInstance> deps = dependsOn.get(candidate);
+                if (deps == null || deps.stream().noneMatch(remainingSet::contains)) {
+                    pick = candidate;
+                    break;
+                }
+            }
+            if (pick == null) {
+                pick = remaining.get(0);
+            }
+            EffectInstance chosen = pick;
+            ordered.add(chosen);
+            remaining.removeIf(instance -> instance == chosen);
+            remainingSet.remove(chosen);
+        }
+        return ordered;
+    }
+
+    /**
+     * Trial-applies {@code first} (when non-null) and then {@code instance} onto recording
+     * copies of the board's states, returning {@code instance}'s per-permanent operation
+     * fingerprint. The trial board copies the layer-4 filter verdicts (CR 613.6 — later-layer
+     * parts keep the layer-4-determined sets during trials too) and the land-type overrides;
+     * managed/contribution bookkeeping goes to the trial board and is discarded. The active
+     * pass's board is swapped for the duration so handlers and nested queries read the trial
+     * states.
+     */
+    private Map<UUID, List<String>> trialFingerprint(GameData gameData, Pass pass, EffectInstance instance,
+                                                     EffectInstance first, List<PermanentSlot> slots,
+                                                     Map<UUID, PermanentSlot> slotsById,
+                                                     LayeredBoardState board, InstanceApplier applier) {
+        Map<UUID, CharacteristicState> trialStates = new HashMap<>();
+        Map<UUID, RecordingCharacteristicState> recorders = new HashMap<>();
+        for (Map.Entry<UUID, CharacteristicState> entry : board.states().entrySet()) {
+            RecordingCharacteristicState recorder = new RecordingCharacteristicState(entry.getValue());
+            recorders.put(entry.getKey(), recorder);
+            trialStates.put(entry.getKey(), recorder);
+        }
+        Map<PermanentPredicate, Map<UUID, Boolean>> trialVerdicts = new IdentityHashMap<>();
+        board.l4FilterVerdicts().forEach((filter, verdicts) -> trialVerdicts.put(filter, new HashMap<>(verdicts)));
+        LayeredBoardState trialBoard = new LayeredBoardState(trialStates,
+                new HashMap<>(board.landTypeOverrides()), new HashSet<>(board.marchAnimatedIds()),
+                Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
+                trialVerdicts, Collections.newSetFromMap(new IdentityHashMap<>()),
+                new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
+                new HashSet<>(board.switchedPt7d()));
+        LayeredBoardState saved = pass.board;
+        pass.board = trialBoard;
+        try {
+            if (first != null) {
+                applier.apply(gameData, first, slots, slotsById, trialBoard);
+            }
+            recorders.values().forEach(RecordingCharacteristicState::startRecording);
+            applier.apply(gameData, instance, slots, slotsById, trialBoard);
+        } finally {
+            pass.board = saved;
+        }
+        Map<UUID, List<String>> fingerprint = new HashMap<>();
+        recorders.forEach((id, recorder) -> {
+            if (!recorder.ops().isEmpty()) {
+                fingerprint.put(id, recorder.ops());
+            }
+        });
+        return fingerprint;
+    }
+
     // ===== layer 4 =====
 
     private void applyLayer4(GameData gameData, List<PermanentSlot> slots,
                              Map<UUID, PermanentSlot> slotsById,
                              Map<UUID, CharacteristicState> states, LayeredBoardState board) {
-        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L4_TYPE)) {
-            applyL4Instance(instance, slots, slotsById, states, board);
-        }
+        applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L4_TYPE),
+                slots, slotsById, board, this::applyL4Instance);
     }
 
-    private void applyL4Instance(EffectInstance instance, List<PermanentSlot> slots,
+    private void applyL4Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
                                  Map<UUID, PermanentSlot> slotsById,
-                                 Map<UUID, CharacteristicState> states,
                                  LayeredBoardState board) {
+        // CR 613.8a(1)/CR 305.7: the source's printed abilities were removed by an
+        // earlier-applied layer-4 land-type setter — this instance no longer exists.
+        // (A layer-6 lose-all does NOT suppress layer-4 contributions; see the helper.)
+        if (staticSourceAbilitiesGone(instance, board, false)) {
+            manage(board, instance);
+            return;
+        }
+        Map<UUID, CharacteristicState> states = board.states();
         Map<UUID, CardSubtype> landTypeOverrides = board.landTypeOverrides();
         switch (instance.effect()) {
             case GrantSubtypeEffect grant -> {
@@ -640,12 +829,20 @@ public class LayerSystemService {
                 .put(target.permanent().getId(), contribution);
     }
 
-    /** "Becomes a [land type]": clears the other land types and replaces the intrinsic mana
-     *  ability (CR 305.7). Later-timestamp setters overwrite the recorded override. */
+    /** "Becomes a [land type]": clears the other land types, replaces the intrinsic mana
+     *  ability, and removes the land's printed abilities — all as part of the layer-4 type
+     *  change itself (CR 305.7), which is what makes an Urborg-style ability-granting land
+     *  dependent on Blood Moon (CR 613.8). Later-timestamp setters overwrite the recorded
+     *  override. */
     private void setLandType(CharacteristicState state, UUID permanentId, CardSubtype subtype,
                              Map<UUID, CardSubtype> landTypeOverrides) {
         state.removeSubtypesIf(LAND_SUBTYPES::contains);
         state.addSubtype(subtype);
+        if (state.hasCardType(CardType.LAND)) {
+            // CR 305.7 only strips lands; setting a basic land type on a non-land (nothing in
+            // the pool does this today) would not remove its abilities.
+            state.removePrintedAbilities();
+        }
         landTypeOverrides.put(permanentId, subtype);
     }
 
@@ -885,39 +1082,50 @@ public class LayerSystemService {
     private void applyLayer5(GameData gameData, List<PermanentSlot> slots,
                              Map<UUID, PermanentSlot> slotsById,
                              Map<UUID, CharacteristicState> states, LayeredBoardState board) {
-        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L5_COLOR)) {
-            if (instance.floating() != null) {
-                CardColor color = switch (instance.effect()) {
-                    case GrantColorUntilEndOfTurnEffect becomes -> becomes.color();
-                    case GrantColorEffect grant -> grant.color();
-                    default -> null;
-                };
-                if (color == null) continue;
-                boolean setting = LayerClassifier.classify(instance.effect(), false).colorSetting();
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (setting) {
-                        state.overrideColors(Set.of(color));
-                    } else {
-                        state.addColor(color);
-                    }
-                    board.l56Touched().add(target.permanent().getId());
-                }
-                continue;
-            }
-            applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
-                if (harvested.getGrantedColors().isEmpty()) {
-                    return;
-                }
+        applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L5_COLOR),
+                slots, slotsById, board, this::applyL5Instance);
+    }
+
+    private void applyL5Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                                 Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        // CR 305.7: a land-type setter removed the source's printed abilities in layer 4.
+        // (A layer-6 lose-all is not retroactive on layer 5.)
+        if (staticSourceAbilitiesGone(instance, board, false)) {
+            board.managedL56Effects().add(instance.original());
+            return;
+        }
+        Map<UUID, CharacteristicState> states = board.states();
+        if (instance.floating() != null) {
+            CardColor color = switch (instance.effect()) {
+                case GrantColorUntilEndOfTurnEffect becomes -> becomes.color();
+                case GrantColorEffect grant -> grant.color();
+                default -> null;
+            };
+            if (color == null) return;
+            boolean setting = LayerClassifier.classify(instance.effect(), false).colorSetting();
+            for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
                 CharacteristicState state = states.get(target.permanent().getId());
-                if (harvested.isColorOverriding()) {
-                    state.overrideColors(harvested.getGrantedColors());
+                if (setting) {
+                    state.overrideColors(Set.of(color));
                 } else {
-                    harvested.getGrantedColors().forEach(state::addColor);
+                    state.addColor(color);
                 }
                 board.l56Touched().add(target.permanent().getId());
-            });
+            }
+            return;
         }
+        applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+            if (harvested.getGrantedColors().isEmpty()) {
+                return;
+            }
+            CharacteristicState state = states.get(target.permanent().getId());
+            if (harvested.isColorOverriding()) {
+                state.overrideColors(harvested.getGrantedColors());
+            } else {
+                harvested.getGrantedColors().forEach(state::addColor);
+            }
+            board.l56Touched().add(target.permanent().getId());
+        });
     }
 
     /**
@@ -932,64 +1140,77 @@ public class LayerSystemService {
     private void applyLayer6(GameData gameData, List<PermanentSlot> slots,
                              Map<UUID, PermanentSlot> slotsById,
                              Map<UUID, CharacteristicState> states, LayeredBoardState board) {
-        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES)) {
-            // An unattached scope-less protection static is the object's OWN printed protection
-            // ability — already seeded into its state (and removable by a lose-all there); the
-            // attachment handler would no-op anyway.
-            if (instance.effect() instanceof ProtectionFromColorsEffect protection
-                    && protection.scope() == null && instance.source() != null
-                    && !instance.source().permanent().isAttached()) {
-                continue;
-            }
-            if (instance.floating() != null) {
-                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    switch (instance.effect()) {
-                        case LosesAllAbilitiesEffect ignored -> state.loseAllAbilities(instance.timestamp());
-                        case RemoveKeywordEffect remove -> state.removeKeyword(remove.keyword());
-                        case GrantKeywordEffect grant -> state.addKeywords(grant.keywords());
-                        default -> {
-                            continue;
-                        }
-                    }
-                    board.l56Touched().add(target.permanent().getId());
-                }
-                continue;
-            }
-            applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
-                CharacteristicState state = states.get(target.permanent().getId());
-                boolean touched = false;
-                // Removal before grants within one harvested instance: "loses all other
-                // abilities" never eats what the same printed ability grants.
-                if (harvested.isLosesAllAbilities()) {
-                    state.loseAllAbilities(instance.timestamp());
-                    touched = true;
-                }
-                for (Keyword removed : harvested.getRemovedKeywords()) {
-                    state.removeKeyword(removed);
-                    touched = true;
-                }
-                if (!harvested.getKeywords().isEmpty()) {
-                    state.addKeywords(harvested.getKeywords());
-                    touched = true;
-                }
-                if (!harvested.getProtectionColors().isEmpty()) {
-                    state.addProtectionColors(harvested.getProtectionColors());
-                    touched = true;
-                }
-                if (!harvested.getGrantedActivatedAbilities().isEmpty()) {
-                    harvested.getGrantedActivatedAbilities().forEach(state::addActivatedAbility);
-                    touched = true;
-                }
-                if (!harvested.getGrantedEffects().isEmpty()) {
-                    harvested.getGrantedEffects().forEach(state::addStaticEffect);
-                    touched = true;
-                }
-                if (touched) {
-                    board.l56Touched().add(target.permanent().getId());
-                }
-            });
+        applyInstances(gameData, collectInstances(gameData, slots, slotsById, Layer.L6_ABILITIES),
+                slots, slotsById, board, this::applyL6Instance);
+    }
+
+    private void applyL6Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
+                                 Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        // An unattached scope-less protection static is the object's OWN printed protection
+        // ability — already seeded into its state (and removable by a lose-all there); the
+        // attachment handler would no-op anyway.
+        if (instance.effect() instanceof ProtectionFromColorsEffect protection
+                && protection.scope() == null && instance.source() != null
+                && !instance.source().permanent().isAttached()) {
+            return;
         }
+        // CR 613.8a(1): the ability no longer exists — its source lost all abilities (an
+        // earlier-applied layer-6 removal; dependency ordering guarantees the removal applies
+        // first regardless of timestamps) or had its printed abilities removed by a layer-4
+        // land-type setter (CR 305.7). A lose-all'd lord grants nothing.
+        if (staticSourceAbilitiesGone(instance, board, true)) {
+            board.managedL56Effects().add(instance.original());
+            return;
+        }
+        Map<UUID, CharacteristicState> states = board.states();
+        if (instance.floating() != null) {
+            for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                CharacteristicState state = states.get(target.permanent().getId());
+                switch (instance.effect()) {
+                    case LosesAllAbilitiesEffect ignored -> state.loseAllAbilities(instance.timestamp());
+                    case RemoveKeywordEffect remove -> state.removeKeyword(remove.keyword());
+                    case GrantKeywordEffect grant -> state.addKeywords(grant.keywords());
+                    default -> {
+                        continue;
+                    }
+                }
+                board.l56Touched().add(target.permanent().getId());
+            }
+            return;
+        }
+        applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+            CharacteristicState state = states.get(target.permanent().getId());
+            boolean touched = false;
+            // Removal before grants within one harvested instance: "loses all other
+            // abilities" never eats what the same printed ability grants.
+            if (harvested.isLosesAllAbilities()) {
+                state.loseAllAbilities(instance.timestamp());
+                touched = true;
+            }
+            for (Keyword removed : harvested.getRemovedKeywords()) {
+                state.removeKeyword(removed);
+                touched = true;
+            }
+            if (!harvested.getKeywords().isEmpty()) {
+                state.addKeywords(harvested.getKeywords());
+                touched = true;
+            }
+            if (!harvested.getProtectionColors().isEmpty()) {
+                state.addProtectionColors(harvested.getProtectionColors());
+                touched = true;
+            }
+            if (!harvested.getGrantedActivatedAbilities().isEmpty()) {
+                harvested.getGrantedActivatedAbilities().forEach(state::addActivatedAbility);
+                touched = true;
+            }
+            if (!harvested.getGrantedEffects().isEmpty()) {
+                harvested.getGrantedEffects().forEach(state::addStaticEffect);
+                touched = true;
+            }
+            if (touched) {
+                board.l56Touched().add(target.permanent().getId());
+            }
+        });
     }
 
     // ===== sublayer 7b =====
@@ -1030,6 +1251,12 @@ public class LayerSystemService {
         }
 
         for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L7B_SET_PT)) {
+            // CR 613.8a(1): a static setter whose source's abilities are gone (lose-all in
+            // layer 6, or a layer-4 land-type set removing printed abilities) contributes no
+            // 7b entry.
+            if (staticSourceAbilitiesGone(instance, board, true)) {
+                continue;
+            }
             switch (instance.effect()) {
                 case SetBasePowerToughnessEffect setPt -> {
                     if (instance.floating() != null) {

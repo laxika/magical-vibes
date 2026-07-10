@@ -66,6 +66,14 @@ public class CharacteristicState {
     private boolean losesAllAbilities;
     /** CR 613.7 timestamp of the lose-all effect; only meaningful while {@link #losesAllAbilities}. */
     private long losesAllAbilitiesTimestamp;
+    /**
+     * True once a land-type-setting effect (Blood Moon, Sea's Claim, ...) removed the object's
+     * printed abilities as part of setting its land types (CR 305.7). Unlike
+     * {@link #losesAllAbilities} this happens in layer 4, so the object's own static-slot
+     * effects stop existing for every later layer (and for later layer-4 applications —
+     * CR 613.8 dependency ordering); externally granted abilities are unaffected.
+     */
+    private boolean printedAbilitiesRemoved;
 
     /**
      * Seeds the state from the permanent's post-copy card plus the persistent one-shot grants
@@ -98,6 +106,34 @@ public class CharacteristicState {
                 - permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
         this.powerDelta = counterDelta;
         this.toughnessDelta = counterDelta;
+    }
+
+    /**
+     * Copy constructor for CR 613.8 dependency trials: the layer engine copies the in-progress
+     * states, trial-applies effects onto the copies, and discards them. Copies every field
+     * directly (no mutator calls — subclasses may instrument the mutators).
+     */
+    public CharacteristicState(CharacteristicState source) {
+        this.name = source.name;
+        this.cardTypes.addAll(source.cardTypes);
+        this.supertypes.addAll(source.supertypes);
+        this.subtypes.addAll(source.subtypes);
+        this.colors.addAll(source.colors);
+        this.colorsOverridden = source.colorsOverridden;
+        this.seededColors.addAll(source.seededColors);
+        this.keywords.addAll(source.keywords);
+        this.seededKeywords.addAll(source.seededKeywords);
+        this.protectionColors.addAll(source.protectionColors);
+        this.grantedActivatedAbilities.addAll(source.grantedActivatedAbilities);
+        this.grantedStaticEffects.addAll(source.grantedStaticEffects);
+        this.basePower = source.basePower;
+        this.baseToughness = source.baseToughness;
+        this.powerDelta = source.powerDelta;
+        this.toughnessDelta = source.toughnessDelta;
+        this.switchCount = source.switchCount;
+        this.losesAllAbilities = source.losesAllAbilities;
+        this.losesAllAbilitiesTimestamp = source.losesAllAbilitiesTimestamp;
+        this.printedAbilitiesRemoved = source.printedAbilitiesRemoved;
     }
 
     // --- Layer 3 (text) ---
@@ -217,6 +253,15 @@ public class CharacteristicState {
         grantedStaticEffects.clear();
         this.losesAllAbilities = true;
         this.losesAllAbilitiesTimestamp = timestamp;
+    }
+
+    /**
+     * Records that a layer-4 land-type-setting effect removed the object's printed abilities
+     * (CR 305.7). The object's own static-slot effects stop existing from this point in the
+     * pass; granted abilities and keywords are untouched (only rules-text abilities are lost).
+     */
+    public void removePrintedAbilities() {
+        this.printedAbilitiesRemoved = true;
     }
 
     // --- Layer 7 ---

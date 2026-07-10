@@ -1076,6 +1076,15 @@ public class GameQueryService {
         for (StaticSource sourceSlot : sources) {
             Permanent source = sourceSlot.permanent();
             if (source == target) continue;
+            // CR 613.8a(1)/CR 305.7: a source whose abilities are gone — "loses all abilities"
+            // applied in layer 6, or a land whose type was set (removing its printed abilities
+            // in layer 4) — contributes nothing in layer 7 either: a lose-all'd lord grants
+            // neither its keyword (suppressed by the pass) nor its 7c boost. Managed layer-4
+            // replays below still run: the pass already decided existence with correct
+            // ordering, and a skipped instance simply recorded no contributions.
+            CharacteristicState sourceState = board.states().get(source.getId());
+            boolean sourceAbilitiesGone = sourceState != null
+                    && (sourceState.isLosesAllAbilities() || sourceState.isPrintedAbilitiesRemoved());
             StaticEffectContext context = new StaticEffectContext(source, target, sourceSlot.sameBattlefieldAsTarget(), gameData);
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 // Purely type-changing effects were applied by the layer-4 pass (with filters
@@ -1084,6 +1093,9 @@ public class GameQueryService {
                 // let self-referencing filters negate their own output (Bludgeon Brawl).
                 if (board.isManagedL4(effect)) {
                     board.replayL4Contribution(effect, target.getId(), accumulator);
+                    continue;
+                }
+                if (sourceAbilitiesGone) {
                     continue;
                 }
                 StaticEffectHandler handler = staticEffectRegistry.getHandler(effect);

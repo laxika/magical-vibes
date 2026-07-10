@@ -38,9 +38,12 @@ Continuous effects are applied in this order, modeled by the `Layer` enum
 - **Dependency (CR 613.8)** overrides timestamp order **within a layer only** (never across
   layers): effect A waits for effect B if applying B first would change
   (a) whether A exists, (b) what A applies to, or (c) what A does.
-  Example: Blood Moon vs. an "is a Swamp" Aura on a nonbasic — both in L4; conversely a
-  type-change never "depends" on a L6 ability removal, because they are in different layers.
-  Dependency **loops** fall back to plain timestamp order.
+  Implemented for layers 4, 5, and 6 (step 11) — see §8 "Dependency" for the doctrine, the
+  trial-application algorithm, and its limits. Two land-type setters (Blood Moon vs. an
+  "is a Swamp" Aura) are mutually INdependent per official rulings — plain timestamp order;
+  the real dependency cases are existence (Blood Moon strips an Urborg-style land's ability)
+  and applicability (Xenograft's "creatures you control" growing when March of the Machines
+  animates an artifact). Dependency **loops** fall back to plain timestamp order (CR 613.8c).
 
 ## 3. Cross-layer semantics that trip people up
 
@@ -179,12 +182,11 @@ the floating instance at its real timestamp, which is what drives ordering. Rema
 `Permanent.getEffectiveColor()` uses to clean up later: `ai/BoardEvaluator` (heuristics),
 `PermanentViewFactory`'s legacy transient-color branch, `Permanent.hasKeyword` direct callers
 in null-`GameData` predicate fallbacks. There is **no cross-call cache** yet (no GameData
-modification counter) — a dedicated perf step comes later. CR 613.8 dependency is not
-implemented: ordering is pure timestamp order (known consequences: a Xenograft grant with an
-earlier timestamp does not apply to an artifact a later March of the Machines animates; a
-lord's L6 keyword grant does not apply to a creature whose matching subtype arrives from a
-LATER-timestamp L6-only source — changeling grants sidestep this by also being classified
-into L4, see §7).
+modification counter) — a dedicated perf step comes later. CR 613.8 dependency is implemented
+for layers 4-6 since step 11 (see §8): a Xenograft grant with an earlier timestamp DOES apply
+to an artifact a later March of the Machines animates, and existence-removals (Blood Moon on
+an ability-granting land, a lose-all on a lord) beat timestamps; the changeling L4+L6 dual
+classification (§7) remains as the cross-LAYER bridge dependency cannot provide.
 
 **Implementation status (step 6 — layer 7a/7b/7c rules-accurate):** sublayer **7b** is
 first-class: `LayerSystemService.applyLayer7b` (runs after L6) collects EVERY base-P/T setter
@@ -428,7 +430,9 @@ Reasoning behind the non-obvious mappings:
   All three members of the family are flagged for consistency.
 - **Blood Moon** (`NonbasicLandsBecomeTypeEffect`) is L4 ONLY: the affected land losing its
   printed abilities is a consequence of the land-type override itself (CR 305.7), not a
-  separate L6 contribution.
+  separate L6 contribution. Since step 11 this is modeled concretely: every land-type setter
+  (`setLandType`) marks the state `printedAbilitiesRemoved`, which kills the land's own
+  static-slot effects from layer 4 onward (§8 "Dependency" — existence).
 - **Ability grants are L6 regardless of the granted ability's content**:
   `GrantEffectEffect`, `GrantActivatedAbilityEffect`, `GrantEquipByManaValueEffect` add an
   ability to the object; what that ability later does is the ability's business.
@@ -445,7 +449,98 @@ Reasoning behind the non-obvious mappings:
   → L3; `LoseAllCreatureTypesEffect` → L4; `BoostTargetCreatureEffect` (Giant Growth) → 7c;
   `SwitchPowerToughnessEffect` → 7d.
 
-## 8. Migration plan context
+## 8. Dependency (CR 613.8)
+
+Within one layer/sublayer, effect A is **dependent** on effect B when (1) both apply in the
+same layer, and (2) applying B first would change (a) whether A exists, (b) what A applies to,
+or (c) what A does. Dependent effects apply AFTER what they depend on, regardless of
+timestamps; dependency **loops** are ignored wholesale and fall back to pure timestamp order
+(CR 613.8c). Implemented in `LayerSystemService.orderByDependency` for **layers 4, 5, and 6**
+(step 11), running only when a layer has 2+ non-CDA instances — the 0/1 case (overwhelmingly
+common) skips the machinery entirely.
+
+### Doctrine: "what it does" means "what it attempts to do"
+
+Verified against official rulings (web, 2026-07-10) before implementing, because it decides
+the detection function:
+
+- **"Loses all abilities" vs. a grant to the same creature is NOT a dependency** — Humility
+  doctrine: ordering is pure timestamps; a grant with a later timestamp than the lose-all
+  sticks (SevenLayerTest pins this). The lose-all always *attempts* the same thing ("remove
+  all") even though the concrete removal set differs, so it does not "depend" on earlier
+  grants. Consequently the detector must NOT compare concrete state deltas.
+- **Blood Moon vs. Dryad-of-the-Ilysian-Grove-style additive land types is NOT a dependency
+  either** — timestamps decide (Dryad after Blood Moon → lands have all basic types). The
+  earlier plan-era assumption that these were dependent was wrong.
+- **The real dependency drivers** are (a) **existence** — Blood Moon's land-type set removes an
+  Urborg-style land's printed abilities as part of layer 4 itself (CR 305.7), so the Urborg
+  grant applies after Blood Moon and never does anything, both orders; and (b) **applicability**
+  — Xenograft's "creatures you control" set grows when March of the Machines animates an
+  artifact in the same layer, so Xenograft applies after March regardless of timestamps
+  (also the Mycosynth-Lattice-family shape).
+
+### Algorithm: trial application over operation fingerprints
+
+Before a layer's non-CDA instances apply (the CDA prefix applies first per CR 613.2b, outside
+the dependency relation), `orderByDependency`:
+
+1. Computes each instance A's **fingerprint**: trial-apply A onto `RecordingCharacteristicState`
+   copies of the current states (a `CharacteristicState` subclass that logs every mutator call
+   as a normalized operation string — `addKeyword:FLYING`, `loseAllAbilities` WITHOUT its
+   concrete result, `removeSubtypesIf` opaquely) and collect the per-permanent operation lists.
+   The trial board copies the L4 filter verdicts (CR 613.6) and land-type overrides; the active
+   pass's board is swapped to the trial board for the duration so legacy handlers and nested
+   queries read the trial states; all bookkeeping lands on the trial board and is discarded.
+2. For each ordered pair (A, B): recompute A's fingerprint in a world where B was applied
+   first; if it differs from A's base fingerprint, **A depends on B**. Operation strings make
+   this "what A attempts": a changed target set or a vanished application (existence) changes
+   the fingerprint; a merely different concrete outcome does not. Pairs where B's own base
+   fingerprint is empty are skipped (a no-op cannot change anything).
+3. Topologically sorts (Kahn) preferring the collected (timestamp, position) order; when no
+   remaining instance is dependency-free, a loop exists — per CR 613.8c the earliest-timestamp
+   remaining instance applies next.
+
+**Existence** is modeled in the apply path itself (`staticSourceAbilitiesGone`), which is what
+the trials detect: a STATIC-slot instance is skipped when its source's state has
+`printedAbilitiesRemoved` (set by `setLandType` as part of the L4 type change, CR 305.7 —
+checked from layer 4 onward) or `losesAllAbilities` (an L6 removal — checked from **layer 6**
+onward only: ability removal is not retroactive on layers 1-5, a changeling under a lose-all
+keeps its types, §3). The same check gates the 7b static setters and — via
+`assembleStaticBonus`'s per-source `sourceAbilitiesGone` skip — all layer-7 handler outputs:
+a lose-all'd lord grants neither its keyword nor its 7c boost (Adaptive-Automaton-under-Humility
+doctrine), and a Blood-Mooned land's static grants stop entirely. Floating effects are the
+one-shot results of already-resolved spells/abilities and exist independently of their source.
+
+**The Cairn Wanderer distinction:** its graveyard-scanning keyword gain is applied CDA-first
+per the engine's 613.2 modeling (§7), NOT via dependency — reading out-of-battlefield zones is
+not a same-layer dependency on anything, so the CDA prefix stays outside the dependency
+relation entirely.
+
+### Limits
+
+- **Compute-once approximation:** the CR re-evaluates dependencies after each application;
+  we compute the relation once against the layer-entry states and topo-sort. With the tiny
+  per-layer instance counts the difference is theoretical.
+- **Detection is only as good as the recorded operations:** an effect whose applicability or
+  parameters hinge on state OUTSIDE `CharacteristicState` (side conditions read from
+  `Permanent`/`GameData`, e.g. tapped-ness, counters, chosen values) produces identical
+  fingerprints in both worlds — false negative. No same-layer pair in the current pool hits
+  this.
+- **Normalization false positives are harmless:** two effects granting the same
+  already-present subtype detect as mutually dependent (add-op appears/disappears) — a loop,
+  which falls back to timestamp order, and their outcomes commute anyway.
+- **7b/7d are not dependency-ordered:** 7b setters' applicability cannot currently key on
+  another 7b entry (base P/T lives outside `CharacteristicState` during collection), and 7d
+  switches only contribute parity. Layers 1-3 are outside the pass (L1/L2 are storage-derived,
+  L3 applies at collection time).
+- The **assembly's `sourceAbilitiesGone` skip** also silences *unmanaged* legacy outputs
+  (conditional wrappers) of a stripped source, including any hypothetical L4/L5-ish wrapper
+  contribution that strictly should have survived a layer-6 lose-all — acceptable over-removal,
+  no current card hits it (the self-handler loop keeps only the pre-existing 7a CDA lose-all
+  guard, so conditional SELF-animations of a stripped artifact still animate — pre-existing
+  gap, unchanged).
+
+## 9. Migration plan context
 
 This document is step 1 of ~14. Rough sequence: (1) design doc + domain scaffolding +
 timestamps ✅, (2) `FloatingContinuousEffect` storage on `GameData` + creation/expiry
@@ -856,3 +951,47 @@ and any deviations from this document.
     TurnCleanupServiceTest, TurnProgressionServiceTest, LayerClassifierTest,
     FloatingEffectLifecycleTest, BecomeCopyOfTargetCreatureEffectHandlerTest and the full AI
     module suite — all green.
+
+11. **2026-07-10 — Step 11: CR 613.8 dependency for layers 4-6.** Added
+    `LayerSystemService.orderByDependency` (see the new §8 "Dependency"): before a layer's
+    non-CDA instances apply (CDA prefix first, per the existing sort), each ordered pair is
+    trial-applied onto `RecordingCharacteristicState` copies (new engine class — a
+    `CharacteristicState` subclass logging every mutator as a normalized operation string;
+    `CharacteristicState` gained a copy constructor) with the active pass's board swapped to a
+    throwaway trial board (copied L4 filter verdicts and land-type overrides); A depends on B
+    when A's per-permanent operation fingerprint changes once B is applied first. Topological
+    (Kahn) order preferring (timestamp, position); loops fall back to timestamp order
+    (CR 613.8c). Skipped entirely at 0/1 non-CDA instances. **Doctrine verified by web search
+    before implementing** (decisive for the detector): Humility ordering — lose-all vs. grants
+    to the same creature — is pure timestamps (NOT dependent), and Blood Moon vs. Dryad-style
+    additive land types is ALSO timestamps (the plan-era "Blood Moon vs. additive is
+    dependent" assumption was wrong); the real drivers are existence and applicability, hence
+    operation fingerprints ("what it attempts"), not state deltas (which would have broken
+    SevenLayerTest's `keywordGrantAfterLoseAllApplies`). **Existence is now modeled in the
+    apply path** (`staticSourceAbilitiesGone`): `setLandType` marks the new
+    `CharacteristicState.printedAbilitiesRemoved` as part of the L4 type change (CR 305.7 —
+    Blood Moon's "loses abilities" was previously modeled only as the mana-ability override),
+    killing the land's static-slot instances from L4 onward; `losesAllAbilities` kills the
+    source's static instances from L6 onward only (not retroactive on L4/L5 — changeling
+    doctrine, §3); both flags also gate the 7b static setters and, via a new per-source
+    `sourceAbilitiesGone` skip in `assembleStaticBonus` (after the managed-L4 replay branch),
+    all layer-7 handler outputs — a lose-all'd lord grants neither keyword nor 7c boost, a
+    rules FIX over the old behavior (Adaptive-Automaton-under-Humility). applyLayer4/5/6 were
+    refactored onto a shared `InstanceApplier` shape (`applyL4Instance`/`applyL5Instance`/
+    `applyL6Instance` + `applyInstances`) reused by the trials. 7b/7d are not
+    dependency-ordered (§8 limits); the Cairn Wanderer family stays CDA-first (613.2b), not a
+    dependency matter. SevenLayerTest stays **100 green** (the suite's ordering tests are
+    timestamp-based and unaffected — verified the Humility-doctrine pins in particular). New
+    acceptance suite: `layers/LayerDependencyTest` (9 tests, all green): Xenograft grant
+    applies to an artifact a LATER March animates (both orders), synthetic Urborg-style land
+    vs. Blood Moon (existence, both orders, basic-land beneficiary pin), Blood-Mooned land's
+    L6 keyword grant + 7c boost stop (both orders — the CR 305.7 cross-layer part), lose-all
+    on a synthetic lord with a LATER timestamp strips its grant+boost from others, and a
+    mutual-dependency loop (two subtype grants keyed on each other's output) falling back to
+    timestamp order. Ran LayerDependencyTest, SevenLayerTest, FloatingEffectLifecycleTest,
+    the named card tests (BloodMoon, TideshaperMystic, StormtideLeviathan, Xenograft,
+    ArcaneAdaptation, MarchOfTheMachines, MerfolkTrickster, DeepFreeze, GoblinKing,
+    ElvishChampion, Lignify, Nightmare, Maro, BludgeonBrawl, EvilPresence, SeasClaim,
+    MindBend), the staticfx/battlefield/filter unit suites (incl. GameQueryServiceTest,
+    PermanentTimestampTest, LayerClassifierTest, PredicateEvaluationServiceTest,
+    TextChangeTransformerTest) and the full AI module suite — all green.
