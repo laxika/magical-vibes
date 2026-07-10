@@ -14,8 +14,10 @@ import java.util.UUID;
 /**
  * Self-only (characteristic-defining) static handler for {@link SetPowerToughnessToAmountEffect}
  * in the {@code STATIC} slot: evaluates the power/toughness {@code DynamicAmount}s via
- * {@link AmountEvaluationService} and adds the results as a continuous self bonus on the
- * 0/0 base. Replaces the former per-derivation {@code PowerToughnessEqualTo*} self handlers.
+ * {@link AmountEvaluationService} and records the result as the CR 613.4a sublayer-7a base P/T.
+ * A layer-7b setter (Diminish, Lignify) applies after 7a and overrides this base — the
+ * static-bonus assembly merges the layered 7b winner over the override written here. Replaces
+ * the former per-derivation {@code PowerToughnessEqualTo*} self handlers.
  */
 @Component
 @RequiredArgsConstructor
@@ -39,7 +41,8 @@ public class SetPowerToughnessToAmountSelfEffectHandler implements StaticEffectH
         var cda = (SetPowerToughnessToAmountEffect) effect;
         UUID controllerId = support.findControllerId(context.gameData(), context.source());
         AmountContext ctx = AmountContext.forStaticEffect(context.source(), controllerId);
-        accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), cda.power(), ctx));
-        accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), cda.toughness(), ctx));
+        accumulator.setBasePTOverride(
+                amountEvaluationService.evaluate(context.gameData(), cda.power(), ctx),
+                amountEvaluationService.evaluate(context.gameData(), cda.toughness(), ctx));
     }
 }

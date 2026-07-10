@@ -865,10 +865,13 @@ public class GameQueryService {
 
     /**
      * Returns the permanent's effective power using a pre-computed static bonus.
-     * Handles Layer 7b base P/T overrides from continuous effects (e.g. Deep Freeze).
+     * {@code bonus.basePTOverridden()} carries the CR 613 layer 7a/7b result (the object's CDA
+     * overridden by the timestamp-resolved base-P/T setter winner from the layered pass) — it
+     * takes precedence over every legacy {@code Permanent} base field; modifiers (7c) and the
+     * bonus sum apply on top.
      */
     public int getEffectivePower(Permanent permanent, StaticBonus bonus) {
-        if (bonus.basePTOverridden() && !permanent.isBasePowerToughnessOverriddenUntilEndOfTurn()) {
+        if (bonus.basePTOverridden()) {
             int power;
             if (permanent.isPowerToughnessSwitched()) {
                 power = bonus.baseToughnessOverride() + permanent.getToughnessModifiers();
@@ -890,10 +893,10 @@ public class GameQueryService {
 
     /**
      * Returns the permanent's effective toughness using a pre-computed static bonus.
-     * Handles Layer 7b base P/T overrides from continuous effects (e.g. Deep Freeze).
+     * See {@link #getEffectivePower(Permanent, StaticBonus)} — the layered 7a/7b base wins.
      */
     public int getEffectiveToughness(Permanent permanent, StaticBonus bonus) {
-        if (bonus.basePTOverridden() && !permanent.isBasePowerToughnessOverriddenUntilEndOfTurn()) {
+        if (bonus.basePTOverridden()) {
             int toughness;
             if (permanent.isPowerToughnessSwitched()) {
                 toughness = bonus.basePowerOverride() + permanent.getPowerModifiers();
@@ -1042,12 +1045,12 @@ public class GameQueryService {
     }
 
     /**
-     * Legacy layer 5-7 accumulator assembly for one permanent, running against the layer-4
-     * board state: sources apply in timestamp order (battlefield position for equal timestamps)
-     * so last-write-wins fields (7b base P/T setters) become timestamp-correct, subtype/type
-     * filters are answered from the L4-corrected {@code CharacteristicState}s via the active
-     * pass, and {@link AnimateNoncreatureArtifactsEffect} contributes its MV-based base P/T as
-     * a 7b entry at the animating permanent's timestamp instead of the old additive hack.
+     * Legacy layer 7 accumulator assembly for one permanent, running against the layered board
+     * state: sources apply in timestamp order (battlefield position for equal timestamps),
+     * subtype/type filters are answered from the L4-corrected {@code CharacteristicState}s via
+     * the active pass, and the sublayer-7b base P/T (every setter — static, floating one-shot,
+     * animation, exchange, March MV — resolved in timestamp order by
+     * {@code LayerSystemService.applyLayer7b}) is merged over the 7a CDA / intrinsic base.
      */
     private StaticBonus assembleStaticBonus(GameData gameData, LayerSystemService.LayeredBoardState board, Permanent target) {
         boolean isNaturalCreature = hasCardType(target, CardType.CREATURE);
@@ -1063,7 +1066,6 @@ public class GameQueryService {
             }
         }
         sources.sort(Comparator.comparingLong(StaticSource::timestamp).thenComparingInt(StaticSource::position));
-        Boolean marchBasePtApplies = null;
         for (StaticSource sourceSlot : sources) {
             Permanent source = sourceSlot.permanent();
             if (source == target) continue;
@@ -1092,18 +1094,6 @@ public class GameQueryService {
                         if (layeredManaged) {
                             accumulator.setLayeredOutputsSuppressed(false);
                         }
-                    }
-                }
-                // CR 613.4: the animation's MV-based base P/T is a 7b entry with the animating
-                // permanent's timestamp — a later-timestamp base-P/T setter overrides it.
-                if (effect instanceof AnimateNoncreatureArtifactsEffect
-                        && board.marchAnimatedIds().contains(target.getId())) {
-                    if (marchBasePtApplies == null) {
-                        marchBasePtApplies = !hasSelfBecomeCreatureEffect(gameData, target);
-                    }
-                    if (marchBasePtApplies) {
-                        int manaValue = target.getCard().getManaValue();
-                        accumulator.setBasePTOverride(manaValue, manaValue);
                     }
                 }
             }
@@ -1158,6 +1148,22 @@ public class GameQueryService {
             }
         }
 
+        // Sublayer 7b: the timestamp-resolved base P/T from the layered pass overrides the base
+        // decided so far (the 7a CDA applied just above, or the intrinsic base). CR 613.4:
+        // 7a applies before 7b, so the latest-timestamp setter beats the CDA regardless of when
+        // either arrived; a component no 7b entry set (power-only exchange) keeps the 7a/ladder
+        // value. Precedence between setters lives entirely in LayerSystemService.applyLayer7b.
+        LayerSystemService.BasePt basePt7b = board.basePt7b().get(target.getId());
+        if (basePt7b != null) {
+            int basePower = basePt7b.power() != null ? basePt7b.power()
+                    : accumulator.isBasePTOverridden() ? accumulator.getBasePowerOverride()
+                    : target.getBasePower();
+            int baseToughness = basePt7b.toughness() != null ? basePt7b.toughness()
+                    : accumulator.isBasePTOverridden() ? accumulator.getBaseToughnessOverride()
+                    : target.getBaseToughness();
+            accumulator.setBasePTOverride(basePower, baseToughness);
+        }
+
         // Transient "becomes the basic land type of your choice" override (e.g. Tideshaper Mystic):
         // replaces the land's subtypes and mana ability until end of turn (rule 305.7).
         if (target.getTransientLandTypeOverride() != null) {
@@ -1166,7 +1172,8 @@ public class GameQueryService {
             accumulator.setLandSubtypeOverriding(true);
         }
 
-        boolean layeredTouched = state != null && board.l56Touched().contains(target.getId());
+        boolean layeredTouched = state != null
+                && (board.l56Touched().contains(target.getId()) || basePt7b != null);
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilEndOfCombat() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
@@ -1245,8 +1252,6 @@ public class GameQueryService {
             keywords = mergedKeywords;
         }
 
-        // The animation's MV-based P/T is applied as a timestamp-ordered 7b base override in the
-        // source loop above (CR 613.4), not added on top of the accumulator's power/toughness.
         return new StaticBonus(accumulator.getPower(), accumulator.getToughness(), keywords,
                 protectionColors, accumulator.isAnimatedCreature() || isSelfAnimated,
                 grantedActivatedAbilities, grantedEffects, grantedColors,

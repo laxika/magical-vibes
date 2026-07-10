@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffec
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -49,6 +51,21 @@ public class AnimationSupport {
     private final PredicateEvaluationService predicateEvaluationService;
 
     /**
+     * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
+     * animation's timestamp — a later-timestamp base-P/T setter (Diminish, Lignify) overrides
+     * it while the permanent stays a creature. The animation flags on {@code Permanent} are
+     * still written for direct readers; this floating instance is what drives 7b precedence
+     * in the layered pass ({@code agent-docs/LAYER_SYSTEM.md}).
+     */
+    private void addAnimationBasePtFloatingEffect(GameData gameData, StackEntry entry, Permanent target,
+                                                  int power, int toughness, EffectDuration duration) {
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                new SetBasePowerToughnessEffect(power, toughness), target.getId(), null, null,
+                duration, 0));
+    }
+
+    /**
      * SELF/TARGET scope, until end of turn (manlands, Crew, Chimeric Staff/Mass, Warden of the Wall).
      * A {@code null} power/toughness means "use the source's printed value" (Crew on Vehicles).
      */
@@ -68,9 +85,13 @@ public class AnimationSupport {
 
         boolean untilEndOfCombat = effect.duration() == EffectDuration.UNTIL_END_OF_COMBAT;
         if (untilEndOfCombat) {
+            // Deferred from the layered 7b migration: UNTIL_END_OF_COMBAT floating expiry is
+            // not plumbed yet (see agent-docs/LAYER_SYSTEM.md cleanup debt) — the animation
+            // stays flag-only and applies only when no layered 7b entry exists.
             self.setAnimatedUntilEndOfCombat(true);
         } else {
             self.setAnimatedUntilEndOfTurn(true);
+            addAnimationBasePtFloatingEffect(gameData, entry, self, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
         }
         self.setAnimatedPower(power);
         self.setAnimatedToughness(toughness);
@@ -116,6 +137,7 @@ public class AnimationSupport {
                 perm.getUntilNextTurnSubtypes().clear();
                 perm.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
                 perm.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
             } else {
                 perm.setAnimatedUntilEndOfTurn(true);
                 perm.setAnimatedPower(power);
@@ -125,6 +147,7 @@ public class AnimationSupport {
                 perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
                 perm.getGrantedKeywords().addAll(effect.grantedKeywords());
                 perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
             }
 
             log.info("Game {} - {} animated{}", gameData.id, perm.getCard().getName(),
@@ -159,6 +182,7 @@ public class AnimationSupport {
                 perm.getTransientSubtypes().addAll(effect.grantedSubtypes());
                 perm.getGrantedKeywords().addAll(effect.grantedKeywords());
                 perm.getGrantedCardTypes().addAll(effect.grantedCardTypes());
+                addAnimationBasePtFloatingEffect(gameData, entry, perm, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
 
                 log.info("Game {} - {} animated until end of turn", gameData.id, perm.getCard().getName());
             }
@@ -193,6 +217,7 @@ public class AnimationSupport {
                 permanent.setAnimatedPower(power);
                 permanent.setAnimatedToughness(toughness);
                 permanent.getGrantedCardTypes().add(CardType.CREATURE);
+                addAnimationBasePtFloatingEffect(gameData, entry, permanent, power, toughness, EffectDuration.UNTIL_END_OF_TURN);
 
                 // Per MTG rules: if an Equipment becomes a creature, it becomes unattached (CR 301.5c)
                 if (permanent.isAttached() && permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
@@ -226,6 +251,7 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.PERMANENT);
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {
@@ -277,6 +303,8 @@ public class AnimationSupport {
         target.setPermanentlyAnimated(true);
         target.setPermanentAnimatedPower(power);
         target.setPermanentAnimatedToughness(toughness);
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness,
+                EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD);
 
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             if (!target.getGrantedSubtypes().contains(subtype)) {

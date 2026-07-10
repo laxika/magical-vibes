@@ -85,13 +85,16 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
             triggerCollectionService.checkLifeLossTriggers(gameData, controllerId, currentLife - currentStat);
         }
 
-        // Set creature's base stat to the player's former life total (layer 7b setting effect, CR 613.4b)
+        // Set creature's base stat to the player's former life total (layer 7b setting effect,
+        // CR 613.4b). The timestamp orders the override against other 7b setters in the layered pass.
         if (usePower) {
             source.setBasePowerOverriddenPermanently(true);
             source.setPermanentBasePowerOverride(currentLife);
+            source.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
         } else {
             source.setBaseToughnessOverriddenPermanently(true);
             source.setPermanentBaseToughnessOverride(currentLife);
+            source.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
         }
 
         log.info("Game {} - {} exchanges life ({} -> {}) with {}'s {} ({} -> {})",

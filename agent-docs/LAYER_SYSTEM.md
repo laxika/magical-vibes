@@ -169,6 +169,59 @@ lord's L6 keyword grant does not apply to a creature whose matching subtype arri
 LATER-timestamp L6-only source — changeling grants sidestep this by also being classified
 into L4, see §7).
 
+**Implementation status (step 6 — layer 7a/7b/7c rules-accurate):** sublayer **7b** is
+first-class: `LayerSystemService.applyLayer7b` (runs after L6) collects EVERY base-P/T setter
+into one flat entry list sorted by (timestamp, position) and applies it per component into
+`LayeredBoardState.basePt7b` — static setters (Lignify, Deep Freeze) harvested via their legacy
+handlers at the attach timestamp (harvested UNmanaged: the assembly's own accumulator write is
+overwritten by the merge, so no new suppression was needed); floating one-shot
+`SetBasePowerToughnessEffect`s at their resolution timestamp; March of the Machines' MV/MV at
+March's own timestamp (moved out of the assembly source loop; still gated off for
+self-animating artifacts via `hasSelfBecomeCreatureEffect`, which needed a `@Lazy
+GameQueryService` in `LayerSystemService`); migrated animation base P/T (below); and permanent
+exchange overrides (Evra, Tree of Redemption) which keep their `Permanent` field storage but
+are ordered via the new `permanentBase*OverrideTimestamp` fields stamped at exchange time
+(timestamp 0 = "before everything" for pre-migration/hand-built state). Entries are
+per-component — a power-only exchange leaves toughness to the earlier layers. **7a**:
+`SetPowerToughnessToAmountSelfEffectHandler` now writes a base-P/T *override* instead of adding
+onto a 0/0 base, and the assembly merges the 7b winner OVER it — a 7b setter beats the CDA in
+layer order no matter the timestamps (`basePTSetterOverridesCda`); the lose-all 7a suppression
+is unchanged. **7c**: `powerModifier`/counters/static boosts remain storage and sum on top of
+whichever base won; `getEffectivePower(Permanent, StaticBonus)` trusts
+`bonus.basePTOverridden()` unconditionally — the hardcoded "one-shot flag beats static setter"
+guard is gone. `Permanent.getRawPower/getRawToughness` split into public
+`getBasePower()/getBaseToughness()` + modifiers; the ladder **no longer decides layered
+precedence** — it is the fallback for direct `Permanent` readers (views' raw term — the view
+path is layered because `GameBroadcastService` passes `gqs.getEffectivePower(p,bonus) −
+p.getEffectivePower()` as the view bonus — plus last-known-information reads and the power/
+toughness predicate leaves). One-shot setters **dual-write** (step-5 pattern, deviation from
+this step's "migrate away from the fields" plan): `SetBasePowerToughnessEffectHandler` and
+`SetAllOwnCreaturesBasePowerToughnessEffectHandler` still set
+`basePowerToughnessOverriddenUntilEndOfTurn`/`basePowerOverride`/`baseToughnessOverride` for
+direct/LKI readers AND create the floating 7b instance that drives precedence (per-permanent
+instances for the mass setter — locks the affected set per CR 611.2c).
+
+**Animation-flag 7b migration status (step 6):** migrated (flag still written; a floating
+`SetBasePowerToughnessEffect` at the animation's timestamp drives 7b ordering — all writers
+funnel through `AnimationSupport.addAnimationBasePtFloatingEffect`):
+`animatedUntilEndOfTurn`/`animatedPower` (`animateSingle` UEOT branch — manlands, Crew,
+Chimeric Staff/Mass; `animateOwnLands` UEOT branch; `animateAllLands` — Natural Affinity;
+`animateControlledPermanents` — The Antiquities War III → `UNTIL_END_OF_TURN`),
+`animatedUntilNextTurn` (`animateOwnLands` — Sylvan Awakening → `UNTIL_YOUR_NEXT_TURN`), and
+`permanentlyAnimated` (`animatePermanentTarget` — Tezzeret, Waker of the Wilds → `PERMANENT`;
+`animateWhileSource` — Awakener Druid → `WHILE_SOURCE_ON_BATTLEFIELD` with the source id, so
+the floating entry and the flag revert together when the source leaves). **Deferred** (flag
+only, applies ONLY when no 7b entry exists — any real setter beats it regardless of relative
+order; cleanup debt): `animatedUntilEndOfCombat` (Jade Statue — `UNTIL_END_OF_COMBAT` floating
+expiry is not plumbed) and the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
+`MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
+getEffectiveToughness()` callers that bypass the layered numbers:** the power/toughness
+predicate leaves (`PredicateEvaluationService`, `StaticEffectSupport.matchesStaticFilter`),
+`AmountEvaluationService` toughness-based amounts, `TriggerCollectionService`/
+`IncrementTriggerEffectHandler` mana-spent-vs-P/T checks, `DeathTriggerCollectorService`
+last-known-information power, and `PermanentViewFactory`'s raw term (already corrected by the
+broadcast diff).
+
 ## 6. Sources of continuous effects
 
 Each source is classified into one or more layers:
@@ -459,3 +512,48 @@ and any deviations from this document.
    BlessingOfBelzenlok, MarchOfTheMachines) and the full AI module suite — all green
    (BoardEvaluator hypothetical scoring needed the off-battlefield keyword fallback in the
    assembly).
+
+6. **2026-07-10 — Step 6: rules-accurate layer 7a/7b/7c.** Sublayer 7b is now resolved
+   entirely by `LayerSystemService.applyLayer7b` (see the new §5 step-6 status note for the
+   architecture): ALL base-P/T setters — static aura setters via handler harvest, one-shot
+   floating effects, March MV entries, animation base P/T, permanent exchange overrides —
+   apply in one (timestamp, position) order, per component, into
+   `LayeredBoardState.basePt7b`; the assembly merges the result OVER the 7a base and
+   `getEffectivePower(Permanent, StaticBonus)` trusts `bonus.basePTOverridden()`
+   unconditionally (the `!isBasePowerToughnessOverriddenUntilEndOfTurn()` hardcoded precedence
+   guard and the assembly's in-loop March injection are deleted). 7a:
+   `SetPowerToughnessToAmountSelfEffectHandler` switched from `addPower/addToughness` on a 0/0
+   base to `setBasePTOverride`, so a 7b setter overrides the CDA instead of the CDA amount
+   surviving as a 7c addition. `Permanent.getRawPower/getRawToughness` split into public
+   `getBasePower()/getBaseToughness()` + modifiers — the if-else ladder is demoted to a
+   fallback for direct readers (list in §5) and no longer decides layered precedence.
+   **Deviation:** the one-shot `SetBasePowerToughnessEffect` handlers DUAL-WRITE the legacy
+   UEOT fields instead of dropping them (step-5 precedent: last-known-information reads —
+   `DeathTriggerCollectorService` — plus predicate leaves and white-box card tests read the
+   fields directly; the floating instance is what drives precedence). **Animation flags
+   migrated** (dual-write flag + floating 7b entry): `animatedUntilEndOfTurn`,
+   `animatedUntilNextTurn`, `permanentlyAnimated` (both writers, incl. Awakener Druid's
+   `WHILE_SOURCE_ON_BATTLEFIELD`). **Deferred:** `animatedUntilEndOfCombat` (no
+   end-of-combat floating expiry yet) and the AWAKENING-counter 8/8 (no timestamp) — both
+   flag-only, beaten by ANY real 7b entry. Exchange overrides got
+   `Permanent.permanentBase*OverrideTimestamp` stamped in
+   `ExchangeLifeTotalWithCreatureStatEffectHandler`. SevenLayerTest 86 → **89 green (11
+   red)**; flips are exactly the step's remaining targets: `basePTSetterOverridesCda`,
+   `auraSetterAfterSpellSetterWins`, `deepFreezeAfterWingsWins` (`wingsAfterDeepFreezeWins`,
+   `setterOverridesAnimationBasePT`, `laterSetterBeatsAnimationBasePT` were already green from
+   step 4/5 and stayed green, as did the whole Layer7c group, `secondSpellSetterWins` both
+   orders, `countersApplyOnTopOfSetter`, `pumpBeforeSetterStillApplies`,
+   `temporarySetterExpires`, `loseAllRemovesPTDefiningCda`). Remaining 11 red = L2 control
+   (3), L3 text (7), 7d self-switch SBA (1) — future-step targets. Test setups for the
+   hand-built `LayerSystemService` (GameQueryServiceTest, PredicateEvaluationServiceTest) now
+   also inject `gameQueryService`. Ran SevenLayerTest, the staticfx/battlefield/turn/filter/
+   state/combat/spell/ability unit suites, FloatingEffectLifecycleTest, the card tests
+   (Diminish, WingsOfVelisVel, Lignify, DeepFreeze, MarchOfTheMachines, GiantGrowth,
+   GloriousAnthem, Nightmare, Maro, DauntlessDourbark, QuandrixCharm, MarshFlitter), the
+   animation/exchange card tests (AwakenerDruid, ChimericMass/Staff, Evra, TreeOfRedemption,
+   FaerieConclave, ForbiddingWatchtower, GhituEncampment, Koth, RustedRelic, SleekSchooner,
+   SpawningPool, SylvanAwakening, Tezzeret, TheAntiquitiesWar, TreetopVillage, WardenOfTheWall,
+   Weatherlight, WakerOfTheWilds, InkmothNexus, GlintHawkIdol, JadeStatue, NaturalAffinity,
+   ElvishBranchbender, FellFlagship, ConquerorsGalleon, ShadowedCaravel, DuskLegionDreadnought)
+   and the full AI module suite — all green (two MCTS time-budget tests flaked under load and
+   pass in isolation).

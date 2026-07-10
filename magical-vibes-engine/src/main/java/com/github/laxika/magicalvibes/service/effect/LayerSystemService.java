@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -60,9 +61,13 @@ import java.util.UUID;
  * effects are applied by invoking their legacy staticfx handlers into a throwaway accumulator and
  * harvesting the result into the states, so all scope/filter logic stays in one place; the
  * static-bonus assembly then suppresses those handlers' layered outputs (they are "managed") and
- * merges the finished states into the {@code StaticBonus}. Layer 7 still runs through the legacy
- * {@code StaticBonusAccumulator} in {@link GameQueryService#computeStaticBonus}, with scope and
- * filter checks reading the layered states via {@link #activeStateFor} while a pass is active.
+ * merges the finished states into the {@code StaticBonus}. <b>Sublayer 7b</b> (base P/T setting)
+ * is resolved by {@link #applyLayer7b}: every setter — static, floating one-shot, animation,
+ * permanent exchange — applies in one timestamp order and the per-component winner lands in
+ * {@code LayeredBoardState.basePt7b}, which the assembly merges over the 7a/intrinsic base.
+ * Sublayers 7a/7c/7d still run through the legacy {@code StaticBonusAccumulator} in
+ * {@link GameQueryService#computeStaticBonus}, with scope and filter checks reading the layered
+ * states via {@link #activeStateFor} while a pass is active.
  *
  * <p>Unmanaged layer 5/6 sources (conditional wrappers, emblems) keep their legacy additive
  * behavior: their grants union in on top of the layered result, outside timestamp order.
@@ -100,6 +105,15 @@ public class LayerSystemService {
     @Autowired
     @Lazy
     private StaticEffectHandlerRegistry staticEffectRegistry;
+
+    /**
+     * Used by the layer-7b pass to gate March of the Machines' MV-based base P/T off for
+     * artifacts that animate themselves (conditional self-animations like Rusted Relic).
+     * Injected lazily: {@code GameQueryService} depends on this service.
+     */
+    @Autowired
+    @Lazy
+    private GameQueryService gameQueryService;
 
     /**
      * The type-changing decision one layer-4 effect made for one permanent, expressed as the
@@ -140,10 +154,21 @@ public class LayerSystemService {
      * per-target decisions of the purely-type-changing effects the pass took over from the
      * legacy handlers (identity-keyed by effect instance), the layer 5/6 effect instances whose
      * color/ability outputs the pass applied in timestamp order ({@code managedL56Effects} —
-     * their legacy handlers run with layered outputs suppressed during assembly), and the ids of
+     * their legacy handlers run with layered outputs suppressed during assembly), the ids of
      * permanents whose layer 5/6 characteristics were modified ({@code l56Touched} — vetoes the
-     * assembly's {@code StaticBonus.NONE} early-out).
+     * assembly's {@code StaticBonus.NONE} early-out), and the timestamp-resolved sublayer-7b
+     * base P/T per permanent ({@code basePt7b} — merged over the 7a/intrinsic base by the
+     * assembly; also vetoes the early-out).
      */
+    /**
+     * The layer-7b (base P/T setting) result for one permanent: the last-applied value per
+     * component after all 7b entries were applied in CR 613.7 timestamp order. A {@code null}
+     * component was not set by any 7b entry (a power-only exchange leaves toughness to the
+     * earlier layers / intrinsic base).
+     */
+    public record BasePt(Integer power, Integer toughness) {
+    }
+
     public record LayeredBoardState(Map<UUID, CharacteristicState> states,
                                     Map<UUID, CardSubtype> landTypeOverrides,
                                     Set<UUID> marchAnimatedIds,
@@ -151,7 +176,8 @@ public class LayerSystemService {
                                     Map<CardEffect, Map<UUID, L4Contribution>> l4Contributions,
                                     Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
                                     Set<CardEffect> managedL56Effects,
-                                    Set<UUID> l56Touched) {
+                                    Set<UUID> l56Touched,
+                                    Map<UUID, BasePt> basePt7b) {
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
          *  must be skipped and {@link #replayL4Contribution} used instead. */
@@ -302,7 +328,7 @@ public class LayerSystemService {
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                new HashSet<>());
+                new HashSet<>(), new HashMap<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -349,6 +375,10 @@ public class LayerSystemService {
         // timestamp order.
         applyLayer5(gameData, slots, slotsById, states, board);
         applyLayer6(gameData, slots, slotsById, states, board);
+
+        // Sublayer 7b (base P/T setting): every setter — static aura, one-shot floating,
+        // animation, permanent exchange — ordered by one timestamp sequence.
+        applyLayer7b(gameData, slots, slotsById, board);
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -904,27 +934,122 @@ public class LayerSystemService {
         }
     }
 
+    // ===== sublayer 7b =====
+
+    /** One base-P/T-setting application collected for the 7b pass; a {@code null} component
+     *  leaves that component untouched (power-only exchanges). */
+    private record BasePtEntry(UUID targetId, Integer power, Integer toughness, long timestamp, int position) {
+    }
+
+    /**
+     * Sublayer 7b (CR 613.4b): applies every base-P/T-setting effect in timestamp order —
+     * static setters (Lignify, Deep Freeze) at their attach timestamp, floating one-shots
+     * (Diminish, Wings of Velis Vel, migrated animation base P/T) at their resolution
+     * timestamp, March of the Machines' MV-based P/T at March's own timestamp (CR 613.4: one
+     * timestamp with its layer-4 type change), and permanent exchange overrides (Evra, Tree of
+     * Redemption) at the exchange's stamped timestamp. The last-applied value per component
+     * wins; the static-bonus assembly overrides the 7a/intrinsic base with the result. The
+     * object's own {@code SetPowerToughnessToAmountEffect} is its 7a CDA and is NOT collected
+     * here — the assembly applies (and lose-all-suppresses, CR 613.4a) it before merging 7b.
+     */
+    private void applyLayer7b(GameData gameData, List<PermanentSlot> slots,
+                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        List<BasePtEntry> entries = new ArrayList<>();
+
+        // Permanent exchange overrides keep their Permanent-field storage but order like any
+        // other 7b entry via the timestamp stamped at exchange time (0 = before everything,
+        // for pre-migration state and hand-built test setups).
+        for (PermanentSlot slot : slots) {
+            Permanent permanent = slot.permanent();
+            if (permanent.isBasePowerOverriddenPermanently()) {
+                entries.add(new BasePtEntry(permanent.getId(), permanent.getPermanentBasePowerOverride(),
+                        null, permanent.getPermanentBasePowerOverrideTimestamp(), slot.position()));
+            }
+            if (permanent.isBaseToughnessOverriddenPermanently()) {
+                entries.add(new BasePtEntry(permanent.getId(), null, permanent.getPermanentBaseToughnessOverride(),
+                        permanent.getPermanentBaseToughnessOverrideTimestamp(), slot.position()));
+            }
+        }
+
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L7B_SET_PT)) {
+            switch (instance.effect()) {
+                case SetBasePowerToughnessEffect setPt -> {
+                    if (instance.floating() != null) {
+                        for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                            entries.add(new BasePtEntry(target.permanent().getId(), setPt.power(),
+                                    setPt.toughness(), instance.timestamp(), instance.position()));
+                        }
+                    } else {
+                        applyStaticInstanceViaHandlers(gameData, instance, slots, board, false, (target, harvested) -> {
+                            if (harvested.isBasePTOverridden()) {
+                                entries.add(new BasePtEntry(target.permanent().getId(),
+                                        harvested.getBasePowerOverride(), harvested.getBaseToughnessOverride(),
+                                        instance.timestamp(), instance.position()));
+                            }
+                        });
+                    }
+                }
+                case AnimateNoncreatureArtifactsEffect ignored -> {
+                    // Gated off for artifacts that animate themselves — their own animation
+                    // defines the base P/T, not March's MV.
+                    for (PermanentSlot target : slots) {
+                        if (isSource(instance, target)) continue;
+                        Permanent permanent = target.permanent();
+                        if (board.marchAnimatedIds().contains(permanent.getId())
+                                && !gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent)) {
+                            int manaValue = permanent.getCard().getManaValue();
+                            entries.add(new BasePtEntry(permanent.getId(), manaValue, manaValue,
+                                    instance.timestamp(), instance.position()));
+                        }
+                    }
+                }
+                // Non-own-slot SetPowerToughnessToAmountEffect classifies into 7b but has no
+                // producer today; conditional wrappers around setters stay legacy-only.
+                default -> {
+                }
+            }
+        }
+
+        entries.sort(Comparator.comparingLong(BasePtEntry::timestamp).thenComparingInt(BasePtEntry::position));
+        for (BasePtEntry entry : entries) {
+            BasePt previous = board.basePt7b().get(entry.targetId());
+            board.basePt7b().put(entry.targetId(), new BasePt(
+                    entry.power() != null ? entry.power() : previous == null ? null : previous.power(),
+                    entry.toughness() != null ? entry.toughness() : previous == null ? null : previous.toughness()));
+        }
+    }
+
     @FunctionalInterface
     private interface HarvestConsumer {
         void accept(PermanentSlot target, StaticBonusAccumulator harvested);
     }
 
-    /**
-     * Applies one static-slot layer 5/6 instance by invoking its legacy staticfx handler(s)
-     * against every potential target into a throwaway accumulator (reusing all scope/filter
-     * logic), handing each per-target result to {@code harvest}. Marks the effect instance as
-     * managed so the static-bonus assembly suppresses the same handler's layered outputs —
-     * other-layer outputs (a lord boost's 7c power) still run there.
-     */
     private void applyStaticInstanceViaHandlers(GameData gameData, EffectInstance instance,
                                                 List<PermanentSlot> slots, LayeredBoardState board,
                                                 HarvestConsumer harvest) {
+        applyStaticInstanceViaHandlers(gameData, instance, slots, board, true, harvest);
+    }
+
+    /**
+     * Applies one static-slot layered instance by invoking its legacy staticfx handler(s)
+     * against every potential target into a throwaway accumulator (reusing all scope/filter
+     * logic), handing each per-target result to {@code harvest}. With {@code manage} the effect
+     * instance is marked managed so the static-bonus assembly suppresses the same handler's
+     * layer 5/6 outputs — other-layer outputs (a lord boost's 7c power) still run there. The
+     * 7b pass harvests unmanaged: its handlers' only output (the base-P/T override) is
+     * consumed from the board's 7b result, which the assembly merges over the accumulator.
+     */
+    private void applyStaticInstanceViaHandlers(GameData gameData, EffectInstance instance,
+                                                List<PermanentSlot> slots, LayeredBoardState board,
+                                                boolean manage, HarvestConsumer harvest) {
         StaticEffectHandler handler = staticEffectRegistry.getHandler(instance.effect());
         StaticEffectHandler selfHandler = staticEffectRegistry.getSelfHandler(instance.effect());
         if (handler == null && selfHandler == null) {
             return;
         }
-        board.managedL56Effects().add(instance.effect());
+        if (manage) {
+            board.managedL56Effects().add(instance.effect());
+        }
         PermanentSlot source = instance.source();
         if (source == null) {
             return;

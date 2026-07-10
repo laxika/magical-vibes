@@ -146,14 +146,19 @@ public class Permanent {
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
      *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBasePowerOverrideTimestamp}. */
     @Setter private boolean basePowerOverriddenPermanently;
     @Setter private int permanentBasePowerOverride;
+    /** CR 613.7 timestamp of the exchange that set {@link #basePowerOverriddenPermanently} — the
+     *  layered 7b pass orders the override against other base-P/T setters with it. */
+    @Setter private long permanentBasePowerOverrideTimestamp;
     /** When true, the creature's base toughness has been permanently overridden (e.g. by an exchange effect
      *  like Tree of Redemption). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBaseToughnessOverrideTimestamp}. */
     @Setter private boolean baseToughnessOverriddenPermanently;
     @Setter private int permanentBaseToughnessOverride;
+    /** CR 613.7 timestamp of the exchange that set {@link #baseToughnessOverriddenPermanently}. */
+    @Setter private long permanentBaseToughnessOverrideTimestamp;
     @Setter private boolean transformed;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
@@ -311,8 +316,10 @@ public class Permanent {
         this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;
         this.permanentBasePowerOverride = source.permanentBasePowerOverride;
+        this.permanentBasePowerOverrideTimestamp = source.permanentBasePowerOverrideTimestamp;
         this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
+        this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
@@ -481,48 +488,66 @@ public class Permanent {
         return getRawToughness();
     }
 
-    private int getRawPower() {
-        int basePower;
+    /**
+     * The base power of this permanent from its own stored state, WITHOUT modifiers or counters.
+     * This is NOT the CR 613 layer-7b precedence decision — that lives in the layered pass
+     * ({@code LayerSystemService}), which orders every base-P/T setter (static, one-shot,
+     * animation, exchange) by timestamp and surfaces the winner through
+     * {@code GameQueryService.getEffectivePower}. This accessor is the legacy fallback used by
+     * direct {@code Permanent} readers (views, last-known-information reads, predicate leaves)
+     * when no layered 7b entry applies; when only one of these fields is set, the two agree.
+     */
+    public int getBasePower() {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
-            basePower = basePowerOverride;
-        } else if (basePowerOverriddenPermanently) {
-            // Layer 7b: permanent power override (e.g. Evra, Halcyon Witness exchange)
-            basePower = permanentBasePowerOverride;
-        } else if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            basePower = animatedPower;
-        } else if (animatedUntilNextTurn) {
-            basePower = untilNextTurnAnimatedPower;
-        } else if (permanentlyAnimated) {
-            basePower = permanentAnimatedPower;
-        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
-            basePower = 8;
-        } else {
-            basePower = card.getPower() != null ? card.getPower() : 0;
+            return basePowerOverride;
         }
-        return basePower + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        if (basePowerOverriddenPermanently) {
+            return permanentBasePowerOverride;
+        }
+        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
+            return animatedPower;
+        }
+        if (animatedUntilNextTurn) {
+            return untilNextTurnAnimatedPower;
+        }
+        if (permanentlyAnimated) {
+            return permanentAnimatedPower;
+        }
+        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+            return 8;
+        }
+        return card.getPower() != null ? card.getPower() : 0;
+    }
+
+    /** The base toughness counterpart of {@link #getBasePower()} — same fallback caveats. */
+    public int getBaseToughness() {
+        if (basePowerToughnessOverriddenUntilEndOfTurn) {
+            return baseToughnessOverride;
+        }
+        if (baseToughnessOverriddenPermanently) {
+            return permanentBaseToughnessOverride;
+        }
+        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
+            return animatedToughness;
+        }
+        if (animatedUntilNextTurn) {
+            return untilNextTurnAnimatedToughness;
+        }
+        if (permanentlyAnimated) {
+            return permanentAnimatedToughness;
+        }
+        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+            return 8;
+        }
+        return card.getToughness() != null ? card.getToughness() : 0;
+    }
+
+    private int getRawPower() {
+        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     private int getRawToughness() {
-        int baseToughness;
-        if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
-            baseToughness = baseToughnessOverride;
-        } else if (baseToughnessOverriddenPermanently) {
-            // Layer 7b: permanent toughness override (e.g. Tree of Redemption exchange)
-            baseToughness = permanentBaseToughnessOverride;
-        } else if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
-            baseToughness = animatedToughness;
-        } else if (animatedUntilNextTurn) {
-            baseToughness = untilNextTurnAnimatedToughness;
-        } else if (permanentlyAnimated) {
-            baseToughness = permanentAnimatedToughness;
-        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
-            baseToughness = 8;
-        } else {
-            baseToughness = card.getToughness() != null ? card.getToughness() : 0;
-        }
-        return baseToughness + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     public CardColor getEffectiveColor() {

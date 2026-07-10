@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -49,9 +52,16 @@ public class SetAllOwnCreaturesBasePowerToughnessEffectHandler implements Normal
             if (!gameQueryService.isCreature(gameData, permanent)) {
                 continue;
             }
+            // CR 613 layer engine: one floating layer-7b effect per affected creature locks the
+            // set at resolution time (CR 611.2c) and carries the resolution timestamp; the
+            // legacy fields stay written for direct Permanent readers.
             permanent.setBasePowerToughnessOverriddenUntilEndOfTurn(true);
             permanent.setBasePowerOverride(power);
             permanent.setBaseToughnessOverride(toughness);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    new SetBasePowerToughnessEffect(power, toughness), permanent.getId(), null, null,
+                    EffectDuration.UNTIL_END_OF_TURN, 0));
             count++;
         }
 

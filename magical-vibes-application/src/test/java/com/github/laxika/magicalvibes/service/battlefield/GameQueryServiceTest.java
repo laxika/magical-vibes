@@ -87,6 +87,7 @@ class GameQueryServiceTest {
         LayerSystemService layerSystemService = new LayerSystemService();
         ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
         ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
+        ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
         ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
 
         player1Id = UUID.randomUUID();
@@ -1969,6 +1970,7 @@ class GameQueryServiceTest {
             LayerSystemService lookaheadLayerSystem = new LayerSystemService();
             ReflectionTestUtils.setField(lookaheadLayerSystem, "predicateEvaluationService", lookaheadEvaluator);
             ReflectionTestUtils.setField(lookaheadLayerSystem, "staticEffectRegistry", realRegistry);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "gameQueryService", lookaheadGqs);
             ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
 
             playerId = UUID.randomUUID();
