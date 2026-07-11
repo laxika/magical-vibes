@@ -128,6 +128,8 @@ public class GameData {
     public final Map<UUID, Set<UUID>> creatureCardsDamagedThisTurnBySourcePermanent = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card ID → poison counters to give its controller when it dies this turn. */
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Delayed trigger: creature card IDs to return to the battlefield under their owner's control if they die this turn (Graceful Reprieve). */
+    public final Set<UUID> creaturesReturnedToBattlefieldOnDeathThisTurn = ConcurrentHashMap.newKeySet();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -163,6 +165,12 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
+    /**
+     * Resolution-time "choose a creature type" answer for a spell/ability that has no permanent
+     * to hang the choice on (e.g. Coordinated Barrage). Set by the choice handler, read and
+     * cleared by the effect handler that re-runs after the choice completes.
+     */
+    public CardSubtype chosenSpellSubtype;
     /**
      * Generic re-entry signal: when set, {@code EffectResolutionService} re-runs the current
      * effect (rather than advancing to the next) after the pending interaction completes.
@@ -394,6 +402,15 @@ public class GameData {
     /** Tracks which creatures that dealt combat damage to players this turn had the Changeling keyword.
      *  These creatures count as having all creature subtypes for subtype-conditional triggers. */
     public final Set<UUID> combatDamageSourcesWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks, per player who controlled the source at damage time, the union of subtypes of creatures
+     *  they controlled that dealt combat damage to a player this turn. Used to evaluate the prowl
+     *  alternative cost ("if you dealt combat damage to a player this turn with a [subtype]"). */
+    public final Map<UUID, Set<CardSubtype>> combatDamageToPlayerControllerSubtypesThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks which players dealt combat damage to a player this turn with a Changeling creature they
+     *  controlled (which counts as every creature subtype for prowl). */
+    public final Set<UUID> controllersDealtCombatDamageWithChangelingThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks which Leonin Arbiter permanent IDs each player has paid {2} for this turn. */
     public final Map<UUID, Set<UUID>> paidSearchTaxPermanentIds = new ConcurrentHashMap<>();
@@ -1212,6 +1229,7 @@ public class GameData {
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
         copy.eachPlayerRummage.active = this.eachPlayerRummage.active;
         copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
@@ -1284,6 +1302,9 @@ public class GameData {
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
+        this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
+                copy.combatDamageToPlayerControllerSubtypesThisTurn.put(k, new HashSet<>(v)));
+        copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
@@ -1323,6 +1344,7 @@ public class GameData {
         this.creatureCardsDamagedThisTurnBySourcePermanent.forEach((k, v) ->
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
+        copy.creaturesReturnedToBattlefieldOnDeathThisTurn.addAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->

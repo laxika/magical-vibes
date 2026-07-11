@@ -36,6 +36,7 @@ export enum MessageType {
   MAY_ABILITY_CHOSEN = 'MAY_ABILITY_CHOSEN',
   ACTIVATE_ABILITY = 'ACTIVATE_ABILITY',
   ACTIVATE_GRAVEYARD_ABILITY = 'ACTIVATE_GRAVEYARD_ABILITY',
+  ACTIVATE_HAND_ABILITY = 'ACTIVATE_HAND_ABILITY',
   CHOOSE_PERMANENT = 'CHOOSE_PERMANENT',
   PERMANENT_CHOSEN = 'PERMANENT_CHOSEN',
   CHOOSE_MULTIPLE_PERMANENTS = 'CHOOSE_MULTIPLE_PERMANENTS',
@@ -187,6 +188,7 @@ export interface Card {
   alternateCostTapCount: number;
   alternateCostManaCost: string | null;
   graveyardActivatedAbilities: ActivatedAbilityView[];
+  handActivatedAbilities?: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
   modalChoicesRequired: number;
@@ -488,6 +490,7 @@ export interface ChooseFromRevealedHandNotification {
   cards: Card[];
   validIndices: number[];
   prompt: string;
+  optional: boolean;
 }
 
 export interface ChooseCardFromGraveyardNotification {

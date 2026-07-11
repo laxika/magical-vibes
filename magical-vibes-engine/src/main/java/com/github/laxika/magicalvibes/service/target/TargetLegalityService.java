@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
@@ -67,6 +69,15 @@ public class TargetLegalityService {
     private final TargetValidationService targetValidationService;
 
     public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
+        return checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, null);
+    }
+
+    /**
+     * Same as {@link #checkSpellTargetOnStack(GameData, UUID, TargetFilter, UUID)} but with the source
+     * permanent supplied, which source-dependent predicates (e.g. "with the chosen name") require.
+     */
+    public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter,
+                                                    UUID controllerId, Permanent source) {
         if (targetId == null) {
             return Optional.of("Must target a spell on the stack");
         }
@@ -82,7 +93,7 @@ public class TargetLegalityService {
         }
 
         if (targetFilter instanceof StackEntryPredicateTargetFilter filter
-                && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicate(), controllerId)) {
+                && !matchesStackEntryPredicate(gameData, targetSpell, filter.predicate(), controllerId, source)) {
             return Optional.of(filter.errorMessage());
         }
 
@@ -90,7 +101,11 @@ public class TargetLegalityService {
     }
 
     public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
-        checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId)
+        validateSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, null);
+    }
+
+    public void validateSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId, Permanent source) {
+        checkSpellTargetOnStack(gameData, targetId, targetFilter, controllerId, source)
                 .ifPresent(reason -> { throw new IllegalStateException(reason); });
     }
 
@@ -422,6 +437,29 @@ public class TargetLegalityService {
                 validateSpellProtections(gameData, target, card);
                 validateHexproofFromColor(gameData, target, card, controllerId);
                 validatePermanentTargetable(gameData, target, controllerId);
+            }
+        }
+
+        validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
+    }
+
+    /**
+     * Enforces a spell's cross-target restriction on the whole chosen set (CR 601.2c), beyond the
+     * per-position filters. Currently only "share no creature types" (Rivals' Duel).
+     */
+    private void validateMultiTargetConstraint(GameData gameData, MultiTargetConstraint constraint, List<UUID> targetIds) {
+        if (constraint != MultiTargetConstraint.SHARE_NO_CREATURE_TYPES) {
+            return;
+        }
+        List<Permanent> targets = targetIds.stream()
+                .map(id -> gameQueryService.findPermanentById(gameData, id))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        for (int i = 0; i < targets.size(); i++) {
+            for (int j = i + 1; j < targets.size(); j++) {
+                if (gameQueryService.shareCreatureType(gameData, targets.get(i), targets.get(j))) {
+                    throw new IllegalStateException("Chosen creatures must share no creature types");
+                }
             }
         }
     }
@@ -835,6 +873,15 @@ public class TargetLegalityService {
     }
 
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate, UUID controllerId) {
+        return matchesStackEntryPredicate(gameData, stackEntry, predicate, controllerId, null);
+    }
+
+    public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
+                                              UUID controllerId, Permanent source) {
+        if (predicate instanceof StackEntrySharesChosenNameWithSourcePredicate) {
+            return source != null && source.getChosenName() != null
+                    && source.getChosenName().equals(stackEntry.getCard().getName());
+        }
         if (predicate instanceof StackEntryTypeInPredicate typeInPredicate) {
             return typeInPredicate.spellTypes().contains(stackEntry.getEntryType());
         }
@@ -874,7 +921,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
+                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source)) {
                     return true;
                 }
             }
@@ -882,14 +929,14 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAllOfPredicate allOfPredicate) {
             for (StackEntryPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
+                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source)) {
                     return false;
                 }
             }
             return true;
         }
         if (predicate instanceof StackEntryNotPredicate notPredicate) {
-            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId);
+            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId, source);
         }
         return false;
     }

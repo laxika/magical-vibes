@@ -86,6 +86,13 @@ public class MayCopyHandlerService {
                 }
             }
 
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+                triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
                 return;

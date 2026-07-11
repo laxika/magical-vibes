@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
@@ -266,19 +267,23 @@ public class SpellCastTriggerCollectorService {
         CardSubtype chosenSubtype = match.permanent().getChosenSubtype();
         if (chosenSubtype == null) return false;
 
-        // Must be a creature spell of the chosen type
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(),
-                new CardAllOfPredicate(List.of(
+        // Must be a spell of the chosen type (optionally restricted to creature spells)
+        CardPredicate subtypeFilter = trigger.creatureSpellOnly()
+                ? new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
-                        new CardSubtypePredicate(chosenSubtype)
-                )), null, match.gameData(), sc.castingPlayerId())) return false;
+                        new CardSubtypePredicate(chosenSubtype)))
+                : new CardSubtypePredicate(chosenSubtype);
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(),
+                subtypeFilter, null, match.gameData(), sc.castingPlayerId())) return false;
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(trigger.resolvedEffects())
+                new ArrayList<>(trigger.resolvedEffects()),
+                null,
+                match.permanent().getId()
         ));
 
         log.info("Game {} - {} chosen-subtype spell-cast trigger queued",

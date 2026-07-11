@@ -132,6 +132,36 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Starts the next pending "each opponent may search for a creature card to battlefield" search
+     * from the follow-up's remaining-searchers list; the advanced remainder rides the begun search.
+     * Each searcher may search their library for a creature card, put it onto the battlefield, then
+     * shuffle. Returns true if a search was initiated, false if no searcher remains (empty library /
+     * no creatures / Leonin Arbiter players are skipped). Used by Boldwyr Heavyweights.
+     */
+    public boolean startNextEachPlayerCreatureToBattlefieldSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerCreatureToBattlefieldSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            boolean started = performLibrarySearch(
+                    gameData,
+                    nextPlayerId,
+                    card -> card.hasType(CardType.CREATURE),
+                    "creature cards",
+                    "You may search your library for a creature card and put it onto the battlefield.",
+                    false,
+                    true,
+                    LibrarySearchDestination.BATTLEFIELD,
+                    followUp.withRemainingEachPlayerCreatureToBattlefieldSearches(remaining)
+            );
+            if (started) {
+                return true;
+            }
+            // If search could not start (empty library, no creatures, Leonin Arbiter, etc.), try the next player
+        }
+        return false;
+    }
+
+    /**
      * Searches the controller's library for a creature card, reveals it, and puts it into their hand.
      * Called after the sacrifice portion of SacrificeCreatureSearchLibraryForCreatureToHandEffect completes.
      */

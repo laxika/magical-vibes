@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -78,10 +79,12 @@ public class EtbEffectResolver {
         register(ConditionalEffect.class, (ctx, effect) -> {
             ConditionalEffect conditional = (ConditionalEffect) effect;
             ConditionContext conditionContext = new ConditionContext(ctx.controllerId(), null, null,
-                    ctx.card(), ctx.kicked(), ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null, false);
+                    ctx.card(), ctx.kicked(), ctx.prowl(), ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null, false);
             return switch (conditional.condition()) {
                 // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
                 case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
+                // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
+                case CastForProwlCost ignored -> ctx.prowl() ? conditional.wrapped() : null;
                 // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)

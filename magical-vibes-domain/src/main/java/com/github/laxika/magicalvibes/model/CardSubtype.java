@@ -68,6 +68,7 @@ public enum CardSubtype {
     NIGHTMARE("Nightmare"),
     SHAPESHIFTER("Shapeshifter"),
     CRAB("Crab"),
+    COWARD("Coward"),
     DJINN("Djinn"),
     ROGUE("Rogue"),
     RAT("Rat"),

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M10", collectorNumber = "106")
+@CardRegistration(set = "MOR", collectorNumber = "66")
 public class MindShatter extends Card {
 
     public MindShatter() {

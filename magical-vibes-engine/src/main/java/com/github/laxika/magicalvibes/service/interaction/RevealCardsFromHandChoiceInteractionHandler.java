@@ -52,7 +52,7 @@ public class RevealCardsFromHandChoiceInteractionHandler
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
         List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(recipientId, new ChooseFromRevealedHandMessage(
-                cardViews, interaction.validIndices(), interaction.prompt()));
+                cardViews, interaction.validIndices(), interaction.prompt(), false));
 
         String playerName = gameData.playerIdToName.get(interaction.playerId());
         log.info("Game {} - Awaiting {} to choose a card to reveal", gameData.id, playerName);

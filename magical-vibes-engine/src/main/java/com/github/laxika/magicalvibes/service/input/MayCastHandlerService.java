@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -127,10 +128,21 @@ public class MayCastHandlerService {
         Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
         List<Card> deck = gameData.playerDecks.get(player.getId());
+        boolean exileIfNotPlayed = ability.effects().stream()
+                .filter(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect)
+                .map(e -> ((RevealTopCardMayPlayFreeOrExileEffect) e).exileIfNotPlayed())
+                .findFirst().orElse(true);
 
         if (!accepted) {
-            // Declined — exile the card from library
-            exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+            if (exileIfNotPlayed) {
+                // Declined — exile the card from library
+                exileTopCardFromLibrary(gameData, player.getId(), deck, cardToPlay, playerName);
+            } else {
+                // Declined — the card stays on top of the library
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " declines to play " + cardToPlay.getName() + ".");
+                log.info("Game {} - {} declines to play {}, stays on top", gameData.id, playerName, cardToPlay.getName());
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -185,11 +197,19 @@ public class MayCastHandlerService {
                 List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
 
                 if (validTargets.isEmpty()) {
-                    // No valid targets — exile the card instead
-                    exileService.exileCard(gameData, player.getId(), cardToPlay);
-                    String logEntry = cardToPlay.getName() + " has no valid targets and is exiled.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
+                    if (exileIfNotPlayed) {
+                        // No valid targets — exile the card instead
+                        exileService.exileCard(gameData, player.getId(), cardToPlay);
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                cardToPlay.getName() + " has no valid targets and is exiled.");
+                        log.info("Game {} - {} play-from-library has no valid targets, exiled", gameData.id, cardToPlay.getName());
+                    } else {
+                        // No valid targets — return the card to the top of the library
+                        deck.addFirst(cardToPlay);
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                cardToPlay.getName() + " has no valid targets and stays on top of the library.");
+                        log.info("Game {} - {} play-from-library has no valid targets, stays on top", gameData.id, cardToPlay.getName());
+                    }
                 } else {
                     gameData.interaction.setPermanentChoiceContext(
                             new PermanentChoiceContext.LibraryCastSpellTarget(cardToPlay, player.getId(), spellEffects, spellType));

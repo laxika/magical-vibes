@@ -64,6 +64,7 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -131,6 +132,8 @@ public class MultiPermanentChoiceHandlerService {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped) {
+            handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -313,6 +316,68 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleSacrificeLandsSearchLandsToBattlefieldTapped(GameData gameData, UUID playerId,
+                                                                    List<UUID> permanentIds) {
+        int sacrificed = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        // Search the library for up to that many land cards, put them onto the battlefield tapped.
+        if (sacrificed > 0 && !librarySearchSupport.isSearchPrevented(gameData, playerId)) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            String playerName = gameData.playerIdToName.get(playerId);
+            if (deck == null || deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " searches their library but it is empty. Library is shuffled.");
+            } else {
+                List<Card> lands = deck.stream()
+                        .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.LAND))
+                        .toList();
+                if (lands.isEmpty()) {
+                    com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " searches their library but finds no land cards. Library is shuffled.");
+                } else {
+                    String prompt = "Search your library for up to " + sacrificed + " land card"
+                            + (sacrificed != 1 ? "s" : "")
+                            + " and put them onto the battlefield tapped (" + sacrificed + " remaining).";
+                    librarySearchSupport.sendLibrarySearchToPlayer(gameData, playerId,
+                            com.github.laxika.magicalvibes.model.LibrarySearchParams.builder(playerId, new ArrayList<>(lands))
+                                    .remainingCount(sacrificed)
+                                    .canFailToFind(true)
+                                    .destination(com.github.laxika.magicalvibes.model.LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                                    .build(), prompt, true);
+                    // Library search interaction is now active; it resumes effect resolution on completion.
+                    return;
+                }
+            }
+        }
+
+        // No search begun — follow standard completion: SBA → may abilities → resume effects
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {

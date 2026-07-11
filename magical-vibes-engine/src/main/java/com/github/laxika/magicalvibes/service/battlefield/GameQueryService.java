@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
@@ -2072,6 +2073,53 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the two creatures share at least one creature type, accounting for
+     * granted/transient/layer subtypes, "loses all creature types", and Changeling (which counts
+     * as having every creature type). Backs the "creatures that share no creature types" targeting
+     * restriction (Rivals' Duel).
+     */
+    public boolean shareCreatureType(GameData gameData, Permanent a, Permanent b) {
+        boolean aChangeling = hasKeyword(gameData, a, Keyword.CHANGELING);
+        boolean bChangeling = hasKeyword(gameData, b, Keyword.CHANGELING);
+        Set<CardSubtype> aTypes = effectiveCreatureSubtypes(gameData, a);
+        Set<CardSubtype> bTypes = effectiveCreatureSubtypes(gameData, b);
+        // A Changeling has every creature type, so it shares a type with any creature that has
+        // at least one creature type (or with another Changeling).
+        if (aChangeling) {
+            return bChangeling || !bTypes.isEmpty();
+        }
+        if (bChangeling) {
+            return !aTypes.isEmpty();
+        }
+        return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
+    private Set<CardSubtype> effectiveCreatureSubtypes(GameData gameData, Permanent permanent) {
+        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
+            return Set.of();
+        }
+        Set<CardSubtype> result = new HashSet<>();
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (!bonus.subtypeOverriding()) {
+            addCreatureSubtypes(result, permanent.getCard().getSubtypes());
+        }
+        addCreatureSubtypes(result, permanent.getTransientSubtypes());
+        addCreatureSubtypes(result, permanent.getGrantedSubtypes());
+        addCreatureSubtypes(result, permanent.getUntilNextTurnSubtypes());
+        addCreatureSubtypes(result, bonus.grantedSubtypes());
+        return result;
+    }
+
+    private void addCreatureSubtypes(Set<CardSubtype> target, List<CardSubtype> subtypes) {
+        for (CardSubtype subtype : subtypes) {
+            if (isCreatureSubtype(subtype)) {
+                target.add(subtype);
+            }
+        }
+    }
+
+    /**
      * Returns {@code true} if the given permanent has at least one Equipment attached to it.
      */
     public boolean isEquipped(GameData gameData, Permanent creature) {
@@ -2180,6 +2228,10 @@ public class GameQueryService {
                 return Optional.of(blocker.getCard().getName() + " can only block " + restriction.allowedAttackersDescription());
             }
         }
+        Optional<String> globalRestriction = getGlobalBlockRestrictionMessage(gameData, attacker, blocker);
+        if (globalRestriction.isPresent()) {
+            return globalRestriction;
+        }
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
@@ -2224,6 +2276,30 @@ public class GameQueryService {
         }
         if (hasProtectionFromSource(gameData, attacker, blocker)) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (protection)");
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Board-wide "creatures matching X can't block creatures matching Y" restrictions
+     * (e.g. Boldwyr Intimidator: "Cowards can't block Warriors."). Scans every permanent on the
+     * battlefield for {@link MatchingCreaturesCantBlockMatchingCreaturesEffect} statics and returns a
+     * message if the given blocker/attacker pair is prohibited.
+     */
+    private Optional<String> getGlobalBlockRestrictionMessage(GameData gameData, Permanent attacker, Permanent blocker) {
+        List<MatchingCreaturesCantBlockMatchingCreaturesEffect> restrictions = new ArrayList<>();
+        gameData.forEachPermanent((playerId, source) -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MatchingCreaturesCantBlockMatchingCreaturesEffect restriction) {
+                    restrictions.add(restriction);
+                }
+            }
+        });
+        for (MatchingCreaturesCantBlockMatchingCreaturesEffect restriction : restrictions) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
+                return Optional.of(restriction.description());
+            }
         }
         return Optional.empty();
     }

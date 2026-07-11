@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateGraveyardAbilityRequest;
+import com.github.laxika.magicalvibes.networking.message.ActivateHandAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
@@ -492,6 +493,27 @@ public class GameMessageHandler implements MessageHandler {
 
         try {
             gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleActivateHandAbility(Connection connection, ActivateHandAbilityRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.activateHandAbility(gameData, player, request.handCardIndex(), request.abilityIndex(), request.targetId(), request.xValue());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

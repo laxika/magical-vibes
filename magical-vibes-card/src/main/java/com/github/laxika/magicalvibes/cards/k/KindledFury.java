@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "M10", collectorNumber = "144")
+@CardRegistration(set = "MOR", collectorNumber = "92")
 public class KindledFury extends Card {
 
     public KindledFury() {

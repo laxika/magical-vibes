@@ -103,6 +103,11 @@ public class AutoPassService {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
 
+        // Process any pending targeted leaves-the-battlefield triggers (e.g. Meadowboon)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        }
+
         // Process any pending explore targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);

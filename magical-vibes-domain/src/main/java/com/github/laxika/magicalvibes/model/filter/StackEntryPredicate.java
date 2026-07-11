@@ -17,6 +17,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryManaValuePredicate,
         StackEntryManaValueAtMostControlledCountPredicate,
         StackEntryNotPredicate,
+        StackEntrySharesChosenNameWithSourcePredicate,
         StackEntryTargetsPermanentPredicate,
         StackEntryTargetsYouOrCreatureYouControlPredicate,
         StackEntryTargetsYourPermanentPredicate,

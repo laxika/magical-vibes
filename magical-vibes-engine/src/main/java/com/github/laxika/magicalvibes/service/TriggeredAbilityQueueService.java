@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -76,6 +77,104 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} death trigger awaiting target selection", gameData.id, pending.dyingCard().getName());
             return;
         }
+    }
+
+    public void processNextSelfLeavesTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            PermanentChoiceContext.SelfLeavesTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+
+            // Graveyard-targeting self-leaves trigger (e.g. Offalsnout): choose a target card in a
+            // graveyard to exile, at the time the trigger is put on the stack.
+            ExileGraveyardCardsEffect gyExile = pending.effects().stream()
+                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.canTargetGraveyard())
+                    .map(e -> (ExileGraveyardCardsEffect) e)
+                    .findFirst().orElse(null);
+            if (gyExile != null) {
+                if (beginSelfLeavesGraveyardTarget(gameData, pending, gyExile)) {
+                    return;
+                }
+                continue;
+            }
+
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    pending.sourceCard().getTargetFilter(),
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.END_STEP);
+
+            if (result.validTargets().isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+                String logEntry = pending.sourceCard().getName() + "'s leaves-the-battlefield trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} leaves-battlefield trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
+                    : result.canTargetPlayers()
+                            ? (result.opponentOnly() ? "target opponent" : "target player")
+                            : "target creature";
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+
+            String logEntry = pending.sourceCard().getName() + "'s leaves-the-battlefield trigger - choose " + targetDescription + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} leaves-battlefield trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    /**
+     * Collects the graveyard targets for a leaves-the-battlefield exile trigger (e.g. Offalsnout) and
+     * begins the card choice. Returns {@code true} if input was begun (caller should return), or
+     * {@code false} if the trigger was skipped for lack of a legal target (caller should continue).
+     */
+    private boolean beginSelfLeavesGraveyardTarget(GameData gameData,
+            PermanentChoiceContext.SelfLeavesTriggerTarget pending, ExileGraveyardCardsEffect gyExile) {
+        CardPredicate filter = gyExile.filter();
+        boolean anyGraveyard = gyExile.canTargetAnyGraveyard();
+
+        List<Card> matchingCards = new ArrayList<>();
+        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(pending.controllerId());
+        for (UUID playerId : searchPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, pending.sourceCard().getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        gameData.pollPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class);
+
+        if (matchingCards.isEmpty()) {
+            String logEntry = pending.sourceCard().getName() + "'s leaves-the-battlefield trigger has no valid graveyard targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} leaves-battlefield graveyard trigger skipped (no valid targets)",
+                    gameData.id, pending.sourceCard().getName());
+            return false;
+        }
+
+        gameData.graveyardTargetOperation.card = pending.sourceCard();
+        gameData.graveyardTargetOperation.controllerId = pending.controllerId();
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
+
+        String filterLabel = CardPredicateUtils.describeFilter(filter);
+        playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
+                pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from a graveyard to exile.");
+
+        String logEntry = pending.sourceCard().getName() + "'s leaves-the-battlefield trigger — choose a graveyard target.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} leaves-battlefield graveyard trigger awaiting target selection",
+                gameData.id, pending.sourceCard().getName());
+        return true;
     }
 
     public void processNextAttackTriggerTarget(GameData gameData) {

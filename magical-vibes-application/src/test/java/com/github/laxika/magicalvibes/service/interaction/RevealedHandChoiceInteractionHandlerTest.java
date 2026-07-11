@@ -68,7 +68,7 @@ class RevealedHandChoiceInteractionHandlerTest {
 
     private PendingInteraction.RevealedHandChoice choice(List<Integer> validIndices, String prompt) {
         return new PendingInteraction.RevealedHandChoice(
-                PLAYER1_ID, PLAYER2_ID, validIndices, 1, false, false, List.of(), null, prompt);
+                PLAYER1_ID, PLAYER2_ID, validIndices, 1, false, false, List.of(), null, prompt, false, false);
     }
 
     @Test

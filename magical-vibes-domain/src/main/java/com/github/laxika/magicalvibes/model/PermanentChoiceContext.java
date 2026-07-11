@@ -17,6 +17,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Stonehewer Giant: attach the just-placed Equipment {@code equipmentPermanentId} to the chosen creature. */
+    record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) implements PermanentChoiceContext {}
+
     /** Nettlevine Blight: sacrifice {@code permanentToSacrificeId}, then reattach the source Aura
      *  {@code auraPermanentId} onto the chosen creature or land. */
     record ReattachSourceAuraAfterSacrifice(UUID auraPermanentId, UUID permanentToSacrificeId) implements PermanentChoiceContext {}
@@ -47,9 +50,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       UUID targetId,
                                       Zone targetZone,
                                       CardEffect costEffect,
-                                      int remaining) implements PermanentChoiceContext {}
+                                      int remaining,
+                                      List<UUID> chosenSoFar) implements PermanentChoiceContext {
+
+        /** Permanents already paid toward this cost, for costs whose valid choices depend on prior
+         *  picks (e.g. "tap two creatures that share a creature type"). Empty for count-only costs. */
+        public ActivatedAbilityCostChoice(UUID activatingPlayerId, UUID sourcePermanentId, Integer abilityIndex,
+                                          Integer xValue, UUID targetId, Zone targetZone, CardEffect costEffect,
+                                          int remaining) {
+            this(activatingPlayerId, sourcePermanentId, abilityIndex, xValue, targetId, targetZone, costEffect, remaining, List.of());
+        }
+    }
 
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
+
+    /** Targeted "when this permanent leaves the battlefield" trigger ({@code EffectSlot.ON_SELF_LEAVES_BATTLEFIELD}),
+     *  e.g. Meadowboon — "put a +1/+1 counter on each creature target player controls." */
+    record SelfLeavesTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
     record DiscardTriggerAnyTarget(Card discardedCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
@@ -122,6 +139,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record UpkeepSecondPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId, UUID firstTargetPlayerId) implements PermanentChoiceContext {}
 
@@ -226,6 +245,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */
     record SacrificeCreatureCreateTokensEqualToToughness(UUID controllerId, Card sourceCard,
                                                          com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
+
+    /** "Target player sacrifices a creature of their choice. If a [subtype] is sacrificed this way,
+     *  that player creates [tokens]." (Warren Weirding.) The sacrificing player also creates the tokens. */
+    record SacrificeCreatureCreateTokensIfSubtype(UUID sacrificingPlayerId, Card sourceCard,
+                                                  CardSubtype requiredSubtype,
+                                                  com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
 
     /** Explore trigger that needs to target a creature an opponent controls
      *  (e.g. Lurking Chupacabra: "Whenever a creature you control explores, target creature

@@ -88,7 +88,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, false, false, List.of(), null,
-                "Choose a card to put on top of " + targetName + "'s library."));
+                "Choose a card to put on top of " + targetName + "'s library.", false, false));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
                 gameData.id, casterName, cardsToChoose, targetName);

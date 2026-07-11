@@ -32,8 +32,11 @@ public class BoostCreaturesOfChosenSubtypeEffectHandler implements StaticEffectH
         Permanent target = context.target();
         if (!gameQueryService.isCreature(context.gameData(), target)) return;
         if (support.matchesStaticFilter(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
+            int multiplier = boost.scalingCounter() == null
+                    ? 1
+                    : context.source().getCounterCount(boost.scalingCounter());
+            accumulator.addPower(boost.powerBoost() * multiplier);
+            accumulator.addToughness(boost.toughnessBoost() * multiplier);
         }
     }
 }

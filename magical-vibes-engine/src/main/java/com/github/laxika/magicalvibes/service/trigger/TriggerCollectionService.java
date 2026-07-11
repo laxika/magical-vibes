@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
@@ -40,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellC
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -791,6 +795,52 @@ public class TriggerCollectionService {
         });
     }
 
+    // ── Ally-creature-deals-damage-to-creature reflection (Greatbow Doyen) ──
+
+    /**
+     * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers. When a creature the watcher's
+     * controller controls (matching the effect's source filter) deals damage to a creature, the
+     * damage-source creature deals that much damage to the damaged creature's controller. Called
+     * once per source/target/damage event (combat and non-combat).
+     */
+    public void checkAllyDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
+            UUID damageSourceControllerId, UUID damagedCreatureControllerId, int damage) {
+        if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null || damage <= 0) {
+            return;
+        }
+
+        gameData.forEachPermanent((watcherControllerId, watcher) -> {
+            // "a creature you control" — the damage source must be controlled by the watcher's controller.
+            if (!watcherControllerId.equals(damageSourceControllerId)) return;
+
+            for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)) {
+                if (!(effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect)) continue;
+                if (reflect.sourceFilter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, reflect.sourceFilter())) {
+                    continue;
+                }
+
+                // The damage-source creature deals that much damage to the damaged creature's controller.
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        damageSource.getCard(),
+                        damageSourceControllerId,
+                        damageSource.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER))),
+                        damagedCreatureControllerId,
+                        damageSource.getId()
+                );
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} reflects {} damage from {} to {}", gameData.id,
+                        watcher.getCard().getName(), damage, damageSource.getCard().getName(),
+                        gameData.playerIdToName.get(damagedCreatureControllerId));
+            }
+        });
+    }
+
     // ── Any-creature-dealt-damage triggers ─────────────────────────────
 
     /**
@@ -1068,6 +1118,10 @@ public class TriggerCollectionService {
 
     public void processNextAttackTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
+    }
+
+    public void processNextSelfLeavesTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextSelfLeavesTriggerTarget(gameData);
     }
 
     public void processNextDiscardSelfTrigger(GameData gameData) {
@@ -1425,6 +1479,21 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Fires ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Countryside Crusher) whenever a
+     * land card is put into its owner's graveyard from any zone. Fires on every permanent the graveyard
+     * owner controls that has this slot.
+     */
+    public void checkLandPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId, Card landCard) {
+        var ctx = new TriggerContext.LandPutIntoGraveyard(landCard, graveyardOwnerId, null);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
+        }
+    }
+
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
 
@@ -1530,6 +1599,29 @@ public class TriggerCollectionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} poison counter(s) (delayed trigger: creature died this turn)",
                 gameData.id, playerName, poisonAmount);
+    }
+
+    /**
+     * Delayed "return that card when it dies this turn" (Graceful Reprieve): if the dying creature's
+     * card was registered, push a triggered ability that returns it from its owner's graveyard to the
+     * battlefield under its owner's control. Fires at most once per registration.
+     */
+    public void triggerDelayedReturnOnDeath(GameData gameData, UUID dyingCreatureCardId, Card graveyardCard, UUID ownerId) {
+        if (!gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.remove(dyingCreatureCardId)) {
+            return;
+        }
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                graveyardCard,
+                ownerId,
+                "Return " + graveyardCard.getName() + " to the battlefield",
+                new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect()))
+        ));
+
+        String triggerLog = graveyardCard.getName() + " will return to the battlefield (it died this turn).";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
     }
 
     // ── Enter-the-battlefield triggers ─────────────────────────────────
@@ -1774,6 +1866,34 @@ public class TriggerCollectionService {
             gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
             log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
         }
+
+        // Graveyard-resident landfall triggers (GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Reach of Branches).
+        List<Card> graveyard = gameData.playerGraveyards.get(landControllerId);
+        if (graveyard != null) {
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<CardEffect> effects = card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, landControllerId);
+                    if (resolved == null) continue;
+
+                    if (resolved instanceof MayEffect may) {
+                        gameData.queueMayAbility(card, landControllerId, may);
+                    } else {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                landControllerId,
+                                card.getName() + "'s ability",
+                                new ArrayList<>(List.of(resolved))
+                        ));
+                    }
+                    gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
+                    log.info("Game {} - {} graveyard landfall trigger queued", gameData.id, card.getName());
+                }
+            }
+        }
     }
 
     /**
@@ -1868,7 +1988,7 @@ public class TriggerCollectionService {
         if (effect instanceof ConditionalEffect conditional
                 && conditional.condition() instanceof PermanentEnteredThisTurn) {
             ConditionContext ctx = new ConditionContext(affectedPlayerId, null, null, null,
-                    false, null, 0, null, null, false);
+                    false, false, null, 0, null, null, false);
             if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                 return null;
             }

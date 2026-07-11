@@ -741,6 +741,9 @@
         @if (!choice.choosingFromRevealedHand) {
           <button class="btn-keep" (click)="choice.closeRevealHand()">Close</button>
         }
+        @if (choice.choosingFromRevealedHand && choice.revealedHandChoiceOptional) {
+          <button class="btn-keep" (click)="choice.declineFromRevealedHand()">Choose none</button>
+        }
       </div>
     </div>
   }

@@ -386,6 +386,12 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} creatures in graveyard)",
                                 gameData.id, perm.getCard().getName(), creatureCount);
                     }
+                } else if (effect.canTargetPermanent()) {
+                    // Generic targeted-permanent upkeep trigger (e.g. Weed-Pruner Poplar's
+                    // "target creature other than this creature gets -1/-1"). Target is chosen
+                    // at trigger time (CR 603.3d) via a permanent choice.
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
+                            perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -417,7 +423,7 @@ public class StepTriggerService {
                     if (innerEffect instanceof ConditionalEffect metalcraft
                             && metalcraft.condition() instanceof Metalcraft) {
                         if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
-                                new ConditionContext(activePlayerId, null, null, card, false, null, 0, null, null, false))) {
+                                new ConditionContext(activePlayerId, null, null, card, false, false, null, 0, null, null, false))) {
                             log.info("Game {} - {} graveyard metalcraft ability skipped (fewer than three artifacts)",
                                     gameData.id, card.getName());
                             continue;
@@ -641,6 +647,11 @@ public class StepTriggerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            processNextUpkeepPermanentTarget(gameData);
+            return;
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -706,6 +717,60 @@ public class StepTriggerService {
         String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger — choose " + targetDescription + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep any-target trigger awaiting target selection",
+                gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the next pending upkeep permanent-target trigger (e.g. Weed-Pruner Poplar's
+     * "target creature other than this creature gets -1/-1"). Presents the controller with a
+     * permanent choice honouring the source card's target filter; when selected, the trigger is
+     * pushed onto the stack with the chosen target. Mandatory targeting at trigger time (CR 603.3d).
+     *
+     * @param gameData the current game state to modify
+     */
+    public void processNextUpkeepPermanentTarget(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.UpkeepPermanentTargetTrigger trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class);
+
+        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                trigger.effects(),
+                targetFilter,
+                trigger.controllerId(),
+                trigger.sourceCard(),
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets();
+
+        if (validTargets.isEmpty()) {
+            String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} upkeep permanent-target trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextUpkeepPermanentTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+
+        String targetDescription;
+        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else {
+            targetDescription = "target permanent";
+        }
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger — choose " + targetDescription + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep permanent-target trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
     }
 
@@ -827,7 +892,7 @@ public class StepTriggerService {
      */
     public void processNextCapriciousEfreetTarget(GameData gameData) {
         if (!gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
-            playerInputService.processNextMayAbility(gameData);
+            processNextUpkeepPermanentTarget(gameData);
             return;
         }
 
@@ -1514,6 +1579,27 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} end-step not-kicked trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof NoOtherPermanent) {
+                        // Intervening-if: only trigger if controller has no other matching permanents (CR 603.4)
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} end-step trigger skipped (intervening-if failed: matching permanent present)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} end-step no-other-permanent trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect morbid
                             && morbid.condition() instanceof Morbid) {
                         // Intervening-if: only trigger if morbid condition is met (CR 603.4)

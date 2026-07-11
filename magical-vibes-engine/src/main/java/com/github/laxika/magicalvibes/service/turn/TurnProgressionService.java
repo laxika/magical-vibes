@@ -214,11 +214,14 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
+        gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
+        gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
         gameData.damageDealtToPlayersThisTurn.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
+        gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
@@ -339,6 +342,10 @@ public class TurnProgressionService {
 
     public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
         stepTriggerService.processNextUpkeepAnyTargetTrigger(gameData);
+    }
+
+    public void processNextUpkeepPermanentTarget(GameData gameData) {
+        stepTriggerService.processNextUpkeepPermanentTarget(gameData);
     }
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {

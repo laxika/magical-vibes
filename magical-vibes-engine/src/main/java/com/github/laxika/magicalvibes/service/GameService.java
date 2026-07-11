@@ -370,6 +370,16 @@ public class GameService {
         }
     }
 
+    public void playCardWithProwl(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                  Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithProwl(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of());
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
@@ -456,6 +466,18 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+        }
+    }
+
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId) {
+        activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, null);
+    }
+
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue);
         }
     }
 

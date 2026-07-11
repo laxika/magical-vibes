@@ -233,6 +233,9 @@ public class CombatDamageService {
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
 
+        // Process ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
+        processAllyDealtDamageToCreatureReflectionTriggers(gameData, state);
+
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
 
@@ -688,6 +691,16 @@ public class CombatDamageService {
                 }
             }
 
+            // Record the controller's subtypes at combat damage time so prowl (an alternative
+            // cost gated on "you dealt combat damage to a player this turn with a [subtype]") can be
+            // evaluated regardless of whether the source is still on the battlefield.
+            gameData.combatDamageToPlayerControllerSubtypesThisTurn
+                    .computeIfAbsent(attackerId, k -> ConcurrentHashMap.newKeySet())
+                    .addAll(gameData.combatDamageSourceSubtypesThisTurn.get(creature.getId()));
+            if (gameData.combatDamageSourcesWithChangelingThisTurn.contains(creature.getId())) {
+                gameData.controllersDealtCombatDamageWithChangelingThisTurn.add(attackerId);
+            }
+
             List<CardEffect> allDamageEffects = new ArrayList<>();
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
@@ -788,7 +801,7 @@ public class CombatDamageService {
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
             checkPlayerAttachedCurseCombatDamageTriggers(gameData, creature, attackerId, defenderId);
-            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId);
+            checkAllyCreatureCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId);
         }
     }
 
@@ -853,7 +866,7 @@ public class CombatDamageService {
      * combat damage to a player. E.g. Rakish Heir: "Whenever a Vampire you control deals
      * combat damage to a player, put a +1/+1 counter on it."
      */
-    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId) {
+    private void checkAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (attackerBattlefield == null) return;
 
@@ -865,19 +878,49 @@ public class CombatDamageService {
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
                         continue;
                     }
+                    // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
+                    // against them (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             attackerId,
                             perm.getCard().getName() + "'s triggered ability",
                             List.of(trigger.effect()),
-                            null,
+                            defenderId,
                             trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
                     gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
                             + "'s triggered ability goes on the stack.");
+                }
+            }
+        }
+
+        // Graveyard-based variant (GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER): the trigger
+        // fires from the attacker's graveyard. E.g. Auntie's Snitch — "Whenever a Goblin or Rogue you
+        // control deals combat damage to a player, if this card is in your graveyard, you may return
+        // this card to your hand." The stack entry's source is the graveyard card itself.
+        List<Card> graveyard = gameData.playerGraveyards.get(attackerId);
+        if (graveyard == null) return;
+        for (Card card : new ArrayList<>(graveyard)) {
+            for (CardEffect effect : card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)) {
+                if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
+                    if (trigger.dealerPredicate() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
+                        continue;
+                    }
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            attackerId,
+                            card.getName() + "'s graveyard trigger",
+                            List.of(trigger.effect())
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    gameBroadcastService.logAndBroadcast(gameData, card.getName()
+                            + "'s graveyard trigger goes on the stack.");
                 }
             }
         }
@@ -991,6 +1034,24 @@ public class CombatDamageService {
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen) for
+     * each source/target combat-damage pair. Each source creature that dealt damage to a creature
+     * this step reflects that damage to the damaged creature's controller if a watcher listens.
+     */
+    private void processAllyDealtDamageToCreatureReflectionTriggers(GameData gameData, CombatDamageState state) {
+        for (var entry : state.combatDamageAmountsToCreatures.entrySet()) {
+            Permanent source = entry.getKey();
+            UUID sourceControllerId = state.combatDamageDealerControllers.get(source);
+            if (sourceControllerId == null) continue;
+            for (var amountEntry : entry.getValue().entrySet()) {
+                UUID damagedCreatureControllerId = state.combatDamageTargetControllers.get(amountEntry.getKey());
+                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(
+                        gameData, source, sourceControllerId, damagedCreatureControllerId, amountEntry.getValue());
             }
         }
     }
@@ -1428,6 +1489,14 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
                 // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
                 damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
+                // Battletide Alchemist: the defending player prevents up to (Clerics they control) of this attacker's damage.
+                int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, defenderId, damage);
+                if (battletidePrevented > 0) {
+                    damage -= battletidePrevented;
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            battletidePrevented + " of " + atk.getCard().getName() + "'s combat damage to "
+                                    + gameData.playerIdToName.get(defenderId) + " is prevented.");
+                }
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -1503,6 +1572,11 @@ public class CombatDamageService {
         state.combatDamageAmountsToCreatures
                 .computeIfAbsent(source, ignored -> new HashMap<>())
                 .merge(target.getId(), damage, Integer::sum);
+        // Capture the damaged creature's controller while it is still alive (for reflection triggers).
+        UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        if (targetControllerId != null) {
+            state.combatDamageTargetControllers.putIfAbsent(target.getId(), targetControllerId);
+        }
         graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);
     }

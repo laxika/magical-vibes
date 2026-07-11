@@ -41,6 +41,11 @@ class CombatDamageState {
     // Key: source permanent, Value: map of target creature ID -> damage amount
     final Map<Permanent, Map<UUID, Integer>> combatDamageAmountsToCreatures = new HashMap<>();
 
+    // Controller of each damaged creature, captured while it is still alive so reflection triggers
+    // (ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE) can find it after the creature dies. Key: damaged
+    // creature ID, Value: its controller ID at damage time.
+    final Map<UUID, UUID> combatDamageTargetControllers = new HashMap<>();
+
     // CR 510.1 — Snapshot of whether defender's damage should be dealt as infect (Phyrexian Unlife),
     // captured before lifelink is processed so simultaneous combat damage uses pre-damage life total.
     boolean defenderDamageAsInfect;

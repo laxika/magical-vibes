@@ -343,6 +343,11 @@ public class GameTestHarness {
         gameService.playCardWithEvoke(gameData, player, cardIndex, 0, targetId, null, List.of());
     }
 
+    public void castWithProwl(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardWithProwl(gameData, player, cardIndex, 0, targetId, null, List.of());
+    }
+
     public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
@@ -665,6 +670,16 @@ public class GameTestHarness {
     public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex) {
         ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+    }
+
+    public void activateHandAbility(Player player, int handCardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId);
+    }
+
+    public void activateHandAbility(Player player, int handCardIndex, UUID targetId, int xValue) {
+        ensurePriority(player);
+        gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId, xValue);
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {

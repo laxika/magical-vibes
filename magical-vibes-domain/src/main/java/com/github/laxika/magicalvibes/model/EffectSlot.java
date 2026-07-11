@@ -55,6 +55,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
      *  the graveyard owner controls. */
     ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT,
+    /** Triggers whenever a land card the controller owns is put into their graveyard from anywhere
+     *  (battlefield, hand, library, stack, exile). Fires on permanents the graveyard owner controls.
+     *  Checked in {@code GraveyardService.addCardToGraveyard} (the single zone→graveyard choke point)
+     *  via {@code TriggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers}. Used by
+     *  Countryside Crusher. */
+    ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
@@ -132,6 +138,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
      *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
     ON_ANY_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever a creature this permanent's controller controls (matching the effect's
+     *  source filter) deals damage — combat or non-combat — to a creature. Fires on the permanent
+     *  with this slot, not on the damaged creature. Scans all battlefields; the reflected damage is
+     *  dealt by the damage-source creature to the damaged creature's controller (e.g. Greatbow Doyen). */
+    ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
@@ -151,6 +162,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers when a creature the controller controls (matching the trigger's dealer predicate)
+     *  deals combat damage to a player, while this card is in the controller's graveyard. Holds an
+     *  {@link com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect}. Checked in
+     *  {@code CombatDamageService.checkAllyCreatureCombatDamageToPlayerTriggers}. Used by Auntie's Snitch. */
+    GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
+    /** Triggers whenever a land the controller controls enters the battlefield, while this card is
+     *  in the controller's graveyard. Like {@link #ON_ALLY_LAND_ENTERS_BATTLEFIELD} but fired from
+     *  the graveyard. Wrap the effect in {@code TriggeringCardConditionalEffect} to filter by the
+     *  entering land (e.g. Reach of Branches — "whenever a Forest you control enters"). Checked in
+     *  {@code TriggerCollectionService.checkAllyLandEntersTriggers}. */
+    GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD,
     /** Triggers whenever one or more +1/+1 counters are put on this permanent.
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
@@ -168,6 +190,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Supports TriggeringCardConditionalEffect to filter by the attacking creature (e.g. Vampires).
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Sanctum Seeker. */
     ON_ALLY_CREATURE_ATTACKS,
+    /** Triggers once per unblocked attacking creature the controller controls, during the
+     *  declare-blockers step (once "isn't blocked" is determined). Supports
+     *  {@code TriggeringCardConditionalEffect} to filter by the unblocked creature (e.g. Rogues).
+     *  The queued trigger sets the unblocked creature as the (non-targeting) {@code sourcePermanentId}
+     *  so self-scoped effects like {@code BoostSelfEffect} apply to "it" (the unblocked creature),
+     *  not the trigger's source permanent. Checked in {@code CombatBlockService}. Used by
+     *  Stinkdrinker Bandit. */
+    ON_ALLY_CREATURE_ATTACKS_UNBLOCKED,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell
      *  or ability controlled by an opponent. Fires on ALL permanents with this slot on the
      *  creature's controller's battlefield (not just the targeted creature).
@@ -242,5 +272,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  snapshotted and copied. Carries a {@link CopyControllerActivatedAbilityTriggerEffect}; the
      *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
      *  Used by Rings of Brighthearth. */
-    ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
+    ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+    /** Triggers whenever a creature the controller controls becomes blocked. Fires once per blocked
+     *  attacker, on every permanent with this slot on the blocked creature's controller's battlefield
+     *  (not just the blocked creature). The blocked creature's permanent ID is set as the non-targeting
+     *  {@code sourcePermanentId} on the stack entry so self-scoped effects like {@code BoostSelfEffect}
+     *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
+     *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
+    ON_ALLY_CREATURE_BECOMES_BLOCKED
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "SOM", collectorNumber = "31")
+@CardRegistration(set = "MOR", collectorNumber = "31")
 public class Disperse extends Card {
 
     public Disperse() {

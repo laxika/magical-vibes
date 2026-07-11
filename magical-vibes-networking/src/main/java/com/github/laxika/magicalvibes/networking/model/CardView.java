@@ -42,6 +42,7 @@ public record CardView(
         int alternateCostTapCount,
         String alternateCostManaCost,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
+        List<ActivatedAbilityView> handActivatedAbilities,
         boolean transformable,
         String kickerCost,
         int modalChoicesRequired,

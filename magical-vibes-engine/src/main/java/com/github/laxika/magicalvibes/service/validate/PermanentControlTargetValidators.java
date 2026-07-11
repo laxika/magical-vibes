@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureE
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -67,6 +68,11 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(PutTargetPermanentIntoLibraryNFromTopEffect.class)
     public void validatePutTargetPermanentIntoLibraryNFromTop(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(ShuffleTargetPermanentIntoLibraryEffect.class)
+    public void validateShuffleTargetPermanentIntoLibrary(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 

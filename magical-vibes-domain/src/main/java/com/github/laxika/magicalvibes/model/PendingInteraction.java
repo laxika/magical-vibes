@@ -167,13 +167,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * accumulated {@code chosenCards}; the batch action (discard / exile / put on library)
      * applies when the countdown ends. {@code sourcePermanentId} tracks
      * exile-until-source-leaves effects (e.g. Kitesail Freebooter); matching the legacy
-     * re-begin, it is not carried across picks.
+     * re-begin, it is not carried across picks. {@code bottomThenDrawMode} routes the chosen
+     * card to the bottom of the target's library and then makes them draw a card (Vendilion
+     * Clique); {@code optional} lets the caster decline (answer {@code cardIndex == -1}) even
+     * when a legal choice exists.
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                               java.util.List<Integer> validIndices, int remainingCount,
                               boolean discardMode, boolean exileMode,
                               java.util.List<Card> chosenCards, UUID sourcePermanentId,
-                              String prompt) implements PendingInteraction {
+                              String prompt, boolean bottomThenDrawMode, boolean optional)
+            implements PendingInteraction {
     }
 
     /**
@@ -216,7 +220,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
-                                    String prompt) implements PendingInteraction {
+                                    String prompt, int discardCount) implements PendingInteraction {
     }
 
     /**
@@ -375,20 +379,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * chosen card once it enters (e.g. Deathrender).
      */
     record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
-                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId)
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                          boolean enterAttacking)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
-            this(playerId, validIndices, prompt, false, false, false, null);
+            this(playerId, validIndices, prompt, false, false, false, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped) {
-            this(playerId, validIndices, prompt, enterTapped, false, false, null);
+            this(playerId, validIndices, prompt, enterTapped, false, false, null, false);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep) {
-            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null, false);
+        }
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, false);
         }
     }
 

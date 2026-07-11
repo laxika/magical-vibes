@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -103,6 +104,20 @@ public class ValidTargetService {
                     validPermanentIds.add(perm.getId());
                 }
             });
+
+            // Cross-target restriction (e.g. Rivals' Duel): once a creature is chosen, later
+            // positions may not choose a creature that shares a creature type with it.
+            if (card.getMultiTargetConstraint() == MultiTargetConstraint.SHARE_NO_CREATURE_TYPES && !excludeIds.isEmpty()) {
+                List<Permanent> selected = excludeIds.stream()
+                        .map(id -> gameQueryService.findPermanentById(gameData, id))
+                        .filter(java.util.Objects::nonNull)
+                        .toList();
+                validPermanentIds.removeIf(id -> {
+                    Permanent perm = gameQueryService.findPermanentById(gameData, id);
+                    return perm != null && selected.stream()
+                            .anyMatch(sel -> gameQueryService.shareCreatureType(gameData, sel, perm));
+                });
+            }
         }
 
         if (allowedTargets.contains(TargetType.PLAYER)) {

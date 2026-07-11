@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.cast;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -208,6 +209,12 @@ public class CastingCostService {
         AlternateHandCast altCast = altCastOpt.get();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
 
+        // Prowl: the alternate cost is only available if the caster dealt combat damage to a
+        // player this turn with a creature of the required subtype.
+        if (!altCast.prowlDamageSubtypes().isEmpty() && !prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+            return false;
+        }
+
         var lifeCost = altCast.getCost(LifeCastingCost.class);
         if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
 
@@ -237,6 +244,17 @@ public class CastingCostService {
         }
 
         return true;
+    }
+
+    /**
+     * Prowl (CR 702.75): true if {@code playerId} dealt combat damage to a player this turn with a
+     * creature of any of the given subtypes (a Changeling creature counts as every subtype).
+     */
+    public boolean prowlConditionMet(GameData gameData, UUID playerId, Set<CardSubtype> subtypes) {
+        Set<CardSubtype> dealt = gameData.combatDamageToPlayerControllerSubtypesThisTurn
+                .getOrDefault(playerId, Set.of());
+        return subtypes.stream().anyMatch(dealt::contains)
+                || gameData.controllersDealtCombatDamageWithChangelingThisTurn.contains(playerId);
     }
 
     /**

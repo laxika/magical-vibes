@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutOneOnTopRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -84,6 +88,11 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent().getCard();
+        // "You may gain life equal to that creature's toughness" (e.g. Orchard Warden): read the
+        // entering creature's toughness now, since the wrapped effect loses that context once queued.
+        if (may.wrapped() instanceof GainLifeEqualToToughnessEffect) {
+            may = new MayEffect(new GainLifeEffect(pe.enteringCard().getToughness()), may.prompt());
+        }
         if (pe.defaultTargetPlayerId() != null) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     pe.defaultTargetPlayerId(), match.permanent().getId());
@@ -177,6 +186,64 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} triggers for {} entering (put {} +1/+1 counter(s))",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
         return true;
+    }
+
+    @CollectsTrigger(value = LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyLookAtTopEqualToEnteringPower(TriggerMatchContext match,
+            LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        int power = Math.max(0, pe.enteringCard().getPower());
+        Card sourceCard = match.permanent().getCard();
+        // X = 0: looking at zero cards accomplishes nothing, so skip the "you may" prompt entirely.
+        if (power <= 0) {
+            logTriggered(match);
+            return true;
+        }
+        var look = new LookAtTopCardsPutOneOnTopRestOnBottomEffect(power);
+        var may = new MayEffect(look, "Look at the top " + power + " card(s) of your library?");
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (look at top {})",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
+        return true;
+    }
+
+    /**
+     * "Whenever a [subtype] creature enters, you may attach this Equipment to it" (Cloak and Dagger).
+     * The subtype gate is applied upstream by {@code TriggeringCardConditionalEffect}; here we resolve
+     * the entering permanent (which may be under any player's control) and queue a "you may attach"
+     * whose {@code targetId} is that creature and {@code sourcePermanentId} is this Equipment.
+     */
+    @CollectsTrigger(value = AttachSourceEquipmentToEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureAttachEquipment(TriggerMatchContext match,
+            AttachSourceEquipmentToEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to attach to.
+            return true;
+        }
+        var may = new MayEffect(new AttachSourceEquipmentToTargetCreatureEffect(),
+                "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                enteringPermanentId, match.permanent().getId());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (may attach equipment)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    private UUID findEnteringPermanentId(TriggerMatchContext match, Card enteringCard) {
+        UUID[] found = new UUID[1];
+        match.gameData().forEachPermanent((playerId, perm) -> {
+            if (found[0] == null && perm.getCard() == enteringCard) {
+                found[0] = perm.getId();
+            }
+        });
+        return found[0];
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────────────

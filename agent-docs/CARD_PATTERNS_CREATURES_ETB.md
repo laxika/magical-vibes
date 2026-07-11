@@ -46,6 +46,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | DiscardEffect(1, EACH_OPPONENT) — no targeting, all opponents discard |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryEffect(CardPredicateUtils.basicLand())) |
 | ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect — each opponent may search for a basic land (tapped). No targeting. APNAP order |
+| ETB opponent search (creature, downside) | `b/BoldwyrHeavyweights.java` | EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect — each opponent may tutor a creature onto the battlefield (untapped). No targeting. APNAP order |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryEffect(CardAllOf(ARTIFACT, MinMV 6))) — artifact with MV 6+ |
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryEffect(new Fixed(3), new CardNamedPredicate("Squadron Hawk"), LibrarySearchDestination.HAND)) — up to 3 copies by name to hand |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |

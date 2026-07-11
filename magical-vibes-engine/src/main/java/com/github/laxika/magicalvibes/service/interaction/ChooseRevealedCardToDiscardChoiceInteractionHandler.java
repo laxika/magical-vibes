@@ -54,7 +54,7 @@ public class ChooseRevealedCardToDiscardChoiceInteractionHandler
             validIndices.add(i);
         }
         sessionManager.sendToPlayer(recipientId, new ChooseFromRevealedHandMessage(
-                cardViews, validIndices, interaction.prompt()));
+                cardViews, validIndices, interaction.prompt(), false));
 
         String playerName = gameData.playerIdToName.get(interaction.choosingPlayerId());
         log.info("Game {} - Awaiting {} to choose a revealed card to discard", gameData.id, playerName);

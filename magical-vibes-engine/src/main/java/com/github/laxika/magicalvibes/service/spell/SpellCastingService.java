@@ -440,6 +440,28 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Casts a card for its prowl cost (CR 702.75). Like evoke, prowl is a pure-mana alternate hand
+     * cost that must be forced explicitly. The prowl availability condition (dealt combat damage
+     * with the required creature type this turn) is validated inside {@code playCardInternal}.
+     */
+    public void playCardWithProwl(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                  Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        try {
+            playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
+                    null, null, false, null, true);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            if (attempted != null && !hand.contains(attempted)
+                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
+                hand.add(Math.min(cardIndex, hand.size()), attempted);
+            }
+            throw e;
+        }
+    }
+
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
@@ -556,6 +578,13 @@ public class SpellCastingService {
         if (usingAlternateCost) {
             AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
                     .orElseThrow(() -> new IllegalStateException("Card does not have an alternate casting cost"));
+
+            // Prowl: the alternate cost may only be used if the caster dealt combat damage to a
+            // player this turn with a creature of the required subtype.
+            if (!altCast.prowlDamageSubtypes().isEmpty()
+                    && !castingCostService.prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+                throw new IllegalStateException("Prowl cost is not available — no combat damage dealt with the required creature type this turn");
+            }
 
             var sacCost = altCast.getCost(SacrificePermanentsCost.class);
             if (sacCost.isPresent()) {
@@ -924,6 +953,12 @@ public class SpellCastingService {
             // casts (e.g. Demon of Death's Gate), which have no evoke sacrifice ETB effect.
             if (usingAlternateCost) {
                 entry.setEvoked(true);
+                // Prowl (CR 702.75): flag the entry so a creature's "if its prowl cost was paid" ETB
+                // trigger can gate on it. Only set for actual prowl alternate casts.
+                AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+                if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
+                    entry.setProwl(true);
+                }
             }
             entry.setSourceZone(Zone.HAND);
             gameData.stack.add(entry);
@@ -1238,6 +1273,14 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setKicked(true);
+            }
+            // Prowl (CR 702.75): flag the sorcery/instant entry so a "if this spell's prowl cost was
+            // paid" SPELL effect can gate on it (e.g. Notorious Throng's extra turn).
+            if (usingAlternateCost && !gameData.stack.isEmpty()) {
+                AlternateHandCast altHandCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+                if (altHandCast != null && !altHandCast.prowlDamageSubtypes().isEmpty()) {
+                    gameData.stack.getLast().setProwl(true);
+                }
             }
             if (!gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setSourceZone(Zone.HAND);

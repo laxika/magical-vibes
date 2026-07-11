@@ -80,6 +80,7 @@ export class GameChoiceService {
     this.choosingFromRevealedHand = false;
     this.revealedHandChoosableIndices = new Set();
     this.revealedHandChoicePrompt = '';
+    this.revealedHandChoiceOptional = false;
     // Choose from graveyard
     this.choosingFromGraveyard = false;
     this.graveyardChoiceIndices = [];
@@ -143,6 +144,7 @@ export class GameChoiceService {
   choosingFromRevealedHand = false;
   revealedHandChoosableIndices = new Set<number>();
   revealedHandChoicePrompt = '';
+  revealedHandChoiceOptional = false;
 
   // --- Choose from graveyard state ---
   choosingFromGraveyard = false;
@@ -214,6 +216,7 @@ export class GameChoiceService {
     this.revealedHandCards = msg.cards;
     this.revealedHandChoosableIndices = new Set(msg.validIndices);
     this.revealedHandChoicePrompt = msg.prompt;
+    this.revealedHandChoiceOptional = msg.optional;
     this.revealedHandPlayerName = '';
   }
 
@@ -450,11 +453,25 @@ export class GameChoiceService {
       type: MessageType.CARD_CHOSEN,
       cardIndex: index
     });
+    this.closeRevealedHandChoice();
+  }
+
+  declineFromRevealedHand(): void {
+    if (!this.choosingFromRevealedHand || !this.revealedHandChoiceOptional) return;
+    this.websocketService.send({
+      type: MessageType.CARD_CHOSEN,
+      cardIndex: -1
+    });
+    this.closeRevealedHandChoice();
+  }
+
+  private closeRevealedHandChoice(): void {
     this.choosingFromRevealedHand = false;
     this.revealingHand = false;
     this.revealedHandCards = [];
     this.revealedHandChoosableIndices = new Set();
     this.revealedHandChoicePrompt = '';
+    this.revealedHandChoiceOptional = false;
   }
 
   isRevealedHandCardChoosable(index: number): boolean {

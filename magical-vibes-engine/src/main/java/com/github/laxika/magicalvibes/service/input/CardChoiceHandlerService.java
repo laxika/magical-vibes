@@ -63,6 +63,7 @@ public class CardChoiceHandlerService {
         boolean enterTapped = false;
         boolean grantHaste = false;
         boolean sacrificeAtEndStep = false;
+        boolean enterAttacking = false;
         UUID attachEquipmentCardId = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
@@ -73,6 +74,7 @@ public class CardChoiceHandlerService {
             grantHaste = hc.grantHaste();
             sacrificeAtEndStep = hc.sacrificeAtEndStep();
             attachEquipmentCardId = hc.attachEquipmentCardId();
+            enterAttacking = hc.enterAttacking();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -105,7 +107,7 @@ public class CardChoiceHandlerService {
                 resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste,
-                        sacrificeAtEndStep, attachEquipmentCardId);
+                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking);
             }
         }
 
@@ -305,6 +307,12 @@ public class CardChoiceHandlerService {
             throw new IllegalStateException("Not your turn to choose");
         }
 
+        // Optional choice declined (e.g. Vendilion Clique: "you may choose a nonland card").
+        if (cardIndex == -1 && revealedHandChoice.optional()) {
+            handleRevealedHandChoiceDeclined(gameData, player, revealedHandChoice);
+            return;
+        }
+
         List<Integer> validIndices = revealedHandChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -325,6 +333,7 @@ public class CardChoiceHandlerService {
         int remainingChoices = Math.max(revealedHandChoice.remainingCount() - 1, 0);
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
+        boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
 
         if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
@@ -344,7 +353,7 @@ public class CardChoiceHandlerService {
             // Matching the legacy mid-flow re-begin, sourcePermanentId is not carried across picks.
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
-                    discardMode, exileMode, chosenCards, null, prompt));
+                    discardMode, exileMode, chosenCards, null, prompt, false, false));
         } else {
             // All cards chosen
             gameData.interaction.clearAwaitingInput();
@@ -404,6 +413,20 @@ public class CardChoiceHandlerService {
                                 new PendingExileReturn(exiled, targetPlayerId, false, true));
                     }
                 }
+            } else if (bottomThenDrawMode) {
+                // Vendilion Clique: reveal chosen card, put it on the bottom of the library, then draw a card.
+                List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+                for (Card chosen : chosenCards) {
+                    deck.addLast(chosen);
+                }
+
+                String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
+                String putLog = targetName + " reveals " + cardNames + ", puts it on the bottom of their library, then draws a card.";
+                gameBroadcastService.logAndBroadcast(gameData, putLog);
+                log.info("Game {} - {} bottoms {} from {}'s hand and {} draws", gameData.id,
+                        player.getUsername(), cardNames, targetName, targetName);
+
+                drawService.resolveDrawCard(gameData, targetPlayerId);
             } else {
                 // Put chosen cards on top of library
                 List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -439,6 +462,30 @@ public class CardChoiceHandlerService {
 
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */
+    private void handleRevealedHandChoiceDeclined(GameData gameData, Player player,
+                                                  PendingInteraction.RevealedHandChoice revealedHandChoice) {
+        gameData.interaction.clearAwaitingInput();
+
+        String targetName = gameData.playerIdToName.get(revealedHandChoice.targetPlayerId());
+        String declineLog = player.getUsername() + " chooses no card from " + targetName + "'s hand.";
+        gameBroadcastService.logAndBroadcast(gameData, declineLog);
+        log.info("Game {} - {} declines the revealed-hand choice", gameData.id, player.getUsername());
+
+        // Resume resolving remaining effects on the same spell/ability.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     /**
@@ -609,11 +656,11 @@ public class CardChoiceHandlerService {
                 newValid.remove(Integer.valueOf(cardIndex));
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                         choice.decidingPlayerId(), targetPlayerId, choice.controllerId(), true,
-                        newValid, remaining, revealed, "Choose another card to reveal."));
+                        newValid, remaining, revealed, "Choose another card to reveal.", choice.discardCount()));
             } else {
                 gameData.interaction.clearAwaitingInput();
                 playerInteractionSupport.beginRevealCardsDiscardStage(gameData, targetPlayerId,
-                        choice.controllerId(), revealed);
+                        choice.controllerId(), revealed, choice.discardCount());
             }
             return;
         }
@@ -628,32 +675,39 @@ public class CardChoiceHandlerService {
             }
         }
         gameData.interaction.clearAwaitingInput();
-        if (handIndex < 0) {
-            // Card left the hand between reveal and discard — nothing to discard.
-            turnProgressionService.resolveAutoPass(gameData);
-            return;
+        if (handIndex >= 0) {
+            Card card = targetHand.remove(handIndex);
+            String controllerName = player.getUsername();
+
+            if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+                Permanent permanent = new Permanent(card);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
+                log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                        gameData.id, targetName, card.getName());
+                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+                if (card.hasType(CardType.CREATURE)) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
+                }
+            } else {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        controllerName + " chooses " + card.getName() + "; " + targetName + " discards it.");
+                log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
+                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            }
         }
 
-        Card card = targetHand.remove(handIndex);
-        String controllerName = player.getUsername();
-
-        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
-            Permanent permanent = new Permanent(card);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
-            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
-                    gameData.id, targetName, card.getName());
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
-            if (card.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
-            }
-        } else {
-            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " chooses " + card.getName() + "; " + targetName + " discards it.");
-            log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
-            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        // More cards left to discard (e.g. Noggin Whack chooses two)? Prompt for the next one over
+        // the remaining revealed cards before resolving any triggers or the rest of the spell.
+        int remainingDiscards = choice.remainingCount() - 1;
+        List<UUID> remainingRevealed = new ArrayList<>(choice.revealedCardIds());
+        remainingRevealed.remove(chosenId);
+        if (remainingDiscards > 0 && !remainingRevealed.isEmpty()) {
+            playerInteractionSupport.beginRevealCardsDiscardStageContinuation(gameData, targetPlayerId,
+                    choice.controllerId(), remainingRevealed, remainingDiscards, choice.discardCount());
+            return;
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
@@ -735,7 +789,7 @@ public class CardChoiceHandlerService {
 
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
-                                             UUID attachEquipmentCardId) {
+                                             UUID attachEquipmentCardId, boolean enterAttacking) {
         Permanent permanent = new Permanent(card);
         if (enterTapped) {
             permanent.tap();
@@ -744,12 +798,19 @@ public class CardChoiceHandlerService {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
+        if (enterAttacking) {
+            permanent.setAttacking(true);
+        }
 
+        String stateSuffix = enterTapped && enterAttacking ? " tapped and attacking"
+                : enterTapped ? " tapped"
+                : enterAttacking ? " attacking"
+                : "";
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield"
-                + (enterTapped ? " tapped" : "") + ".";
+                + stateSuffix + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} onto the battlefield{}", gameData.id, player.getUsername(), card.getName(),
-                enterTapped ? " tapped" : "");
+                stateSuffix);
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
 

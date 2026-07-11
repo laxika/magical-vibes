@@ -131,9 +131,12 @@ public class GraveyardReturnSupport {
             return;
         }
 
-        // For TOP_OF_OWNERS_LIBRARY, find the graveyard owner before removal
+        // A card returned to HAND or to the top of a library always goes to its owner's zone
+        // (only BATTLEFIELD returns can put a card under a non-owner's control). Resolve the
+        // graveyard owner before removal.
         UUID destinationPlayerId = controllerId;
-        if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
+        if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
+                || effect.destination() == GraveyardChoiceDestination.HAND) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
             if (ownerId != null) {
                 destinationPlayerId = ownerId;
@@ -256,7 +259,8 @@ public class GraveyardReturnSupport {
                 for (Card card : toReturn) {
                     gy.remove(card);
                     graveyardService.notifyCardsLeftGraveyard(gameData, gyEntry.getKey());
-                    UUID targetPlayerId = effect.underOwnersControl() ? gyEntry.getKey() : controllerId;
+                    UUID targetPlayerId = (effect.destination() == GraveyardChoiceDestination.HAND || effect.underOwnersControl())
+                            ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
                         gameData.addCardToHand(targetPlayerId, card);
                     } else {

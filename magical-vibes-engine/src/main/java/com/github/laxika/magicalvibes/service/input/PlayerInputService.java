@@ -62,9 +62,16 @@ public class PlayerInputService {
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
                                 UUID attachEquipmentCardId) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId, false);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId, boolean enterAttacking) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
                 playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
-                attachEquipmentCardId));
+                attachEquipmentCardId, enterAttacking));
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
@@ -164,6 +171,20 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId);
+
+        List<String> creatureTypes = Arrays.stream(CardSubtype.values())
+                .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
+                .map(CardSubtype::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
+    }
+
+    public void beginSpellCreatureTypeChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.SpellCreatureTypeChoice choiceContext = new ChoiceContext.SpellCreatureTypeChoice(playerId);
 
         List<String> creatureTypes = Arrays.stream(CardSubtype.values())
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +78,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final LifeSupport lifeSupport;
     private final LibrarySearchSupport librarySearchSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
+    private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -96,6 +98,13 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
             }
 
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+                triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+            }
+
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
                 return;
@@ -103,6 +112,22 @@ public class PermanentChoiceBattlefieldHandlerService {
 
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    public void handleAttachEquipmentToCreature(GameData gameData, UUID creatureId,
+                                                PermanentChoiceContext.AttachEquipmentToCreature context) {
+        Permanent equipment = gameQueryService.findPermanentById(gameData, context.equipmentPermanentId());
+        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+        if (equipment != null && creature != null) {
+            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+            equipment.setAttachedTo(creature.getId());
+            // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+            equipment.setTimestamp(gameData.nextTimestamp());
+            gameBroadcastService.logAndBroadcast(gameData,
+                    equipment.getCard().getName() + " is now attached to " + creature.getCard().getName() + ".");
+        }
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     public void handleAuraGraft(GameData gameData, UUID permanentId, PermanentChoiceContext.AuraGraft auraGraft) {
@@ -728,6 +753,35 @@ public class PermanentChoiceBattlefieldHandlerService {
                     new ArrayList<>(List.of(sized))
             ));
         }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureCreateTokensIfSubtype(GameData gameData, UUID permanentId,
+                                                             PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype ctx) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        sacrificeCreatureCreateTokensIfSubtypeHandler.sacrificeAndMaybeCreateTokens(
+                gameData, ctx.sacrificingPlayerId(), target, ctx.requiredSubtype(),
+                ctx.tokenTemplate(), ctx.sourceCard().getSetCode());
 
         stateBasedActionService.performStateBasedActions(gameData);
 

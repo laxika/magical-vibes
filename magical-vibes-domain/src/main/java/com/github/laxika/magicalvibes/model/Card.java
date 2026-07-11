@@ -102,6 +102,12 @@ public class Card {
      * "target Merfolk", where a Merfolk satisfies both).
      */
     private boolean allowSharedTargets;
+    /**
+     * Optional cross-target restriction on the whole set of chosen targets (e.g. Rivals' Duel's
+     * "two target creatures that share no creature types"), checked at announcement in addition
+     * to the per-position filters. Null for spells with no such restriction.
+     */
+    private MultiTargetConstraint multiTargetConstraint;
 
     // Target-first targeting system: each target() call adds a SpellTarget
     @Getter(AccessLevel.NONE)
@@ -127,6 +133,8 @@ public class Card {
     private Map<EffectSlot, Set<TargetFilter>> sagaChapterTargetFilters = new EnumMap<>(EffectSlot.class);
     private List<ActivatedAbility> activatedAbilities = new ArrayList<>();
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
+    /** Abilities activatable while this card is in its owner's hand (e.g. Reinforce). */
+    private List<ActivatedAbility> handActivatedAbilities = new ArrayList<>();
 
     public Card() {
         this.id = UUID.randomUUID();
@@ -187,6 +195,7 @@ public class Card {
         this.requiresCreatureMana = source.requiresCreatureMana;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.allowSharedTargets = source.allowSharedTargets;
+        this.multiTargetConstraint = source.multiTargetConstraint;
         this.spellTargets.addAll(source.spellTargets);
         this.effectTargetIndexMap.putAll(source.effectTargetIndexMap);
         this.castTimeTargetFilter = source.castTimeTargetFilter;
@@ -200,6 +209,7 @@ public class Card {
         this.sagaChapterTargetFilters.putAll(source.sagaChapterTargetFilters);
         this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
         this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
+        this.handActivatedAbilities = new ArrayList<>(source.handActivatedAbilities);
     }
 
     /**
@@ -255,6 +265,7 @@ public class Card {
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
@@ -490,6 +501,11 @@ public class Card {
     public void addGraveyardActivatedAbility(ActivatedAbility ability) {
         assertMutable();
         graveyardActivatedAbilities.add(ability);
+    }
+
+    public void addHandActivatedAbility(ActivatedAbility ability) {
+        assertMutable();
+        handActivatedAbilities.add(ability);
     }
 
     public String getBackFaceClassName() {

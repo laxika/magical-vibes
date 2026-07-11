@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -36,6 +37,7 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
+import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
@@ -106,6 +108,8 @@ public class ConditionEvaluationService {
                     ctx.kicked();
             case NotKicked ignored ->
                     !ctx.kicked();
+            case CastForProwlCost ignored ->
+                    ctx.prowl();
             case Raid ignored ->
                     ctx.controllerId() != null
                             && gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
@@ -138,6 +142,8 @@ public class ConditionEvaluationService {
                     controlledCreaturesTotalPower(gameData, ctx.controllerId()) >= c.threshold();
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
+            case ControllerHasMoreLifeThanAnOpponent ignored ->
+                    controllerHasMoreLifeThanAnOpponent(gameData, ctx.controllerId());
             case ControllerLifeAtLeast c ->
                     ctx.controllerId() != null
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) >= c.threshold();
@@ -240,6 +246,22 @@ public class ConditionEvaluationService {
         for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
             if (candidateOpponentId.equals(controllerId)) continue;
             if (countCreaturesControlled(gameData, candidateOpponentId) >= yourCreatures + minimumDifference) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * True if the controller has strictly more life than at least one opponent
+     * (Feudkiller's Verdict).
+     */
+    private boolean controllerHasMoreLifeThanAnOpponent(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int yourLife = gameData.getLife(controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (yourLife > gameData.getLife(candidateOpponentId)) {
                 return true;
             }
         }

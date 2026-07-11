@@ -45,6 +45,14 @@ public final class ReturnToHandEffect implements CardEffect {
         return new ReturnToHandEffect(BounceScope.SELF, null, 0);
     }
 
+    /**
+     * Returns the resolving spell card itself to its owner's hand instead of the graveyard
+     * (instants/sorceries that bounce themselves off the stack — Redeem the Lost's won-clash reward).
+     */
+    public static ReturnToHandEffect selfSpell() {
+        return new ReturnToHandEffect(BounceScope.SELF_SPELL, null, 0);
+    }
+
     public static ReturnToHandEffect allPermanentsMatching(PermanentPredicate filter) {
         return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0);
     }

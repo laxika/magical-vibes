@@ -45,6 +45,8 @@ public class PermanentChoiceHandlerService {
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.AttachEquipmentToCreature attachEquip) {
+            battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
         } else if (context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach) {
@@ -85,6 +87,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDiscardTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
             triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
+        } else if (context instanceof PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
+            triggerHandler.handleSelfLeavesTrigger(gameData, permanentId, slt);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
@@ -105,6 +109,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
+        } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype scts) {
+            battlefieldHandler.handleSacrificeCreatureCreateTokensIfSubtype(gameData, permanentId, scts);
         } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {
             battlefieldHandler.handleSacrificeArtifactForDividedDamage(gameData, permanentId, sadd);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
@@ -125,6 +131,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
         } else if (context instanceof PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
             triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
+        } else if (context instanceof PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
+            triggerHandler.handleUpkeepPermanentTargetTrigger(gameData, permanentId, uptt);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {

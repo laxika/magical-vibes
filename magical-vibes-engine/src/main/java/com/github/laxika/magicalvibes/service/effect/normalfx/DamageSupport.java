@@ -111,6 +111,12 @@ public class DamageSupport {
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
             triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
+
+            // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
+            Permanent reflectionSource = damageSource != null
+                    ? damageSource
+                    : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, sourceControllerId, damagedCreatureControllerId, damage);
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
@@ -178,6 +184,13 @@ public class DamageSupport {
 
             // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
             triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
+
+            // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
+            Permanent reflectionSource = entry.getSourcePermanentId() != null
+                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                    : null;
+            UUID reflectionTargetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource, entry.getControllerId(), reflectionTargetControllerId, damage);
         }
 
         String sourceName = entry.getCard().getName();
@@ -392,6 +405,14 @@ public class DamageSupport {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+
+            // Battletide Alchemist: the controller prevents up to (Clerics they control) of this source's damage.
+            int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, playerId, effectiveDamage);
+            if (battletidePrevented > 0) {
+                effectiveDamage -= battletidePrevented;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        battletidePrevented + " of " + cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            }
 
             // Purity: prevent all remaining noncombat damage to the controller and gain that much life
             int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);

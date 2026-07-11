@@ -28,6 +28,6 @@ public class TargetRevealsCardsControllerChoosesDiscardEffectHandler implements 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetRevealsCardsControllerChoosesDiscardEffect) effect;
-        playerInteractionSupport.beginRevealCardsChooseDiscard(gameData, entry, e.revealCount());
+        playerInteractionSupport.beginRevealCardsChooseDiscard(gameData, entry, e.revealCount(), e.discardCount());
     }
 }

@@ -7,6 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #TARGET} — the effect's chosen target permanent(s) (reads the stack entry's
  *       {@code targetId}/{@code targetIds}).</li>
  *   <li>{@link #SELF} — the source permanent itself (reads {@code sourcePermanentId}).</li>
+ *   <li>{@link #SELF_SPELL} — the resolving spell card itself: instead of moving to the graveyard
+ *       after resolution it returns to its owner's hand (sets {@code returnToHandAfterResolving}).
+ *       For instants/sorceries that return themselves from the stack (Redeem the Lost).</li>
  *   <li>{@link #ALL_MATCHING} — every permanent on the battlefield matching the effect's filter
  *       (all battlefields; a null filter matches all permanents).</li>
  *   <li>{@link #TARGET_PLAYERS_PERMANENTS} — every permanent the targeted player <em>controls</em>
@@ -19,6 +22,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum BounceScope {
     TARGET,
     SELF,
+    SELF_SPELL,
     ALL_MATCHING,
     TARGET_PLAYERS_PERMANENTS,
     TARGET_PLAYERS_OWNED

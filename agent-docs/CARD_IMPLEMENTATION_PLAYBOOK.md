@@ -138,6 +138,12 @@ public class ExampleCard extends Card {
   - Example (sacrifice + life): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/d/DemonOfDeathsGate.java`
   - Example (mana + tap artifact): `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/z/ZahidDjinnOfTheLamp.java`
 
+- Prowl ("Prowl {cost}" — an alternate hand cost gated on combat damage):
+  - `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{cost}")), CardSubtype.X))` — the second arg gates the alternate cost on "you dealt combat damage to a player this turn with a [subtype]" (a Changeling creature counts). For "with a Faerie or Rogue" (multiple qualifying subtypes) pass `Set.of(CardSubtype.FAERIE, CardSubtype.ROGUE)` instead. Populated in `CombatDamageService`, tracked per controller in `GameData.combatDamageToPlayerControllerSubtypesThisTurn`, checked by `CastingCostService.prowlConditionMet`.
+  - Like evoke, it is a pure-mana alternate cost forced through a dedicated entry point (`GameService.playCardWithProwl` / harness `castWithProwl`); the availability gate runs in `SpellCastingService`.
+  - "When this creature enters, if its prowl cost was paid, [effect]": wrap the ETB effect in `ConditionalEffect(new CastForProwlCost(), innerEffect)` on `ON_ENTER_BATTLEFIELD` (Latchkey Faerie = `DrawCardEffect`). The prowl flag is stamped on the `StackEntry`/`Permanent` at cast/resolution and gated by `EtbEffectResolver` (unwrap when paid, drop otherwise — CR 603.4).
+  - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/k/KnowledgeExploitation.java`
+
 - Graveyard cast ("You may cast this card from your graveyard"):
   - `addCastingOption(new GraveyardCast())` — uses the card's normal mana cost, no exile after resolution (unlike flashback)
   - Card goes to graveyard normally if it dies, allowing repeated graveyard casts

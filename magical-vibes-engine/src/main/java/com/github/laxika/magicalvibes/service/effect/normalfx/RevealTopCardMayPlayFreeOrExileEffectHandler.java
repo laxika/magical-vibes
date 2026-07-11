@@ -54,14 +54,20 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
             boolean isControllersTurn = controllerId.equals(gameData.activePlayerId);
             int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(controllerId, 0);
             if (!isControllersTurn || landsPlayed >= gameData.getMaxLandsThisTurn(controllerId)) {
-                // Can't play the land — exile it
-                deck.removeFirst();
-                exileService.exileCard(gameData, controllerId, topCard);
-                String exileLog = topCard.getName() + " can't be played (" +
-                        (!isControllersTurn ? "not controller's turn" : "land already played this turn") + ") and is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, exileLog);
-                log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(),
-                        !isControllersTurn ? "not controller's turn" : "already played this turn");
+                String reason = !isControllersTurn ? "not controller's turn" : "land already played this turn";
+                if (e.exileIfNotPlayed()) {
+                    // Can't play the land — exile it
+                    deck.removeFirst();
+                    exileService.exileCard(gameData, controllerId, topCard);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            topCard.getName() + " can't be played (" + reason + ") and is exiled.");
+                    log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(), reason);
+                } else {
+                    // Can't play the land — it stays on top of the library
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            topCard.getName() + " can't be played (" + reason + ") and stays on top of the library.");
+                    log.info("Game {} - {} stays on top (can't play land: {})", gameData.id, topCard.getName(), reason);
+                }
                 return;
             }
         }

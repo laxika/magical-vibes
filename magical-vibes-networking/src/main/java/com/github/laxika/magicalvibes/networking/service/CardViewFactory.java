@@ -50,7 +50,7 @@ public class CardViewFactory {
                 base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
                 base.alternateCostTapCount(), base.alternateCostManaCost(),
-                base.graveyardActivatedAbilities(), base.transformable(), base.kickerCost(),
+                base.graveyardActivatedAbilities(), base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
                 base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
     }
 
@@ -70,6 +70,10 @@ public class CardViewFactory {
         }
 
         List<ActivatedAbilityView> graveyardAbilityViews = card.getGraveyardActivatedAbilities().stream()
+                .map(this::createAbilityView)
+                .toList();
+
+        List<ActivatedAbilityView> handAbilityViews = card.getHandActivatedAbilities().stream()
                 .map(this::createAbilityView)
                 .toList();
 
@@ -116,6 +120,7 @@ public class CardViewFactory {
                 alternateCostTapCount,
                 alternateCostManaCost,
                 graveyardAbilityViews,
+                handAbilityViews,
                 card.getBackFaceCard() != null,
                 card.getEffects(EffectSlot.STATIC).stream()
                         .filter(e -> e instanceof KickerEffect)

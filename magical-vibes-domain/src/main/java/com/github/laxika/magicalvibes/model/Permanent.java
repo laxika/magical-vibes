@@ -105,6 +105,12 @@ public class Permanent {
      *  replacing its other land types and mana ability (e.g. Tideshaper Mystic). Distinct from
      *  {@link #transientSubtypes}, which is additive. Cleared every turn by {@link #resetModifiers()}. */
     @Setter private CardSubtype transientLandTypeOverride;
+    /** When non-null, this creature "becomes a [creature type]" until end of turn, replacing all its
+     *  other creature types (e.g. Boldwyr Intimidator: "target creature becomes a Coward"). Read by the
+     *  layered pass, which strips every creature subtype and adds this one. Distinct from
+     *  {@link #transientSubtypes} (additive) and {@link #transientLandTypeOverride} (land types).
+     *  Cleared every turn by {@link #resetModifiers()}. */
+    @Setter private CardSubtype transientCreatureTypeOverride;
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
@@ -179,6 +185,8 @@ public class Permanent {
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
     @Setter private boolean evoked;
+    /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
+    @Setter private boolean prowl;
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -307,6 +315,7 @@ public class Permanent {
         this.transientColors.addAll(source.transientColors);
         this.colorOverridden = source.colorOverridden;
         this.transientSubtypes.addAll(source.transientSubtypes);
+        this.transientCreatureTypeOverride = source.transientCreatureTypeOverride;
         this.grantedCardTypes.addAll(source.grantedCardTypes);
         this.persistentGrantedCardTypes.addAll(source.persistentGrantedCardTypes);
         this.textReplacements.addAll(source.textReplacements);
@@ -334,6 +343,7 @@ public class Permanent {
         this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.kicked = source.kicked;
         this.evoked = source.evoked;
+        this.prowl = source.prowl;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
@@ -610,6 +620,7 @@ public class Permanent {
         this.colorOverridden = false;
         this.transientSubtypes.clear();
         this.transientLandTypeOverride = null;
+        this.transientCreatureTypeOverride = null;
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();

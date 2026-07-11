@@ -169,6 +169,10 @@ public class LibraryChoiceHandlerService {
                     if (!gameData.interaction.isAwaitingInput()) {
                         legendRuleService.checkLegendRule(gameData, playerId);
                     }
+                } else if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
+                    // Chosen card stays on top; the rest are reordered to the bottom below
+                    // (Cream of the Crop). No shuffle — unlike the non-reorder TOP_OF_LIBRARY path.
+                    deck.addFirst(chosenCard);
                 } else {
                     gameData.addCardToHand(handOwnerId, chosenCard);
                 }
@@ -198,6 +202,10 @@ public class LibraryChoiceHandlerService {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " puts no card onto the battlefield."
                         : chosenCard.getName() + " enters the battlefield under " + player.getUsername() + "'s control.";
+            } else if (destination == LibrarySearchDestination.TOP_OF_LIBRARY) {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + " puts no card on top of their library."
+                        : player.getUsername() + " puts a card on top of their library.";
             } else {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " does not reveal a creature card."
@@ -265,6 +273,7 @@ public class LibraryChoiceHandlerService {
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
+            if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -286,6 +295,21 @@ public class LibraryChoiceHandlerService {
 
         if (!removed) {
             throw new IllegalStateException("Chosen card not found in library");
+        }
+
+        if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
+            // The chosen card leaves the searched library; the owner then shuffles (the chosen card
+            // is already removed so it is not shuffled back). The card is cast under the searcher's
+            // control without paying its mana cost (e.g. Knowledge Exploitation).
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                if (targetPlayerId != null) {
+                    String targetName = gameData.playerIdToName.get(targetPlayerId);
+                    gameBroadcastService.logAndBroadcast(gameData, targetName + "'s library is shuffled.");
+                }
+            }
+            castCardWithoutPaying(gameData, player, chosenCard);
+            return;
         }
 
         if (destination == LibrarySearchDestination.EXILE) {
@@ -394,6 +418,38 @@ public class LibraryChoiceHandlerService {
 
             // Prompt the opponent to name a card
             playerInputService.beginSphinxAmbassadorCardNameChoice(gameData, opponentId, pending.controllerId());
+            return;
+        }
+
+        if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_CREATURE) {
+            // Stonehewer Giant: put the Equipment onto the battlefield, shuffle, then let the
+            // controller attach it to a creature they control.
+            Permanent equipment = new Permanent(chosenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, equipment);
+            stateBasedActionService.performStateBasedActions(gameData);
+
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+            }
+            String enterLog = shuffleAfterSelection
+                    ? chosenCard.getName() + " enters the battlefield under " + player.getUsername() + "'s control. Library is shuffled."
+                    : chosenCard.getName() + " enters the battlefield under " + player.getUsername() + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, enterLog);
+
+            List<UUID> creatureIds = new ArrayList<>();
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (gameQueryService.isCreature(gameData, p)) {
+                    creatureIds.add(p.getId());
+                }
+            }
+            if (creatureIds.isEmpty()) {
+                turnProgressionService.resolveAutoPass(gameData);
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), playerId));
+            playerInputService.beginPermanentChoice(gameData, playerId, creatureIds,
+                    "Choose a creature you control to attach " + chosenCard.getName() + " to.");
             return;
         }
 
@@ -518,6 +574,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD -> "onto the battlefield";
                 case BATTLEFIELD_TAPPED -> "onto the battlefield tapped";
                 case BATTLEFIELD_ATTACHED_TO_PLAYER -> "onto the battlefield";
+                case BATTLEFIELD_ATTACHED_TO_CREATURE -> throw new IllegalStateException("BATTLEFIELD_ATTACHED_TO_CREATURE should be handled earlier");
                 case HAND -> "into their hand";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE -> "into exile";
@@ -554,6 +611,7 @@ public class LibraryChoiceHandlerService {
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**
@@ -1085,7 +1143,6 @@ public class LibraryChoiceHandlerService {
     private void handleCastWithoutPayingChoice(GameData gameData, Player player, int cardIndex,
                                                 boolean canFailToFind, List<Card> searchCards,
                                                 List<Card> sourceCards, List<Card> deck) {
-        UUID playerId = player.getId();
         String playerName = player.getUsername();
 
         Card chosenCard = null;
@@ -1122,6 +1179,19 @@ public class LibraryChoiceHandlerService {
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
+
+        castCardWithoutPaying(gameData, player, chosenCard);
+    }
+
+    /**
+     * Casts {@code chosenCard} (already removed from its library) under {@code player}'s control
+     * without paying its mana cost. Targeted spells begin a target choice; non-targeted spells go
+     * straight onto the stack. Shared by Sunbird's Invocation and the CAST_WITHOUT_PAYING library
+     * search destination (e.g. Knowledge Exploitation).
+     */
+    private void castCardWithoutPaying(GameData gameData, Player player, Card chosenCard) {
+        UUID playerId = player.getId();
+        String playerName = player.getUsername();
 
         // Cast the chosen card without paying its mana cost
         StackEntryType spellType = mapCardTypeToSpellType(chosenCard);

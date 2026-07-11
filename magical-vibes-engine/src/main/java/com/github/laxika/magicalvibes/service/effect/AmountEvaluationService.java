@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -27,6 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -104,11 +106,15 @@ public class AmountEvaluationService {
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
+            case OtherAttackersSharingCreatureTypeWithTarget ignored ->
+                    countOtherAttackersSharingCreatureTypeWithTarget(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
+            case DamageDealtToOpponentsThisTurn ignored ->
+                    damageDealtToOpponentsThisTurn(gameData, ctx);
             case ImprintedCreaturePower ignored ->
                     imprintedCreaturePT(gameData, ctx, true);
             case ImprintedCreatureToughness ignored ->
@@ -126,6 +132,23 @@ public class AmountEvaluationService {
             case TargetPower ignored ->
                     targetEffectivePower(gameData, ctx);
         };
+    }
+
+    private int countOtherAttackersSharingCreatureTypeWithTarget(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        if (target == null) return 0;
+        // Each other attacking creature that shares a creature type with the target counts once,
+        // regardless of how many types it shares (CR 700.x, Shared Animosity ruling: counted as the
+        // ability resolves). Changeling handling lives in GameQueryService.shareCreatureType.
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.isAttacking() && !permanent.getId().equals(target.getId())
+                    && gameQueryService.shareCreatureType(gameData, target, permanent)) {
+                count[0]++;
+            }
+        });
+        return count[0];
     }
 
     private int targetEffectiveToughness(GameData gameData, AmountContext ctx) {
@@ -363,6 +386,16 @@ public class AmountEvaluationService {
             return 0;
         }
         return power ? imprinted.getPower() : imprinted.getToughness();
+    }
+
+    private int damageDealtToOpponentsThisTurn(GameData gameData, AmountContext ctx) {
+        if (ctx.controllerId() == null) return 0;
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            total += gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
     }
 
     private boolean isPlayerInScope(UUID playerId, CountScope scope, AmountContext ctx) {

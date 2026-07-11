@@ -108,7 +108,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
     @Test
             @DisplayName("Empty library logs and returns")
             void emptyLibraryLogs() {
-                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect();
+                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                         player1Id, "Djinn of Wishes", List.of(effect));
 
@@ -126,7 +126,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(land);
                 gd.activePlayerId = player2Id; // not controller's turn
 
-                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect();
+                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                         player1Id, "Djinn of Wishes", List.of(effect));
 
@@ -138,6 +138,24 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
             }
 
             @Test
+            @DisplayName("Unplayable land stays on top when exileIfNotPlayed is false")
+            void landStaysOnTopWhenNotExiling() {
+                Card land = createCard("Forest", CardType.LAND);
+                gd.playerDecks.get(player1Id).add(land);
+                gd.activePlayerId = player2Id; // not controller's turn
+
+                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect(false);
+                StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Leaf-Crowned Elder"),
+                        player1Id, "Leaf-Crowned Elder", List.of(effect));
+
+                revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
+
+                verifyNoInteractions(exileService);
+                assertThat(gd.playerDecks.get(player1Id)).containsExactly(land);
+                assertThat(gd.pendingMayAbilities).isEmpty();
+            }
+
+            @Test
             @DisplayName("Land card exiled when land already played this turn")
             void landExiledAlreadyPlayed() {
                 Card land = createCard("Forest", CardType.LAND);
@@ -145,7 +163,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
                 gd.activePlayerId = player1Id;
                 gd.landsPlayedThisTurn.put(player1Id, 1);
 
-                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect();
+                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                         player1Id, "Djinn of Wishes", List.of(effect));
 
@@ -160,7 +178,7 @@ class RevealTopCardMayPlayFreeOrExileEffectHandlerTest {
             void playableCardQueuesMayAbility() {
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
-                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect();
+                RevealTopCardMayPlayFreeOrExileEffect effect = new RevealTopCardMayPlayFreeOrExileEffect(true);
                 StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                         player1Id, "Djinn of Wishes", List.of(effect));
 

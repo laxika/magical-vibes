@@ -98,7 +98,7 @@ class EtbEffectResolverTest {
     }
 
     private EtbEffectContext ctx(boolean wasCastFromHand, int etbMode, boolean kicked) {
-        return new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, false);
+        return new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, false, false);
     }
 
     @Test

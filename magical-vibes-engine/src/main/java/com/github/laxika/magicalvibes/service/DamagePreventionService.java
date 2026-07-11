@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackin
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -470,6 +472,30 @@ public class DamagePreventionService {
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PreventNoncombatDamageToControllerAndGainLifeEffect));
         return hasEffect ? damage : 0;
+    }
+
+    /**
+     * Battletide Alchemist-style prevention: "If a source would deal damage to a player, you may prevent
+     * X of that damage, where X is the number of Clerics you control." Modeled on the controller of the
+     * permanent (the "you may" choice would never prevent damage dealt to an opponent). Prevents up to
+     * X = (Clerics that player controls) from each source, multiplied by the number of Battletide-style
+     * permanents they control (each is a separate "you may prevent X"). Returns the amount prevented
+     * (the caller subtracts it); 0 when damage can't be prevented or no such permanent is present.
+     */
+    public int applyControllerPerClericDamagePrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        long shields = battlefield.stream().filter(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PreventDamageToControllerPerClericEffect)).count();
+        if (shields == 0) return 0;
+
+        long clerics = gameQueryService.countControlledSubtypePermanents(gameData, playerId, CardSubtype.CLERIC);
+        return (int) Math.min(damage, clerics * shields);
     }
 
     /**

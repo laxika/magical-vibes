@@ -65,7 +65,7 @@ public class RevealCardsDiscardChoiceInteractionHandler
             }
         }
         sessionManager.sendToPlayer(recipientId, new ChooseFromRevealedHandMessage(
-                cardViews, interaction.validIndices(), interaction.prompt()));
+                cardViews, interaction.validIndices(), interaction.prompt(), false));
 
         log.info("Game {} - Awaiting {} to choose a card (reveal-and-discard)",
                 gameData.id, gameData.playerIdToName.get(interaction.decidingPlayerId()));

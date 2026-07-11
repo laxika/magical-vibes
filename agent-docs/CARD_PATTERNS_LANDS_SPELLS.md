@@ -109,7 +109,9 @@ All paths relative to `cards/`.
 | Tutor + exile + opponent choice | `d/DistantMemories.java` | DistantMemoriesEffect — search, exile, opponent may let you have it or draw 3 |
 | Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryEffect(basicLand filter, LibrarySearchDestination.BATTLEFIELD_TAPPED) |
 | Cultivate (2 basic lands split) | `c/Cultivate.java` | SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect — one to BF tapped, one to hand |
+| Sacrifice N lands → fetch N lands tapped | `s/Scapeshift.java` | SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect — controller sacrifices any number of lands, searches for that many land cards to BF tapped |
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build() — any card, targets graveyard |
+| Token spell + graveyard landfall self-return | `r/ReachOfBranches.java` | SPELL: CreateTokenEffect (2/5 green Treefolk Shaman). GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD: TriggeringCardConditionalEffect(CardSubtypePredicate(FOREST), MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).build())) — "whenever a Forest you control enters, you may return this from your graveyard to hand" |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |
 | Graveyard return (one per subtype to hand) | `g/GrimCaptainsCall.java` | ReturnOneOfEachSubtypeFromGraveyardToHandEffect(List.of(PIRATE, VAMPIRE, DINOSAUR, MERFOLK)) — one of each subtype, chosen at resolution |
 | Graveyard return (to battlefield) | `b/BeaconOfUnrest.java` | ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardAnyOfPredicate).source(ALL_GRAVEYARDS).build() |

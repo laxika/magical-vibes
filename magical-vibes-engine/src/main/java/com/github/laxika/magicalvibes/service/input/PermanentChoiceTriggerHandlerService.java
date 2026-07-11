@@ -154,6 +154,41 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleSelfLeavesTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.SelfLeavesTriggerTarget slt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                slt.sourceCard(),
+                slt.controllerId(),
+                slt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(slt.effects())
+        );
+        entry.setTargetId(targetId);
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        String logEntry = slt.sourceCard().getName() + "'s leaves-the-battlefield trigger targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} leaves-battlefield trigger targets {}", gameData.id, slt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            triggerCollectionService.processNextDeathTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleExploreTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ExploreTriggerTarget ett) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -960,6 +995,40 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             turnProgressionService.processNextEndStepTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleUpkeepPermanentTargetTrigger(GameData gameData, UUID chosenId,
+            PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                uptt.sourceCard(),
+                uptt.controllerId(),
+                uptt.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(uptt.effects()),
+                chosenId,
+                uptt.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, chosenId);
+        String logEntry = uptt.sourceCard().getName() + "'s ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep permanent-target trigger targets {}",
+                gameData.id, uptt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPermanentTargetTrigger.class)) {
+            turnProgressionService.processNextUpkeepPermanentTarget(gameData);
             return;
         }
 

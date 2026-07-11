@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
@@ -150,6 +151,7 @@ public class BattlefieldEntryService {
         applyUnchosenParityEnterTapped(gameData, permanent);
         applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
         applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
+        applyControlledCreaturesEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
@@ -370,7 +372,7 @@ public class BattlefieldEntryService {
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof EnterWithCountersEffect wrapped) {
                 ConditionContext conditionContext = new ConditionContext(controllerId, null, permanent,
-                        card, kicked, null, xValue, null, null, false);
+                        card, kicked, false, null, xValue, null, null, false);
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext)) {
                     continue;
                 }
@@ -423,6 +425,44 @@ public class BattlefieldEntryService {
         if (additionalCounters > 0) {
             permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
             log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from graveyard effect(s)",
+                    gameData.id, permanent.getCard().getName(), additionalCounters);
+        }
+    }
+
+    /**
+     * Replacement effect (MTG Rule 614.1c): checks the controller's battlefield for permanents with
+     * {@link ControlledCreaturesEnterWithAdditionalCountersEffect} and adds +1/+1 counters to matching
+     * creatures as they enter. "Other" is implicit — the entering permanent is not yet on the
+     * battlefield, and a source entering simultaneously does not apply its effect (CR 614.12).
+     *
+     * @param simultaneouslyEntered permanents to exclude from subtype lookahead (see CR 614.12)
+     */
+    private void applyControlledCreaturesEnterWithAdditionalCounters(GameData gameData, UUID controllerId,
+                                                                     Permanent permanent, List<Permanent> simultaneouslyEntered) {
+        if (!permanent.getCard().hasType(CardType.CREATURE)) return;
+
+        boolean cantHaveCounters = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof CantHaveCountersEffect);
+        if (cantHaveCounters) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null || battlefield.isEmpty()) return;
+
+        int additionalCounters = 0;
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ControlledCreaturesEnterWithAdditionalCountersEffect controlledEffect) {
+                    if (gameQueryService.permanentWouldHaveSubtype(gameData, permanent, controllerId,
+                            simultaneouslyEntered, controlledEffect.subtype())) {
+                        additionalCounters += controlledEffect.count();
+                    }
+                }
+            }
+        }
+
+        if (additionalCounters > 0) {
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
+            log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from battlefield static effect(s)",
                     gameData.id, permanent.getCard().getName(), additionalCounters);
         }
     }
@@ -530,9 +570,12 @@ public class BattlefieldEntryService {
             // was stamped from the spell's cast context at resolution time.
             List<Permanent> evokeBf = gameData.playerBattlefields.get(controllerId);
             boolean evoked = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isEvoked();
+            // Prowl gate (CR 603.4): read the just-entered permanent's prowl flag, stamped from the
+            // spell's cast context at resolution time.
+            boolean prowl = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isProwl();
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
-            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked);
+            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked, prowl);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .map(e -> etbEffectResolver.resolve(etbCtx, e))

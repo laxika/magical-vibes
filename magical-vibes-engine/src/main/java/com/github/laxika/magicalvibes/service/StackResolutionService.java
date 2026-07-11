@@ -149,6 +149,13 @@ public class StackResolutionService {
             }
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
@@ -208,6 +215,8 @@ public class StackResolutionService {
                 entry.getXValue(), entry.isKicked());
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
+        // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
+        perm.setProwl(entry.isProwl());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -406,6 +415,8 @@ public class StackResolutionService {
                 entry.getXValue(), entry.isKicked());
         // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
         perm.setEvoked(entry.isEvoked());
+        // Carry prowl cast context so an "if its prowl cost was paid" ETB trigger can gate on it.
+        perm.setProwl(entry.isProwl());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing

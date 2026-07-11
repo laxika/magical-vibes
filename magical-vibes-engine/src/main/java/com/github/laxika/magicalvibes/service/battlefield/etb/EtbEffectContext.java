@@ -20,6 +20,8 @@ import java.util.UUID;
  * @param etbMode         the modal-choice index selected at cast time (for {@code ChooseOneEffect})
  * @param kicked          whether the spell was kicked (gates kicked-conditional effects)
  * @param evoked          whether the spell was cast for its evoke cost (gates the evoke sacrifice)
+ * @param prowl           whether the spell was cast for its prowl cost (gates prowl-conditional effects)
  */
 public record EtbEffectContext(GameData gameData, Card card, UUID controllerId,
-                               boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked) {}
+                               boolean wasCastFromHand, int etbMode, boolean kicked, boolean evoked,
+                               boolean prowl) {}

@@ -68,6 +68,13 @@ public sealed interface ChoiceContext {
 
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
+    /**
+     * The controller chooses a creature type at resolution for a spell/ability that has no
+     * permanent to store it on (e.g. Coordinated Barrage). The answer is stored on
+     * {@code GameData.chosenSpellSubtype} and effect resolution resumes.
+     */
+    record SpellCreatureTypeChoice(UUID controllerId) implements ChoiceContext {}
+
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
 

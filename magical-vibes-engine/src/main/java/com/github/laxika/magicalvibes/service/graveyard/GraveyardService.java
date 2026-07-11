@@ -169,6 +169,9 @@ public class GraveyardService {
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        if (!card.isToken() && card.hasType(CardType.LAND)) {
+            triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        }
         return true;
     }
 

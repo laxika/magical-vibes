@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
@@ -346,6 +347,39 @@ public class MayAbilityHandlerService {
                         player.getUsername(), ability.sourceCard().getName());
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Kinship (Morningtide) — the top card shares a creature type; you may reveal it to resolve
+        // the reveal effects against the source creature. The card stays on top of the library.
+        KinshipEffect kinship = ability.effects().stream()
+                .filter(e -> e instanceof KinshipEffect)
+                .map(e -> (KinshipEffect) e)
+                .findFirst().orElse(null);
+        if (kinship != null) {
+            if (accepted) {
+                List<Card> deck = gameData.playerDecks.get(ability.controllerId());
+                if (deck != null && !deck.isEmpty()) {
+                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
+                            + deck.getFirst().getName() + " from the top of their library.");
+                }
+                Permanent self = ability.sourcePermanentId() != null
+                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
+                if (self != null && !kinship.revealEffects().isEmpty()) {
+                    StackEntry kinshipEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(), ability.controllerId(),
+                            ability.sourceCard().getName() + " (Kinship)",
+                            kinship.revealEffects(), 0, ability.sourcePermanentId());
+                    effectResolutionService.resolveEffects(gameData, kinshipEntry);
+                }
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " chooses not to reveal.");
+                log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            }
+            if (!gameData.interaction.isAwaitingInput()) {
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

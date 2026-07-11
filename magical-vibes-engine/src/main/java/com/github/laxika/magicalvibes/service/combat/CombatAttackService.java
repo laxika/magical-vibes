@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
@@ -429,23 +431,54 @@ public class CombatAttackService {
                             continue;
                         }
                         matchingEffects.add(conditional.wrapped());
+                    } else if (effect instanceof TriggeringPermanentConditionalEffect permConditional) {
+                        // Filter by the attacking permanent itself (e.g. Rage Forger — "a creature you
+                        // control with a +1/+1 counter on it attacks").
+                        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, permConditional.predicate())) {
+                            continue;
+                        }
+                        matchingEffects.add(permConditional.wrapped());
                     } else {
                         matchingEffects.add(effect);
                     }
                 }
                 if (matchingEffects.isEmpty()) continue;
 
-                StackEntry attackTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s attack trigger",
-                        matchingEffects,
-                        null,
-                        perm.getId()
-                );
-                attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                gameData.stack.add(attackTrigger);
+                // Optional ("you may") per-creature attack triggers go on the stack as CR 603.5
+                // resolution-time may abilities: the source permanent is the *attacking* creature
+                // ("that creature", the damage source), while the source card is the ability's owner
+                // whose target filter governs legal targets (e.g. Rage Forger's ping to a
+                // player/planeswalker). Mandatory effects keep the existing direct-stack path where
+                // the ability's owner is the source and the attacked target is captured for effects
+                // like Hellrider's DealDamageToAttackedTargetEffect.
+                List<CardEffect> mayEffects = matchingEffects.stream()
+                        .filter(e -> e instanceof MayEffect).toList();
+                List<CardEffect> mandatoryEffects = matchingEffects.stream()
+                        .filter(e -> !(e instanceof MayEffect)).toList();
+
+                for (CardEffect effect : mayEffects) {
+                    gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null, attacker.getId());
+                }
+
+                if (!mandatoryEffects.isEmpty()) {
+                    StackEntry attackTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s attack trigger",
+                            mandatoryEffects,
+                            null,
+                            perm.getId()
+                    );
+                    attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                    // Record the triggering attacker as a non-targeting reference so effects that
+                    // act on "that creature" (e.g. Shared Animosity's +1/+0 boost) can find it.
+                    // Non-targeting so this never fizzles triggers that ignore it (e.g. Hellrider).
+                    attackTrigger.setTargetId(attacker.getId());
+                    attackTrigger.setNonTargeting(true);
+                    gameData.stack.add(attackTrigger);
+                }
+
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameData.gameLog.add(triggerLog);
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
@@ -468,7 +501,7 @@ public class CombatAttackService {
                     if (innerEffect instanceof ConditionalEffect ce
                             && ce.condition() instanceof MinimumAttackers mac) {
                         ConditionContext ctx = new ConditionContext(playerId, null, null, card,
-                                false, null, attackerIndices.size(), null, null, false);
+                                false, false, null, attackerIndices.size(), null, null, false);
                         if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
                             log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
                                     gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());

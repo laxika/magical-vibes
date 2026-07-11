@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHa
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
 
@@ -73,6 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -708,6 +710,84 @@ public class AbilityActivationService {
     }
 
     /**
+     * Activates an ability of a card in the player's hand (e.g. Reinforce N—{cost}:
+     * "{cost}, Discard this card: Put N +1/+1 counters on target creature."). Discarding
+     * the source card is an intrinsic part of the activation cost.
+     *
+     * <p>Validates targeting before any cost is paid (CR 601.2c), pays the mana cost, discards
+     * the source card to the graveyard, then pushes the ability onto the stack.</p>
+     */
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId) {
+        activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, null);
+    }
+
+    public void activateHandAbility(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, UUID targetId, Integer xValue) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || handCardIndex < 0 || handCardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid hand card index");
+        }
+
+        Card card = hand.get(handCardIndex);
+        List<ActivatedAbility> abilities = card.getHandActivatedAbilities();
+        if (abilities.isEmpty()) {
+            throw new IllegalStateException("Card has no hand-activated ability");
+        }
+
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        if (idx < 0 || idx >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(idx);
+        List<CardEffect> abilityEffects = ability.getEffects();
+        int effectiveXValue = xValue != null ? xValue : 0;
+
+        // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
+        targetLegalityService.validateActivatedAbilityTargeting(
+                gameData, playerId, ability, abilityEffects, targetId, null, card, effectiveXValue);
+
+        // Pay mana cost (throws before mutating the pool if it can't be afforded)
+        String abilityCost = ability.getManaCost();
+        if (abilityCost != null) {
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, false, false);
+        }
+
+        // Pay the "discard this card" cost intrinsic to a hand-activated ability
+        hand.remove(handCardIndex);
+        graveyardService.addCardToGraveyard(gameData, playerId, card);
+        gameData.discardCausedByOpponent = false;
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+
+        // Push the ability onto the stack (cost effects are not part of the resolution snapshot)
+        List<CardEffect> snapshotEffects = new ArrayList<>();
+        for (CardEffect effect : abilityEffects) {
+            if (!(effect instanceof CostEffect)) {
+                snapshotEffects.add(effect);
+            }
+        }
+        gameData.stack.add(new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ability",
+                snapshotEffects,
+                effectiveXValue,
+                targetId,
+                Map.of()
+        ));
+
+        String logEntry = player.getUsername() + " activates " + card.getName() + "'s ability from their hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} activates {}'s hand ability", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
      * Callback for when a player has chosen which card to discard as an activated ability's discard cost
      * (e.g. {@link DiscardCardTypeCost}). Resumes the pending ability activation with the chosen card.
      *
@@ -870,7 +950,7 @@ public class AbilityActivationService {
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId);
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, ability.getTargetFilter(), playerId, permanent);
         }
 
         UUID sourceId = permanent.getId();
@@ -1100,6 +1180,11 @@ public class AbilityActivationService {
     }
 
     PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue) {
+        return toPermanentChoiceCostHandler(effect, sourcePermanentId, xValue, List.of());
+    }
+
+    PermanentChoiceCostHandler toPermanentChoiceCostHandler(CardEffect effect, UUID sourcePermanentId, int xValue,
+                                                            List<UUID> chosenSoFar) {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
@@ -1110,6 +1195,7 @@ public class AbilityActivationService {
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameBroadcastService);
         return null;
@@ -1162,7 +1248,7 @@ public class AbilityActivationService {
             throw new IllegalStateException("Activated ability no longer has the required cost");
         }
 
-        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue());
+        PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), context.chosenSoFar());
         if (handler == null) {
             throw new IllegalStateException("Unknown cost effect type");
         }
@@ -1193,6 +1279,11 @@ public class AbilityActivationService {
         handler.validateAndPay(gameData, player, chosen);
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
+        // Costs whose valid choices depend on prior picks (e.g. tap two creatures sharing a type)
+        // need the just-paid permanent threaded into the handler for the remaining choices.
+        List<UUID> chosenSoFar = new ArrayList<>(context.chosenSoFar());
+        chosenSoFar.add(chosenPermanentId);
+        handler = toPermanentChoiceCostHandler(context.costEffect(), context.sourcePermanentId(), context.xValue(), chosenSoFar);
         if (remaining > 0) {
             if (!handler.canPayRemaining(gameData, playerId, remaining)) {
                 throw new IllegalStateException("Not enough permanents remaining");
@@ -1209,7 +1300,7 @@ public class AbilityActivationService {
                 List<UUID> validIds = handler.getValidChoiceIds(gameData, playerId);
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                         playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),
-                        context.targetId(), context.targetZone(), context.costEffect(), remaining));
+                        context.targetId(), context.targetZone(), context.costEffect(), remaining, chosenSoFar));
                 playerInputService.beginPermanentChoice(gameData, playerId, validIds,
                         handler.getPromptMessage(remaining));
                 gameBroadcastService.broadcastGameState(gameData);

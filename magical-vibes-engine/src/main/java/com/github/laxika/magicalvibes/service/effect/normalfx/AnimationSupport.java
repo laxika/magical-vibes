@@ -68,9 +68,28 @@ public class AnimationSupport {
     /**
      * SELF/TARGET scope, until end of turn (manlands, Crew, Chimeric Staff/Mass, Warden of the Wall).
      * A {@code null} power/toughness means "use the source's printed value" (Crew on Vehicles).
+     *
+     * <p>Supports "up to N target" abilities (Fendeep Summoner) by iterating over
+     * {@code entry.getTargetIds()} when a multi-target ability populated them; a single-target
+     * self/target animation still reads {@code entry.getTargetId()}.
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        List<UUID> targetIds;
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
+                && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
+            targetIds = entry.getTargetIds();
+        } else if (entry.getTargetId() != null) {
+            targetIds = List.of(entry.getTargetId());
+        } else {
+            return;
+        }
+        for (UUID targetId : targetIds) {
+            animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+        }
+    }
+
+    private void animateOneUntilEndOfTurn(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect, UUID targetId) {
+        Permanent self = gameQueryService.findPermanentById(gameData, targetId);
         if (self == null) {
             return;
         }

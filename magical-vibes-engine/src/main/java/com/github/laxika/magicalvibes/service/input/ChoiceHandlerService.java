@@ -124,6 +124,10 @@ public class ChoiceHandlerService {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.SpellCreatureTypeChoice ctx) {
+            handleSpellCreatureTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
             handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
@@ -624,6 +628,21 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleSpellCreatureTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.SpellCreatureTypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.chosenSpellSubtype = subtype;
+        gameData.interaction.clearAwaitingInput();
+
+        String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses creature type {} for a spell", gameData.id, player.getUsername(), subtype);
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     private void handleManaValueParityChoice(GameData gameData, Player player, String parityName, ChoiceContext.ManaValueParityChoice ctx) {

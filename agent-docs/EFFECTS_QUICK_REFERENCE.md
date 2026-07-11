@@ -38,6 +38,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
 - `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` — controls another matching permanent
 - `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` — life >= N
+- `ConditionalEffect(new ControllerHasMoreLifeThanAnOpponent(), wrapped)` — you have strictly more life than at least one opponent (Feudkiller's Verdict)
 
 Metalcraft / Morbid / Raid / ControlsAnotherPermanent are ETB trigger gates
 (`Condition.isEtbTriggerGate()`): a targeted ETB wrapped in one never asks for its target at cast
@@ -97,12 +98,15 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 > CR 510.1a so the damage primitives never see negative values.
 
 - `DealDamageToAnyTargetEffect(DynamicAmount, boolean cantRegenerate, boolean exileInsteadOfDie)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — any target. Amounts: `Fixed`, `XValue` (X spells / cost-snapshotted power), `SourcePower`, `CountersOnSource(CHARGE)`, …
+- `DealDamageToSourceEffect(DynamicAmount)`; `(int)` — the source permanent deals damage to itself (no target). Pair with `DealDamageToAnyTargetEffect` for "deals X to any target and X to itself" (Sunflare Shaman)
 - `DealDamageToAttackedTargetEffect(int damage)` — damage to the player or planeswalker attacked by the creature that caused the attack trigger
 - `SourceFightsTargetCreatureEffect()` — source fights target
 - `PackHuntEffect(CardSubtype)` — pack hunt
 - `DealDamageToTargetAndTheirCreaturesEffect(int)` — player + their creatures
 - `DealDamageToEachCreatureDamagedPlayerControlsEffect()` — damage to damaged player's creatures
 - `DealDamageToTargetCreatureEffect(DynamicAmount, boolean unpreventable)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — target creature. Amounts: `Fixed`, `XValue`, `SourceToughness`, `PermanentCount` (subtype counts), `ManaSpentToCast`
+- `DealDamageToTargetCreatureEqualToChosenTypeCountEffect()` — "Choose a creature type. Deals damage to target creature equal to the number of permanents you control of the chosen type" (Coordinated Barrage). Resolution-time creature-type choice (`beginSpellCreatureTypeChoice`, stored on `GameData.chosenSpellSubtype`), Changeling-aware count; pair with an attacking/blocking target filter
+- `DealDamageToAnyTargetEqualToChosenTypeCountEffect()` — "Choose a creature type. Deals damage to any target equal to the number of permanents you control of the chosen type" (Roar of the Crowd). Any-target sibling of the above; self-declares any-target (creature/planeswalker/player)
 - `DealDamageToTargetCreatureOrPlaneswalkerEffect(int)` — creature or planeswalker
 - `DealDamageToTargetOpponentOrPlaneswalkerEffect(int)` — opponent or planeswalker
 - `DealDamageToTargetPlayerOrPlaneswalkerEffect(DynamicAmount)` / `(int)` — any player (incl. controller) or planeswalker (Boggart Shenanigans; Brion Stoutarm's sacrificed-power `XValue`)
@@ -126,6 +130,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `FightTargetsEffect()` — fight (group indices `(firstTargetGroup, secondTargetGroup)` default to 0, 1)
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
+- `PreventDamageToControllerPerClericEffect()` — STATIC: "If a source would deal damage to a player, you may prevent X of that damage, where X = Clerics you control" (Battletide Alchemist). Modeled controller-only; prevents up to (Clerics controlled × number of these permanents) per source, combat and noncombat. Via `DamagePreventionService.applyControllerPerClericDamagePrevention`, hooked in `DamageSupport.dealDamageToPlayer` (noncombat) and `CombatDamageService.accumulatePlayerDamage` (combat, per attacker)
 - `PreventCombatDamageToAttackingCreaturesYouControlEffect()` — STATIC: prevent all combat damage dealt to attacking creatures the source's controller controls (Dolmen Gate). Checked in `DamagePreventionService.applyCreaturePreventionShield` via `permanent.isAttacking()` + `isCombatDamage`
 - `PreventSpellDamageToOpponentAndCreateTokensEffect(CreateTokenEffect token)` — STATIC: if a spell you control would deal damage to an opponent, prevent it and create one `token` per 1 damage prevented (Hostility). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
@@ -159,6 +164,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect(CardPredicate, boolean may[, boolean tapped])` — destroy + controller searches to battlefield (tapped optional, e.g. Erode)
 - `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect()` — destroy + each searches
 - `EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect()` — opponents search
+- `EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect()` — each opponent may tutor a creature onto the battlefield (untapped), then shuffle; APNAP; Boldwyr Heavyweights
 - `EachPlayerMaySearchLibraryForCreaturesToHandEffect(DynamicAmount count)` — each player (APNAP) may tutor up to `count` creatures to hand; `()` = X (Weird Harvest)
 - `DestroyTargetLandAndDamageControllerEffect(int)` — destroy land + damage
 - `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(int)` — destroy + conditional damage
@@ -173,19 +179,22 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `PlayerDestroysPermanentsEffect(count, PermanentPredicate, DestroyRecipient)` — a player chooses and **destroys** N of their own permanents matching the filter (regeneration/indestructible apply — the destroy analog of `SacrificePermanentsEffect`). `DestroyRecipient` = CONTROLLER / TARGET_PLAYER (TARGET_PLAYER makes it `canTargetPlayer`). ≤N matching ⇒ all destroyed, no choice; >N ⇒ player picks which. int-count sugar ctor. "You destroy four lands you control" = `(4, PermanentIsLandPredicate, CONTROLLER)`; Burning of Xinye uses both recipients + `MassDamageEffect(4)`
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
+- `TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffect(CardSubtype requiredSubtype, CreateTokenEffect tokenTemplate)` — targets a player (`canTargetPlayer()`); that player sacrifices a creature of their choice, and if it had `requiredSubtype` (last-known info) the same player creates the template tokens under their own control. Warren Weirding ("gains haste until end of turn" → template's `grantedKeywordsUntilEndOfTurn`)
 - `ForcedCostOrElseEffect(CostEffect, List<CardEffect>[, boolean optional])` — cost-like instruction; if it cannot be performed, resolve fallback effects. `optional=true` makes it a "you may [cost]. If you don't, [fallback]" choice (Yawgmoth Demon); default `false` is mandatory (Archdemon of Greed). Supported costs: `SacrificePermanentCost` (single) and `SacrificeMultiplePermanentsCost` (N of a filter, e.g. Rathi Dragon). Supported fallbacks: `TapPermanentsEffect(SELF)`, `DealDamageToPlayersEffect(CONTROLLER, Fixed)`, `SacrificeSelfEffect`
 - `SacrificeAttackingCreaturesEffect(int base, int metalcraft)` — sacrifice attackers
 - `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int, CardPredicate)` — mass reanimate
+- `ReturnCardsFromControllerGraveyardToBattlefieldEffect(CardPredicate, int)` — return up to N of controller's own graveyard cards to the battlefield (resolution-time choice; non-targeting). Reveillark
 - `SacrificeSelfEffect()` — sacrifice self
 - `SacrificeSelfThenDealDamageToTargetPlayerEffect(int damage)` — sac source; if sacrificed, deal N to stack entry's targetId player (Booby Trap trigger)
 - `SacrificeSelfIfEvokedEffect()` — evoke sacrifice; ON_ENTER_BATTLEFIELD, fires only when cast for evoke cost
 - `SacrificeUnlessDiscardCardTypeEffect(CardType)` / `(CardType, boolean random)` — sacrifice unless discard (`random=true` = discard at random, Pillaging Horde; `null` type = any card)
 - `SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType)` — sacrifice unless bounce own
-- `ChampionCreatureEffect(CardSubtype)` — champion a creature (null subtype = any creature); exile on ETB, return when source leaves
+- `ChampionCreatureEffect(CardSubtype...)` — champion a creature (no subtype = any creature; multiple = inclusive, e.g. Goblin or Shaman); exile on ETB, return when source leaves
 - `SacrificeSelfAndDrawCardsEffect(int)` — sacrifice + draw
 - `SacrificeAtEndOfCombatEffect()` — sacrifice at EOC
 - `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set<CardType>)` — Polymorph
 - `RevealUntilNonlandCardsToHandRestToBottomEffect(int)` — reveal until N nonland to hand, rest (lands) to bottom in any order (Fathom Trawl)
+- `RevealUntilLandToBattlefieldRestToBottomEffect()` — reveal until a land, put that land onto the battlefield, rest to bottom in any order (Recross the Paths; used as a `ClashEffect` pre-clash body)
 
 See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/sacrifice effects.
 
@@ -218,6 +227,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `TargetSpellControllerDiscardsEffect(int)` — target spell controller discards
 - `CounterUnlessPaysEffect(int)` or `(int, boolean useX, boolean exileIfCountered)` — counter unless pays
 - `CounterUnlessDiscardsEffect()` — counter unless controller discards a card (Ward—Discard a card)
+- `CounterSpellsNamedLikeCardsExiledWithSourceEffect()` — non-targeting: counter all stack spells named like a card exiled with the source (Grimoire Thief; pair with `SacrificeSelfCost`)
 - `CounterlashEffect()` — counter target spell, then may cast from hand sharing a card type without paying mana cost
 - `RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor)` — Scattering Stroke clash reward: wrap in `ClashEffect` before the counter; may add {C} equal to the countered spell's mana value at your next main phase
 - `MayCastFromHandWithoutPayingManaCostEffect()` — marker for may-cast-from-hand routing in PendingMayAbility
@@ -233,7 +243,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Bounce / return to hand
 
-- `ReturnToHandEffect` — unified bounce, **static factories only**: `.target()` (bounce target), `.targetAndControllerLosesLife(1)` (Vapor Snag), `.self()` (bounce source), `.allPermanentsMatching(filter)` (mass bounce matching permanents; null = every permanent — pass `PermanentIsCreaturePredicate` for creatures), `.permanentsTargetPlayerControls(filter)` (River's Rebuke), `.permanentsTargetPlayerOwns(filter)` (Hurkyl's Recall, owner-based)
+- `ReturnToHandEffect` — unified bounce, **static factories only**: `.target()` (bounce target), `.targetAndControllerLosesLife(1)` (Vapor Snag), `.self()` (bounce source permanent), `.selfSpell()` (the resolving instant/sorcery returns itself to its owner's hand off the stack instead of the graveyard — Redeem the Lost's won-clash reward), `.allPermanentsMatching(filter)` (mass bounce matching permanents; null = every permanent — pass `PermanentIsCreaturePredicate` for creatures), `.permanentsTargetPlayerControls(filter)` (River's Rebuke), `.permanentsTargetPlayerOwns(filter)` (Hurkyl's Recall, owner-based)
 - `ReturnTargetPermanentToHandWithManaValueConditionalEffect(int, CardEffect)` — bounce + MV bonus
 - `ReturnSelfToHandOnCoinFlipLossEffect()` — bounce self on coin flip loss
 - `ReturnPermanentsOnCombatDamageToPlayerEffect()` or `(PermanentPredicate)` — Ninja-style
@@ -246,6 +256,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `ReturnCardFromGraveyardEffect.builder().destination(HAND|BATTLEFIELD|TOP_OF_OWNERS_LIBRARY)...build()` — unified graveyard return (see EFFECTS_INDEX.md for full builder API)
 - `ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId)` — Sacred Ground's trigger effect: return the identified land from the graveyard to the battlefield under its owner's control. Register the template with `null` on the `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` slot; the collector stamps the real card id.
+- `ReturnTargetCardOnDeathThisTurnEffect()` — SPELL delayed trigger (Graceful Reprieve): if the targeted creature dies this turn, return that card to the battlefield under its owner's control. Pair with a creature `target(...)`.
+- `ReturnTriggeringCardFromGraveyardToBattlefieldEffect()` — triggered-ability effect the death pipeline pushes for the above; returns the stack entry's card from its owner's graveyard to the battlefield. Not added to a card directly.
 - `ReturnOneOfEachSubtypeFromGraveyardToHandEffect(List<CardSubtype>)` — one of each subtype
 - `PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardPredicate)` — graveyard to top of library
 - `ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate, int)` — up to N cards to hand
@@ -260,6 +272,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Draw / discard / hand manipulation
 
 - `DrawCardEffect(DynamicAmount)` or `(int)` — controller draws that many; use `XValue` for "draw X", `PermanentCount`/`CardsInGraveyard`/`CountersOnSource` for "draw a card for each …"
+- `DrawCardPerChosenTypeCountEffect()` — "Choose a creature type. Draw a card for each permanent you control of that type" (Distant Melody). Resolution-time creature-type choice (`beginSpellCreatureTypeChoice`, stored on `GameData.chosenSpellSubtype`), Changeling-aware count; draw sibling of `DealDamageToTargetCreatureEqualToChosenTypeCountEffect`
+- `GainLifePerChosenTypeCountEffect(int lifePerPermanent)` — "Choose a creature type. You gain `lifePerPermanent` life for each permanent you control of that type" (Luminescent Rain = `(2)`). Resolution-time creature-type choice (`beginSpellCreatureTypeChoice`, stored on `GameData.chosenSpellSubtype`), Changeling-aware count; gains `count*lifePerPermanent` life. Life sibling of `DrawCardPerChosenTypeCountEffect`
+- `BoostTargetCreaturePerChosenTypeCountEffect(int powerPer, int toughnessPer)` — "Choose a creature type. Target creature gets `powerPer`/`toughnessPer` until end of turn for each permanent of the chosen type you control" (Pack's Disdain = `(-1, -1)`). Resolution-time creature-type choice (`beginSpellCreatureTypeChoice`, stored on `GameData.chosenSpellSubtype`), Changeling-aware count; applies `count*powerPer`/`count*toughnessPer` as a until-end-of-turn P/T modifier. Boost sibling of `DealDamageToTargetCreatureEqualToChosenTypeCountEffect`; pair with a `PermanentIsCreaturePredicate` target filter
 - `EachPlayerDrawsCardEffect(DynamicAmount)` or `(int)` — each player (turn order) draws that many; `XValue()` for "each player draws X" (Prosperity), `int` for a fixed count
 - `DrawCardForTargetPlayerEffect(DynamicAmount, boolean requiresUntapped, boolean targets)` or `(int)` — target/entry player draws; `XValue` for "target player draws X"
 - `DrawAndDiscardCardEffect(int draw, int discard)` — loot
@@ -278,10 +293,11 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PlayImprintedCardWithoutPayingManaCostEffect()` — Hideaway "you may play the exiled card without paying its mana cost" activated ability (Howltooth Hollow). Offers a may-play of the source permanent's imprinted (face-down exiled) card: land → battlefield (counts as the land play for the turn), else cast from exile for free. Routed by `MayCastHandlerService.handlePlayImprintedCardChoice`. Gate with `ConditionalEffect(<play condition>, …)` (e.g. `NoPlayerHasCardsInHand`); pair with `ImprintFromTopCardsEffect(N)` on ON_ENTER_BATTLEFIELD
 - `ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes[, List<CardType> includedTypes], HandChoiceDestination destination[, boolean returnOnSourceLeave])` — reveal target's hand, caster chooses N card(s) → `DISCARD` / `EXILE` / `TOP_OF_LIBRARY` (Duress, Kitesail Freebooter, Agonizing Memories)
 - `RevealCardsChooseOneToDiscardEffect(PermanentPredicate countFilter)` — target reveals X cards **of their choice** (X = number of the caster's permanents matching `countFilter`), then the caster picks one for the target to discard (Thieving Sprite, `PermanentHasAnySubtypePredicate(FAERIE)`). Unlike `ChooseCardsFromTargetHandEffect` the rest of the hand stays hidden; two-phase interaction (`RevealCardsFromHandChoice` → `ChooseRevealedCardToDiscardChoice`), phase 1 skipped when the hand is already ≤ X
-- `TargetRevealsCardsControllerChoosesDiscardEffect(int revealCount)` — target player reveals `revealCount` cards **of their choice** from hand (whole hand if fewer); the controller sees only those and picks one for the target to discard (Blackmail). Two-stage `RevealCardsDiscardChoice` interaction; `canTargetPlayer()`. Contrast `ChooseCardsFromTargetHandEffect` (whole hand revealed, controller chooses)
+- `TargetRevealsCardsControllerChoosesDiscardEffect(int revealCount[, int discardCount])` — target player reveals `revealCount` cards **of their choice** from hand (whole hand if fewer); the controller sees only those and picks `discardCount` of them (default 1; fewer if the hand held fewer) for the target to discard (Blackmail = reveal 3/discard 1; Noggin Whack = reveal 3/discard 2). Two-stage `RevealCardsDiscardChoice` interaction, discard picks looped one at a time; `canTargetPlayer()`. Contrast `ChooseCardsFromTargetHandEffect` (whole hand revealed, controller chooses)
 - `RevealTargetHandDrawPerMatchingCardEffect(List<CardSubtype> subtypes, List<CardColor> colors)` — target opponent reveals hand; draw one card per card matching any subtype/color (counted once). Pair with `target(PlayerPredicateTargetFilter(OPPONENT))` (Baleful Stare)
 - `DiscardAllCardsOfChosenColorEffect()` — caster chooses a color, target player discards all cards of that color from hand. Pair with `target(PlayerPredicateTargetFilter(ANY))` (Persecute)
 - `LookAtHandEffect()` — look at hand
+- `LookAtHandChooseNonlandToBottomAndDrawEffect()` — look at target player's hand; caster **may** choose a nonland card (optional decline); if chosen, target reveals it, bottoms it, then draws a card. Pair with `target(PlayerPredicateTargetFilter(ANY))` (Vendilion Clique, `ON_ENTER_BATTLEFIELD`)
 - `ShuffleHandIntoLibraryAndDrawEffect()` — wheel
 - `PutHandOnBottomOfLibraryAndDrawEffect()` — target player puts hand on bottom of library, draws that many (Teferi's Puzzle Box, `EACH_DRAW_TRIGGERED`)
 - `EachPlayerShufflesHandAndGraveyardIntoLibraryEffect()` — Timetwister-style
@@ -290,12 +306,19 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination, XManaValueBound manaValueBound, int castFromGraveyardCount)` — unified library search (collapsed the `SearchLibraryFor*` family). Convenience: `()` unrestricted-to-hand (Diabolic Tutor), `(filter)` filtered-to-hand, `(filter, destination)`, `(count, filter, destination)`, `(filter, int count, int cfg)` flashback tutor (Increasing Ambition `(null,1,2)`), `(filter, destination, bound)`. destination ∈ `HAND`/`BATTLEFIELD`/`BATTLEFIELD_TAPPED`/`TOP_OF_LIBRARY`; by-name via `CardNamedPredicate` (Squadron Hawk); creature MV/colour/subtype via filter + `XManaValueBound` (Citanul Flute, Birthing Pod `(true,1)`, Green Sun's Zenith `CardColorPredicate(GREEN)`, Myr Turbine)
 - `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect()` — Cultivate
+- `TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffect()` — target player searches their library for a basic land card, puts it onto the battlefield tapped, then shuffles; targets a player (`canTargetPlayer()=true`), mandatory search that may fail to find; Fertilid
+- `SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedEffect()` — controller sacrifices any number of their lands (multi-permanent choice, 0 to all), then searches their library for up to that many land cards to the battlefield tapped, then shuffles; search count = lands sacrificed, may fail to find; Scapeshift
+- `TargetPlayerLosesLifeAndSearchesLibraryToHandEffect(int lifeLoss)` — EACH_DRAW_TRIGGERED: the draw-step player (`entry.getTargetId()`) loses `lifeLoss` life, then does a mandatory unrestricted tutor of their own library to hand, then shuffles; Maralen of the Mornsong (with static `PlayersCannotDrawCardsEffect()`)
 - `SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect()` — Curse (name not shared with one already on enchanted player) onto battlefield attached to enchanted player; Curse of Misfortunes
+- `SearchLibraryForEquipmentToBattlefieldAndAttachEffect()` — search for an Equipment card, put it onto the battlefield, then choose a creature you control to attach it to, then shuffle; Stonehewer Giant. Controller picks the creature via a follow-up `PermanentChoiceContext.AttachEquipmentToCreature` (no interaction if no creatures)
 - `SearchTargetLibraryForCardsToGraveyardEffect(int, Set<CardType>)` — target library to graveyard
 - `SearchTargetLibraryForCardsToExileEffect(int count)` — search target player's library for up to `count` cards, exile them, then that player shuffles (Jester's Cap, count=3); no play permission. Targets player
+- `SearchTargetPlayerLibraryAndCastEffect(Set<CardType> castableTypes)` — search target opponent's library for a card of one of the types, caster may cast it without paying its mana cost, then that player shuffles (Knowledge Exploitation, INSTANT/SORCERY). Targets player; uses `CAST_WITHOUT_PAYING`
 - `RevealTopCardOfLibraryEffect()` or overloads — reveal top card
+- `RevealTopCardPutLandsIntoGraveyardRepeatEffect()` — reveal the controller's library one card at a time, binning each land into the graveyard until a non-land (stays on top) or empty (Countryside Crusher, `UPKEEP_TRIGGERED`)
 - `RevealTopCardRemoveTargetFromCombatIfMatchEffect(CardPredicate)` — reveal top; if match, remove the engine-set attacking creature (targetId) from combat; then bottom the card (Lost in the Woods, ON_CREATURE_ATTACKS_YOU)
 - `RevealTopCardsAndSeparateEffect(int)` — reveal + separate into piles
+- `RevealTopCardsBottomThenDamageIfCopyRevealedEffect(int count, int damage)` — reveal top `count`, bottom them in any order (async `LibraryReorder`); if a card sharing the source's name was revealed, deal `damage` to the any-target (Stomping Slabs 7/7). Any-target chosen on cast; no damage if no copy revealed
 - `ScryEffect(int)` — scry N
 - `SurveilEffect(int)` — surveil N
 - `ShuffleLibraryEffect(boolean targetPlayer)` — shuffle library (false=controller's, true=target player's)
@@ -304,9 +327,11 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ShuffleSelfFromGraveyardIntoLibraryEffect()` — triggered ability: shuffle the source card from its owner's graveyard into their library (pair with `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE`, e.g. Purity)
 - `ShuffleGraveyardIntoLibraryEffect(boolean targetPlayer)` — shuffle graveyard into library (targetPlayer=true targets, false=controller's)
 - `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(CardPredicate, int)` — shuffle N cards from graveyard
+- `ShuffleTargetPermanentIntoLibraryEffect()` — target permanent's owner shuffles it into their library (Deglamer; constrain to artifact/enchantment etc. via the card's target filter)
 - `CastTopOfLibraryWithoutPayingManaCostEffect(Set<CardType>)` — cast top free
 - `ImprovisationCapstoneEffect(int totalManaValueThreshold)` — exile from library until total MV ≥ threshold; `ImprovisationCapstoneCastChoice` interaction lets controller cast any number of exiled instants/sorceries/etc. without paying (`ImprovisationCapstoneCastSupport`)
-- `RevealTopCardMayPlayFreeOrExileEffect()` — reveal top, play free or exile
+- `RevealTopCardMayPlayFreeOrExileEffect(boolean exileIfNotPlayed)` — reveal top, may play free; `true` = exile if not played (Djinn of Wishes), `false` = leave on top (Leaf-Crowned Elder Kinship)
+- `KinshipEffect(List<CardEffect> revealEffects)` — Morningtide Kinship (`UPKEEP_TRIGGERED`): look at top card; if it shares a creature type with the source, you may reveal it, and on reveal the `revealEffects` resolve against the source (Kithkin Zephyrnaut)
 
 ## Mill
 
@@ -324,6 +349,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileAllCreaturesEffect()` — exile all creatures
 - `ExileAllPermanentsEffect(PermanentPredicate)` — exile matching permanents
 - `ExileTargetPermanentAndTrackWithSourceEffect()` — exile + track exiled card with source permanent (cards "exiled with" it)
+- `ExileTopCardsToSourceEffect(int)` / `EachPlayerExilesTopCardsToSourceEffect(int)` / `ExileTopCardsOfOpponentLibraryToSourceEffect(int)` — exile top N of a library face down, tracked with source (controller / each player / target opponent — the last is Grimoire Thief, two-player resolves against the single opponent)
 - `ReturnAllCardsExiledWithSourceEffect()` — ON_DEATH trigger: return all cards exiled with the source to the battlefield under owners' control (Helvault)
 - `ReturnTargetCardFromExileToHandEffect(CardPredicate, boolean ownedOnly)` — exile to hand
 
@@ -335,6 +361,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreateTokenEffect.whiteSoldier(int)` — 1/1 white Soldier creature token
 - `CreateTokenEffect.ofTreasureToken(int)` — treasure tokens
 - `CreateTokenWithDyingSourceCountersEffect(CreateTokenEffect template)` — `ON_DEATH`: if the dying creature had ≥1 +1/+1 counter, create `template` with that many +1/+1 counters (e.g. Ambitious Augmenter's Fractal)
+- `CreateTokensForEachDyingSourceCounterEffect(CreateTokenEffect template)` — `ON_DEATH`: "create one `template` token for each counter on it." The death collector snapshots the dying creature's total counter count (every concrete counter type) and creates that many copies of `template` (e.g. Kinsbaile Borderguard's 1/1 white Kithkin Soldier)
 - `MoveDyingSourceCountersToTargetCreatureEffect()` — `ON_DEATH`: if the dying creature had ≥1 counter (any type), move all of its counters onto up to one target creature (e.g. Scolding Administrator). Intervening-if snapshots the counters at death; targets any creature
 - For "create a token that gains [keyword] until end of turn", set `CreateTokenEffect`'s `grantedKeywordsUntilEndOfTurn` (e.g. `new CreateTokenEffect(amount, name, p, t, color, colors, subtypes, innateKeywords, Set.of(Keyword.HASTE))` — Artistic Process Elemental gains haste). Distinct from the token's innate `keywords`.
 - `CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes, CounterType counterType)` — create one token with X counters of `counterType` from ability/spell X value (e.g. Berta's Fractal with `PLUS_ONE_PLUS_ONE`)
@@ -388,6 +415,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutCounterOnEachMatchingPermanentEffect(CounterType, int|DynamicAmount, PermanentPredicate, EachPermanentScope)` — counters on each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER` (each attacking / other / all creatures; each creature target player controls)
 - `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
 - `EnterWithCountersEffect(CounterType, DynamicAmount)` — "enters the battlefield with … counters" (as-enters replacement effect): fixed = `Fixed(n)`, X paid = `XValue()`, "for each …" = a counting amount (`CreatureDeathsThisTurn`, `Sum(PermanentCount(...), CardsInGraveyard(...))`, …). "If kicked" / "Raid —" variants wrap it in `ConditionalEffect(new Kicked()/new Raid(), …)`
+- `GraveyardEnterWithAdditionalCountersEffect(CardSubtype, int)` — graveyard static: while in your graveyard, creatures of that subtype you control enter with N extra +1/+1 counters (Dearly Departed / HUMAN)
+- `ControlledCreaturesEnterWithAdditionalCountersEffect(CardSubtype, int)` — battlefield static: while on the battlefield, each other creature of that subtype you control enters with N extra +1/+1 counters (Sage of Fables / WIZARD)
 - Increment keyword — keyword-driven (`Keyword.INCREMENT`, auto-loaded from Scryfall): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness. Add nothing to the card; behavior lives in `TriggerCollectionService.collectIncrementTriggers` (resolution effect: `IncrementTriggerEffect`). E.g. Ambitious Augmenter
 - `ProliferateEffect()` — proliferate
 - `KickerEffect(String cost)` — kicker declaration
@@ -399,11 +428,12 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `GrantFlashToCardTypeEffect(CardPredicate)` — flash to card types (static)
 - `ActivateCreatureAbilitiesAsThoughHasteEffect()` — controller may activate abilities of creatures they control as though they had haste (static; lifts summoning-sickness on ability activation only, does NOT grant haste — Thousand-Year Elixir)
 - `GrantActivatedAbilityEffect(ActivatedAbility, GrantScope)` or `(ActivatedAbility, GrantScope, PermanentPredicate)` — grant ability
-- `GrantAdditionalBlockEffect(int)` — block N additional
+- `GrantAdditionalBlockEffect(int)` or `(int, PermanentPredicate controlledFilter)` — block N additional (filter → each controlled permanent matching predicate, e.g. Cenn's Tactician)
 - `RegenerateEffect()` or `(boolean targetsPermanent)` — regenerate
 - `ProtectionFromColorsEffect(Set<CardColor>)` — protection from colors (static)
 - `ProtectionFromSubtypesEffect(Set<CardSubtype>)` — protection from subtypes (static)
 - `GrantSubtypeToTargetCreatureEffect(CardSubtype)` — target creature "becomes a [subtype] in addition to its other types" (permanent, added to `grantedSubtypes`)
+- `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype)` — target creature **becomes** the given creature type until end of turn, **replacing** all its other creature types (Boldwyr Intimidator: "target creature becomes a Coward"). Sets `Permanent.transientCreatureTypeOverride`, read by the layered pass; contrast the additive/permanent `GrantSubtypeToTargetCreatureEffect`
 - `GrantBasicLandTypeToTargetEffect(EffectDuration[, CardSubtype fixedSubtype][, boolean replacing])` — target land becomes a chosen basic land type. Default adds "in addition to its other types" (Navigator's Compass / Aquitect's Will); `replacing=true` makes the land **become** the type, losing its others per rule 305.7 (Tideshaper Mystic, UNTIL_END_OF_TURN only)
 - `NonbasicLandsBecomeTypeEffect(CardSubtype)` — STATIC, global: every nonbasic land (any controller) becomes the basic land type, losing its other land types/abilities and producing that type's mana per rule 305.7. Basic lands unaffected. Blood Moon (MOUNTAIN)
 - `LoseAllCreatureTypesEffect(GrantScope)` — creatures lose all creature types until end of turn; `TARGET` = single creature (Amoeboid Changeling), `TARGET_PLAYERS_CREATURES` = all creatures target player controls (Ego Erasure); "gains all creature types" = `GrantKeywordEffect(Keyword.CHANGELING, sameScope)`
@@ -425,9 +455,11 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MustBeBlockedByAllCreaturesThisTurnEffect()` — one-shot targeted Lure: all creatures able to block target creature this turn do so (Alluring Scent); SPELL slot, `canTargetPermanent`
 - `MustBlockTargetCreatureEffect()` — two-target spell: blocker group (0) must block blocked group (1) this turn if able (Hunt Down)
 - `EnchantedCreatureCantAttackOrBlockEffect()` — Pacifism (static)
+- `ExileEnchantedCreatureEffect()` — exile the creature the source Aura is attached to (exile variant of `SacrificeEnchantedCreatureEffect`); use in an Aura's activated ability (Weight of Conscience). Pairs with the `TapTwoCreaturesSharingTypeCost` activated-ability cost.
 - `MakeCreatureUnblockableEffect()` — target unblockable this turn
 - `CanBeBlockedOnlyByFilterEffect(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — static evasion on the source: it can be blocked only by blockers matching the predicate (Fear-like, e.g. Dread Warlock = black creatures)
 - `GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(PermanentPredicate creatureFilter, PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — SPELL one-shot: your creatures matching `creatureFilter` (null = all) can be blocked only by blockers matching `blockerPredicate` until end of turn. Dread Charge = both filters `PermanentColorInPredicate(BLACK)`. Affected creatures snapshotted at resolution; restriction stored transiently on each `Permanent`
+- `MatchingCreaturesCantBlockMatchingCreaturesEffect(PermanentPredicate blockerPredicate, PermanentPredicate attackerPredicate, String description)` — global STATIC: while the source is on the battlefield, any creature matching `blockerPredicate` can't block any creature matching `attackerPredicate`, board-wide (Boldwyr Intimidator: "Cowards can't block Warriors"). Evaluated in `GameQueryService.getBlockRestriction`
 - `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
 - `TargetPlayerChoosesCreatureRestCantBlockEffect()` — SPELL, `canTargetPlayer`: the targeted player chooses one creature they control (kept able to block); all their OTHER creatures can't block this turn. Pair with a `PlayerPredicateTargetFilter(OPPONENT)`. 0-1 creatures ⇒ no choice, resolves harmlessly (Goblin War Cry).
 
@@ -442,6 +474,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `UntapPermanentsEffect(TapUntapScope.SELF)` — untap self · `.ALL_TARGETS` — untap all targets
 - `UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter)` — untap all you control matching · `.OTHER_CONTROLLED_CREATURES` — untap each other creature you control · `.ATTACKED_CREATURES` — untap creatures that attacked this turn
 - `UntapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, filter)` — untap all of target player's permanents matching filter (Early Harvest: `PermanentAllOf(land, BASIC supertype)` = target player's basic lands)
+- `UntapEquippedCreatureEffect()` — untap the source Equipment's attached creature (fizzles if unattached). Place on the Equipment in a trigger slot (e.g. `ON_ANY_CREATURE_DIES`) to model equipment-granted untap triggers; Thornbite Staff
 - `MatchingPermanentsDoesntUntapEffect(PermanentPredicate)` — global static: every permanent matching the predicate (any controller, incl. the source) doesn't untap during its controller's untap step; Marble Titan (`PermanentPowerAtLeastPredicate(3)`)
 - `StorageMatrixEffect()` — global static (Storage Matrix): while any permanent carrying it is untapped, each player's untap step pauses (`UntapStepService.storageMatrixRestrictionApplies`) so the active player chooses artifact/creature/land (a `ColorChoice` with `ChoiceContext.StorageMatrixUntapChoice`); only permanents of the chosen type untap that step. No card-side targeting/config — just `addEffect(EffectSlot.STATIC, new StorageMatrixEffect())`.
 - `DoesntUntapEffect.self()` — this permanent doesn't untap (static) · `.enchanted()` — attached aura/equipment's host doesn't untap (static) · `.targetWhileSourceOnBattlefield()` — target doesn't untap while source on battlefield (Dungeon Geists / Time of Ice) · `.targetWhileSourceTapped()` — while source stays tapped (Rust Tick); TARGET factories piggyback on a companion `TapPermanentsEffect(TapUntapScope.TARGET)`
@@ -455,6 +488,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `GainControlOfTargetEffect(ControlDuration.PERMANENT[, CardSubtype])` — gain control permanently
 - `GainControlOfTargetEffect(ControlDuration.END_OF_TURN)` — gain control until EOT
 - `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` — control while source on battlefield
+- `GainControlOfAllLandsTargetPlayerControlsEffect()` — gain permanent control of every land the target player controls (`canTargetPlayer`, Gilt-Leaf Archdruid)
 - `GainControlOfEnchantedTargetEffect()` — Control Magic (static)
 - `ClashForControlOfEnchantedCreatureEffect()` — Captivating Glance: `CONTROLLER_END_STEP_TRIGGERED` Aura effect; clash, then the winner (controller on win, else clash opponent) gains control of the enchanted creature
 - `SacrificeEnchantedPermanentAndReattachSourceAuraEffect()` — Nettlevine Blight: `ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED` Aura effect; the enchanted permanent's controller sacrifices it and moves this Aura (keeping its controller) onto another creature/land they control
@@ -494,7 +528,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Animate / transform
 
-- `AnimatePermanentsEffect(power, toughness, subtypes, keywords, color, cardTypes, GrantScope, EffectDuration, filter)` (+ int-P/T sugar ctors) — one/many permanents become creatures. Scope SELF (manland/self, UEOT), TARGET (PERMANENT or WHILE_SOURCE_ON_BATTLEFIELD), OWN_LANDS (Sylvan Awakening), ALL_LANDS (every land on the battlefield, both players — Natural Affinity), OWN_PERMANENTS+filter (The Antiquities War). P/T `DynamicAmount` (`XValue`/`CountersOnSource`); null P/T = printed
+- `AnimatePermanentsEffect(power, toughness, subtypes, keywords, color, cardTypes, GrantScope, EffectDuration, filter)` (+ int-P/T sugar ctors) — one/many permanents become creatures. Scope SELF (manland/self, UEOT), TARGET (single, UEOT via Elvish Branchbender / PERMANENT via Tezzeret / WHILE_SOURCE_ON_BATTLEFIELD via Awakener Druid; **multi-target UEOT reads `targetIds` for "up to N target" abilities — Fendeep Summoner**), OWN_LANDS (Sylvan Awakening), ALL_LANDS (every land on the battlefield, both players — Natural Affinity), OWN_PERMANENTS+filter (The Antiquities War). Wire multi-target via the multi-target `ActivatedAbility` ctor (per-position filters, minTargets/maxTargets). P/T `DynamicAmount` (`XValue`/`CountersOnSource`); null P/T = printed
 - `AnimatePermanentsEffect.crew()` — vehicle crew (printed P/T, +CREATURE)
 - `TransformSelfEffect()` — transform DFC
 - `TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect()` — combat-damage "you may transform; if you do, attach to target creature that player controls" (wrap in `MayEffect`)

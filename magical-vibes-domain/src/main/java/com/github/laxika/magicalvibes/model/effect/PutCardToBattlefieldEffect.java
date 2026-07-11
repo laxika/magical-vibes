@@ -23,26 +23,40 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param attachSourceEquipment   if {@code true}, the source Equipment is attached to the chosen card after it enters
  *                                (e.g. Deathrender's "put a creature card from your hand onto the battlefield and
  *                                attach this Equipment to it")
+ * @param enterAttacking          if {@code true}, the chosen creature enters the battlefield attacking
+ *                                (e.g. Preeminent Captain's "onto the battlefield tapped and attacking")
  */
 public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterTapped, boolean maxManaValueBoundedByX,
                                          boolean grantHaste, boolean sacrificeAtEndStep,
-                                         boolean attachSourceEquipment) implements CardEffect {
+                                         boolean attachSourceEquipment, boolean enterAttacking) implements CardEffect {
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label) {
-        this(predicate, label, false, false, false, false, false);
+        this(predicate, label, false, false, false, false, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped) {
-        this(predicate, label, enterTapped, false, false, false, false);
+        this(predicate, label, enterTapped, false, false, false, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
                                       boolean grantHaste, boolean sacrificeAtEndStep) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, false, false);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep, boolean attachSourceEquipment) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, attachSourceEquipment, false);
+    }
+
+    /**
+     * "Put a card from your hand onto the battlefield tapped and attacking" (e.g. Preeminent Captain).
+     */
+    public static PutCardToBattlefieldEffect tappedAndAttacking(CardPredicate predicate, String label) {
+        return new PutCardToBattlefieldEffect(predicate, label, true, false, false, false, false, true);
     }
 }

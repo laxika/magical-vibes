@@ -34,6 +34,9 @@ public class StackEntry {
     @Setter private boolean kicked;
     /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
     @Setter private boolean evoked;
+    /** Whether this spell was cast for its prowl cost — carried to the entering permanent so its
+     *  "if its prowl cost was paid" ETB trigger can gate on it (CR 702.75). */
+    @Setter private boolean prowl;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -252,6 +255,7 @@ public class StackEntry {
         this.sourceZone = source.sourceZone;
         this.kicked = source.kicked;
         this.evoked = source.evoked;
+        this.prowl = source.prowl;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;

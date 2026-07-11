@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
  * Unified handler for {@link ReturnToHandEffect}. Dispatches on the effect's
  * {@link com.github.laxika.magicalvibes.model.effect.BounceScope}: {@code TARGET} (the chosen target
  * permanent(s), with the optional controller-life-loss rider), {@code SELF} (the source),
+ * {@code SELF_SPELL} (the resolving spell returns itself to hand off the stack),
  * {@code ALL_MATCHING} (every permanent matching the filter across all battlefields),
  * {@code TARGET_PLAYERS_PERMANENTS} (the target player's matching permanents), and
  * {@code TARGET_PLAYERS_OWNED} (permanents the target player owns, any controller).
@@ -49,6 +50,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry, e);
             case SELF -> bounceSupport.applyReturnSelfToHand(gameData, entry);
+            case SELF_SPELL -> entry.setReturnToHandAfterResolving(true);
             case ALL_MATCHING -> resolveAllMatching(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case TARGET_PLAYERS_OWNED -> resolveTargetPlayersOwned(gameData, entry, e);

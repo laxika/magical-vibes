@@ -43,13 +43,13 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         Permanent sourcePermanent = findSourcePermanent(gameData, controllerId, sourceCard);
-        List<UUID> validIds = collectValidChampionTargets(gameData, sourcePermanent, controllerId, e.championedSubtype());
+        List<UUID> validIds = collectValidChampionTargets(gameData, sourcePermanent, controllerId, e.championedSubtypes());
 
         if (validIds.isEmpty()) {
             if (sourcePermanent != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " controls no other "
-                        + championQualityLabel(e.championedSubtype())
+                        + championQualityLabel(e.championedSubtypes())
                         + ". " + sourceCard.getName() + " is sacrificed.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} sacrificed (no creature to champion)", gameData.id, sourceCard.getName());
@@ -65,7 +65,7 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ChampionCreature(sourcePermanent.getId(), controllerId));
-        String prompt = "Choose another " + championQualityLabel(e.championedSubtype())
+        String prompt = "Choose another " + championQualityLabel(e.championedSubtypes())
                 + " you control to exile.";
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds, prompt);
     }
@@ -84,14 +84,14 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
     }
 
     private List<UUID> collectValidChampionTargets(GameData gameData, Permanent sourcePermanent,
-                                                   UUID controllerId, CardSubtype championedSubtype) {
+                                                   UUID controllerId, List<CardSubtype> championedSubtypes) {
         List<UUID> validIds = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null || sourcePermanent == null) {
             return validIds;
         }
         for (Permanent p : battlefield) {
-            if (isValidChampionTarget(gameData, sourcePermanent, p, championedSubtype)) {
+            if (isValidChampionTarget(gameData, sourcePermanent, p, championedSubtypes)) {
                 validIds.add(p.getId());
             }
         }
@@ -99,21 +99,24 @@ public class ChampionCreatureEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean isValidChampionTarget(GameData gameData, Permanent source, Permanent candidate,
-                                          CardSubtype championedSubtype) {
+                                          List<CardSubtype> championedSubtypes) {
         if (candidate.getId().equals(source.getId())) {
             return false;
         }
         if (!gameQueryService.isCreature(gameData, candidate)) {
             return false;
         }
-        return championedSubtype == null
-                || GameQueryService.permanentHasSubtype(candidate, championedSubtype);
+        return championedSubtypes.isEmpty()
+                || championedSubtypes.stream()
+                        .anyMatch(subtype -> GameQueryService.permanentHasSubtype(candidate, subtype));
     }
 
-    private static String championQualityLabel(CardSubtype championedSubtype) {
-        if (championedSubtype == null) {
+    private static String championQualityLabel(List<CardSubtype> championedSubtypes) {
+        if (championedSubtypes.isEmpty()) {
             return "creature";
         }
-        return championedSubtype.name().toLowerCase();
+        return championedSubtypes.stream()
+                .map(subtype -> subtype.name().toLowerCase())
+                .collect(java.util.stream.Collectors.joining(" or "));
     }
 }

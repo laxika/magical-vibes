@@ -91,11 +91,14 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        String tappedSuffix = effect.enterTapped() ? " tapped" : "";
+        String tappedSuffix = effect.enterTapped() && effect.enterAttacking() ? " tapped and attacking"
+                : effect.enterTapped() ? " tapped"
+                : effect.enterAttacking() ? " attacking"
+                : "";
         String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
         UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId);
+                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId, effect.enterAttacking());
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {
@@ -236,19 +239,67 @@ public class PlayerInteractionSupport {
         // sourcePermanentId tracks exile-until-source-leaves effects (e.g. Kitesail Freebooter)
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
-                List.of(), sourcePermanentId, choicePrompt));
+                List.of(), sourcePermanentId, choicePrompt, false, false));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     
     }
     /**
+     * Vendilion Clique: the caster looks at the target player's hand, then may choose a nonland
+     * card. The choice is optional; the chosen card is revealed, put on the bottom of that
+     * player's library, and they draw a card ({@code bottomThenDrawMode}). Handled by
+     * {@link com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService#handleRevealedHandCardChosen}.
+     */
+    public void resolveLookAtHandChooseNonlandToBottom(GameData gameData, StackEntry entry) {
+
+        UUID targetPlayerId = entry.getTargetId();
+        UUID casterId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String casterName = gameData.playerIdToName.get(casterId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
+            return;
+        }
+
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (!hand.get(i).hasType(CardType.LAND)) {
+                validIndices.add(i);
+            }
+        }
+
+        if (validIndices.isEmpty()) {
+            String noValidEntry = casterName + " chooses no card (" + targetName + " has no nonland cards).";
+            gameBroadcastService.logAndBroadcast(gameData, noValidEntry);
+            log.info("Game {} - {}'s hand has no nonland cards for {}", gameData.id, targetName, casterName);
+            return;
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, validIndices, 1, false, false, List.of(), null,
+                "You may choose a nonland card to put on the bottom of " + targetName + "'s library.",
+                true, true));
+
+        log.info("Game {} - {} may choose a nonland card from {}'s hand (bottom + draw)",
+                gameData.id, casterName, targetName);
+    }
+
+    /**
      * Begins the Blackmail flow: "Target player reveals {@code revealCount} cards from their hand
      * and you choose one of them. That player discards that card." The target picks which cards to
      * reveal; if they hold {@code revealCount} or fewer, their whole hand is revealed and the
      * controller's discard choice begins immediately.
      */
-    public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount) {
+    public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount, int discardCount) {
 
         UUID targetPlayerId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();
@@ -267,7 +318,7 @@ public class PlayerInteractionSupport {
         if (hand.size() <= revealCount) {
             // Whole hand is revealed — no choice for the target player.
             List<UUID> revealedCardIds = hand.stream().map(Card::getId).toList();
-            beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds);
+            beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds, discardCount);
             return;
         }
 
@@ -276,9 +327,11 @@ public class PlayerInteractionSupport {
             validIndices.add(i);
         }
 
+        // The reveal-stage interaction stashes the controller's discard count in remainingCount's
+        // sibling — carried forward once the reveal picks complete (see the discard-stage begin).
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
                 targetPlayerId, targetPlayerId, controllerId, true, validIndices, revealCount,
-                new ArrayList<>(), "Choose " + revealCount + " cards to reveal."));
+                new ArrayList<>(), "Choose " + revealCount + " cards to reveal.", discardCount));
 
         log.info("Game {} - {} choosing {} cards to reveal for reveal-and-discard",
                 gameData.id, targetName, revealCount);
@@ -286,10 +339,11 @@ public class PlayerInteractionSupport {
 
     /**
      * Logs the revealed cards and begins the controller's discard choice over exactly that
-     * revealed set (the rest of the target's hand stays hidden).
+     * revealed set (the rest of the target's hand stays hidden). The controller discards up to
+     * {@code discardCount} of the revealed cards (fewer if the hand held fewer).
      */
     public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
-                                             UUID controllerId, List<UUID> revealedCardIds) {
+                                             UUID controllerId, List<UUID> revealedCardIds, int discardCount) {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);
@@ -306,9 +360,33 @@ public class PlayerInteractionSupport {
             validIndices.add(i);
         }
 
+        int toDiscard = Math.min(discardCount, revealedCardIds.size());
+        String prompt = toDiscard > 1
+                ? "Choose " + toDiscard + " cards for " + targetName + " to discard."
+                : "Choose a card for " + targetName + " to discard.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
-                controllerId, targetPlayerId, controllerId, false, validIndices, 1,
-                new ArrayList<>(revealedCardIds), "Choose a card for " + targetName + " to discard."));
+                controllerId, targetPlayerId, controllerId, false, validIndices, toDiscard,
+                new ArrayList<>(revealedCardIds), prompt, toDiscard));
+    }
+
+    /**
+     * Begins the next discard pick over the still-revealed cards (used when the controller discards
+     * more than one, e.g. Noggin Whack). Unlike {@link #beginRevealCardsDiscardStage} this does not
+     * re-log the reveal — the cards were already revealed at the start of the discard stage.
+     */
+    public void beginRevealCardsDiscardStageContinuation(GameData gameData, UUID targetPlayerId,
+                                                         UUID controllerId, List<UUID> revealedCardIds,
+                                                         int remainingDiscards, int discardCount) {
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < revealedCardIds.size(); i++) {
+            validIndices.add(i);
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
+                controllerId, targetPlayerId, controllerId, false, validIndices, remainingDiscards,
+                new ArrayList<>(revealedCardIds), "Choose another card for " + targetName + " to discard.",
+                discardCount));
     }
 
     public boolean sharesCardType(List<Card> cards) {

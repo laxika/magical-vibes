@@ -106,4 +106,12 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record TapCreaturesGainLife(int lifePerCreature) implements MultiPermanentChoiceContext {
     }
+
+    /**
+     * Sacrifice the chosen lands, then search the library for up to that many land cards and put
+     * them onto the battlefield tapped, then shuffle (Scapeshift). The number of lands searched
+     * for equals the number of lands sacrificed.
+     */
+    record SacrificeLandsSearchLandsToBattlefieldTapped() implements MultiPermanentChoiceContext {
+    }
 }

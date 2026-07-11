@@ -564,6 +564,9 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
+        }
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
@@ -775,6 +778,9 @@ public class ActivatedAbilityExecutionService {
         gameData.priorityPassedBy.clear();
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
+        }
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfLeavesTriggerTarget.class)) {
+            triggerCollectionService.processNextSelfLeavesTriggerTarget(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
     }
