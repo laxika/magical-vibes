@@ -8,6 +8,7 @@ import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
 import { SidePanelComponent } from './side-panel/side-panel.component';
+import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
 import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
@@ -16,7 +17,7 @@ import { PermanentClickResolverService } from '../../services/permanent-click-re
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent],
+  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css']
 })
@@ -24,6 +25,8 @@ export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
+  // Anchor for the board-card modifier tooltip; set only when hovering a battlefield permanent.
+  modifierTooltipAnchor = signal<{ x: number; y: number; below: boolean } | null>(null);
   stackTargetId = signal<string | null>(null);
   private subscriptions: Subscription[] = [];
 
@@ -98,6 +101,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.searchTaxCost.set(0);
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+    this.modifierTooltipAnchor.set(null);
     this.stackTargetId.set(null);
     this.combatShiftX.set(new Map());
     this.showShortcutsPopup.set(false);
@@ -1420,14 +1424,28 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  onCardHover(card: Card, permanent: Permanent | null = null): void {
+  onCardHover(card: Card, permanent: Permanent | null = null, event?: MouseEvent): void {
     this.hoveredCard.set(card);
     this.hoveredPermanent.set(permanent);
+    if (permanent && event) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      // Not enough room above the card (opponent's rows at the top) — flip under it.
+      const below = rect.top < 240;
+      const halfTooltipWidth = 120;
+      this.modifierTooltipAnchor.set({
+        x: Math.min(Math.max(rect.left + rect.width / 2, halfTooltipWidth), window.innerWidth - halfTooltipWidth),
+        y: below ? rect.bottom + 6 : rect.top - 6,
+        below,
+      });
+    } else {
+      this.modifierTooltipAnchor.set(null);
+    }
   }
 
   onCardHoverEnd(): void {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+    this.modifierTooltipAnchor.set(null);
   }
 
   // ========== Keyboard shortcuts ==========

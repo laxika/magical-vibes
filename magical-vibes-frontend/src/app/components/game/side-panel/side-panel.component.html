@@ -2,28 +2,6 @@
   <div class="card-preview-panel">
     @if (hoveredCard) {
       <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
-      @if (modifierBreakdown; as bd) {
-        <div class="modifier-breakdown">
-          @if (bd.showPt) {
-            <div class="breakdown-row breakdown-base">
-              <span class="breakdown-label">Base</span>
-              <span class="breakdown-value">{{ bd.basePower }}/{{ bd.baseToughness }}</span>
-            </div>
-          }
-          @for (row of bd.rows; track $index) {
-            <div class="breakdown-row">
-              <span class="breakdown-label">{{ row.label }}</span>
-              <span class="breakdown-value" [class.positive]="row.tone === 'positive'" [class.negative]="row.tone === 'negative'">{{ row.value }}</span>
-            </div>
-          }
-          @if (bd.showPt) {
-            <div class="breakdown-row breakdown-total">
-              <span class="breakdown-label">Current</span>
-              <span class="breakdown-value">{{ bd.finalPower }}/{{ bd.finalToughness }}</span>
-            </div>
-          }
-        </div>
-      }
     } @else {
       <div class="card-preview-empty"></div>
     }

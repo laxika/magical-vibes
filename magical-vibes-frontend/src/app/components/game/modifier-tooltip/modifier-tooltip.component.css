@@ -1,0 +1,97 @@
+/* The host is the anchor point (the hovered card's horizontal center, just above or
+   below its bounding rect); left/top are bound inline by the game component. Centered
+   via translate, and flipped under the card with .below when there is no room above. */
+:host {
+  position: fixed;
+  z-index: 400;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+}
+
+:host(.below) {
+  transform: translate(-50%, 0);
+}
+
+.modifier-tooltip {
+  width: 230px;
+  box-sizing: border-box;
+  padding: 5px 8px 6px;
+  background: rgba(24, 16, 9, 0.94);
+  border: 2px solid var(--color-dark-border);
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  color: var(--color-parchment);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.tooltip-header {
+  margin-bottom: 3px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(232, 213, 176, 0.25);
+}
+
+.tooltip-card-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltip-type-line {
+  font-size: 10px;
+  opacity: 0.75;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltip-keywords {
+  font-size: 10px;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.breakdown-label {
+  opacity: 0.85;
+  flex-shrink: 0;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breakdown-value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.breakdown-value.positive {
+  color: #8fd48f;
+}
+
+.breakdown-value.negative {
+  color: #e08a7a;
+}
+
+.breakdown-base {
+  margin-bottom: 2px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(232, 213, 176, 0.25);
+}
+
+.breakdown-total {
+  margin-top: 2px;
+  padding-top: 2px;
+  border-top: 1px solid rgba(232, 213, 176, 0.25);
+}

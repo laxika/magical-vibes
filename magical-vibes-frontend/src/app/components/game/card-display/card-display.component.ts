@@ -6,7 +6,7 @@ import { ScryfallCardDataService } from '../../../services/scryfall-card-data.se
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
-import { formatEnumName, formatKeywords } from '../../../utils/format-utils';
+import { formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
 
 @Component({
   selector: 'app-card-display',
@@ -191,13 +191,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
   }
 
   get typeLine(): string {
-    const supertypes = (this.card.supertypes ?? []).map(s => formatEnumName(s));
-    const mainType = [...supertypes, formatEnumName(this.card.type)].join(' ');
-    const subtypes = (this.card.subtypes ?? []).map(s => formatEnumName(s));
-    if (subtypes.length > 0) {
-      return `${mainType} \u2014 ${subtypes.join(' ')}`;
-    }
-    return mainType;
+    return formatTypeLine(this.card);
   }
 
   get scryfallData() {

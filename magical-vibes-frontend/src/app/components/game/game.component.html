@@ -320,7 +320,7 @@
                           class="attached-aura"
                           [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                           (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                          (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                           (mouseleave)="onCardHoverEnd()" />
                       }
                       <app-card-display
@@ -333,7 +333,7 @@
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                         [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
                         (mouseleave)="onCardHoverEnd()" />
                     </div>
                   </div>
@@ -348,7 +348,7 @@
                     class="attached-aura"
                     [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                     (click)="onAuraClick(aura)"
-                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                     (mouseleave)="onCardHoverEnd()" />
                 }
                 <app-card-display
@@ -361,7 +361,7 @@
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
                   [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
                   (click)="onOpponentBattlefieldCardClick(item.originalIndex)"
-                  (mouseenter)="onCardHover(item.perm.card, item.perm)"
+                  (mouseenter)="onCardHover(item.perm.card, item.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
               </div>
             }
@@ -377,7 +377,7 @@
                   class="attached-aura"
                   [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                   (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
@@ -398,7 +398,7 @@
                 [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
                 (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
                 (mouseleave)="onCardHoverEnd()">
                 @if (ip.perm.attacking) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
                 @if (ip.perm.blocking) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, false) }}</div> }
@@ -456,7 +456,7 @@
                   class="attached-aura"
                   [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                   (click)="onAuraClick(aura)"
-                  (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                  (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
               }
               <app-card-display
@@ -482,7 +482,7 @@
                 [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
                 (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
-                (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
                 (mouseleave)="onCardHoverEnd()">
                 @if (isAttackingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
                 @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
@@ -521,7 +521,7 @@
                           class="attached-aura"
                           [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                           (click)="onAuraClick(aura)"
-                          (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                          (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                           (mouseleave)="onCardHoverEnd()" />
                       }
                       <app-card-display
@@ -535,7 +535,7 @@
                         [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                         [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                         (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
-                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm, $event)"
                         (mouseleave)="onCardHoverEnd()" />
                       @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
                         <div class="ability-popup" (click)="$event.stopPropagation()">
@@ -559,7 +559,7 @@
                     class="attached-aura"
                     [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(aura.perm)"
                     (click)="onAuraClick(aura)"
-                    (mouseenter)="onCardHover(aura.perm.card, aura.perm)"
+                    (mouseenter)="onCardHover(aura.perm.card, aura.perm, $event)"
                     (mouseleave)="onCardHoverEnd()" />
                 }
                 <app-card-display
@@ -573,7 +573,7 @@
                   [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(item.perm.id)"
                   [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(item.perm.id)"
                   (click)="onMyBattlefieldCardClick(item.originalIndex, $event)"
-                  (mouseenter)="onCardHover(item.perm.card, item.perm)"
+                  (mouseenter)="onCardHover(item.perm.card, item.perm, $event)"
                   (mouseleave)="onCardHoverEnd()" />
               @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === item.originalIndex) {
                 <div class="ability-popup" (click)="$event.stopPropagation()">
@@ -827,4 +827,10 @@
       (graveyardAbilityActivate)="activateGraveyardAbility($event)"
       (flashbackPlay)="playFlashback($event)" />
   </div>
+
+  @if (hoveredPermanent(); as perm) {
+    @if (modifierTooltipAnchor(); as anchor) {
+      <app-modifier-tooltip [permanent]="perm" [x]="anchor.x" [y]="anchor.y" [below]="anchor.below" />
+    }
+  }
 </div>

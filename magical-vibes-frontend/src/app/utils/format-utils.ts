@@ -13,3 +13,16 @@ export function formatEnumName(s: string): string {
 export function formatKeywords(keywords: string[]): string {
   return keywords.map(k => k.charAt(0) + k.slice(1).toLowerCase().replace('_', ' ')).join(', ');
 }
+
+/**
+ * Formats a card's full type line, e.g. "Legendary Creature — Elf Warrior".
+ */
+export function formatTypeLine(card: { supertypes?: string[]; type: string; subtypes?: string[] }): string {
+  const supertypes = (card.supertypes ?? []).map(s => formatEnumName(s));
+  const mainType = [...supertypes, formatEnumName(card.type)].join(' ');
+  const subtypes = (card.subtypes ?? []).map(s => formatEnumName(s));
+  if (subtypes.length > 0) {
+    return `${mainType} — ${subtypes.join(' ')}`;
+  }
+  return mainType;
+}

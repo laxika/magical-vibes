@@ -28,68 +28,6 @@
   transform-origin: top center;
 }
 
-/* Modifier breakdown — overlays the bottom of the previewed card when the hovered
-   permanent's characteristics differ from its printed ones. Absolutely positioned so
-   its appearance never shifts the panel layout; pointer-events off like the preview. */
-.modifier-breakdown {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  z-index: 5;
-  pointer-events: none;
-  padding: 5px 8px 6px;
-  background: rgba(24, 16, 9, 0.92);
-  border: 2px solid var(--color-dark-border);
-  border-radius: 6px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
-  color: var(--color-parchment);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.breakdown-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.breakdown-label {
-  opacity: 0.85;
-  flex-shrink: 0;
-  max-width: 55%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.breakdown-value {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-.breakdown-value.positive {
-  color: #8fd48f;
-}
-
-.breakdown-value.negative {
-  color: #e08a7a;
-}
-
-.breakdown-base {
-  margin-bottom: 2px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid rgba(232, 213, 176, 0.25);
-}
-
-.breakdown-total {
-  margin-top: 2px;
-  padding-top: 2px;
-  border-top: 1px solid rgba(232, 213, 176, 0.25);
-}
-
 .card-preview-empty {
   width: 264px;
   height: 370px;
