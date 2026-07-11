@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
@@ -65,6 +66,7 @@ public class GameBroadcastService {
     private final ValidTargetService validTargetService;
     private final CastingCostService castingCostService;
     private final CastingPermissionService castingPermissionService;
+    private final PotentialManaService potentialManaService;
 
     public void broadcastGameState(GameData gameData) {
         // Skip expensive view computation during MCTS simulation (headless session manager discards the result)
@@ -99,6 +101,8 @@ public class GameBroadcastService {
                     ? new ArrayList<>(gameData.playerAutoStopSteps.get(playerId))
                     : List.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN);
             List<Integer> playableCardIndices = getPlayableCardIndices(gameData, playerId);
+            List<Integer> potentialPlayableCardIndices = getPotentialPlayableCardIndices(gameData, playerId, playableCardIndices);
+            int potentialManaTotal = getPotentialManaTotal(gameData, playerId);
             List<Integer> playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, playerId);
             List<CardView> playableExileCards = getPlayableExileCards(gameData, playerId);
             List<Integer> playableFlashbackIndices = getPlayableFlashbackIndices(gameData, playerId);
@@ -114,6 +118,8 @@ public class GameBroadcastService {
                     opponentHand = gameData.playerHands.getOrDefault(controlledId, List.of())
                             .stream().map(c -> cardViewFactory.create(c, controlledGranted)).toList();
                     playableCardIndices = getPlayableCardIndices(gameData, controlledId);
+                    potentialPlayableCardIndices = getPotentialPlayableCardIndices(gameData, controlledId, playableCardIndices);
+                    potentialManaTotal = getPotentialManaTotal(gameData, controlledId);
                     playableGraveyardLandIndices = getPlayableGraveyardLandIndices(gameData, controlledId);
                     playableExileCards = getPlayableExileCards(gameData, controlledId);
                     playableFlashbackIndices = getPlayableFlashbackIndices(gameData, controlledId);
@@ -128,7 +134,7 @@ public class GameBroadcastService {
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableGraveyardLandIndices, playableExileCards, newLogEntries, searchTaxCost,
                     gameData.mindControlledPlayerId, revealedLibraryTopCards, playableFlashbackIndices,
-                    playableLibraryTopCards
+                    playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal
             ));
         }
     }
@@ -309,6 +315,40 @@ public class GameBroadcastService {
     }
 
     public List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana) {
+        return getPlayableCardIndices(gameData, playerId, extraConvokeMana, gameData.playerManaPools.get(playerId));
+    }
+
+    /**
+     * Hand indices castable right now if the player also taps their untapped mana sources
+     * (MTGO-style click-to-cast). Checked against the potential pool from
+     * {@link PotentialManaService#buildVirtualManaPool}, then unioned with the strictly
+     * affordable indices (restricted-bucket mana such as artifact-only colorless isn't
+     * carried into the virtual pool, so the strict list isn't always a subset).
+     */
+    public List<Integer> getPotentialPlayableCardIndices(GameData gameData, UUID playerId, List<Integer> strictIndices) {
+        // Same gating as getPlayableCardIndices — skip the virtual-pool build for the
+        // player who couldn't act anyway (broadcasts compute this for both players).
+        if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()
+                || !playerId.equals(gameQueryService.getPriorityPlayerId(gameData))) {
+            return new ArrayList<>(strictIndices);
+        }
+        List<Integer> potential = getPlayableCardIndices(gameData, playerId, 0,
+                potentialManaService.buildVirtualManaPool(gameData, playerId));
+        for (Integer i : strictIndices) {
+            if (!potential.contains(i)) {
+                potential.add(i);
+            }
+        }
+        potential.sort(Integer::compareTo);
+        return potential;
+    }
+
+    /** Total mana the player could have available after tapping every untapped mana source. */
+    public int getPotentialManaTotal(GameData gameData, UUID playerId) {
+        return potentialManaService.buildVirtualManaPool(gameData, playerId).getTotal();
+    }
+
+    private List<Integer> getPlayableCardIndices(GameData gameData, UUID playerId, int extraConvokeMana, ManaPool pool) {
         List<Integer> playable = new ArrayList<>();
         if (gameData.status != GameStatus.RUNNING || gameData.interaction.isAwaitingInput()) {
             return playable;
@@ -324,7 +364,6 @@ public class GameBroadcastService {
             return playable;
         }
 
-        ManaPool pool = gameData.playerManaPools.get(playerId);
         SpellPlayabilityContext ctx = buildSpellPlayabilityContext(gameData, playerId);
         for (int i = 0; i < hand.size(); i++) {
             if (isCardPlayable(gameData, playerId, hand.get(i), pool, extraConvokeMana, 0, ctx)) {

@@ -215,6 +215,19 @@
   cursor: pointer;
 }
 
+/* The card whose held-back cast is being paid for (MTGO-style): pulse until the
+   tapped mana covers the cost and the cast fires. */
+.card.casting-pending {
+  outline: 3px solid var(--color-blue-primary);
+  box-shadow: 0 0 14px rgba(44, 94, 162, 0.7), 2px 3px 8px rgba(0, 0, 0, 0.5);
+  animation: casting-pending-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes casting-pending-pulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(44, 94, 162, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(44, 94, 162, 0.9), 2px 3px 8px rgba(0, 0, 0, 0.5); }
+}
+
 .card.tapped {
   /* Rotation handled by card-display component via :host(.is-tapped);
      this class is still set by parents for the :has(.tapped) spacing rules. */

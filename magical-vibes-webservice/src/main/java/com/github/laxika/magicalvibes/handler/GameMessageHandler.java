@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.networking.message.LoginResponse;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
+import com.github.laxika.magicalvibes.networking.message.RevertManaActivationsRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
@@ -407,6 +408,27 @@ public class GameMessageHandler implements MessageHandler {
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         null, null, null, Boolean.TRUE.equals(request.kicked()));
             }
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            handleError(connection, e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleRevertManaActivations(Connection connection, RevertManaActivationsRequest request) throws Exception {
+        Player player = sessionManager.getPlayer(connection.getId());
+        if (player == null) {
+            handleError(connection, "Not authenticated");
+            return;
+        }
+
+        GameData gameData = gameRegistry.getGameForPlayer(player.getId());
+        if (gameData == null) {
+            handleError(connection, "Not in a game");
+            return;
+        }
+
+        try {
+            gameService.revertManaActivations(gameData, player);
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

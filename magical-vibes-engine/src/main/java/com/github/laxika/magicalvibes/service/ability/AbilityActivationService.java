@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaActivation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -80,6 +81,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -166,6 +168,8 @@ public class AbilityActivationService {
         permanent.tap();
 
         ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        EnumMap<ManaColor, Integer> poolBefore = snapshotPoolColors(manaPool);
+        EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
         if (overriddenManaColor != null) {
             // Land type is overridden — produce the new basic land type's mana instead of original
@@ -213,13 +217,109 @@ public class AbilityActivationService {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+        List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
-            List<StackEntry> deferred = new ArrayList<>(
+            deferred = new ArrayList<>(
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
             gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
             gameData.pendingManaAbilityTriggers.addAll(deferred);
         }
 
+        recordRevertableManaActivation(gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /** Per-color snapshot of the plain pool, for computing what a mana activation added. */
+    static EnumMap<ManaColor, Integer> snapshotPoolColors(ManaPool pool) {
+        EnumMap<ManaColor, Integer> snapshot = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            snapshot.put(color, pool.get(color));
+        }
+        return snapshot;
+    }
+
+    static EnumMap<ManaColor, Integer> snapshotCreatureManaColors(ManaPool pool) {
+        EnumMap<ManaColor, Integer> snapshot = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            snapshot.put(color, pool.getCreatureMana(color));
+        }
+        return snapshot;
+    }
+
+    /**
+     * Logs a completed pure mana activation (source tapped, mana added, nothing else) into
+     * {@link GameData#revertableManaActivations} so the MTGO-style cancel-casting UI can undo it.
+     */
+    static void recordRevertableManaActivation(GameData gameData, UUID playerId, Permanent permanent,
+                                               EnumMap<ManaColor, Integer> poolBefore,
+                                               EnumMap<ManaColor, Integer> creatureManaBefore,
+                                               List<StackEntry> deferredTriggers) {
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        EnumMap<ManaColor, Integer> manaAdded = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> creatureManaAdded = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int added = pool.get(color) - poolBefore.getOrDefault(color, 0);
+            if (added > 0) {
+                manaAdded.put(color, added);
+            }
+            int creatureAdded = pool.getCreatureMana(color) - creatureManaBefore.getOrDefault(color, 0);
+            if (creatureAdded > 0) {
+                creatureManaAdded.put(color, creatureAdded);
+            }
+        }
+        if (manaAdded.isEmpty() && deferredTriggers.isEmpty()) {
+            return;
+        }
+        gameData.revertableManaActivations.add(new ManaActivation(
+                playerId, permanent.getId(), manaAdded, creatureManaAdded, List.copyOf(deferredTriggers)));
+    }
+
+    /**
+     * Undoes this player's still-revertable mana-ability activations: untaps each recorded
+     * source, drains the mana it produced, and removes its deferred triggers. Entries are
+     * processed newest-first and skipped (dropped without reverting) when the produced mana
+     * is no longer in the pool or the source is no longer tapped — a safety net in case the
+     * mana was spent through a path that didn't clear the log.
+     */
+    public void revertManaActivations(GameData gameData, Player player) {
+        UUID playerId = player.getId();
+        ManaPool pool = gameData.playerManaPools.get(playerId);
+        boolean revertedAny = false;
+
+        List<ManaActivation> activations = gameData.revertableManaActivations;
+        for (int i = activations.size() - 1; i >= 0; i--) {
+            ManaActivation activation = activations.get(i);
+            if (!playerId.equals(activation.playerId())) {
+                continue;
+            }
+            activations.remove(i);
+
+            Permanent source = gameQueryService.findPermanentById(gameData, activation.permanentId());
+            boolean poolStillHasMana = pool != null && activation.manaAdded().entrySet().stream()
+                    .allMatch(e -> pool.get(e.getKey()) >= e.getValue());
+            if (source == null || !source.isTapped() || !poolStillHasMana) {
+                continue;
+            }
+
+            source.untap();
+            for (Map.Entry<ManaColor, Integer> e : activation.manaAdded().entrySet()) {
+                for (int n = 0; n < e.getValue(); n++) {
+                    pool.remove(e.getKey());
+                }
+            }
+            for (Map.Entry<ManaColor, Integer> e : activation.creatureManaAdded().entrySet()) {
+                pool.removeCreatureMana(e.getKey(), e.getValue());
+            }
+            gameData.pendingManaAbilityTriggers.removeAll(activation.deferredTriggers());
+            revertedAny = true;
+        }
+
+        if (revertedAny) {
+            String logEntry = player.getUsername() + " cancels — mana abilities reverted.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} reverts their mana ability activations", gameData.id, player.getUsername());
+        }
         gameBroadcastService.broadcastGameState(gameData);
     }
 

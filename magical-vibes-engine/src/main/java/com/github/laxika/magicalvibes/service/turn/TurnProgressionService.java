@@ -41,6 +41,10 @@ public class TurnProgressionService {
     private final AutoPassService autoPassService;
 
     public void advanceStep(GameData gameData) {
+        // The mana pool drains at step boundaries, so nothing recorded before this point can
+        // still be reverted by the cancel-casting UI.
+        gameData.revertableManaActivations.clear();
+
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
                 && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)

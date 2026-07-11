@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.networking.message.DraftPickRequest;
 import com.github.laxika.magicalvibes.networking.message.RequestCardListRequest;
 import com.github.laxika.magicalvibes.networking.message.SubmitDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.PaySearchTaxRequest;
+import com.github.laxika.magicalvibes.networking.message.RevertManaActivationsRequest;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
@@ -103,6 +104,8 @@ public interface MessageHandler {
     void handleValidTargetsRequest(Connection connection, ValidTargetsRequest request) throws Exception;
 
     void handlePaySearchTax(Connection connection, PaySearchTaxRequest request) throws Exception;
+
+    void handleRevertManaActivations(Connection connection, RevertManaActivationsRequest request) throws Exception;
 
     void handleScryCompleted(Connection connection, ScryCompletedRequest request) throws Exception;
 

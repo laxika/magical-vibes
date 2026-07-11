@@ -96,6 +96,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.legalBlockPairs.set(new Map());
     this.selectedBlockerIndex.set(null);
     this.playableCardIndices.set(new Set());
+    this.potentialPlayableCardIndices.set(new Set());
+    this.potentialManaTotal.set(0);
     this.playableGraveyardLandIndices.set(new Set());
     this.playableFlashbackIndices.set(new Set());
     this.playableExileCards.set([]);
@@ -112,7 +114,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.game,
       () => this.myBattlefield,
       () => this.opponentBattlefield,
-      () => this.totalMana
+      () => this.totalMana,
+      (index: number) => this.playableCardIndices().has(index),
+      () => this.potentialManaTotal()
     );
 
     const initialStops = this.websocketService.currentGame?.autoStopSteps;
@@ -670,6 +674,8 @@ export class GameComponent implements OnInit, OnDestroy {
     this.websocketService.currentGame = updated;
 
     this.playableCardIndices.set(new Set(state.playableCardIndices));
+    this.potentialPlayableCardIndices.set(new Set(state.potentialPlayableCardIndices ?? []));
+    this.potentialManaTotal.set(state.potentialManaTotal ?? 0);
     this.playableGraveyardLandIndices.set(new Set(state.playableGraveyardLandIndices ?? []));
     this.playableFlashbackIndices.set(new Set(state.playableFlashbackIndices ?? []));
     this.playableExileCards.set(state.playableExileCards ?? []);
@@ -699,6 +705,9 @@ export class GameComponent implements OnInit, OnDestroy {
       this.blockerAssignments.set(new Map());
     }
 
+    // MTGO-style casting: fire the held-back cast once the pool covers it
+    this.choice.targeting.onGameStateUpdate();
+
     this.scheduleCombatShiftUpdate();
   }
 
@@ -722,6 +731,8 @@ export class GameComponent implements OnInit, OnDestroy {
   // ========== Priority & playability ==========
 
   playableCardIndices = signal(new Set<number>());
+  potentialPlayableCardIndices = signal(new Set<number>());
+  potentialManaTotal = signal(0);
   playableGraveyardLandIndices = signal(new Set<number>());
   playableFlashbackIndices = signal(new Set<number>());
   playableExileCards = signal<Card[]>([]);
@@ -729,8 +740,10 @@ export class GameComponent implements OnInit, OnDestroy {
   autoStopSteps = signal(new Set<string>());
   searchTaxCost = signal(0);
 
+  /** Clickable/highlighted in hand: strictly affordable now, or affordable once the
+      player taps their mana sources (MTGO-style — clicking enters the payment flow). */
   isCardPlayable(index: number): boolean {
-    return this.playableCardIndices().has(index);
+    return this.playableCardIndices().has(index) || this.potentialPlayableCardIndices().has(index);
   }
 
   isGraveyardLandPlayable(index: number): boolean {
@@ -1517,6 +1530,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const t = this.choice.targeting;
     if (this.showShortcutsPopup()) { this.showShortcutsPopup.set(false); return true; }
     if (this.showSurrenderConfirm()) { this.cancelSurrender(); return true; }
+    if (t.payingForCast) { t.cancelPendingCast(); return true; }
     if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
     if (t.choosingMode) { t.cancelModes(); return true; }
     if (t.choosingKicker) { t.cancelKicker(); return true; }
@@ -1542,7 +1556,7 @@ export class GameComponent implements OnInit, OnDestroy {
       || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
       || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
       || c.damage.assigningCombatDamage || c.damage.distributingDamage
-      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking || t.payingForCast
       || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
       || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
       || t.targetingGraveyard;

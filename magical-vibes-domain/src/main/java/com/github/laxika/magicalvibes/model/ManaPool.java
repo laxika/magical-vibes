@@ -226,6 +226,15 @@ public class ManaPool {
         creatureMana.merge(color, amount, Integer::sum);
     }
 
+    /** Removes the creature-mana tag for the given color (floored at 0), e.g. when a
+     *  mana-creature tap is reverted. The regular pool is unaffected. */
+    public void removeCreatureMana(ManaColor color, int amount) {
+        creatureMana.merge(color, -amount, Integer::sum);
+        if (creatureMana.getOrDefault(color, 0) < 0) {
+            creatureMana.put(color, 0);
+        }
+    }
+
     public int getCreatureMana(ManaColor color) {
         return creatureMana.getOrDefault(color, 0);
     }

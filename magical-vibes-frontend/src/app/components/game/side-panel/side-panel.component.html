@@ -359,6 +359,9 @@
       <button class="btn-pass btn-pass-orange" (click)="confirmAttackers.emit()">Confirm Attackers</button>
     } @else if (declaringBlockers) {
       <button class="btn-pass btn-pass-blue" (click)="confirmBlockers.emit()">Confirm Blockers</button>
+    } @else if (choice.targeting.payingForCast) {
+      <div class="attack-tax-banner">Casting {{ choice.targeting.pendingCastCardName }} — activate mana abilities to pay the cost.</div>
+      <button class="btn-pass" (click)="choice.targeting.cancelPendingCast()">Cancel</button>
     } @else {
       <button class="btn-pass" (click)="passPriority.emit()" [disabled]="!hasPriority">Pass Priority</button>
     }

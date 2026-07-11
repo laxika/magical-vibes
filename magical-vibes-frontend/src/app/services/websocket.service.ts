@@ -71,6 +71,7 @@ export enum MessageType {
   VALID_TARGETS_REQUEST = 'VALID_TARGETS_REQUEST',
   VALID_TARGETS_RESPONSE = 'VALID_TARGETS_RESPONSE',
   PAY_SEARCH_TAX = 'PAY_SEARCH_TAX',
+  REVERT_MANA_ACTIVATIONS = 'REVERT_MANA_ACTIVATIONS',
   X_VALUE_CHOICE = 'X_VALUE_CHOICE',
   X_VALUE_CHOSEN = 'X_VALUE_CHOSEN',
   SURRENDER = 'SURRENDER',
@@ -353,6 +354,8 @@ export interface GameStateNotification {
   manaPool: Record<string, number>;
   autoStopSteps: string[];
   playableCardIndices: number[];
+  potentialPlayableCardIndices: number[];
+  potentialManaTotal: number;
   playableGraveyardLandIndices: number[];
   playableFlashbackIndices: number[];
   playableExileCards: Card[];

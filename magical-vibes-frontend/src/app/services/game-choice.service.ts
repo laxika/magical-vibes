@@ -29,11 +29,14 @@ export class GameChoiceService {
     gameSignal: Signal<Game | null>,
     myBattlefieldFn: () => Permanent[],
     opponentBattlefieldFn: () => Permanent[],
-    totalManaFn: () => number
+    totalManaFn: () => number,
+    isStrictlyPlayableFn: (index: number) => boolean = () => false,
+    potentialTotalManaFn: () => number = () => 0
   ): void {
     this.reset();
     this.gameSignal = gameSignal;
-    this.targeting.init(gameSignal, myBattlefieldFn, opponentBattlefieldFn, totalManaFn);
+    this.targeting.init(gameSignal, myBattlefieldFn, opponentBattlefieldFn, totalManaFn,
+      isStrictlyPlayableFn, potentialTotalManaFn);
   }
 
   reset(): void {

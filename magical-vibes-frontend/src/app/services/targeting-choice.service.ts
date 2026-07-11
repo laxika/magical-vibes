@@ -14,17 +14,23 @@ export class TargetingChoiceService {
   private myBattlefieldFn!: () => Permanent[];
   private opponentBattlefieldFn!: () => Permanent[];
   private totalManaFn!: () => number;
+  private isStrictlyPlayableFn: (index: number) => boolean = () => false;
+  private potentialTotalManaFn: () => number = () => 0;
 
   init(
     gameSignal: Signal<Game | null>,
     myBattlefieldFn: () => Permanent[],
     opponentBattlefieldFn: () => Permanent[],
-    totalManaFn: () => number
+    totalManaFn: () => number,
+    isStrictlyPlayableFn: (index: number) => boolean = () => false,
+    potentialTotalManaFn: () => number = () => 0
   ): void {
     this.gameSignal = gameSignal;
     this.myBattlefieldFn = myBattlefieldFn;
     this.opponentBattlefieldFn = opponentBattlefieldFn;
     this.totalManaFn = totalManaFn;
+    this.isStrictlyPlayableFn = isStrictlyPlayableFn;
+    this.potentialTotalManaFn = potentialTotalManaFn;
   }
 
   reset(): void {
@@ -111,6 +117,8 @@ export class TargetingChoiceService {
     this.graveyardTargetCards = [];
     this.graveyardTargetCardIds = [];
     this.graveyardTargetPrompt = '';
+    // MTGO-style cast payment
+    this.clearCastPayment();
   }
 
   private get hasPriority(): boolean {
@@ -215,6 +223,21 @@ export class TargetingChoiceService {
   graveyardTargetCardIds: string[] = [];
   graveyardTargetPrompt = '';
 
+  // --- MTGO-style cast payment state ---
+  // A fully specified PLAY_CARD message waiting for the mana cost to be covered: the
+  // player clicked a card only "potentially" playable (affordable if they tap their mana
+  // sources), finished all pre-cast choices (modes/kicker/X/targets), and is now tapping
+  // lands. The message is sent automatically once the pool covers the cost; the side
+  // panel shows a Cancel button (instead of Pass Priority) that reverts the taps.
+  payingForCast = false;
+  pendingCastCardIndex = -1;
+  pendingCastCardName = '';
+  private pendingCastCardId: string | null = null;
+  /** Cost to re-check client-side before firing (X/kicker portion); null = trust strict playability. */
+  private pendingCastManaCost: string | null = null;
+  private pendingCastXValue = 0;
+  private pendingCastMessage: any = null;
+
   // ========== Message handlers ==========
 
   handleValidTargetsResponse(msg: ValidTargetsResponse): void {
@@ -300,6 +323,8 @@ export class TargetingChoiceService {
   }
 
   playCard(index: number, isCardPlayable: (i: number) => boolean): void {
+    // While paying for a held-back cast, hand clicks are ignored — cancel first.
+    if (this.payingForCast) return;
     const g = this.gameSignal();
     if (g && isCardPlayable(index)) {
       const card = g.hand[index];
@@ -372,7 +397,9 @@ export class TargetingChoiceService {
       this.xValueCardIndex = index;
       this.xValueCardName = card.name;
       this.xValueInput = 0;
-      this.xValueMaximum = this.totalManaFn() - base;
+      // X can be paid MTGO-style by tapping more lands after announcing, so the cap is
+      // the potential mana (pool + untapped sources), not just what's floating now.
+      this.xValueMaximum = Math.max(this.totalManaFn(), this.potentialTotalManaFn()) - base;
       return;
     }
     if (card.needsSpellTarget) {
@@ -702,8 +729,95 @@ export class TargetingChoiceService {
     if (extra) {
       Object.assign(msg, extra);
     }
-    this.websocketService.send(msg);
     this.pendingPhyrexianLifeCount = null;
+
+    // MTGO-style casting: a plain hand cast whose cost the pool doesn't cover yet is
+    // held back while the player taps mana sources; it is sent automatically once the
+    // pool covers it (see onGameStateUpdate). Zone plays (flashback/exile/library-top)
+    // keep the immediate path — the server marked them strictly affordable.
+    const isZonePlay = msg.flashback || msg.fromExileCardId != null || msg.fromLibraryTop;
+    if (!isZonePlay && this.beginCastPaymentIfUnaffordable(msg)) {
+      return;
+    }
+    this.websocketService.send(msg);
+  }
+
+  // ========== MTGO-style cast payment ==========
+
+  /** Enters payment mode for the given PLAY_CARD message when its mana cost isn't
+      covered by the current pool. Returns true when the message was held back. */
+  private beginCastPaymentIfUnaffordable(msg: any): boolean {
+    const g = this.gameSignal();
+    const card = g?.hand?.[msg.cardIndex];
+    if (!card) return false;
+
+    const hasX = card.manaCost?.includes('{X}') ?? false;
+    // msg.xValue doubles as the modal-mode encoding for non-X cards — only treat it as
+    // generic mana when the card really has {X} in its cost.
+    const xGeneric = hasX && typeof msg.xValue === 'number' && msg.xValue > 0 ? msg.xValue : 0;
+    // The server's strict playability already prices in every cost modifier for the base
+    // cost, so a client-side pool check is only needed for what strict playability doesn't
+    // know: the announced X and a confirmed kicker. Checking the base cost here too would
+    // strand cost-reduced cards in payment mode.
+    let clientCheckedCost: string | null = null;
+    if (xGeneric > 0) {
+      clientCheckedCost = card.manaCost ?? '';
+    }
+    if (msg.kicked && card.kickerCost) {
+      clientCheckedCost = (clientCheckedCost ?? card.manaCost ?? '') + card.kickerCost;
+    }
+
+    if (this.isStrictlyPlayableFn(msg.cardIndex)
+        && (clientCheckedCost == null || this.canPayManaCost(clientCheckedCost, xGeneric))) {
+      return false;
+    }
+
+    this.payingForCast = true;
+    this.pendingCastCardIndex = msg.cardIndex;
+    this.pendingCastCardName = card.name;
+    this.pendingCastCardId = card.id ?? null;
+    this.pendingCastManaCost = clientCheckedCost;
+    this.pendingCastXValue = xGeneric;
+    this.pendingCastMessage = msg;
+    return true;
+  }
+
+  /** Called after every GAME_STATE while paying: sends the held-back cast once the pool
+      covers it, or abandons payment mode when the game moved on under us. */
+  onGameStateUpdate(): void {
+    if (!this.payingForCast) return;
+    const g = this.gameSignal();
+    const card = g?.hand?.[this.pendingCastCardIndex];
+    const cardChanged = !card || (this.pendingCastCardId != null && card.id !== this.pendingCastCardId);
+    if (!g || cardChanged || !this.hasPriority) {
+      this.clearCastPayment();
+      return;
+    }
+    if (this.isStrictlyPlayableFn(this.pendingCastCardIndex)
+        && (this.pendingCastManaCost == null
+            || this.canPayManaCost(this.pendingCastManaCost, this.pendingCastXValue))) {
+      const msg = this.pendingCastMessage;
+      this.clearCastPayment();
+      this.websocketService.send(msg);
+    }
+  }
+
+  /** Cancel button / Esc while paying: drop the pending cast and untap the mana
+      sources tapped for it (the server reverts the recorded mana activations). */
+  cancelPendingCast(): void {
+    if (!this.payingForCast) return;
+    this.clearCastPayment();
+    this.websocketService.send({ type: MessageType.REVERT_MANA_ACTIVATIONS });
+  }
+
+  private clearCastPayment(): void {
+    this.payingForCast = false;
+    this.pendingCastCardIndex = -1;
+    this.pendingCastCardName = '';
+    this.pendingCastCardId = null;
+    this.pendingCastManaCost = null;
+    this.pendingCastXValue = 0;
+    this.pendingCastMessage = null;
   }
 
   confirmXValue(): void {
@@ -1309,14 +1423,14 @@ export class TargetingChoiceService {
     return true;
   }
 
-  private canPayManaCost(manaCost: string): boolean {
+  private canPayManaCost(manaCost: string, extraGeneric = 0): boolean {
     const g = this.gameSignal();
     if (!g) return false;
     const pool = g.manaPool;
     const symbols = manaCost.match(/\{([^}]+)\}/g) || [];
     const coloredSymbols = ['W', 'U', 'B', 'R', 'G', 'C'];
     const coloredNeeded: Record<string, number> = {};
-    let genericNeeded = 0;
+    let genericNeeded = extraGeneric;
     for (const sym of symbols) {
       const inner = sym.slice(1, -1);
       if (inner === 'X' || inner === 'T') continue;

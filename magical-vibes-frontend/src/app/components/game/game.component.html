@@ -646,6 +646,7 @@
           <app-card-display
             [card]="card"
             [class.playable]="isCardPlayable($index)"
+            [class.casting-pending]="choice.targeting.payingForCast && choice.targeting.pendingCastCardIndex === $index"
             [class.choosable-card]="choice.choosingFromHand && choice.isChoosableCard($index)"
             (click)="choice.choosingFromHand ? choice.chooseCardFromHand($index) : playCard($index)"
             (mouseenter)="onCardHover(card)"

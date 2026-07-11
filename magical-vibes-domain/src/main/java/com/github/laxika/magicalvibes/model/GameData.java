@@ -108,6 +108,13 @@ public class GameData {
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
     public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
+    /** Mana-ability activations that can still be undone by the MTGO-style "cancel casting" UI
+     *  (untap the source, drain the produced mana). Cleared whenever a non-mana action happens
+     *  (casting, non-mana ability activation, passing priority, step change); each entry is also
+     *  re-validated against the pool at revert time. Deliberately NOT copied by
+     *  {@link #simulationCopy()} — the AI never reverts, and the entries reference live
+     *  {@link StackEntry} objects from this game. */
+    public final List<ManaActivation> revertableManaActivations = Collections.synchronizedList(new ArrayList<>());
     /** CR 603.2 / 603.3 — depth counter for nested mana-ability resolution. While > 0,
      *  triggered abilities that fire from effects resolving inside a mana ability (e.g. a life-gain
      *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the

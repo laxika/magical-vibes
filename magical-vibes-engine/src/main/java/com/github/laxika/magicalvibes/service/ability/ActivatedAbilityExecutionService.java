@@ -265,6 +265,20 @@ public class ActivatedAbilityExecutionService {
                 && snapshotEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
 
         if (isManaAbility) {
+            // A "pure" mana activation (tap-only cost, only fixed-shape AwardManaEffect output)
+            // can be undone by the MTGO-style cancel-casting UI: snapshot the pool around
+            // resolution so the exact mana added (incl. Damping Sphere replacement) is recorded.
+            boolean revertable = ability.isRequiresTap()
+                    && ability.getManaCost() == null
+                    && abilityEffects.stream().noneMatch(e -> e instanceof CostEffect)
+                    && snapshotEffects.stream().allMatch(e -> e instanceof AwardManaEffect);
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            java.util.EnumMap<ManaColor, Integer> poolBefore =
+                    revertable ? AbilityActivationService.snapshotPoolColors(pool) : null;
+            java.util.EnumMap<ManaColor, Integer> creatureManaBefore =
+                    revertable ? AbilityActivationService.snapshotCreatureManaColors(pool) : null;
+            int pendingTriggersBefore = gameData.pendingManaAbilityTriggers.size();
+
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
             // CR 603.3: Triggered abilities from mana-ability costs (sacrifice, tap)
             // wait until the next time a player would receive priority before going
@@ -274,6 +288,17 @@ public class ActivatedAbilityExecutionService {
                 gameData.pendingManaAbilityTriggers.addAll(deferredTapTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
+            }
+            if (revertable) {
+                List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
+                        pendingTriggersBefore, gameData.pendingManaAbilityTriggers.size()));
+                AbilityActivationService.recordRevertableManaActivation(
+                        gameData, playerId, permanent, poolBefore, creatureManaBefore, deferred);
+            } else {
+                // A mana ability with side effects (pain-land damage, pool doubling, color choice,
+                // extra costs) can't be undone — and undoing earlier activations after it could
+                // interact with its result (e.g. doubled mana), so bar the whole window.
+                gameData.revertableManaActivations.clear();
             }
             return;
         }

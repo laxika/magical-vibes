@@ -117,6 +117,10 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
 
+            // Passing priority closes the window in which mana-ability activations could
+            // still be undone by the cancel-casting UI.
+            gameData.revertableManaActivations.clear();
+
             // CR 603.3: Flush triggers deferred from mana-ability activations.
             // They go on the stack now (the next time a player would receive priority)
             // and both players must pass again before the top resolves.
@@ -389,6 +393,22 @@ public class GameService {
                 requirePriority(gameData, player);
             }
             abilityActivationService.tapPermanent(gameData, player, permanentIndex);
+        }
+    }
+
+    /**
+     * Undoes the player's still-revertable mana-ability activations (MTGO-style cancel while
+     * paying for a spell): tapped sources untap and the mana they produced leaves the pool.
+     * Allowed whenever the player could have activated the abilities in the first place —
+     * holding priority, or while paying attack tax during attacker declaration.
+     */
+    public void revertManaActivations(GameData gameData, Player player) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            if (!isAttackTaxManaPayment(gameData, player)) {
+                requirePriority(gameData, player);
+            }
+            abilityActivationService.revertManaActivations(gameData, player);
         }
     }
 
