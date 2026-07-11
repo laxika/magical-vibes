@@ -26,9 +26,11 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
@@ -82,6 +84,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -855,6 +858,26 @@ public class GameQueryService {
         return hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class);
     }
 
+    /**
+     * True if any attacking creature is attacking the given player directly or one of the planeswalkers
+     * they control (i.e. the player "has been attacked" this combat). Defiant Stand, Kongming's Contraptions.
+     */
+    public boolean isPlayerBeingAttacked(GameData gameData, UUID playerId) {
+        List<Permanent> playerBattlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (!perm.isAttacking()) continue;
+                UUID target = perm.getAttackTarget();
+                if (target == null) continue;
+                if (target.equals(playerId)) return true;
+                if (playerBattlefield.stream().anyMatch(p -> p.getId().equals(target))) return true;
+            }
+        }
+        return false;
+    }
+
     /** True if the given attacker is the only creature its controller declared as an attacker (CR 509.1). */
     private boolean isAttackingAlone(GameData gameData, Permanent attacker) {
         UUID controllerId = findPermanentController(gameData, attacker.getId());
@@ -1270,6 +1293,29 @@ public class GameQueryService {
                 if (!line.isEmpty()) {
                     explain.add(line);
                 }
+            }
+        }
+
+        // Indefinite target buffs (Riding the Dilu Horse): a resolved spell recorded a PERMANENT
+        // floating BuffTargetCreatureIndefinitelyEffect on this permanent. It has no static-slot
+        // source, so it is read here rather than through a handler — the additive +P/+Y (7c) and
+        // granted keywords (layer 6) apply for as long as the permanent exists; multiple copies
+        // stack additively.
+        AccumulatorSnapshot beforeIndefinite = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof BuffTargetCreatureIndefinitelyEffect buff
+                        && target.getId().equals(floating.affectedPermanentId())) {
+                    accumulator.addPower(buff.powerBoost());
+                    accumulator.addToughness(buff.toughnessBoost());
+                    accumulator.addKeywords(buff.keywords());
+                }
+            }
+        }
+        if (beforeIndefinite != null) {
+            ModifierLine line = beforeIndefinite.diff("Indefinite buff", accumulator, false);
+            if (!line.isEmpty()) {
+                explain.add(line);
             }
         }
 
@@ -2114,6 +2160,10 @@ public class GameQueryService {
                 && !hasKeyword(gameData, blocker, Keyword.REACH)) {
             return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (flying)");
         }
+        if (hasKeyword(gameData, attacker, Keyword.HORSEMANSHIP)
+                && !hasKeyword(gameData, blocker, Keyword.HORSEMANSHIP)) {
+            return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName() + " (horsemanship)");
+        }
         if (hasKeyword(gameData, attacker, Keyword.FEAR)
                 && !isArtifact(blocker)
                 && !hasColor(gameData, blocker, CardColor.BLACK)) {
@@ -2134,6 +2184,10 @@ public class GameQueryService {
             if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
+            }
+            if (effect instanceof CantBeBlockedByCreaturesMatchingPredicateEffect restriction
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return Optional.of(blocker.getCard().getName() + " cannot block " + attacker.getCard().getName());
             }
         }
         for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {

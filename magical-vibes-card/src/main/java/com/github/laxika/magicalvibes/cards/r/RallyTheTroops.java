@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "19")
+@CardRegistration(set = "PTK", collectorNumber = "16")
 public class RallyTheTroops extends Card {
 
     public RallyTheTroops() {

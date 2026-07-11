@@ -29,6 +29,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeCreature(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
+    record DestroyChosenCreature(UUID choosingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
+
     record SacrificeCreatureThenSearchLibrary(UUID sacrificingPlayerId) implements PermanentChoiceContext {}
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}

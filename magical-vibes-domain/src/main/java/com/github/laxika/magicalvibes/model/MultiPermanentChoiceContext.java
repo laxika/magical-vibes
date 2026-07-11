@@ -55,6 +55,16 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
+    /**
+     * Forced destroy pick ("you/target player destroys N permanents you control"). The
+     * {@code destroyingPlayerId} is the chooser; the chosen permanents are destroyed (regeneration
+     * and indestructible apply) and then effect resolution resumes. {@code sourceName} is used for
+     * the destruction log. Used by {@code PlayerDestroysPermanentsEffect} (e.g. Burning of Xinye).
+     */
+    record ForcedDestroy(UUID destroyingPlayerId, String sourceName)
+            implements MultiPermanentChoiceContext {
+    }
+
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
     record CombatDamageBounce(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }

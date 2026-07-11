@@ -70,13 +70,13 @@ public final class TextChangeTransformer {
             "Forest", CardSubtype.FOREST);
 
     /** Reverse of {@link Keyword#LANDWALK_MAP}: the walk keyword whose text contains a given
-     *  land-type word. PLAINS has no walk keyword in the enum, so a replacement targeting it
-     *  leaves walk keywords unchanged. */
+     *  land-type word. */
     private static final Map<CardSubtype, Keyword> LANDWALK_BY_LAND_TYPE = Map.of(
             CardSubtype.FOREST, Keyword.FORESTWALK,
             CardSubtype.MOUNTAIN, Keyword.MOUNTAINWALK,
             CardSubtype.ISLAND, Keyword.ISLANDWALK,
-            CardSubtype.SWAMP, Keyword.SWAMPWALK);
+            CardSubtype.SWAMP, Keyword.SWAMPWALK,
+            CardSubtype.PLAINS, Keyword.PLAINSWALK);
 
     private TextChangeTransformer() {
     }

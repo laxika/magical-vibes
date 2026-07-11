@@ -209,6 +209,42 @@ public class DestructionSupport {
         }
     }
 
+    /**
+     * A single player destroys {@code count} permanents matching {@code filter} that they control:
+     * if they control more than {@code count} they choose which (multi-select via
+     * {@link MultiPermanentChoiceContext.ForcedDestroy}), otherwise all matching are destroyed with
+     * no choice. Destruction respects regeneration/indestructible. Returns {@code true} if a choice
+     * was begun (resolution is now awaiting input), {@code false} if it resolved synchronously.
+     */
+    public boolean destroyPlayerMatchingPermanents(GameData gameData, UUID playerId, int count,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter, String sourceName) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<Permanent> matching = battlefield == null ? List.of() : battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .toList();
+
+        if (matching.isEmpty()) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " has no matching permanents to destroy.");
+            return false;
+        }
+
+        if (matching.size() <= count) {
+            for (Permanent perm : matching) {
+                tryDestroyAndLog(gameData, perm, sourceName);
+            }
+            permanentRemovalService.removeOrphanedAuras(gameData);
+            return false;
+        }
+
+        List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+        playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
+                new MultiPermanentChoiceContext.ForcedDestroy(playerId, sourceName),
+                "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to destroy.");
+        return true;
+    }
+
     public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
                                               String cardName, CardColor sourceColor) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);

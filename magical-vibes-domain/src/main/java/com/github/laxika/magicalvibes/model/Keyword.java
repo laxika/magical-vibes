@@ -24,6 +24,7 @@ public enum Keyword {
     MOUNTAINWALK,
     ISLANDWALK,
     SWAMPWALK,
+    PLAINSWALK,
     HEXPROOF,
     INFECT,
     INTIMIDATE,
@@ -40,7 +41,8 @@ public enum Keyword {
     UNDYING,
     CONVERGE,
     INCREMENT,
-    PARADIGM;
+    PARADIGM,
+    HORSEMANSHIP;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.
@@ -49,6 +51,7 @@ public enum Keyword {
             FORESTWALK, CardSubtype.FOREST,
             MOUNTAINWALK, CardSubtype.MOUNTAIN,
             ISLANDWALK, CardSubtype.ISLAND,
-            SWAMPWALK, CardSubtype.SWAMP
+            SWAMPWALK, CardSubtype.SWAMP,
+            PLAINSWALK, CardSubtype.PLAINS
     );
 }

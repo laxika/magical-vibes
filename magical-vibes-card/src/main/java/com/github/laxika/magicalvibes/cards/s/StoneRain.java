@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "221")
 @CardRegistration(set = "POR", collectorNumber = "151")
 @CardRegistration(set = "P02", collectorNumber = "117")
+@CardRegistration(set = "PTK", collectorNumber = "123")
 public class StoneRain extends Card {
 
     public StoneRain() {

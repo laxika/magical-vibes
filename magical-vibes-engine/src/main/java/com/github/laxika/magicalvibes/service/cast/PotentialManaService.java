@@ -329,6 +329,8 @@ public class PotentialManaService {
             case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep.isBeforeAttackersDeclared();
             case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
+            case ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED -> gameData.currentStep == TurnStep.DECLARE_ATTACKERS
+                    && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
             case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
             case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;
             case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(playerId);

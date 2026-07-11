@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -340,6 +341,8 @@ public class StaticEffectSupport {
         if (filter instanceof PermanentIsAttackingPredicate)
             return target.isAttacking();
         if (filter instanceof PermanentTruePredicate) return true;
+        if (filter instanceof PermanentNamedPredicate p)
+            return target.getCard().getName().equals(p.cardName());
         if (filter instanceof PermanentPowerAtMostPredicate p)
             return target.getEffectivePower() <= p.maxPower();
         if (filter instanceof PermanentToughnessAtMostPredicate p)

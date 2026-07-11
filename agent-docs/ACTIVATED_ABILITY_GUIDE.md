@@ -30,6 +30,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
 | `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
 | `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
+| `ONLY_DURING_DECLARE_ATTACKERS_IF_ATTACKED` | Activate only during the declare attackers step and only if you've been attacked this step (a creature is attacking you or a planeswalker you control). Kongming's Contraptions. Checks `gameData.currentStep == DECLARE_ATTACKERS` + `gameQueryService.isPlayerBeingAttacked(gd, playerId)` |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |

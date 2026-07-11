@@ -125,6 +125,8 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ForcedDestroy ctx) {
+            handleForcedDestroy(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
             handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
@@ -282,6 +284,35 @@ public class MultiPermanentChoiceHandlerService {
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Follow the same pattern as proliferate completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleForcedDestroy(GameData gameData, List<UUID> permanentIds,
+                                     MultiPermanentChoiceContext.ForcedDestroy context) {
+        // Chosen permanents are destroyed simultaneously (regeneration/indestructible apply).
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.tryDestroyAndLog(gameData, perm, context.sourceName());
+            }
+        }
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {

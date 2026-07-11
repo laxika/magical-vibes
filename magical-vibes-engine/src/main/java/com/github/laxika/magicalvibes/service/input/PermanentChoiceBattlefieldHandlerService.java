@@ -206,6 +206,25 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleDestroyChosenCreature(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.DestroyChosenCreature context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Target creature no longer exists");
+        }
+
+        destructionSupport.tryDestroyAndLog(gameData, target, context.sourceCardName());
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureThenSearchLibrary(GameData gameData, UUID permanentId,
                                                          PermanentChoiceContext.SacrificeCreatureThenSearchLibrary context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);

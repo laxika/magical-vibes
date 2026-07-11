@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "P02", collectorNumber = "38")
+@CardRegistration(set = "PTK", collectorNumber = "43")
 public class Extinguish extends Card {
 
     public Extinguish() {

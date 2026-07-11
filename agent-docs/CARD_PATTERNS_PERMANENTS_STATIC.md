@@ -24,6 +24,7 @@ All paths relative to `cards/`.
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |
 | Evasion (blocked only by) | `e/ElvenRiders.java` | STATIC CanBeBlockedOnlyByFilterEffect |
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |
+| Block limit (team-wide) | `y/YuanShaoTheIndecisive.java` | STATIC EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect — each creature you control can't be blocked by more than N |
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
 | Unblockable while attacking alone | `d/DreamProwler.java` | STATIC CantBeBlockedIfAttackingAloneEffect |

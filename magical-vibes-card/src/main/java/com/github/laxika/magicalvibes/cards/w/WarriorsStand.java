@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "29")
+@CardRegistration(set = "PTK", collectorNumber = "31")
 public class WarriorsStand extends Card {
 
     public WarriorsStand() {

@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -65,6 +66,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
@@ -184,6 +186,8 @@ public class PredicateEvaluationService {
                     card.getManaValue() <= p.maxManaValue();
             case CardMinManaValuePredicate p ->
                     card.getManaValue() >= p.minManaValue();
+            case CardPowerAtMostPredicate p ->
+                    card.getPower() != null && card.getPower() <= p.maxPower();
             case CardNamedPredicate p ->
                     p.cardName().equals(card.getName());
             case CardNotPredicate p ->
@@ -467,6 +471,8 @@ public class PredicateEvaluationService {
                 }
                 yield permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
             }
+            case PermanentNamedPredicate namedPredicate ->
+                    permanent.getCard().getName().equals(namedPredicate.cardName());
             case PermanentHasCountersPredicate hasCountersPredicate ->
                     switch (hasCountersPredicate.counterType()) {
                         case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;

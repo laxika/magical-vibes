@@ -37,6 +37,7 @@ public sealed interface PermanentPredicate permits
         PermanentManaValueEqualsXPredicate,
         PermanentMaxManaValuePredicate,
         PermanentMinManaValuePredicate,
+        PermanentNamedPredicate,
         PermanentNotPredicate,
         PermanentPowerAtLeastPredicate,
         PermanentPowerAtMostControlledCreatureCountPredicate,

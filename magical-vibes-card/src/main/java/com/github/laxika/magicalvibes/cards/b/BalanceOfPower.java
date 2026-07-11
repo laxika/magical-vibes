@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "41")
+@CardRegistration(set = "PTK", collectorNumber = "34")
 public class BalanceOfPower extends Card {
 
     public BalanceOfPower() {

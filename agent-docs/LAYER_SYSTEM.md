@@ -308,8 +308,7 @@ order — they compose, replacement N applies to the output of N−1), it rewrit
 (`ProtectionFromColorsEffect` colors, `GrantColorEffect` color), basic-land-type parameters
 (`EnchantedPermanentBecomesTypeEffect`/`NonbasicLandsBecomeTypeEffect`/`GrantSubtypeEffect`
 subtypes), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
-(via the reverse of `Keyword.LANDWALK_MAP`; no PLAINSWALK exists in the enum, so a walk
-targeted at Plains stays unchanged), land-type and color predicates inside filters
+(via the reverse of `Keyword.LANDWALK_MAP`), land-type and color predicates inside filters
 (`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`, `PermanentColorInPredicate`,
 recursing through AllOf/AnyOf/Not), and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
 `EnchantedPermanentConditionalEffect` (recursing into what they wrap). An unchanged effect

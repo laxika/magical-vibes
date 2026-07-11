@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelf
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -196,12 +197,28 @@ public class CombatBlockService {
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
         }
 
+        // Team-wide "each creature you control can't be blocked by more than N creatures" (Yuan Shao).
+        // All attackers belong to the active player, so scan that player's battlefield once.
+        int teamMaxBlockers = Integer.MAX_VALUE;
+        for (Permanent p : attackerBattlefield) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect restriction) {
+                    teamMaxBlockers = Math.min(teamMaxBlockers, restriction.maxBlockers());
+                }
+            }
+        }
+
         for (var entry : blockersPerAttacker.entrySet()) {
             int attackerIdx = entry.getKey();
             int blockerCount = entry.getValue();
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
                 throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
+            }
+            if (blockerCount > teamMaxBlockers) {
+                throw new IllegalStateException(attacker.getCard().getName()
+                        + " can't be blocked by more than " + teamMaxBlockers
+                        + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
             }
             for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CanBeBlockedByAtMostNCreaturesEffect restriction
