@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "283")
+@CardRegistration(set = "POR", collectorNumber = "195")
 public class WoodElves extends Card {
 
     public WoodElves() {

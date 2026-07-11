@@ -209,6 +209,11 @@ public class CombatAttackService {
             if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
+            // Taunt: a taunted player's attacking creatures must attack the taunter if able.
+            UUID taunter = gameData.tauntedThisTurn.get(playerId);
+            if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " must attack the taunting player");
+            }
             // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
             // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
             if (isCantAttackDefenderDueToRestriction(gameData, attacker, targetId)) {
@@ -652,6 +657,12 @@ public class CombatAttackService {
         }
 
         UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
+
+        // Taunt: every creature the affected player controls must attack the taunter if able.
+        UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);
+        if (taunter != null && buildValidAttackTargetIds(gameData, creatureControllerId).contains(taunter)) {
+            count[0]++;
+        }
 
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttached()

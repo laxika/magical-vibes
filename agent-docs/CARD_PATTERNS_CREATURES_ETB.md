@@ -65,6 +65,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | As-enters choose creature + sacrifice grant | `d/DauntlessBodyguard.java` | ChooseAnotherCreatureOnEnterEffect + SacrificeSelfCost + GrantKeywordToChosenCreatureUntilEndOfTurnEffect — choose another creature on entry (replacement effect, not Torpor Orb-able), sacrifice to grant chosen creature indestructible |
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
+| ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |
 | ETB champion | `c/ChangelingHero.java` | ChampionCreatureEffect() — sacrifice unless exile another creature you control; exiled creature returns when this leaves |
 | ETB -1/-1 counters + counter removal ability | `b/BurdenedStoneback.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + GrantKeywordEffect |

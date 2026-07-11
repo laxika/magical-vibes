@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "10E", collectorNumber = "222")
 @CardRegistration(set = "M10", collectorNumber = "152")
 @CardRegistration(set = "M11", collectorNumber = "154")
+@CardRegistration(set = "POR", collectorNumber = "143")
 public class Pyroclasm extends Card {
 
     public Pyroclasm() {

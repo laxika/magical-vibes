@@ -3,6 +3,8 @@
 Purpose: quickly map oracle text phrases to the correct effect class + slot. Search this file for keywords from the card's oracle text to find the matching effect without reading EFFECTS_QUICK_REFERENCE.md.
 
 - "When [this] dies, return it to the battlefield transformed under your control at the beginning of the next end step." -> `EffectSlot.ON_DEATH` + `RegisterDelayedReturnSourceTransformedEffect()`.
+- "When [this] dies, return it to its owner's hand." -> `EffectSlot.ON_DEATH` + `ReturnSourceCardFromGraveyardToOwnerHandEffect()` (Endless Cockroaches).
+- "When [this] dies, put it on top of its owner's library." -> `EffectSlot.ON_DEATH` + `PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect()` (Undying Beast).
 - "When [this] dies, create a N/N [color] [Subtype] creature token ... at the beginning of the next end step." -> `EffectSlot.ON_DEATH` + `RegisterDelayedCreateTokenEffect(new CreateTokenEffect(...))` (Rukh Egg). The wrapped `CreateTokenEffect` is resolved at the next end step, not immediately.
 - "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield, return that card to the battlefield." (Sacred Ground) -> `EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` + `ReturnTriggeringLandFromGraveyardToBattlefieldEffect(null)`. The engine reads `GameData.currentlyResolvingControllerId` (set in `StackResolutionService`) to confirm an opponent's spell/ability caused it.
 
@@ -24,7 +26,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "CARDNAME can't attack or block unless [condition]" | `CantAttackOrBlockUnlessEffect(Condition, "unless clause")` | `STATIC` | Block-side counterpart of `CantAttackUnlessEffect` (same Condition mapping). "you control another [X]" = `ControlsAnotherPermanent(filter)` (excludes the source, e.g. Blind-Spot Giant "another Giant"). |
 | "deals N damage to target creature" | `DealDamageToTargetCreatureEffect(N)` | SPELL | Creature-only targeting |
 | "deals N damage to target creature or planeswalker" | `DealDamageToTargetCreatureOrPlaneswalkerEffect(N)` | SPELL | |
-| "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |
+| "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | Amount may be a `DynamicAmount`; pair with `SacrificeCreatureCost(false, true)` + `new XValue()` for "damage equal to the sacrificed creature's power to target opponent or planeswalker" (Final Strike) |
 | "deals N damage to target opponent and N damage to up to M target creatures that player controls" | `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(N, N, M)` | `ON_TRANSFORM_TO_BACK_FACE` | Two-step transform trigger target choice; use M=1 for "up to one" |
 | "deals N damage to target player" | `DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PLAYER)` | SPELL | Only recipient that targets. Amount is any `DynamicAmount` |
 | "deals N damage to each opponent" | `DealDamageToPlayersEffect(N, DamageRecipient.EACH_OPPONENT)` | SPELL/trigger | No targeting. Amount evaluates once — for dynamic amounts pass a `DynamicAmount`, e.g. `new CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar). NOT for per-opponent amounts (Molten Psyche keeps its own record) |
@@ -130,6 +132,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy target [permanent type]" | `DestroyTargetPermanentEffect(false)` | SPELL | + PermanentPredicate filter |
 | "destroy target creature. It can't be regenerated" | `DestroyTargetPermanentEffect(true)` | SPELL | cantRegenerate=true |
 | "destroy target attacking creature. You gain life equal to its power" | `GainLifeEffect(new TargetPower())` + `DestroyTargetPermanentEffect(false)` | SPELL | target = `PermanentPredicateTargetFilter(PermanentIsAttackingPredicate)`; gain life FIRST so power is read before destruction (Chastise) |
+| "destroy target creature. Its owner gains N life" | `DestroyTargetPermanentThenEffect(new GainLifeEffect(N), ThenEffectRecipient.TARGET_OWNER)` | SPELL | target = creature filter; `TARGET_OWNER` routes life to the creature's owner (not current controller — differs only for stolen creatures). Path of Peace |
 | "destroy all creatures" | `DestroyAllPermanentsEffect(PermanentIsCreaturePredicate())` | SPELL | |
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "target player sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)` | SPELL | bare creature filter → single-select sacrifice-a-creature primitive |
@@ -171,6 +174,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "If a spell or ability you control would counter a spell, instead exile that spell and you may play that card without paying its mana cost" | `ReplaceControlledCounterWithExileAndPlayEffect()` | STATIC | Guile. Intercepts every counter effect the permanent's controller controls (in `CounterSupport`); exiles the spell and queues a `MayPlayExiledCounteredCardEffect` free-play. Only spells, not abilities; uncounterable spells unaffected |
 | "This creature can't be blocked except by three or more creatures" | `CantBeBlockedByFewerThanNCreaturesEffect(3)` | STATIC | Generalized menace (validated in CombatBlockService). Menace itself = minBlockers 2; use this effect for other minimums (Guile = 3) |
 | "This creature can't be blocked as long as it's attacking alone" | `CantBeBlockedIfAttackingAloneEffect()` | STATIC | Dream Prowler. Unblockable only when it's the sole declared attacker (validated in CombatBlockService/GameQueryService) |
+| "This creature can't be blocked except by black creatures" | `CanBeBlockedOnlyByFilterEffect(new PermanentColorInPredicate(Set.of(CardColor.BLACK)), "black creatures")` | STATIC | Fear-style per-creature evasion (Dread Warlock). Validated in `GameQueryService.getBlockRestriction` |
+| "Black creatures you control can't be blocked this turn except by black creatures" | `GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(new PermanentColorInPredicate(Set.of(CardColor.BLACK)), new PermanentColorInPredicate(Set.of(CardColor.BLACK)), "black creatures")` | SPELL | Dread Charge. Grants the `CanBeBlockedOnlyByFilterEffect` restriction to each matching own creature until end of turn (transient on `Permanent`, cleared by `resetModifiers`). First filter = which of your creatures; second = allowed blockers |
 
 ## Draw / discard
 
@@ -193,6 +198,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard any number of cards, then draw that many cards plus one" | `DiscardUpToThenDrawThatManyEffect(ANY_NUMBER, 1)` | ON_DEATH/trigger | Colossus of the Blood Age |
 | "discard all the cards in your hand, then draw that many cards" | `DiscardOwnHandThenDrawThatManyEffect()` | SPELL | Shattered Perception |
 | "each player discards all the cards in their hand, then draws that many cards" | `EachPlayerDiscardsHandThenDrawsThatManyEffect()` | SPELL | APNAP order; each player's draw count = own discard count. Incendiary Command (modal mode) |
+| "each player discards any number of cards, then draws that many cards" | `EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect()` | SPELL | APNAP order; each player chooses how many to discard (X-value choice), discards that many, then draws that many, before the next player. Flux (add a trailing `DrawCardEffect(1)` for "Draw a card") |
 | "discard your hand, then draw cards equal to the number of cards in target opponent's hand" | `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` | SPELL | Borrowed Knowledge (modal mode 0) |
 | "discard a card" / "discard N cards" | `DiscardEffect(N, DiscardRecipient.CONTROLLER)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `DiscardEffect(N, DiscardRecipient.TARGET_PLAYER)` | SPELL | |
@@ -215,8 +221,10 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "you gain N life" / "gain N life" | `GainLifeEffect(N)` | SPELL/trigger | |
 | "you gain 1 life for each [permanent]" | `GainLifeEffect(new PermanentCount(predicate, scope))` | SPELL/trigger | scope: "you control" = CONTROLLER, "on the battlefield" = ANY_PLAYER; "N life for each" = wrap in `Scaled(count, N)`; independent counts summed ("each creature and each artifact", artifact creatures count twice) = `Sum(count1, count2)` (War Report ruling) |
+| "you gain N life for each [permanent] target opponent controls" | `GainLifeEffect(new Scaled(new PermanentCount(predicate, CountScope.TARGET_PLAYER), N), GainLifeRecipient.CONTROLLER, true)` + `target(PlayerPredicateTargetFilter(OPPONENT))` | SPELL | Renewing Dawn. `targetsPlayer=true` makes the spell target the opponent (controller still gains) so `TARGET_PLAYER` reads their board |
 | "you gain 1 life for each card in your hand" | `GainLifeEffect(new CardsInHand(CountScope.CONTROLLER))` | SPELL/trigger | Venser's Journal, Sword of War and Peace |
 | "you gain N life for each card in your graveyard" | `GainLifeEffect(new CardsInGraveyard(cardPredicate, CountScope.CONTROLLER))` | SPELL/trigger | `null` predicate = every card; ×N via `Scaled` (Gnaw to the Bone, Archangel's Light) |
+| "you gain N life for each creature attacking you" | `GainLifeEffect(new Scaled(new PermanentCount(new PermanentIsAttackingSourceControllerPredicate(), CountScope.ANY_PLAYER), N))` | SPELL/trigger | Blessed Reversal. Only counts attackers whose attack target is you (not your planeswalkers) |
 | "you gain life equal to the number of charge counters on ~" (sacrifice cost) | `GainLifeEffect(new CountersOnSource(CounterType.CHARGE))` | ability effect | resolves from the stack entry's source snapshot (last-known info) after the source is sacrificed; Golden Urn |
 | "you gain life equal to the greatest power among creatures you control" | `GainLifeEffect(new GreatestPowerAmongControlled())` | ability/trigger | Huatli, Warrior Poet +2 |
 | "you gain life equal to the sacrificed creature's toughness" | `GainLifeEffect(new XValue())` | ability effect | with `SacrificeCreatureCost(trackToughness)` snapshotting toughness into xValue |
@@ -248,6 +256,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "exile the top N cards of your library face down" (controller only, tracked to source) | `ExileTopCardsToSourceEffect(N)` | ON_ENTER_BATTLEFIELD | Colfenor's Plans. Controller-only; pair with `AllowCastFromCardsExiledWithSourceEffect(false)` for "you may play lands and cast spells from among those cards" |
 | "Skip your draw step." | `SkipDrawStepEffect()` | STATIC | Colfenor's Plans. Controller's draw step skipped in `StepTriggerService.handleDrawStep` |
 | "You can't cast more than one spell each turn." (controller only) | `LimitSpellsForControllerEffect(1)` | STATIC | Colfenor's Plans. Controller-only variant of `LimitSpellsPerTurnEffect` (Rule of Law, which is every player) |
+| "Cast this spell only during the declare attackers step and only if you've been attacked this step." | `setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED)` in the card constructor (not an effect) | — | Defiant Stand. Card-level cast-timing restriction on `Card`; enforced in `CastingPermissionService.canCastWithSpellTimingRestriction` and surfaced by the `GameBroadcastService` playable-card gate. "Attacked" = a creature is attacking you or a planeswalker you control |
 | "players can't cast spells from graveyards or libraries" | `PlayersCantCastSpellsFromZonesEffect(Set.of(Zone.GRAVEYARD, Zone.LIBRARY))` | STATIC | Grafdigger's Cage. Gated via `GameQueryService.canPlayersCastSpellsFromZone(gd, zone)` (graveyard cast/flashback + `playCardFromLibraryTop`). Only `GRAVEYARD`/`LIBRARY` enforced |
 | "creature cards in graveyards and libraries can't enter the battlefield" | `CardsCantEnterBattlefieldFromZonesEffect(new CardTypePredicate(CREATURE), Set.of(Zone.GRAVEYARD, Zone.LIBRARY))` | STATIC | Grafdigger's Cage. Filter selects which cards are blocked (null = all); `zones` selects which source zones are blocked (only `GRAVEYARD`/`LIBRARY` enforced). Blocks reanimation/undying + library-search-to-battlefield; gated via `GameQueryService.isCardBlockedFromEnteringFromZone(gd, card, zone)`. Blocked card stays in its zone |
 | "Noncreature spells with mana value N or greater can't be cast." / "Noncreature spells with {X} in their mana costs can't be cast." | `NoncreatureSpellsCantBeCastEffect(N, true)` | STATIC | Gaddock Teeg `(4, true)`. Global/symmetric — restricts all players incl. controller. Enforced via `CastingPermissionService.isNoncreatureSpellCastRestricted` at the hand/exile/library-top playable sites. Pass `restrictXSpells=false` for the mana-value clause alone |
@@ -288,6 +297,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each player mills N cards" | `MillEffect(N, MillRecipient.CONTROLLER)` + `MillEffect(N, MillRecipient.EACH_OPPONENT)` | SPELL/trigger | Combine two effects — no targeting. See `GhoulcallersBell`, `ChillOfForeboding` |
 | "mill N cards" (self) | `MillEffect(N, MillRecipient.CONTROLLER)` | SPELL/trigger | |
 | "target player mills half their library" | `MillHalfLibraryEffect()` | SPELL | |
+| "look at the top N cards of target opponent's library. Put one into that player's graveyard and the rest on top in any order" | `LookAtTopCardsOfTargetLibraryPutOneIntoGraveyardEffect(N)` | SPELL | Cruel Fate (N=5) — controller picks the milled card; `target(PlayerPredicateTargetFilter(OPPONENT))`. Mill-one variant of `LookAtTopCardsOfTargetLibraryMayExileOneEffect` |
 | "Choose a card name, then target player mills a card. If a card with the chosen name was milled this way, you gain life equal to its mana value. Draw a card." | `NameCardMillTargetGainLifeEffect()` + `DrawCardEffect(1)` | SPELL | Lammastide Weave — first effect targets the player and prompts the controller to name a card; the draw is unconditional |
 
 ## Exile
@@ -456,7 +466,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
+| "This turn, whenever an attacking creature deals combat damage to you, it deals that much damage to its controller" | `RegisterCombatDamageReflectionEffect()` | SPELL | Harsh Justice. Registers a `DelayedCombatDamageReflection(controllerId)` delayed action for the rest of the turn; `CombatDamageService.processCombatDamageReflectionTriggers` fires one trigger per attacking creature that dealt combat damage to the protected player, dealing that much back to its controller with the attacking creature as the damage source. Cleared at turn cleanup. Usually paired with `setSpellCastTimingRestriction(DECLARE_ATTACKERS_IF_ATTACKED)` |
 | "prevent all combat damage that would be dealt this turn" | `PreventAllCombatDamageEffect()` | SPELL | |
+| "Prevent all damage that would be dealt to you this turn by attacking creatures" | `PreventAllDamageToControllerFromAttackingCreaturesEffect()` | SPELL | Deep Wood. Protects only the caster (not their creatures) and only from attacking creatures. Pair with `setSpellCastTimingRestriction(DECLARE_ATTACKERS_IF_ATTACKED)` |
 | "prevent the next N damage that would be dealt to target" | `PreventDamageToTargetEffect(N)` | SPELL | |
 | "prevent all damage that would be dealt to target creature this turn" | `PreventAllDamageToTargetCreatureEffect()` | SPELL/ability | Target creature only. Wellgabber Apothecary — combine with a `PermanentPredicateTargetFilter` for subtype/tapped restrictions |
 | "If noncombat damage would be dealt to you, prevent that damage. You gain life equal to the damage prevented this way" | `PreventNoncombatDamageToControllerAndGainLifeEffect()` | STATIC | Purity. Combat damage unaffected (hooked only in the noncombat player-damage path) |
@@ -523,8 +535,11 @@ All spell-self cost reductions use the single `ReduceOwnCastCostEffect(DynamicAm
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "take an extra turn after this one" | `ControllerExtraTurnEffect(1)` | SPELL | Non-targeting |
+| "take an extra turn after this one. At the beginning of that turn's end step, you lose the game" | `ControllerExtraTurnEffect(1)` + `RegisterLoseGameAtEndStepEffect()` | SPELL | Last Chance. The register-effect schedules a `LoseGameAtEndStep` delayed action tagged with the current turn number; it fires at the first end step of a *later* turn (skips the current turn's own end step, lands on the extra turn's), pushing `TargetPlayerLosesGameEffect` onto the stack (respects can't-lose) |
 | "untap all creatures that attacked this turn. After this main phase, there is an additional combat phase followed by an additional main phase" | `AdditionalCombatMainPhaseEffect(1)` | SPELL | |
 | "that player skips their next combat phase" (combat-damage trigger) | `SkipNextCombatPhaseEffect()` | ON_COMBAT_DAMAGE_TO_PLAYER | Non-targeting; the damaged player is baked in as `targetId`. Increments per-player `GameData.skipNextCombatPhaseCount`; that player jumps from precombat main straight to postcombat main. Blinding Angel |
+| "target player skips all combat phases of their next turn" | `SkipNextCombatPhaseEffect(true)` | SPELL | Targeted variant (`targetsPlayer = true` → `canTargetPlayer`); caster picks the affected player. Same counter model as above. False Peace |
+| "during target player's next turn, creatures that player controls attack you if able" | `MustAttackControllerNextTurnEffect()` | SPELL | Targets a player. Stored in `GameData.tauntedNextTurn`, promoted to `tauntedThisTurn` when that player's turn begins; `CombatAttackService` forces all their creatures to attack the caster if able. Taunt |
 
 ## Copy
 

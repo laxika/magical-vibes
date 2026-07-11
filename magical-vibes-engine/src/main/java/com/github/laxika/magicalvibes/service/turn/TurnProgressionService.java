@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
@@ -164,6 +165,17 @@ public class TurnProgressionService {
 
         gameData.activePlayerId = nextActive;
 
+        // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
+        gameData.tauntedThisTurn.clear();
+        UUID taunter = gameData.tauntedNextTurn.remove(nextActive);
+        if (taunter != null && gameData.playerIds.contains(taunter)) {
+            gameData.tauntedThisTurn.put(nextActive, taunter);
+            String taunterName = gameData.playerIdToName.get(taunter);
+            String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
+            gameBroadcastService.logAndBroadcast(gameData, tauntLog);
+            log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
+        }
+
         // Check for pending Mindslaver control on the new active player
         UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
         if (pendingController != null && gameData.playerIds.contains(pendingController)) {
@@ -194,6 +206,7 @@ public class TurnProgressionService {
         gameData.lifeGainedThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
+        gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();

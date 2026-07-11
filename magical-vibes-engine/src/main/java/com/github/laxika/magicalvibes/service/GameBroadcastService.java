@@ -452,6 +452,9 @@ public class GameBroadcastService {
                 ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())) {
             return false;
         }
+        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card)) {
+            return false;
+        }
 
         // Alternative zero cost (e.g. Rooftop Storm for Zombie creature spells)
         if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {

@@ -71,6 +71,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -102,6 +103,7 @@ public class MayAbilityHandlerService {
     // @Lazy breaks the circular dependency:
     // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
     private final ParadigmService paradigmService;
+    private final ValidTargetService validTargetService;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -119,7 +121,8 @@ public class MayAbilityHandlerService {
                                     MayAbilityTapCostService mayAbilityTapCostService,
                                     ExileFreeCastSupport exileFreeCastSupport,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
-                                    @Lazy ParadigmService paradigmService) {
+                                    @Lazy ParadigmService paradigmService,
+                                    ValidTargetService validTargetService) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
@@ -137,6 +140,7 @@ public class MayAbilityHandlerService {
         this.exileFreeCastSupport = exileFreeCastSupport;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.paradigmService = paradigmService;
+        this.validTargetService = validTargetService;
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -688,10 +692,12 @@ public class MayAbilityHandlerService {
             }
         }
 
-        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect)
+        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect),
+        // honoring the card's player target filter (e.g. "target opponent") so the controller is excluded.
         boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
         if (canTargetPlayer) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            validTargets.addAll(validTargetService.filterValidPlayerTargets(
+                    gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId()));
         }
 
         if (validTargets.isEmpty()) {
@@ -985,7 +991,7 @@ public class MayAbilityHandlerService {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
         if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
-        if (canTargetPlayer) { validTargets.addAll(gameData.orderedPlayerIds); }
+        if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId())); }
         if (validTargets.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, ability.sourceCard().getName() + "'s ability has no valid targets.");
             gameData.resolvedMayAccepted = false;

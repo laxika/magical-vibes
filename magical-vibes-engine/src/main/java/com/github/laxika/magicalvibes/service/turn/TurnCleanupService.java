@@ -81,7 +81,8 @@ public class TurnCleanupService {
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
                     || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
-                    || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
+                    || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
+                    || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
                     || !p.getTemporaryTriggeredEffects().isEmpty()
                     || p.isLosesAllAbilitiesUntilEndOfTurn()
@@ -111,6 +112,7 @@ public class TurnCleanupService {
         gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.drawReplacementTargetToController.clear();

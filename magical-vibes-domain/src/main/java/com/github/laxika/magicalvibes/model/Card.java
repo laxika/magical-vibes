@@ -104,6 +104,8 @@ public class Card {
     private String watermark;
     private Card backFaceCard;
     private List<CastingOption> castingOptions = new ArrayList<>();
+    /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
+    private SpellCastTimingRestriction spellCastTimingRestriction;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -181,6 +183,7 @@ public class Card {
         this.watermark = source.watermark;
         this.backFaceCard = source.backFaceCard;
         this.castingOptions = new ArrayList<>(source.castingOptions);
+        this.spellCastTimingRestriction = source.spellCastTimingRestriction;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
@@ -243,6 +246,7 @@ public class Card {
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
+    public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
 

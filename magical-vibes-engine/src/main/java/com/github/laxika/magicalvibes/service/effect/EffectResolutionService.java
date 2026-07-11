@@ -163,7 +163,8 @@ public class EffectResolutionService {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.
                 boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
-                        || gameData.resolvingMayEffectFromStack;
+                        || gameData.resolvingMayEffectFromStack
+                        || gameData.rerunCurrentEffectAfterInteraction;
                 gameData.pendingEffectResolutionEntry = entry;
                 gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;
                 return;

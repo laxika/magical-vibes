@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -254,6 +255,9 @@ public class CombatDamageService {
 
         // Process delayed combat damage loot triggers (e.g. Jace, Cunning Castaway's +1)
         processDelayedCombatDamageLootTriggers(gameData, state.combatDamageDealtToPlayer, activeId);
+
+        // Process combat damage reflection triggers (e.g. Harsh Justice)
+        processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
         // Process defender-side damage triggers (e.g. Dissipation Field)
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
@@ -884,6 +888,41 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Processes combat damage reflection triggers registered this turn (e.g. Harsh Justice).
+     * For each attacking creature that dealt combat damage to a protected player this step, the
+     * creature deals that much damage back to its controller (the active player). Each creature
+     * reflects separately, with the attacking creature as the damage source.
+     */
+    private void processCombatDamageReflectionTriggers(GameData gameData,
+                                                       Map<Permanent, Integer> combatDamageDealtToPlayer,
+                                                       UUID attackerId, UUID defenderId) {
+        if (!gameData.hasDelayedAction(DelayedCombatDamageReflection.class)) return;
+
+        for (DelayedCombatDamageReflection reflection : gameData.getDelayedActions(DelayedCombatDamageReflection.class)) {
+            // Combat damage to a player always goes to the defending player in this combat.
+            if (!reflection.protectedPlayerId().equals(defenderId)) continue;
+            for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {
+                Permanent attacker = dmgEntry.getKey();
+                int damage = dmgEntry.getValue();
+                if (damage <= 0) continue;
+                StackEntry se = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        reflection.protectedPlayerId(),
+                        reflection.sourceCard().getName() + "'s reflected combat damage",
+                        List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER)),
+                        attackerId,
+                        attacker.getId());
+                se.setNonTargeting(true);
+                gameData.stack.add(se);
+                gameBroadcastService.logAndBroadcast(gameData, reflection.sourceCard().getName()
+                        + " reflects " + damage + " combat damage from " + attacker.getCard().getName()
+                        + " to " + gameData.playerIdToName.get(attackerId) + ".");
+            }
+        }
+    }
+
     private void processCombatDamageToCreatureTriggers(GameData gameData,
                                                         Map<Permanent, List<UUID>> combatDamageDealtToCreatures,
                                                         Map<Permanent, UUID> combatDamageDealerControllers) {
@@ -1113,6 +1152,11 @@ public class CombatDamageService {
         int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
         state.damageToDefendingPlayer *= playerMultiplier;
         state.poisonDamageToDefendingPlayer *= playerMultiplier;
+        // Deep Wood: prevent all damage attacking creatures would deal to the defending player this turn.
+        if (damagePreventionService.isCombatDamageFromAttackersPreventedForPlayer(gameData, defenderId)) {
+            state.damageToDefendingPlayer = 0;
+            state.poisonDamageToDefendingPlayer = 0;
+        }
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);

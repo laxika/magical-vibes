@@ -28,6 +28,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
+| `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal) |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |

@@ -156,6 +156,15 @@ public class GameData {
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
     /**
+     * Generic re-entry signal: when set, {@code EffectResolutionService} re-runs the current
+     * effect (rather than advancing to the next) after the pending interaction completes.
+     * Set by handlers that drive a multi-step, self-continuing flow through an interaction whose
+     * completion is not itself an X-value choice (e.g. the each-player discard-then-draw of Flux).
+     */
+    public boolean rerunCurrentEffectAfterInteraction;
+    /** Progress state for Flux's "each player discards any number, then draws that many" flow. */
+    public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
+    /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
      * token-exile/sacrifice/destroy/counter/untap/graveyard-returns, exile-until-step returns,
@@ -212,6 +221,8 @@ public class GameData {
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
+    public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
@@ -230,6 +241,8 @@ public class GameData {
     public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
+    /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
+    public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
@@ -380,6 +393,12 @@ public class GameData {
     public UUID mindControlledPlayerId;
     /** Non-null when a player is being controlled this turn (the controlling player's ID). */
     public UUID mindControllerPlayerId;
+
+    // Taunt — "creatures that player controls attack you if able" during their next turn
+    /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
+    public final Map<UUID, UUID> tauntedNextTurn = new ConcurrentHashMap<>();
+    /** Active this turn: affectedPlayerId -> controllerId all their creatures must attack if able. */
+    public final Map<UUID, UUID> tauntedThisTurn = new ConcurrentHashMap<>();
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
@@ -1181,6 +1200,11 @@ public class GameData {
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
+        copy.eachPlayerRummage.active = this.eachPlayerRummage.active;
+        copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
+        copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;
+        copy.eachPlayerRummage.remaining.addAll(this.eachPlayerRummage.remaining);
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
@@ -1193,6 +1217,7 @@ public class GameData {
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
+        copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);
@@ -1202,6 +1227,7 @@ public class GameData {
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
+        copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
@@ -1397,6 +1423,8 @@ public class GameData {
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+        copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
+        copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
         copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---

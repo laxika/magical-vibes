@@ -13,5 +13,11 @@ public enum ThenEffectRecipient {
      * The controller of the destroyed permanent, snapshotted before it leaves the battlefield
      * (e.g. "its controller loses N life" / "its controller gets a poison counter").
      */
-    TARGET_CONTROLLER
+    TARGET_CONTROLLER,
+    /**
+     * The owner of the destroyed permanent (its original controller absent any control-changing
+     * effect), snapshotted before it leaves the battlefield (e.g. Path of Peace: "its owner gains
+     * 4 life"). Differs from {@link #TARGET_CONTROLLER} only when the destroyed creature was stolen.
+     */
+    TARGET_OWNER
 }

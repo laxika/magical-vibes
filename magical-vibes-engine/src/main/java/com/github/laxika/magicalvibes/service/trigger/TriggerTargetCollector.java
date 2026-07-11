@@ -148,11 +148,17 @@ public class TriggerTargetCollector {
                 }
             }
 
+            // An explicit PermanentPredicateTargetFilter fully governs which permanents are legal
+            // targets, so the death pipeline's default "creatures only" narrowing must not intersect
+            // it away (e.g. Fire Snake's "destroy target land").
+            boolean creaturesOnly = options.creaturesOnly()
+                    && !(targetFilter instanceof PermanentPredicateTargetFilter);
+
             for (UUID pid : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (options.creaturesOnly() && !gameQueryService.isCreature(gameData, p)) continue;
+                    if (creaturesOnly && !gameQueryService.isCreature(gameData, p)) continue;
 
                     if (options.supportControlledFilter()
                             && targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {

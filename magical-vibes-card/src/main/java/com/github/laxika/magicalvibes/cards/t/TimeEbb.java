@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "9ED", collectorNumber = "107")
+@CardRegistration(set = "POR", collectorNumber = "75")
 public class TimeEbb extends Card {
 
     public TimeEbb() {

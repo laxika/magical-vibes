@@ -148,6 +148,8 @@ public class LibraryChoiceHandlerService {
                     }
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
+                } else if (toGraveyard) {
+                    graveyardService.addCardToGraveyard(gameData, deckOwnerId, chosenCard);
                 } else if (toBattlefield) {
                     Permanent perm = new Permanent(chosenCard);
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
@@ -188,6 +190,10 @@ public class LibraryChoiceHandlerService {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " does not exile a card."
                         : player.getUsername() + " exiles " + chosenCard.getName() + ".";
+            } else if (toGraveyard) {
+                logEntry = chosenCard == null
+                        ? player.getUsername() + " does not put a card into the graveyard."
+                        : player.getUsername() + " puts " + chosenCard.getName() + " into the graveyard.";
             } else if (toBattlefield) {
                 logEntry = chosenCard == null
                         ? player.getUsername() + " puts no card onto the battlefield."

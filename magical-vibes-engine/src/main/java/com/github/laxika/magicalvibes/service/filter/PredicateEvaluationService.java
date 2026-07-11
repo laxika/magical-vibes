@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -312,6 +313,9 @@ public class PredicateEvaluationService {
                     permanent.getCard().isToken();
             case PermanentIsAttackingPredicate ignored ->
                     permanent.isAttacking();
+            case PermanentIsAttackingSourceControllerPredicate ignored ->
+                    permanent.isAttacking() && sourceControllerId != null
+                            && sourceControllerId.equals(permanent.getAttackTarget());
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
             case PermanentPowerAtMostPredicate powerAtMostPredicate -> {

@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
@@ -222,6 +224,39 @@ public class CastingPermissionService {
                 || card.getKeywords().contains(Keyword.FLASH)
                 || hasFlashGrantForCard(gameData, playerId, card);
         return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+    }
+
+    /**
+     * Returns true if the card's card-specific spell cast timing restriction (if any) is currently
+     * satisfied for the caster. Cards without such a restriction always pass. Defiant Stand.
+     */
+    public boolean canCastWithSpellTimingRestriction(GameData gameData, UUID playerId, Card card) {
+        SpellCastTimingRestriction restriction = card.getSpellCastTimingRestriction();
+        if (restriction == null) return true;
+        return switch (restriction) {
+            case DECLARE_ATTACKERS_IF_ATTACKED ->
+                    gameData.currentStep == TurnStep.DECLARE_ATTACKERS && isBeingAttacked(gameData, playerId);
+        };
+    }
+
+    /**
+     * Returns true if any attacking creature is attacking the given player directly or one of the
+     * planeswalkers they control (i.e. the player "has been attacked" this combat).
+     */
+    private boolean isBeingAttacked(GameData gameData, UUID playerId) {
+        List<Permanent> playerBattlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                if (!perm.isAttacking()) continue;
+                UUID target = perm.getAttackTarget();
+                if (target == null) continue;
+                if (target.equals(playerId)) return true;
+                if (playerBattlefield.stream().anyMatch(p -> p.getId().equals(target))) return true;
+            }
+        }
+        return false;
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {

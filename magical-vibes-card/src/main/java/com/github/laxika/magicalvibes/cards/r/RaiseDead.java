@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * this spell is created in exile while Cheerful Osteomancer is prepared and may be cast from there.
  */
 @CardRegistration(set = "9ED", collectorNumber = "156")
+@CardRegistration(set = "POR", collectorNumber = "107")
 public class RaiseDead extends Card {
 
     public RaiseDead() {

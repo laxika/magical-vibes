@@ -187,6 +187,27 @@ public class DamagePreventionService {
         }
     }
 
+    /**
+     * Deep Wood: whether combat damage dealt to the given player by attacking creatures is prevented this
+     * turn. Combat damage to a defending player always originates from attacking creatures, so this needs
+     * only the player flag.
+     */
+    public boolean isCombatDamageFromAttackersPreventedForPlayer(GameData gameData, UUID playerId) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        return gameData.playersWithDamageFromAttackersPrevented.contains(playerId);
+    }
+
+    /**
+     * Deep Wood: whether noncombat damage dealt to the given player is prevented this turn because its
+     * source permanent is currently an attacking creature.
+     */
+    public boolean isNoncombatDamageFromAttackerPreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        if (!isCombatDamageFromAttackersPreventedForPlayer(gameData, playerId)) return false;
+        if (sourcePermanentId == null) return false;
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && source.isAttacking();
+    }
+
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
         if (!gameQueryService.isDamagePreventable(gameData)) return damage;
         if (gameData.playersWithAllDamagePrevented.contains(playerId)) return 0;

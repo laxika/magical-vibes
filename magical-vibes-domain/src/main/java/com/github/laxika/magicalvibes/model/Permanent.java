@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
@@ -46,6 +47,8 @@ public class Permanent {
     @Setter private UUID mustAttackTargetId;
     /** When true, at least one creature must block this creature this turn if able (e.g. Emergent Growth). Cleared at end of turn. */
     @Setter private boolean mustBeBlockedThisTurn;
+    /** When true, all creatures able to block this creature this turn do so (Lure-style, one-shot, e.g. Alluring Scent). Cleared at end of turn. */
+    @Setter private boolean mustBeBlockedByAllThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
@@ -114,6 +117,11 @@ public class Permanent {
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
     private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
+    /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
+     *  "black creatures you control can't be blocked this turn except by black creatures").
+     *  Each entry means this creature can be blocked only by blockers matching the restriction's
+     *  filter. Consumed by {@code GameQueryService.getBlockRestriction}; cleared by {@link #resetModifiers()}. */
+    private final List<CanBeBlockedOnlyByFilterEffect> blockRestrictionsUntilEndOfTurn = new ArrayList<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
@@ -272,6 +280,7 @@ public class Permanent {
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
+        this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.prepared = source.prepared;
@@ -304,6 +313,7 @@ public class Permanent {
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
+        this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
@@ -584,6 +594,7 @@ public class Permanent {
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
         this.mustBeBlockedThisTurn = false;
+        this.mustBeBlockedByAllThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
@@ -603,6 +614,7 @@ public class Permanent {
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
+        this.blockRestrictionsUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "38")
+@CardRegistration(set = "POR", collectorNumber = "25")
 public class SacredNectar extends Card {
 
     public SacredNectar() {

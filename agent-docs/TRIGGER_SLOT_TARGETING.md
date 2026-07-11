@@ -174,8 +174,11 @@ controls", combine the two: `PlayerPredicateTargetFilter` for the player side an
 Honoured in **Death / Attack / End-step**. See `PREDICATES_REFERENCE.md` for the full list of
 `PermanentPredicate` compositions (e.g. `opponentControlled(creature())`, `nonToken(creature())`, etc.).
 
-Note that the death pipeline additionally forces `creaturesOnly = true` — a permanent predicate that
-allows non-creatures is silently intersected with "is a creature". End-step has no such restriction.
+Note that the death pipeline defaults to `creaturesOnly = true`, **but** an explicit
+`PermanentPredicateTargetFilter` overrides it — the filter's predicate then fully governs which
+permanents are legal (e.g. Fire Snake's "destroy target land"). A death trigger with **no** target
+filter (or a `ControlledPermanentPredicateTargetFilter`) still narrows to creatures. End-step has no
+such restriction.
 
 ### `ControlledPermanentPredicateTargetFilter(PermanentPredicate)`
 
@@ -193,8 +196,10 @@ unwrap `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before in
 
 ## Common pitfalls
 
-- **"My ON_DEATH trigger targets non-creatures."** It can't. Death forces `creaturesOnly = true`. Use a
-  different slot (or add a new `Options` variant).
+- **"My ON_DEATH trigger targets non-creatures."** Give the card an explicit
+  `PermanentPredicateTargetFilter` — its predicate then governs and the death pipeline's default
+  `creaturesOnly` narrowing is skipped (e.g. Fire Snake targeting a land). Without such a filter,
+  death targets are creatures only.
 - **"My ON_DEATH trigger lets the controller pick themselves as the target."** You forgot the
   `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))` on the card — or
   you wired it on a pipeline that doesn't honour it (everything outside death / attack / end-step).

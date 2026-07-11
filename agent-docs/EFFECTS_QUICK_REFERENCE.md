@@ -7,6 +7,7 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 - `RegisterDelayedReturnSourceTransformedEffect()` — ON_DEATH effect that registers a delayed end-step return from the source card's owner's graveyard to the battlefield transformed. Used by Loyal Cathar-style "When this dies, return it transformed at the beginning of the next end step."
 - `RegisterDelayedCreateTokenEffect(CreateTokenEffect tokenEffect)` — registers a delayed trigger that resolves `tokenEffect` at the beginning of the next end step, creating the token(s) under the resolving controller's control. Used by Rukh Egg-style "When this dies, create a ... token at the beginning of the next end step."
+- `RegisterCombatDamageReflectionEffect()` — "This turn, whenever an attacking creature deals combat damage to you, it deals that much damage to its controller" (Harsh Justice). Registers a `DelayedCombatDamageReflection` for the rest of the turn; `CombatDamageService` reflects each attacking creature's player-damage back to its controller. Pair with `setSpellCastTimingRestriction(DECLARE_ATTACKERS_IF_ATTACKED)`.
 
 ## Targeting rules (summary)
 
@@ -118,6 +119,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventSpellDamageToOpponentAndCreateTokensEffect(CreateTokenEffect token)` — STATIC: if a spell you control would deal damage to an opponent, prevent it and create one `token` per 1 damage prevented (Hostility). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
+- `PreventAllDamageToControllerFromAttackingCreaturesEffect()` — SPELL: prevent all damage attacking creatures would deal to the controller this turn (Deep Wood). Adds controller to `GameData.playersWithDamageFromAttackersPrevented`; combat damage prevented in `CombatDamageService.applyPlayerDamage`, noncombat only when the source permanent is attacking. Cleared at turn cleanup. Pair with `setSpellCastTimingRestriction(DECLARE_ATTACKERS_IF_ATTACKED)`
 - `PreventDamageToOtherCreaturesAndAddPlusCountersEffect()` — STATIC: prevent all damage (combat or noncombat, any source) to *another* creature you control and put a +1/+1 counter on it per 1 damage prevented (Vigor). Checked in `DamagePreventionService.applyCreaturePreventionShield`; the effect is on a different permanent than the one being damaged
 - `PreventNextDamageFromChosenColoredSourceEffect(CardColor color)` — one-shot: prevent the *next* damage event a chosen source of that color would deal to you this turn (Circle of Protection cycle). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield`
 - `PreventNextDamageFromChosenSourceAndGainLifeEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to you this turn and gain that much life (Reverse Damage). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields` with `gainLife=true`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield` (which grants the life via `LifeSupport`)
@@ -163,7 +165,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeSelfEffect()` — sacrifice self
 - `SacrificeSelfThenDealDamageToTargetPlayerEffect(int damage)` — sac source; if sacrificed, deal N to stack entry's targetId player (Booby Trap trigger)
 - `SacrificeSelfIfEvokedEffect()` — evoke sacrifice; ON_ENTER_BATTLEFIELD, fires only when cast for evoke cost
-- `SacrificeUnlessDiscardCardTypeEffect(CardType)` — sacrifice unless discard
+- `SacrificeUnlessDiscardCardTypeEffect(CardType)` / `(CardType, boolean random)` — sacrifice unless discard (`random=true` = discard at random, Pillaging Horde; `null` type = any card)
 - `SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType)` — sacrifice unless bounce own
 - `ChampionCreatureEffect(CardSubtype)` — champion a creature (null subtype = any creature); exile on ETB, return when source leaves
 - `SacrificeSelfAndDrawCardsEffect(int)` — sacrifice + draw
@@ -223,6 +225,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutTargetOnBottomOfLibraryEffect()` — tuck bottom
 - `PutTargetOnTopOfLibraryEffect()` — tuck top
 - `PutTargetPermanentIntoLibraryNFromTopEffect(int)` — tuck N from top
+- `PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect()` — ON_DEATH: put dying source on top of owner's library (Undying Beast)
 
 ## Graveyard return
 
@@ -242,7 +245,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Draw / discard / hand manipulation
 
 - `DrawCardEffect(DynamicAmount)` or `(int)` — controller draws that many; use `XValue` for "draw X", `PermanentCount`/`CardsInGraveyard`/`CountersOnSource` for "draw a card for each …"
-- `EachPlayerDrawsCardEffect(int)` — each player draws N
+- `EachPlayerDrawsCardEffect(DynamicAmount)` or `(int)` — each player (turn order) draws that many; `XValue()` for "each player draws X" (Prosperity), `int` for a fixed count
 - `DrawCardForTargetPlayerEffect(DynamicAmount, boolean requiresUntapped, boolean targets)` or `(int)` — target/entry player draws; `XValue` for "target player draws X"
 - `DrawAndDiscardCardEffect(int draw, int discard)` — loot
 - `DiscardAndDrawCardEffect(int discard, int draw)` — rummage
@@ -251,6 +254,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
 - `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
 - `EachPlayerDiscardsHandThenDrawsThatManyEffect()` — each player (APNAP) discards their entire hand, then draws that many
+- `EachPlayerDiscardsAnyNumberThenDrawsThatManyEffect()` — each player (APNAP) discards any number of cards (their choice), then draws that many (Flux)
 - `ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count)` or `(int count)` — exile top N from library, may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`). Use `EventValue()` for "equal to the excess damage dealt this way" (Archaic's Agony)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
@@ -394,11 +398,15 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CantBeBlockedIfAttackingAloneEffect()` — can't be blocked while attacking alone (static)
 - `CantBlockEffect()` — can't block (static)
 - `MustAttackEffect()` — must attack (static)
+- `MustAttackControllerNextTurnEffect()` — targets a player: during their next turn every creature they control attacks you (the controller) if able (Taunt). SPELL slot; `canTargetPlayer`
 - `MustBeBlockedIfAbleEffect()` — must be blocked (static)
 - `MustBeBlockedByAllCreaturesEffect()` — Lure (static)
+- `MustBeBlockedByAllCreaturesThisTurnEffect()` — one-shot targeted Lure: all creatures able to block target creature this turn do so (Alluring Scent); SPELL slot, `canTargetPermanent`
 - `MustBlockTargetCreatureEffect()` — two-target spell: blocker group (0) must block blocked group (1) this turn if able (Hunt Down)
 - `EnchantedCreatureCantAttackOrBlockEffect()` — Pacifism (static)
 - `MakeCreatureUnblockableEffect()` — target unblockable this turn
+- `CanBeBlockedOnlyByFilterEffect(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — static evasion on the source: it can be blocked only by blockers matching the predicate (Fear-like, e.g. Dread Warlock = black creatures)
+- `GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(PermanentPredicate creatureFilter, PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — SPELL one-shot: your creatures matching `creatureFilter` (null = all) can be blocked only by blockers matching `blockerPredicate` until end of turn. Dread Charge = both filters `PermanentColorInPredicate(BLACK)`. Affected creatures snapshotted at resolution; restriction stored transiently on each `Permanent`
 - `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
 
 ## Tap / untap
@@ -454,9 +462,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Turn / phase
 
 - `ControllerExtraTurnEffect(int)` — extra turns (non-targeting)
+- `RegisterLoseGameAtEndStepEffect()` — schedules "at the beginning of the next turn's end step, you lose the game" (Last Chance); skips the current turn's end step, fires on the extra turn's
 - `ExtraTurnEffect(int)` — target extra turns
 - `AdditionalCombatMainPhaseEffect(int)` — additional combat phases
-- `SkipNextCombatPhaseEffect()` — ON_COMBAT_DAMAGE_TO_PLAYER: the damaged player skips their next combat phase (Blinding Angel)
+- `SkipNextCombatPhaseEffect()` — ON_COMBAT_DAMAGE_TO_PLAYER: the damaged player skips their next combat phase (Blinding Angel). `(true)` = targeted spell variant where the caster picks the affected player (False Peace)
 - `EndTurnEffect()` — end the turn
 
 ## Animate / transform

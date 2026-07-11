@@ -61,6 +61,7 @@ public class MayPenaltyChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -259,6 +260,15 @@ public class MayPenaltyChoiceHandlerService {
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
                 gameData.discardCausedByOpponent = false;
+
+                if (effect.random()) {
+                    // Pillaging Horde: the discard is at random, so no player choice is needed.
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), 1);
+                    log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
                         "Choose a " + typeName + " to discard.", 1);
 

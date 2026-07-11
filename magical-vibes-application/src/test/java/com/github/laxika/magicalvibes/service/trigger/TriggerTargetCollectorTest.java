@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -150,5 +154,26 @@ class TriggerTargetCollectorTest {
         assertThat(result.canTargetPermanents()).isTrue();
         assertThat(result.validTargets()).contains(creature.getId());
         assertThat(result.validTargets()).doesNotContain(noncreature.getId());
+    }
+
+    @Test
+    @DisplayName("DEATH option with an explicit permanent filter allows non-creature targets")
+    void deathExplicitPermanentFilterAllowsNonCreatures() {
+        Permanent noncreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).add(noncreature);
+        lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        // Fire Snake's "destroy target land": the filter's predicate governs, not creaturesOnly.
+        TargetFilter filter = new PermanentPredicateTargetFilter(
+                new PermanentTruePredicate(), "Target can be any permanent");
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
+
+        assertThat(result.validTargets()).contains(noncreature.getId());
     }
 }

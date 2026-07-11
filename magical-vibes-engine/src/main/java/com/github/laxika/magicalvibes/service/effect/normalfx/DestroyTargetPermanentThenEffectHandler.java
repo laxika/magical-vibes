@@ -54,6 +54,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
 
         // Snapshot everything read from the destroyed permanent BEFORE it leaves the battlefield.
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        UUID targetOwnerId = gameData.defaultControllerOf(target.getId());
         int statValue = switch (e.stat()) {
             case NONE -> 0;
             case MANA_VALUE -> target.getCard().getManaValue();
@@ -69,9 +70,11 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             return;
         }
 
-        UUID thenControllerId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER
-                ? targetControllerId
-                : entry.getControllerId();
+        UUID thenControllerId = switch (e.recipient()) {
+            case TARGET_CONTROLLER -> targetControllerId;
+            case TARGET_OWNER -> targetOwnerId;
+            case CONTROLLER -> entry.getControllerId();
+        };
         if (thenControllerId == null) {
             return;
         }

@@ -1351,6 +1351,14 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Activate only if this creature is attacking");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_BEFORE_ATTACKERS_DECLARED) {
+                if (!playerId.equals(gameData.activePlayerId)) {
+                    throw new IllegalStateException("This ability can only be activated during your turn, before attackers are declared");
+                }
+                if (!gameData.currentStep.isBeforeAttackersDeclared()) {
+                    throw new IllegalStateException("This ability can only be activated before attackers are declared");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT) {
                 if (!gameData.currentStep.isCombatPhase()) {
                     throw new IllegalStateException("This ability can only be activated during combat");

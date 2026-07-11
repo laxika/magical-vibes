@@ -364,6 +364,7 @@ public class DamageSupport {
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+                || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;

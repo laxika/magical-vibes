@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "178")
+@CardRegistration(set = "POR", collectorNumber = "119")
 public class BoilingSeas extends Card {
 
     public BoilingSeas() {

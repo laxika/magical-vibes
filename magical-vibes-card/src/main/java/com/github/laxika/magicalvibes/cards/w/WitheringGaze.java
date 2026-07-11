@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "113")
+@CardRegistration(set = "POR", collectorNumber = "78")
 public class WitheringGaze extends Card {
 
     public WitheringGaze() {

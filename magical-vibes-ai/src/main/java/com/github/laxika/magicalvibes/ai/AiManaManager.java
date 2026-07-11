@@ -275,6 +275,8 @@ public class AiManaManager {
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
+            case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
+                    && gameData.currentStep.isBeforeAttackersDeclared();
             case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
             case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
             case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;

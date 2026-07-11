@@ -544,7 +544,8 @@ public class CombatBlockService {
         for (int i = 0; i < attackerBattlefield.size(); i++) {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasRequirement = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasRequirement = attacker.isMustBeBlockedByAllThisTurn()
+                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
             if (hasRequirement) {

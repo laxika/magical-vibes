@@ -26,12 +26,14 @@ public sealed interface DelayedAction permits
         ExileTokenAtEndStep,
         SacrificeAtEndStep,
         DestroyAtEndStep,
+        LoseGameAtEndStep,
         DelayedPlusOneCounters,
         DelayedUntapPermanents,
         DelayedCreateToken,
         DelayedGraveyardToHandReturn,
         DelayedGraveyardToBattlefieldTransformedReturn,
         DelayedCombatDamageLoot,
+        DelayedCombatDamageReflection,
         AddManaAtNextMainPhase,
         PendingExileReturn {
 }

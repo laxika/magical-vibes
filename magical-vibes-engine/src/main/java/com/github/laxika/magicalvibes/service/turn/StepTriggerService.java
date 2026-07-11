@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedCreateToken;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
+import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
@@ -66,6 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanents
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -1278,6 +1280,28 @@ public class StepTriggerService {
                         log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
                     }
                 }
+            }
+        }
+
+        // Process delayed "lose the game" triggers (e.g. Last Chance). Only fire entries scheduled on
+        // an earlier turn, so the current turn's own end step is skipped and the loss lands on the
+        // extra turn's end step.
+        if (gameData.hasDelayedAction(LoseGameAtEndStep.class)) {
+            List<LoseGameAtEndStep> toLose = gameData.drainDelayedActions(
+                    LoseGameAtEndStep.class, a -> gameData.turnNumber > a.registeredTurnNumber());
+            for (LoseGameAtEndStep action : toLose) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        action.sourceCard(),
+                        action.playerId(),
+                        action.sourceCard().getName() + "'s delayed trigger — you lose the game",
+                        new ArrayList<>(List.of(new TargetPlayerLosesGameEffect(action.playerId())))
+                ));
+                String logEntry = action.sourceCard().getName() + "'s delayed trigger — "
+                        + gameData.playerIdToName.get(action.playerId()) + " loses the game.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} delayed lose-game trigger pushed onto stack",
+                        gameData.id, action.sourceCard().getName());
             }
         }
 

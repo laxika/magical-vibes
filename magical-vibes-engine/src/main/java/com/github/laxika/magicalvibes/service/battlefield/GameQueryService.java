@@ -2001,6 +2001,11 @@ public class GameQueryService {
                 return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
             }
         }
+        for (CanBeBlockedOnlyByFilterEffect restriction : attacker.getBlockRestrictionsUntilEndOfTurn()) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
+            }
+        }
         if (defenderBattlefield != null) {
             for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
                 if (hasKeyword(gameData, attacker, entry.getKey())

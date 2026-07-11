@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "9ED", collectorNumber = "42")
+@CardRegistration(set = "POR", collectorNumber = "26")
 public class SeasonedMarshal extends Card {
 
     public SeasonedMarshal() {
