@@ -13,7 +13,7 @@ public class ScryfallDataService {
 
     private static final Logger LOG = Logger.getLogger(ScryfallDataService.class.getName());
 
-    @Value("${scryfall.cache-dir:./scryfall-cache}")
+    @Value("${card-data.cache-dir:./card-data-cache}")
     private String cacheDir;
 
     @Value("${oracle.data-provider:SCRYFALL}")

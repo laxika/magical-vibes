@@ -45,7 +45,7 @@ application → engine, websocket, ai (config @Imports)
 
 ### Scryfall Oracle Data
 
-All card metadata (name, type, mana cost, color, supertypes, subtypes, card text, power/toughness, keywords) comes from Scryfall via `ScryfallOracleLoader`. On startup, `ScryfallDataService` (`@PostConstruct`) fetches oracle data for each set in `CardSet`, caches it to `./scryfall-cache/`, and populates `Card.oracleRegistry`. If Scryfall is unreachable (or `oracle.data-provider=MTGJSON` is set), `MtgjsonOracleLoader` loads the same data from MTGJSON set files instead (cached as `mtgjson-{set}.json` in the same directory). Card subclass constructors contain only game-engine logic (effects, abilities, targeting) — metadata is auto-populated from the registry via `Card`'s no-arg constructor. Tests load the registry via `GameTestHarness` (first run requires network; subsequent runs use disk cache).
+All card metadata (name, type, mana cost, color, supertypes, subtypes, card text, power/toughness, keywords) comes from Scryfall via `ScryfallOracleLoader`. On startup, `ScryfallDataService` (`@PostConstruct`) fetches oracle data for each set in `CardSet`, caches it to `./card-data-cache/`, and populates `Card.oracleRegistry`. If Scryfall is unreachable (or `oracle.data-provider=MTGJSON` is set), `MtgjsonOracleLoader` loads the same data from MTGJSON set files instead (cached as `mtgjson-{set}.json` in the same directory). Card subclass constructors contain only game-engine logic (effects, abilities, targeting) — metadata is auto-populated from the registry via `Card`'s no-arg constructor. Tests load the registry via `GameTestHarness` (first run requires network; subsequent runs use disk cache).
 
 ### Testing
 

@@ -16,5 +16,5 @@ token-usage-output.txt
 magical-vibes.db
 magical-vibes.db-journal
 
-# Scryfall cache
-scryfall-cache/
+# Card data cache
+card-data-cache/

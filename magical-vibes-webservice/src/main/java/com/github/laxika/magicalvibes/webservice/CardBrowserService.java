@@ -49,7 +49,7 @@ public class CardBrowserService {
 
     private final ConcurrentHashMap<String, List<BrowseCardInfo>> cache = new ConcurrentHashMap<>();
 
-    @Value("${scryfall.cache-dir:./scryfall-cache}")
+    @Value("${card-data.cache-dir:./card-data-cache}")
     private String cacheDir;
 
     public List<BrowseCardInfo> getCardsForSet(String setCode) {

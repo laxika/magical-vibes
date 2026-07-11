@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Runs each oracle loader end to end against the real cached set data (first run fetches from
- * the network and populates this module's {@code ./scryfall-cache}, like the other test modules)
+ * the network and populates this module's {@code ./card-data-cache}, like the other test modules)
  * and verifies the registration invariants that parsing-level unit tests cannot: every printing
  * resolves to oracle data, back-face-only classes get registered, and back-face registrations
  * do not clobber a standalone card's own printing (the Seething Song collision).
@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Tag("scryfall")
 class OracleLoaderIntegrationTest {
 
-    private static final String CACHE_DIR = "./scryfall-cache";
+    private static final String CACHE_DIR = "./card-data-cache";
 
     @Test
     void scryfallLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
