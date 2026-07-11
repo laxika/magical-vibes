@@ -23,6 +23,13 @@ import java.util.UUID;
 /**
  * Exhaustive combat search with pure arithmetic (no state mutation).
  * Simulates combat outcomes to find the best set of attackers or blockers.
+ *
+ * <p>This class owns the searches (which subsets of attackers/blockers to consider) and the
+ * GameData-backed setup: building {@link CreatureInfo} snapshots and precomputing block
+ * legality into {@link CombatMath.Attacker} rows. The per-configuration combat arithmetic
+ * itself lives in {@link CombatMath}, which never touches GameData — the attacker subset
+ * loop evaluates up to 2^12 configurations per decision, so everything inside it must stay
+ * free of layered-system queries.
  */
 public class CombatSimulator {
 
@@ -130,17 +137,19 @@ public class CombatSimulator {
         // "losing the race with your last blockers", which only applies when life is low.
         // This cheap gate also keeps the MCTS rollout hot path free of any extra work
         // at typical starting-life totals.
-        List<CreatureInfo> opponentNextTurnAttackers = List.of();
         List<CreatureInfo> aiPotentialBlockers = List.of();
+        List<CombatMath.Attacker> opponentNextTurnAttackers = List.of();
         DefensiveBaseline defensiveBaseline = null;
         if (aiLife > 0 && aiLife < DEFENSIVE_PENALTY_LIFE_THRESHOLD) {
-            opponentNextTurnAttackers = buildOpponentNextTurnAttackers(
+            List<CreatureInfo> opponentAttackerInfos = buildOpponentNextTurnAttackers(
                     gameData, aiPlayerId, opponentId, oppBattlefield, aiBattlefield);
-            if (!opponentNextTurnAttackers.isEmpty()) {
+            if (!opponentAttackerInfos.isEmpty()) {
                 aiPotentialBlockers = buildAiPotentialBlockers(
                         gameData, aiPlayerId, opponentId, aiBattlefield);
-                double[] baselineOutcome = estimateCounterAttackOutcome(
-                        gameData, opponentNextTurnAttackers, aiPotentialBlockers, aiLife);
+                opponentNextTurnAttackers = buildAttackers(
+                        gameData, opponentAttackerInfos, aiPotentialBlockers, false);
+                double[] baselineOutcome = CombatMath.estimateCounterAttackOutcome(
+                        opponentNextTurnAttackers, aiPotentialBlockers, null, aiLife);
                 defensiveBaseline = new DefensiveBaseline(baselineOutcome[0], baselineOutcome[1]);
             }
         }
@@ -153,30 +162,41 @@ public class CombatSimulator {
 
         // If all attackers are forced, return them all
         if (optionalAttackerInfos.isEmpty()) {
-            return forcedAttackerInfos.stream().map(CreatureInfo::index).toList();
+            return indexList(forcedAttackerInfos);
         }
 
-        int n = optionalAttackerInfos.size();
+        // Precompute each candidate attacker's block-compatibility row once. The subset loop
+        // below evaluates combat up to 2^12 times, and block legality is by far the most
+        // expensive per-pair query involved (layered-system keyword checks).
+        boolean trackVigilance = defensiveBaseline != null;
+        List<CombatMath.Attacker> forcedAttackers = buildAttackers(
+                gameData, forcedAttackerInfos, blockerInfos, trackVigilance);
+        List<CombatMath.Attacker> optionalAttackers = buildAttackers(
+                gameData, optionalAttackerInfos, blockerInfos, trackVigilance);
+
+        int n = optionalAttackers.size();
         int totalSubsets = 1 << n;
 
         // Baseline: forced attackers only (score must beat this; if no must-attack, baseline is 0 = no attack)
-        double bestScore = Double.NEGATIVE_INFINITY;
+        double bestScore;
         List<Integer> bestSubset = List.of();
-        if (!forcedAttackerInfos.isEmpty()) {
+        if (!forcedAttackers.isEmpty()) {
             // Evaluate forced-only attack as baseline
-            CombatOutcome forcedOutcome = simulateCombat(gameData, forcedAttackerInfos, blockerInfos, opponentLife);
+            CombatOutcome forcedOutcome = CombatMath.simulateCombat(forcedAttackers, blockerInfos, opponentLife);
             bestScore = forcedOutcome.evaluationDelta();
-            bestSubset = forcedAttackerInfos.stream().map(CreatureInfo::index).toList();
+            bestSubset = indexList(forcedAttackerInfos);
         } else {
             bestScore = 0; // Not attacking at all scores 0
         }
 
+        List<CombatMath.Attacker> subset = new ArrayList<>(forcedAttackers.size() + n);
         for (int mask = 0; mask < totalSubsets; mask++) {
             // Build subset: forced attackers + selected optional attackers
-            List<CreatureInfo> subset = new ArrayList<>(forcedAttackerInfos);
+            subset.clear();
+            subset.addAll(forcedAttackers);
             for (int i = 0; i < n; i++) {
                 if ((mask & (1 << i)) != 0) {
-                    subset.add(optionalAttackerInfos.get(i));
+                    subset.add(optionalAttackers.get(i));
                 }
             }
 
@@ -184,29 +204,28 @@ public class CombatSimulator {
             if (subset.isEmpty()) continue;
 
             // Quick lethal check: if unblockable damage >= opponent life (or poison), pick immediately
-            List<CreatureInfo> unblockable = subset.stream()
-                    .filter(a -> a.cantBeBlocked || !canBeBlockedByAny(gameData, a, blockerInfos))
-                    .toList();
-            int unblockableLifeDamage = unblockable.stream()
-                    .filter(a -> !a.infect)
-                    .mapToInt(CreatureInfo::power)
-                    .sum();
-            int unblockablePoisonDamage = unblockable.stream()
-                    .filter(a -> a.infect)
-                    .mapToInt(CreatureInfo::power)
-                    .sum();
+            int unblockableLifeDamage = 0;
+            int unblockablePoisonDamage = 0;
+            for (CombatMath.Attacker attacker : subset) {
+                if (attacker.blockable()) continue;
+                if (attacker.info().infect()) {
+                    unblockablePoisonDamage += attacker.info().power();
+                } else {
+                    unblockableLifeDamage += attacker.info().power();
+                }
+            }
             if (unblockableLifeDamage >= opponentLife
                     || unblockablePoisonDamage + opponentPoison >= 10) {
-                return subset.stream().map(CreatureInfo::index).toList();
+                return attackerIndexList(subset);
             }
 
             // Simulate greedy-optimal blocking by opponent
-            CombatOutcome outcome = simulateCombat(gameData, subset, blockerInfos, opponentLife);
+            CombatOutcome outcome = CombatMath.simulateCombat(subset, blockerInfos, opponentLife);
             double score = outcome.evaluationDelta();
 
             // Apply pessimism for opponent's potential combat tricks
             if (threatEstimate.hasThreat()) {
-                score -= computeAttackTrickRisk(gameData, subset, blockerInfos, threatEstimate);
+                score -= CombatMath.computeAttackTrickRisk(subset, blockerInfos, threatEstimate);
             }
 
             // Apply defensive value penalty: attacking taps non-vigilance creatures,
@@ -214,13 +233,19 @@ public class CombatSimulator {
             // opponent has a significant board, sending creatures into a losing race
             // is worse than holding them back.
             if (defensiveBaseline != null) {
-                score -= computeDefensiveValuePenalty(gameData, subset, aiPotentialBlockers,
+                Set<UUID> tappedAttackerIds = new HashSet<>();
+                for (CombatMath.Attacker attacker : subset) {
+                    if (!attacker.vigilance()) {
+                        tappedAttackerIds.add(attacker.info().id());
+                    }
+                }
+                score -= CombatMath.computeDefensiveValuePenalty(tappedAttackerIds, aiPotentialBlockers,
                         opponentNextTurnAttackers, defensiveBaseline, aiLife);
             }
 
             if (score > bestScore) {
                 bestScore = score;
-                bestSubset = subset.stream().map(CreatureInfo::index).toList();
+                bestSubset = attackerIndexList(subset);
             }
         }
 
@@ -260,39 +285,53 @@ public class CombatSimulator {
             blockerInfos.add(buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId));
         }
 
+        // Precompute the lure / must-block flags once — they involve effect scans and aura
+        // queries, and the sort below would otherwise re-evaluate them per comparison.
+        Set<UUID> lureAttackerIds = new HashSet<>();
+        Set<UUID> mustBlockAttackerIds = new HashSet<>();
+        for (CreatureInfo attacker : attackerInfos) {
+            if (hasLureEffect(gameData, attacker.perm)) lureAttackerIds.add(attacker.id);
+            if (hasMustBeBlockedIfAbleEffect(gameData, attacker.perm)) mustBlockAttackerIds.add(attacker.id);
+        }
+
         // Priority: lure first (forces all able), then mustBlockIfAble, then regular by threat desc.
         // Within lures, menace+lure sorts ahead so it claims a legal 2+ pool before a non-menace
         // lure can drain candidates.
         List<CreatureInfo> sortedAttackers = new ArrayList<>(attackerInfos);
         sortedAttackers.sort((a, b) -> {
-            int lureCmp = Boolean.compare(hasLureEffect(gameData, b.perm), hasLureEffect(gameData, a.perm));
+            int lureCmp = Boolean.compare(lureAttackerIds.contains(b.id), lureAttackerIds.contains(a.id));
             if (lureCmp != 0) return lureCmp;
             int menaceCmp = Boolean.compare(b.menace, a.menace);
             if (menaceCmp != 0) return menaceCmp;
-            int mbCmp = Boolean.compare(hasMustBeBlockedIfAbleEffect(gameData, b.perm),
-                                        hasMustBeBlockedIfAbleEffect(gameData, a.perm));
+            int mbCmp = Boolean.compare(mustBlockAttackerIds.contains(b.id),
+                                        mustBlockAttackerIds.contains(a.id));
             if (mbCmp != 0) return mbCmp;
             return Double.compare(b.creatureScore, a.creatureScore);
         });
 
-        int totalIncoming = attackerInfos.stream().mapToInt(CreatureInfo::power).sum();
+        int totalIncoming = 0;
+        for (CreatureInfo attacker : attackerInfos) {
+            totalIncoming += attacker.power;
+        }
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
         List<int[]> assignments = new ArrayList<>();
 
         for (CreatureInfo attacker : sortedAttackers) {
             if (attacker.cantBeBlocked) continue;
 
-            List<CreatureInfo> candidates = blockerInfos.stream()
-                    .filter(b -> !blockerUsed[b.index])
-                    .filter(b -> canBlock(gameData, b, attacker))
-                    .toList();
+            List<CreatureInfo> candidates = new ArrayList<>();
+            for (CreatureInfo blocker : blockerInfos) {
+                if (blockerUsed[blocker.index]) continue;
+                if (!canBlock(gameData, blocker, attacker)) continue;
+                candidates.add(blocker);
+            }
             if (candidates.isEmpty()) continue;
 
             // Menace: no creature is "able to block" alone, so with <2 candidates skip entirely.
             if (attacker.menace && candidates.size() < 2) continue;
 
-            boolean lure = hasLureEffect(gameData, attacker.perm);
-            boolean mustBlock = hasMustBeBlockedIfAbleEffect(gameData, attacker.perm);
+            boolean lure = lureAttackerIds.contains(attacker.id);
+            boolean mustBlock = mustBlockAttackerIds.contains(attacker.id);
             boolean lethalIncoming = totalIncoming >= aiLife;
 
             List<CreatureInfo> chosen;
@@ -317,7 +356,8 @@ public class CombatSimulator {
                 // Voluntary single block: take the best single blocker if favorable or lethal.
                 CreatureInfo best = pickBestSingleBlocker(attacker, candidates);
                 double bestValue = best != null
-                        ? (attacker.trample ? evaluateTrampleBlock(attacker, best) : evaluateBlock(attacker, best))
+                        ? (attacker.trample ? CombatMath.evaluateTrampleBlock(attacker, best)
+                                            : CombatMath.evaluateBlock(attacker, best))
                         : Double.NEGATIVE_INFINITY;
                 chosen = (best != null && (bestValue > 0 || lethalIncoming)) ? List.of(best) : List.of();
             }
@@ -367,7 +407,7 @@ public class CombatSimulator {
     private List<CreatureInfo> pickMenaceBlockers(CreatureInfo attacker, List<CreatureInfo> candidates,
                                                   boolean lethalIncoming) {
         if (candidates.size() < 2) return List.of();
-        int[] bestPair = findBestBlockerPairForMenace(attacker, candidates, null);
+        int[] bestPair = CombatMath.findBestBlockerPairForMenace(attacker, candidates);
         if (bestPair != null) {
             CreatureInfo a = findByIndex(candidates, bestPair[0]);
             CreatureInfo b = findByIndex(candidates, bestPair[1]);
@@ -395,8 +435,8 @@ public class CombatSimulator {
         double bestValue = Double.NEGATIVE_INFINITY;
         for (CreatureInfo blocker : candidates) {
             double value = attacker.trample
-                    ? evaluateTrampleBlock(attacker, blocker)
-                    : evaluateBlock(attacker, blocker);
+                    ? CombatMath.evaluateTrampleBlock(attacker, blocker)
+                    : CombatMath.evaluateBlock(attacker, blocker);
             if (value > bestValue) {
                 bestValue = value;
                 best = blocker;
@@ -508,7 +548,7 @@ public class CombatSimulator {
                 scored.add(blocker);
             }
             if (scored.size() < needed) continue;
-            scored.sort(Comparator.comparingDouble((CreatureInfo b) -> evaluateBlock(mustBlockAttacker, b)).reversed());
+            scored.sort(Comparator.comparingDouble((CreatureInfo b) -> CombatMath.evaluateBlock(mustBlockAttacker, b)).reversed());
             for (int i = 0; i < needed; i++) {
                 CreatureInfo blocker = scored.get(i);
                 forcedAssignments.get(ai).add(blocker);
@@ -576,13 +616,13 @@ public class CombatSimulator {
             // candidate states rather than scoring them — this keeps the search from
             // returning an illegal declaration the server will refuse.
             if (isValidBlockerAssignment(attackerInfos, forcedAssignments)) {
-                double score = evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
+                double score = CombatMath.evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
 
                 // Apply pessimism for opponent's potential combat tricks: a block that
                 // looks profitable now could flip to a disaster if the opponent pumps an
                 // attacker (e.g. 3/3 blocking 2/3 becomes a blocker loss after Giant Growth).
                 if (threatEstimate.hasThreat()) {
-                    score -= computeBlockTrickRisk(attackerInfos, forcedAssignments, aiLife, aiPoison, threatEstimate);
+                    score -= CombatMath.computeBlockTrickRisk(attackerInfos, forcedAssignments, aiLife, aiPoison, threatEstimate);
                 }
 
                 if (score > bestScore) {
@@ -621,153 +661,12 @@ public class CombatSimulator {
 
     /**
      * Evaluates a specific set of blocker assignments from the defender's perspective.
-     * Higher score = better for the defender.
+     * Higher score = better for the defender. Delegates to {@link CombatMath}.
      */
     double evaluateDefenderCombat(List<CreatureInfo> attackerInfos,
-                                          List<List<CreatureInfo>> blockAssignments,
-                                          int aiLife, int aiPoison) {
-        double defenderLifeLost = 0;
-        double defenderPoisonGained = 0;
-        double defenderLifeGained = 0;
-        double defenderCreaturesLostValue = 0;
-        double attackerCreaturesLostValue = 0;
-
-        for (int ai = 0; ai < attackerInfos.size(); ai++) {
-            CreatureInfo attacker = attackerInfos.get(ai);
-            List<CreatureInfo> blockers = blockAssignments.get(ai);
-
-            // Menace requires 2+ blockers; fewer means effectively unblocked
-            if (attacker.menace && blockers.size() < 2) {
-                blockers = List.of();
-            }
-
-            if (blockers.isEmpty()) {
-                if (attacker.infect) {
-                    defenderPoisonGained += attacker.power;
-                } else {
-                    defenderLifeLost += attacker.power;
-                }
-                continue;
-            }
-
-            // Defender controls damage assignment order — sacrifice cheapest first
-            List<CreatureInfo> orderedBlockers = new ArrayList<>(blockers);
-            orderedBlockers.sort(Comparator.comparingDouble(CreatureInfo::creatureScore));
-
-            int attackerDamageReceived = 0;
-            boolean attackerDead = false;
-            boolean attackerDealtFirstStrike = attacker.firstStrike || attacker.doubleStrike;
-
-            // === First strike phase ===
-            if (attackerDealtFirstStrike) {
-                int remaining = attacker.power;
-                for (CreatureInfo blocker : orderedBlockers) {
-                    if (remaining <= 0) break;
-                    if (!blocker.indestructible) {
-                        int dmg = Math.min(remaining, blocker.toughness);
-                        if (dmg >= blocker.toughness) {
-                            defenderCreaturesLostValue += blocker.creatureScore;
-                        }
-                        remaining -= dmg;
-                    } else {
-                        remaining -= blocker.toughness;
-                    }
-                }
-                if (attacker.trample && remaining > 0) {
-                    if (attacker.infect) {
-                        defenderPoisonGained += remaining;
-                    } else {
-                        defenderLifeLost += remaining;
-                    }
-                }
-            }
-
-            // Blockers with first strike deal damage to attacker
-            for (CreatureInfo blocker : orderedBlockers) {
-                if (blocker.firstStrike || blocker.doubleStrike) {
-                    attackerDamageReceived += blocker.power;
-                    if (blocker.lifelink) {
-                        defenderLifeGained += blocker.power;
-                    }
-                }
-            }
-
-            if (attackerDamageReceived >= attacker.toughness && !attacker.indestructible) {
-                attackerDead = true;
-                attackerCreaturesLostValue += attacker.creatureScore;
-            }
-
-            // === Regular damage phase ===
-            if (!attackerDead && !(attacker.firstStrike && !attacker.doubleStrike)) {
-                int remaining = attacker.power;
-                for (CreatureInfo blocker : orderedBlockers) {
-                    if (remaining <= 0) break;
-                    if (!blocker.indestructible) {
-                        int dmg = Math.min(remaining, blocker.toughness);
-                        // Only count blocker death here if attacker didn't have first strike
-                        if (dmg >= blocker.toughness && !attackerDealtFirstStrike) {
-                            defenderCreaturesLostValue += blocker.creatureScore;
-                        }
-                        remaining -= dmg;
-                    } else {
-                        remaining -= blocker.toughness;
-                    }
-                }
-                if (attacker.trample && remaining > 0) {
-                    if (attacker.infect) {
-                        defenderPoisonGained += remaining;
-                    } else {
-                        defenderLifeLost += remaining;
-                    }
-                }
-            }
-
-            // Regular blocker damage to attacker
-            if (!attackerDead) {
-                int totalRegularBlockerDmg = 0;
-                for (CreatureInfo blocker : orderedBlockers) {
-                    if (!blocker.firstStrike || blocker.doubleStrike) {
-                        totalRegularBlockerDmg += blocker.power;
-                        if (blocker.lifelink && !(blocker.firstStrike || blocker.doubleStrike)) {
-                            defenderLifeGained += blocker.power;
-                        }
-                    }
-                }
-                if (totalRegularBlockerDmg + attackerDamageReceived >= attacker.toughness
-                        && !attacker.indestructible) {
-                    attackerCreaturesLostValue += attacker.creatureScore;
-                }
-            }
-        }
-
-        // Scale life loss weight based on proximity to lethal — when damage
-        // represents a large fraction of remaining life, prioritize blocking
-        // over preserving creatures (enables correct chump-blocking decisions).
-        double lifeWeight = 2.0;
-        if (aiLife > 0) {
-            double totalPotentialDamage = 0;
-            for (CreatureInfo attacker : attackerInfos) {
-                totalPotentialDamage += attacker.power;
-            }
-            double lethalRatio = totalPotentialDamage / aiLife;
-            if (lethalRatio >= 0.5) {
-                // At 50% of life: weight = 2.0, at 100%+ (lethal): weight = 5.0
-                lifeWeight = 2.0 + 3.0 * Math.min(1.0, (lethalRatio - 0.5) / 0.5);
-            }
-        }
-
-        double score = attackerCreaturesLostValue
-                - defenderCreaturesLostValue
-                - defenderLifeLost * lifeWeight
-                - defenderPoisonGained * 4.0
-                + defenderLifeGained * 0.5;
-
-        // Heavy penalty when blocking still results in lethal damage
-        if (defenderLifeLost >= aiLife || defenderPoisonGained + aiPoison >= 10) {
-            score -= 1000;
-        }
-
-        return score;
+                                  List<List<CreatureInfo>> blockAssignments,
+                                  int aiLife, int aiPoison) {
+        return CombatMath.evaluateDefenderCombat(attackerInfos, blockAssignments, aiLife, aiPoison);
     }
 
     private List<int[]> convertToAssignmentList(List<CreatureInfo> attackerInfos,
@@ -825,303 +724,14 @@ public class CombatSimulator {
 
     /**
      * Simulates combat between a set of attackers and greedy-optimal blocking.
+     * Convenience wrapper that computes block legality on the fly; the subset search in
+     * {@link #findBestAttackers} precomputes the rows once and calls {@link CombatMath}
+     * directly instead.
      */
     CombatOutcome simulateCombat(GameData gameData, List<CreatureInfo> attackers, List<CreatureInfo> blockers,
                                   int opponentLife) {
-        // Simulate opponent's greedy-optimal blocking:
-        // assign best blocker to biggest threat first
-        List<CreatureInfo> sortedAttackers = new ArrayList<>(attackers);
-        sortedAttackers.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
-
-        boolean[] blockerUsed = new boolean[blockers.size()];
-        // Track blocking assignments: for each attacker, list of assigned blockers
-        List<List<CreatureInfo>> blockAssignments = new ArrayList<>();
-        for (int i = 0; i < sortedAttackers.size(); i++) {
-            blockAssignments.add(new ArrayList<>());
-        }
-
-        for (int i = 0; i < sortedAttackers.size(); i++) {
-            CreatureInfo attacker = sortedAttackers.get(i);
-            if (attacker.cantBeBlocked) continue;
-
-            if (attacker.menace) {
-                // Need 2 blockers for menace
-                List<Integer> availableIdx = new ArrayList<>();
-                for (int j = 0; j < blockers.size(); j++) {
-                    if (!blockerUsed[j] && canBlock(gameData, blockers.get(j), attacker)) {
-                        availableIdx.add(j);
-                    }
-                }
-                if (availableIdx.size() >= 2) {
-                    // Pick cheapest pair that can kill attacker
-                    int bestA = -1, bestB = -1;
-                    double bestValue = Double.NEGATIVE_INFINITY;
-                    for (int a = 0; a < availableIdx.size(); a++) {
-                        for (int b = a + 1; b < availableIdx.size(); b++) {
-                            CreatureInfo ba = blockers.get(availableIdx.get(a));
-                            CreatureInfo bb = blockers.get(availableIdx.get(b));
-                            boolean kills = ba.power + bb.power >= attacker.toughness;
-                            double value = kills ? attacker.creatureScore - ba.creatureScore - bb.creatureScore : -100;
-                            if (value > bestValue) {
-                                bestValue = value;
-                                bestA = availableIdx.get(a);
-                                bestB = availableIdx.get(b);
-                            }
-                        }
-                    }
-                    if (bestA >= 0 && bestValue > -50) {
-                        blockerUsed[bestA] = true;
-                        blockerUsed[bestB] = true;
-                        blockAssignments.get(i).add(blockers.get(bestA));
-                        blockAssignments.get(i).add(blockers.get(bestB));
-                    }
-                }
-                continue;
-            }
-
-            // Single blocker: find most favorable block for defender
-            int bestBlockerIdx = -1;
-            double bestDefenderValue = Double.NEGATIVE_INFINITY;
-
-            for (int j = 0; j < blockers.size(); j++) {
-                if (blockerUsed[j]) continue;
-                CreatureInfo blocker = blockers.get(j);
-                if (!canBlock(gameData, blocker, attacker)) continue;
-
-                double value = evaluateDefenderBlock(attacker, blocker);
-                if (value > bestDefenderValue) {
-                    bestDefenderValue = value;
-                    bestBlockerIdx = j;
-                }
-            }
-
-            if (bestBlockerIdx >= 0 && bestDefenderValue > 0) {
-                blockerUsed[bestBlockerIdx] = true;
-                blockAssignments.get(i).add(blockers.get(bestBlockerIdx));
-            }
-        }
-
-        // Now compute combat outcome
-        int opponentLifeLost = 0;
-        int opponentPoisonGained = 0;
-        int aiLifeGained = 0;
-        double aiCreaturesLostValue = 0;
-        double oppCreaturesLostValue = 0;
-
-        for (int i = 0; i < sortedAttackers.size(); i++) {
-            CreatureInfo attacker = sortedAttackers.get(i);
-            List<CreatureInfo> assignedBlockers = blockAssignments.get(i);
-
-            if (assignedBlockers.isEmpty()) {
-                // Unblocked: damage goes to opponent
-                if (attacker.infect) {
-                    opponentPoisonGained += attacker.power;
-                } else {
-                    opponentLifeLost += attacker.power;
-                }
-                if (attacker.lifelink) {
-                    aiLifeGained += attacker.power;
-                }
-            } else {
-                // Blocked combat
-                int totalBlockerPower = assignedBlockers.stream().mapToInt(CreatureInfo::power).sum();
-                int totalBlockerToughness = assignedBlockers.stream().mapToInt(CreatureInfo::toughness).sum();
-
-                // First strike / Double strike phase
-                int attackerDamageDealt = 0;
-                int blockerDamageDealt = 0;
-
-                if (attacker.firstStrike || attacker.doubleStrike) {
-                    // Attacker deals first strike damage
-                    int fsRemaining = attacker.power;
-                    for (CreatureInfo blocker : assignedBlockers) {
-                        if (!blocker.indestructible) {
-                            int lethal = blocker.toughness;
-                            int dmg = Math.min(fsRemaining, lethal);
-                            if (dmg >= blocker.toughness) {
-                                oppCreaturesLostValue += blocker.creatureScore;
-                            }
-                            fsRemaining -= dmg;
-                        } else {
-                            fsRemaining -= blocker.toughness;
-                        }
-                        if (fsRemaining <= 0) break;
-                    }
-
-                    // Trample excess in first strike
-                    if (attacker.trample && fsRemaining > 0) {
-                        if (attacker.infect) {
-                            opponentPoisonGained += fsRemaining;
-                        } else {
-                            opponentLifeLost += fsRemaining;
-                        }
-                    }
-                    if (attacker.lifelink) {
-                        aiLifeGained += attacker.power;
-                    }
-                    attackerDamageDealt += attacker.power;
-                }
-
-                // Check which blockers have first strike
-                for (CreatureInfo blocker : assignedBlockers) {
-                    if (blocker.firstStrike || blocker.doubleStrike) {
-                        blockerDamageDealt += blocker.power;
-                    }
-                }
-
-                // Check if attacker dies to first strike damage
-                boolean attackerDead = false;
-                if (blockerDamageDealt >= attacker.toughness && !attacker.indestructible) {
-                    attackerDead = true;
-                    aiCreaturesLostValue += attacker.creatureScore;
-                }
-
-                // Regular damage phase (only if not already dealt via first strike)
-                if (!attackerDead && !(attacker.firstStrike && !attacker.doubleStrike)) {
-                    int regularRemaining = attacker.power;
-                    for (CreatureInfo blocker : assignedBlockers) {
-                        if (!blocker.indestructible) {
-                            int dmg = Math.min(regularRemaining, blocker.toughness);
-                            // Only count as killed if not already killed in first strike
-                            if (dmg >= blocker.toughness && !attacker.firstStrike && !attacker.doubleStrike) {
-                                oppCreaturesLostValue += blocker.creatureScore;
-                            }
-                            regularRemaining -= dmg;
-                        } else {
-                            regularRemaining -= blocker.toughness;
-                        }
-                        if (regularRemaining <= 0) break;
-                    }
-
-                    if (attacker.trample && regularRemaining > 0) {
-                        if (attacker.infect) {
-                            opponentPoisonGained += regularRemaining;
-                        } else {
-                            opponentLifeLost += regularRemaining;
-                        }
-                    }
-                    if (attacker.lifelink && attackerDamageDealt == 0) {
-                        aiLifeGained += attacker.power;
-                    }
-                }
-
-                // Regular blocker damage
-                if (!attackerDead) {
-                    int totalRegularBlockerDmg = 0;
-                    for (CreatureInfo blocker : assignedBlockers) {
-                        if (!blocker.firstStrike || blocker.doubleStrike) {
-                            totalRegularBlockerDmg += blocker.power;
-                        }
-                    }
-                    if (totalRegularBlockerDmg + blockerDamageDealt >= attacker.toughness
-                            && !attacker.indestructible) {
-                        aiCreaturesLostValue += attacker.creatureScore;
-                    }
-                }
-            }
-        }
-
-        return new CombatOutcome(aiLifeGained, -opponentLifeLost, opponentPoisonGained,
-                aiCreaturesLostValue, oppCreaturesLostValue);
-    }
-
-    private double evaluateBlock(CreatureInfo attacker, CreatureInfo blocker) {
-        boolean blockerKillsAttacker = blocker.power >= attacker.toughness || attacker.indestructible;
-        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
-
-        if (blocker.power >= attacker.toughness && !attacker.indestructible) {
-            if (!attackerKillsBlocker) {
-                // Kill attacker, blocker survives — great trade
-                return attacker.creatureScore + 10;
-            }
-            // Both die — trade evaluation
-            return attacker.creatureScore - blocker.creatureScore;
-        }
-
-        if (!attackerKillsBlocker) {
-            // Neither dies — still prevents damage
-            return attacker.power * 0.5;
-        }
-
-        // Blocker dies, attacker lives — bad unless chump blocking
-        return -blocker.creatureScore + attacker.power * 0.5;
-    }
-
-    /**
-     * Evaluates blocking a trample attacker. Unlike evaluateBlock, this factors in how much
-     * trample damage the blocker's toughness prevents, preferring high-toughness blockers
-     * even when they can't kill the attacker.
-     */
-    private double evaluateTrampleBlock(CreatureInfo attacker, CreatureInfo blocker) {
-        boolean blockerKillsAttacker = blocker.power >= attacker.toughness && !attacker.indestructible;
-        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
-
-        if (blockerKillsAttacker) {
-            if (!attackerKillsBlocker) {
-                // Kill attacker and blocker survives — best outcome, no trample at all
-                return attacker.creatureScore + 10;
-            }
-            // Both die — trade evaluation
-            return attacker.creatureScore - blocker.creatureScore;
-        }
-
-        // Attacker survives with trample: value is based on how much trample damage is prevented.
-        // The blocker's toughness is how much of the attacker's power it absorbs.
-        int tramplePrevented = Math.min(attacker.power, blocker.toughness);
-        double cost = attackerKillsBlocker ? blocker.creatureScore : 0;
-        return tramplePrevented * 0.8 - cost;
-    }
-
-    private double evaluateDefenderBlock(CreatureInfo attacker, CreatureInfo blocker) {
-        // From defender's perspective: positive means favorable for the defender
-        boolean blockerKillsAttacker = blocker.power >= attacker.toughness && !attacker.indestructible;
-        boolean attackerKillsBlocker = attacker.power >= blocker.toughness && !blocker.indestructible;
-
-        if (blockerKillsAttacker && !attackerKillsBlocker) {
-            // Defender kills attacker, blocker survives
-            return attacker.creatureScore + 10;
-        }
-        if (blockerKillsAttacker && attackerKillsBlocker) {
-            // Both die — favorable if attacker is more valuable
-            return attacker.creatureScore - blocker.creatureScore;
-        }
-        if (!blockerKillsAttacker && !attackerKillsBlocker) {
-            // Neither dies — prevents damage
-            return attacker.power * 0.3;
-        }
-        // Blocker dies, attacker survives — only block if cheap blocker vs expensive attacker
-        return -blocker.creatureScore * 0.5;
-    }
-
-    private int[] findBestBlockerPairForMenace(CreatureInfo attacker, List<CreatureInfo> available,
-                                               boolean[] blockerUsed) {
-        int[] bestPair = null;
-        double bestValue = Double.NEGATIVE_INFINITY;
-
-        for (int a = 0; a < available.size(); a++) {
-            for (int b = a + 1; b < available.size(); b++) {
-                CreatureInfo ba = available.get(a);
-                CreatureInfo bb = available.get(b);
-                boolean kills = ba.power + bb.power >= attacker.toughness;
-                boolean oneSurvives = attacker.power < ba.toughness || attacker.power < bb.toughness;
-
-                double value;
-                if (kills && oneSurvives) {
-                    value = attacker.creatureScore;
-                } else if (kills) {
-                    value = attacker.creatureScore - ba.creatureScore - bb.creatureScore;
-                } else {
-                    continue;
-                }
-
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestPair = new int[]{ba.index, bb.index};
-                }
-            }
-        }
-
-        return bestValue > 0 ? bestPair : null;
+        return CombatMath.simulateCombat(buildAttackers(gameData, attackers, blockers, false),
+                blockers, opponentLife);
     }
 
     private boolean canBlock(GameData gameData, CreatureInfo blocker, CreatureInfo attacker) {
@@ -1140,9 +750,41 @@ public class CombatSimulator {
         return List.of();
     }
 
-    private boolean canBeBlockedByAny(GameData gameData, CreatureInfo attacker, List<CreatureInfo> blockers) {
-        if (attacker.cantBeBlocked) return false;
-        return blockers.stream().anyMatch(b -> canBlock(gameData, b, attacker));
+    /**
+     * Wraps attacker infos with their block-compatibility rows against the given blocker
+     * list, evaluating the expensive per-pair block-legality query exactly once per pair.
+     * When {@code trackVigilance} is set, each attacker's vigilance keyword is also
+     * resolved (needed only by the defensive-value penalty).
+     */
+    private List<CombatMath.Attacker> buildAttackers(GameData gameData, List<CreatureInfo> attackers,
+                                                     List<CreatureInfo> blockers, boolean trackVigilance) {
+        List<CombatMath.Attacker> result = new ArrayList<>(attackers.size());
+        for (CreatureInfo info : attackers) {
+            boolean[] canBeBlockedBy = new boolean[blockers.size()];
+            for (int j = 0; j < blockers.size(); j++) {
+                canBeBlockedBy[j] = canBlock(gameData, blockers.get(j), info);
+            }
+            boolean vigilance = trackVigilance
+                    && gameQueryService.hasKeyword(gameData, info.perm, Keyword.VIGILANCE);
+            result.add(CombatMath.Attacker.of(info, canBeBlockedBy, vigilance));
+        }
+        return result;
+    }
+
+    private static List<Integer> indexList(List<CreatureInfo> infos) {
+        List<Integer> result = new ArrayList<>(infos.size());
+        for (CreatureInfo info : infos) {
+            result.add(info.index);
+        }
+        return result;
+    }
+
+    private static List<Integer> attackerIndexList(List<CombatMath.Attacker> attackers) {
+        List<Integer> result = new ArrayList<>(attackers.size());
+        for (CombatMath.Attacker attacker : attackers) {
+            result.add(attacker.info().index());
+        }
+        return result;
     }
 
     CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
@@ -1232,86 +874,17 @@ public class CombatSimulator {
 
     /**
      * Estimates the outcome of a greedy counter-attack by the opponent given the
-     * AI's remaining blockers. Unlike {@link #simulateCombat}, this method models
-     * chump blocking: when the total incoming damage would be lethal, the AI
-     * blocks even at a negative trade because not blocking would lose the game.
+     * AI's remaining blockers. Convenience wrapper over
+     * {@link CombatMath#estimateCounterAttackOutcome}; see that method for the model.
      * <p>
      * Returns a two-element array: {@code [damageTaken, creaturesLostValue]}.
-     * Infect damage is counted as 2x its power in life-equivalent terms (since
-     * 10 poison = loss, and 20 life = loss).
      */
     double[] estimateCounterAttackOutcome(GameData gameData,
                                            List<CreatureInfo> attackers,
                                            List<CreatureInfo> blockers,
                                            int aiLife) {
-        if (attackers.isEmpty()) return new double[]{0, 0};
-
-        // Total raw incoming damage if we don't block at all (used for lethal-chump check)
-        int rawIncoming = 0;
-        for (CreatureInfo a : attackers) {
-            rawIncoming += a.power;
-        }
-
-        // Process attackers biggest-first so the AI uses blockers on the largest threats
-        List<CreatureInfo> sorted = new ArrayList<>(attackers);
-        sorted.sort(Comparator.comparingInt((CreatureInfo c) -> c.power).reversed());
-
-        boolean[] blockerUsed = new boolean[blockers.size()];
-        double damageTaken = 0;
-        double creaturesLostValue = 0;
-        int remainingIncoming = rawIncoming;
-
-        for (CreatureInfo attacker : sorted) {
-            int unblockedPower = attacker.power;
-
-            if (attacker.cantBeBlocked) {
-                damageTaken += unblockedPower;
-                remainingIncoming -= unblockedPower;
-                continue;
-            }
-
-            // Find the best single blocker for this attacker
-            int bestIdx = -1;
-            double bestValue = Double.NEGATIVE_INFINITY;
-            for (int j = 0; j < blockers.size(); j++) {
-                if (blockerUsed[j]) continue;
-                CreatureInfo b = blockers.get(j);
-                if (!canBlock(gameData, b, attacker)) continue;
-                double v = attacker.trample
-                        ? evaluateTrampleBlock(attacker, b)
-                        : evaluateBlock(attacker, b);
-                if (v > bestValue) {
-                    bestValue = v;
-                    bestIdx = j;
-                }
-            }
-
-            boolean mustChump = remainingIncoming >= aiLife;
-            if (bestIdx >= 0 && (bestValue > 0 || mustChump)) {
-                CreatureInfo b = blockers.get(bestIdx);
-                blockerUsed[bestIdx] = true;
-
-                boolean blockerDies = !b.indestructible && attacker.power >= b.toughness;
-                if (blockerDies) {
-                    creaturesLostValue += b.creatureScore;
-                }
-
-                if (attacker.trample) {
-                    int trampleDmg = Math.max(0, attacker.power - b.toughness);
-                    damageTaken += trampleDmg;
-                    remainingIncoming -= (unblockedPower - trampleDmg);
-                } else {
-                    // All damage absorbed by the blocker
-                    remainingIncoming -= unblockedPower;
-                }
-            } else {
-                // Not blocked: full damage goes through
-                damageTaken += unblockedPower;
-                remainingIncoming -= unblockedPower;
-            }
-        }
-
-        return new double[]{damageTaken, creaturesLostValue};
+        return CombatMath.estimateCounterAttackOutcome(
+                buildAttackers(gameData, attackers, blockers, false), blockers, null, aiLife);
     }
 
     // ===== Defensive Value Penalty =====
@@ -1368,18 +941,10 @@ public class CombatSimulator {
     }
 
     /**
-     * Computes a penalty reflecting the defensive value we lose by attacking
-     * with a given subset of creatures. Non-vigilance attackers become tapped
-     * and cannot block the opponent's next-turn attack.
-     * <p>
-     * The penalty compares the opponent's counter-attack outcome with all AI
-     * creatures as blockers (baseline) vs the subset of creatures remaining
-     * after the attack. Extra life lost and extra creature value lost both
-     * contribute to the penalty. If attacking converts a survivable
-     * counter-attack into a lethal one, a large sentinel penalty is added.
-     * <p>
-     * The penalty weight scales with urgency: when the AI's post-counter life
-     * total is low, each point of lost life hurts more.
+     * Computes the defensive value penalty for attacking with the given subset.
+     * Convenience wrapper over {@link CombatMath#computeDefensiveValuePenalty} that
+     * resolves vigilance and block legality on the fly; the subset search in
+     * {@link #findBestAttackers} precomputes both and calls {@link CombatMath} directly.
      */
     double computeDefensiveValuePenalty(GameData gameData,
                                         List<CreatureInfo> attackSubset,
@@ -1398,160 +963,36 @@ public class CombatSimulator {
             if (gameQueryService.hasKeyword(gameData, info.perm, Keyword.VIGILANCE)) continue;
             tappedAttackerIds.add(info.id);
         }
-        if (tappedAttackerIds.isEmpty()) return 0;
 
-        // Remove tapped attackers from the potential blocker pool.
-        List<CreatureInfo> remainingBlockers = new ArrayList<>(aiPotentialBlockers.size());
-        for (CreatureInfo blocker : aiPotentialBlockers) {
-            if (!tappedAttackerIds.contains(blocker.id)) {
-                remainingBlockers.add(blocker);
-            }
-        }
-        // If we didn't actually remove anything (e.g. attackers weren't in the
-        // potential-blocker set for some reason), the attack doesn't reduce defense.
-        if (remainingBlockers.size() == aiPotentialBlockers.size()) return 0;
-
-        double[] reducedOutcome = estimateCounterAttackOutcome(
-                gameData, opponentNextTurnAttackers, remainingBlockers, aiLife);
-        double reducedDamage = reducedOutcome[0];
-        double reducedCreatureLoss = reducedOutcome[1];
-
-        double damageDelta = reducedDamage - baseline.damageTaken();
-        double creatureLossDelta = reducedCreatureLoss - baseline.creaturesLostValue();
-
-        // If the attack doesn't worsen our defensive outcome, there's nothing to penalize.
-        if (damageDelta <= 0 && creatureLossDelta <= 0) return 0;
-
-        double penalty = 0;
-
-        // Lethal flip sentinel: attacking turns a survivable counter-attack into a
-        // lethal one. This is the worst-case scenario and must strongly outweigh
-        // any attack upside short of actual lethal this turn.
-        double lifeAfterBaseline = aiLife - baseline.damageTaken();
-        double lifeAfterReduced = aiLife - reducedDamage;
-        if (lifeAfterBaseline > 0 && lifeAfterReduced <= 0) {
-            penalty += 1000;
-        }
-
-        // Base penalty: each point of extra damage scales roughly like the
-        // attacker-side life-loss weight (2.0 per point) used in evaluationDelta,
-        // so the defensive trade-off is commensurate with offensive gain.
-        penalty += Math.max(0, damageDelta) * 2.0;
-
-        // Creature loss delta: extra blockers we'd lose in the counter-attack.
-        penalty += Math.max(0, creatureLossDelta);
-
-        // Urgency scaling: at full life the penalty stays baseline; as our
-        // post-counter life falls, each point hurts more (up to ~2x at near-zero life).
-        if (lifeAfterReduced > 0 && aiLife > 0) {
-            double urgency = 1.0 + (1.0 - Math.min(1.0, lifeAfterReduced / (double) aiLife));
-            penalty *= urgency;
-        }
-
-        return penalty;
+        return CombatMath.computeDefensiveValuePenalty(tappedAttackerIds, aiPotentialBlockers,
+                buildAttackers(gameData, opponentNextTurnAttackers, aiPotentialBlockers, false),
+                baseline, aiLife);
     }
 
     // ===== Opponent Trick Risk Estimation =====
 
     /**
      * Computes a risk penalty for a set of attackers when the opponent may have
-     * combat tricks. For each blockable attacker, checks whether any legal blocker
-     * — when pumped by the estimated trick — could kill the attacker when it
-     * wouldn't die without the trick. This captures the key scenario: the opponent
-     * blocks only <em>because</em> they have a trick, turning a safe attack into a
-     * creature loss.
-     * <p>
-     * Returns the maximum such vulnerability (the single best target for the
-     * opponent's trick) scaled by trick probability.
+     * combat tricks. Convenience wrapper over {@link CombatMath#computeAttackTrickRisk};
+     * see that method for the model.
      */
     double computeAttackTrickRisk(GameData gameData,
                                   List<CreatureInfo> attackers,
                                   List<CreatureInfo> blockers,
                                   OpponentThreatEstimator.ThreatEstimate threat) {
-        if (!threat.hasThreat()) return 0;
-        int pump = threat.estimatedPumpBoost();
-
-        double maxVulnerability = 0;
-
-        for (CreatureInfo attacker : attackers) {
-            if (attacker.cantBeBlocked || attacker.indestructible) continue;
-
-            for (CreatureInfo blocker : blockers) {
-                if (!canBlock(gameData, blocker, attacker)) continue;
-
-                boolean alreadyLethal = blocker.power >= attacker.toughness;
-                boolean pumpedLethal = (blocker.power + pump) >= attacker.toughness;
-
-                if (pumpedLethal && !alreadyLethal) {
-                    // The pump turns a non-lethal block into a lethal one for our attacker.
-                    // This is the creature value at risk if the opponent has a trick.
-                    maxVulnerability = Math.max(maxVulnerability, attacker.creatureScore);
-                    break; // one vulnerable blocker is enough for this attacker
-                }
-            }
-        }
-
-        return maxVulnerability * threat.trickProbability();
+        return CombatMath.computeAttackTrickRisk(
+                buildAttackers(gameData, attackers, blockers, false), blockers, threat);
     }
 
     /**
      * Computes a risk penalty for a set of blocker assignments when the opponent may
-     * have combat tricks. For each blocked attacker, evaluates how the defender's combat
-     * score changes if that attacker receives the estimated pump. The penalty is the
-     * worst-case swing (the single best pump target for the opponent) scaled by trick
-     * probability. This captures the key scenario: a profitable-looking block that flips
-     * to a disaster when the opponent casts a pump spell on their creature.
-     * <p>
-     * Only the worst single attacker is considered because a typical opponent has at
-     * most one pump spell in hand — they can't pump every attacker simultaneously.
+     * have combat tricks. Delegates to {@link CombatMath#computeBlockTrickRisk}.
      */
     double computeBlockTrickRisk(List<CreatureInfo> attackerInfos,
                                   List<List<CreatureInfo>> blockAssignments,
                                   int aiLife, int aiPoison,
                                   OpponentThreatEstimator.ThreatEstimate threat) {
-        if (!threat.hasThreat()) return 0;
-        int pump = threat.estimatedPumpBoost();
-
-        double baselineScore = evaluateDefenderCombat(attackerInfos, blockAssignments, aiLife, aiPoison);
-        double maxSwing = 0;
-
-        for (int ai = 0; ai < attackerInfos.size(); ai++) {
-            // Unblocked attackers don't interact with our creatures — a pump on them
-            // would deal a bit more damage, but that applies equally whether we block
-            // elsewhere or not, so it doesn't affect the relative ranking of blocks.
-            if (blockAssignments.get(ai).isEmpty()) continue;
-
-            CreatureInfo original = attackerInfos.get(ai);
-            if (original.indestructible) {
-                // Pump toughness doesn't matter for an already-indestructible attacker,
-                // but pumped power could still kill blockers. Continue to simulate.
-            }
-
-            CreatureInfo pumped = withPump(original, pump);
-            List<CreatureInfo> pumpedList = new ArrayList<>(attackerInfos);
-            pumpedList.set(ai, pumped);
-
-            double pumpedScore = evaluateDefenderCombat(pumpedList, blockAssignments, aiLife, aiPoison);
-            double swing = baselineScore - pumpedScore;
-            if (swing > maxSwing) {
-                maxSwing = swing;
-            }
-        }
-
-        return maxSwing * threat.trickProbability();
-    }
-
-    /**
-     * Returns a copy of the given CreatureInfo with power and toughness increased by
-     * the given pump amount. Used by combat trick risk estimation.
-     */
-    private static CreatureInfo withPump(CreatureInfo c, int pump) {
-        return new CreatureInfo(
-                c.index, c.id, c.perm,
-                c.power + pump, c.toughness + pump,
-                c.flying, c.firstStrike, c.doubleStrike, c.trample, c.lifelink,
-                c.indestructible, c.menace, c.fear, c.intimidate, c.reach, c.defender,
-                c.cantBeBlocked, c.isArtifact, c.infect, c.color, c.creatureScore);
+        return CombatMath.computeBlockTrickRisk(attackerInfos, blockAssignments, aiLife, aiPoison, threat);
     }
 
     private UUID getOpponentId(GameData gameData, UUID playerId) {
