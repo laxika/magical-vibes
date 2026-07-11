@@ -16,7 +16,6 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
