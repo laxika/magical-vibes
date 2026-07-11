@@ -140,6 +140,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.mctsEngine.setTimeBudgetMs(timeBudgetMs);
     }
 
+    /** Overrides the MCTS parallel worker count (see {@code ai.mcts.parallelism}). */
+    public void setMctsParallelism(int parallelism) {
+        this.mctsEngine.setParallelism(parallelism);
+    }
+
     // ===== Smart Land Selection =====
 
     /**

@@ -61,10 +61,14 @@ subprojects {
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
-                    "layerBench", "disableLayerBoardCache", "oracle.data-provider").forEach { prop ->
+                    "layerBench", "mctsBench", "disableLayerBoardCache", "oracle.data-provider").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {
+                // Benchmarks report through stdout — surface it on the console
+                if (System.getProperty("layerBench") != null || System.getProperty("mctsBench") != null) {
+                    showStandardStreams = true
+                }
                 events("failed")
                 showExceptions = true
                 showCauses = true

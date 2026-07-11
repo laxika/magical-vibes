@@ -39,6 +39,7 @@ public class AiPlayerService {
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
     private final long mctsTimeBudgetMs;
+    private final int mctsParallelism;
 
     public AiPlayerService(GameRegistry gameRegistry,
                            GameService gameService,
@@ -52,7 +53,8 @@ public class AiPlayerService {
                            TargetLegalityService targetLegalityService,
                            WebSocketSessionManager sessionManager,
                            ObjectMapper objectMapper,
-                           @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs) {
+                           @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs,
+                           @Value("${ai.mcts.parallelism:0}") int mctsParallelism) {
         this.gameRegistry = gameRegistry;
         this.gameService = gameService;
         this.gameSetupService = gameSetupService;
@@ -66,6 +68,7 @@ public class AiPlayerService {
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
         this.mctsTimeBudgetMs = mctsTimeBudgetMs;
+        this.mctsParallelism = mctsParallelism;
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId) {
@@ -84,6 +87,11 @@ public class AiPlayerService {
             case HARD -> {
                 HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
                 hard.setMctsTimeBudgetMs(mctsTimeBudgetMs);
+                // 0 = auto-size from available cores; tests bypass this service and
+                // stay on the engine's single-threaded default
+                hard.setMctsParallelism(mctsParallelism > 0
+                        ? mctsParallelism
+                        : MCTSEngine.autoParallelism());
                 yield hard;
             }
             case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);

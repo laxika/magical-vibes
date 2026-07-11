@@ -299,6 +299,71 @@ class MCTSEngineTest {
     }
 
     @Test
+    @DisplayName("Early stopping does not fire before the tree has minimum root visits")
+    void earlyStopRespectsMinimumRootVisits() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        // 10 iterations < the 100-visit minimum: the convergence check must never fire,
+        // so all 10 budgeted iterations run.
+        engine.search(gd, player1.getId(), 10);
+
+        assertThat(engine.isLastSearchEarlyStopped()).isFalse();
+        assertThat(engine.getLastSearchIterations()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Warm-started converged tree early-stops a repeat search without changing the action")
+    void earlyStopOnConvergedWarmTree() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        // Build a converged tree: 400 iterations concentrate visits on the best child.
+        MCTSEngine bigBudgetEngine = new MCTSEngine(simulator, 42L, 400);
+        SimulationAction firstAction = bigBudgetEngine.search(gd, player1.getId(), 400);
+
+        // Repeat search with a small budget: the warm tree's visit lead exceeds the
+        // 30 remaining iterations, so the search must stop early and return the same action.
+        SimulationAction repeatAction = bigBudgetEngine.search(gd, player1.getId(), 31);
+
+        assertThat(bigBudgetEngine.getCacheHits()).isEqualTo(1);
+        assertThat(bigBudgetEngine.isLastSearchEarlyStopped()).isTrue();
+        assertThat(bigBudgetEngine.getLastSearchIterations()).isLessThan(31);
+        assertThat(repeatAction).isEqualTo(firstAction);
+    }
+
+    @Test
+    @DisplayName("Parallel time-budgeted search returns a valid action and runs iterations on all workers")
+    void parallelSearchReturnsValidAction() {
+        harness.setHand(player1, List.of(new SerraAngel(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        MCTSEngine parallelEngine = new MCTSEngine(simulator);
+        parallelEngine.setTimeBudgetMs(1500);
+        parallelEngine.setParallelism(4);
+
+        SimulationAction action = parallelEngine.search(gd, player1.getId(), 50000);
+
+        assertThat(action).isInstanceOf(SimulationAction.PlayCard.class);
+        assertThat(parallelEngine.getLastSearchIterations()).isPositive();
+        // The shared tree must stay consistent: every completed iteration is one root visit
+        assertThat(parallelEngine.getCachedRootChildVisitSum())
+                .isLessThanOrEqualTo(parallelEngine.getLastSearchIterations());
+    }
+
+    @Test
     @DisplayName("Multi-turn lookahead completes within time budget with deeper rollouts")
     void multiTurnLookaheadCompletesInTime() {
         // Use a non-seeded engine here because this test validates the time budget

@@ -68,12 +68,14 @@ class MCTSNode {
     }
 
     /**
-     * Expands this node by creating a child for the given action.
+     * Expands this node by creating a child for the given action. The action must
+     * already have been reserved (removed from {@link #untriedActions}) by the caller —
+     * the reserve-then-commit split lets the parallel search apply the action and
+     * enumerate the child's legal moves outside the tree lock.
      */
-    MCTSNode addChild(SimulationAction action, List<SimulationAction> childActions) {
+    MCTSNode addExpandedChild(SimulationAction action, List<SimulationAction> childActions) {
         MCTSNode child = new MCTSNode(action, this, childActions);
         children.add(child);
-        untriedActions.remove(action);
         return child;
     }
 
