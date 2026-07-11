@@ -30,7 +30,15 @@ public class MCTSEngine {
 
     private static final double EXPLORATION_CONSTANT = 1.41; // √2
     private static final int DEFAULT_ROLLOUT_DEPTH = 20;
-    private static final long TIME_BUDGET_MS = 1200;
+    /**
+     * Default per-decision think time, overridable via the
+     * {@code ai.mcts.time-budget-ms} application property. 2500ms buys roughly
+     * 90–140 iterations per decision. The simulated opponent playing lands and
+     * creatures during rollouts (GameSimulator's greedy policy) makes each
+     * iteration costlier and narrows root-action reward gaps, so the old 1200ms
+     * (~30–60 iterations) no longer separated good casts from passes.
+     */
+    public static final long DEFAULT_TIME_BUDGET_MS = 2500;
 
     /**
      * Softmax temperature for rollout action selection.
@@ -54,6 +62,7 @@ public class MCTSEngine {
     private final Random rng;
     private final boolean timeBudgetEnabled;
     private final int maxBudget;
+    private long timeBudgetMs = DEFAULT_TIME_BUDGET_MS;
 
     /**
      * Warm-start cache. When the AI passes priority and then gets priority back at a
@@ -126,7 +135,7 @@ public class MCTSEngine {
             cachedSignature = signature;
             cacheMisses++;
         }
-        long deadline = timeBudgetEnabled ? System.currentTimeMillis() + TIME_BUDGET_MS : Long.MAX_VALUE;
+        long deadline = timeBudgetEnabled ? System.currentTimeMillis() + timeBudgetMs : Long.MAX_VALUE;
         int effectiveBudget = maxBudget > 0 ? Math.min(budget, maxBudget) : budget;
 
         for (int i = 0; i < effectiveBudget; i++) {
@@ -343,6 +352,14 @@ public class MCTSEngine {
             node.totalReward += reward;
             node = node.parent;
         }
+    }
+
+    /**
+     * Overrides the per-decision think time. Only meaningful for time-budgeted
+     * engines; deterministic test engines ignore it.
+     */
+    public void setTimeBudgetMs(long timeBudgetMs) {
+        this.timeBudgetMs = timeBudgetMs;
     }
 
     /**

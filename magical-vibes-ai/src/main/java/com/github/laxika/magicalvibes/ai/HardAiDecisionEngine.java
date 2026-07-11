@@ -135,6 +135,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.mctsEngine = mctsEngine;
     }
 
+    /** Overrides the MCTS per-decision think time (see {@code ai.mcts.time-budget-ms}). */
+    public void setMctsTimeBudgetMs(long timeBudgetMs) {
+        this.mctsEngine.setTimeBudgetMs(timeBudgetMs);
+    }
+
     // ===== Smart Land Selection =====
 
     /**

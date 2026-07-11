@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -402,6 +404,72 @@ class GameSimulatorTest {
 
             // Should have at least: no-block, best-block, and single-block options
             assertThat(actions.size()).isGreaterThanOrEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("Simulated opponent policy")
+    class SimulatedOpponentPolicy {
+
+        @Test
+        @DisplayName("Simulated opponent plays a land and casts a spell during its own main phase")
+        void opponentPlaysLandAndCastsSpellInOwnMainPhase() {
+            // player1 is the MCTS player; player2 is the simulated opponent, whose turn it is
+            harness.setHand(player1, List.of(new SerraAngel()));
+            harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
+            harness.addMana(player2, ManaColor.GREEN, 2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.forceActivePlayer(player2);
+            gd.stack.clear();
+
+            int oppBattlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
+            Card mctsCard = gd.playerHands.get(player1.getId()).getFirst();
+
+            // First pass: opponent plays its land and puts the creature on the stack;
+            // second pass lets the MCTS player pass priority so the spell resolves.
+            simulator.applyAction(gd, player1.getId(), new SimulationAction.PassPriority());
+            simulator.applyAction(gd, player1.getId(), new SimulationAction.PassPriority());
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(oppBattlefieldBefore + 2);
+            assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+            // The MCTS player's hand is never touched by the opponent policy
+            assertThat(gd.playerHands.get(player1.getId())).containsExactly(mctsCard);
+        }
+
+        @Test
+        @DisplayName("Simulated opponent casts nothing outside its main phase")
+        void opponentCastsNothingOutsideMainPhase() {
+            Card oppCreature = new GrizzlyBears();
+            harness.setHand(player2, List.of(oppCreature));
+            harness.addMana(player2, ManaColor.GREEN, 2);
+            harness.forceStep(TurnStep.UPKEEP);
+            harness.forceActivePlayer(player2);
+            gd.stack.clear();
+
+            int oppBattlefieldBefore = gd.playerBattlefields.get(player2.getId()).size();
+
+            simulator.applyAction(gd, player1.getId(), new SimulationAction.PassPriority());
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(oppBattlefieldBefore);
+            assertThat(gd.playerHands.get(player2.getId())).containsExactly(oppCreature);
+        }
+
+        @Test
+        @DisplayName("Simulated opponent casts nothing while a spell is on the stack")
+        void opponentCastsNothingWithNonEmptyStack() {
+            Card oppCreature = new GrizzlyBears();
+            harness.setHand(player1, List.of(new SerraAngel()));
+            harness.setHand(player2, List.of(oppCreature));
+            harness.addMana(player1, ManaColor.WHITE, 5);
+            harness.addMana(player2, ManaColor.GREEN, 2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.forceActivePlayer(player1);
+            gd.stack.clear();
+
+            // The MCTS player casts a spell; the opponent gets priority while it is on the stack
+            simulator.applyAction(gd, player1.getId(), new SimulationAction.PlayCard(0, null, 0));
+
+            assertThat(gd.playerHands.get(player2.getId())).containsExactly(oppCreature);
         }
     }
 }

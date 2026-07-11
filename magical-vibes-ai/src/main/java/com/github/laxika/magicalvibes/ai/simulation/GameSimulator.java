@@ -43,12 +43,14 @@ import com.github.laxika.magicalvibes.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 /**
  * Provides MCTS simulation capabilities using the headless Spring engine context.
@@ -61,6 +63,25 @@ import java.util.UUID;
  */
 @Slf4j
 public class GameSimulator {
+
+    /**
+     * Budget of greedy opponent creature casts per simulation state. Unbounded
+     * development halves MCTS throughput (every extra creature inflates the combat
+     * simulations in each rollout) and drowns the root-action reward signal in
+     * determinization noise — measured to flip correct casts into passes at the
+     * production time budget. The budget must also be independent of the MCTS
+     * player's actions (e.g. a board-emptiness condition would punish exactly the
+     * board-clearing plays), so it is a flat per-simulation-state allowance.
+     */
+    private static final int MAX_OPPONENT_CASTS_PER_ROLLOUT = 1;
+
+    /**
+     * Tracks the opponent cast budget per {@link GameData}. Keyed weakly by the
+     * determinized copy each MCTS iteration works on, so the budget resets for
+     * every rollout and entries vanish with the discarded copies.
+     */
+    private final Map<GameData, Integer> opponentRolloutCasts =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
@@ -118,47 +139,7 @@ public class GameSimulator {
             boolean isActivePlayer = playerId.equals(gd.activePlayerId);
 
             if (isMainPhase && isActivePlayer && gd.stack.isEmpty()) {
-                // Enumerate castable spells
-                List<Card> hand = gd.playerHands.get(playerId);
-                if (hand != null) {
-                    ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
-                    for (int i = 0; i < hand.size(); i++) {
-                        Card card = hand.get(i);
-                        // Policy (which legal moves to try): rollouts don't sequence land drops
-                        // here and only cast at sorcery speed, so lands and instants are skipped.
-                        if (card.hasType(CardType.LAND)) continue;
-                        if (card.hasType(CardType.INSTANT)) continue;
-                        // The simulator's downstream mana-payment / X helpers dereference the mana
-                        // cost, so costless alternate-cast cards are out of its scope.
-                        if (card.getManaCost() == null) continue;
-                        boolean hasX = new ManaCost(card.getManaCost()).hasX();
-                        // Legality/affordability is the engine's call: isCardPlayable covers mana
-                        // (every cost modifier / alternative-cost route, requiresCreatureMana),
-                        // timing, spell limits, target availability, ExileN and legendary-sorcery
-                        // rules. X>=1 stays AI policy — passed as the extra generic requirement,
-                        // mirroring AiDecisionEngine.canAffordSpell.
-                        int minXPolicy = hasX ? 1 : 0;
-                        if (!gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
-                            continue;
-                        }
-                        // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.
-                        if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
-                            continue;
-                        }
-                        // For targeted spells, try to find a target (policy: which target to try)
-                        UUID targetId = null;
-                        if (EffectResolution.needsTarget(card) || card.isAura()) {
-                            targetId = findBestTarget(gd, card, playerId);
-                            if (targetId == null) continue; // no valid target
-                        }
-                        int xValue = 0;
-                        if (hasX) {
-                            xValue = calculateSmartX(gd, card, targetId, virtualPool);
-                            if (xValue <= 0) continue;
-                        }
-                        actions.add(new SimulationAction.PlayCard(i, targetId, xValue));
-                    }
-                }
+                actions.addAll(enumerateCastableSpells(gd, playerId));
             }
             // Always can pass priority
             actions.add(new SimulationAction.PassPriority());
@@ -289,18 +270,7 @@ public class GameSimulator {
         try {
             synchronized (gd) {
                 switch (action) {
-                    case SimulationAction.PlayCard pc -> {
-                        Card card = gd.playerHands.get(playerId).get(pc.handIndex());
-                        tapLandsForCard(gd, playerId, card, pc.xValue());
-                        List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
-                        UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
-                        if (exileIndices != null || sacrificeId != null) {
-                            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
-                                    null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices);
-                        } else {
-                            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
-                        }
-                    }
+                    case SimulationAction.PlayCard pc -> executePlayCard(gd, player, pc);
                     case SimulationAction.PassPriority ignored ->
                             gameService.passPriority(gd, player);
                     case SimulationAction.DeclareAttackers da ->
@@ -329,8 +299,9 @@ public class GameSimulator {
             log.trace("Simulation action failed: {}", e.getMessage());
         }
 
-        // Auto-resolve pending decisions for any player (including opponent)
-        autoResolveDecisions(gd, playerId, 10);
+        // Auto-resolve pending decisions for any player (including opponent). The budget
+        // covers the simulated opponent's own main-phase land drop and spell casts too.
+        autoResolveDecisions(gd, playerId, 30);
     }
 
     /**
@@ -393,7 +364,18 @@ public class GameSimulator {
                 // Check if we need to pass priority for the non-MCTS player
                 UUID priorityHolder = getPriorityPlayer(gd);
                 if (priorityHolder != null && !priorityHolder.equals(mctsPlayerId)) {
-                    Player oppPlayer = new Player(priorityHolder, "opp");
+                    Player oppPlayer = new Player(priorityHolder, gd.playerIdToName.getOrDefault(priorityHolder, "opp"));
+                    // Greedy opponent policy: during its own main phase the simulated
+                    // opponent plays a land and casts spells instead of always passing,
+                    // so rollouts don't see a frozen opponent board.
+                    if (isOpponentSorceryWindow(gd, priorityHolder)) {
+                        if (tryOpponentPlayLand(gd, oppPlayer)) continue;
+                        if (opponentRolloutCasts.getOrDefault(gd, 0) < MAX_OPPONENT_CASTS_PER_ROLLOUT
+                                && tryOpponentCastSpell(gd, oppPlayer)) {
+                            opponentRolloutCasts.merge(gd, 1, Integer::sum);
+                            continue;
+                        }
+                    }
                     try {
                         synchronized (gd) {
                             gameService.passPriority(gd, oppPlayer);
@@ -421,6 +403,163 @@ public class GameSimulator {
                 return;
             }
         }
+    }
+
+    /**
+     * Enumerates the sorcery-speed spells the MCTS player could cast right now,
+     * with the best target and X value pre-selected.
+     */
+    private List<SimulationAction.PlayCard> enumerateCastableSpells(GameData gd, UUID playerId) {
+        List<SimulationAction.PlayCard> castable = new ArrayList<>();
+        List<Card> hand = gd.playerHands.get(playerId);
+        if (hand == null) return castable;
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
+        for (int i = 0; i < hand.size(); i++) {
+            Card card = hand.get(i);
+            // Policy (which legal moves to try): rollouts don't sequence land drops
+            // here and only cast at sorcery speed, so lands and instants are skipped.
+            if (card.hasType(CardType.LAND)) continue;
+            if (card.hasType(CardType.INSTANT)) continue;
+            // The simulator's downstream mana-payment / X helpers dereference the mana
+            // cost, so costless alternate-cast cards are out of its scope.
+            if (card.getManaCost() == null) continue;
+            boolean hasX = new ManaCost(card.getManaCost()).hasX();
+            // Legality/affordability is the engine's call: isCardPlayable covers mana
+            // (every cost modifier / alternative-cost route, requiresCreatureMana),
+            // timing, spell limits, target availability, ExileN and legendary-sorcery
+            // rules. X>=1 stays AI policy — passed as the extra generic requirement,
+            // mirroring AiDecisionEngine.canAffordSpell.
+            int minXPolicy = hasX ? 1 : 0;
+            if (!gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
+                continue;
+            }
+            // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.
+            if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
+                continue;
+            }
+            // For targeted spells, try to find a target (policy: which target to try)
+            UUID targetId = null;
+            if (EffectResolution.needsTarget(card) || card.isAura()) {
+                targetId = findBestTarget(gd, card, playerId);
+                if (targetId == null) continue; // no valid target
+            }
+            int xValue = 0;
+            if (hasX) {
+                xValue = calculateSmartX(gd, card, targetId, virtualPool);
+                if (xValue <= 0) continue;
+            }
+            castable.add(new SimulationAction.PlayCard(i, targetId, xValue));
+        }
+        return castable;
+    }
+
+    /**
+     * Taps mana sources and plays the card from hand, paying any non-mana
+     * additional costs (sacrifice / graveyard exile) heuristically.
+     */
+    private void executePlayCard(GameData gd, Player player, SimulationAction.PlayCard pc) {
+        UUID playerId = player.getId();
+        Card card = gd.playerHands.get(playerId).get(pc.handIndex());
+        tapLandsForCard(gd, playerId, card, pc.xValue());
+        List<Integer> exileIndices = computeExileNGraveyardIndices(gd, playerId, card);
+        UUID sacrificeId = computeSacrificeTarget(gd, playerId, card);
+        if (exileIndices != null || sacrificeId != null) {
+            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(),
+                    null, List.of(), List.of(), false, sacrificeId, null, null, null, exileIndices);
+        } else {
+            gameService.playCard(gd, player, pc.handIndex(), pc.xValue(), pc.targetId(), null);
+        }
+    }
+
+    /**
+     * Returns true when the simulated opponent may take a greedy sorcery-speed
+     * action: its own main phase with an empty stack and nothing pending.
+     */
+    private boolean isOpponentSorceryWindow(GameData gd, UUID opponentId) {
+        return opponentId.equals(gd.activePlayerId)
+                && (gd.currentStep == TurnStep.PRECOMBAT_MAIN || gd.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                && gd.stack.isEmpty()
+                && gd.interaction.activeInteraction() == null;
+    }
+
+    /**
+     * Greedy opponent policy: play the first land in hand if the land drop is
+     * still available. Returns true if a land was played.
+     */
+    private boolean tryOpponentPlayLand(GameData gd, Player opponent) {
+        UUID opponentId = opponent.getId();
+        try {
+            if (gd.landsPlayedThisTurn.getOrDefault(opponentId, 0) != 0) return false;
+            List<Card> hand = gd.playerHands.get(opponentId);
+            if (hand == null) return false;
+            for (int i = 0; i < hand.size(); i++) {
+                Card card = hand.get(i);
+                if (!card.hasType(CardType.LAND)) continue;
+                synchronized (gd) {
+                    gameService.playCard(gd, opponent, i, 0, null, null);
+                }
+                return handNoLongerContains(gd, opponentId, card);
+            }
+        } catch (Exception e) {
+            log.trace("Simulated opponent land play failed: {}", e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Greedy opponent policy: cast the biggest affordable untargeted creature.
+     * Returns true if a spell was put on the stack.
+     * <p>
+     * Deliberately much narrower and cheaper than {@link #enumerateCastableSpells}:
+     * the production MCTS only completes a few dozen iterations per decision, so the
+     * opponent policy cannot afford the full isCardPlayable legality pass, and
+     * targeted spells (removal, auras) fired at the MCTS player's board would make
+     * rollout rewards swing on the determinized hand instead of the MCTS player's
+     * own decisions. Steady creature pressure is what fixes the frozen-opponent
+     * over-optimism.
+     */
+    private boolean tryOpponentCastSpell(GameData gd, Player opponent) {
+        UUID opponentId = opponent.getId();
+        try {
+            List<Card> hand = gd.playerHands.get(opponentId);
+            if (hand == null) return false;
+            ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, opponentId);
+            int bestIndex = -1;
+            Card bestCard = null;
+            for (int i = 0; i < hand.size(); i++) {
+                Card card = hand.get(i);
+                if (!card.hasType(CardType.CREATURE)) continue;
+                if (card.getManaCost() == null) continue;
+                if (card.isRequiresCreatureMana()) continue;
+                if (EffectResolution.needsTarget(card) || card.isAura()) continue;
+                ManaCost cost = new ManaCost(card.getManaCost());
+                if (cost.hasX()) continue;
+                if (!cost.canPay(virtualPool)) continue;
+                if (!castingCostService.canPayAdditionalSpellCosts(gd, opponentId, card)) continue;
+                if (bestCard == null || card.getManaValue() > bestCard.getManaValue()) {
+                    bestIndex = i;
+                    bestCard = card;
+                }
+            }
+            if (bestCard == null) return false;
+            synchronized (gd) {
+                executePlayCard(gd, opponent, new SimulationAction.PlayCard(bestIndex, null, 0));
+            }
+            return handNoLongerContains(gd, opponentId, bestCard);
+        } catch (Exception e) {
+            log.trace("Simulated opponent spell cast failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private boolean handNoLongerContains(GameData gd, UUID playerId, Card card) {
+        List<Card> hand = gd.playerHands.get(playerId);
+        if (hand == null) return true;
+        for (Card c : hand) {
+            if (c == card) return false;
+        }
+        return true;
     }
 
     private void resolveInteraction(GameData gd, Player player, PendingInteraction awaiting, UUID mctsPlayerId) {

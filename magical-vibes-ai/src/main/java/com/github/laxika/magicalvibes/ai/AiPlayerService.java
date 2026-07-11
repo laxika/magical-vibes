@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
+import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -36,6 +38,7 @@ public class AiPlayerService {
     private final TargetLegalityService targetLegalityService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
+    private final long mctsTimeBudgetMs;
 
     public AiPlayerService(GameRegistry gameRegistry,
                            GameService gameService,
@@ -48,7 +51,8 @@ public class AiPlayerService {
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService,
                            WebSocketSessionManager sessionManager,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           @Value("${ai.mcts.time-budget-ms:" + MCTSEngine.DEFAULT_TIME_BUDGET_MS + "}") long mctsTimeBudgetMs) {
         this.gameRegistry = gameRegistry;
         this.gameService = gameService;
         this.gameSetupService = gameSetupService;
@@ -61,6 +65,7 @@ public class AiPlayerService {
         this.targetLegalityService = targetLegalityService;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
+        this.mctsTimeBudgetMs = mctsTimeBudgetMs;
     }
 
     public void joinAsAi(GameData gameData, String aiDeckId) {
@@ -76,7 +81,11 @@ public class AiPlayerService {
         Player aiPlayer = new Player(aiPlayerId, aiName);
 
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case HARD -> {
+                HardAiDecisionEngine hard = new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+                hard.setMctsTimeBudgetMs(mctsTimeBudgetMs);
+                yield hard;
+            }
             case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
             case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
