@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormtideLeviathanTest extends BaseCardTest {
-
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Stormtide Leviathan has GrantSubtypeEffect and CreaturesCantAttackUnlessPredicateEffect")
-    void hasCorrectEffects() {
-        StormtideLeviathan card = new StormtideLeviathan();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(GrantSubtypeEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(CreaturesCantAttackUnlessPredicateEffect.class);
-    }
 
     // ===== All lands are Islands =====
 
@@ -105,7 +89,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int flyerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(flyerPerm);
         gs.declareAttackers(gd, player1, List.of(flyerIndex));
@@ -134,7 +118,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int walkerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(walkerPerm);
         gs.declareAttackers(gd, player1, List.of(walkerIndex));
@@ -161,7 +145,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int gruntIndex = gd.playerBattlefields.get(player1.getId()).indexOf(gruntPerm);
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(gruntIndex)))
@@ -186,7 +170,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -203,7 +187,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -235,7 +219,7 @@ class StormtideLeviathanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 

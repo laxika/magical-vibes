@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,8 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeaMonsterTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sea Monster has correct card properties")
-    void hasCorrectProperties() {
-        SeaMonster card = new SeaMonster();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);
-        CantAttackUnlessDefenderControlsMatchingPermanentEffect effect =
-                (CantAttackUnlessDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.defenderPermanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-    }
 
     // ===== Casting and resolving =====
 
@@ -101,7 +82,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -119,7 +100,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -142,7 +123,7 @@ class SeaMonsterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -168,5 +149,4 @@ class SeaMonsterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 }
-
 

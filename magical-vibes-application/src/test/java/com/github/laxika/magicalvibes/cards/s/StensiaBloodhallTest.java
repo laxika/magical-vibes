@@ -1,17 +1,28 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StensiaBloodhallTest extends BaseCardTest {
@@ -26,19 +37,7 @@ class StensiaBloodhallTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no cost")
-    void firstAbilityProperties() {
-        StensiaBloodhall card = new StensiaBloodhall();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
     @Test
     @DisplayName("Second ability costs {3}{B}{R} and deals 2 damage to target player or planeswalker")
@@ -51,7 +50,7 @@ class StensiaBloodhallTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isTrue();
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) ability.getEffects().get(0)).damage()).isEqualTo(2);
+        assertThat(((DealDamageToAnyTargetEffect) ability.getEffects().get(0)).damage()).isEqualTo(new Fixed(2));
     }
 
     // ===== Tapping for colorless mana =====

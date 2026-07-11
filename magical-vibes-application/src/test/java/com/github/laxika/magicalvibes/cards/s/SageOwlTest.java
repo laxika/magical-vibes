@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,21 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SageOwlTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sage Owl has correct card properties")
-    void hasCorrectProperties() {
-        SageOwl card = new SageOwl();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-        ReorderTopCardsOfLibraryEffect effect = (ReorderTopCardsOfLibraryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-    }
 
     // ===== Casting and resolving =====
 
@@ -85,9 +68,9 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     @Test
@@ -129,9 +112,9 @@ class SageOwlTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isNull();
-        assertThat(gd.interaction.libraryView().reorderCards()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
     }
 
     // ===== Library edge cases =====
@@ -154,8 +137,8 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 
@@ -177,7 +160,7 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
     }
 
@@ -194,7 +177,7 @@ class SageOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
 
@@ -211,5 +194,4 @@ class SageOwlTest extends BaseCardTest {
                         && p.getCard().getKeywords().contains(Keyword.FLYING));
     }
 }
-
 

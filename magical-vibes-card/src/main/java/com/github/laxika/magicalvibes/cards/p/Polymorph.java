@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "67")
+@CardRegistration(set = "9ED", collectorNumber = "90")
 public class Polymorph extends Card {
 
     public Polymorph() {

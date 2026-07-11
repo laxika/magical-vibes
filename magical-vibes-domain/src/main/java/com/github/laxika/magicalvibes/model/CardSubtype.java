@@ -41,6 +41,7 @@ public enum CardSubtype {
     REBEL("Rebel"),
     KNIGHT("Knight"),
     SPIRIT("Spirit"),
+    INKLING("Inkling"),
     AURA("Aura"),
     NOMAD("Nomad"),
     WIZARD("Wizard"),
@@ -94,6 +95,7 @@ public enum CardSubtype {
     VEDALKEN("Vedalken"),
     GIANT("Giant"),
     GOBLIN("Goblin"),
+    GOAT("Goat"),
     KAVU("Kavu"),
     CYCLOPS("Cyclops"),
     HORROR("Horror"),
@@ -144,7 +146,9 @@ public enum CardSubtype {
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TREASURE("Treasure"),
-    VEHICLE("Vehicle");
+    VEHICLE("Vehicle"),
+    NIGHTSTALKER("Nightstalker"),
+    LESSON("Lesson");
 
     @Getter
     private final String displayName;

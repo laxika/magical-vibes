@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +40,7 @@ public class AdditiveEvolution extends Card {
                 "Target must be a creature you control"
         ))
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
-                        new PutPlusOnePlusOneCounterOnTargetCreatureEffect(1))
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 .addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED,
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
     }

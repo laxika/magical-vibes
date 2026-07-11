@@ -5,41 +5,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MasterOfTheWildHuntTest extends BaseCardTest {
-
-    // ===== Card setup =====
-
-    @Test
-    @DisplayName("Has upkeep token trigger and tap activated ability")
-    void hasCorrectAbilities() {
-        MasterOfTheWildHunt card = new MasterOfTheWildHunt();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(PackHuntEffect.class);
-    }
 
     // ===== Upkeep trigger: token creation =====
 

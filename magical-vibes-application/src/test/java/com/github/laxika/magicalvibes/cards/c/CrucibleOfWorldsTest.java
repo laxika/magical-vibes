@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -18,19 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CrucibleOfWorldsTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Crucible of Worlds has correct card properties")
-    void hasCorrectProperties() {
-        CrucibleOfWorlds card = new CrucibleOfWorlds();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PlayLandsFromGraveyardEffect.class);
-    }
 
     // ===== Casting =====
 

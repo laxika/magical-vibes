@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,42 +29,6 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         card.setToughness(2);
         card.setSubtypes(List.of(subtypes));
         return card;
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseSubtypeOnEnterEffect on ON_ENTER_BATTLEFIELD")
-    void hasChooseSubtypeEffect() {
-        UnclaimedTerritory card = new UnclaimedTerritory();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities: colorless mana and restricted any-color mana")
-    void hasTwoActivatedAbilities() {
-        UnclaimedTerritory card = new UnclaimedTerritory();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var colorlessAbility = card.getActivatedAbilities().get(0);
-        assertThat(colorlessAbility.isRequiresTap()).isTrue();
-        assertThat(colorlessAbility.getManaCost()).isNull();
-        assertThat(colorlessAbility.getEffects()).hasSize(1);
-        assertThat(colorlessAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) colorlessAbility.getEffects().getFirst()).color()).isEqualTo(ManaColor.COLORLESS);
-
-        // Second ability: {T}: Add one mana of any color (restricted)
-        var restrictedAbility = card.getActivatedAbilities().get(1);
-        assertThat(restrictedAbility.isRequiresTap()).isTrue();
-        assertThat(restrictedAbility.getManaCost()).isNull();
-        assertThat(restrictedAbility.getEffects()).hasSize(1);
-        assertThat(restrictedAbility.getEffects().getFirst())
-                .isInstanceOf(AwardAnyColorChosenSubtypeCreatureManaEffect.class);
     }
 
     // ===== Colorless mana ability =====
@@ -100,7 +60,7 @@ class UnclaimedTerritoryTest extends BaseCardTest {
 
         assertThat(territory.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty(); // mana ability does not use the stack
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 
     @Test

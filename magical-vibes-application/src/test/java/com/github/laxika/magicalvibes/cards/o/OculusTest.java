@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,20 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class OculusTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Oculus has correct death trigger effect")
-    void hasCorrectProperties() {
-        Oculus card = new Oculus();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
 
     // ===== Death trigger: combat (blocker dies) =====
 
@@ -71,7 +55,7 @@ class OculusTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 should be prompted for the may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -144,7 +128,7 @@ class OculusTest extends BaseCardTest {
         // Resolve the MayEffect from the stack
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 

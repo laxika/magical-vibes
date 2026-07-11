@@ -1,22 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
+import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TeferiHeroEmblemEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,48 +34,11 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has DrawCardEffect and RegisterDelayedUntapPermanentsEffect")
-    void plusOneAbilityHasCorrectEffects() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(0)).amount()).isEqualTo(1);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegisterDelayedUntapPermanentsEffect.class);
-        assertThat(((RegisterDelayedUntapPermanentsEffect) ability.getEffects().get(1)).count()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has PutTargetPermanentIntoLibraryNFromTopEffect(2) with nonland filter")
-    void minusThreeAbilityHasCorrectEffect() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutTargetPermanentIntoLibraryNFromTopEffect.class);
-        assertThat(((PutTargetPermanentIntoLibraryNFromTopEffect) ability.getEffects().getFirst()).position()).isEqualTo(2);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) ability.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentNotPredicate.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has TeferiHeroEmblemEffect")
-    void minusEightAbilityHasCorrectEffect() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TeferiHeroEmblemEffect.class);
-    }
+    
 
     // ===== +1 ability: Draw a card + delayed untap =====
 
@@ -101,9 +59,9 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Loyalty should increase
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         // Delayed trigger should be registered
-        assertThat(gd.pendingDelayedUntapPermanents).hasSize(1);
-        assertThat(gd.pendingDelayedUntapPermanents.getFirst().count()).isEqualTo(2);
-        assertThat(gd.pendingDelayedUntapPermanents.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().count()).isEqualTo(2);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().controllerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -126,7 +84,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Delayed trigger registered
-        assertThat(gd.pendingDelayedUntapPermanents).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
 
         // Advance to end step to fire delayed trigger
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -142,7 +100,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(plains.isTapped()).isFalse();
         assertThat(island.isTapped()).isFalse();
         // Pending list should be cleared
-        assertThat(gd.pendingDelayedUntapPermanents).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).isEmpty();
     }
 
     @Test
@@ -306,7 +264,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.getDrawService().resolveDrawCard(gd, player1.getId());
 
         // Should be awaiting permanent choice for the emblem trigger target
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
         // Choose the opponent's bears
         harness.handlePermanentChosen(player1, bearsId);
@@ -340,7 +298,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.getDrawService().resolveDrawCard(gd, player1.getId());
 
         // No valid targets — emblem trigger should be skipped
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

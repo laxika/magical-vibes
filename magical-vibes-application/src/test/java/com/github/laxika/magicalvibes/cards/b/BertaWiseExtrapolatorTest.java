@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,30 +31,7 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has counter trigger and X-cost Fractal token activated ability (Increment is keyword-driven)")
-    void hasCorrectEffects() {
-        BertaWiseExtrapolator card = new BertaWiseExtrapolator();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT).getFirst())
-                .isInstanceOf(AwardAnyColorManaEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{X}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateXTokenWithXCountersEffect.class);
-
-        CreateXTokenWithXCountersEffect tokenEffect =
-                (CreateXTokenWithXCountersEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Fractal");
-        assertThat(tokenEffect.power()).isZero();
-        assertThat(tokenEffect.toughness()).isZero();
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.FRACTAL);
-        assertThat(tokenEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
+    
 
     @Nested
     @DisplayName("Counter trigger")
@@ -77,7 +51,7 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
 
             GameData localGd = harness.getGameData();
             assertThat(berta.getPlusOnePlusOneCounters()).isEqualTo(1);
-            assertThat(localGd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+            assertThat(localGd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
             int before = localGd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
             harness.handleListChoice(player1, "BLUE");

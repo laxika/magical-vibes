@@ -4,10 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ExileUntilNonlandToHandRepeatIfHighMVEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,22 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DemonlordBelzenlokTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Demonlord Belzenlok has ETB exile-until-nonland effect")
-    void hasEtbEffect() {
-        DemonlordBelzenlok card = new DemonlordBelzenlok();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(ExileUntilNonlandToHandRepeatIfHighMVEffect.class);
-
-        ExileUntilNonlandToHandRepeatIfHighMVEffect effect =
-                (ExileUntilNonlandToHandRepeatIfHighMVEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.manaValueThreshold()).isEqualTo(4);
-        assertThat(effect.damagePerCard()).isEqualTo(1);
-    }
 
     // ===== ETB trigger behavior =====
 

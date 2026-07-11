@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M11", collectorNumber = "62")
+@CardRegistration(set = "9ED", collectorNumber = "86")
 public class ManaLeak extends Card {
 
     public ManaLeak() {

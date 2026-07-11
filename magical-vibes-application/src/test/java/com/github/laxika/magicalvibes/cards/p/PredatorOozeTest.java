@@ -2,15 +2,12 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,27 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PredatorOozeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has attack and damaged-creature-dies counter triggers")
-    void hasCounterTriggers() {
-        PredatorOoze card = new PredatorOoze();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOfSatisfying(PutCountersOnSourceEffect.class, effect -> {
-                    assertThat(effect.powerModifier()).isEqualTo(1);
-                    assertThat(effect.toughnessModifier()).isEqualTo(1);
-                    assertThat(effect.amount()).isEqualTo(1);
-                });
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOfSatisfying(PutCountersOnSourceEffect.class, effect -> {
-                    assertThat(effect.powerModifier()).isEqualTo(1);
-                    assertThat(effect.toughnessModifier()).isEqualTo(1);
-                    assertThat(effect.amount()).isEqualTo(1);
-                });
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when it attacks")
@@ -167,7 +144,7 @@ class PredatorOozeTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 }

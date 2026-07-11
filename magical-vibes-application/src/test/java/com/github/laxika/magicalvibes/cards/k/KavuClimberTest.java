@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,15 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KavuClimberTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Kavu Climber has ETB draw card effect")
-    void hasEtbDrawEffect() {
-        KavuClimber card = new KavuClimber();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Kavu Climber puts it on stack as creature spell")

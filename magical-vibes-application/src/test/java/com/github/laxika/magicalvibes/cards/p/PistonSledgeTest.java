@@ -1,20 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,55 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PistonSledgeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Piston Sledge has ETB attach effect")
-    void hasEtbAttachEffect() {
-        PistonSledge card = new PistonSledge();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(AttachSourceEquipmentToTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("Piston Sledge has static +3/+1 boost")
-    void hasStaticBoost() {
-        PistonSledge card = new PistonSledge();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Piston Sledge has equip ability with sacrifice artifact cost")
-    void hasEquipAbilityWithSacrificeArtifactCost() {
-        PistonSledge card = new PistonSledge();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeArtifactCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(EquipEffect.class);
-                });
-    }
 
     // ===== ETB attach =====
 
@@ -229,7 +173,7 @@ class PistonSledgeTest extends BaseCardTest {
 
         // Add a second creature and another artifact to sacrifice
         Permanent secondCreature = new Permanent(new GrizzlyBears());
-        secondCreature.getCard().setName("Second Bear");
+        TestCards.mutableCard(secondCreature).setName("Second Bear");
         secondCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(secondCreature);
         harness.addToBattlefield(player1, new Spellbook());

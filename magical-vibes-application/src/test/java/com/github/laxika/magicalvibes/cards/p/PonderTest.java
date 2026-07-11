@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,25 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PonderTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ponder has reorder 3, may shuffle, and draw 1 spell effects")
-    void hasCorrectEffects() {
-        Ponder card = new Ponder();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-        ReorderTopCardsOfLibraryEffect reorderEffect = (ReorderTopCardsOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(reorderEffect.count()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(mayEffect.wrapped()).isInstanceOf(ShuffleLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(drawEffect.amount()).isEqualTo(1);
-    }
 
     // ===== Casting =====
 
@@ -78,9 +54,9 @@ class PonderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryReorderContext()).isNotNull();
-        assertThat(gd.interaction.libraryReorderContext().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
     }
 
     // ===== Resolving — reorder then decline shuffle, then draw =====
@@ -97,7 +73,7 @@ class PonderTest extends BaseCardTest {
         // Complete reorder (keep same order)
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test

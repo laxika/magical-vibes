@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,22 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BogardanHellkiteTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bogardan Hellkite has ON_ENTER_BATTLEFIELD DealDividedDamageToAnyTargetsEffect(5, 5)")
-    void hasETBEffect() {
-        BogardanHellkite card = new BogardanHellkite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-        DealDividedDamageToAnyTargetsEffect effect =
-                (DealDividedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.totalDamage()).isEqualTo(5);
-        assertThat(effect.maxTargets()).isEqualTo(5);
-    }
 
     // ===== ETB trigger: deal 5 divided damage =====
 

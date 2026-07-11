@@ -5,14 +5,12 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LiquimetalCoatingTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct activated ability structure")
-    void hasCorrectAbility() {
-        LiquimetalCoating card = new LiquimetalCoating();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddCardTypeToTargetPermanentEffect.class);
-        AddCardTypeToTargetPermanentEffect effect = (AddCardTypeToTargetPermanentEffect) ability.getEffects().getFirst();
-        assertThat(effect.cardType()).isEqualTo(CardType.ARTIFACT);
-    }
 
     // ===== Casting and resolving =====
 

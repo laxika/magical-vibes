@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,26 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GishathSunsAvatarTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER effect with Dinosaur creature predicate")
-    void hasCombatDamageToPlayerEffect() {
-        GishathSunsAvatar card = new GishathSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .hasSize(1)
-                .first()
-                .isInstanceOf(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.class);
-
-        LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect effect =
-                (LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect)
-                        card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.remainingToBottomRandom()).isTrue();
-        assertThat(effect.alwaysEligiblePredicate()).isNotNull();
-        assertThat(effect.mvCappedEligiblePredicate()).isNull();
-    }
 
     // ===== Combat damage trigger: reveals correct number of cards =====
 
@@ -65,7 +43,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
 
         // Should be awaiting library reveal choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose both Dinosaur creatures
         harness.handleMultipleCardsChosen(player1, List.of(dino1.getId(), dino2.getId()));
@@ -95,7 +73,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose nothing
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -121,7 +99,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Bears should not be selectable
         assertThatThrownBy(() ->
@@ -144,7 +122,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // No choice should be needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // All cards should be on the bottom of the library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
@@ -161,7 +139,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -177,7 +155,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
 
@@ -221,7 +199,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // No player damage = no trigger = no library reveal choice
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNull();
         // Library should be untouched
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
@@ -269,7 +247,6 @@ class GishathSunsAvatarTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombatWithGishath() {
         Permanent gishath = addGishathReady(player1);

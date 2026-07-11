@@ -129,7 +129,9 @@ class MerfolkTricksterTest extends BaseCardTest {
 
             assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
 
-            // Simulate end of turn cleanup
+            // Simulate end of turn cleanup: the lose-all is a floating CR 613 layer-6 effect
+            // that expires with the until-end-of-turn floating effects.
+            gd.expireEndOfTurnFloatingEffects();
             elemental.resetModifiers();
 
             assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();

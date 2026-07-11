@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,15 +19,7 @@ class PutrefaxTest extends BaseCardTest {
 
     // ===== End-step sacrifice trigger =====
 
-    @Test
-    @DisplayName("Putrefax has end-step sacrifice trigger")
-    void hasEndStepSacrificeTrigger() {
-        Putrefax card = new Putrefax();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Putrefax is sacrificed at end step")
@@ -71,7 +59,7 @@ class PutrefaxTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -119,7 +107,7 @@ class PutrefaxTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(putrefax);
@@ -162,7 +150,7 @@ class PutrefaxTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();

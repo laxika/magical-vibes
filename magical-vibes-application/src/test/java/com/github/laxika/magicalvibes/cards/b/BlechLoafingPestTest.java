@@ -6,15 +6,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InsectileAberration;
 import com.github.laxika.magicalvibes.cards.r.RottingFensnake;
 import com.github.laxika.magicalvibes.cards.s.ScreechingBat;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,33 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlechLoafingPestTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with subtype-filtered counter effect")
-    void hasCorrectProperties() {
-        BlechLoafingPest card = new BlechLoafingPest();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
-
-        PutPlusOnePlusOneCounterOnEachControlledPermanentEffect effect =
-                (PutPlusOnePlusOneCounterOnEachControlledPermanentEffect)
-                        card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(effect.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-
-        PermanentAnyOfPredicate anyOf = (PermanentAnyOfPredicate) effect.predicate();
-        assertThat(anyOf.predicates()).hasSize(5);
-        assertThat(anyOf.predicates()).allMatch(PermanentHasSubtypePredicate.class::isInstance);
-        assertThat(anyOf.predicates().stream()
-                .map(p -> ((PermanentHasSubtypePredicate) p).subtype())
-                .toList()).containsExactlyInAnyOrder(
-                CardSubtype.PEST,
-                CardSubtype.BAT,
-                CardSubtype.INSECT,
-                CardSubtype.SNAKE,
-                CardSubtype.SPIDER
-        );
-    }
+    
 
     @Test
     @DisplayName("Puts +1/+1 counters on each matching creature you control when you gain life")

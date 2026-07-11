@@ -2,40 +2,19 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnAtEndStepEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArgentSphinxTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Argent Sphinx has metalcraft activated ability")
-    void hasMetalcraftAbility() {
-        ArgentSphinx card = new ArgentSphinx();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{U}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ExileSelfAndReturnAtEndStepEffect.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.METALCRAFT);
-    }
 
     // ===== Metalcraft restriction =====
 

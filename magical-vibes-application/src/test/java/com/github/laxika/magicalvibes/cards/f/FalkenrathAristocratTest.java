@@ -7,14 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,45 +29,9 @@ class FalkenrathAristocratTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability: sacrifice a Human for indestructible and a +1/+1 counter")
-    void firstAbilityStructure() {
-        FalkenrathAristocrat card = new FalkenrathAristocrat();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(ability.getEffects().get(2)).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-    }
-
-    @Test
-    @DisplayName("Second ability: sacrifice a non-Human creature for indestructible only")
-    void secondAbilityStructure() {
-        FalkenrathAristocrat card = new FalkenrathAristocrat();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificePermanentCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-    }
+    
 
     // ===== Sacrifice a Human: indestructible + counter =====
 

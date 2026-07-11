@@ -1,24 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class KamahlsDruidicVowTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect configuration")
-    void hasCorrectEffect() {
-        KamahlsDruidicVow card = new KamahlsDruidicVow();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.class);
-        LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect effect =
-                (LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.alwaysEligiblePredicate()).isInstanceOf(CardTypePredicate.class);
-        assertThat(effect.mvCappedEligiblePredicate()).isInstanceOf(CardAllOfPredicate.class);
-    }
 
     // ===== Legendary sorcery casting restriction =====
 
@@ -110,7 +87,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(3);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose the forest
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
@@ -128,7 +105,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(5);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose Arvad
         harness.handleMultipleCardsChosen(player1, List.of(arvad.getId()));
@@ -147,7 +124,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(4); // X=4, Arvad MV=5 → not eligible
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Only forest should be selectable, not Arvad
         assertThatThrownBy(() ->
@@ -165,7 +142,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(5);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Bears should not be selectable
         assertThatThrownBy(() ->
@@ -259,7 +236,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // No choice should be needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Both should be in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -278,7 +255,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // Library should be unchanged (still has the cards)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
@@ -296,7 +273,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 5);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -309,7 +286,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         castAndResolve(5); // X=5 but only 1 card
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose the forest
         harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));

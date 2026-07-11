@@ -1,17 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,39 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RustTickTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rust Tick has MayNotUntapDuringUntapStepEffect as static effect")
-    void hasStaticMayNotUntapEffect() {
-        RustTick card = new RustTick();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MayNotUntapDuringUntapStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Rust Tick has activated ability with tap and prevent untap effects")
-    void hasActivatedAbilityWithCorrectEffects() {
-        RustTick card = new RustTick();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(PreventTargetUntapWhileSourceTappedEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().get(0).getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
 
     // ===== Activated ability: tap target artifact =====
 

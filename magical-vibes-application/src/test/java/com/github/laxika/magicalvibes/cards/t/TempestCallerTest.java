@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,30 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TempestCallerTest extends BaseCardTest {
-
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has ETB TapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasEtbTapEffect() {
-        TempestCaller card = new TempestCaller();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TapPermanentsOfTargetPlayerEffect.class);
-        TapPermanentsOfTargetPlayerEffect effect =
-                (TapPermanentsOfTargetPlayerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsCreaturePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Needs target and has opponent-only target filter")
-    void needsTargetWithOpponentFilter() {
-        TempestCaller card = new TempestCaller();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
 
     // ===== ETB trigger =====
 

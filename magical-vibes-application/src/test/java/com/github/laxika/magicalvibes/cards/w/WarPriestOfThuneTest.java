@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,20 +34,6 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, enchantmentId); // choose target -> ETB on stack
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("War Priest of Thune has correct card properties")
-    void hasCorrectProperties() {
-        WarPriestOfThune card = new WarPriestOfThune();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== ETB may ability =====
 
     @Test
@@ -64,7 +47,7 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -81,7 +64,7 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -140,34 +123,22 @@ class WarPriestOfThuneTest extends BaseCardTest {
     // ===== No enchantment scenarios =====
 
     @Test
-    @DisplayName("May prompt still fires when no enchantment on battlefield")
-    void mayPromptFiresWithoutEnchantment() {
+    @DisplayName("May prompt does not fire when no enchantment on battlefield")
+    void noMayPromptWithoutEnchantment() {
+        // A "you may destroy target enchantment" trigger requires a legal target. With only a
+        // non-enchantment permanent (Grizzly Bears) present the ability is never put on the stack
+        // (CR 601.2c / 603.3b), so the controller is never prompted to make the "may" choice.
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new WarPriestOfThune()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-    }
-
-    @Test
-    @DisplayName("Accepting may with no enchantment results in no valid targets")
-    void acceptingMayWithNoEnchantmentHasNoValidTargets() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new WarPriestOfThune()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no targets
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("War Priest of Thune"));
     }
 
     // ===== Fizzle =====

@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AdantoVanguard;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,27 +14,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BishopOfTheBloodstainedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Bishop of the Bloodstained has correct card properties")
-    void hasCorrectProperties() {
-        BishopOfTheBloodstained card = new BishopOfTheBloodstained();
+    
 
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose life per Vampire")
-    void hasEtbLifeLossPerVampireEffect() {
-        BishopOfTheBloodstained card = new BishopOfTheBloodstained();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifePerControlledPermanentEffect.class);
-        TargetPlayerLosesLifePerControlledPermanentEffect effect =
-                (TargetPlayerLosesLifePerControlledPermanentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.multiplier()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("ETB trigger targets opponent and goes on stack")

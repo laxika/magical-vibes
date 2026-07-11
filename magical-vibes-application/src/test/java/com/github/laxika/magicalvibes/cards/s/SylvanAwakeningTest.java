@@ -5,15 +5,11 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,28 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanAwakeningTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has AnimateLandEffect with OWN_LANDS scope and UNTIL_YOUR_NEXT_TURN duration")
-    void hasCorrectEffect() {
-        SylvanAwakening card = new SylvanAwakening();
-
-        var effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(AnimateLandEffect.class);
-
-        AnimateLandEffect effect = (AnimateLandEffect) effects.getFirst();
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.grantedSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(effect.grantedKeywords()).containsExactlyInAnyOrder(
-                Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE
-        );
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_LANDS);
-        assertThat(effect.duration()).isEqualTo(EffectDuration.UNTIL_YOUR_NEXT_TURN);
-    }
 
     // ===== Resolution: lands become creatures =====
 

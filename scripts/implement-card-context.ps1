@@ -2,10 +2,13 @@ param(
     [Parameter(Mandatory = $true, Position = 0)]
     [string] $SetCode,
 
-    [Parameter(Mandatory = $true, Position = 1)]
-    [string] $CollectorNumber,
+    # One or more collector numbers from the same set. Each is processed in turn
+    # and gets its own full context block. E.g. `... SOS 1 2 3 4`.
+    [Parameter(Mandatory = $true, Position = 1, ValueFromRemainingArguments = $true)]
+    [string[]] $CollectorNumber,
 
-    [Parameter(Position = 2)]
+    # Optional explicit class name. Only honored when a single collector number
+    # is supplied; with multiple cards each name is derived from Scryfall.
     [string] $ClassName,
 
     # Optional reference card class names. For each, the script prints the
@@ -235,64 +238,102 @@ function Write-ReferenceConstructor {
     }
 }
 
-$card = $null
+function Invoke-CardContext {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $SetCode,
 
-Write-Section "Scryfall"
-if ($SkipScryfall) {
-    Write-Host "Skipped by -SkipScryfall."
-} else {
-    try {
-        $card = Get-ScryfallCard -SetCode $SetCode -CollectorNumber $CollectorNumber
-        if (-not $ClassName) {
-            $ClassName = ConvertTo-ClassName -CardName $card.name
+        [Parameter(Mandatory = $true)]
+        [string] $CollectorNumber,
+
+        [string] $ClassName,
+
+        [string[]] $Reference,
+
+        [switch] $SkipScryfall
+    )
+
+    $card = $null
+
+    Write-Section "Scryfall"
+    if ($SkipScryfall) {
+        Write-Host "Skipped by -SkipScryfall."
+    } else {
+        try {
+            $card = Get-ScryfallCard -SetCode $SetCode -CollectorNumber $CollectorNumber
+            if (-not $ClassName) {
+                $ClassName = ConvertTo-ClassName -CardName $card.name
+            }
+            Write-ScryfallSummary -Card $card
+        } catch {
+            Write-Host "Lookup failed: $($_.Exception.Message)"
         }
-        Write-ScryfallSummary -Card $card
-    } catch {
-        Write-Host "Lookup failed: $($_.Exception.Message)"
     }
+
+    if (-not $ClassName) {
+        Write-Host "ClassName could not be derived for $SetCode $CollectorNumber. Re-run with the optional -ClassName argument (single card only), or allow Scryfall lookup to succeed."
+        return
+    }
+
+    Write-Section "Reprint Check"
+    $classHits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @("magical-vibes-card/src/main/java") -MaxResults 20
+    if ($classHits.Count -gt 0) {
+        Write-Host "EXISTING CLASS FOUND - this is a reprint."
+        $classHits | ForEach-Object { Write-Host $_ }
+        Write-Host "Action: add a @CardRegistration(set, collectorNumber) annotation for this printing only."
+        Write-Host "Do NOT implement logic or write/run tests."
+    } else {
+        Write-Host "No existing class: $ClassName (new card)."
+    }
+
+    Write-Section "Tests Guidance"
+    if (Test-IsBasicLand -Card $card) {
+        Write-Host "Skip tests (basic land)."
+    } elseif (Test-IsVanillaCard -Card $card) {
+        Write-Host "Skip tests (vanilla card, no engine behavior)."
+    } elseif ($classHits.Count -gt 0) {
+        Write-Host "Skip tests (reprint of an existing class)."
+    } else {
+        Write-Host "Write focused card behavior tests (effects/abilities/targeting only; never Scryfall metadata)."
+    }
+
+    if ($Reference -and $Reference.Count -gt 0) {
+        Write-Section "Reference Constructors"
+        foreach ($ref in $Reference) {
+            Write-ReferenceConstructor -ReferenceClassName $ref
+        }
+    }
+
+    $packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
+
+    Write-Section "Suggested Files"
+    Write-Host "Card: magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/$packageLetter/$ClassName.java"
+    Write-Host "Test: magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
+
+    Write-Section "Suggested Test Command"
+    $testClass = "com.github.laxika.magicalvibes.cards.$packageLetter.${ClassName}Test"
+    Write-Host "./gradlew :magical-vibes-application:test --tests `"$testClass`" -x :magical-vibes-frontend:buildAngular"
+    Write-Host "(fallback if frontend assets are stale: drop the -x flag)"
 }
 
-if (-not $ClassName) {
-    Write-Error "ClassName could not be derived. Re-run with the optional ClassName argument, or allow Scryfall lookup to succeed."
+$collectorNumbers = @($CollectorNumber | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if ($collectorNumbers.Count -eq 0) {
+    Write-Error "No collector number supplied."
     exit 1
 }
 
-Write-Section "Reprint Check"
-$classHits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @("magical-vibes-card/src/main/java") -MaxResults 20
-if ($classHits.Count -gt 0) {
-    Write-Host "EXISTING CLASS FOUND - this is a reprint."
-    $classHits | ForEach-Object { Write-Host $_ }
-    Write-Host "Action: add a @CardRegistration(set, collectorNumber) annotation for this printing only."
-    Write-Host "Do NOT implement logic or write/run tests."
-} else {
-    Write-Host "No existing class: $ClassName (new card)."
+if ($ClassName -and $collectorNumbers.Count -gt 1) {
+    Write-Error "-ClassName is only supported with a single collector number; with multiple cards each name is derived from Scryfall."
+    exit 1
 }
 
-Write-Section "Tests Guidance"
-if (Test-IsBasicLand -Card $card) {
-    Write-Host "Skip tests (basic land)."
-} elseif (Test-IsVanillaCard -Card $card) {
-    Write-Host "Skip tests (vanilla card, no engine behavior)."
-} elseif ($classHits.Count -gt 0) {
-    Write-Host "Skip tests (reprint of an existing class)."
-} else {
-    Write-Host "Write focused card behavior tests (effects/abilities/targeting only; never Scryfall metadata)."
-}
-
-if ($Reference -and $Reference.Count -gt 0) {
-    Write-Section "Reference Constructors"
-    foreach ($ref in $Reference) {
-        Write-ReferenceConstructor -ReferenceClassName $ref
+$multiple = $collectorNumbers.Count -gt 1
+foreach ($number in $collectorNumbers) {
+    if ($multiple) {
+        Write-Host ""
+        Write-Host "############################################################"
+        Write-Host "# CARD: $SetCode $number"
+        Write-Host "############################################################"
     }
+    Invoke-CardContext -SetCode $SetCode -CollectorNumber $number -ClassName $ClassName -Reference $Reference -SkipScryfall:$SkipScryfall
 }
-
-$packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
-
-Write-Section "Suggested Files"
-Write-Host "Card: magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/$packageLetter/$ClassName.java"
-Write-Host "Test: magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
-
-Write-Section "Suggested Test Command"
-$testClass = "com.github.laxika.magicalvibes.cards.$packageLetter.${ClassName}Test"
-Write-Host "./gradlew :magical-vibes-application:test --tests `"$testClass`" -x :magical-vibes-frontend:buildAngular"
-Write-Host "(fallback if frontend assets are stale: drop the -x flag)"

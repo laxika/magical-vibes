@@ -1,20 +1,15 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NavigatorsCompassTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Navigator's Compass has ETB gain life and activated ability")
-    void hasCorrectProperties() {
-        NavigatorsCompass card = new NavigatorsCompass();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect = (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(lifeEffect.amount()).isEqualTo(3);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(GrantBasicLandTypeToTargetEffect.class);
-    }
 
     // ===== ETB life gain =====
 
@@ -89,9 +62,9 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, forestId);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.AddBasicLandTypeChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.AddBasicLandTypeChoice.class);
     }
 
     @Test

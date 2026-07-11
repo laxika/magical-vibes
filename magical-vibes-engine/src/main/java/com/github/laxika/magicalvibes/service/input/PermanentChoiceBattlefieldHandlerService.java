@@ -5,18 +5,23 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -63,6 +68,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PlayerInputService playerInputService;
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggerTargetCollector triggerTargetCollector;
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -83,7 +89,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             stateBasedActionService.performStateBasedActions(gameData);
 
-            if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
                 triggerCollectionService.processNextDeathTriggerTarget(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
@@ -110,12 +116,49 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target permanent no longer exists");
         }
 
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
         aura.setAttachedTo(permanentId);
+        // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
+        aura.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} reattached to {}", gameData.id, aura.getCard().getName(), newTarget.getCard().getName());
 
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleReattachSourceAuraAfterSacrifice(GameData gameData, UUID permanentId,
+                                                       PermanentChoiceContext.ReattachSourceAuraAfterSacrifice ctx) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.auraPermanentId());
+        if (aura == null) {
+            throw new IllegalStateException("Aura permanent no longer exists");
+        }
+
+        Permanent newTarget = gameQueryService.findPermanentById(gameData, permanentId);
+        if (newTarget == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        // Sacrifice the enchanted permanent, then move the Aura onto the chosen creature or land.
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
+        if (toSacrifice != null) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
+            permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " sacrifices " + toSacrifice.getCard().getName() + ".");
+        }
+
+        gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+        aura.setAttachedTo(permanentId);
+        // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
+        aura.setTimestamp(gameData.nextTimestamp());
+        gameBroadcastService.logAndBroadcast(gameData,
+                aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".");
+        log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
+                aura.getCard().getName(), newTarget.getCard().getName());
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -314,6 +357,71 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleChampionCreature(GameData gameData, UUID championedPermanentId,
+                                       PermanentChoiceContext.ChampionCreature context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, championedPermanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        Card card = target.getOriginalCard();
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), context.controllerId());
+
+        permanentRemovalService.removePermanentToExile(gameData, target);
+
+        String logEntry = card.getName() + " is exiled by " + source.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} champions {} (exiled until source leaves)",
+                gameData.id, source.getCard().getName(), card.getName());
+
+        gameData.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(card, ownerId));
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique).
+        List<CardEffect> championedEffects = source.getCard().getEffects(EffectSlot.ON_CHAMPIONED);
+        if (championedEffects != null && !championedEffects.isEmpty()) {
+            beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(championedEffects));
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void beginChampionedTrigger(GameData gameData, Permanent source, UUID controllerId,
+                                        List<CardEffect> effects) {
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData, effects, source.getCard().getTargetFilter(), controllerId,
+                source.getCard(), TriggerTargetCollector.Options.END_STEP);
+
+        if (result.validTargets().isEmpty()) {
+            String logEntry = source.getCard().getName() + "'s championed trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} championed trigger skipped (no valid targets)",
+                    gameData.id, source.getCard().getName());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ChampionedTriggerTarget(
+                        source.getCard(), controllerId, effects, source.getId()));
+        playerInputService.beginPermanentChoice(gameData, controllerId, result.validTargets(),
+                source.getCard().getName() + "'s ability — Choose target player.");
+
+        String logEntry = source.getCard().getName() + "'s championed trigger — choose target player.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} championed trigger awaiting target selection", gameData.id, source.getCard().getName());
+    }
+
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (chosenPermanent == null) {
@@ -321,14 +429,22 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID controllerId = preventSource.controllerId();
-        gameData.playerSourceDamagePreventionIds
-                .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(permanentId);
-
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + playerName + " is prevented this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, chosenPermanent.getCard().getName());
+        String sourceName = chosenPermanent.getCard().getName();
+
+        if (preventSource.controllerOnly()) {
+            gameData.playerSourceDamagePreventionIds
+                    .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(permanentId);
+            String logEntry = "All damage " + sourceName + " would deal to " + playerName + " is prevented this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            gameData.permanentsPreventedFromDealingDamage.add(permanentId);
+            String logEntry = "All damage " + sourceName + " would deal this turn is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
@@ -351,6 +467,31 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chose {} as redirect damage source (up to {} damage redirected)",
                 gameData.id, playerName, chosenPermanent.getCard().getName(), redirectSource.amount());
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleRedirectCreatureDamageSourceChoice(GameData gameData, UUID permanentId,
+                                                         PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectSource) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+                redirectSource.protectedCreatureId(), permanentId,
+                CreatureDamageRedirectShield.UNLIMITED, redirectSource.redirectTargetId()));
+
+        Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
+        Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
+        String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
+        String redirectName = redirectPerm != null ? redirectPerm.getCard().getName() : "another creature";
+        String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + protectedName
+                + " this turn is dealt to " + redirectName + " instead.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
+                gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
@@ -388,6 +529,67 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromColoredSourceChoice(GameData gameData, UUID permanentId,
+                                                               PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
+                + " this turn, it is prevented.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromSourceAndGainLifeChoice(GameData gameData, UUID permanentId,
+                                                                   PermanentChoiceContext.PreventNextDamageFromSourceAndGainLifeChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId, true));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
+                + " this turn, it is prevented and " + playerName + " gains that much life.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as Reverse Damage prevention source", gameData.id, playerName, sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromSourceToAnyTargetChoice(GameData gameData, UUID permanentId,
+                                                                   PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.sourceNextDamageToAnyTargetShields.add(permanentId);
+
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to any target this turn, it is prevented.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as Sanctum Guardian next-damage prevention source", gameData.id,
+                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 
@@ -442,14 +644,17 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
-        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s effect",
-                new ArrayList<>(List.of(ctx.thenEffect()))
-        ));
+        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability.
+        // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.
+        if (ctx.thenEffect() != null) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ctx.sourceCard(),
+                    ctx.controllerId(),
+                    ctx.sourceCard().getName() + "'s effect",
+                    new ArrayList<>(List.of(ctx.thenEffect()))
+            ));
+        }
 
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -587,7 +792,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             boolean hasControlEffect = auraCard.getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
             if (hasControlEffect) {
-                creatureControlService.stealPermanent(gameData, auraControllerId, enchantTarget);
+                creatureControlService.applyControlEffect(gameData, auraControllerId, enchantTarget,
+                        new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                        auraPerm.getId(), auraCard.getName());
             }
 
             String playerName = gameData.playerIdToName.get(auraControllerId);

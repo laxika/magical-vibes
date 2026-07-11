@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class SwordOfBodyAndMind extends Card {
                         Set.of(), Set.of()));
 
         // Triggered: ...and that player mills ten cards
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillTargetPlayerEffect(10));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(10, MillRecipient.TARGET_PLAYER));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

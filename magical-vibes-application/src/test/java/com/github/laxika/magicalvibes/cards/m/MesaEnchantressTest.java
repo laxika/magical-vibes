@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorOfThePure;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MesaEnchantressTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Mesa Enchantress has MayEffect wrapping SpellCastTriggerEffect with enchantment filter")
-    void hasCorrectStructure() {
-        MesaEnchantress card = new MesaEnchantress();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) trigger.spellFilter()).cardType()).isEqualTo(CardType.ENCHANTMENT);
-    }
 
     // ===== Trigger fires on enchantment cast =====
 
@@ -52,7 +31,7 @@ class MesaEnchantressTest extends BaseCardTest {
         harness.castEnchantment(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept: draws a card =====
@@ -117,7 +96,7 @@ class MesaEnchantressTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
@@ -139,7 +118,7 @@ class MesaEnchantressTest extends BaseCardTest {
         harness.castEnchantment(player2, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
     }

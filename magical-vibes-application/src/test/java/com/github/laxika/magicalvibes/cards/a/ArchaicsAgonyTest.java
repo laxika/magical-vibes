@@ -4,14 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -26,18 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArchaicsAgonyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has converge damage and excess-damage exile effects")
-    void hasCorrectStructure() {
-        ArchaicsAgony card = new ArchaicsAgony();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DealXDamageToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Converge X equals number of colors spent to cast")

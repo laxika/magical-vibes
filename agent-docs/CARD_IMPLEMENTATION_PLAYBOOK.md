@@ -93,11 +93,12 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Opponent draw trigger:
-  - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(N))` when the effect should hit the player who drew
+  - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PLAYER))` when the effect should hit the player who drew
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
-- Conditional self cast-cost reduction:
-  - add static effect on the card itself (in hand-relevant card logic): `addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect(M, N))`
+- Conditional self cast-cost reduction ("this spell costs {N} less to cast if …"):
+  - wrap the single `ReduceOwnCastCostEffect` in a `ConditionalEffect`: `addEffect(EffectSlot.STATIC, new ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N))))`
+  - reuse an existing `Condition` (Metalcraft, ControlsPermanent, OpponentControlsMoreCreatures, CardsLeftGraveyardThisTurn, …); "for each …" reductions instead pass a counting `DynamicAmount` directly to `ReduceOwnCastCostEffect`. **Never add a per-variant `ReduceOwnCastCostIf*`/`Per*` record** — see `COST_MODIFICATION_HANDLERS.md`.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
 - Attacker blocked-only-by-flying-or-subtype:
@@ -109,7 +110,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/w/WhispersilkCloak.java`
 
 - Creature land (manland) — enters tapped, taps for mana, animates:
-  - `addEffect(EffectSlot.STATIC, new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimateLandEffect(power, toughness, subtypes, keywords, color)), description))`
+  - `addEffect(EffectSlot.STATIC, new EntersTappedEffect())` + `addEffect(EffectSlot.ON_TAP, new AwardManaEffect(...))` + `addActivatedAbility(new ActivatedAbility(false, cost, List.of(new AnimatePermanentsEffect(power, toughness, subtypes, keywords, color)), description))`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/f/FaerieConclave.java`
 
 - Kindred Enchantment with ETB token creation + activated token ability:
@@ -171,7 +172,7 @@ public class ExampleCard extends Card {
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
 - Add `setTargetFilter(...)` (on Card) or pass a `TargetFilter` to the `ActivatedAbility` constructor when target legality is restricted.
 - Cross-group target uniqueness: by default, all targets across target groups must be distinct (matching the common MTG "another target" pattern). When the card's oracle text does NOT say "another" and its target filters can overlap (e.g. "target creature" + "target Merfolk"), call `setAllowSharedTargets(true)` to allow the same permanent for different target groups (CR 114.6c). Example: `RiverHeraldsBoon` allows a Merfolk as both targets; `BloodFeud` uses the default (distinct) since it says "another target creature".
-- Multi-zone targeting (spell + permanent): when a spell targets both a spell on the stack and a permanent (e.g. Lost in the Mist), chain both effects (`CounterSpellEffect` + `ReturnTargetPermanentToHandEffect`). The engine stores the spell target in `targetId` (Zone.STACK) and permanent targets in `targetIds`. Uses multi-zone fizzle logic: only fizzles when ALL targets become illegal. Cast in tests via `castInstant(player, cardIndex, spellTargetId, permanentTargetId)`.
+- Multi-zone targeting (spell + permanent): when a spell targets both a spell on the stack and a permanent (e.g. Lost in the Mist), chain both effects (`CounterSpellEffect` + `ReturnToHandEffect.target()`). The engine stores the spell target in `targetId` (Zone.STACK) and permanent targets in `targetIds`. Uses multi-zone fizzle logic: only fizzles when ALL targets become illegal. Cast in tests via `castInstant(player, cardIndex, spellTargetId, permanentTargetId)`.
 - Multi-zone targeting (graveyard + permanent): when a spell targets both a card in a graveyard and a permanent (e.g. Yawgmoth's Vile Offering), use `addEffect(SPELL, ReturnCardFromGraveyardEffect.builder().targetGraveyard(true)...)` for the graveyard target and `target(filter, 0, 1).addEffect(SPELL, ...)` for the permanent target. The engine stores the graveyard target in `targetId` (Zone.GRAVEYARD) and permanent targets in `targetIds`. Cast in tests via `castSorcery(player, cardIndex, graveyardCardId, List.of(permanentId))`.
 
 ## MayEffect lifecycle
@@ -196,7 +197,7 @@ public class ExampleCard extends Card {
 advanceToUpkeep(player1);
 // 3. Resolve stack → MayEffect prompts
 harness.passBothPriorities();
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 // 4. Accept or decline
 harness.handleMayAbilityChosen(player1, true);  // or false to decline
 // 5. Inner effect now resolves (may trigger further interaction)
@@ -241,6 +242,7 @@ Then do all of:
   ```
   Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
 - For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
+- For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameBroadcastService`/`SpellCastingService`.
 - If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
   ```java
   @ValidatesTarget(YourNewEffect.class)
@@ -264,11 +266,13 @@ Then do all of:
    }
    ```
    Add constructor parameters only if the predicate needs static values (e.g. `(int maxPower)`). Dynamic predicates that read game state at evaluation time typically have no parameters.
+   The base interfaces (`PermanentPredicate`, `CardPredicate`, `StackEntryPredicate`, `PlayerPredicate`, `TargetFilter`) are **sealed** — add your new record to the `permits` clause of the interface it implements.
 
-2. **Add evaluation logic** in `GameQueryService.matchesPermanentPredicate()` (in `magical-vibes-engine/.../service/battlefield/GameQueryService.java`):
-   - Find the predicate chain (search for `instanceof PermanentPowerAtMost` to see examples)
-   - Add a new `if (predicate instanceof YourNewPredicate)` block
+2. **Add evaluation logic** in `PredicateEvaluationService.matchesPermanentPredicate()` (in `magical-vibes-engine/.../service/filter/PredicateEvaluationService.java`):
+   - The switch is exhaustive over the sealed hierarchy, so after step 1 the file **fails to compile until you add a case** — a missing evaluation is a compile error, never a silent `false`
+   - Add a new `case YourNewPredicate p ->` arm (search for `case PermanentPowerAtMostPredicate` to see examples)
    - Use `filterContext.gameData()`, `filterContext.sourceControllerId()`, `filterContext.sourceCardId()`, `filterContext.xValue()` as needed
+   - Delegate to `GameQueryService` for engine-computed state (effective power/toughness, changeling-aware keywords, animation-aware `isCreature`)
    - Add the import at the top of the file
 
 3. **Update agent-docs**:
@@ -397,9 +401,9 @@ public class YourLookAtTopEffectHandler implements NormalEffectHandlerBean {
 **Test flow** for the complete interaction:
 ```java
 harness.passBothPriorities();                                    // effect resolves
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 harness.getGameService().handleLibraryCardChosen(gd, player1, 0);  // choose first match (or -1 to decline)
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, ...));  // order remaining
 ```
 
@@ -438,12 +442,12 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
    - Add front face abilities/effects
    - Override `getBackFaceClassName()` returning `"BackFaceName"`
 3. **Transform trigger** — Choose the right pattern:
-   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `NoSpellsCastLastTurnConditionalEffect` (front) / `TwoOrMoreSpellsCastLastTurnConditionalEffect` (back)
-   - Life threshold: `ControllerLifeThresholdConditionalEffect(N, TransformSelfEffect())` or `ControllerLifeAtOrBelowThresholdConditionalEffect(N, MayEffect(TransformSelfEffect(), "..."))`
+   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
+   - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`
    - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
-   - Creature count: `ControlsPermanentCountConditionalEffect(N, PermanentIsCreaturePredicate, TransformSelfEffect())`
+   - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
-   - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ControllerLifeThresholdConditionalEffect(30, TransformSelfEffect())]`
+   - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ConditionalEffect(new ControllerLifeAtLeast(30), TransformSelfEffect())]`
 4. **Tests** — See TEST_RECIPES.md "Transform DFC" recipe
 
 ### Transform card template
@@ -481,37 +485,43 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 
 | ConditionalEffect | Static | Effect Resolution | Trigger Time |
 |---|---|---|---|
-| `ControllerLifeThresholdConditionalEffect` | yes | yes | - |
-| `ControllerLifeAtOrBelowThresholdConditionalEffect` | - | yes | yes (upkeep) |
-| `MetalcraftConditionalEffect` | yes | yes | yes (graveyard upkeep) |
-| `MorbidConditionalEffect` | - | yes | yes (end step) |
-| `KickedConditionalEffect` | - | yes | - |
-| `NotKickedConditionalEffect` | - | yes | yes (end step) |
-| `RaidConditionalEffect` | - | yes | yes (end step) |
-| `EquippedConditionalEffect` | yes | yes | - |
-| `ControlsAnotherPermanentConditionalEffect` | yes | yes | - |
-| `ControlsPermanentConditionalEffect` | yes | yes | yes (attack) |
+| `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new GainedLifeThisTurn(), wrapped)` | yes | yes | yes (end step) |
+| `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
+| `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CreatureDiedUnderYourControlThisTurn(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CardsLeftGraveyardThisTurn(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
+| `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
-| `ControlsPermanentCountConditionalEffect` | - | yes | yes (upkeep, end step) |
-| `NoOtherPermanentConditionalEffect` | - | yes | yes (upkeep) |
-| `NoSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
-| `TwoOrMoreSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
-| `ActivationCountConditionalEffect` | - | yes | - |
-| `DidntAttackConditionalEffect` | - | yes | yes (end step) |
-| `AttacksAloneConditionalEffect` | - | yes | yes (attack) |
-| `MinimumAttackersConditionalEffect` | - | yes | yes (attack) |
-| `HasAttackerConditionalEffect` | - | yes | yes (attack) |
-| `ControllerGraveyardCardThresholdConditionalEffect` | yes | yes | - |
-| `DefendingPlayerPoisonedConditionalEffect` | - | yes | - |
-| `PermanentEnteredThisTurnConditionalEffect` | - | yes | - |
-| `ControllerTurnConditionalEffect` | yes | - | - |
-| `NotControllerTurnConditionalEffect` | yes | - | - |
-| `OpponentControlsPermanentConditionalEffect` | yes | yes | - |
-| `AnyPlayerControlsPermanentConditionalEffect` | yes | - | - |
-| `SelfHasKeywordConditionalEffect` | yes | - | - |
-| `TopCardOfLibraryColorConditionalEffect` | yes | - | - |
-| `BlockedByMinCreaturesConditionalEffect` | yes | - | - |
-| `OpponentPoisonedConditionalEffect` | yes | - | - |
+| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
+| `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
+| `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
+| `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |
+| `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
+| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
+| `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |
+| `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
+| `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |
+| `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
+| `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
+| `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |
+| `ConditionalEffect(new OpponentPoisoned(), wrapped)` | yes | - | - |
 
 **Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`staticfx` `StaticEffectHandlerBean`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).
 

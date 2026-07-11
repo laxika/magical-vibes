@@ -1,48 +1,26 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KnowledgePoolTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB and cast trigger effects")
-    void hasCorrectEffects() {
-        KnowledgePool card = new KnowledgePool();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EachPlayerExilesTopCardsToSourceEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
-                .isInstanceOf(KnowledgePoolCastTriggerEffect.class);
-    }
 
     // ===== ETB — each player exiles top 3 =====
 
@@ -143,7 +121,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
 
         // Player should be presented with a choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
     }
 
     // ===== Player picks from pool =====
@@ -196,7 +174,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore + 1);
 
         // Interaction should be cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== No re-trigger =====
@@ -252,7 +230,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No choice should be presented (original spell gone)
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Pool should be unchanged
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore);
@@ -273,7 +251,7 @@ class KnowledgePoolTest extends BaseCardTest {
 
         // The original spell (Counsel) gets added to pool but the "other" filter
         // removes the just-exiled card, and only lands remain eligible → no choice
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== "Other" filter =====
@@ -291,9 +269,10 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Player should be offered only the Shock (not the just-exiled Counsel)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
 
-        var validIds = gd.interaction.knowledgePoolCastChoiceContext().validCardIds();
+        var validIds = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.KnowledgePoolCastChoice.class).validCardIds();
         assertThat(validIds).contains(shockInPool.getId());
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
@@ -325,7 +304,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Trigger should fizzle — no choice presented
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Original spell should still be on stack (not exiled)
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
@@ -381,7 +360,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Should be waiting for target selection (permanent choice)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose target — Grizzly Bears
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");

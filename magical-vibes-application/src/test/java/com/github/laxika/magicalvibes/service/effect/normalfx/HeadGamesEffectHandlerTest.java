@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -19,13 +20,10 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.HeadGamesEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
@@ -57,7 +55,6 @@ class HeadGamesEffectHandlerTest {
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private PlayerInputService playerInputService;
-    @InjectMocks
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -66,6 +63,8 @@ class HeadGamesEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        support = new LibrarySearchSupport(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -133,7 +132,7 @@ class HeadGamesEffectHandlerTest {
 
                 headGamesHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("has no cards in hand")));
             }
@@ -159,8 +158,8 @@ class HeadGamesEffectHandlerTest {
                 // Library should grow by 2 (the 2 cards from hand)
                 assertThat(gd.playerDecks.get(player2Id)).hasSize(deckSizeBefore + 2);
                 // Player1 should be searching player2's library
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("puts") && msg.contains("from their hand")));
             }
@@ -178,7 +177,7 @@ class HeadGamesEffectHandlerTest {
 
                 headGamesHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("3 cards")));
             }

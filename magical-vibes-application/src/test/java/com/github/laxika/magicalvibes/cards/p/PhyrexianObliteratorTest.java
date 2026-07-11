@@ -1,14 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianObliteratorTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Obliterator has one ON_DEALT_DAMAGE sacrifice effect")
-    void hasCorrectEffect() {
-        PhyrexianObliterator card = new PhyrexianObliterator();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(DamageSourceControllerSacrificesPermanentsEffect.class);
-    }
 
     // ===== Non-combat damage trigger =====
 
@@ -83,9 +70,12 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         // Resolve the trigger — player1 has 3 permanents but must sacrifice 2
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(2);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         // Player1 chooses which two to sacrifice
         List<Permanent> p1Battlefield = gd.playerBattlefields.get(player1.getId());

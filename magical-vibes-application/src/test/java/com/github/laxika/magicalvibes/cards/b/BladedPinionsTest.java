@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,24 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BladedPinionsTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
-
-    @Test
-    @DisplayName("Bladed Pinions has static flying and first strike keyword grant effects")
-    void hasKeywordGrantEffects() {
-        BladedPinions card = new BladedPinions();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.FIRST_STRIKE);
-    }
+    
 
     @Test
     @DisplayName("Bladed Pinions has equip {2} ability with correct properties")

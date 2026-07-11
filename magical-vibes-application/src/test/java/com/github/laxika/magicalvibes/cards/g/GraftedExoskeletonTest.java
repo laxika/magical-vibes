@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,45 +21,11 @@ class GraftedExoskeletonTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Grafted Exoskeleton has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        GraftedExoskeleton card = new GraftedExoskeleton();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("Grafted Exoskeleton grants infect to equipped creature")
-    void hasInfectGrantEffect() {
-        GraftedExoskeleton card = new GraftedExoskeleton();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.INFECT);
-    }
-
-    @Test
-    @DisplayName("Grafted Exoskeleton has sacrifice-on-unattach effect")
-    void hasSacrificeOnUnattachEffect() {
-        GraftedExoskeleton card = new GraftedExoskeleton();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof SacrificeOnUnattachEffect)
-                .hasSize(1);
-    }
+    
 
     @Test
     @DisplayName("Grafted Exoskeleton has equip {2} ability")

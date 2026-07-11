@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,20 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChartACourseTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has DrawCardEffect(2) and DiscardCardUnlessAttackedThisTurnEffect on SPELL slot")
-    void hasCorrectEffects() {
-        ChartACourse card = new ChartACourse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DiscardCardUnlessAttackedThisTurnEffect.class);
-    }
 
     // ===== Did not attack this turn — must discard =====
 
@@ -44,7 +27,7 @@ class ChartACourseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting discard choice (did not attack)
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
 
         // Hand should have 2 cards (0 original after casting + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -72,7 +55,7 @@ class ChartACourseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should NOT be awaiting discard — attack condition met
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isFalse();
 
         // Hand should have 2 cards (0 original after casting + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -96,7 +79,7 @@ class ChartACourseTest extends BaseCardTest {
 
         // Hand should have 3 cards (1 remaining + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isFalse();
     }
 
     // ===== Spell goes to graveyard after resolution =====

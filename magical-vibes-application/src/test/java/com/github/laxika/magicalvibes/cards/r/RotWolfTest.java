@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class RotWolfTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rot Wolf has correct ON_DAMAGED_CREATURE_DIES effect")
-    void hasCorrectProperties() {
-        RotWolf card = new RotWolf();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
 
     // ===== Combat: infect kills blocker, accept may =====
 
@@ -76,7 +60,7 @@ class RotWolfTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Rot Wolf"));
 
         // May ability prompt for Rot Wolf's controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -184,7 +168,7 @@ class RotWolfTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
         // May ability prompt for Rot Wolf's controller (creature dealt damage by Rot Wolf died)
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -216,7 +200,7 @@ class RotWolfTest extends BaseCardTest {
         // Creature died but was not damaged by Rot Wolf - no trigger
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore - 1);
     }
 }

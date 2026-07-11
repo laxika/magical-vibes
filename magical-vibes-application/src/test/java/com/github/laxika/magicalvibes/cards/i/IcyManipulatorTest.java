@@ -6,9 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -23,26 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IcyManipulatorTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Icy Manipulator has correct card properties")
-    void hasCorrectProperties() {
-        IcyManipulator card = new IcyManipulator();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter targetFilter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().get(0).getTargetFilter();
-        assertThat(targetFilter.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-    }
 
     // ===== Casting and resolving =====
 

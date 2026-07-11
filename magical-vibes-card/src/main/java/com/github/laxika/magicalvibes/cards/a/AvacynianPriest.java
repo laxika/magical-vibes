@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +22,7 @@ public class AvacynianPriest extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new TapTargetPermanentEffect()),
+                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "{1}, {T}: Tap target non-Human creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

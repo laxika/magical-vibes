@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PainsmithTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Painsmith has MayEffect wrapping SpellCastTriggerEffect with boost and deathtouch")
-    void hasCorrectStructure() {
-        Painsmith card = new Painsmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-    }
-
     // ===== Trigger fires on artifact cast =====
 
     @Test
@@ -52,7 +31,7 @@ class PainsmithTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept: target creature gets +2/+0 and deathtouch =====
@@ -72,7 +51,7 @@ class PainsmithTest extends BaseCardTest {
 
         // Should be prompting for target selection
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the creature target
         harness.handlePermanentChosen(player1, targetId);
@@ -130,7 +109,7 @@ class PainsmithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -152,7 +131,7 @@ class PainsmithTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }

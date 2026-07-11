@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,8 +74,10 @@ class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler = new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler = new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -137,7 +137,7 @@ class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandlerTest {
 
                 lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("Player1") && msg.contains("Player2")));

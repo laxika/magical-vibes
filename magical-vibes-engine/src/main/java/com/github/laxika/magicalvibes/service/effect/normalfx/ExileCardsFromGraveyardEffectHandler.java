@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

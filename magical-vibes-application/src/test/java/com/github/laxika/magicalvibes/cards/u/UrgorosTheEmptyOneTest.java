@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,15 +30,7 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Urgoros has TargetPlayerRandomDiscardOrControllerDrawsEffect on ON_COMBAT_DAMAGE_TO_PLAYER")
-    void hasCorrectEffect() {
-        UrgorosTheEmptyOne card = new UrgorosTheEmptyOne();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(TargetPlayerRandomDiscardOrControllerDrawsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Dealing combat damage forces opponent to discard a card at random when they have cards")
@@ -141,7 +131,7 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 }

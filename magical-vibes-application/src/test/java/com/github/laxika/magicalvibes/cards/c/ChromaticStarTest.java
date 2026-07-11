@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -19,27 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChromaticStarTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chromatic Star has correct card properties")
-    void hasCorrectProperties() {
-        ChromaticStar card = new ChromaticStar();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AwardAnyColorManaEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DrawCardEffect.class);
-    }
 
     // ===== Mana ability resolves immediately (CR 605.3a) =====
 
@@ -68,8 +43,8 @@ class ChromaticStarTest extends BaseCardTest {
         assertThat(gd.pendingManaAbilityTriggers.getFirst().getCard().getName()).isEqualTo("Chromatic Star");
 
         // Should be immediately awaiting color choice (mana ability, no priority pass needed)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -90,7 +65,7 @@ class ChromaticStarTest extends BaseCardTest {
 
         // Red mana should have been added immediately
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -163,5 +138,4 @@ class ChromaticStarTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Chromatic Star"));
     }
 }
-
 

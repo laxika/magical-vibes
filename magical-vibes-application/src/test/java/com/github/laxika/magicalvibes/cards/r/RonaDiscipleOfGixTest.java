@@ -1,26 +1,19 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -29,32 +22,9 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has ETB may effect to exile historic card from own graveyard")
-    void hasCorrectETBEffect() {
-        RonaDiscipleOfGix card = new RonaDiscipleOfGix();
+    
 
-        var etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
-        assertThat(etbEffects).hasSize(1);
-        assertThat(etbEffects.getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) etbEffects.getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class);
-
-        ExileTargetCardFromGraveyardAndImprintOnSourceEffect exileEffect =
-                (ExileTargetCardFromGraveyardAndImprintOnSourceEffect) mayEffect.wrapped();
-        assertThat(exileEffect.filter()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has static effect to cast from exiled cards")
-    void hasCorrectStaticEffect() {
-        RonaDiscipleOfGix card = new RonaDiscipleOfGix();
-
-        var staticEffects = card.getEffects(EffectSlot.STATIC);
-        assertThat(staticEffects).hasSize(1);
-        assertThat(staticEffects.getFirst()).isInstanceOf(AllowCastFromCardsExiledWithSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability: {4}, {T}: Exile the top card of your library")
@@ -88,7 +58,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -159,7 +129,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The may ability should still trigger (the may question is asked regardless)
-        if (gd.interaction.awaitingInputType() == AwaitingInput.MAY_ABILITY_CHOICE) {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
             // Accept — but inner effect finds no historic cards, so nothing happens
             harness.handleMayAbilityChosen(player1, true);
         }

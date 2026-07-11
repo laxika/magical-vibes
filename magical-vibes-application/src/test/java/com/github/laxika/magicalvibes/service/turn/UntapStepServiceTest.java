@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -31,12 +31,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @ExtendWith(MockitoExtension.class)
 class UntapStepServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -134,10 +138,10 @@ class UntapStepServiceTest {
     class DoesntUntap {
 
         @Test
-        @DisplayName("Permanent with DoesntUntapDuringUntapStepEffect stays tapped")
+        @DisplayName("Permanent with self-scoped DoesntUntapEffect stays tapped")
         void doesntUntapWithStaticEffect() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
 
@@ -147,12 +151,12 @@ class UntapStepServiceTest {
         }
 
         @Test
-        @DisplayName("Permanent with AttachedCreatureDoesntUntapEffect stays tapped")
+        @DisplayName("Permanent with enchanted-scope DoesntUntapEffect stays tapped")
         void doesntUntapWithAttachedAuraEffect() {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             perm.tap();
 
-            when(gameQueryService.hasAuraWithEffect(gd, perm, AttachedCreatureDoesntUntapEffect.class))
+            when(gameQueryService.hasAuraWithEffect(gd, perm, DoesntUntapEffect.class))
                     .thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
@@ -228,10 +232,10 @@ class UntapStepServiceTest {
         }
 
         @Test
-        @DisplayName("Permanent with DoesntUntapDuringUntapStepEffect still clears summoning sickness")
+        @DisplayName("Permanent with self-scoped DoesntUntapEffect still clears summoning sickness")
         void clearsSummoningSicknessEvenWhenDoesntUntap() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
             perm.setSummoningSick(true);
@@ -293,7 +297,7 @@ class UntapStepServiceTest {
         @DisplayName("Filtered untap effect only untaps matching permanents")
         void filteredEffectOnlyUntapsMatchingPermanents() {
             // Player 2 controls a permanent with a filtered untap effect
-            PermanentPredicate filter = new PermanentPredicate() {};
+            PermanentPredicate filter = new PermanentTruePredicate();
             Card effectCard = createCardWithName("Filtered Untapper");
             effectCard.addEffect(EffectSlot.STATIC,
                     new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
@@ -306,9 +310,9 @@ class UntapStepServiceTest {
             nonMatchingPerm.tap();
 
             // Default: permanents don't match the filter
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
             // Only the matching permanent passes the filter
-            when(gameQueryService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
 
@@ -336,6 +340,61 @@ class UntapStepServiceTest {
             // Player 2's perm stays tapped — player 1's Seedborn Muse only fires
             // during OTHER players' untap steps, not player 1's own
             assertThat(tappedPerm.isTapped()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("Storage Matrix restriction")
+    class StorageMatrixRestriction {
+
+        @Test
+        @DisplayName("Applies when an untapped Storage Matrix is out and the active player has a tapped permanent")
+        void appliesWithUntappedMatrixAndTappedPermanent() {
+            Card matrixCard = createCardWithName("Storage Matrix");
+            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            addPermanent(player1Id, matrixCard);
+            addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
+
+            assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Does not apply when the Storage Matrix is tapped")
+        void doesNotApplyWhenMatrixTapped() {
+            Card matrixCard = createCardWithName("Storage Matrix");
+            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            addPermanent(player1Id, matrixCard).tap();
+            addPermanent(player1Id, createCardWithName("Grizzly Bears")).tap();
+
+            assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not apply when the active player has nothing tapped")
+        void doesNotApplyWithNothingTapped() {
+            Card matrixCard = createCardWithName("Storage Matrix");
+            matrixCard.addEffect(EffectSlot.STATIC, new StorageMatrixEffect());
+            addPermanent(player1Id, matrixCard);
+
+            assertThat(sut.storageMatrixRestrictionApplies(gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Restricted untap only untaps permanents matching the chosen-type predicate")
+        void restrictedUntapOnlyUntapsMatching() {
+            PermanentPredicate chosenType = new PermanentTruePredicate();
+            Permanent matching = addPermanent(player1Id, createCardWithName("Matching"));
+            matching.tap();
+            Permanent nonMatching = addPermanent(player1Id, createCardWithName("Non-Matching"));
+            nonMatching.tap();
+
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), eq(chosenType))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, matching, chosenType)).thenReturn(true);
+
+            sut.untapPermanents(gd, player1Id, chosenType);
+
+            assertThat(matching.isTapped()).isFalse();
+            assertThat(nonMatching.isTapped()).isTrue();
         }
     }
 

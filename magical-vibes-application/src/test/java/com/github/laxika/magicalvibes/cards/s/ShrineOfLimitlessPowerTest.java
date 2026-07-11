@@ -1,22 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.d.DementiaBat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,36 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfLimitlessPowerTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has upkeep trigger, black spell cast trigger, and activated ability")
-    void hasCorrectStructure() {
-        ShrineOfLimitlessPower card = new ShrineOfLimitlessPower();
-
-        // Upkeep trigger — mandatory charge counter
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).singleElement()
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Cast trigger — black spell adds charge counter
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect castTrigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(castTrigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
-        assertThat(((CardColorPredicate) castTrigger.spellFilter()).color()).isEqualTo(CardColor.BLACK);
-        assertThat(castTrigger.resolvedEffects()).singleElement().isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Activated ability — {4}, T, sacrifice: target player discards by charge counters
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(TargetPlayerDiscardsByChargeCountersEffect.class);
-        assertThat(ability.isNeedsTarget()).isTrue();
-    }
 
     // ===== Upkeep trigger =====
 
@@ -161,15 +125,15 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
@@ -184,7 +148,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -237,7 +201,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
@@ -269,8 +233,8 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);

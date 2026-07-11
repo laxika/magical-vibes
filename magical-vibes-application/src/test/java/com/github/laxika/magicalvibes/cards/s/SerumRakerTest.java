@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,20 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SerumRakerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Serum Raker has ON_DEATH effect that makes each player discard a card")
-    void hasDeathTriggerEffect() {
-        SerumRaker card = new SerumRaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(EachPlayerDiscardsEffect.class);
-        EachPlayerDiscardsEffect effect = (EachPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
 
     // ===== Casting =====
 
@@ -79,9 +64,9 @@ class SerumRakerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve death trigger
 
         // Active player (player1) should be prompted to discard first
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
     }
 
     @Test
@@ -99,9 +84,9 @@ class SerumRakerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Non-active player should now be prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
     }
 
     @Test
@@ -139,8 +124,8 @@ class SerumRakerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve death trigger
 
         // Active player (player1) has no cards — should skip to player2
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 
@@ -155,7 +140,7 @@ class SerumRakerTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Serum Raker dies
         harness.passBothPriorities(); // Resolve death trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Helpers =====

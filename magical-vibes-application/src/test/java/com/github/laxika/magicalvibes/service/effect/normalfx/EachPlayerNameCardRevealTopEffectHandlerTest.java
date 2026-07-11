@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerNameCardRevealTopEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,8 +73,11 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(sessionManager, libraryRevealSupport);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
+                libraryRevealSupport);
 
     }
 
@@ -118,7 +119,7 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
 
                 eachPlayerNameCardRevealTopEffectHandler.resolve(gd, entry, new EachPlayerNameCardRevealTopEffect());
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

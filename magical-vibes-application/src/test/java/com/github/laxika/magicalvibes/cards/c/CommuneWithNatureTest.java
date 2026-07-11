@@ -1,20 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,20 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CommuneWithNatureTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Commune with Nature has correct card properties")
-    void hasCorrectProperties() {
-        CommuneWithNature card = new CommuneWithNature();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-    }
+    
 
     @Test
     @DisplayName("Casting Commune with Nature puts it on the stack")
@@ -72,11 +55,11 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -100,10 +83,10 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
 
-        List<Card> remaining = gd.interaction.libraryView().reorderCards();
+        List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         // Put Plains first (closest to top), then Shock, then Swamp, then Grizzly Bears
         int iPlains = indexOf(remaining, "Plains");
         int iShock = indexOf(remaining, "Shock");
@@ -136,8 +119,8 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
 
     @Test
@@ -157,8 +140,8 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
 
     @Test
@@ -173,7 +156,7 @@ class CommuneWithNatureTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }

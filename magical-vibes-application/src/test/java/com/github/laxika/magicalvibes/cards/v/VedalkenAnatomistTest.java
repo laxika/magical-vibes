@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,8 +36,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{U}");
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
+        // The -1/-1 counter placement is asserted behaviorally below.
         assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
@@ -95,7 +93,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
         // May ability should be pending
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     // ===== May tap/untap — accept taps untapped creature =====

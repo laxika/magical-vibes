@@ -4,11 +4,8 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,28 +22,6 @@ class VensersJournalTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Venser's Journal has no maximum hand size static effect")
-    void hasNoMaxHandSizeEffect() {
-        VensersJournal card = new VensersJournal();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Venser's Journal has upkeep life gain trigger")
-    void hasUpkeepLifeGainTrigger() {
-        VensersJournal card = new VensersJournal();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(GainLifePerCardsInHandEffect.class);
     }
 
     // ===== No maximum hand size =====

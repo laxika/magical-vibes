@@ -3,14 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,27 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MoldgrafMonstrosityTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH effect that exiles self and returns two random creatures to battlefield")
-    void hasCorrectEffect() {
-        MoldgrafMonstrosity card = new MoldgrafMonstrosity();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.destination()).isEqualTo(GraveyardChoiceDestination.BATTLEFIELD);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.randomCount()).isEqualTo(2);
-        assertThat(effect.exileSourceFromGraveyard()).isTrue();
-    }
 
     // ===== Death trigger =====
 

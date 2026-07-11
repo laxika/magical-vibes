@@ -12,6 +12,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *       always uses toughness regardless of power (e.g. Belligerent Brontodon).</li>
  *   <li>{@link GrantScope#ALL_OWN_CREATURES} — all creatures the controller controls
  *       including the source; always uses toughness regardless of power.</li>
+ *   <li>{@link GrantScope#ALL_CREATURES} — every creature on the battlefield regardless of
+ *       controller; always uses toughness regardless of power (e.g. Doran, the Siege Tower).</li>
  * </ul>
  */
 public record AssignCombatDamageWithToughnessEffect(GrantScope scope) implements CardEffect {

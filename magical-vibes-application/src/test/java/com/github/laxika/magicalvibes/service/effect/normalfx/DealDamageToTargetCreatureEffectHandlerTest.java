@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetCreatureEffectHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -25,7 +24,7 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
     @Override
     protected void setUpHandler() {
-        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService);
+        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService, amountEvaluationService);
     }
 
     @Test

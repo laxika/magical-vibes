@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,29 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CarrionCallTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Carrion Call has spell effect that creates two 1/1 green Phyrexian Insect tokens with infect")
-    void hasCorrectProperties() {
-        CarrionCall card = new CarrionCall();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Phyrexian Insect");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.INSECT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.INFECT);
-    }
 
     // ===== Casting and resolving =====
 

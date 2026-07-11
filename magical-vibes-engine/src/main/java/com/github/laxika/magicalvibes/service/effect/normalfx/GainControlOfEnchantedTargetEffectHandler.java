@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -26,18 +27,19 @@ public class GainControlOfEnchantedTargetEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                if (target == null) return;
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) return;
 
-                if (!gameQueryService.isEnchanted(gameData, target)) {
-                    String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    return;
-                }
+        if (!gameQueryService.isEnchanted(gameData, target)) {
+            String logEntry = entry.getCard().getName() + "'s ability has no effect (" + target.getCard().getName() + " is not enchanted).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
 
-                creatureControlService.stealPermanent(gameData, entry.getControllerId(), target);
-                gameData.enchantmentDependentStolenCreatures.add(target.getId());
-    
+        // "For as long as that creature remains enchanted": no time-based expiry — the
+        // condition is enforced by CreatureControlService.reconcileControl, keyed on the
+        // wrapped GainControlOfEnchantedTargetEffect type.
+        creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
+                effect, EffectDuration.PERMANENT, null, entry.getCard().getName());
     }
 }

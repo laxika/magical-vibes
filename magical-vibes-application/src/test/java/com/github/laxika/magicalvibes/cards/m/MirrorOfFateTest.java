@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,24 +17,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorOfFateTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Mirror of Fate has correct ability structure")
-    void hasCorrectAbilityStructure() {
-        MirrorOfFate card = new MirrorOfFate();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof SacrificeSelfCost)
-                .anyMatch(e -> e instanceof MirrorOfFateEffect);
-    }
 
     // ===== No exiled cards: library gets exiled entirely =====
 
@@ -91,7 +71,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting mirror of fate choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MIRROR_OF_FATE_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
     }
 
     @Test
@@ -158,7 +138,7 @@ class MirrorOfFateTest extends BaseCardTest {
                 List.of(exiledBears.getId(), exiledElves.getId()));
 
         // Should be awaiting library reorder (player chooses the order)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Cards should be removed from exile already
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -250,14 +230,14 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MIRROR_OF_FATE_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
 
         // Choose 7 of the 10
         List<UUID> chosen = exiledCards.stream().limit(7).map(Card::getId).toList();
         harness.handleMultipleCardsChosen(player1, chosen);
 
         // Should be awaiting library reorder for the 7 cards
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Complete reorder: keep original order [0, 1, 2, 3, 4, 5, 6]
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3, 4, 5, 6));

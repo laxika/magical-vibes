@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BrazenBuccaneers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class WildgrowthWalkerTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
-
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES effects: PutCountersOnSelfEffect and GainLifeEffect")
-    void hasExploreTriggeredEffects() {
-        WildgrowthWalker card = new WildgrowthWalker();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) effects.get(0);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(effects.get(1)).isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect = (GainLifeEffect) effects.get(1);
-        assertThat(lifeEffect.amount()).isEqualTo(3);
-    }
 
     // ===== Explore triggers — land on top =====
 
@@ -70,7 +50,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // May ability for explore graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the trigger

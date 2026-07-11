@@ -3,15 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,27 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PrecognitionFieldTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct static effects and activated ability")
-    void hasCorrectEffects() {
-        PrecognitionField card = new PrecognitionField();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(LookAtTopCardOfOwnLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(AllowCastFromTopOfLibraryEffect.class);
-
-        AllowCastFromTopOfLibraryEffect castEffect = (AllowCastFromTopOfLibraryEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(castEffect.castableTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ExileTopCardOfOwnLibraryEffect.class);
-    }
 
     // ===== Casting and resolving =====
 

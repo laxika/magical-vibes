@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -72,7 +72,8 @@ class GrandArchitectTest extends BaseCardTest {
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Copper Myr"))
                 .findFirst().orElseThrow();
-        assertThat(myr.getTransientColors()).contains(CardColor.BLUE);
+        // "Becomes blue" is a floating CR 613 layer-5 color setter.
+        assertThat(gqs.getEffectiveColors(gd, myr)).containsExactly(CardColor.BLUE);
     }
 
     @Test
@@ -108,9 +109,12 @@ class GrandArchitectTest extends BaseCardTest {
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Copper Myr"))
                 .findFirst().orElseThrow();
+        // The color setter is a floating CR 613 layer-5 effect expiring with the
+        // until-end-of-turn floating effects at cleanup.
+        gd.expireEndOfTurnFloatingEffects();
         myr.resetModifiers();
 
-        assertThat(myr.getTransientColors()).isEmpty();
+        assertThat(gqs.getEffectiveColors(gd, myr)).doesNotContain(CardColor.BLUE);
     }
 
     @Test
@@ -122,7 +126,7 @@ class GrandArchitectTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -207,11 +211,11 @@ class GrandArchitectTest extends BaseCardTest {
         Permanent myr = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Copper Myr"))
                 .findFirst().orElseThrow();
-        assertThat(myr.getTransientColors()).contains(CardColor.BLUE);
+        assertThat(gqs.getEffectiveColors(gd, myr)).containsExactly(CardColor.BLUE);
 
         // Now 2 blue creatures — presents choice
         harness.activateAbility(player1, 0, 1, null, null);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose Copper Myr to tap
         harness.handlePermanentChosen(player1, myrId);

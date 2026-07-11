@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,22 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OptTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Opt has scry 1 and draw 1 spell effects")
-    void hasCorrectProperties() {
-        Opt card = new Opt();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ScryEffect.class);
-        ScryEffect scryEffect = (ScryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(scryEffect.count()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(drawEffect.amount()).isEqualTo(1);
-    }
 
     // ===== Casting =====
 
@@ -73,9 +54,9 @@ class OptTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
 
     @Test

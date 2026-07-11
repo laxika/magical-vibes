@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,20 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FungalInfectionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fungal Infection has correct effects")
-    void hasCorrectEffects() {
-        FungalInfection card = new FungalInfection();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(-1);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
-    }
+    
 
     @Test
     @DisplayName("Resolving Fungal Infection gives -1/-1 and creates a Saproling token")

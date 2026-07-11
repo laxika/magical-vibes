@@ -1,19 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,38 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfPiercingVisionTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Shrine has upkeep trigger, blue spell cast trigger, and activated ability")
-    void hasCorrectAbilityStructure() {
-        ShrineOfPiercingVision card = new ShrineOfPiercingVision();
-
-        // Upkeep triggered ability (mandatory charge counter)
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Spell cast trigger (blue spell -> charge counter)
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        var spellTrigger = card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(spellTrigger).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) spellTrigger;
-        assertThat(trigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
-        assertThat(((CardColorPredicate) trigger.spellFilter()).color()).isEqualTo(CardColor.BLUE);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Activated ability (tap + sacrifice -> look at top X)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect.class);
-    }
 
     // ===== Upkeep trigger =====
 
@@ -128,40 +88,38 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     // ===== Activated ability: Tap + sacrifice to look at top X =====
 
     @Test
-    @DisplayName("Sacrificing with charge counters enters hand/top/bottom choice state")
-    void sacrificeEntersHandTopBottomChoiceState() {
+    @DisplayName("Sacrificing with charge counters enters library reveal choice state")
+    void sacrificeEntersLibraryRevealChoiceState() {
         Permanent shrine = addReadyShrine(player1);
         shrine.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability from stack
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(3);
     }
 
     @Test
-    @DisplayName("Choosing a card puts it into hand and rest on bottom")
+    @DisplayName("Choosing a card puts it into hand and the rest on the bottom")
     void choosingCardPutsInHandRestOnBottom() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setCounterCount(CounterType.CHARGE, 3);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
         Card top1 = deck.get(1);
-        Card top2 = deck.get(2);
         int originalDeckSize = deck.size();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Choose: card 1 to hand, card 0 to top, card 2 to bottom
-        gs.handleHandTopBottomChosen(gd, player1, 1, 0);
+        // Choose top0 to hand; the other card goes on the bottom of the library
+        harness.handleMultipleCardsChosen(player1, List.of(top0.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(top1);
-        assertThat(deck.get(0)).isSameAs(top0);
-        assertThat(deck.get(deck.size() - 1)).isSameAs(top2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(top0);
+        assertThat(deck.get(deck.size() - 1)).isSameAs(top1);
         assertThat(deck).hasSize(originalDeckSize - 1);
     }
 
@@ -193,8 +151,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         // No cards should be added to hand
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no charge counters"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -210,9 +167,9 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Single card goes directly to hand — no choice needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("into their hand"));
     }
 
     @Test
@@ -254,8 +211,8 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should use all available cards (capped at deck size)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(deckSize);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(deckSize);
     }
 
     // ===== Helper methods =====

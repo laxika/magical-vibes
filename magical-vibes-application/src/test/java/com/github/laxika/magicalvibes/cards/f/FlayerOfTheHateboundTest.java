@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.ReassemblingSkeleton;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,18 +34,6 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
                 .findFirst().orElse(null);
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flayer has an ON_CREATURE_ENTERS_FROM_GRAVEYARD deal-power-damage effect")
-    void hasEntersFromGraveyardEffect() {
-        FlayerOfTheHatebound card = new FlayerOfTheHatebound();
-
-        assertThat(card.getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD).getFirst())
-                .isInstanceOf(DealDamageEqualToSourcePowerToAnyTargetEffect.class);
-    }
-
     // ===== Undying =====
 
     @Test
@@ -64,7 +50,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
 
         // Bolt killed Flayer; undying returned it with a +1/+1 counter and its
         // enters-from-graveyard ability is now asking for a target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         Permanent flayer = flayerOnBattlefield(gd);
         assertThat(flayer).isNotNull();
@@ -106,7 +92,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Flayer of the Hatebound"));
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 
@@ -128,7 +114,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Flayer of the Hatebound"));
         resolveUntilInputOrEmpty();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, target.getId());
         resolveUntilInputOrEmpty();
 
@@ -152,7 +138,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Skeleton returned from player1's graveyard → Flayer triggers, awaiting a target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 

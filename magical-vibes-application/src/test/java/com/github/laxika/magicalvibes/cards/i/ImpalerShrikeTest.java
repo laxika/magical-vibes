@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,18 +29,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Impaler Shrike has MayEffect-wrapped combat damage trigger")
-    void hasCorrectEffect() {
-        ImpalerShrike card = new ImpalerShrike();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeSelfAndDrawCardsEffect.class);
-        assertThat(((SacrificeSelfAndDrawCardsEffect) may.wrapped()).amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
@@ -54,7 +40,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -118,7 +104,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

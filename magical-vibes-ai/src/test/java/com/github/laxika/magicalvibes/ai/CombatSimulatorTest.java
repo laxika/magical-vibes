@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
@@ -16,10 +17,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 
 import java.util.EnumSet;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -54,6 +60,15 @@ class CombatSimulatorTest {
 
         gd.playerBattlefields.get(player1.getId()).clear();
         gd.playerBattlefields.get(player2.getId()).clear();
+    }
+
+    /** Marks a permanent on the AI's battlefield as stolen from the opponent until end of
+     *  turn — the ownership record plus the floating control effect Act of Treason creates. */
+    private void markStolenUntilEndOfTurn(Permanent perm) {
+        gd.stolenCreatures.put(perm.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Act of Treason",
+                null, player1.getId(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                perm.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
     }
 
     @Test
@@ -331,8 +346,8 @@ class CombatSimulatorTest {
         serraAngel.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(serraAngel);
 
-        // Mark as stolen until end of turn (as Act of Treason would do)
-        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+
+        markStolenUntilEndOfTurn(serraAngel);
 
         CombatSimulator.CreatureInfo stolenInfo = simulator.buildCreatureInfo(
                 gd, serraAngel, 0, player1.getId(), player2.getId());
@@ -361,7 +376,7 @@ class CombatSimulatorTest {
         Permanent bears = new Permanent(new GrizzlyBears());
         bears.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(bears);
-        gd.untilEndOfTurnStolenCreatures.add(bears.getId());
+        markStolenUntilEndOfTurn(bears);
 
         Permanent airElemental = new Permanent(new AirElemental());
         airElemental.setSummoningSick(false);
@@ -526,7 +541,7 @@ class CombatSimulatorTest {
         Permanent serraAngel = new Permanent(new SerraAngel());
         serraAngel.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(serraAngel);
-        gd.untilEndOfTurnStolenCreatures.add(serraAngel.getId());
+        markStolenUntilEndOfTurn(serraAngel);
 
         // Opponent has Air Elemental (4/4 flying) — slightly lower score than Serra Angel
         // This means: without the fix, the opponent would block SA with AE and the trade
@@ -695,9 +710,9 @@ class CombatSimulatorTest {
     void exhaustiveMenaceRequiresTwoBlockers() {
         // Opponent attacks with a 3/3 menace creature
         Permanent menaceCreature = new Permanent(new GrizzlyBears());
-        menaceCreature.getCard().setPower(3);
-        menaceCreature.getCard().setToughness(3);
-        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(menaceCreature).setPower(3);
+        TestCards.mutableCard(menaceCreature).setToughness(3);
+        TestCards.mutableCard(menaceCreature).setKeywords(EnumSet.of(Keyword.MENACE));
         menaceCreature.setSummoningSick(false);
         menaceCreature.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(menaceCreature);
@@ -719,9 +734,9 @@ class CombatSimulatorTest {
     void exhaustiveMenaceBlockedByPair() {
         // Opponent attacks with a 3/3 menace creature
         Permanent menaceCreature = new Permanent(new GrizzlyBears());
-        menaceCreature.getCard().setPower(3);
-        menaceCreature.getCard().setToughness(3);
-        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(menaceCreature).setPower(3);
+        TestCards.mutableCard(menaceCreature).setToughness(3);
+        TestCards.mutableCard(menaceCreature).setKeywords(EnumSet.of(Keyword.MENACE));
         menaceCreature.setSummoningSick(false);
         menaceCreature.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(menaceCreature);
@@ -799,9 +814,9 @@ class CombatSimulatorTest {
     void exhaustiveFirstStrikeAttackerKillsBlocker() {
         // Opponent attacks with a 3/3 first strike creature
         Permanent fsAttacker = new Permanent(new GrizzlyBears());
-        fsAttacker.getCard().setPower(3);
-        fsAttacker.getCard().setToughness(3);
-        fsAttacker.getCard().setKeywords(EnumSet.of(Keyword.FIRST_STRIKE));
+        TestCards.mutableCard(fsAttacker).setPower(3);
+        TestCards.mutableCard(fsAttacker).setToughness(3);
+        TestCards.mutableCard(fsAttacker).setKeywords(EnumSet.of(Keyword.FIRST_STRIKE));
         fsAttacker.setSummoningSick(false);
         fsAttacker.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(fsAttacker);
@@ -846,9 +861,9 @@ class CombatSimulatorTest {
     void exhaustiveIndestructibleAttackerSurvives() {
         // Opponent attacks with a 5/5 indestructible creature
         Permanent indestructible = new Permanent(new GrizzlyBears());
-        indestructible.getCard().setPower(5);
-        indestructible.getCard().setToughness(5);
-        indestructible.getCard().setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
+        TestCards.mutableCard(indestructible).setPower(5);
+        TestCards.mutableCard(indestructible).setToughness(5);
+        TestCards.mutableCard(indestructible).setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
         indestructible.setSummoningSick(false);
         indestructible.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(indestructible);
@@ -878,9 +893,9 @@ class CombatSimulatorTest {
 
         // AI has a 1/1 indestructible creature — blocks without dying, prevents 6 damage
         Permanent indestructible = new Permanent(new GrizzlyBears());
-        indestructible.getCard().setPower(1);
-        indestructible.getCard().setToughness(1);
-        indestructible.getCard().setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
+        TestCards.mutableCard(indestructible).setPower(1);
+        TestCards.mutableCard(indestructible).setToughness(1);
+        TestCards.mutableCard(indestructible).setKeywords(EnumSet.of(Keyword.INDESTRUCTIBLE));
         indestructible.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(indestructible);
 
@@ -896,9 +911,9 @@ class CombatSimulatorTest {
     void exhaustiveInfectAttackerDealsPoisonWhenUnblocked() {
         // Opponent attacks with a 3/3 infect creature
         Permanent infectCreature = new Permanent(new GrizzlyBears());
-        infectCreature.getCard().setPower(3);
-        infectCreature.getCard().setToughness(3);
-        infectCreature.getCard().setKeywords(EnumSet.of(Keyword.INFECT));
+        TestCards.mutableCard(infectCreature).setPower(3);
+        TestCards.mutableCard(infectCreature).setToughness(3);
+        TestCards.mutableCard(infectCreature).setKeywords(EnumSet.of(Keyword.INFECT));
         infectCreature.setSummoningSick(false);
         infectCreature.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(infectCreature);
@@ -1010,8 +1025,8 @@ class CombatSimulatorTest {
         gd.playerBattlefields.get(player2.getId()).add(oppBears);
 
         Permanent opp1_1 = new Permanent(new GrizzlyBears());
-        opp1_1.getCard().setPower(1);
-        opp1_1.getCard().setToughness(1);
+        TestCards.mutableCard(opp1_1).setPower(1);
+        TestCards.mutableCard(opp1_1).setToughness(1);
         opp1_1.setSummoningSick(false);
         opp1_1.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(opp1_1);
@@ -1062,7 +1077,7 @@ class CombatSimulatorTest {
 
         // AI has a 2/2 lifelink creature — trade is enhanced by lifelink gaining life
         Permanent lifelinkCreature = new Permanent(new GrizzlyBears());
-        lifelinkCreature.getCard().setKeywords(EnumSet.of(Keyword.LIFELINK));
+        TestCards.mutableCard(lifelinkCreature).setKeywords(EnumSet.of(Keyword.LIFELINK));
         lifelinkCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(lifelinkCreature);
 
@@ -1245,8 +1260,8 @@ class CombatSimulatorTest {
         // Normally: AI kills blocker, survives. With +3/+3 pump, blocker becomes 5/5:
         // blocker survives (3 < 5), blocker kills attacker (5 >= 3). Big swing.
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
@@ -1327,14 +1342,14 @@ class CombatSimulatorTest {
         // With +3/+3: blocker becomes 6/6 — AI dies (6 >= 5), blocker survives (5 < 6).
         // Complete reversal: from winning to losing.
         Permanent ai5_5 = new Permanent(new GrizzlyBears());
-        ai5_5.getCard().setPower(5);
-        ai5_5.getCard().setToughness(5);
+        TestCards.mutableCard(ai5_5).setPower(5);
+        TestCards.mutableCard(ai5_5).setToughness(5);
         ai5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai5_5);
 
         Permanent opp3_3 = new Permanent(new GrizzlyBears());
-        opp3_3.getCard().setPower(3);
-        opp3_3.getCard().setToughness(3);
+        TestCards.mutableCard(opp3_3).setPower(3);
+        TestCards.mutableCard(opp3_3).setToughness(3);
         opp3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp3_3);
 
@@ -1356,8 +1371,8 @@ class CombatSimulatorTest {
     @DisplayName("Trick risk: higher probability produces higher risk")
     void trickRiskScalesWithProbability() {
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
@@ -1417,14 +1432,14 @@ class CombatSimulatorTest {
         // With +3/+3: blocker becomes 5/6, kills attacker (5 >= 3), survives (3 < 6). Bad.
         // The trick risk penalty should make this attack score negative.
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
         Permanent opp2_3 = new Permanent(new GrizzlyBears());
-        opp2_3.getCard().setPower(2);
-        opp2_3.getCard().setToughness(3);
+        TestCards.mutableCard(opp2_3).setPower(2);
+        TestCards.mutableCard(opp2_3).setToughness(3);
         opp2_3.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp2_3);
 
@@ -1479,15 +1494,15 @@ class CombatSimulatorTest {
         // 5/6, blocker dies (3 tough <= 5 power), attacker survives (3 power < 6).
         // Big swing.
         Permanent opp2_3 = new Permanent(new GrizzlyBears());
-        opp2_3.getCard().setPower(2);
-        opp2_3.getCard().setToughness(3);
+        TestCards.mutableCard(opp2_3).setPower(2);
+        TestCards.mutableCard(opp2_3).setToughness(3);
         opp2_3.setSummoningSick(false);
         opp2_3.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(opp2_3);
 
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
@@ -1542,15 +1557,15 @@ class CombatSimulatorTest {
         gd.playerLifeTotals.put(player1.getId(), 20);
 
         Permanent opp2_3 = new Permanent(new GrizzlyBears());
-        opp2_3.getCard().setPower(2);
-        opp2_3.getCard().setToughness(3);
+        TestCards.mutableCard(opp2_3).setPower(2);
+        TestCards.mutableCard(opp2_3).setToughness(3);
         opp2_3.setSummoningSick(false);
         opp2_3.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(opp2_3);
 
         Permanent ai5_5 = new Permanent(new GrizzlyBears());
-        ai5_5.getCard().setPower(5);
-        ai5_5.getCard().setToughness(5);
+        TestCards.mutableCard(ai5_5).setPower(5);
+        TestCards.mutableCard(ai5_5).setToughness(5);
         ai5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai5_5);
 
@@ -1576,8 +1591,8 @@ class CombatSimulatorTest {
         gd.playerLifeTotals.put(player1.getId(), 2);
 
         Permanent opp3_3 = new Permanent(new GrizzlyBears());
-        opp3_3.getCard().setPower(3);
-        opp3_3.getCard().setToughness(3);
+        TestCards.mutableCard(opp3_3).setPower(3);
+        TestCards.mutableCard(opp3_3).setToughness(3);
         opp3_3.setSummoningSick(false);
         opp3_3.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(opp3_3);
@@ -1609,14 +1624,14 @@ class CombatSimulatorTest {
         gd.playerLifeTotals.put(player2.getId(), 20);
 
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
         Permanent opp5_5 = new Permanent(new GrizzlyBears());
-        opp5_5.getCard().setPower(5);
-        opp5_5.getCard().setToughness(5);
+        TestCards.mutableCard(opp5_5).setPower(5);
+        TestCards.mutableCard(opp5_5).setToughness(5);
         opp5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp5_5);
 
@@ -1635,8 +1650,8 @@ class CombatSimulatorTest {
         // Same 3/3 AI creature, but opponent has no creatures. No defensive
         // value to preserve — the attack should go through.
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
@@ -1660,8 +1675,8 @@ class CombatSimulatorTest {
 
         // Opponent has a 5/5 threatening lethal
         Permanent opp5_5 = new Permanent(new GrizzlyBears());
-        opp5_5.getCard().setPower(5);
-        opp5_5.getCard().setToughness(5);
+        TestCards.mutableCard(opp5_5).setPower(5);
+        TestCards.mutableCard(opp5_5).setToughness(5);
         opp5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp5_5);
 
@@ -1686,14 +1701,14 @@ class CombatSimulatorTest {
         gd.playerBattlefields.get(player1.getId()).add(aiFlyer);
 
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
         Permanent opp5_5 = new Permanent(new GrizzlyBears());
-        opp5_5.getCard().setPower(5);
-        opp5_5.getCard().setToughness(5);
+        TestCards.mutableCard(opp5_5).setPower(5);
+        TestCards.mutableCard(opp5_5).setToughness(5);
         opp5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp5_5);
 
@@ -1708,8 +1723,8 @@ class CombatSimulatorTest {
     @DisplayName("Defensive value: computePenalty returns zero when opponent has no board")
     void computeDefensivePenaltyZeroWithNoOpponent() {
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
@@ -1730,8 +1745,8 @@ class CombatSimulatorTest {
         gd.playerBattlefields.get(player1.getId()).add(aiAngel);
 
         Permanent opp5_5 = new Permanent(new GrizzlyBears());
-        opp5_5.getCard().setPower(5);
-        opp5_5.getCard().setToughness(5);
+        TestCards.mutableCard(opp5_5).setPower(5);
+        TestCards.mutableCard(opp5_5).setToughness(5);
         opp5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp5_5);
 
@@ -1761,14 +1776,14 @@ class CombatSimulatorTest {
         gd.playerLifeTotals.put(player1.getId(), 5);
 
         Permanent ai3_3 = new Permanent(new GrizzlyBears());
-        ai3_3.getCard().setPower(3);
-        ai3_3.getCard().setToughness(3);
+        TestCards.mutableCard(ai3_3).setPower(3);
+        TestCards.mutableCard(ai3_3).setToughness(3);
         ai3_3.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(ai3_3);
 
         Permanent opp5_5 = new Permanent(new GrizzlyBears());
-        opp5_5.getCard().setPower(5);
-        opp5_5.getCard().setToughness(5);
+        TestCards.mutableCard(opp5_5).setPower(5);
+        TestCards.mutableCard(opp5_5).setToughness(5);
         opp5_5.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(opp5_5);
 
@@ -1797,7 +1812,7 @@ class CombatSimulatorTest {
     @DisplayName("Greedy: lure+menace with a single able blocker assigns zero blockers")
     void greedyLureMenaceSingleCandidateSkipped() {
         Permanent unicorn = new Permanent(new PrizedUnicorn());
-        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(unicorn).setKeywords(EnumSet.of(Keyword.MENACE));
         unicorn.setSummoningSick(false);
         unicorn.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(unicorn);
@@ -1817,7 +1832,7 @@ class CombatSimulatorTest {
     @DisplayName("Greedy: lure+menace with two able blockers forces both to block")
     void greedyLureMenaceTwoCandidatesBothBlock() {
         Permanent unicorn = new Permanent(new PrizedUnicorn());
-        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(unicorn).setKeywords(EnumSet.of(Keyword.MENACE));
         unicorn.setSummoningSick(false);
         unicorn.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(unicorn);
@@ -1840,7 +1855,7 @@ class CombatSimulatorTest {
     @DisplayName("Greedy: must-block-if-able + menace with one candidate assigns zero blockers")
     void greedyMustBlockMenaceSingleCandidateSkipped() {
         Permanent protector = new Permanent(new GaeasProtector());
-        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(protector).setKeywords(EnumSet.of(Keyword.MENACE));
         protector.setSummoningSick(false);
         protector.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(protector);
@@ -1860,7 +1875,7 @@ class CombatSimulatorTest {
     @DisplayName("Greedy: must-block-if-able + menace with two candidates assigns a pair")
     void greedyMustBlockMenaceTwoCandidatesAssignsPair() {
         Permanent protector = new Permanent(new GaeasProtector());
-        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(protector).setKeywords(EnumSet.of(Keyword.MENACE));
         protector.setSummoningSick(false);
         protector.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(protector);
@@ -1883,7 +1898,7 @@ class CombatSimulatorTest {
     @DisplayName("Exhaustive: lure+menace with a single able blocker assigns zero blockers")
     void exhaustiveLureMenaceSingleCandidateSkipped() {
         Permanent unicorn = new Permanent(new PrizedUnicorn());
-        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(unicorn).setKeywords(EnumSet.of(Keyword.MENACE));
         unicorn.setSummoningSick(false);
         unicorn.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(unicorn);
@@ -1902,7 +1917,7 @@ class CombatSimulatorTest {
     @DisplayName("Exhaustive: lure+menace with two able blockers forces both to block")
     void exhaustiveLureMenaceTwoCandidatesBothBlock() {
         Permanent unicorn = new Permanent(new PrizedUnicorn());
-        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(unicorn).setKeywords(EnumSet.of(Keyword.MENACE));
         unicorn.setSummoningSick(false);
         unicorn.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(unicorn);
@@ -1925,7 +1940,7 @@ class CombatSimulatorTest {
     @DisplayName("Exhaustive: must-block-if-able + menace with one candidate assigns zero blockers")
     void exhaustiveMustBlockMenaceSingleCandidateSkipped() {
         Permanent protector = new Permanent(new GaeasProtector());
-        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(protector).setKeywords(EnumSet.of(Keyword.MENACE));
         protector.setSummoningSick(false);
         protector.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(protector);
@@ -1944,7 +1959,7 @@ class CombatSimulatorTest {
     @DisplayName("Exhaustive: must-block-if-able + menace with two candidates assigns a pair")
     void exhaustiveMustBlockMenaceTwoCandidatesAssignsPair() {
         Permanent protector = new Permanent(new GaeasProtector());
-        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(protector).setKeywords(EnumSet.of(Keyword.MENACE));
         protector.setSummoningSick(false);
         protector.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(protector);
@@ -1969,7 +1984,7 @@ class CombatSimulatorTest {
         // Regular (non-lure, non-must-block) menace attacker. The enumeration must
         // never return a 1-blocker state — that would be an illegal declaration.
         Permanent menaceCreature = new Permanent(new GrizzlyBears());
-        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        TestCards.mutableCard(menaceCreature).setKeywords(EnumSet.of(Keyword.MENACE));
         menaceCreature.setSummoningSick(false);
         menaceCreature.setAttacking(true);
         gd.playerBattlefields.get(player2.getId()).add(menaceCreature);

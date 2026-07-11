@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,20 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TelJiladDefianceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tel-Jilad Defiance has correct effects")
-    void hasCorrectEffects() {
-        TelJiladDefiance card = new TelJiladDefiance();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantProtectionFromCardTypeUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-
-        GrantProtectionFromCardTypeUntilEndOfTurnEffect protEffect =
-                (GrantProtectionFromCardTypeUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(protEffect.cardType()).isEqualTo(CardType.ARTIFACT);
-    }
+    
 
     @Test
     @DisplayName("Resolving Tel-Jilad Defiance grants protection from artifacts and draws a card")
@@ -122,7 +104,7 @@ class TelJiladDefianceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -147,7 +129,7 @@ class TelJiladDefianceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 

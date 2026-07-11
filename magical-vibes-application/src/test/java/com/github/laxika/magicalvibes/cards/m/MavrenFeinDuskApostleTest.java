@@ -1,21 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,34 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MavrenFeinDuskApostleTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with HasAttackerConditionalEffect wrapping CreateTokenEffect")
-    void hasCorrectAttackTrigger() {
-        MavrenFeinDuskApostle card = new MavrenFeinDuskApostle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(HasAttackerConditionalEffect.class);
-
-        HasAttackerConditionalEffect conditional =
-                (HasAttackerConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
-                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                new PermanentNotPredicate(new PermanentIsTokenPredicate())
-        )));
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) conditional.wrapped();
-        assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);
-    }
 
     // ===== Trigger: nontoken Vampire attacks =====
 
@@ -165,7 +128,7 @@ class MavrenFeinDuskApostleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 

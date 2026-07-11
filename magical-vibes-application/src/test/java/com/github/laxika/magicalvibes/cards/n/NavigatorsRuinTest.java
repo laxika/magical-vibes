@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,31 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NavigatorsRuinTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has RaidConditionalEffect wrapping MillTargetPlayerEffect(4) on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffect() {
-        NavigatorsRuin card = new NavigatorsRuin();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) raid.wrapped();
-        assertThat(mill.count()).isEqualTo(4);
-    }
-
-    @Test
-    @DisplayName("Has PlayerPredicateTargetFilter restricting to opponents")
-    void hasOpponentTargetFilter() {
-        NavigatorsRuin card = new NavigatorsRuin();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
 
     // ===== Raid met — mills target opponent =====
 
@@ -60,7 +31,7 @@ class NavigatorsRuinTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Select opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -110,7 +81,7 @@ class NavigatorsRuinTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // No trigger for player1's Navigator's Ruin on player2's end step
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Helpers =====

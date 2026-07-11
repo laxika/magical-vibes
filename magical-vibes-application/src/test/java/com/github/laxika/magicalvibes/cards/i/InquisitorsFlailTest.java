@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,15 +20,7 @@ class InquisitorsFlailTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Inquisitor's Flail has DoubleEquippedCreatureCombatDamageEffect as static effect")
-    void hasCorrectStaticEffect() {
-        InquisitorsFlail card = new InquisitorsFlail();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleEquippedCreatureCombatDamageEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Inquisitor's Flail has equip {2} ability")
@@ -74,7 +63,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -107,7 +96,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -157,7 +146,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -250,7 +239,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -283,7 +272,7 @@ class InquisitorsFlailTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 }

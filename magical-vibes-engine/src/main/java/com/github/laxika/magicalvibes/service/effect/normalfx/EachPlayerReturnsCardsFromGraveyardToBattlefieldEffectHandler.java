@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGra
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
@@ -45,7 +46,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
 
             List<Card> matching = new ArrayList<>();
             for (Card card : graveyard) {
-                if (gameQueryService.matchesCardPredicate(card, e.filter(), null)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)) {
                     matching.add(card);
                 }
             }

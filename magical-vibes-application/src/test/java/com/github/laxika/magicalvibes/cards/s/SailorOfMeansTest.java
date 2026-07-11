@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,21 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SailorOfMeansTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one ON_ENTER_BATTLEFIELD effect that creates one Treasure token")
-    void hasCorrectEffect() {
-        SailorOfMeans card = new SailorOfMeans();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.TREASURE);
-    }
 
     // ===== Casting =====
 

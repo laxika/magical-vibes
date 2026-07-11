@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -14,13 +16,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "326")
 @CardRegistration(set = "DOM", collectorNumber = "219")
+@CardRegistration(set = "9ED", collectorNumber = "299")
 public class IcyManipulator extends Card {
 
     public IcyManipulator() {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new TapTargetPermanentEffect()),
+                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "{1}, {T}: Tap target artifact, creature, or land.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

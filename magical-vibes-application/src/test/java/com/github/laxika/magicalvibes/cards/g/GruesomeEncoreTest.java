@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,16 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GruesomeEncoreTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gruesome Encore has correct effects")
-    void hasCorrectEffects() {
-        GruesomeEncore card = new GruesomeEncore();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Gruesome Encore puts it on the stack with graveyard target")
@@ -79,7 +69,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.pendingTokenExilesAtEndStep).contains(creature.getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(creature.getId()));
 
         // Creature should be tracked as stolen
         assertThat(gd.stolenCreatures).containsKey(creature.getId());

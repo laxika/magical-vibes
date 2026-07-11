@@ -6,7 +6,7 @@ import { ScryfallCardDataService } from '../../../services/scryfall-card-data.se
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
-import { formatEnumName, formatKeywords } from '../../../utils/format-utils';
+import { formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
 
 @Component({
   selector: 'app-card-display',
@@ -21,6 +21,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
   @Input() preview = false;
 
   formatKeywords = formatKeywords;
+  formatEnumName = formatEnumName;
   artUrl = signal<string | null>(null);
   watermarkUrl = signal<string | null>(null);
 
@@ -131,14 +132,9 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
     return `linear-gradient(135deg, ${stops.join(', ')})`;
   }
 
-  @HostBinding('style.transform')
-  get tappedTransform(): string | null {
-    return !this.preview && this.permanent?.tapped ? 'rotate(90deg)' : null;
-  }
-
-  @HostBinding('style.margin')
-  get tappedMargin(): string | null {
-    return !this.preview && this.permanent?.tapped ? '-33px 33px' : null;
+  @HostBinding('class.is-tapped')
+  get isTapped(): boolean {
+    return !this.preview && !!this.permanent?.tapped;
   }
 
   get effectiveKeywords(): string[] {
@@ -179,19 +175,23 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
     return this.permanent?.counters?.[counterType] ?? 0;
   }
 
+  /** Counter types shown elsewhere on the card: loyalty has its own box, P/T counters are baked into effective P/T. */
+  private static readonly BADGE_EXCLUDED_COUNTERS = new Set(['LOYALTY', 'PLUS_ONE_PLUS_ONE', 'MINUS_ONE_MINUS_ONE']);
+
+  get badgeCounters(): { type: string; count: number }[] {
+    if (this.preview || !this.permanent?.counters) return [];
+    return Object.entries(this.permanent.counters)
+      .filter(([type, count]) => count > 0 && !CardDisplayComponent.BADGE_EXCLUDED_COUNTERS.has(type))
+      .map(([type, count]) => ({ type, count }));
+  }
+
   get displayLoyalty(): number | null {
     if (this.permanent && this.counter('LOYALTY') > 0) return this.counter('LOYALTY');
     return this.card.loyalty ?? null;
   }
 
   get typeLine(): string {
-    const supertypes = (this.card.supertypes ?? []).map(s => formatEnumName(s));
-    const mainType = [...supertypes, formatEnumName(this.card.type)].join(' ');
-    const subtypes = (this.card.subtypes ?? []).map(s => formatEnumName(s));
-    if (subtypes.length > 0) {
-      return `${mainType} \u2014 ${subtypes.join(' ')}`;
-    }
-    return mainType;
+    return formatTypeLine(this.card);
   }
 
   get scryfallData() {

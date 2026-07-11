@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RunAmokTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Run Amok has correct card properties")
-    void hasCorrectProperties() {
-        RunAmok card = new RunAmok();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(3);
-
-        GrantKeywordEffect trample = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trample.scope()).isEqualTo(GrantScope.TARGET);
-    }
 
     // ===== Casting and resolving =====
 

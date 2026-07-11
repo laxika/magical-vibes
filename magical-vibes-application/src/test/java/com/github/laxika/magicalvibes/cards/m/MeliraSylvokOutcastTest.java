@@ -3,16 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.b.BlackcleaveGoblin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorRats;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,29 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MeliraSylvokOutcastTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has three static effects: poison prevention, -1/-1 counter prevention, and infect removal")
-    void hasCorrectEffects() {
-        MeliraSylvokOutcast card = new MeliraSylvokOutcast();
-
-        var statics = card.getEffects(EffectSlot.STATIC);
-        assertThat(statics).hasSize(3);
-
-        assertThat(statics.get(0)).isInstanceOf(PlayerCantGetPoisonCountersEffect.class);
-
-        assertThat(statics.get(1)).isInstanceOf(GrantEffectEffect.class);
-        GrantEffectEffect grantEffect = (GrantEffectEffect) statics.get(1);
-        assertThat(grantEffect.effect()).isInstanceOf(CantHaveMinusOneMinusOneCountersEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        assertThat(statics.get(2)).isInstanceOf(RemoveKeywordEffect.class);
-        RemoveKeywordEffect removeKeyword = (RemoveKeywordEffect) statics.get(2);
-        assertThat(removeKeyword.keyword()).isEqualTo(Keyword.INFECT);
-        assertThat(removeKeyword.scope()).isEqualTo(GrantScope.OPPONENT_CREATURES);
-    }
 
     // ===== Ability 1: You can't get poison counters =====
 

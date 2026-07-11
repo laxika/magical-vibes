@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
@@ -29,11 +32,11 @@ public final class EffectResolution {
     /**
      * Resolves a raw effect list by unwrapping conditional wrappers based on casting choices.
      * <ul>
-     *   <li>{@link KickerReplacementEffect}: resolves to {@code baseEffect} or {@code kickedEffect}</li>
+     *   <li>Kicker {@link ConditionalReplacementEffect}: resolves to the base or upgraded effect</li>
      *   <li>{@link ChooseOneEffect}: resolves to the chosen mode's effect</li>
-     *   <li>Other {@link com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect}
-     *       types (metalcraft, morbid, etc.): kept as-is because their condition depends on
-     *       game state at resolution time, not casting time</li>
+     *   <li>Other {@link ConditionalReplacementEffect} conditions (metalcraft, morbid, etc.):
+     *       kept as-is because their condition depends on game state at resolution time,
+     *       not casting time</li>
      * </ul>
      *
      * @param rawEffects the unresolved effect list from the card
@@ -44,12 +47,21 @@ public final class EffectResolution {
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked, Integer modeIndex) {
         List<CardEffect> resolved = new ArrayList<>(rawEffects.size());
         for (CardEffect effect : rawEffects) {
-            if (effect instanceof KickerReplacementEffect kre && kicked != null) {
-                resolved.add(kicked ? kre.kickedEffect() : kre.baseEffect());
+            if (effect instanceof ConditionalReplacementEffect cre
+                    && cre.condition() instanceof Kicked && kicked != null) {
+                resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {
-                List<ChooseOneEffect.ChooseOneOption> options = coe.options();
-                if (modeIndex >= 0 && modeIndex < options.size()) {
-                    resolved.add(options.get(modeIndex).effect());
+                if (coe.choicesRequired() == 1) {
+                    List<ChooseOneEffect.ChooseOneOption> options = coe.options();
+                    if (modeIndex >= 0 && modeIndex < options.size()) {
+                        resolved.addAll(options.get(modeIndex).effects());
+                    } else {
+                        resolved.add(effect);
+                    }
+                } else if (modeIndex < 0) {
+                    for (int chosenModeIndex : coe.decodeModeIndices(modeIndex)) {
+                        resolved.addAll(coe.options().get(chosenModeIndex).effects());
+                    }
                 } else {
                     resolved.add(effect);
                 }
@@ -85,6 +97,21 @@ public final class EffectResolution {
             collectTargetTypes(e, result);
         }
         for (CardEffect e : etbEffects) {
+            // A "may" ETB ability (e.g. Leonin Relic-Warder's "you may exile target
+            // artifact or enchantment") chooses its target when the trigger is put on the
+            // stack after the permanent enters (CR 603.3d), never at cast time. It must not
+            // make the spell report a cast-time target requirement — otherwise the permanent
+            // couldn't be cast when no legal target exists, which is illegal (CR 601.2c only
+            // the spell's own targets gate casting). The trigger still resolves its own
+            // targeting after entry, doing nothing when there are no legal targets.
+            if (e instanceof MayEffect) continue;
+            // A gate-conditional ETB ("Metalcraft — When ~ enters, ... target player loses
+            // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
+            // depends on game state as the permanent enters, so the target can't be a
+            // cast-time requirement. The target is chosen as the trigger goes on the stack
+            // (CR 603.3d) via the ETBTokenTargetTrigger path — and never chosen at all when
+            // the gate isn't met.
+            if (e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()) continue;
             if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
             if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
         }
@@ -137,11 +164,17 @@ public final class EffectResolution {
      * Returns true if the given effects require damage distribution (divided damage spells).
      */
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream()
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
-                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
-                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
+        return effects.stream().anyMatch(EffectResolution::isChosenDivision);
+    }
+
+    /**
+     * Divided damage whose per-target amounts are announced by the controller (CR 601.2b) and
+     * carried on {@code StackEntry.damageAssignments} — i.e. CHOSEN mode that reads the standard
+     * targeting buffer (not the ETB {@code pendingETBDamageAssignments} path).
+     */
+    private static boolean isChosenDivision(CardEffect e) {
+        return e instanceof DealDividedDamageEffect d
+                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments();
     }
 
     // ===== Card convenience overloads (union semantics, no casting context) =====
@@ -189,10 +222,7 @@ public final class EffectResolution {
         boolean inSpell = needsDamageDistribution(card.getEffects(EffectSlot.SPELL));
         boolean inAbility = card.getActivatedAbilities().stream()
                 .flatMap(a -> a.getEffects().stream())
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
-                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
-                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
+                .anyMatch(EffectResolution::isChosenDivision);
         return inSpell || inAbility;
     }
 
@@ -209,6 +239,15 @@ public final class EffectResolution {
     public static boolean hasConvergeEffect(Card card) {
         return card.getKeywords().contains(Keyword.CONVERGE)
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+    }
+
+    public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {
+        return effects.stream().anyMatch(e ->
+                e instanceof DealDamageToTargetCreatureEffect d && d.damage() instanceof ManaSpentToCast);
+    }
+
+    public static boolean hasManaSpentToCastDamageEffect(Card card) {
+        return hasManaSpentToCastDamageEffect(card.getEffects(EffectSlot.SPELL));
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {

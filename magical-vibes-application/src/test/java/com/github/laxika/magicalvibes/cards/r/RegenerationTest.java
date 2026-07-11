@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,20 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RegenerationTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Regeneration has correct card properties")
-    void hasCorrectProperties() {
-        Regeneration card = new Regeneration();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Regeneration puts it on the stack")

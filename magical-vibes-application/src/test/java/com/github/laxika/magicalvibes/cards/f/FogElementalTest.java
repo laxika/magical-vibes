@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FogElementalTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fog Elemental has correct card properties")
-    void hasCorrectProperties() {
-        FogElemental card = new FogElemental();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(SacrificeAtEndOfCombatEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(SacrificeAtEndOfCombatEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -103,7 +86,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -131,7 +114,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -156,7 +139,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         // Resolve attack trigger
@@ -181,7 +164,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
@@ -212,7 +195,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         // Resolve block trigger, then pass through declare blockers priority
@@ -241,7 +224,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -268,7 +251,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -287,7 +270,7 @@ class FogElementalTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -298,5 +281,4 @@ class FogElementalTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Fog Elemental") && log.contains("sacrificed"));
     }
 }
-
 

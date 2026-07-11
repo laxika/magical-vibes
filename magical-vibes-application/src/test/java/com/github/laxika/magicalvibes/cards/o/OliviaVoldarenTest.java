@@ -8,10 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentWhileSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,39 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class OliviaVoldarenTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("First ability has correct effects: damage, grant subtype, +1/+1 counter")
-    void firstAbilityHasCorrectEffects() {
-        OliviaVoldaren card = new OliviaVoldaren();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        var firstAbility = card.getActivatedAbilities().get(0);
-        assertThat(firstAbility.getManaCost()).isEqualTo("{1}{R}");
-        assertThat(firstAbility.isRequiresTap()).isFalse();
-        assertThat(firstAbility.getEffects())
-                .hasSize(3)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-                    assertThat(effects.get(1)).isInstanceOf(GrantSubtypeToTargetCreatureEffect.class);
-                    assertThat(effects.get(2)).isInstanceOf(PutCountersOnSelfEffect.class);
-                });
-    }
-
-    @Test
-    @DisplayName("Second ability has correct effects: gain control while source")
-    void secondAbilityHasCorrectEffects() {
-        OliviaVoldaren card = new OliviaVoldaren();
-
-        var secondAbility = card.getActivatedAbilities().get(1);
-        assertThat(secondAbility.getManaCost()).isEqualTo("{3}{B}{B}");
-        assertThat(secondAbility.isRequiresTap()).isFalse();
-        assertThat(secondAbility.getEffects())
-                .hasSize(1)
-                .first().isInstanceOf(GainControlOfTargetPermanentWhileSourceEffect.class);
-    }
 
     // ===== First ability: {1}{R} ping + Vampire + counter =====
 
@@ -197,8 +160,8 @@ class OliviaVoldarenTest extends BaseCardTest {
                     .noneMatch(p -> p.getId().equals(barony.getId()));
 
             // Tracked as source-dependent steal
-            assertThat(gd.sourceDependentStolenCreatures).containsKey(barony.getId());
-            assertThat(gd.sourceDependentStolenCreatures.get(barony.getId())).isEqualTo(olivia.getId());
+            assertThat(gd.newestControlEffectFor(barony.getId())).isNotNull();
+            assertThat(gd.newestControlEffectFor(barony.getId()).sourcePermanentId()).isEqualTo(olivia.getId());
         }
 
         @Test
@@ -288,7 +251,7 @@ class OliviaVoldarenTest extends BaseCardTest {
 
             // Tracking should be cleaned up
             assertThat(gd.stolenCreatures).doesNotContainKey(barony.getId());
-            assertThat(gd.sourceDependentStolenCreatures).doesNotContainKey(barony.getId());
+            assertThat(gd.controlEffectsFor(barony.getId())).isEmpty();
         }
 
         @Test

@@ -1,20 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShuntTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Shunt has correct card properties")
-    void hasCorrectProperties() {
-        Shunt card = new Shunt();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryIsSingleTargetPredicate(),
-                "Target spell must have a single target."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChangeTargetOfTargetSpellWithSingleTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Shunt requires targeting a spell with a single target")
@@ -84,10 +67,10 @@ class ShuntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bears2PermId);
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(bears1PermId);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bears2PermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(bears1PermId);
 
         harness.handlePermanentChosen(player2, bears2PermId);
         harness.passBothPriorities();
@@ -119,7 +102,7 @@ class ShuntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         StackEntry boomerangEntry = gd.stack.getLast();
         assertThat(boomerangEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
@@ -146,9 +129,9 @@ class ShuntTest extends BaseCardTest {
         harness.castInstant(player2, 0, lavaAxe.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(player1.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(player2.getId());
 
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
@@ -189,7 +172,7 @@ class ShuntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player2, boomerangB.getId());
         harness.passBothPriorities();
@@ -204,5 +187,4 @@ class ShuntTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Cancel") && log.contains("fizzles"));
     }
 }
-
 

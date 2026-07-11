@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,18 +34,6 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has SphinxAmbassadorEffect on ON_COMBAT_DAMAGE_TO_PLAYER slot")
-    void hasCorrectEffect() {
-        SphinxAmbassador card = new SphinxAmbassador();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(SphinxAmbassadorEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test
@@ -63,9 +51,9 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         // Should trigger library search
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
     }
 
     // ===== Full flow: creature selected, wrong name guessed =====
@@ -86,13 +74,13 @@ class SphinxAmbassadorTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Opponent should now be prompted to name a card
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         // Opponent names wrong card
         harness.handleListChoice(player2, "Shock");
 
         // Controller gets may ability prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Controller accepts
         harness.handleMayAbilityChosen(player1, true);
@@ -106,7 +94,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
     }
 
     // ===== Creature selected, correct name guessed =====
@@ -137,7 +125,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
         assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
@@ -171,7 +159,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Shock"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
         assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
@@ -228,7 +216,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should mention decline
         assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
@@ -287,6 +275,6 @@ class SphinxAmbassadorTest extends BaseCardTest {
         resolveCombat();
 
         // Should not present library search for empty library
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 }

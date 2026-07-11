@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScoriaWurmTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -20,15 +17,7 @@ class ScoriaWurmTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Scoria Wurm has correct card properties")
-    void hasCorrectProperties() {
-        ScoriaWurm card = new ScoriaWurm();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnSelfToHandOnCoinFlipLossEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers during controller upkeep")

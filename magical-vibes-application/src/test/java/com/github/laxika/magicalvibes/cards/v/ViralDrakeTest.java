@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,20 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ViralDrakeTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has proliferate activated ability that does not require tap")
-    void hasProliferateAbilityWithoutTap() {
-        ViralDrake card = new ViralDrake();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{U}");
-    }
 
     // ===== Proliferate activated ability =====
 

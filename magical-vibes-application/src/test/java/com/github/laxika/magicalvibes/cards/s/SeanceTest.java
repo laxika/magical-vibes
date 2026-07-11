@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,25 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeanceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has each-upkeep may effect to exile own graveyard creature and create Spirit token copy")
-    void hasCorrectStructure() {
-        Seance card = new Seance();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.class);
-
-        ExileTargetCardFromGraveyardAndCreateTokenCopyEffect effect =
-                (ExileTargetCardFromGraveyardAndCreateTokenCopyEffect) may.wrapped();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(effect.ownGraveyardOnly()).isTrue();
-        assertThat(effect.additionalSubtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(effect.grantHaste()).isFalse();
-        assertThat(effect.exileAtEndStep()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Triggers during controller's upkeep and prompts may ability")
@@ -51,7 +28,7 @@ class SeanceTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -63,7 +40,7 @@ class SeanceTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test

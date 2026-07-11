@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -7,11 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.EndTurnEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TurnSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -37,7 +36,7 @@ class EndTurnEffectHandlerTest {
 
     @Mock private CombatService combatService;
     @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private AuraAttachmentService auraAttachmentService;
+    @Mock private CreatureControlService creatureControlService;
     @Mock private TurnCleanupService turnCleanupService;
     @Mock private ExileService exileService;
     @InjectMocks
@@ -169,16 +168,16 @@ class EndTurnEffectHandlerTest {
             @Test
             @DisplayName("Clears sacrifice-at-end-of-combat and token-exile-at-end-of-combat sets")
             void clearsCombatEndSets() {
-                gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
-                gd.pendingTokenExilesAtEndOfCombat.add(UUID.randomUUID());
+                gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
+                gd.queueDelayedAction(new ExileTokenAtEndOfCombat(UUID.randomUUID()));
 
                 Card card = createCard("Time Stop", CardType.INSTANT);
                 StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
-                assertThat(gd.pendingTokenExilesAtEndOfCombat).isEmpty();
+                assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+                assertThat(gd.getDelayedActions(ExileTokenAtEndOfCombat.class)).isEmpty();
             }
 
             @Test
@@ -213,7 +212,7 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                verify(auraAttachmentService).returnStolenCreatures(gd, true);
+                verify(creatureControlService).reconcileControl(gd);
             }
 
             @Test

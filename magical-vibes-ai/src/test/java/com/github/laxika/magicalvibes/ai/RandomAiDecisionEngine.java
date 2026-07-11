@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -26,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -68,9 +72,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                            GameService gameService, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
+                           com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
+                           com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.rng = rng;
     }
 
@@ -112,7 +118,128 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        // Re-check priority: casting an instant may have triggered abilities that
+        // set awaiting input.
+        if (!hasPriority(gameData)) {
+            return;
+        }
+
+        // Half the time, try activating a random non-mana activated ability.
+        // Abilities are instant-speed (loyalty abilities are gated to sorcery speed
+        // inside canActivateAbility); the 50% keeps games moving.
+        if (rng.nextBoolean() && tryActivateRandomAbility(gameData)) {
+            return;
+        }
+
         send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
+    }
+
+    // ===== Random Ability Activation =====
+
+    /**
+     * Attempts to activate a randomly chosen legal non-mana activated ability.
+     * Abilities this engine can't parameterize (X mana costs, variable loyalty
+     * costs, multi-target, spell targets) are skipped. Returns true if an
+     * activation (or a mana-tap pending choice) was initiated.
+     */
+    private boolean tryActivateRandomAbility(GameData gameData) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        if (battlefield.isEmpty()) {
+            return false;
+        }
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        record AbilityCandidate(Permanent permanent, int abilityIndex, ActivatedAbility ability) {}
+        List<AbilityCandidate> candidates = new ArrayList<>();
+
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            List<ActivatedAbility> abilities = buildEffectiveAbilityList(gameData, permanent);
+            for (int abilIdx = 0; abilIdx < abilities.size(); abilIdx++) {
+                ActivatedAbility ability = abilities.get(abilIdx);
+                if (isManaAbility(ability)) continue;
+                if (ability.isVariableLoyaltyCost()) continue;
+                if (ability.isMultiTarget()) continue;
+                if (ability.isNeedsSpellTarget()) continue;
+                if (ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) continue;
+                if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
+                candidates.add(new AbilityCandidate(permanent, abilIdx, ability));
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return false;
+        }
+        Collections.shuffle(candidates, rng);
+
+        for (AbilityCandidate candidate : candidates) {
+            Permanent permanent = candidate.permanent();
+            if (!battlefield.contains(permanent)) {
+                continue; // Left the battlefield since candidates were collected
+            }
+
+            UUID targetId = null;
+            if (candidate.ability().isNeedsTarget()) {
+                targetId = targetSelector.chooseAbilityTarget(gameData, candidate.ability(),
+                        aiPlayer.getId(), permanent);
+                if (targetId == null) {
+                    continue;
+                }
+            }
+
+            if (candidate.ability().getManaCost() != null) {
+                // A {T}-ability's own source must not be tapped for mana
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
+                        candidate.ability().getManaCost(), 0, manaTapAction(), false,
+                        candidate.ability().isRequiresTap() ? candidate.permanent().getId() : null);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return true; // Mana ability triggered a pending choice; will resume after it resolves
+                }
+            }
+
+            // Re-resolve the index at send time: paying mana costs can remove
+            // permanents from the battlefield (e.g. sacrifice-for-mana artifacts),
+            // shifting or invalidating indexes captured during collection.
+            int permIdx = battlefield.indexOf(permanent);
+            if (permIdx < 0) {
+                continue;
+            }
+
+            // Re-verify with the engine against the ACTUAL pool: tapping can under-deliver
+            // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
+            // only untapped producer left), and a doomed request is rejected silently.
+            if (!canActivateAbility(gameData, permanent, candidate.ability(),
+                    candidate.abilityIndex(), gameData.playerManaPools.get(aiPlayer.getId()))) {
+                continue;
+            }
+
+            log.info("Random AI: Activating ability {} on {} in game {}", candidate.abilityIndex(),
+                    permanent.getCard().getName(), gameId);
+            final int finalPermIdx = permIdx;
+            final int abilIdx = candidate.abilityIndex();
+            final UUID finalTargetId = targetId;
+            int stackSizeBefore = gameData.stack.size();
+            boolean tappedBefore = permanent.isTapped();
+            send(() -> gameActions.handleActivateAbility(selfConnection,
+                    new ActivateAbilityRequest(finalPermIdx, abilIdx, null, finalTargetId, null, null, null)));
+
+            // The engine rejects some invalid activations by returning silently. If the
+            // AI treated such an activation as its action for this priority, no state
+            // change is broadcast, no new message arrives, and the game deadlocks —
+            // detect it and fall through to the next candidate (or pass priority).
+            boolean activated = gameData.stack.size() > stackSizeBefore
+                    || gameData.interaction.isAwaitingInput()
+                    || (!tappedBefore && permanent.isTapped())
+                    || gameData.status != GameStatus.RUNNING;
+            if (!activated) {
+                log.warn("Random AI: ActivateAbility failed silently in game {}. Permanent='{}' abilityIndex={} step={} activePlayer={}",
+                        gameId, permanent.getCard().getName(), candidate.abilityIndex(),
+                        gameData.currentStep, gameData.activePlayerId);
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     // ===== Random Spell Casting =====
@@ -232,7 +359,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
             if (castCost.hasX() && xValue == null) {
-                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+                int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {
@@ -279,7 +406,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             send(() -> gameActions.handlePlayCard(selfConnection,
-                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
+                    new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null, null)));
+
+            // Game may have ended while paying costs (e.g. Manabarbs killing the caster
+            // on a land tap) — every later action no-ops, which is not a legality bug.
+            if (gameData.status != GameStatus.RUNNING) {
+                return true;
+            }
 
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand (e.g. Explore revealing a land), masking a
@@ -358,7 +491,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 return artifacts.isEmpty() ? null : artifacts.get(rng.nextInt(artifacts.size())).getId();
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 List<Permanent> matching = battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
                         .toList();
                 return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
             }
@@ -684,14 +817,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleCardChoice(GameData gameData) {
-        var cardChoice = gameData.interaction.cardChoiceContext();
-        if (cardChoice == null) {
+        if (!(gameData.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice)) {
             return;
         }
         UUID choicePlayerId = cardChoice.playerId();
-        Set<Integer> validIndices = cardChoice.validIndices();
+        List<Integer> validIndices = cardChoice.validIndices();
 
-        if (!aiPlayer.getId().equals(choicePlayerId)) {
+        if (!AiUtils.isRespondingFor(gameData, aiPlayer.getId(), choicePlayerId)) {
             return;
         }
 
@@ -707,10 +839,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(chosen)));
     }
 
-    // ===== Mulligan: always keep (speeds up games) =====
+    // ===== Mulligan: mostly keep, occasionally mulligan =====
 
     @Override
     protected boolean shouldKeepHand(GameData gameData) {
-        return true;
+        // Mulligan 10% of the time (at most twice) so the London mulligan and
+        // card-bottoming paths get fuzzed without slowing games down much.
+        int mulliganCount = gameData.mulliganCounts.getOrDefault(aiPlayer.getId(), 0);
+        return mulliganCount >= 2 || rng.nextInt(10) > 0;
     }
 }

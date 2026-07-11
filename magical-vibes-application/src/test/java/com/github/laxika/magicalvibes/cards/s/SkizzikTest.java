@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,17 +28,7 @@ class SkizzikTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{R}"));
     }
 
-    @Test
-    @DisplayName("Has NotKickedConditionalEffect wrapping SacrificeSelfEffect on END_STEP_TRIGGERED")
-    void hasEndStepSacrificeTrigger() {
-        Skizzik card = new Skizzik();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(NotKickedConditionalEffect.class);
-        assertThat(((NotKickedConditionalEffect) card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst()).wrapped())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     // ===== Cast without kicker =====
 

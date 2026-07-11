@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -20,19 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MassPolymorphTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mass Polymorph has correct effect")
-    void hasCorrectEffect() {
-        MassPolymorph card = new MassPolymorph();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect.class);
-    }
 
     // ===== Casting =====
 

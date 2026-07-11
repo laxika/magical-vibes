@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,22 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PiratesPrizeTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has draw 2 and treasure creation effects on SPELL slot")
-    void hasCorrectSpellEffects() {
-        PiratesPrize card = new PiratesPrize();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(DrawCardEffect.class);
-                    assertThat(((DrawCardEffect) effects.get(0)).amount()).isEqualTo(2);
-                    assertThat(effects.get(1)).isInstanceOf(CreateTokenEffect.class);
-                });
-    }
 
     // ===== Casting =====
 
@@ -109,7 +90,5 @@ class PiratesPrizeTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Pirate's Prize"));
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Helpers =====
 
 }

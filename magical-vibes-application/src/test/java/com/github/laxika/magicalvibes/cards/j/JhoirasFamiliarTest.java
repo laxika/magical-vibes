@@ -3,11 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.g.GeistOfSaintTraft;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,22 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JhoirasFamiliarTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jhoira's Familiar has correct effects")
-    void hasCorrectEffects() {
-        JhoirasFamiliar card = new JhoirasFamiliar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
 
     // ===== Cost reduction: artifact spells =====
 

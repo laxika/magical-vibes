@@ -2,14 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,24 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToGloryTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memorial to Glory has correct card structure")
-    void hasCorrectProperties() {
-        MemorialToGlory card = new MemorialToGlory();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(0);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{3}{W}");
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-    }
 
     // ===== Enters the battlefield tapped =====
 

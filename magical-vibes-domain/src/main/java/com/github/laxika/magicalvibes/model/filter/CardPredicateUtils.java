@@ -14,7 +14,7 @@ public final class CardPredicateUtils {
 
     /**
      * A predicate matching basic land cards (a land card with the Basic supertype), composed from
-     * existing predicates so no new dispatch handling is required in {@code matchesCardPredicate}
+     * existing predicates so no new dispatch handling is required in {@code PredicateEvaluationService}
      * or {@link #describeFilter}. Describes as "basic land card".
      */
     public static CardPredicate basicLand() {
@@ -49,6 +49,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSupertypePredicate p) {
             return p.supertype().getDisplayName().toLowerCase();
         }
+        if (predicate instanceof CardColorPredicate p) {
+            return p.color().name().toLowerCase();
+        }
         if (predicate instanceof CardMaxManaValuePredicate p) {
             return "card with mana value " + p.maxManaValue() + " or less";
         }
@@ -73,6 +76,21 @@ public final class CardPredicateUtils {
             List<String> parts = new ArrayList<>();
             for (CardPredicate sub : ordered) {
                 parts.add(describeFilter(sub));
+            }
+            // Merge type/subtype "X card" adjectives: strip trailing " card" from every part that
+            // ends in " card" except the last such part, so ["Myr card","creature card"] reads
+            // "Myr creature card" (not "Myr card creature card"). Parts like "card with mana value 1
+            // or less" (no " card" suffix) and bare adjectives ("basic", "green") are untouched.
+            int lastCardIdx = -1;
+            for (int i = 0; i < parts.size(); i++) {
+                if (parts.get(i).endsWith(" card")) {
+                    lastCardIdx = i;
+                }
+            }
+            for (int i = 0; i < parts.size(); i++) {
+                if (i != lastCardIdx && parts.get(i).endsWith(" card")) {
+                    parts.set(i, parts.get(i).substring(0, parts.get(i).length() - " card".length()));
+                }
             }
             // "creature card" + "card with infect" → "creature card with infect"
             StringBuilder sb = new StringBuilder();

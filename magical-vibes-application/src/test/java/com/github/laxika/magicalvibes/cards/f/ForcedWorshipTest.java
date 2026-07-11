@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -33,7 +32,7 @@ class ForcedWorshipTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -61,7 +60,7 @@ class ForcedWorshipTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -84,7 +83,7 @@ class ForcedWorshipTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -92,7 +91,7 @@ class ForcedWorshipTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player2.getId()).remove(auraPerm);
 
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gs.declareAttackers(gd, player1, List.of(0));

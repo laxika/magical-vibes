@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

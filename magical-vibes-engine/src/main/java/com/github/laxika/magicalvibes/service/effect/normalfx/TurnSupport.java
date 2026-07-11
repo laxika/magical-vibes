@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -6,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -31,7 +33,7 @@ public class TurnSupport {
 
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
-    private final AuraAttachmentService auraAttachmentService;
+    private final CreatureControlService creatureControlService;
     private final TurnCleanupService turnCleanupService;
     private final ExileService exileService;
 
@@ -68,14 +70,14 @@ public class TurnSupport {
 
     public void clearCombatState(GameData gameData) {
         combatService.clearCombatState(gameData);
-        gameData.permanentsToSacrificeAtEndOfCombat.clear();
-        gameData.pendingTokenExilesAtEndOfCombat.clear();
+        gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
+        gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);
     }
 
     public void skipToCleanupStep(GameData gameData) {
         gameData.currentStep = TurnStep.CLEANUP;
         turnCleanupService.resetEndOfTurnModifiers(gameData);
-        auraAttachmentService.returnStolenCreatures(gameData, true);
+        creatureControlService.reconcileControl(gameData);
         gameData.priorityPassedBy.clear();
     }
 

@@ -20,8 +20,8 @@ export class HomeComponent implements OnInit, OnDestroy {
   aiDeckId = signal<string>('');
   aiDifficulty = signal<string>('EASY');
   errorMessage = signal('');
-  showCreateForm = signal(false);
-  activeTab = signal<'1v1' | 'draft'>('1v1');
+  creating = signal(false);
+  activeTab = signal<'1v1' | 'allrandom' | 'draft'>('1v1');
   draftAiCount = signal(7);
   draftSetCode = signal('');
   draftGameName = signal('');
@@ -102,6 +102,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         } else if (message.type === MessageType.DRAFT_PACK_UPDATE) {
           this.router.navigate(['/draft']);
         } else if (message.type === MessageType.ERROR) {
+          this.creating.set(false);
           const notification = message as GameNotification;
           if (notification.message) {
             this.errorMessage.set(notification.message);
@@ -124,40 +125,39 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   readonly aiCountOptions = [1, 2, 3, 4, 5, 6, 7];
 
-  toggleCreateForm() {
-    this.showCreateForm.set(!this.showCreateForm());
-    this.newGameName.set('');
-    this.errorMessage.set('');
-    this.activeTab.set('1v1');
-  }
-
   createGame() {
+    if (this.creating()) {
+      return;
+    }
     if (!this.newGameName().trim()) {
       this.errorMessage.set('Please enter a game name');
       return;
     }
 
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.CREATE_GAME,
       gameName: this.newGameName(),
       deckId: this.selectedDeckId(),
       vsAi: this.vsAi(),
       aiDeckId: this.aiDeckId(),
-      aiDifficulty: this.aiDifficulty()
+      aiDifficulty: this.aiDifficulty(),
+      allRandom: this.activeTab() === 'allrandom'
     });
-
-    this.newGameName.set('');
-    this.showCreateForm.set(false);
   }
 
   createDraft() {
+    if (this.creating()) {
+      return;
+    }
     if (!this.draftGameName().trim()) {
       this.errorMessage.set('Please enter a draft name');
       return;
     }
 
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.CREATE_DRAFT,
       draftName: this.draftGameName(),
@@ -168,7 +168,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   joinGame(gameId: string) {
+    if (this.creating()) {
+      return;
+    }
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.JOIN_GAME,
       gameId: gameId,

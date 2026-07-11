@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,27 +11,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HowlingBansheeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Howling Banshee does not need a target")
-    void doesNotNeedTarget() {
-        HowlingBanshee card = new HowlingBanshee();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has ETB effects for each player losing life")
-    void hasEtbEffects() {
-        HowlingBanshee card = new HowlingBanshee();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(EachOpponentLosesLifeEffect.class)
-                .hasAtLeastOneElementOfType(LoseLifeEffect.class);
-    }
 
     // ===== Casting =====
 

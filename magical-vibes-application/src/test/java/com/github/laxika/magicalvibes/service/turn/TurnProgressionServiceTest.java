@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -14,10 +17,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.turn.AutoPassService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
-import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,7 +35,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -288,7 +287,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Processes sacrifices when leaving END_OF_COMBAT with pending sacrifices")
         void processesEndOfCombatSacrifices() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
 
             turnProgressionService.advanceStep(gd);
 
@@ -302,7 +301,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Processes exiles when leaving END_OF_COMBAT with pending token exiles")
         void processesEndOfCombatExiles() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.pendingTokenExilesAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new ExileTokenAtEndOfCombat(UUID.randomUUID()));
 
             turnProgressionService.advanceStep(gd);
 
@@ -315,7 +314,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Clears priority passed after processing end-of-combat sacrifices")
         void clearsPriorityAfterSacrifices() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
             gd.priorityPassedBy.add(player1Id);
 
             turnProgressionService.advanceStep(gd);
@@ -400,7 +399,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
             assertThat(gd.cleanupDiscardPending).isTrue();
             assertThat(gd.discardCausedByOpponent).isFalse();
-            verify(playerInputService).beginDiscardChoice(gd, player1Id);
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
         }
 
         @Test
@@ -414,7 +413,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.cleanupDiscardPending).isFalse();
-            verify(playerInputService, never()).beginDiscardChoice(any(), any());
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             verify(turnCleanupService).applyCleanupResets(gd);
         }
 
@@ -429,7 +428,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.cleanupDiscardPending).isFalse();
-            verify(playerInputService, never()).beginDiscardChoice(any(), any());
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             verify(turnCleanupService).applyCleanupResets(gd);
         }
 
@@ -458,7 +457,7 @@ class TurnProgressionServiceTest {
 
             // With 1 card and max 0, discard count = 1
             assertThat(gd.cleanupDiscardPending).isTrue();
-            verify(playerInputService).beginDiscardChoice(gd, player1Id);
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
         }
     }
 
@@ -515,7 +514,7 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Clears awaiting input")
         void clearsAwaitingInput() {
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             turnProgressionService.advanceTurn(gd);
 
@@ -546,8 +545,9 @@ class TurnProgressionServiceTest {
             gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(player1Id, new HashSet<>());
             gd.creatureDeathCountThisTurn.put(player1Id, 2);
             gd.cardsDrawnThisTurn.put(player1Id, 3);
+            gd.lifeGainedThisTurn.put(player1Id, 4);
             gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
-            gd.pendingDelayedCombatDamageLoots.add(new GameData.DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
+            gd.queueDelayedAction(new DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
             gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
@@ -564,8 +564,9 @@ class TurnProgressionServiceTest {
             assertThat(gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn).isEmpty();
             assertThat(gd.creatureDeathCountThisTurn).isEmpty();
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
+            assertThat(gd.lifeGainedThisTurn).isEmpty();
             assertThat(gd.combatDamageToPlayersThisTurn).isEmpty();
-            assertThat(gd.pendingDelayedCombatDamageLoots).isEmpty();
+            assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).isEmpty();
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
             assertThat(gd.creatureCardsDamagedThisTurnBySourcePermanent).isEmpty();
@@ -845,7 +846,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Does not process may abilities when awaiting input")
         void doesNotProcessMayAbilitiesWhenAwaitingInput() {
             gd.pendingMayAbilities.add(newMayAbility());
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             turnProgressionService.resolveAutoPass(gd);
 

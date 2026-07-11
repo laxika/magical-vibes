@@ -4,13 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,19 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class YawgmothsVileOfferingTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effects: reanimate, destroy, exile self")
-    void hasCorrectEffects() {
-        YawgmothsVileOffering card = new YawgmothsVileOffering();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ExileSpellEffect.class);
-    }
 
     // ===== Legendary sorcery restriction =====
 

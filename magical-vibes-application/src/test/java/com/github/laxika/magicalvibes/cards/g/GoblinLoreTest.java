@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,23 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinLoreTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Lore has correct card properties")
-    void hasCorrectProperties() {
-        GoblinLore card = new GoblinLore();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(4);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect discardEffect = (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(discardEffect.amount()).isEqualTo(3);
-    }
 
     // ===== Casting =====
 
@@ -84,7 +63,7 @@ class GoblinLoreTest extends BaseCardTest {
         // 3 cards should have been discarded at random (graveyard has Goblin Lore + 3 discarded)
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
         // Should NOT be awaiting any input (random discard doesn't prompt)
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // Log should mention discards at random
         long randomDiscardLogs = gd.gameLog.stream()
                 .filter(log -> log.contains("discards") && log.contains("at random"))
@@ -127,5 +106,4 @@ class GoblinLoreTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 }
-
 

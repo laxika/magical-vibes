@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +26,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,6 +37,7 @@ class AuraAttachmentServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GraveyardService graveyardService;
+    @Mock private CreatureControlService creatureControlService;
 
     @InjectMocks private AuraAttachmentService service;
 
@@ -252,167 +252,6 @@ class AuraAttachmentServiceTest {
         }
     }
 
-    // ===== returnStolenCreatures — enchantment-based control =====
-
-    @Nested
-    @DisplayName("returnStolenCreatures - enchantment-based control")
-    class ReturnStolenCreatures {
-
-        @Test
-        @DisplayName("Creature returns to owner when controlling aura is removed")
-        void creatureReturnsWhenControlAuraRemoved() {
-            Permanent creature = createCreature("Grizzly Bears");
-            creature.setSummoningSick(false);
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, false);
-
-            // Creature should be on player2's battlefield
-            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-        }
-
-        @Test
-        @DisplayName("Returned creature has summoning sickness")
-        void returnedCreatureHasSummoningSickness() {
-            Permanent creature = createCreature("Grizzly Bears");
-            creature.setSummoningSick(false);
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(creature.isSummoningSick()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Stolen creature tracking is cleaned up after return")
-        void stolenCreatureTrackingCleanedUp() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Creature stays stolen while controlling aura remains attached")
-        void creatureStaysStolenWhileAuraAttached() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(true);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Game log records creature returning to owner")
-        void gameLogRecordsCreatureReturn() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, false);
-
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Grizzly Bears returns to Player2's control."));
-        }
-    }
-
-    // ===== returnStolenCreatures — until end of turn (Threaten) =====
-
-    @Nested
-    @DisplayName("returnStolenCreatures - until end of turn steals")
-    class UntilEndOfTurnSteals {
-
-        @Test
-        @DisplayName("Until-end-of-turn stolen creature is returned when includeUntilEndOfTurn is true")
-        void untilEndOfTurnCreatureReturned() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, true);
-
-            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-        }
-
-        @Test
-        @DisplayName("Until-end-of-turn creature is NOT returned when includeUntilEndOfTurn is false")
-        void untilEndOfTurnCreatureNotReturnedWhenFlagIsFalse() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Non-temporary steal is NOT returned when includeUntilEndOfTurn is true")
-        void nonTemporaryStealNotReturnedWhenUntilEndOfTurnFlagIsTrue() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            // NOT in untilEndOfTurnStolenCreatures
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-
-            service.returnStolenCreatures(gd, true);
-
-            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Until-end-of-turn tracking is cleaned up after return")
-        void untilEndOfTurnTrackingCleanedUp() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.untilEndOfTurnStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
-            service.returnStolenCreatures(gd, true);
-
-            assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(creature.getId());
-            assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
-        }
-    }
-
     // ===== Edge cases =====
 
     @Nested
@@ -432,89 +271,11 @@ class AuraAttachmentServiceTest {
         }
 
         @Test
-        @DisplayName("Stolen creature that no longer exists is cleaned up")
-        void stolenCreatureThatNoLongerExistsIsCleanedUp() {
-            UUID goneCreatureId = UUID.randomUUID();
-            gd.stolenCreatures.put(goneCreatureId, player2Id);
-            gd.untilEndOfTurnStolenCreatures.add(goneCreatureId);
-            gd.enchantmentDependentStolenCreatures.add(goneCreatureId);
-
-            when(gameQueryService.findPermanentById(gd, goneCreatureId)).thenReturn(null);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.stolenCreatures).doesNotContainKey(goneCreatureId);
-            assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(goneCreatureId);
-            assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(goneCreatureId);
-        }
-
-        @Test
-        @DisplayName("Permanent control steal is never returned")
-        void permanentControlStealIsNeverReturned() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.permanentControlStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Enchantment-dependent steal is not returned while creature is still enchanted")
-        void enchantmentDependentStealNotReturnedWhileEnchanted() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.enchantmentDependentStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-            when(gameQueryService.isEnchanted(gd, creature)).thenReturn(true);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
-            assertThat(gd.stolenCreatures).containsKey(creature.getId());
-        }
-
-        @Test
-        @DisplayName("Enchantment-dependent steal IS returned when creature is no longer enchanted")
-        void enchantmentDependentStealReturnedWhenNoLongerEnchanted() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-            gd.enchantmentDependentStolenCreatures.add(creature.getId());
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-            when(gameQueryService.isEnchanted(gd, creature)).thenReturn(false);
-
-            service.returnStolenCreatures(gd, false);
-
-            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
-            assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(creature);
-            assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(creature.getId());
-        }
-
-        @Test
-        @DisplayName("removeOrphanedAuras also triggers returnStolenCreatures for non-temporary steals")
-        void removeOrphanedAurasTriggersReturnStolenCreatures() {
-            Permanent creature = createCreature("Grizzly Bears");
-            gd.playerBattlefields.get(player1Id).add(creature);
-            gd.stolenCreatures.put(creature.getId(), player2Id);
-
-            when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);
-            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(creature), eq(ControlEnchantedCreatureEffect.class))).thenReturn(false);
-
+        @DisplayName("removeOrphanedAuras reconciles the CR 613.2 control state afterwards")
+        void removeOrphanedAurasReconcilesControl() {
             service.removeOrphanedAuras(gd);
 
-            assertThat(gd.playerBattlefields.get(player2Id)).contains(creature);
-            assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
+            verify(creatureControlService).reconcileControl(gd);
         }
     }
 

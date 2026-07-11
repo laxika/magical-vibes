@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -16,9 +17,7 @@ import java.util.List;
 public class ManorGargoyle extends Card {
 
     public ManorGargoyle() {
-        addEffect(EffectSlot.STATIC, new SelfHasKeywordConditionalEffect(
-                Keyword.DEFENDER,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new SelfHasKeyword(Keyword.DEFENDER), new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
         ));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}",

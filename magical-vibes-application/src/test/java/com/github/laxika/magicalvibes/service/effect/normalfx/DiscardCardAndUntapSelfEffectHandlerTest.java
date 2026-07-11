@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardAndUntapSelfEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -27,9 +28,9 @@ class DiscardCardAndUntapSelfEffectHandlerTest extends AbstractPlayerInteraction
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.pendingUntapAfterDiscardPermanentId).isEqualTo(sourcePermanentId);
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
+                        argThat((DiscardFollowUp f) -> sourcePermanentId.equals(f.untapPermanentId())));
             }
 
             @Test

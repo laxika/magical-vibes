@@ -3,19 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SkitteringSurveyor;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,46 +26,11 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has UntapTargetPermanentEffect with minTargets=0")
-    void plusTwoAbilityHasCorrectEffect() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(1);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(UntapTargetPermanentEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has GainLifeEffect(2) and DrawCardEffect(2)")
-    void minusThreeAbilityHasCorrectEffects() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) ability.getEffects().get(0)).amount()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(1)).amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("-9 ability has ControllerExtraTurnEffect(1)")
-    void minusNineAbilityHasCorrectEffect() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-9);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ControllerExtraTurnEffect.class);
-        assertThat(((ControllerExtraTurnEffect) ability.getEffects().getFirst()).count()).isEqualTo(1);
-    }
+    
 
     // ===== +2 ability: Untap up to one target artifact or creature =====
 

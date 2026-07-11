@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToExileEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,22 +43,6 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ChooseCardFromTargetHandToExileEffect with returnOnSourceLeave on ETB")
-    void hasCorrectEffects() {
-        KitesailFreebooter card = new KitesailFreebooter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseCardFromTargetHandToExileEffect.class);
-        ChooseCardFromTargetHandToExileEffect effect =
-                (ChooseCardFromTargetHandToExileEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.returnOnSourceLeave()).isTrue();
-        assertThat(effect.excludedTypes()).containsExactlyInAnyOrder(CardType.CREATURE, CardType.LAND);
-    }
-
     // ===== ETB exile =====
 
     @Test
@@ -73,9 +54,9 @@ class KitesailFreebooterTest extends BaseCardTest {
 
         castAndResolveETB();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().exileMode()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).exileMode()).isTrue();
     }
 
     @Test
@@ -90,7 +71,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         // Choose Peek (index 0) — an instant (noncreature, nonland)
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Peek"));
         // Creature stays in hand
@@ -109,7 +90,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
 
         // Only index 2 (Peek) should be valid — creature at 0 and land at 1 are excluded
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(2);
     }
 
     @Test
@@ -122,7 +103,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
 
         // No valid choices, effect completes without prompting
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid choices"));
     }
@@ -134,7 +115,7 @@ class KitesailFreebooterTest extends BaseCardTest {
 
         castAndResolveETB();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
     }
 

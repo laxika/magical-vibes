@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,9 +13,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,21 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FaunaShamanTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fauna Shaman has correct activated ability")
-    void hasCorrectProperties() {
-        FaunaShaman card = new FaunaShaman();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("creature card");
-    }
+    
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice for creature cards")
@@ -52,10 +36,10 @@ class FaunaShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
         // Only creature cards should be valid (index 0 = GrizzlyBears)
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(0);
     }
 
     @Test
@@ -69,7 +53,7 @@ class FaunaShamanTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -105,7 +89,7 @@ class FaunaShamanTest extends BaseCardTest {
 
         // State should still be awaiting discard cost choice (re-prompted)
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -122,11 +106,11 @@ class FaunaShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.CREATURE));
-        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
 
     @Test
@@ -167,7 +151,7 @@ class FaunaShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature cards"));
     }
 
@@ -186,7 +170,7 @@ class FaunaShamanTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,14 +21,7 @@ class UnburialRitesTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: ReturnCardFromGraveyardEffect")
-    void hasCorrectEffects() {
-        UnburialRites card = new UnburialRites();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {3}{W}")

@@ -1,22 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.i.ItlimocCradleOfTheSun;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,75 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GrowingRitesOfItlimocTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has ETB look-at-top-4 effect for creatures")
-    void frontFaceHasCorrectETBEffect() {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        var effect = (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect)
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-        assertThat(effect.anyNumber()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Front face has end step transform trigger for 4+ creatures")
-    void frontFaceHasCorrectEndStepTrigger() {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControlsPermanentCountConditionalEffect.class);
-        var conditional = (ControlsPermanentCountConditionalEffect)
-                card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.minCount()).isEqualTo(4);
-        assertThat(conditional.filter()).isInstanceOf(PermanentIsCreaturePredicate.class);
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has back face linked")
-    void frontFaceHasBackFace() {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(ItlimocCradleOfTheSun.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("ItlimocCradleOfTheSun");
-    }
-
-    @Test
-    @DisplayName("Back face has two activated mana abilities")
-    void backFaceHasCorrectAbilities() {
-        GrowingRitesOfItlimoc card = new GrowingRitesOfItlimoc();
-        ItlimocCradleOfTheSun backFace = (ItlimocCradleOfTheSun) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // {T}: Add {G}.
-        var tapForGreen = backFace.getActivatedAbilities().get(0);
-        assertThat(tapForGreen.isRequiresTap()).isTrue();
-        assertThat(tapForGreen.getManaCost()).isNull();
-        assertThat(tapForGreen.getEffects()).hasSize(1);
-        assertThat(tapForGreen.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) tapForGreen.getEffects().getFirst()).color()).isEqualTo(ManaColor.GREEN);
-
-        // {T}: Add {G} for each creature you control.
-        var tapForCreatures = backFace.getActivatedAbilities().get(1);
-        assertThat(tapForCreatures.isRequiresTap()).isTrue();
-        assertThat(tapForCreatures.getManaCost()).isNull();
-        assertThat(tapForCreatures.getEffects()).hasSize(1);
-        assertThat(tapForCreatures.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-        var manaPerCreature = (AddManaPerControlledPermanentEffect) tapForCreatures.getEffects().getFirst();
-        assertThat(manaPerCreature.color()).isEqualTo(ManaColor.GREEN);
-        assertThat(manaPerCreature.predicate()).isInstanceOf(PermanentIsCreaturePredicate.class);
-    }
 
     // ===== ETB: look at top 4, may reveal creature =====
 
@@ -116,11 +38,11 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         // ETB is pushed onto the stack as a triggered ability
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Bear", "Elf");
     }
 
@@ -144,8 +66,8 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Bear"));
         // Remaining 3 cards should be offered for reorder
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
     }
 
     @Test
@@ -171,8 +93,8 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         // All 4 cards should be offered for reorder
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     @Test
@@ -192,8 +114,8 @@ class GrowingRitesOfItlimocTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         // No creatures → directly go to reorder
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     // ===== End step transform =====

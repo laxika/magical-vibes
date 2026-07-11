@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutXPlusOnePlusOneCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,12 +30,8 @@ class WakerOfTheWildsTest extends BaseCardTest {
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{X}{G}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(PutXPlusOnePlusOneCountersOnTargetPermanentEffect.class);
-                    assertThat(effects.get(1)).isInstanceOf(AnimateTargetPermanentEffect.class);
-                });
+        // The counters and permanent animation of the land are asserted behaviorally below.
+        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
     }
 
     // ===== Activating ability =====

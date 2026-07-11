@@ -10,23 +10,29 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +50,7 @@ public class MayPenaltyChoiceHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final ExileService exileService;
     private final StateTriggerService stateTriggerService;
@@ -53,6 +60,9 @@ public class MayPenaltyChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         CounterUnlessPaysEffect effect = ability.effects().stream()
@@ -130,6 +140,89 @@ public class MayPenaltyChoiceHandlerService {
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
     }
 
+    public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        // Presence check — the effect is a marker; wording differs from counter-unless-pays.
+        ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessDiscardsEffect)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId(); // the countered spell's controller — the decision maker
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-discard target no longer on stack", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    ability.sourceCard().getColor().name().toLowerCase());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    validIndices.add(i);
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                // Paying the Ward cost is the controller's own choice — not an opponent-caused discard.
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
+                        "Choose a card to discard.", 1);
+
+                String logEntry = player.getUsername() + " discards a card. " + targetEntry.getCard().getName() + " is not countered.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts counter-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+
+            // Hand changed since prompt — no cards left, fall through to counter
+        }
+
+        // Declined or no cards — counter the spell/ability
+        counterUnlessDiscardCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void counterUnlessDiscardCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
+        gameData.stack.remove(targetEntry);
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
+
+        boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+        if (!targetEntry.isCopy() && !isAbility) {
+            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+        }
+
+        String logEntry = isAbility
+                ? targetEntry.getCard().getName() + "'s ability is countered. (" + sourceCard.getName() + ")"
+                : targetEntry.getCard().getName() + " is countered. (" + sourceCard.getName() + ")";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} counters {}", gameData.id, sourceCard.getName(), targetEntry.getCard().getName());
+    }
+
     public void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         SacrificeUnlessDiscardCardTypeEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect)
@@ -167,9 +260,17 @@ public class MayPenaltyChoiceHandlerService {
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
                 gameData.discardCausedByOpponent = false;
-                gameData.interaction.setDiscardRemainingCount(1);
+
+                if (effect.random()) {
+                    // Pillaging Horde: the discard is at random, so no player choice is needed.
+                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), 1);
+                    log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.");
+                        "Choose a " + typeName + " to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -214,9 +315,8 @@ public class MayPenaltyChoiceHandlerService {
 
             if (!validIndices.isEmpty()) {
                 gameData.discardCausedByOpponent = false;
-                gameData.interaction.setDiscardRemainingCount(1);
                 playerInputService.beginDiscardChoice(gameData, targetPlayerId, validIndices,
-                        "Choose a card to discard.");
+                        "Choose a card to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a card.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -400,6 +500,75 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleForcedCostOrElseOptionalChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        ForcedCostOrElseEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof ForcedCostOrElseEffect)
+                .map(e -> (ForcedCostOrElseEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID controllerId = ability.controllerId();
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
+            ManaCost cost = new ManaCost(payCost.manaCost());
+            ManaPool pool = gameData.playerManaPools.get(controllerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays " + payCost.manaCost() + ". (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), payCost.manaCost(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but can't actually pay — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost multiCost) {
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, multiCost.filter()));
+            if (matchingIds.size() >= multiCost.count()) {
+                // sacrificePlayerMatchingPermanents sacrifices all when the count matches exactly, or
+                // begins a multi-select choice when the controller has more than needed. The choice's
+                // completion continues the game itself, so only auto-pass here when nothing is pending.
+                destructionSupport.sacrificePlayerMatchingPermanents(gameData, controllerId, multiCost.count(), multiCost.filter());
+                if (matchingIds.size() == multiCost.count()) {
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                }
+                return;
+            }
+            // Accepted but no longer enough to sacrifice — fall through to the penalty.
+        }
+
+        if (accepted && effect.forcedCost() instanceof SacrificePermanentCost sacrificeCost) {
+            List<UUID> matchingIds = destructionSupport.collectPermanentIds(gameData, controllerId,
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeCost.filter()));
+
+            if (matchingIds.size() == 1) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, matchingIds.getFirst());
+                if (perm != null) {
+                    destructionSupport.sacrificeAndLog(gameData, perm, controllerId);
+                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+            } else if (matchingIds.size() > 1) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ForcedCostOrElse(controllerId, ability.sourcePermanentId(),
+                                ability.sourceCard(), effect));
+                playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds,
+                        "Choose a permanent to sacrifice (" + sacrificeCost.description() + ").");
+                return;
+            }
+            // Accepted but nothing left to sacrifice — fall through to the penalty.
+        }
+
+        // Declined (or unable to pay) — resolve the fallback/penalty effects.
+        StackEntry syntheticEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                ability.sourceCard().getName() + "'s ability", List.of(effect),
+                null, ability.sourcePermanentId());
+        destructionSupport.resolveForcedCostElseEffects(gameData, syntheticEntry, effect);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleDiscardUnlessExileChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         DiscardUnlessExileCardFromGraveyardEffect effect = ability.effects().stream()
                 .filter(e -> e instanceof DiscardUnlessExileCardFromGraveyardEffect)
@@ -413,7 +582,7 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> matchingIndices = new ArrayList<>();
             if (graveyard != null) {
                 for (int i = 0; i < graveyard.size(); i++) {
-                    if (gameQueryService.matchesCardPredicate(graveyard.get(i), effect.predicate(), null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), effect.predicate(), null)) {
                         matchingIndices.add(i);
                     }
                 }
@@ -427,10 +596,11 @@ public class MayPenaltyChoiceHandlerService {
                 gameData.pendingEffectResolutionIndex = 0;
 
                 String filterLabel = CardPredicateUtils.describeFilter(effect.predicate());
-                gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-                gameData.interaction.setGraveyardChoiceExileRemainingCount(1);
-                playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
-                        "Choose a " + filterLabel + " to exile from your graveyard.");
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                        .builder(controllerId, matchingIndices, GraveyardChoiceDestination.EXILE,
+                                "Choose a " + filterLabel + " to exile from your graveyard.")
+                        .exileRemainingCount(1)
+                        .build());
 
                 String logEntry = player.getUsername() + " chooses to exile a " + filterLabel
                         + " from their graveyard. (" + ability.sourceCard().getName() + ")";
@@ -446,8 +616,7 @@ public class MayPenaltyChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand != null && !hand.isEmpty()) {
             gameData.discardCausedByOpponent = false;
-            gameData.interaction.setDiscardRemainingCount(1);
-            playerInputService.beginDiscardChoice(gameData, controllerId);
+            playerInputService.beginDiscardChoice(gameData, controllerId, 1);
 
             String logEntry = player.getUsername() + " must discard a card. (" + ability.sourceCard().getName() + ")";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

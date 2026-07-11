@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
@@ -17,7 +18,7 @@ public class DiligentExcavator extends Card {
         // (Artifacts, legendaries, and Sagas are historic.)
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardIsHistoricPredicate(),
-                List.of(new MillTargetPlayerEffect(2))
+                List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER))
         ));
     }
 }

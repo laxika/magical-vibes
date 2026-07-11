@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,22 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LifelinkTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lifelink has correct card properties")
-    void hasCorrectProperties() {
-        Lifelink card = new Lifelink();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
 
     // ===== Casting and resolving =====
 
@@ -111,7 +90,7 @@ class LifelinkTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 

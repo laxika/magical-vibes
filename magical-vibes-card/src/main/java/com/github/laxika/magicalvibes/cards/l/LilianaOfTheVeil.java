@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -16,14 +19,15 @@ public class LilianaOfTheVeil extends Card {
         // +1: Each player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new EachPlayerDiscardsEffect(1)),
+                List.of(new DiscardEffect(1, DiscardRecipient.EACH_PLAYER)),
                 "+1: Each player discards a card."
         ));
 
         // −2: Target player sacrifices a creature.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new SacrificeCreatureEffect()),
+                List.of(new SacrificePermanentsEffect(
+                        1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)),
                 "\u22122: Target player sacrifices a creature."
         ));
 

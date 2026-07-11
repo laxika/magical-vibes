@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SoulSalvageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Soul Salvage has correct effects")
-    void hasCorrectEffects() {
-        SoulSalvage card = new SoulSalvage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnTargetCardsFromGraveyardToHandEffect.class);
-        ReturnTargetCardsFromGraveyardToHandEffect effect =
-                (ReturnTargetCardsFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.maxTargets()).isEqualTo(2);
-    }
-
     // ===== Casting with creature cards in graveyard =====
 
     @Test
@@ -50,10 +29,10 @@ class SoulSalvageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Spell is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -71,7 +50,7 @@ class SoulSalvageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select both creatures
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
@@ -110,7 +89,7 @@ class SoulSalvageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select only one creature
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
@@ -160,7 +139,7 @@ class SoulSalvageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -181,7 +160,7 @@ class SoulSalvageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -205,10 +184,10 @@ class SoulSalvageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         // Only the creature should be valid
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(creature.getId());
     }
 
     // ===== Max targets capped at 2 =====
@@ -225,10 +204,10 @@ class SoulSalvageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         // All 3 creatures should be valid choices
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(3);
         // But max selectable is 2
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
     }
 }

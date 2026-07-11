@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,27 +13,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PierceStriderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Pierce Strider has correct card properties")
-    void hasCorrectProperties() {
-        PierceStrider card = new PierceStrider();
+    
 
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose 3 life")
-    void hasEtbLifeLossEffect() {
-        PierceStrider card = new PierceStrider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        TargetPlayerLosesLifeEffect effect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")

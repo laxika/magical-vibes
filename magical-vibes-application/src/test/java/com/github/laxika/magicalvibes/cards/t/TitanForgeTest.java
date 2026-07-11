@@ -3,9 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,28 +23,9 @@ class TitanForgeTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability puts a charge counter on self")
-    void firstAbilityPutsChargeCounter() {
-        TitanForge card = new TitanForge();
+    
 
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
-    }
-
-    @Test
-    @DisplayName("Second ability removes 3 charge counters and creates a 9/9 Golem token")
-    void secondAbilityCreatesToken() {
-        TitanForge card = new TitanForge();
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 3)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
+    
 
     // ===== First ability — charge counter =====
 

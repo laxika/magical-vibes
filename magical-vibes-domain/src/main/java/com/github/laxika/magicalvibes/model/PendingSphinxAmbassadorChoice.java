@@ -11,5 +11,6 @@ import java.util.UUID;
  * @param targetPlayerId  the damaged player whose library was searched
  * @param sourceCard      the Sphinx Ambassador card (for may ability description)
  */
-public record PendingSphinxAmbassadorChoice(Card selectedCard, UUID controllerId, UUID targetPlayerId, Card sourceCard) {
+public record PendingSphinxAmbassadorChoice(Card selectedCard, UUID controllerId, UUID targetPlayerId, Card sourceCard)
+        implements PendingInteraction {
 }

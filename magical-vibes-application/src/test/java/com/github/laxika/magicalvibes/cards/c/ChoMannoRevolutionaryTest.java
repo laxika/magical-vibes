@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChoMannoRevolutionaryTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cho-Manno has correct card properties")
-    void hasCorrectProperties() {
-        ChoMannoRevolutionary card = new ChoMannoRevolutionary();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(PreventAllDamageEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

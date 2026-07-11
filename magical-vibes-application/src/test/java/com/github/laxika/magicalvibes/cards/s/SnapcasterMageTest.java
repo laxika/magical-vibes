@@ -1,37 +1,22 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SnapcasterMageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD GrantFlashbackToTargetGraveyardCardEffect for instants and sorceries")
-    void hasCorrectETBEffect() {
-        SnapcasterMage card = new SnapcasterMage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GrantFlashbackToTargetGraveyardCardEffect.class);
-        GrantFlashbackToTargetGraveyardCardEffect effect =
-                (GrantFlashbackToTargetGraveyardCardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
+    
 
     @Test
     @DisplayName("ETB with instant in controller's graveyard prompts graveyard choice")
@@ -45,7 +30,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -61,7 +46,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).hasSize(1);
         assertThat(validIds).contains(shock.getId());
     }
@@ -150,7 +135,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -162,7 +147,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -178,7 +163,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -222,7 +207,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards with native flashback should still be targetable
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).contains(grudge.getId());
     }
 

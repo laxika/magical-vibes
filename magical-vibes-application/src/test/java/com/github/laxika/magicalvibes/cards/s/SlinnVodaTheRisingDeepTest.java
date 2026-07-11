@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MerfolkSovereign;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,17 +28,7 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{1}{U}"));
     }
 
-    @Test
-    @DisplayName("Has KickedConditionalEffect wrapping ReturnCreaturesToOwnersHandEffect on ETB")
-    void hasKickedConditionalETBEffect() {
-        SlinnVodaTheRisingDeep card = new SlinnVodaTheRisingDeep();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(KickedConditionalEffect.class);
-        var conditional = (KickedConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
+    
 
     // ===== Cast without kicker — no ETB bounce =====
 

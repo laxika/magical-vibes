@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,19 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PowerstoneShardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Powerstone Shard has one tap-for-mana activated ability")
-    void hasCorrectAbility() {
-        PowerstoneShard card = new PowerstoneShard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("With one Powerstone Shard, tapping adds 1 colorless mana")

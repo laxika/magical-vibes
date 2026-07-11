@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -20,26 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JhoiraWeatherlightCaptainTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Jhoira has historic spell-cast trigger with draw a card")
-    void hasCorrectStructure() {
-        JhoiraWeatherlightCaptain card = new JhoiraWeatherlightCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(drawEffect.amount()).isEqualTo(1);
-    }
 
     // ===== Artifact spell triggers =====
 

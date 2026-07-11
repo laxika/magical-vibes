@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -49,7 +50,7 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
             return;
         }
 
-        gameData.pendingDelayedGraveyardToHandReturns.add(new GameData.DelayedGraveyardToHandReturn(cardId, ownerId));
+        gameData.queueDelayedAction(new DelayedGraveyardToHandReturn(cardId, ownerId));
         log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
                 gameData.id, cardId, ownerId);
     }

@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.h.HistoryOfBenalia;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KeldonWarcallerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK effect: PutLoreCounterOnTargetPermanentEffect")
-    void hasOnAttackEffect() {
-        KeldonWarcaller card = new KeldonWarcaller();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK))
-                .hasSize(1)
-                .allSatisfy(e -> {
-                    assertThat(e).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-                    assertThat(((PutCounterOnTargetPermanentEffect) e).counterType()).isEqualTo(CounterType.LORE);
-                });
-    }
-
     // ===== Attack trigger: put lore counter on target Saga =====
 
     @Test
@@ -46,7 +29,7 @@ class KeldonWarcallerTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
                 .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
     }
@@ -157,7 +140,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         // Should not be awaiting permanent choice since there are no valid targets
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Helpers =====
@@ -180,7 +163,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 }

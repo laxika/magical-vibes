@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,26 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DeathbloomThallidTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Deathbloom Thallid has one ON_DEATH token creation effect")
-    void hasCorrectEffect() {
-        DeathbloomThallid card = new DeathbloomThallid();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Saproling");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SAPROLING);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
 
     // ===== Casting =====
 

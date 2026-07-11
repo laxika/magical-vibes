@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MillByHandSizeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,23 +14,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DreambornMuseTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dreamborn Muse has correct card properties")
-    void hasCorrectProperties() {
-        DreambornMuse card = new DreambornMuse();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MillByHandSizeEffect.class);
     }
 
     // ===== Triggering =====

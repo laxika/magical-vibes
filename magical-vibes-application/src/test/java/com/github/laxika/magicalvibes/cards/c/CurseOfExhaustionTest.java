@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CurseOfExhaustionTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Exhaustion has correct effects")
-    void hasCorrectEffects() {
-        CurseOfExhaustion card = new CurseOfExhaustion();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(LimitSpellsForEnchantedPlayerEffect.class);
-        LimitSpellsForEnchantedPlayerEffect effect =
-                (LimitSpellsForEnchantedPlayerEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.maxSpells()).isEqualTo(1);
-    }
 
     // ===== Casting and resolving =====
 

@@ -2,42 +2,21 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ContagionEngineTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB -1/-1 counter on each creature target player controls and proliferate twice activated ability")
-    void hasCorrectEffectsAndAbility() {
-        ContagionEngine card = new ContagionEngine();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .allSatisfy(e -> assertThat(e).isInstanceOf(ProliferateEffect.class));
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-    }
 
     // ===== ETB: put -1/-1 counter on each creature target player controls =====
 

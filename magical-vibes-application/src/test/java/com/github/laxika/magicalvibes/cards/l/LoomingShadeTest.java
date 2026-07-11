@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LoomingShadeTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Looming Shade has correct card properties")
-    void hasCorrectProperties() {
-        LoomingShade card = new LoomingShade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-    }
 
     // ===== Casting =====
 

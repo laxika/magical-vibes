@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -23,22 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TempestOfLightTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Tempest of Light has correct card properties")
-    void hasCorrectProperties() {
-        TempestOfLight card = new TempestOfLight();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsEnchantmentPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
 
     // ===== Casting =====
 

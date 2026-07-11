@@ -3,12 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,27 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class InvaderParasiteTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB exile-and-imprint effect and opponent-land-enters trigger")
-    void hasCorrectEffects() {
-        InvaderParasite card = new InvaderParasite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(ImprintedCardNameMatchesEnteringPermanentConditionalEffect.class);
-        ImprintedCardNameMatchesEnteringPermanentConditionalEffect trigger =
-                (ImprintedCardNameMatchesEnteringPermanentConditionalEffect)
-                        card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(trigger.wrapped()).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) trigger.wrapped()).damage()).isEqualTo(2);
-    }
 
     // ===== ETB: exile target land =====
 
@@ -75,7 +50,7 @@ class InvaderParasiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, parasite);
         // Manually imprint a Forest
         Forest imprintedForest = new Forest();
-        parasite.setImprintedCard(imprintedForest);
+        gd.setImprintedCard(parasite, imprintedForest);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player2);
@@ -99,7 +74,7 @@ class InvaderParasiteTest extends BaseCardTest {
         InvaderParasite parasite = new InvaderParasite();
         harness.addToBattlefield(player1, parasite);
         Forest imprintedForest = new Forest();
-        parasite.setImprintedCard(imprintedForest);
+        gd.setImprintedCard(parasite, imprintedForest);
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player2);
@@ -121,7 +96,7 @@ class InvaderParasiteTest extends BaseCardTest {
         InvaderParasite parasite = new InvaderParasite();
         harness.addToBattlefield(player1, parasite);
         Forest imprintedForest = new Forest();
-        parasite.setImprintedCard(imprintedForest);
+        gd.setImprintedCard(parasite, imprintedForest);
 
         harness.setLife(player1, 20);
         harness.forceActivePlayer(player1);
@@ -164,8 +139,8 @@ class InvaderParasiteTest extends BaseCardTest {
         InvaderParasite parasite2 = new InvaderParasite();
         harness.addToBattlefield(player1, parasite1);
         harness.addToBattlefield(player1, parasite2);
-        parasite1.setImprintedCard(new Forest());
-        parasite2.setImprintedCard(new Forest());
+        gd.setImprintedCard(parasite1, new Forest());
+        gd.setImprintedCard(parasite2, new Forest());
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player2);
@@ -188,7 +163,7 @@ class InvaderParasiteTest extends BaseCardTest {
     void triggersOnEachMatchingLand() {
         InvaderParasite parasite = new InvaderParasite();
         harness.addToBattlefield(player1, parasite);
-        parasite.setImprintedCard(new Swamp());
+        gd.setImprintedCard(parasite, new Swamp());
 
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player2);

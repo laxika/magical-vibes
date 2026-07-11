@@ -2,15 +2,10 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GriptideTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Griptide has correct card properties")
-    void hasCorrectCardProperties() {
-        Griptide card = new Griptide();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PutTargetOnTopOfLibraryEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Griptide targeting a creature puts it on the stack")

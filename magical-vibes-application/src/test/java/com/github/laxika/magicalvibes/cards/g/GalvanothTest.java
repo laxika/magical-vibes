@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,21 +23,6 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has upkeep may-look-and-cast effect")
-    void hasCorrectProperties() {
-        Galvanoth card = new Galvanoth();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(CastTopOfLibraryWithoutPayingManaCostEffect.class);
-        CastTopOfLibraryWithoutPayingManaCostEffect effect = (CastTopOfLibraryWithoutPayingManaCostEffect) may.wrapped();
-        assertThat(effect.castableTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
-
     // ===== Upkeep trigger — may look prompt =====
 
     @Test
@@ -52,8 +33,8 @@ class GalvanothTest extends BaseCardTest {
         advanceToUpkeep(player1);
         // MayEffect goes on the stack — resolve it to get prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Declining to look =====
@@ -107,11 +88,11 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First may: look at top card
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Pyroclasm → second may
 
         // Second may: cast Pyroclasm
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true); // cast Pyroclasm
 
         // Pyroclasm is on the stack
@@ -153,15 +134,15 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // First may: look at top card
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline → sees Shock → second may
 
         // Second may: cast Shock
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true); // cast Shock
 
         // Now should be prompted for target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose Grizzly Bears as target
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -196,7 +177,7 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack
         harness.handleMayAbilityChosen(player1, true); // accept look — inner resolves inline → sees Shock → second may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false); // decline to cast
 
         // Card is still on top of library

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 
 import java.util.List;
 
@@ -14,6 +15,6 @@ import java.util.List;
 public class Duress extends Card {
 
     public Duress() {
-        addEffect(EffectSlot.SPELL, new ChooseCardFromTargetHandToDiscardEffect(1, List.of(CardType.CREATURE, CardType.LAND)));
+        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(1, List.of(CardType.CREATURE, CardType.LAND), HandChoiceDestination.DISCARD));
     }
 }

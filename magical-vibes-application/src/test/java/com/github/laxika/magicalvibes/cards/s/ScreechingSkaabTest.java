@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,16 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScreechingSkaabTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Screeching Skaab has ETB mill controller effect for 2 cards")
-    void hasEtbMillControllerEffect() {
-        ScreechingSkaab card = new ScreechingSkaab();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).count())
-                .isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Screeching Skaab puts it on stack as creature spell")

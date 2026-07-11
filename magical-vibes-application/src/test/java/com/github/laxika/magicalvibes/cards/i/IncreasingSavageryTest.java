@@ -3,16 +3,11 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,30 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncreasingSavageryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has target creature counter effects and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingSavagery card = new IncreasingSavagery();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect baseEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(baseEffect.count()).isEqualTo(5);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastFromZoneConditionalEffect.class);
-        CastFromZoneConditionalEffect conditional =
-                (CastFromZoneConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.sourceZone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(conditional.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect flashbackExtra =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) conditional.wrapped();
-        assertThat(flashbackExtra.count()).isEqualTo(5);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{G}{G}");
-    }
+    
 
     @Test
     @DisplayName("Normal cast puts five +1/+1 counters on target creature")

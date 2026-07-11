@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class Permanent {
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
     @Setter private CardSubtype chosenSubtype;
+    @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
@@ -45,6 +47,8 @@ public class Permanent {
     @Setter private UUID mustAttackTargetId;
     /** When true, at least one creature must block this creature this turn if able (e.g. Emergent Growth). Cleared at end of turn. */
     @Setter private boolean mustBeBlockedThisTurn;
+    /** When true, all creatures able to block this creature this turn do so (Lure-style, one-shot, e.g. Alluring Scent). Cleared at end of turn. */
+    @Setter private boolean mustBeBlockedByAllThisTurn;
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
@@ -62,11 +66,15 @@ public class Permanent {
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
-    @Setter private boolean powerToughnessSwitched;
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
     @Setter private boolean animatedUntilEndOfTurn;
+    /** When {@code true}, this permanent is animated as a creature until the combat phase ends
+     *  (e.g. Jade Statue). Uses the same {@link #animatedPower}/{@link #animatedToughness}/
+     *  {@link #animatedColor}/{@link #transientSubtypes} storage as {@link #animatedUntilEndOfTurn}.
+     *  Cleared by {@link #clearCombatState()} when combat ends. */
+    @Setter private boolean animatedUntilEndOfCombat;
     @Setter private int animatedPower;
     @Setter private int animatedToughness;
     @Setter private CardColor animatedColor;
@@ -93,6 +101,10 @@ public class Permanent {
      *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
      *  For persistent subtype grants from one-shot effects, see {@link #grantedSubtypes}. */
     private final List<CardSubtype> transientSubtypes = new ArrayList<>();
+    /** When non-null, this land "becomes the basic land type of your choice" until end of turn,
+     *  replacing its other land types and mana ability (e.g. Tideshaper Mystic). Distinct from
+     *  {@link #transientSubtypes}, which is additive. Cleared every turn by {@link #resetModifiers()}. */
+    @Setter private CardSubtype transientLandTypeOverride;
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
@@ -105,6 +117,11 @@ public class Permanent {
      *  If this set contains HUMAN, the permanent has "protection from non-Human creatures."
      *  Cleared by {@link #resetModifiers()}. */
     private final Set<CardSubtype> protectionFromNonSubtypeCreaturesUntilEndOfTurn = EnumSet.noneOf(CardSubtype.class);
+    /** Blocking restrictions granted until end of turn by one-shot effects (e.g. Dread Charge:
+     *  "black creatures you control can't be blocked this turn except by black creatures").
+     *  Each entry means this creature can be blocked only by blockers matching the restriction's
+     *  filter. Consumed by {@code GameQueryService.getBlockRestriction}; cleared by {@link #resetModifiers()}. */
+    private final List<CanBeBlockedOnlyByFilterEffect> blockRestrictionsUntilEndOfTurn = new ArrayList<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
@@ -136,27 +153,46 @@ public class Permanent {
     private final List<CardSubtype> grantedSubtypes = new ArrayList<>();
     /** When true, the creature's base power has been permanently overridden (e.g. by an exchange effect
      *  like Evra, Halcyon Witness). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBasePowerOverrideTimestamp}. */
     @Setter private boolean basePowerOverriddenPermanently;
     @Setter private int permanentBasePowerOverride;
+    /** CR 613.7 timestamp of the exchange that set {@link #basePowerOverriddenPermanently} — the
+     *  layered 7b pass orders the override against other base-P/T setters with it. */
+    @Setter private long permanentBasePowerOverrideTimestamp;
     /** When true, the creature's base toughness has been permanently overridden (e.g. by an exchange effect
      *  like Tree of Redemption). NOT cleared by {@link #resetModifiers()} — survives turn resets.
-     *  Layer 7b: end-of-turn overrides still take priority (later timestamp). */
+     *  Participates in CR 613.7 layer-7b ordering via {@link #permanentBaseToughnessOverrideTimestamp}. */
     @Setter private boolean baseToughnessOverriddenPermanently;
     @Setter private int permanentBaseToughnessOverride;
+    /** CR 613.7 timestamp of the exchange that set {@link #baseToughnessOverriddenPermanently}. */
+    @Setter private long permanentBaseToughnessOverrideTimestamp;
     @Setter private boolean transformed;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
+     *  All creature subtypes (base, transient, granted) are treated as absent, and the Changeling keyword
+     *  no longer grants any creature types. Cleared by {@link #resetModifiers()}. */
+    @Setter private boolean losesAllCreatureTypesUntilEndOfTurn;
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
+    /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
+    @Setter private boolean evoked;
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
+    /** Activated abilities granted for as long as this permanent remains on the battlefield
+     *  (e.g. Aquitect's Will making a land an Island in addition to its other types — the
+     *  granted "{T}: Add {U}" has no duration). Stored on the permanent rather than mutating
+     *  the {@link Card}: Card instances are shared with AI simulation copies (see the copy
+     *  constructor) and must stay immutable after construction.
+     *  NOT cleared by {@link #resetModifiers()}. */
+    private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
-     *  At the cleanup step, the card reverts to {@link #preCopyCard}.
+     *  At the cleanup step, the copy's floating layer-1 effect expires and the card reverts to
+     *  {@link #preCopyCard} via {@link #revertEndOfTurnCopy()}.
      *  Used by Tilonalli's Skinshifter and similar shapeshifters. */
     @Setter private boolean copyUntilEndOfTurn;
     /** The card to revert to when the temporary copy effect ends.
@@ -183,9 +219,28 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
     private final Set<Keyword> untilNextTurnKeywords = new HashSet<>();
+    /** When true, this permanent is a copy of another creature until {@link #copyUntilNextTurnControllerId}'s
+     *  next turn (e.g. Shapesharer). NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Reverts to {@link #untilNextTurnPreCopyCard} via {@link #revertUntilNextTurnCopy()} at the beginning
+     *  of that player's turn. */
+    @Setter private boolean copyUntilControllerNextTurn;
+    /** The card to revert to when an "until your next turn" copy ends.
+     *  Only non-null when {@link #copyUntilControllerNextTurn} is true. */
+    @Setter private Card untilNextTurnPreCopyCard;
+    /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
+    @Setter private UUID copyUntilNextTurnControllerId;
+    /** CR 613.7 timestamp: stamped from {@link GameData#nextTimestamp()} when this permanent
+     *  enters a battlefield, and re-stamped each time it becomes attached (CR 613.7e — Auras and
+     *  Equipment). Control changes do NOT re-stamp (CR 613.7c). Stays 0 for permanents added to
+     *  a battlefield directly in tests; the layered engine falls back to battlefield position
+     *  order for equal timestamps (see {@code agent-docs/LAYER_SYSTEM.md}). */
+    @Setter private long timestamp;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
+        // A card wrapped in a Permanent is live game state shared with AI simulation copies —
+        // freeze it so any later mutation of the Card object fails fast instead of leaking.
+        card.freeze();
         this.card = card;
         this.originalCard = card;
         this.tapped = false;
@@ -218,12 +273,14 @@ public class Permanent {
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;
         this.mustAttackThisTurn = source.mustAttackThisTurn;
         this.mustAttackTargetId = source.mustAttackTargetId;
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
+        this.mustBeBlockedByAllThisTurn = source.mustBeBlockedByAllThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
         this.prepared = source.prepared;
@@ -231,11 +288,11 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
-        this.powerToughnessSwitched = source.powerToughnessSwitched;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
         this.animatedUntilEndOfTurn = source.animatedUntilEndOfTurn;
+        this.animatedUntilEndOfCombat = source.animatedUntilEndOfCombat;
         this.animatedPower = source.animatedPower;
         this.animatedToughness = source.animatedToughness;
         this.animatedColor = source.animatedColor;
@@ -256,6 +313,7 @@ public class Permanent {
         this.protectionFromCardTypes.addAll(source.protectionFromCardTypes);
         this.protectionFromColorsUntilEndOfTurn.addAll(source.protectionFromColorsUntilEndOfTurn);
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.addAll(source.protectionFromNonSubtypeCreaturesUntilEndOfTurn);
+        this.blockRestrictionsUntilEndOfTurn.addAll(source.blockRestrictionsUntilEndOfTurn);
         this.exileIfLeavesBattlefield = source.exileIfLeavesBattlefield;
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
@@ -267,12 +325,17 @@ public class Permanent {
         this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;
         this.permanentBasePowerOverride = source.permanentBasePowerOverride;
+        this.permanentBasePowerOverrideTimestamp = source.permanentBasePowerOverrideTimestamp;
         this.baseToughnessOverriddenPermanently = source.baseToughnessOverriddenPermanently;
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
+        this.permanentBaseToughnessOverrideTimestamp = source.permanentBaseToughnessOverrideTimestamp;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.kicked = source.kicked;
+        this.evoked = source.evoked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
+        this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);
@@ -281,6 +344,10 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = source.untilNextTurnAnimatedToughness;
         this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
         this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
+        this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
+        this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
+        this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
+        this.timestamp = source.timestamp;
     }
 
     public Card getOriginalCard() {
@@ -296,6 +363,13 @@ public class Permanent {
     }
 
     public void untap() {
+        // Stun counters (CR 122.1c / 701.x): if a tapped permanent would become untapped,
+        // remove a stun counter from it instead. This is the single funnel point for all
+        // untap sources (untap step, Seedborn Muse, "untap target", etc.).
+        if (this.tapped && getCounterCount(CounterType.STUN) > 0) {
+            setCounterCount(CounterType.STUN, getCounterCount(CounterType.STUN) - 1);
+            return;
+        }
         this.tapped = false;
     }
 
@@ -332,6 +406,25 @@ public class Permanent {
         this.blocking = false;
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
+        clearUntilEndOfCombatAnimation();
+    }
+
+    /**
+     * Reverts an "until end of combat" animation (e.g. Jade Statue) when the combat phase ends.
+     * Clears the shared animation storage that {@link #animatedUntilEndOfCombat} uses. No-op when
+     * the permanent is not animated until end of combat, so unrelated transient grants are preserved.
+     */
+    public void clearUntilEndOfCombatAnimation() {
+        if (!animatedUntilEndOfCombat) {
+            return;
+        }
+        this.animatedUntilEndOfCombat = false;
+        this.animatedPower = 0;
+        this.animatedToughness = 0;
+        this.animatedColor = null;
+        this.grantedKeywords.clear();
+        this.transientSubtypes.clear();
+        this.grantedCardTypes.clear();
     }
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {
@@ -390,69 +483,81 @@ public class Permanent {
         return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
+    /**
+     * This permanent's power from its own stored state (base + modifiers + counters), WITHOUT
+     * layer-7d switches: P/T switching lives in floating continuous effects applied by the
+     * layered pass ({@code GameQueryService.getEffectivePower} swaps the finished values per
+     * CR 613.4d). This accessor is the legacy pre-switch fallback for direct {@code Permanent}
+     * readers (views' raw term, last-known-information reads, predicate leaves).
+     */
     public int getEffectivePower() {
-        if (powerToughnessSwitched) {
-            return getRawToughness();
-        }
-        return getRawPower();
+        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
+    /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        if (powerToughnessSwitched) {
-            return getRawPower();
-        }
-        return getRawToughness();
+        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
-    private int getRawPower() {
-        int basePower;
+    /**
+     * The base power of this permanent from its own stored state, WITHOUT modifiers or counters.
+     * This is NOT the CR 613 layer-7b precedence decision — that lives in the layered pass
+     * ({@code LayerSystemService}), which orders every base-P/T setter (static, one-shot,
+     * animation, exchange) by timestamp and surfaces the winner through
+     * {@code GameQueryService.getEffectivePower}. This accessor is the legacy fallback used by
+     * direct {@code Permanent} readers (views, last-known-information reads, predicate leaves)
+     * when no layered 7b entry applies; when only one of these fields is set, the two agree.
+     */
+    public int getBasePower() {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
-            basePower = basePowerOverride;
-        } else if (basePowerOverriddenPermanently) {
-            // Layer 7b: permanent power override (e.g. Evra, Halcyon Witness exchange)
-            basePower = permanentBasePowerOverride;
-        } else if (animatedUntilEndOfTurn) {
-            basePower = animatedPower;
-        } else if (animatedUntilNextTurn) {
-            basePower = untilNextTurnAnimatedPower;
-        } else if (permanentlyAnimated) {
-            basePower = permanentAnimatedPower;
-        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
-            basePower = 8;
-        } else {
-            basePower = card.getPower() != null ? card.getPower() : 0;
+            return basePowerOverride;
         }
-        return basePower + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        if (basePowerOverriddenPermanently) {
+            return permanentBasePowerOverride;
+        }
+        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
+            return animatedPower;
+        }
+        if (animatedUntilNextTurn) {
+            return untilNextTurnAnimatedPower;
+        }
+        if (permanentlyAnimated) {
+            return permanentAnimatedPower;
+        }
+        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+            return 8;
+        }
+        return card.getPower() != null ? card.getPower() : 0;
     }
 
-    private int getRawToughness() {
-        int baseToughness;
+    /** The base toughness counterpart of {@link #getBasePower()} — same fallback caveats. */
+    public int getBaseToughness() {
         if (basePowerToughnessOverriddenUntilEndOfTurn) {
-            // Layer 7b: "set base P/T" with later timestamp overrides animation P/T
-            baseToughness = baseToughnessOverride;
-        } else if (baseToughnessOverriddenPermanently) {
-            // Layer 7b: permanent toughness override (e.g. Tree of Redemption exchange)
-            baseToughness = permanentBaseToughnessOverride;
-        } else if (animatedUntilEndOfTurn) {
-            baseToughness = animatedToughness;
-        } else if (animatedUntilNextTurn) {
-            baseToughness = untilNextTurnAnimatedToughness;
-        } else if (permanentlyAnimated) {
-            baseToughness = permanentAnimatedToughness;
-        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
-            baseToughness = 8;
-        } else {
-            baseToughness = card.getToughness() != null ? card.getToughness() : 0;
+            return baseToughnessOverride;
         }
-        return baseToughness + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        if (baseToughnessOverriddenPermanently) {
+            return permanentBaseToughnessOverride;
+        }
+        if (animatedUntilEndOfTurn || animatedUntilEndOfCombat) {
+            return animatedToughness;
+        }
+        if (animatedUntilNextTurn) {
+            return untilNextTurnAnimatedToughness;
+        }
+        if (permanentlyAnimated) {
+            return permanentAnimatedToughness;
+        }
+        if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
+            return 8;
+        }
+        return card.getToughness() != null ? card.getToughness() : 0;
     }
 
     public CardColor getEffectiveColor() {
         if (colorOverridden && !transientColors.isEmpty()) {
             return transientColors.iterator().next();
         }
-        if (animatedUntilEndOfTurn && animatedColor != null) {
+        if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
             return animatedColor;
         }
         if (getCounterCount(CounterType.AWAKENING) > 0) {
@@ -463,6 +568,8 @@ public class Permanent {
 
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn) return false;
+        // Changeling grants all creature types; losing all creature types nullifies that grant.
+        if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword);
@@ -479,7 +586,6 @@ public class Permanent {
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
-        this.powerToughnessSwitched = false;
         this.basePowerToughnessOverriddenUntilEndOfTurn = false;
         this.basePowerOverride = 0;
         this.baseToughnessOverride = 0;
@@ -488,11 +594,13 @@ public class Permanent {
         this.mustAttackThisTurn = false;
         this.mustAttackTargetId = null;
         this.mustBeBlockedThisTurn = false;
+        this.mustBeBlockedByAllThisTurn = false;
         this.cantRegenerateThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryTriggeredEffects.clear();
         this.animatedUntilEndOfTurn = false;
+        this.animatedUntilEndOfCombat = false;
         this.animatedPower = 0;
         this.animatedToughness = 0;
         this.animatedColor = null;
@@ -501,19 +609,31 @@ public class Permanent {
         this.transientColors.clear();
         this.colorOverridden = false;
         this.transientSubtypes.clear();
+        this.transientLandTypeOverride = null;
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
         this.protectionFromNonSubtypeCreaturesUntilEndOfTurn.clear();
+        this.blockRestrictionsUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
+        this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.temporaryActivatedAbilities.clear();
+    }
+
+    /**
+     * Reverts an "until end of turn" copy (e.g. Tilonalli's Skinshifter) back to the permanent's
+     * pre-copy card. Driven by the expiry of the copy's floating layer-1 effect at the cleanup
+     * step (CR 613 layer engine), not by {@link #resetModifiers()}. Safe to call more than once
+     * per turn — a second expired copy effect on the same permanent finds the flag cleared.
+     */
+    public void revertEndOfTurnCopy() {
         if (this.copyUntilEndOfTurn && this.preCopyCard != null) {
             this.card = this.preCopyCard;
-            this.copyUntilEndOfTurn = false;
-            this.preCopyCard = null;
         }
+        this.copyUntilEndOfTurn = false;
+        this.preCopyCard = null;
     }
 
     /**
@@ -528,5 +648,18 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = 0;
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
+    }
+
+    /**
+     * Reverts an "until your next turn" copy (e.g. Shapesharer) back to the permanent's
+     * pre-copy card. Called at the beginning of the ability controller's next turn.
+     */
+    public void revertUntilNextTurnCopy() {
+        if (this.copyUntilControllerNextTurn && this.untilNextTurnPreCopyCard != null) {
+            this.card = this.untilNextTurnPreCopyCard;
+        }
+        this.copyUntilControllerNextTurn = false;
+        this.untilNextTurnPreCopyCard = null;
+        this.copyUntilNextTurnControllerId = null;
     }
 }

@@ -6,18 +6,15 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
-import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.MirrorOfFateEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -37,12 +34,10 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MirrorOfFateEffectHandlerTest {
@@ -56,6 +51,7 @@ class MirrorOfFateEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -83,7 +79,7 @@ class MirrorOfFateEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        mirrorOfFateHandler = new MirrorOfFateEffectHandler(exileSupport, playerInputService, cardViewFactory);
+        mirrorOfFateHandler = new MirrorOfFateEffectHandler(exileSupport, interactionHandlerRegistry);
 
     }
 
@@ -191,14 +187,13 @@ class MirrorOfFateEffectHandlerTest {
                         List.of(new MirrorOfFateEffect())
                 );
 
-                CardView mockView = mock(CardView.class);
-                when(cardViewFactory.create(exiledCard)).thenReturn(mockView);
-
                 mirrorOfFateHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(playerInputService).sendMirrorOfFateChoice(
-                        eq(gd), eq(player1Id), eq(List.of(exiledCard.getId())),
-                        eq(List.of(mockView)), eq(1));
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.MirrorOfFateChoice mfc
+                                && mfc.playerId().equals(player1Id)
+                                && mfc.validCardIds().equals(List.of(exiledCard.getId()))
+                                && mfc.maxCount() == 1));
             }
 
 
@@ -212,8 +207,7 @@ class MirrorOfFateEffectHandlerTest {
                 Card libraryCard = createSorceryCard("Doom Blade");
                 gd.playerDecks.get(player1Id).add(libraryCard);
 
-                gd.interaction.beginMirrorOfFateChoice(player1Id,
-                        java.util.Set.of(exiledCard.getId()), 7);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(exiledCard.getId()), 7));
 
                 exileSupport.handleMirrorOfFateChoice(gd, player, List.of(exiledCard.getId()));
 
@@ -243,8 +237,7 @@ class MirrorOfFateEffectHandlerTest {
                 gd.addToExile(player1Id, card1);
                 gd.addToExile(player1Id, card2);
 
-                gd.interaction.beginMirrorOfFateChoice(player1Id,
-                        java.util.Set.of(card1.getId(), card2.getId()), 1);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 1));
 
                 assertThatThrownBy(() ->
                         exileSupport.handleMirrorOfFateChoice(gd, player,
@@ -262,12 +255,13 @@ class MirrorOfFateEffectHandlerTest {
                 gd.addToExile(player1Id, card1);
                 gd.addToExile(player1Id, card2);
 
-                gd.interaction.beginMirrorOfFateChoice(player1Id,
-                        java.util.Set.of(card1.getId(), card2.getId()), 7);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 7));
 
                 exileSupport.handleMirrorOfFateChoice(gd, player,
                         List.of(card1.getId(), card2.getId()));
 
-                verify(playerInputService).beginLibraryReorderFromExile(eq(gd), eq(player1Id), anyList());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof com.github.laxika.magicalvibes.model.PendingInteraction.LibraryReorder lr
+                                && lr.playerId().equals(player1Id)));
             }
 }

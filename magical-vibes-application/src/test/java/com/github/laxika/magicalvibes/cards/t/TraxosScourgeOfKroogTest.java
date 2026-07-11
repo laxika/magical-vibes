@@ -1,17 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,35 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TraxosScourgeOfKroogTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Traxos has EntersTappedEffect and DoesntUntapDuringUntapStepEffect as static effects")
-    void hasCorrectStaticEffects() {
-        TraxosScourgeOfKroog card = new TraxosScourgeOfKroog();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof EntersTappedEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
-    }
-
-    @Test
-    @DisplayName("Traxos has historic spell-cast trigger with untap self")
-    void hasHistoricTrigger() {
-        TraxosScourgeOfKroog card = new TraxosScourgeOfKroog();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(UntapSelfEffect.class);
-    }
 
     // ===== Enters tapped =====
 

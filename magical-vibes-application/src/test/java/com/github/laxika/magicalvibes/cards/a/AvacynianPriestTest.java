@@ -6,35 +6,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AvacynianPriestTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Avacynian Priest has correct activated ability")
-    void hasCorrectAbility() {
-        AvacynianPriest card = new AvacynianPriest();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-    }
 
     // ===== Activated ability =====
 

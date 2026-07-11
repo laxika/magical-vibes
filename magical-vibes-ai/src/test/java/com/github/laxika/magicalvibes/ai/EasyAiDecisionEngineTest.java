@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -63,6 +64,8 @@ class EasyAiDecisionEngineTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private CombatAttackService combatAttackService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService targetValidationService;
     @Mock private Connection selfConnection;
 
@@ -102,10 +105,11 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
-        Mockito.lenient().when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+        AiTestPlayabilityStub.install(gameBroadcastService, castingCostService);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         return engine;
@@ -475,7 +479,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 1);
 
         // Cost modifier adds 1 (e.g. opponent has Thalia) — now needs 3 total
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(1);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -501,7 +505,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 2);
 
         // Cost reduction of 1 — now only needs 3 total
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -510,7 +514,7 @@ class EasyAiDecisionEngineTest {
     }
 
     @Test
-    @DisplayName("Easy AI does not cast spell when isSpellCastingAllowed returns false")
+    @DisplayName("Easy AI does not cast spell when the engine playability check returns false")
     void doesNotCastWhenSpellCastingNotAllowed() throws Exception {
         Card creature = new Card();
         creature.setName("Test Bear");
@@ -524,12 +528,14 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.GREEN, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        // Spell casting not allowed (e.g. spell limit reached, type restricted, silenced)
-        when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(false);
+        // Engine says not playable (e.g. spell limit reached, type restricted, silenced)
+        when(gameBroadcastService.isCardPlayable(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(false);
 
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         engine.handleMessage("GAME_STATE", "");
@@ -549,7 +555,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -592,7 +598,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -615,7 +621,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -682,7 +688,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // Cost modifier +1 (e.g. Thalia on opponent's battlefield)
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(1);
 
         Mockito.doAnswer(inv -> {
             gd.playerHands.get(aiPlayer.getId()).removeFirst();
@@ -714,7 +720,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // Cost modifier +2 — no X value is affordable
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(2);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(2);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -738,7 +744,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // No cost modifier
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(0);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(0);
 
         Mockito.doAnswer(inv -> {
             gd.playerHands.get(aiPlayer.getId()).removeFirst();
@@ -761,15 +767,15 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI caps attackers to affordable count when attack tax is present")
     void capsAttackersWhenAttackTaxPresent() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // 3 creatures on the AI battlefield
         for (int i = 0; i < 3; i++) {
             Permanent creature = new Permanent(new Card());
-            creature.getCard().setName("Bear " + i);
-            creature.getCard().setType(CardType.CREATURE);
-            creature.getCard().setPower(2);
-            creature.getCard().setToughness(2);
+            TestCards.mutableCard(creature).setName("Bear " + i);
+            TestCards.mutableCard(creature).setType(CardType.CREATURE);
+            TestCards.mutableCard(creature).setPower(2);
+            TestCards.mutableCard(creature).setToughness(2);
             creature.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
         }
@@ -781,7 +787,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of(0, 1, 2));
         when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
                 .thenReturn(List.of());
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(1);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1013,7 +1019,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }
@@ -1023,7 +1029,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
         }
 
@@ -1102,24 +1108,24 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI attacks with at least one creature when forced by opponent effect")
     void attacksWithAtLeastOneWhenForcedByOpponentEffect() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // AI has a 2/2
         Permanent creature = new Permanent(new Card());
-        creature.getCard().setName("Bear");
-        creature.getCard().setType(CardType.CREATURE);
-        creature.getCard().setPower(2);
-        creature.getCard().setToughness(2);
+        TestCards.mutableCard(creature).setName("Bear");
+        TestCards.mutableCard(creature).setType(CardType.CREATURE);
+        TestCards.mutableCard(creature).setPower(2);
+        TestCards.mutableCard(creature).setToughness(2);
         creature.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
 
         // Opponent has a 5/5 blocker — AI would normally choose not to attack
         UUID opponentId = gd.orderedPlayerIds.get(1);
         Permanent blocker = new Permanent(new Card());
-        blocker.getCard().setName("Big Blocker");
-        blocker.getCard().setType(CardType.CREATURE);
-        blocker.getCard().setPower(5);
-        blocker.getCard().setToughness(5);
+        TestCards.mutableCard(blocker).setName("Big Blocker");
+        TestCards.mutableCard(blocker).setType(CardType.CREATURE);
+        TestCards.mutableCard(blocker).setPower(5);
+        TestCards.mutableCard(blocker).setToughness(5);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(opponentId).add(blocker);
 
@@ -1129,7 +1135,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of());
         when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
                 .thenReturn(true);
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1151,23 +1157,23 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI can declare zero attackers when not forced by opponent effect")
     void canDeclareZeroAttackersWhenNotForced() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // AI has a 2/2 but strong opponent blocker — Easy AI should choose not to attack
         Permanent creature = new Permanent(new Card());
-        creature.getCard().setName("Bear");
-        creature.getCard().setType(CardType.CREATURE);
-        creature.getCard().setPower(2);
-        creature.getCard().setToughness(2);
+        TestCards.mutableCard(creature).setName("Bear");
+        TestCards.mutableCard(creature).setType(CardType.CREATURE);
+        TestCards.mutableCard(creature).setPower(2);
+        TestCards.mutableCard(creature).setToughness(2);
         creature.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);
         Permanent blocker = new Permanent(new Card());
-        blocker.getCard().setName("Big Blocker");
-        blocker.getCard().setType(CardType.CREATURE);
-        blocker.getCard().setPower(5);
-        blocker.getCard().setToughness(5);
+        TestCards.mutableCard(blocker).setName("Big Blocker");
+        TestCards.mutableCard(blocker).setType(CardType.CREATURE);
+        TestCards.mutableCard(blocker).setPower(5);
+        TestCards.mutableCard(blocker).setToughness(5);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(opponentId).add(blocker);
 
@@ -1177,7 +1183,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of());
         when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
                 .thenReturn(false);
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1218,7 +1224,7 @@ class EasyAiDecisionEngineTest {
 
         // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
         Mockito.doAnswer(inv -> {
-            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
@@ -1254,7 +1260,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
 
         Mockito.doAnswer(inv -> {
-            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
@@ -1290,7 +1296,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }
@@ -1300,7 +1306,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
         }
 
@@ -1364,7 +1370,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.POSTCOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
 
             giveAiMountainsLocal(1); // Only 1 mana — Bolt costs {R} but Kopala adds {2}

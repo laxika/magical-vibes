@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GhostWarden;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingBanshee;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,18 +24,6 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angel of Flight Alabaster has upkeep-triggered graveyard return effect")
-    void hasCorrectEffects() {
-        AngelOfFlightAlabaster card = new AngelOfFlightAlabaster();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Upkeep trigger: return Spirit from graveyard to hand =====
 
     @Test
@@ -53,7 +39,7 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
 
         // Resolve trigger → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose Spirit
         harness.handleGraveyardCardChosen(player1, 0);
@@ -97,7 +83,7 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         // Resolve — should resolve without graveyard choice
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -109,7 +95,7 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }

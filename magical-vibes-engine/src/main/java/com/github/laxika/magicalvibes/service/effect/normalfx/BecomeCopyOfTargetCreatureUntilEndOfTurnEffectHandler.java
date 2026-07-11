@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -52,6 +54,13 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         String originalName = sourcePermanent.getCard().getName();
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
         sourcePermanent.setCopyUntilEndOfTurn(true);
+        // CR 613.2a: a temporary copy is a layer-1 continuous effect with a duration. The card
+        // swap above stores the copiable values; the floating effect carries the CR 613.7
+        // timestamp and drives the revert when it expires at the cleanup step.
+        gameData.addFloatingEffect(new FloatingContinuousEffect(
+                UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
+                entry.getControllerId(), effect, sourcePermanentId, null, null,
+                EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String targetName = targetPerm.getCard().getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,8 +11,23 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LeechingBiteTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cannot target the same creature for both targets")
+    void cannotTargetSameCreatureTwice() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LeechingBite()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(bearId, bearId)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("different");
+    }
 
     @Test
     @DisplayName("First target gets +1/+1 and second target gets -1/-1")

@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +23,7 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -60,19 +61,22 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
         // The target's controller searches their library
         String desc = CardPredicateUtils.describeFilter(effect.searchFilter());
         String descPlural = desc.replace(" card", " cards");
+        String tappedSuffix = effect.tapped() ? " tapped" : "";
         String prompt = effect.may()
-                ? "You may search your library for a " + desc + " and put it onto the battlefield."
-                : "Search your library for a " + desc + " and put it onto the battlefield.";
+                ? "You may search your library for a " + desc + " and put it onto the battlefield" + tappedSuffix + "."
+                : "Search your library for a " + desc + " and put it onto the battlefield" + tappedSuffix + ".";
 
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 targetControllerId,
-                card -> gameQueryService.matchesCardPredicate(card, effect.searchFilter(), null),
+                card -> predicateEvaluationService.matchesCardPredicate(card, effect.searchFilter(), null),
                 descPlural,
                 prompt,
                 false,
                 effect.may(),
-                LibrarySearchDestination.BATTLEFIELD
+                effect.tapped()
+                        ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                        : LibrarySearchDestination.BATTLEFIELD
         );
     }
 }

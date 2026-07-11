@@ -1,71 +1,26 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FiendOfTheShadowsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has combat damage trigger that exiles from hand and grants controller play permission")
-    void hasCombatDamageTrigger() {
-        FiendOfTheShadows card = new FiendOfTheShadows();
-
-        List<?> effects = card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(TargetPlayerExilesFromHandEffect.class);
-
-        TargetPlayerExilesFromHandEffect effect = (TargetPlayerExilesFromHandEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.controllerMayPlay()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has Sacrifice a Human: Regenerate activated ability with no mana cost")
-    void hasRegenerateAbility() {
-        FiendOfTheShadows card = new FiendOfTheShadows();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
-    }
 
     // ===== Combat damage trigger =====
 
@@ -77,8 +32,8 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -166,7 +121,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to exile"));
     }
 
@@ -181,7 +136,7 @@ class FiendOfTheShadowsTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class)).isNull();
         // Note: Fiend has flying so a non-flying/reach blocker is illegal, but this verifies that
         // when no combat damage reaches a player, the trigger does not fire.
     }

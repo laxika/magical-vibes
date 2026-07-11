@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,17 +32,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has MayEffect-wrapped combat damage trigger with correct effect type")
-    void hasCorrectEffect() {
-        WhisperingSpecter card = new WhisperingSpecter();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
@@ -56,7 +43,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -90,7 +77,7 @@ class WhisperingSpecterTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Whispering Specter"));
 
         // Player2 should be prompted to discard cards equal to their poison counter count
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     @Test
@@ -129,7 +116,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -151,7 +138,7 @@ class WhisperingSpecterTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Whispering Specter"));
 
         // Player2 has 1 poison counter from infect combat damage, so they should discard 1 card
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     @Test

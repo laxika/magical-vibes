@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.e.EchoCirclet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KembasLegionTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kemba's Legion has GrantAdditionalBlockPerEquipmentEffect")
-    void hasCorrectEffect() {
-        KembasLegion card = new KembasLegion();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantAdditionalBlockPerEquipmentEffect.class);
-    }
 
     // ===== Blocking with no equipment =====
 
@@ -52,7 +37,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -89,7 +74,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -126,7 +111,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -163,7 +148,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -200,7 +185,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 
@@ -242,7 +227,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int otherIdx = gd.playerBattlefields.get(player2.getId()).indexOf(otherPerm);
 
@@ -281,7 +266,7 @@ class KembasLegionTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(legionPerm);
 

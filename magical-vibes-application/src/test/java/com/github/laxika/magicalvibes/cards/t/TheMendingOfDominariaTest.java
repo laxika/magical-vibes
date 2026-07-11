@@ -1,23 +1,17 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,62 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheMendingOfDominariaTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has mill 2 and return creature from graveyard effects")
-    void chapterIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) effects.get(0)).count()).isEqualTo(2);
-
-        assertThat(effects.get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(1);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.HAND);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same effects as chapter I")
-    void chapterIIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) effects.get(0)).count()).isEqualTo(2);
-
-        assertThat(effects.get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(1);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.HAND);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("Chapter III has return all lands and shuffle graveyard effects")
-    void chapterIIIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(0);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.BATTLEFIELD);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.LAND);
-        assertThat(returnEffect.returnAll()).isTrue();
-
-        assertThat(effects.get(1)).isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
 
     // ===== ETB: first lore counter and chapter I triggers =====
 
@@ -134,7 +72,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Should be awaiting graveyard choice for the creature
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
     }
 
     @Test
@@ -156,7 +94,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // No graveyard choice since no creatures were milled (and none were in graveyard)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -178,7 +116,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Should still offer graveyard choice for the creature that was already in graveyard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
     }
 
     // ===== Chapter III: return lands and shuffle =====

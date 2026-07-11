@@ -3,13 +3,14 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "M10", collectorNumber = "76")
 @CardRegistration(set = "M11", collectorNumber = "76")
 public class TomeScour extends Card {
 
     public TomeScour() {
-        addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
+        addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.TARGET_PLAYER));
     }
 }

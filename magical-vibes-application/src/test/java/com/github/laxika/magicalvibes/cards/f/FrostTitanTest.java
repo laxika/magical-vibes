@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,44 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FrostTitanTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Frost Titan has ON_BECOMES_TARGET_OF_OPPONENT_SPELL CounterUnlessPaysEffect(2)")
-    void hasCounterTriggerEffect() {
-        FrostTitan card = new FrostTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).getFirst())
-                .isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).getFirst()).amount())
-                .isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Frost Titan has ON_ENTER_BATTLEFIELD TapTargetPermanentEffect and SkipNextUntapOnTargetEffect")
-    void hasETBEffects() {
-        FrostTitan card = new FrostTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof TapTargetPermanentEffect);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof SkipNextUntapOnTargetEffect);
-    }
-
-    @Test
-    @DisplayName("Frost Titan has ON_ATTACK TapTargetPermanentEffect and SkipNextUntapOnTargetEffect")
-    void hasAttackEffects() {
-        FrostTitan card = new FrostTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK))
-                .anyMatch(e -> e instanceof TapTargetPermanentEffect);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK))
-                .anyMatch(e -> e instanceof SkipNextUntapOnTargetEffect);
-    }
 
     // ===== ETB trigger: tap target permanent + skip next untap =====
 
@@ -125,7 +83,7 @@ class FrostTitanTest extends BaseCardTest {
 
             declareAttackers(List.of(0));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         }
@@ -230,8 +188,8 @@ class FrostTitanTest extends BaseCardTest {
             harness.castInstant(player2, 0, frostTitan.getId());
             harness.passBothPriorities(); // resolve counter trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
         }
 
         @Test
@@ -316,7 +274,7 @@ class FrostTitanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

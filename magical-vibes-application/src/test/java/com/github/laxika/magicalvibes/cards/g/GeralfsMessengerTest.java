@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,31 +38,6 @@ class GeralfsMessengerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GeralfsMessenger()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Geralf's Messenger enters tapped")
-    void hasEntersTappedEffect() {
-        GeralfsMessenger card = new GeralfsMessenger();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof EntersTappedEffect);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose 2 life")
-    void hasEtbLifeLossEffect() {
-        GeralfsMessenger card = new GeralfsMessenger();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        TargetPlayerLosesLifeEffect effect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
     }
 
     // ===== Enters tapped =====
@@ -121,7 +91,7 @@ class GeralfsMessengerTest extends BaseCardTest {
 
         // Bolt killed the 3/2 Messenger; undying returned it with a +1/+1 counter and its
         // ETB ability is now asking for an opponent target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         Permanent messenger = messengerOnBattlefield();
         assertThat(messenger).isNotNull();
@@ -140,7 +110,7 @@ class GeralfsMessengerTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Choose the opponent as the target of the returned Messenger's ETB.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 

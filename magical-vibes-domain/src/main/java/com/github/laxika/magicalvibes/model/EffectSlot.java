@@ -26,6 +26,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DAMAGE_TO_PLAYER,
     ON_ATTACK,
     ON_BECOMES_BLOCKED,
+    /** Triggers once per attacking creature the controller controls that ends up unblocked
+     *  ("Whenever this creature attacks and isn't blocked"). Fires during the declare-blockers
+     *  step once blocks are locked in — after the defender declares blockers, or immediately when
+     *  the defender has no possible blockers. Player-affecting effects (e.g. a discard) read the
+     *  defending player from the stack entry's (non-targeting) {@code targetId}. Checked in
+     *  {@code CombatBlockService}. Used by Abyssal Nightstalker. */
+    ON_ATTACKS_UNBLOCKED,
     DRAW_TRIGGERED,
     EACH_DRAW_TRIGGERED,
     END_STEP_TRIGGERED,
@@ -44,7 +51,18 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers when a land the controller owns is put into their graveyard from the battlefield
+     *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
+     *  the graveyard owner controls. */
+    ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT,
     ON_ENCHANTED_PERMANENT_TAPPED,
+    /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
+     *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
+     *  effect in {@code TriggeringPermanentConditionalEffect} to filter by the tapped permanent
+     *  (e.g. Judge of Currents — "whenever a Merfolk you control becomes tapped"). Checked in
+     *  {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}, driven by the same
+     *  tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED}. */
+    ON_ALLY_PERMANENT_BECOMES_TAPPED,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
@@ -60,13 +78,17 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+    /** Triggers during the end step of the enchanted permanent's controller ("At the beginning of
+     *  your end step" on an ability granted to the enchanted permanent). Checked in
+     *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */
+    ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
     ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers whenever this creature or another creature enters the battlefield from the
      *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
      *  after a creature enters, using the {@code enteredFromGraveyardOwnerId} flag on the entering
-     *  permanent. Routed into the any-target pipeline ({@code pendingEntersFromGraveyardTriggerTargets}).
+     *  permanent. Routed into the any-target pipeline ({@code EntersFromGraveyardTriggerTarget} interactions).
      *  Used by Flayer of the Hatebound. */
     ON_CREATURE_ENTERS_FROM_GRAVEYARD,
     ON_CONTROLLER_GAINS_LIFE,
@@ -78,6 +100,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
      *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
     ON_SELF_MILLED,
+    /** Triggers when this card is put into a graveyard from anywhere (battlefield, hand, library,
+     *  stack, exile). Checked for every card entering a graveyard in
+     *  {@code GraveyardService.addCardToGraveyard}, which is the single choke point for all
+     *  zone→graveyard transitions. Fires as a triggered ability (the card enters the graveyard
+     *  first). Used by Purity ("shuffle it into its owner's library"). */
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
@@ -100,6 +128,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */
     ON_OPPONENT_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever any creature (yours or an opponent's) is dealt damage (combat or non-combat).
+     *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
+     *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
+    ON_ANY_CREATURE_DEALT_DAMAGE,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
@@ -142,6 +174,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever ANY creature (any controller) becomes the target of ANY spell or ability.
+     *  Fires on ALL permanents with this slot across every battlefield (not just the targeted
+     *  creature). The targeted creature's permanent ID is set as the non-targeting {@code targetId}
+     *  on the stack entry so the resolved effect can act on it. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
+     *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Cowardice. */
+    ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers when this permanent transforms from its front face to its back face.
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched to the back face. */
@@ -156,11 +195,52 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entry so the resolved effect can act on it. Checked in
      *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
     ON_CREATURE_ATTACKS_YOU,
+    /** Triggers when this instant/sorcery spell is cast (a "when you cast this spell" ability on the
+     *  spell itself). Scanned against the just-cast card in
+     *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
+     *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
+    ON_SELF_CAST,
+    /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
+     *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
+     *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
+     *  chooses a target creature an opponent controls (Entangling Trap); non-targeting triggers go
+     *  straight onto the stack as a triggered ability (Rebellion of the Flamekin). Effects wrapped in
+     *  {@code IfWonClashEffect} apply only when the controller won the clash, and effects wrapped in
+     *  {@code IfLostClashEffect} only when they did not win — exactly one branch fires when both are
+     *  listed. */
+    ON_CONTROLLER_CLASHES,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
      *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).
      *  Note: this engine is strictly 2-player and the game ends the instant a player
      *  loses, so in practice this trigger goes onto the stack but the game finishes
      *  before it can resolve. Used by Withengar Unbound. */
-    ON_PLAYER_LOSES_GAME
+    ON_PLAYER_LOSES_GAME,
+    /** Triggers once when this creature blocks two or more creatures. Unlike ON_BLOCK (which fires
+     *  per blocker assignment), this fires exactly once during the declare-blockers step when the
+     *  creature is assigned to block 2+ attackers. The effect is resolved against the blocker itself
+     *  (sourcePermanentId), so self-scoped effects like {@code GrantKeywordEffect(FIRST_STRIKE, SELF)}
+     *  apply to the blocker. Checked in {@code CombatBlockService}. Used by Lairwatch Giant. */
+    ON_BLOCKS_MULTIPLE_CREATURES,
+    /** Triggers when a creature is championed with this permanent (i.e. exiled by this permanent's
+     *  Champion ability). Fired from {@code PermanentChoiceBattlefieldHandlerService.handleChampionCreature}
+     *  right after the championed creature is exiled. Effects that target a player are routed through
+     *  the {@code PermanentChoiceContext.ChampionedTriggerTarget} interaction. Used by Mistbind Clique
+     *  ("When a Faerie is championed with this creature, tap all lands target player controls"). */
+    ON_CHAMPIONED,
+    /** Triggers whenever the controller of this permanent activates an activated ability (including
+     *  mana abilities) of a permanent they control. Fires on every permanent with this slot on the
+     *  activating player's battlefield. Wrap the effect in {@code TriggeringPermanentConditionalEffect}
+     *  to filter by the permanent whose ability was activated (e.g. Ceaseless Searblades —
+     *  "whenever you activate an ability of an Elemental"). Checked in
+     *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
+     *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
+    ON_CONTROLLER_ACTIVATES_ABILITY,
+    /** Triggers whenever the controller of this permanent activates a non-mana activated ability
+     *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
+     *  fires only after the ability has been put on the stack, so the triggering ability can be
+     *  snapshotted and copied. Carries a {@link CopyControllerActivatedAbilityTriggerEffect}; the
+     *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
+     *  Used by Rings of Brighthearth. */
+    ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
 }

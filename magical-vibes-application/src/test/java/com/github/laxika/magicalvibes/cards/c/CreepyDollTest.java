@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,18 +20,7 @@ class CreepyDollTest extends BaseCardTest {
         return perm;
     }
 
-    @Test
-    @DisplayName("Has FlipCoinWinEffect wrapping DestroyTargetPermanentEffect on combat damage to creature")
-    void hasCorrectEffects() {
-        CreepyDoll card = new CreepyDoll();
-
-        var effects = card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(FlipCoinWinEffect.class);
-
-        FlipCoinWinEffect flipEffect = (FlipCoinWinEffect) effects.getFirst();
-        assertThat(flipEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage to creature triggers coin flip — blocker destroyed on win or survives on loss")

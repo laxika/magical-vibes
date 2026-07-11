@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,27 +10,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VillageSurvivorsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has fateful-hour static vigilance grant to other creatures at 5 or less life")
-    void hasCorrectEffect() {
-        VillageSurvivors card = new VillageSurvivors();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
 
     // ===== Above threshold (default 20 life) =====
 

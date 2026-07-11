@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "SOM", collectorNumber = "103")
 @CardRegistration(set = "M10", collectorNumber = "155")
+@CardRegistration(set = "9ED", collectorNumber = "218")
 public class Shatter extends Card {
 
     public Shatter() {

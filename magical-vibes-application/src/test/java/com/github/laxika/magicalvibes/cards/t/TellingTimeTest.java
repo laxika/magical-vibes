@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TellingTimeTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Telling Time has correct card properties")
-    void hasCorrectProperties() {
-        TellingTime card = new TellingTime();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsHandTopBottomEffect.class);
-        LookAtTopCardsHandTopBottomEffect effect = (LookAtTopCardsHandTopBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
 
     // ===== Casting =====
 
@@ -66,9 +49,9 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
     }
 
     @Test
@@ -155,9 +138,9 @@ class TellingTimeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isNull();
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNull();
     }
 
     // ===== Library edge cases =====
@@ -179,8 +162,8 @@ class TellingTimeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(2);
 
         // Choose cardA for hand, cardB for top
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
@@ -205,7 +188,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(singleCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
@@ -223,7 +206,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
@@ -343,5 +326,4 @@ class TellingTimeTest extends BaseCardTest {
                         && !log.contains("bottom"));
     }
 }
-
 

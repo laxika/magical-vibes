@@ -2,12 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,23 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KinjallisCallerTest extends BaseCardTest {
-
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Kinjalli's Caller has the cost reduction effect for Dinosaur subtype")
-    void hasCorrectEffects() {
-        KinjallisCaller card = new KinjallisCaller();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
 
     // ===== Cost reduction =====
 

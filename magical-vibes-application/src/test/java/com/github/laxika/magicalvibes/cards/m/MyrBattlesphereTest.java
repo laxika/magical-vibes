@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageDefenderEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,34 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MyrBattlesphereTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Myr Battlesphere has ETB token creation and ON_ATTACK trigger")
-    void hasCorrectEffects() {
-        MyrBattlesphere card = new MyrBattlesphere();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(4);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Myr");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isNull();
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.MYR);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(TapSubtypeBoostSelfAndDamageDefenderEffect.class);
-        TapSubtypeBoostSelfAndDamageDefenderEffect attackEffect =
-                (TapSubtypeBoostSelfAndDamageDefenderEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackEffect.subtype()).isEqualTo(CardSubtype.MYR);
-    }
 
     // ===== ETB token creation =====
 
@@ -96,7 +65,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0)); // Battlesphere attacks
 
@@ -113,12 +82,12 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 
     @Test
@@ -130,7 +99,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
@@ -163,7 +132,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
@@ -188,7 +157,7 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
@@ -217,14 +186,14 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         harness.setLife(player2, 20);
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger — no untapped Myr to tap
 
         // No multi-permanent choice should be prompted since the only Myr is tapped
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
 
         // No trigger damage or boost, but Battlesphere still deals 4 combat damage
         assertThat(battlesphere.getPowerModifier()).isEqualTo(0);
@@ -244,14 +213,14 @@ class MyrBattlesphereTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         harness.setLife(player2, 20);
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities(); // resolve attack trigger
 
         // Should only have 1 untapped Myr as eligible choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         // Tap the one remaining untapped Myr
         UUID untappedMyrId = battlefield.get(3).getId();

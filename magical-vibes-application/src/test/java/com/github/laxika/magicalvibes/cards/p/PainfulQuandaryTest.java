@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,21 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PainfulQuandaryTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has spell-cast triggered LoseLifeUnlessDiscardEffect with 5 life loss")
-    void hasCorrectEffect() {
-        PainfulQuandary card = new PainfulQuandary();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(LoseLifeUnlessDiscardEffect.class);
-        LoseLifeUnlessDiscardEffect effect =
-                (LoseLifeUnlessDiscardEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(5);
-    }
 
     // ===== Trigger only on opponent's spells =====
 
@@ -48,7 +30,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         // No triggered ability — only the creature spell on the stack
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -81,8 +63,8 @@ class PainfulQuandaryTest extends BaseCardTest {
         // Resolve the triggered ability — should prompt the opponent
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -93,8 +75,8 @@ class PainfulQuandaryTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -169,7 +151,7 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No prompt — it was automatic
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
 

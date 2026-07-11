@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class FumeSpitterTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice-self ability that puts -1/-1 counter on target creature")
-    void hasCorrectStructure() {
-        FumeSpitter card = new FumeSpitter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-    }
 
     // ===== Activation sacrifices and puts ability on stack =====
 

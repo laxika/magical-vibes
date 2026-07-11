@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,23 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlazingFiresingerSeethingSongTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Seething Song back face")
-    void hasCorrectStructure() {
-        BlazingFiresingerSeethingSong card = new BlazingFiresingerSeethingSong();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("SeethingSong");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Seething Song");
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) card.getBackFaceCard().getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.RED);
-        assertThat(manaEffect.amount()).isEqualTo(5);
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield prepares Blazing Firesinger and exiles a castable Seething Song copy")

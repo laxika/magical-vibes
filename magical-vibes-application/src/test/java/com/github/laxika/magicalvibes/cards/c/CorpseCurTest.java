@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BlightMamba;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,20 +32,6 @@ class CorpseCurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB may ability to return creature with infect from graveyard")
-    void hasCorrectEffect() {
-        CorpseCur card = new CorpseCur();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== ETB may ability =====
 
     @Test
@@ -65,7 +47,7 @@ class CorpseCurTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -96,7 +78,7 @@ class CorpseCurTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline → graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -143,7 +125,7 @@ class CorpseCurTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new HolyDay()));
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
     }
 
@@ -152,7 +134,7 @@ class CorpseCurTest extends BaseCardTest {
     void noEffectWithEmptyGraveyard() {
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
     }
 

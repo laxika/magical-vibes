@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,40 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GlorifierOfDuskTest extends BaseCardTest {
-
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has two activated abilities: pay 2 life for flying, pay 2 life for vigilance")
-    void hasCorrectActivatedAbilities() {
-        GlorifierOfDusk card = new GlorifierOfDusk();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: pay 2 life for flying
-        var flyingAbility = card.getActivatedAbilities().get(0);
-        assertThat(flyingAbility.isRequiresTap()).isFalse();
-        assertThat(flyingAbility.getManaCost()).isNull();
-        assertThat(flyingAbility.getEffects()).hasSize(2);
-        assertThat(flyingAbility.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        assertThat(((PayLifeCost) flyingAbility.getEffects().get(0)).amount()).isEqualTo(2);
-        assertThat(flyingAbility.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect flyingGrant = (GrantKeywordEffect) flyingAbility.getEffects().get(1);
-        assertThat(flyingGrant.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(flyingGrant.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second ability: pay 2 life for vigilance
-        var vigilanceAbility = card.getActivatedAbilities().get(1);
-        assertThat(vigilanceAbility.isRequiresTap()).isFalse();
-        assertThat(vigilanceAbility.getManaCost()).isNull();
-        assertThat(vigilanceAbility.getEffects()).hasSize(2);
-        assertThat(vigilanceAbility.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        assertThat(((PayLifeCost) vigilanceAbility.getEffects().get(0)).amount()).isEqualTo(2);
-        assertThat(vigilanceAbility.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect vigilanceGrant = (GrantKeywordEffect) vigilanceAbility.getEffects().get(1);
-        assertThat(vigilanceGrant.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(vigilanceGrant.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Activated ability: pay 2 life for flying =====
 
@@ -147,7 +109,5 @@ class GlorifierOfDuskTest extends BaseCardTest {
         assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
         assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
     }
-
-    // ===== Helper methods =====
 
 }

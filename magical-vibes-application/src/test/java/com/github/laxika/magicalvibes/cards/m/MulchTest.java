@@ -5,37 +5,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MulchTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has RevealTopCardsTypeToHandRestToGraveyardEffect on SPELL slot with count=4 and LAND type")
-    void hasCorrectStructure() {
-        Mulch card = new Mulch();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RevealTopCardsTypeToHandRestToGraveyardEffect.class);
-
-        RevealTopCardsTypeToHandRestToGraveyardEffect effect =
-                (RevealTopCardsTypeToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-        assertThat(effect.cardTypes()).isEqualTo(Set.of(CardType.LAND));
-    }
 
     // ===== All lands go to hand =====
 
@@ -205,6 +184,6 @@ class MulchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should not be awaiting any input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

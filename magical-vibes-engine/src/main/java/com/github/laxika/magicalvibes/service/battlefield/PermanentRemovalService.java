@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -438,6 +438,8 @@ public class PermanentRemovalService {
     private RemovedPermanentInfo processRemovalCleanup(GameData gameData, Permanent target, UUID controllerId) {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         gameData.stolenCreatures.remove(target.getId());
+        gameData.expireFloatingEffectsForDepartedSource(target.getId());
+        gameData.expireControlEffectsForDepartedPermanent(target.getId());
         handleSourceLinkedAnimationCleanup(gameData, target);
         handlePreparedSpellCleanup(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId);
@@ -466,6 +468,10 @@ public class PermanentRemovalService {
             }
             if (wasArtifact) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+            }
+            if (target.getCard().hasType(CardType.LAND)) {
+                triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
+                        gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
             }
             triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId, target.getCard().getId());
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)

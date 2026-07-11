@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfPunishment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,18 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HarmsWayTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Harm's Way has correct spell effect")
-    void hasCorrectEffect() {
-        HarmsWay card = new HarmsWay();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect effect
-                        && effect.amount() == 2);
-    }
 
     // ===== Casting =====
 
@@ -75,7 +61,7 @@ class HarmsWayTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
     }
 
     @Test

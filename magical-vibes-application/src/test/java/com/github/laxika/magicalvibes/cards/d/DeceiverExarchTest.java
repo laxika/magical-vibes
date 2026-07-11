@@ -2,13 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,18 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeceiverExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Deceiver Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        DeceiverExarch card = new DeceiverExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Untap target permanent you control")

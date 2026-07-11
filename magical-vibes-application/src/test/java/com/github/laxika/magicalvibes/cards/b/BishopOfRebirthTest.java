@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StoneGolem;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,22 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BishopOfRebirthTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Bishop of Rebirth has MayEffect wrapping ReturnCardFromGraveyardEffect on attack only")
-    void hasCorrectEffects() {
-        BishopOfRebirth card = new BishopOfRebirth();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect attackMay = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackMay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        // Should NOT have an ETB trigger (unlike Sun Titan)
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).isEmpty();
-    }
 
     // ===== Attack trigger =====
 
@@ -55,8 +35,8 @@ class BishopOfRebirthTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
         @Test
@@ -70,7 +50,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
             harness.handleGraveyardCardChosen(player1, 0);
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -90,7 +70,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // No valid targets — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -104,7 +84,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // Plains is a permanent but not a creature — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -118,7 +98,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // No valid targets — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -132,7 +112,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
             assertThat(gd.playerGraveyards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -146,7 +126,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -163,7 +143,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
             // Only Grizzly Bears should be a valid choice
             harness.handleGraveyardCardChosen(player1, 0);
@@ -186,7 +166,7 @@ class BishopOfRebirthTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,31 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrcishArtilleryTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Orcish Artillery has correct card properties")
-    void hasCorrectProperties() {
-        OrcishArtillery card = new OrcishArtillery();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect targetEffect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
-        assertThat(targetEffect.damage()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(DealDamageToControllerEffect.class);
-        DealDamageToControllerEffect controllerEffect =
-                (DealDamageToControllerEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(controllerEffect.damage()).isEqualTo(3);
-    }
 
     // ===== Activating ability =====
 

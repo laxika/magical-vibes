@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,9 +11,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,31 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnLiberatedTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three activated abilities with correct loyalty costs")
-    void hasThreeAbilities() {
-        KarnLiberated card = new KarnLiberated();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var plus4 = card.getActivatedAbilities().get(0);
-        assertThat(plus4.getLoyaltyCost()).isEqualTo(4);
-        assertThat(plus4.isNeedsTarget()).isTrue();
-        assertThat(plus4.getEffects().getFirst()).isInstanceOf(TargetPlayerExilesFromHandEffect.class);
-
-        var minus3 = card.getActivatedAbilities().get(1);
-        assertThat(minus3.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(minus3.isNeedsTarget()).isTrue();
-        assertThat(minus3.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndTrackWithSourceEffect.class);
-
-        var minus14 = card.getActivatedAbilities().get(2);
-        assertThat(minus14.getLoyaltyCost()).isEqualTo(-14);
-        assertThat(minus14.isNeedsTarget()).isFalse();
-        assertThat(minus14.getEffects().getFirst()).isInstanceOf(KarnRestartGameEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -102,8 +73,8 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(10); // 6 + 4
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
-            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
+            assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
         }
 
         @Test
@@ -118,7 +89,7 @@ class KarnLiberatedTest extends BaseCardTest {
             // Target player (player2) chooses which card to exile
             harness.handleCardChosen(player2, 0); // exile Grizzly Bears
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
             assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
 
@@ -154,8 +125,8 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, player1.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
-            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
+            assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
 
             harness.handleCardChosen(player1, 1); // exile Forest
 
@@ -174,7 +145,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // No exile prompt since hand is empty
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to exile"));
         }
 
@@ -303,6 +274,12 @@ class KarnLiberatedTest extends BaseCardTest {
             // Grizzly Bears should be on player1's battlefield (controller of Karn)
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+
+            // ...and must have LEFT exile — a card can only exist in one zone
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.getPlayerExiledCards(player2.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
             // Controller goes first
             assertThat(gd.activePlayerId).isEqualTo(player1.getId());

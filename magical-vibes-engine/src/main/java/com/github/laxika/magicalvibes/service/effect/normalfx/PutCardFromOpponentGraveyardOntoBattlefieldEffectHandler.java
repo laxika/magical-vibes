@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
+        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
 
         String tappedText = e.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);

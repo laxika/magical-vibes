@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -34,9 +35,9 @@ public class DiscardAndDrawCardEffectHandler implements NormalEffectHandlerBean 
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
-        gameData.pendingRummageDrawCount = e.drawAmount();
         gameData.discardCausedByOpponent = false;
-        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, e.discardAmount());
+        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, e.discardAmount(),
+                DiscardFollowUp.rummage(e.drawAmount()));
     
     }
 }

@@ -1,28 +1,27 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -57,36 +56,39 @@ public class GraveyardChoiceHandlerService {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
             throw new IllegalStateException("Not awaiting graveyard choice");
         }
-        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
+        PendingInteraction.GraveyardChoice graveyardChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         if (graveyardChoice == null || !player.getId().equals(graveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<Integer> validIndices = graveyardChoice.validIndices();
+        List<Integer> validIndices = graveyardChoice.validIndices();
         List<Card> cardPool = graveyardChoice.cardPool();
 
         gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
-        boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoice().gainLifeEqualToManaValue();
-        UUID attachToSourcePermanentId = gameData.interaction.graveyardChoice().attachToSourcePermanentId();
-        CardColor grantColor = gameData.interaction.graveyardChoice().grantColor();
-        CardSubtype grantSubtype = gameData.interaction.graveyardChoice().grantSubtype();
-        int exileRemainingCount = gameData.interaction.graveyardChoice().exileRemainingCount();
-        int gainLifeIfCreatureAmount = gameData.interaction.graveyardChoice().gainLifeIfCreatureAmount();
-        UUID gainLifeIfCreaturePlayerId = gameData.interaction.graveyardChoice().gainLifeIfCreaturePlayerId();
-        UUID trackWithSourcePermanentId = gameData.interaction.graveyardChoice().trackWithSourcePermanentId();
-        // May ability graveyard targeting context (read before clearing)
-        Card mayAbilitySourceCard = gameData.interaction.graveyardChoice().mayAbilitySourceCard();
-        UUID mayAbilityControllerId = gameData.interaction.graveyardChoice().mayAbilityControllerId();
-        java.util.List<CardEffect> mayAbilityEffects = gameData.interaction.graveyardChoice().mayAbilityEffects();
-        UUID mayAbilitySourcePermanentId = gameData.interaction.graveyardChoice().mayAbilitySourcePermanentId();
-        gameData.interaction.clearGraveyardChoice();
+        boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
+        UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
+        CardColor grantColor = graveyardChoice.grantColor();
+        CardSubtype grantSubtype = graveyardChoice.grantSubtype();
+        int exileRemainingCount = graveyardChoice.exileRemainingCount();
+        int gainLifeIfCreatureAmount = graveyardChoice.gainLifeIfCreatureAmount();
+        UUID gainLifeIfCreaturePlayerId = graveyardChoice.gainLifeIfCreaturePlayerId();
+        UUID trackWithSourcePermanentId = graveyardChoice.trackWithSourcePermanentId();
+        CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
+        UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
+        // May ability graveyard targeting context
+        Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
+        UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
+        java.util.List<CardEffect> mayAbilityEffects = graveyardChoice.mayAbilityEffects();
+        UUID mayAbilitySourcePermanentId = graveyardChoice.mayAbilitySourcePermanentId();
 
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
@@ -147,6 +149,19 @@ public class GraveyardChoiceHandlerService {
                         int manaValue = card.getManaValue();
                         if (manaValue > 0) {
                             lifeSupport.applyGainLife(gameData, playerId, manaValue);
+                        }
+                    }
+
+                    // Warren Pilferers: "If that card is a Goblin card, this creature gains haste
+                    // until end of turn." The subtype is checked against the returned card (changeling-aware).
+                    if (grantSourceHasteIfSubtype != null && grantSourceHasteSourcePermanentId != null
+                            && (gameQueryService.cardHasSubtype(card, grantSourceHasteIfSubtype, gameData, playerId)
+                                || card.getKeywords().contains(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
+                        Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
+                        if (sourcePerm != null) {
+                            sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);
+                            String hasteLog = sourcePerm.getCard().getName() + " gains haste until end of turn.";
+                            gameBroadcastService.logAndBroadcast(gameData, hasteLog);
                         }
                     }
                 }
@@ -218,10 +233,11 @@ public class GraveyardChoiceHandlerService {
                         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                         if (graveyard != null && !graveyard.isEmpty()) {
                             List<Integer> newValidIndices = IntStream.range(0, graveyard.size()).boxed().toList();
-                            gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-                            gameData.interaction.setGraveyardChoiceExileRemainingCount(remaining);
-                            playerInputService.beginGraveyardChoice(gameData, playerId, newValidIndices,
-                                    "Choose a card to exile from your graveyard.");
+                            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                                    .builder(playerId, newValidIndices, GraveyardChoiceDestination.EXILE,
+                                            "Choose a card to exile from your graveyard.")
+                                    .exileRemainingCount(remaining)
+                                    .build());
                             return;
                         }
                     }
@@ -271,19 +287,32 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        // Resume the paused spell/ability resolution that began this choice, so effects after
+        // the graveyard-return effect run now. Left dangling, the resumption state would fire
+        // spuriously from a later, unrelated interaction completion (e.g. Beacon of Unrest
+        // getting shuffled into the library a second time).
+        if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_GRAVEYARD_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
-        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
+        PendingInteraction.MultiGraveyardChoice multiGraveyardChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         if (multiGraveyardChoice == null || !player.getId().equals(multiGraveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
+        List<UUID> validIds = multiGraveyardChoice.validCardIds();
         int maxCount = multiGraveyardChoice.maxCount();
 
         if (cardIds == null) {
@@ -315,9 +344,9 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Card pile separation (Boneyard Parley): opponent assigns exiled cards to piles
-        if (gameData.pendingPileSeparation && !gameData.pendingPileSeparationCards.isEmpty()) {
+        PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();
-            gameData.interaction.clearMultiGraveyardChoice();
             graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
             return;
         }
@@ -335,7 +364,6 @@ public class GraveyardChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMultiGraveyardChoice();
         gameData.graveyardTargetOperation.card = null;
         gameData.graveyardTargetOperation.controllerId = null;
         gameData.graveyardTargetOperation.effects = null;
@@ -429,13 +457,13 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Process any remaining pending saga chapter graveyard targets before auto-pass
-        if (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
             return;
         }
 
         // Process any remaining pending graveyard-target triggers before auto-pass
-        if (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }

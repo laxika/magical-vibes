@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,19 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SpellbookTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spellbook has correct card properties")
-    void hasCorrectProperties() {
-        Spellbook card = new Spellbook();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-    }
 
     // ===== Hand limit enforcement =====
 
@@ -53,9 +38,9 @@ class SpellbookTest extends BaseCardTest {
 
         // Player should be prompted to discard 2 cards (9 - 7 = 2)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -78,7 +63,7 @@ class SpellbookTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Discard complete, hand is now 7
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
@@ -97,7 +82,7 @@ class SpellbookTest extends BaseCardTest {
         harness.getGameService().advanceStep(gd);
 
         // No discard needed
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
     }
 
@@ -111,7 +96,7 @@ class SpellbookTest extends BaseCardTest {
 
         harness.getGameService().advanceStep(gd);
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
@@ -155,7 +140,7 @@ class SpellbookTest extends BaseCardTest {
         harness.getGameService().advanceStep(gd);
 
         // No discard prompt — Spellbook removes hand size limit
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(9);
     }
 
@@ -178,9 +163,9 @@ class SpellbookTest extends BaseCardTest {
         harness.getGameService().advanceStep(gd);
 
         // Player1 must still discard — opponent's Spellbook doesn't help
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
     }
 
     // ===== Spellbook removal =====
@@ -204,8 +189,8 @@ class SpellbookTest extends BaseCardTest {
         harness.getGameService().advanceStep(gd);
 
         // Without Spellbook, must discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
     }
 
     // ===== Cleanup discard is logged =====

@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -33,7 +34,7 @@ public class CullingDais extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new DrawCardsEqualToChargeCountersOnSourceEffect()),
+                List.of(new SacrificeSelfCost(), new DrawCardEffect(new CountersOnSource(CounterType.CHARGE))),
                 "{1}, Sacrifice Culling Dais: Draw a card for each charge counter on Culling Dais."
         ));
     }

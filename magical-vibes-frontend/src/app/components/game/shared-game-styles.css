@@ -22,7 +22,9 @@
 }
 
 .game-container {
-  min-height: 100vh;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
   background:
     repeating-linear-gradient(
       0deg,
@@ -39,71 +41,111 @@
       rgba(0, 0, 0, 0.04) 80px
     ),
     linear-gradient(180deg, var(--color-darkest-wood) 0%, var(--color-dark-wood) 30%, var(--color-darkest-wood) 60%, #0d0a07 100%);
-  padding: 10px;
+  padding: 4px;
 }
 
 .game-layout {
   display: flex;
-  gap: 10px;
+  gap: 4px;
+  height: 100%;
 }
 
 .game-area {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Only the board row gives up height; banners and hand keep theirs. */
+.game-area > :not(.board-row) {
+  flex-shrink: 0;
+}
+
+/* Phase rail on the left, battlefield filling the rest. The row absorbs all
+   leftover height so the battlefield gets the tallest possible allocation. */
+.board-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
 .phase-tracker {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
   background: var(--gradient-parchment);
-  padding: 8px 10px;
+  padding: 6px 4px;
   border-radius: 4px;
-  margin-bottom: 6px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  overflow-x: auto;
 }
 
 .phase-group {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
+  gap: 3px;
 }
 
-.phase-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--color-text-brown);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-  white-space: nowrap;
-  font-family: var(--font-display);
-}
-
-.phase-steps {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: center;
+.phase-group + .phase-group {
+  border-top: 1px solid var(--color-border-tan);
+  padding-top: 4px;
 }
 
 .step-pip {
-  padding: 4px 8px;
+  position: relative;
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 3px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   color: #4a2c17;
   background: #e8d5a3;
-  white-space: nowrap;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 
+/* The hover opacity creates a stacking context on the pip, trapping the
+   tooltip's z-index inside it — the explicit z-index lifts that context
+   above the (transformed) battlefield cards. */
 .step-pip:hover {
   opacity: 0.8;
+  z-index: 60;
+}
+
+/* Hover tooltip with the full phase/step name, floating over the battlefield. */
+.step-pip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--gradient-dark-wood);
+  color: var(--color-parchment);
+  border: 1px solid var(--color-border-tan);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 60;
+}
+
+.step-pip:hover::after {
+  opacity: 1;
 }
 
 .step-pip.auto-stop {
@@ -144,72 +186,26 @@
   align-items: center;
 }
 
-.mana-pip {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+.mana-pool-entry {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 700;
   color: white;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  border: 2px solid rgba(0, 0, 0, 0.25);
-}
-
-.mana-pip[data-color="W"] {
-  background: linear-gradient(135deg, #f6d365, #d4a828);
-  color: #333;
-}
-
-.mana-pip[data-color="U"] {
-  background: linear-gradient(135deg, #4a90d9, var(--color-blue-primary));
-}
-
-.mana-pip[data-color="B"] {
-  background: linear-gradient(135deg, #555, #222);
-}
-
-.mana-pip[data-color="R"] {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-.mana-pip[data-color="G"] {
-  background: linear-gradient(135deg, #27ae60, #1e8449);
-}
-
-.mana-pip[data-color="C"] {
-  background: linear-gradient(135deg, #b0b0b0, #808080);
-  color: #333;
-}
-
-.mana-count {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .hand-area {
   background: var(--gradient-parchment);
-  margin-top: 16px;
-  padding: 8px 10px;
+  padding: 3px 4px;
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
 }
 
-.hand-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-red-primary);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: var(--font-display);
-}
-
 .hand-cards {
   display: flex;
-  gap: 10px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -220,7 +216,8 @@
 }
 
 .card.tapped {
-  /* Rotation handled by card-display component via :host(.tapped) */
+  /* Rotation handled by card-display component via :host(.is-tapped);
+     this class is still set by parents for the :has(.tapped) spacing rules. */
 }
 
 .card.tappable {
@@ -237,28 +234,60 @@
   background: var(--gradient-parchment);
   padding: 8px 10px;
   border-radius: 4px;
-  margin-bottom: 6px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  min-height: 160px;
+  /* Fill the board row next to the phase rail; card zoom is computed from the
+     allocated size. Overflow scrolls internally: growing past the allocation
+     would feed the inflated height back into the zoom model (via the
+     ResizeObserver) and push the hand off-screen. */
+  flex: 1;
+  min-width: 0;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  /* Safety: card visuals (lift/rotate transforms) must never grow a
+     horizontal scrollbar. */
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  scrollbar-color: #c4a06a #e8d5b0;
+  scrollbar-width: thin;
+}
+
+.battlefield-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.battlefield-area::-webkit-scrollbar-track {
+  background: #e8d5b0;
+  border-radius: 4px;
+}
+
+.battlefield-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c4a06a 0%, #a88550 100%);
+  border-radius: 4px;
+  border: 1px solid #b8944e;
 }
 
 .battlefield-row {
-  margin-bottom: 8px;
+  /* Each player owns exactly half the area (zero-basis, equal grow) so the
+     divider stays fixed at the center and never gets pushed around by whichever
+     side has more cards. The zoom model shrinks cards so the taller side fits
+     inside its half; a side's cards therefore never cross the divider.
+     The opponent packs its cards DOWN toward the divider so the two card masses
+     meet in the middle and combat happens right where the cards are (rather than
+     floating in an empty centre). */
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .battlefield-row:last-child {
-  margin-bottom: 0;
-}
-
-.battlefield-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-brown);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-  font-family: var(--font-display);
+  /* Our side packs its cards UP toward the divider (mirror of the opponent), so
+     attackers advance to the red line instead of the combat zone opening in dead
+     centre. Empty space collects at the outer edges next to the hand/life totals. */
+  justify-content: flex-start;
 }
 
 .battlefield-cards {
@@ -270,9 +299,25 @@
 }
 
 .battlefield-divider {
-  height: 1px;
+  height: 3px;
+  /* Sits in flow between the two equal halves (so it marks the true center) but
+     never shrinks: the rows don't shrink either, so without this the divider
+     would be the only flex-shrinkable item and collapse to 0px on a full board. */
+  flex-shrink: 0;
+  /* Permanent 30px combat corridor on each side: attacking/blocking creatures
+     advance into it (the ±30px --card-lift nudge) and land exactly on the line
+     instead of overlapping the opposing row. Kept in and out of combat so the
+     zoom never changes when combat starts; mirrored by COMBAT_CORRIDOR in the
+     fit model. */
+  margin: 30px 0;
   background: var(--color-border-tan);
-  margin: 12px 0;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Turns into the red combat line while attackers/blockers are declared. */
+.battlefield-divider.in-combat {
+  background: var(--color-red-primary, #8b1a1a);
+  box-shadow: 0 0 6px rgba(139, 26, 26, 0.6);
 }
 
 .battlefield-empty {
@@ -285,13 +330,20 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  min-height: 30px;
   align-items: center;
+  justify-content: center;
   padding: 4px 0;
+}
+
+/* An empty sub-row (no permanents of that kind) takes no space. */
+.battlefield-sub-row:not(:has(*)) {
+  display: none;
 }
 
 .lands-row {
   opacity: 0.9;
+  /* Lands render at 90% of the row's density zoom. */
+  --land-zoom: calc(var(--density-zoom, 1) * 0.9);
 }
 
 .lands-row:has(.ability-popup) {
@@ -300,11 +352,15 @@
 }
 
 .lands-row .card {
-  transform: scale(0.9);
+  --card-zoom: var(--land-zoom);
 }
 
-.creatures-row {
-  min-height: 40px;
+.creatures-row .card {
+  --card-zoom: var(--density-zoom, 1);
+}
+
+.hand-cards .card {
+  --card-zoom: var(--density-zoom, 1);
 }
 
 .permanent-stack {
@@ -325,7 +381,7 @@
 }
 
 .permanent-stack:has(.attached-aura):has(.tapped) {
-  min-height: 231px;
+  min-height: calc(var(--density-zoom, 1) * 231px);
 }
 
 .permanent-stack > .card:last-child {
@@ -335,19 +391,57 @@
 .land-stack {
   display: inline-flex;
   position: relative;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .land-stack .land-stack-item {
   position: relative;
+  transition: margin-left 0.25s ease, margin-top 0.25s ease;
 }
 
-.land-stack .land-stack-item:not(:first-child) {
-  margin-left: -120px;
+@media (prefers-reduced-motion: reduce) {
+  .land-stack .land-stack-item {
+    transition: none;
+  }
 }
 
-.land-stack:has(.tapped) .land-stack-item:not(:first-child) {
-  margin-left: -200px;
+/* Stack overlap sized in card-zoom units: each land keeps a 32px strip of its
+   box visible. The pull-back depends on the PREVIOUS item's width — an
+   upright box is 165px, a tapped one reserves the rotated 231px footprint —
+   so the strip stays constant in any tapped/untapped mix (stacks are grouped
+   by name only; members rotate in place). Mirrored by STACK_STRIP /
+   TAPPED_CARD_WIDTH in the fit model. */
+.land-stack .land-stack-item + .land-stack-item {
+  margin-left: calc(var(--land-zoom, 0.9) * -133px);
+}
+
+.land-stack .land-stack-item:has(.tapped) + .land-stack-item {
+  margin-left: calc(var(--land-zoom, 0.9) * -199px);
+}
+
+/* MTGO-style diagonal fan: each land in a stack also steps down by the same
+   32px as the horizontal strip, so the back cards peek out above the front
+   one. Max stack size is 4 (see stackBasicLands). Mirrored by
+   LAND_STACK_Y_STEP in the fit model. */
+.land-stack .land-stack-item:nth-child(2) {
+  margin-top: calc(var(--land-zoom, 0.9) * 32px);
+}
+
+.land-stack .land-stack-item:nth-child(3) {
+  margin-top: calc(var(--land-zoom, 0.9) * 64px);
+}
+
+.land-stack .land-stack-item:nth-child(4) {
+  margin-top: calc(var(--land-zoom, 0.9) * 96px);
+}
+
+/* A tapped card's margin box is only 165px tall (the :host(.is-tapped)
+   -33px margins), which would make it jump up against the stack's
+   flex-start axis. Reserve the upright height and center the card so
+   tapping rotates in place within the fan. */
+.land-stack .permanent-stack {
+  min-height: calc(var(--land-zoom, 0.9) * 231px);
+  justify-content: center;
 }
 
 .land-stack .land-stack-item:hover {
@@ -409,13 +503,19 @@
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.btn-keep:hover {
+.btn-keep:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(45, 122, 80, 0.5);
   background: linear-gradient(180deg, #389060 0%, var(--color-green-primary) 100%);
 }
 
-.btn-keep:active {
+.btn-keep:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 2px 8px rgba(45, 122, 80, 0.4);
+}
+
+.btn-keep:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
 }

@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,18 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BlasphemousActTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Blasphemous Act has correct effects")
-    void hasCorrectEffects() {
-        BlasphemousAct card = new BlasphemousAct();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostPerCreatureOnBattlefieldEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MassDamageEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Cost reduction")

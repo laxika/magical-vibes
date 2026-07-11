@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,20 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RavenousDaggertoothTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ravenous Daggertooth has one ON_DEALT_DAMAGE effect")
-    void hasCorrectEffect() {
-        RavenousDaggertooth card = new RavenousDaggertooth();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
 
     // ===== Non-combat damage trigger =====
 

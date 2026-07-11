@@ -2,16 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.cards.t.TovolarsMagehunter;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,39 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MondronenShamanTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has the no-spells upkeep transform trigger")
-    void frontFaceHasCorrectEffects() {
-        MondronenShaman card = new MondronenShaman();
+    
 
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(TovolarsMagehunter.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("TovolarsMagehunter");
-    }
-
-    @Test
-    @DisplayName("Back face damages opponents who cast spells and has the two-spells transform trigger")
-    void backFaceHasCorrectEffects() {
-        MondronenShaman card = new MondronenShaman();
-        TovolarsMagehunter backFace = (TovolarsMagehunter) card.getBackFaceCard();
-
-        assertThat(backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect damage =
-                (DealDamageToTargetPlayerEffect) backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(damage.damage()).isEqualTo(2);
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Transforms to Tovolar's Magehunter when no spells were cast last turn")

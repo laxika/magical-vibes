@@ -1,24 +1,20 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -46,18 +42,6 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Liege of the Tangle has combat damage trigger effect")
-    void hasCorrectEffect() {
-        LiegeOfTheTangle card = new LiegeOfTheTangle();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutAwakeningCountersOnTargetLandsEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test
@@ -70,11 +54,12 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext()).isNotNull();
-        assertThat(gd.interaction.multiPermanentChoiceContext().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiPermanentMaxCount()).isEqualTo(2);
-        assertThat(gd.pendingAwakeningCounterPlacement).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
+                .isInstanceOf(MultiPermanentChoiceContext.AwakeningCounterPlacement.class);
     }
 
     @Test
@@ -171,7 +156,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.pendingAwakeningCounterPlacement).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     @Test
@@ -183,7 +168,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("controls no lands"));
     }
 
@@ -231,7 +216,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 

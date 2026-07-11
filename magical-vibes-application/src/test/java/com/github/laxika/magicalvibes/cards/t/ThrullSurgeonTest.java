@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,22 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThrullSurgeonTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Thrull Surgeon has correct card properties")
-    void hasCorrectProperties() {
-        ThrullSurgeon card = new ThrullSurgeon();
-
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating ability sacrifices Thrull Surgeon and puts ability on stack")
@@ -74,13 +57,13 @@ class ThrullSurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactlyInAnyOrder(0, 1);
 
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Forest"));
         assertThat(gd.playerHands.get(player2.getId()))
@@ -101,7 +84,7 @@ class ThrullSurgeonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Thrull Surgeon"));

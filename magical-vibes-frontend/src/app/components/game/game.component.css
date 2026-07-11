@@ -99,44 +99,6 @@
 
 /* Combat styles */
 
-.combat-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--font-display);
-  color: var(--color-parchment);
-  letter-spacing: 1px;
-  border: 2px solid;
-}
-
-.attackers-banner {
-  background: linear-gradient(135deg, var(--color-red-bright), var(--color-red-primary));
-  border-color: #6b1010;
-  box-shadow: 0 4px 12px rgba(139, 26, 26, 0.4);
-}
-
-.blockers-banner {
-  background: linear-gradient(135deg, var(--color-blue-primary), var(--color-blue-dark));
-  border-color: #143050;
-  box-shadow: 0 4px 12px rgba(44, 94, 162, 0.4);
-}
-
-.mind-control-banner {
-  background: linear-gradient(135deg, #6a1b9a, #4a148c);
-  border-color: #38006b;
-  box-shadow: 0 4px 12px rgba(106, 27, 154, 0.4);
-}
-
-.combat-banner-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .btn-confirm-combat {
   padding: 8px 20px;
   border: 2px solid rgba(255, 255, 255, 0.4);
@@ -170,9 +132,11 @@
   cursor: pointer;
 }
 
+/* Red like a committed attacker (vs the gold "can attack" outline), so the
+   attack is readable while it is being declared, not only after confirming. */
 .card.selected-attacker {
-  outline: 2px solid var(--color-gold);
-  box-shadow: 0 0 16px rgba(200, 169, 81, 0.7);
+  outline: 3px solid #c04040;
+  box-shadow: 0 0 16px rgba(192, 64, 64, 0.7);
   cursor: pointer;
 }
 
@@ -198,10 +162,86 @@
   box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
 }
 
+/* An attacker that already has a blocker assigned during declaration.
+   Declared before .block-target so the dashed "assign here" cue wins while a
+   blocker is being pointed. */
+.card.blocked-attacker {
+  outline: 2px solid #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
+}
+
 .card.block-target {
   outline: 2px dashed #c04040;
   box-shadow: 0 0 16px rgba(192, 64, 64, 0.5);
   cursor: pointer;
+}
+
+/* Attacking/blocking creatures advance toward the divider without changing size
+   or layout: --card-lift composes into the card's own transform (alongside any
+   tap rotation), so the card just slides toward the red line while staying in
+   its row, beside its non-combat neighbours. */
+.battlefield-row:first-child .creatures-row .card.combat-nudge {
+  --card-lift: 30px;   /* opponent's side slides down toward the divider */
+  z-index: 3;
+}
+
+.battlefield-row:last-child .creatures-row .card.combat-nudge {
+  --card-lift: -30px;  /* our side slides up toward the divider */
+  z-index: 3;
+}
+
+/* Combat badges. Each is projected into one of card-display's corner
+   stacks (badge-tl/tr/bl/br marker attributes), which lay co-occurring
+   badges out in a column so they never overlap. */
+.card-combat-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attacking-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+}
+
+/* Below the Attacking badge while declaring: which player/planeswalker this
+   attacker is pointed at; clicking cycles through the available targets. */
+.attack-target-badge {
+  background: #b8860b;
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
+.blocking-badge {
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+}
+
+.blocked-badge {
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+}
+
+.damage-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+}
+
+.must-block-badge {
+  background: #d4a017;
+  color: #1a1a1a;
+}
+
+.menace-badge {
+  background: #8b2fc9;
+  color: var(--color-parchment);
 }
 
 .surrender-confirm-card h2 {
@@ -317,95 +357,6 @@
   font-family: var(--font-display);
 }
 
-/* Hand choice (ETB effects, etc.) */
-
-.hand-choice-banner {
-  background: linear-gradient(135deg, #4b0082, #2e0854);
-  border: 2px solid #3a0068;
-  box-shadow: 0 4px 12px rgba(75, 0, 130, 0.4);
-}
-
-.color-choice-banner {
-  background: linear-gradient(135deg, var(--color-dark-wood), var(--color-darkest-wood));
-  border: 2px solid var(--color-dark-border);
-  box-shadow: 0 4px 12px rgba(43, 27, 23, 0.4);
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.color-choice-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-color-choice {
-  padding: 8px 16px;
-  border: 2px solid rgba(245, 230, 200, 0.5);
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 700;
-  font-family: var(--font-display);
-  color: var(--color-parchment);
-  cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
-}
-
-.btn-color-choice:hover {
-  transform: scale(1.05);
-}
-
-.btn-color-choice[data-color="WHITE"] {
-  background: var(--color-border-gold);
-  color: var(--color-dark-wood);
-  border-color: #a08030;
-}
-
-.btn-color-choice[data-color="BLUE"] {
-  background: var(--color-blue-primary);
-  border-color: var(--color-blue-dark);
-}
-
-.btn-color-choice[data-color="BLACK"] {
-  background: var(--color-darkest-wood);
-  border-color: var(--color-dark-border);
-}
-
-.btn-color-choice[data-color="RED"] {
-  background: var(--color-red-primary);
-  border-color: #6b1010;
-}
-
-.btn-color-choice[data-color="GREEN"] {
-  background: var(--color-green-primary);
-  border-color: var(--color-green-dark);
-}
-
-.btn-color-choice[data-color="PLAINS"] {
-  background: var(--color-border-gold);
-  color: var(--color-dark-wood);
-  border-color: #a08030;
-}
-
-.btn-color-choice[data-color="ISLAND"] {
-  background: var(--color-blue-primary);
-  border-color: var(--color-blue-dark);
-}
-
-.btn-color-choice[data-color="SWAMP"] {
-  background: var(--color-darkest-wood);
-  border-color: var(--color-dark-border);
-}
-
-.btn-color-choice[data-color="MOUNTAIN"] {
-  background: var(--color-red-primary);
-  border-color: #6b1010;
-}
-
-.btn-color-choice[data-color="FOREST"] {
-  background: var(--color-green-primary);
-  border-color: var(--color-green-dark);
-}
-
 .card.choosable-card {
   outline: 3px solid #7040a0;
   box-shadow: 0 0 12px rgba(112, 64, 160, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
@@ -428,12 +379,6 @@
   outline: 3px solid #c02020;
   box-shadow: 0 0 16px rgba(192, 32, 32, 0.8);
   cursor: pointer;
-}
-
-.permanent-choice-banner {
-  background: linear-gradient(135deg, #c9854a, #a06020);
-  border: 2px solid #8a5010;
-  box-shadow: 0 4px 12px rgba(201, 133, 74, 0.4);
 }
 
 .ability-popup {
@@ -497,12 +442,6 @@
 
 /* Targeting styles */
 
-.targeting-banner {
-  background: linear-gradient(135deg, var(--color-green-primary), var(--color-green-dark));
-  border: 2px solid var(--color-green-dark);
-  box-shadow: 0 4px 12px rgba(45, 122, 80, 0.4);
-}
-
 .card.targetable {
   outline: 3px dashed var(--color-green-primary);
   box-shadow: 0 0 12px rgba(45, 122, 80, 0.5), 2px 3px 8px rgba(0, 0, 0, 0.5);
@@ -564,6 +503,10 @@
   transform: scale(0.85);
 }
 
+.card.revealed-hand-card.playable {
+  opacity: 1;
+}
+
 /* Stack target highlight (hover over stack entry to show its target) */
 
 .card.stack-targeted {
@@ -574,27 +517,7 @@
   z-index: 10;
 }
 
-/* Spell targeting styles */
-
-.spell-targeting-banner {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
-}
-
-/* Library reorder styles */
-
-.reorder-banner {
-  background: linear-gradient(135deg, #2980b9, #1a5276);
-  box-shadow: 0 4px 12px rgba(41, 128, 185, 0.4);
-}
-
-.reorder-zone {
-  background: linear-gradient(135deg, rgba(41, 128, 185, 0.08), rgba(26, 82, 118, 0.12));
-  border: 1px dashed rgba(41, 128, 185, 0.4);
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 6px;
-}
+/* Library reorder styles (rendered inside the reveal-hand overlay) */
 
 .reorder-section {
   margin-bottom: 12px;
@@ -695,21 +618,6 @@
 
 .btn-scry-bottom:hover {
   background: rgba(192, 57, 43, 0.5);
-}
-
-.graveyard-choice-overlay {
-  background: linear-gradient(135deg, rgba(44, 62, 80, 0.08), rgba(52, 73, 94, 0.12));
-  border: 1px dashed rgba(192, 128, 64, 0.4);
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 6px;
-}
-
-.graveyard-choice-cards {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: center;
 }
 
 .graveyard-choice-card {
@@ -851,4 +759,107 @@
 .combat-damage-confirm {
   align-self: center;
   margin-top: 4px;
+}
+
+/* ========== Keyboard shortcuts (phase-rail icon + popup) ========== */
+
+/* Anchor pinned to the bottom of the phase rail; the pips stay centered
+   because the anchor is out of flow. */
+.phase-tracker {
+  position: relative;
+}
+
+.shortcuts-anchor {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.shortcuts-toggle {
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 3px;
+  padding: 0;
+  color: #4a2c17;
+  background: #e8d5a3;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.shortcuts-toggle:hover {
+  opacity: 0.8;
+}
+
+.shortcuts-toggle.open {
+  background: linear-gradient(
+    135deg,
+    #5c1818 0%,
+    #7a2222 50%,
+    #5c1818 100%);
+  color: var(--color-parchment);
+}
+
+/* Same float-over-the-battlefield treatment as the step-pip tooltips. */
+.shortcuts-popup {
+  position: absolute;
+  left: calc(100% + 10px);
+  bottom: 0;
+  z-index: 70;
+  width: max-content;
+  background: var(--gradient-dark-wood);
+  color: var(--color-parchment);
+  border: 1px solid var(--color-border-tan);
+  border-radius: 4px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.shortcuts-title {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--color-border-tan);
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 11px;
+}
+
+.shortcut-row + .shortcut-row {
+  margin-top: 5px;
+}
+
+.shortcut-keys {
+  flex-shrink: 0;
+  min-width: 92px;
+}
+
+.shortcut-keys kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--color-border-tan);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.shortcut-desc {
+  color: var(--color-parchment);
+  opacity: 0.9;
 }

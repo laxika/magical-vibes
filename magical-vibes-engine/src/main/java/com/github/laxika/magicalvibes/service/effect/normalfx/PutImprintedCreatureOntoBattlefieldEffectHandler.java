@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID controllerId = entry.getControllerId();
-        Card imprintedCard = entry.getCard().getImprintedCard();
+        Card imprintedCard = gameData.getImprintedCard(entry.getCard());
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (imprintedCard == null) {

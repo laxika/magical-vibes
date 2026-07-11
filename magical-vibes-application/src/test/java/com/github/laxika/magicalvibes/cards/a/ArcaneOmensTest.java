@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -22,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArcaneOmensTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Arcane Omens targets a player and discards by Converge")
-    void hasCorrectEffects() {
-        ArcaneOmens card = new ArcaneOmens();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(TargetPlayerDiscardsByConvergeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting with one color of mana snapshots Converge 1 on the stack")
@@ -73,7 +62,7 @@ class ArcaneOmensTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);

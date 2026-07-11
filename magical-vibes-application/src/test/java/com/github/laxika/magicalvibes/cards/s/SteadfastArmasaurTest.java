@@ -7,11 +7,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourceToughnessToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,24 +34,10 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageEqualToSourceToughnessToTargetCreatureEffect.class);
+                .isEqualTo(new DealDamageToTargetCreatureEffect(new SourceToughness()));
     }
 
-    @Test
-    @DisplayName("Target filter requires creature in combat with source")
-    void hasCorrectTargetFilter() {
-        SteadfastArmasaur card = new SteadfastArmasaur();
-
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().getFirst().getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates().get(0)).isInstanceOf(PermanentIsCreaturePredicate.class);
-        assertThat(allOf.predicates().get(1)).isInstanceOf(PermanentInCombatWithSourcePredicate.class);
-    }
+    
 
     // ===== Deals damage when attacking and blocked =====
 

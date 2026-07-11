@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -26,11 +27,9 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,6 +47,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ReturnCardFromGraveyardEffectHandlerTest {
@@ -61,6 +61,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     @Mock
     private GameQueryService gameQueryService;
     @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+    @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
     private PlayerInputService playerInputService;
@@ -70,6 +72,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private GraveyardService graveyardService;
+    @Mock
+    private InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;
@@ -283,12 +287,14 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService).beginGraveyardChoice(eq(gd), eq(player1Id), any(), any());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc
+                                && gc.playerId().equals(player1Id)));
             }
 
             @Test
@@ -330,11 +336,11 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginGraveyardChoice(any(), any(), any(), any());
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no ") && msg.contains("in any graveyard")));
             }

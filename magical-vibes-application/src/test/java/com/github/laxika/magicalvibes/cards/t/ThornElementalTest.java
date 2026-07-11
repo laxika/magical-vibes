@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,14 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ThornElementalTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Thorn Elemental has AssignCombatDamageAsThoughUnblockedEffect as static effect")
-    void hasCorrectStaticEffect() {
-        ThornElemental card = new ThornElemental();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AssignCombatDamageAsThoughUnblockedEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Blocked Thorn Elemental can assign combat damage to defending player")

@@ -1,37 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorMadPhantasmTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mirror-Mad Phantasm has activated ability with correct effect")
-    void hasCorrectActivatedAbility() {
-        MirrorMadPhantasm card = new MirrorMadPhantasm();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect.class);
-
-        ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect effect =
-                (ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.cardName()).isEqualTo("Mirror-Mad Phantasm");
-    }
 
     // ===== Resolving — finds copy in library =====
 

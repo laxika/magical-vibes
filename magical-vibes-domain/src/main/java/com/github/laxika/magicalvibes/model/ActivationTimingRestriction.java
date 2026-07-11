@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.model;
 public enum ActivationTimingRestriction {
     METALCRAFT,
     MORBID,
+    ONLY_BEFORE_ATTACKERS_DECLARED,
+    ONLY_DURING_COMBAT,
+    OPPONENT_CONTROLS_MORE_LANDS,
     ONLY_DURING_YOUR_TURN,
     ONLY_DURING_YOUR_UPKEEP,
     ONLY_WHILE_ATTACKING,

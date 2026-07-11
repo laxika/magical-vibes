@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
@@ -18,6 +21,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +41,7 @@ import java.util.UUID;
 public class DamageTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
@@ -81,8 +86,9 @@ public class DamageTriggerCollectorService {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, dc.sourcePermanentId());
         if (sourceControllerId == null || sourceControllerId.equals(dc.damagedPlayerId())) return false;
 
-        creatureControlService.stealPermanent(gameData, sourceControllerId, match.permanent());
-        gameData.permanentControlStolenCreatures.add(match.permanent().getId());
+        creatureControlService.applyControlEffect(gameData, sourceControllerId, match.permanent(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                EffectDuration.PERMANENT, null, match.permanent().getCard().getName());
 
         log.info("Game {} - {} triggers, {} gains control of {}",
                 gameData.id, match.permanent().getCard().getName(),
@@ -101,7 +107,7 @@ public class DamageTriggerCollectorService {
         Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
         if (currentSource == null) return false;
         if (destroyEffect.filter() != null
-                && !gameQueryService.matchesPermanentPredicate(gameData, currentSource, destroyEffect.filter())) {
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, currentSource, destroyEffect.filter())) {
             return false;
         }
 
@@ -181,7 +187,7 @@ public class DamageTriggerCollectorService {
             gameData.stack.add(entry);
         } else {
             // Planeswalkers present — need player choice between opponent and planeswalkers
-            gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)), false, null
             ));
         }

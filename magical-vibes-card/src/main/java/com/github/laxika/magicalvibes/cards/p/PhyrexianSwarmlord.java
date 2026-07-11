@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
+import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -15,7 +16,10 @@ import java.util.Set;
 public class PhyrexianSwarmlord extends Card {
 
     public PhyrexianSwarmlord() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenPerOpponentPoisonCounterEffect(
+        // At the beginning of your upkeep, create a 1/1 green Phyrexian Insect creature
+        // token with infect for each poison counter your opponents have.
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+                new OpponentPoisonCounters(),
                 "Phyrexian Insect",
                 1,
                 1,

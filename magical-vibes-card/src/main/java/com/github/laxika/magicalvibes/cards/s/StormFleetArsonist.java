@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -18,7 +20,8 @@ public class StormFleetArsonist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new RaidConditionalEffect(
-                        new TargetPlayerSacrificesPermanentsEffect(1, new PermanentTruePredicate())));
+                new ConditionalEffect(new Raid(),
+                        new SacrificePermanentsEffect(
+                                1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER)));
     }
 }

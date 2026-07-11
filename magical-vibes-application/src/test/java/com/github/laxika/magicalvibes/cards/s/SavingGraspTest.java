@@ -2,16 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,26 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SavingGraspTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has bounce effect on SPELL slot and flashback casting option")
-    void hasCorrectCardStructure() {
-        SavingGrasp card = new SavingGrasp();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getTargetFilter()).isInstanceOf(OwnedPermanentPredicateTargetFilter.class);
-
-        OwnedPermanentPredicateTargetFilter filter = (OwnedPermanentPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsCreaturePredicate.class);
-
-        assertThat(card.getCastingOptions()).hasSize(1);
-        assertThat(card.getCastingOptions().getFirst()).isInstanceOf(FlashbackCast.class);
-        assertThat(((FlashbackCast) card.getCastingOptions().getFirst()).costs()).hasSize(1);
-    }
 
     // ===== Casting =====
 

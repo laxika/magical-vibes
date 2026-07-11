@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.j;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,9 +10,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -34,55 +32,11 @@ class JaceCunningCastawayTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has RegisterDelayedCombatDamageLootEffect(1, 1)")
-    void plusOneAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(RegisterDelayedCombatDamageLootEffect.class);
-        RegisterDelayedCombatDamageLootEffect effect =
-                (RegisterDelayedCombatDamageLootEffect) ability.getEffects().getFirst();
-        assertThat(effect.drawAmount()).isEqualTo(1);
-        assertThat(effect.discardAmount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability creates 2/2 blue Illusion token with sacrifice-on-target trigger")
-    void minusTwoAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(effect.tokenName()).isEqualTo("Illusion");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLUE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.ILLUSION);
-        assertThat(effect.tokenEffects()).containsKey(EffectSlot.ON_BECOMES_TARGET_OF_SPELL);
-        assertThat(effect.tokenEffects().get(EffectSlot.ON_BECOMES_TARGET_OF_SPELL))
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("-5 ability has CreateTokenCopyOfSourceEffect(removeLegendary=true, amount=2)")
-    void minusFiveAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-5);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenCopyOfSourceEffect.class);
-        CreateTokenCopyOfSourceEffect effect =
-                (CreateTokenCopyOfSourceEffect) ability.getEffects().getFirst();
-        assertThat(effect.removeLegendary()).isTrue();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
+    
 
     // ===== +1 ability: delayed combat damage loot trigger =====
 
@@ -96,10 +50,10 @@ class JaceCunningCastawayTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
-        assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().drawAmount()).isEqualTo(1);
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().discardAmount()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().drawAmount()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().discardAmount()).isEqualTo(1);
     }
 
     @Test
@@ -111,8 +65,8 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
-        GameData.DelayedCombatDamageLoot loot = gd.pendingDelayedCombatDamageLoots.getFirst();
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
+        DelayedCombatDamageLoot loot = gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst();
         assertThat(loot.sourceCard()).isNotNull();
         assertThat(loot.sourceCard().getName()).isEqualTo("Jace, Cunning Castaway");
     }

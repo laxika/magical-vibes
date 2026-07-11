@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OvergrowthTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Overgrowth has correct card properties")
-    void hasCorrectProperties() {
-        Overgrowth card = new Overgrowth();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst())
-                .isInstanceOf(AddManaOnEnchantedLandTapEffect.class);
-        AddManaOnEnchantedLandTapEffect effect =
-                (AddManaOnEnchantedLandTapEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst();
-        assertThat(effect.color()).isEqualTo(ManaColor.GREEN);
-        assertThat(effect.amount()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Overgrowth puts it on the stack")

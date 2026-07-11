@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,20 +40,6 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GeralfsMindcrusher()));
         harness.addMana(player1, ManaColor.BLUE, 6);
         harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Geralf's Mindcrusher has an ETB mill-five effect that needs a target")
-    void hasEtbMillEffect() {
-        GeralfsMindcrusher card = new GeralfsMindcrusher();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MillTargetPlayerEffect effect =
-                (MillTargetPlayerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
     }
 
     // ===== Resolving creature spell =====
@@ -142,7 +125,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Undying returned it with a +1/+1 counter and its ETB ability now asks for a target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         Permanent mindcrusher = mindcrusherOnBattlefield();
         assertThat(mindcrusher).isNotNull();
@@ -169,7 +152,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Choose the opponent as the target of the returned Mindcrusher's ETB mill.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 

@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.l.LeadenMyr;
 import com.github.laxika.magicalvibes.cards.s.SilverMyr;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -146,7 +147,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         // Should prompt for choice since 6 Myr > 5 required
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -215,9 +216,9 @@ class MyrTurbineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should prompt for library search
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // Only Myr creature cards should be available
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.MYR));
 
         // Choose Myr Sire
@@ -247,7 +248,7 @@ class MyrTurbineTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No matching cards — library should be shuffled and search should end
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test

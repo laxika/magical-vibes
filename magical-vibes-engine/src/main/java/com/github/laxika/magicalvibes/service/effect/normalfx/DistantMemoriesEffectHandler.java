@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,10 +55,10 @@ public class DistantMemoriesEffectHandler implements NormalEffectHandlerBean {
 
         List<Card> allCards = new ArrayList<>(deck);
 
-        gameData.pendingOpponentExileChoice = new com.github.laxika.magicalvibes.model.PendingOpponentExileChoice(controllerId, 3);
-
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)
                 .destination(LibrarySearchDestination.EXILE)
+                .followUp(LibrarySearchFollowUp.opponentExile(
+                        new com.github.laxika.magicalvibes.model.PendingOpponentExileChoice(controllerId, 3)))
                 .build(), "Search your library for a card to exile.", false);
 
         log.info("Game {} - {} searching library for Distant Memories ({} cards in library)", gameData.id, playerName, allCards.size());

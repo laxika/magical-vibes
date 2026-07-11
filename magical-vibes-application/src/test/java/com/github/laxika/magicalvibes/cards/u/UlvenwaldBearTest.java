@@ -3,12 +3,9 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,25 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UlvenwaldBearTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has MorbidConditionalEffect wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        UlvenwaldBear card = new UlvenwaldBear();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MorbidConditionalEffect.class);
-
-        MorbidConditionalEffect morbid =
-                (MorbidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counters =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) morbid.wrapped();
-        assertThat(counters.count()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("No ETB trigger without morbid")
+    @DisplayName("No ETB trigger and no target prompt without morbid")
     void noEffectWithoutMorbid() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -49,10 +28,12 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        // No morbid — no trigger and no target prompt (CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
@@ -61,7 +42,7 @@ class UlvenwaldBearTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Morbid met — target creature gets two +1/+1 counters")
+    @DisplayName("Morbid met — target creature chosen at trigger time gets two +1/+1 counters")
     void morbidPutsTwoCountersOnTarget() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -73,9 +54,10 @@ class UlvenwaldBearTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
+        harness.passBothPriorities(); // resolve ETB
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
@@ -98,9 +80,10 @@ class UlvenwaldBearTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
+        harness.passBothPriorities(); // resolve ETB
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
@@ -128,9 +111,10 @@ class UlvenwaldBearTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID bears2Id = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, bears2Id);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, bears2Id); // ETB trigger on stack
+        harness.passBothPriorities(); // resolve ETB
 
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(bears2Id))
@@ -151,12 +135,13 @@ class UlvenwaldBearTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
 
         gd.playerBattlefields.get(player2.getId()).clear();
 
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve ETB — fizzles
 
         assertThat(gd.stack).isEmpty();
     }

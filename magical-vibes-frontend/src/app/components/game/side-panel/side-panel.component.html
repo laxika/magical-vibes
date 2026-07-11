@@ -1,65 +1,110 @@
 <div class="side-panel">
+  <div class="card-preview-panel">
+    @if (hoveredCard) {
+      <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
+    } @else {
+      <div class="card-preview-empty"></div>
+    }
+  </div>
+
+  <div class="mana-strip">
+    <div class="mana-strip-pips">
+      @for (color of manaColors; track color) {
+        <div class="mana-socket" [class.filled]="manaCount(color) > 0" [attr.data-color]="color">
+          <span class="mana-socket-symbol" [innerHTML]="manaSymbol(color)"></span>
+          <!-- keyed on the count so the badge is recreated on change, restarting its pop animation -->
+          @for (count of [manaCount(color)]; track count) {
+            @if (count > 0) {
+              <span class="mana-socket-count">{{ count }}</span>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="turn-info">
+    <div class="player-badge-wrapper">
+      <div class="player-badge" [class.active]="opponentBadgeIsActive" [class.inactive]="!opponentBadgeIsActive" [class.has-priority]="opponentBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(opponentBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(opponentPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(opponentBadgePlayerId) || choice.choosablePlayerIds().has(opponentBadgePlayerId))" (click)="onPlayerBadgeClick($event, opponentPlayerIndex)">
+        <span class="badge-name" [title]="opponentPlayerName">{{ opponentPlayerName }}</span>
+        <span class="badge-stats">
+          <span class="badge-stat badge-life" title="Life">
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ opponentBadgeLifeTotal }}
+          </span>
+          @if (opponentBadgePoisonCounters > 0) {
+            <span class="badge-stat badge-poison" title="Poison">
+              <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ opponentBadgePoisonCounters }}
+            </span>
+          }
+          <span class="badge-stat badge-hand" title="Hand">
+            <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ opponentBadgeHandSize }}
+          </span>
+          <span class="badge-stat badge-deck" title="Deck">
+            <svg viewBox="0 0 12 12"><path d="M2 3.5h6a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" opacity=".5"/><path d="M4 0h6a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z"/></svg>{{ opponentBadgeDeckSize }}
+          </span>
+        </span>
+      </div>
+    </div>
+    <div class="turn-center">
+      <span class="turn-number">Turn {{ turnNumber }}</span>
+      <span class="vs-label">VS</span>
+    </div>
+    <div class="player-badge-wrapper">
+      <div class="player-badge" [class.active]="myBadgeIsActive" [class.inactive]="!myBadgeIsActive" [class.has-priority]="myBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(myBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(myPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(myBadgePlayerId) || choice.choosablePlayerIds().has(myBadgePlayerId))" (click)="onPlayerBadgeClick($event, myPlayerIndex)">
+        <span class="badge-name" [title]="myBadgeName">{{ myBadgeName }}</span>
+        <span class="badge-stats">
+          <span class="badge-stat badge-life" title="Life">
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ myBadgeLifeTotal }}
+          </span>
+          @if (myBadgePoisonCounters > 0) {
+            <span class="badge-stat badge-poison" title="Poison">
+              <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ myBadgePoisonCounters }}
+            </span>
+          }
+          <span class="badge-stat badge-hand" title="Hand">
+            <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ myBadgeHandSize }}
+          </span>
+          <span class="badge-stat badge-deck" title="Deck">
+            <svg viewBox="0 0 12 12"><path d="M2 3.5h6a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" opacity=".5"/><path d="M4 0h6a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z"/></svg>{{ myBadgeDeckSize }}
+          </span>
+        </span>
+      </div>
+      @if (showPlayerMenu()) {
+        <div class="player-menu" (click)="$event.stopPropagation()">
+          <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
+        </div>
+      }
+    </div>
+  </div>
+
   <div class="tab-header">
-    <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
+    <div class="tab" [class.active]="activeTab() === 'log'" (click)="openLogTab()">
+      Log
+      @if (logUnreadCount() > 0) {
+        <span class="tab-badges">
+          <span class="tab-badge">{{ logUnreadCount() }}</span>
+        </span>
+      }
+    </div>
     <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
       Stack
-      <span class="tab-badge">{{ stackEntries.length }}</span>
+      <span class="tab-badges">
+        <span class="tab-badge">{{ stackEntries.length }}</span>
+      </span>
     </div>
     <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
-      Graveyard
-      <span class="tab-badge">{{ myGraveyard.length }}</span>
-      <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
+      Grave
+      <span class="tab-badges">
+        <span class="tab-badge">{{ myGraveyard.length }}</span>
+        <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
+      </span>
     </div>
   </div>
 
   <div class="tab-content">
-    @if (activeTab() === 'game') {
-      <div class="game-tab">
-        <div class="card-preview-panel">
-          @if (hoveredCard) {
-            <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
-          } @else {
-            <div class="card-preview-empty"></div>
-          }
-        </div>
-
-        <div class="turn-info">
-          <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="opponentBadgeIsActive" [class.inactive]="!opponentBadgeIsActive" [class.has-priority]="opponentBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(opponentBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(opponentPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(opponentBadgePlayerId) || choice.choosablePlayerIds().has(opponentBadgePlayerId))" (click)="onPlayerBadgeClick($event, opponentPlayerIndex)">
-              {{ opponentPlayerName }}
-              <span class="life-total">Life: {{ opponentBadgeLifeTotal }}</span>
-              @if (opponentBadgePoisonCounters > 0) {
-                <span class="poison-total">Poison: {{ opponentBadgePoisonCounters }}</span>
-              }
-              <span class="hand-size">Hand: {{ opponentBadgeHandSize }}</span>
-              <span class="deck-size">Deck: {{ opponentBadgeDeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!opponentBadgeHoldsPriority">Priority</span>
-            </div>
-          </div>
-          <div class="turn-center">
-            <span class="turn-number">Turn {{ turnNumber }}</span>
-            <span class="vs-label">VS</span>
-          </div>
-          <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="myBadgeIsActive" [class.inactive]="!myBadgeIsActive" [class.has-priority]="myBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(myBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(myPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(myBadgePlayerId) || choice.choosablePlayerIds().has(myBadgePlayerId))" (click)="onPlayerBadgeClick($event, myPlayerIndex)">
-              {{ myBadgeName }}
-              <span class="life-total">Life: {{ myBadgeLifeTotal }}</span>
-              @if (myBadgePoisonCounters > 0) {
-                <span class="poison-total">Poison: {{ myBadgePoisonCounters }}</span>
-              }
-              <span class="hand-size">Hand: {{ myBadgeHandSize }}</span>
-              <span class="deck-size">Deck: {{ myBadgeDeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!myBadgeHoldsPriority">Priority</span>
-            </div>
-            @if (showPlayerMenu()) {
-              <div class="player-menu" (click)="$event.stopPropagation()">
-                <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="log-entries">
+    @if (activeTab() === 'log') {
+      <div class="log-tab">
+        <div class="log-entries" #logEntries (scroll)="onLogScroll()">
           @if (gameLog.length === 0) {
             <div class="log-entry empty">Waiting for game to start...</div>
           } @else {
@@ -131,6 +176,173 @@
               }
             </div>
           }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="side-prompts">
+    @if (isMindControlling) {
+      <div class="side-prompt prompt-mind-control">
+        <span class="side-prompt-text">Mindslaver — You control {{ mindControlledPlayerName }}'s turn</span>
+      </div>
+    }
+
+    @if (choice.targeting.selectingTarget) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">{{ choice.targeting.targetingPrompt }}</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.targetingSpell) {
+      <div class="side-prompt prompt-spell-targeting">
+        @if (choice.targeting.spellTargetCount > 1) {
+          <span class="side-prompt-text">Select target spells on the stack for {{ choice.targeting.targetingSpellCardName }} ({{ choice.targeting.spellTargetSelectedIds.length }}/{{ choice.targeting.spellTargetCount }})</span>
+        } @else {
+          <span class="side-prompt-text">Select a target spell on the stack for {{ choice.targeting.targetingSpellCardName }}</span>
+        }
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelSpellTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.multiTargeting) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">{{ choice.targeting.targetingPrompt }} ({{ choice.targeting.multiTargetSelectedIds().length }}/{{ choice.targeting.multiTargetMaxCount }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmMultiTargets()" [disabled]="choice.targeting.multiTargetSelectedIds().length < choice.targeting.multiTargetMinCount">Confirm</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelMultiTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.convoking) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmConvoke()">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipConvoke()">Skip Convoke</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelConvoke()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingAlternateCost) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
+          @if (choice.targeting.alternateCostSacrificeCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
+          } @else if (choice.targeting.alternateCostTapCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingAlternateCostCreatures) {
+      <div class="side-prompt prompt-targeting">
+        @if (choice.targeting.alternateCostSacrificeCount > 0) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
+        } @else if (choice.targeting.alternateCostTapCount > 0) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostTapCount }} untapped artifact to tap for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostTapCount }})</span>
+        }
+        <div class="side-prompt-buttons">
+          @if (choice.targeting.alternateCostSacrificeCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
+          } @else if (choice.targeting.alternateCostTapCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostTapCount">Cast</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingKicker) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.kickerCardName }} &mdash; pay kicker {{ choice.targeting.kickerCost }}?</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmKicker()">Pay Kicker</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipKicker()">Skip Kicker</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelKicker()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingMode) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">
+          {{ choice.targeting.modeCardName }} &mdash; choose
+          {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
+        </span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          @for (option of choice.targeting.modeOptions; track $index) {
+            <button class="btn-side-prompt mode-option"
+                    [class.mode-option-selected]="choice.targeting.isModeSelected($index)"
+                    (click)="choice.targeting.toggleMode($index)">
+              {{ option.label }}
+            </button>
+          }
+          <button class="btn-side-prompt"
+                  [disabled]="choice.targeting.modeSelectedIndices.length !== choice.targeting.modeChoicesRequired"
+                  (click)="choice.targeting.confirmModes()">Confirm</button>
+          @if (choice.targeting.modeOptional) {
+            <button class="btn-side-prompt" (click)="choice.targeting.skipModes()">Choose None</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelModes()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.damage.distributingDamage) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Click attacking creatures to assign damage for {{ choice.damage.damageDistributionCardName }} ({{ choice.damage.damageDistributionRemaining }} remaining of {{ choice.damage.damageDistributionXValue }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.damage.confirmDamageDistribution()" [disabled]="choice.damage.damageDistributionRemaining !== 0">Confirm</button>
+          <button class="btn-side-prompt" (click)="choice.damage.cancelDamageDistribution()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.choosingFromHand) {
+      <div class="side-prompt prompt-hand-choice">
+        <span class="side-prompt-text">{{ choice.handChoicePrompt }}</span>
+        @if (choice.handChoiceCanDecline) {
+          <div class="side-prompt-buttons">
+            <button class="btn-side-prompt" (click)="choice.declineHandChoice()">Decline</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (choice.choosingFromList) {
+      <div class="side-prompt prompt-list-choice">
+        <span class="side-prompt-text">{{ choice.listChoicePrompt }}</span>
+        <div class="color-choice-buttons">
+          @for (option of choice.listChoices; track option) {
+            <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (choice.choosingPermanent) {
+      <div class="side-prompt prompt-permanent-choice">
+        <span class="side-prompt-text">{{ choice.permanentChoicePrompt }}</span>
+      </div>
+    }
+
+    @if (choice.choosingMultiplePermanents) {
+      <div class="side-prompt prompt-permanent-choice">
+        <span class="side-prompt-text">{{ choice.multiPermanentChoicePrompt }} ({{ choice.multiPermanentSelectedIds().size }}/{{ choice.multiPermanentMaxCount }} selected)</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
         </div>
       </div>
     }

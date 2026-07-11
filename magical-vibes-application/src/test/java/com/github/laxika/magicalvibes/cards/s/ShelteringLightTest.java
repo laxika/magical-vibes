@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,24 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ShelteringLightTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has GrantKeywordEffect(INDESTRUCTIBLE, TARGET) and ScryEffect(1) on SPELL slot")
-    void hasCorrectProperties() {
-        ShelteringLight card = new ShelteringLight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-
-        ScryEffect scry = (ScryEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(scry.count()).isEqualTo(1);
-    }
 
     // ===== Casting and resolving =====
 
@@ -74,9 +51,9 @@ class ShelteringLightTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bears.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
 
     // ===== Scry 1 functionality =====

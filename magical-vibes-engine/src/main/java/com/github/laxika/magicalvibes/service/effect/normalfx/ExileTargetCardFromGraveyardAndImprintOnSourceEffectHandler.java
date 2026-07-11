@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final ExileService exileService;
 
@@ -40,7 +42,7 @@ public class ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler impleme
             return;
         }
 
-        if (e.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, e.filter(), null)) {
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ").");

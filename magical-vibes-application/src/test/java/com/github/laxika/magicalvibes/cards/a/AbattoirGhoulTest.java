@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,15 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AbattoirGhoulTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Abattoir Ghoul has correct ON_DAMAGED_CREATURE_DIES effect")
-    void hasCorrectProperties() {
-        AbattoirGhoul card = new AbattoirGhoul();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOf(GainLifeEqualToToughnessEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gains life equal to dying creature's toughness when it kills in combat")

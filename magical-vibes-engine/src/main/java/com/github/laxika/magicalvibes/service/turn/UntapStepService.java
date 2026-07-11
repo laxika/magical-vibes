@@ -5,13 +5,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +39,7 @@ import java.util.UUID;
 public class UntapStepService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     /**
@@ -43,9 +48,9 @@ public class UntapStepService {
      * <ol>
      *   <li>Removes stale untap-prevention locks whose source permanent has left
      *       the battlefield or is no longer tapped.</li>
-     *   <li>Untaps each of the active player's permanents unless it has a
-     *       {@link DoesntUntapDuringUntapStepEffect}, an attached
-     *       {@link AttachedCreatureDoesntUntapEffect}, or an active untap lock.</li>
+     *   <li>Untaps each of the active player's permanents unless it has a self-scoped
+     *       {@link DoesntUntapEffect}, an attached (enchanted-scope) {@link DoesntUntapEffect},
+     *       or an active untap lock.</li>
      *   <li>Queues a {@code PendingMayAbility} for each tapped permanent with
      *       {@link MayNotUntapDuringUntapStepEffect}, letting the controller choose.</li>
      *   <li>Clears summoning sickness and loyalty-ability-used flags.</li>
@@ -58,6 +63,19 @@ public class UntapStepService {
      * @param activePlayerId the player whose untap step is being processed
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId) {
+        untapPermanents(gameData, activePlayerId, null);
+    }
+
+    /**
+     * Performs the untap step, optionally restricting which of the active player's permanents may
+     * untap to those matching {@code restrictPredicate} (Storage Matrix). A {@code null} predicate
+     * means no restriction (the normal untap step). The restriction applies only to the active
+     * player's own permanents, not to "untap during each other player's step" effects (Seedborn
+     * Muse), which untap during a different player's untap step and so are unaffected.
+     *
+     * @param restrictPredicate only permanents matching this untap; {@code null} = untap all
+     */
+    public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate) {
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
 
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
@@ -83,22 +101,31 @@ public class UntapStepService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield != null) {
             battlefield.forEach(p -> {
-                boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, AttachedCreatureDoesntUntapEffect.class);
+                // ENCHANTED-scope DoesntUntapEffect on an attached aura keeps the host tapped.
+                boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
                 boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
+                        .anyMatch(e -> e instanceof DoesntUntapEffect d && d.scope() == TapUntapScope.SELF);
                 boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                         || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0;
+                // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
+                boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
+
+                boolean blockedByStorageMatrix = restrictPredicate != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
 
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
+                } else if (blockedByStorageMatrix) {
+                    // Storage Matrix: not the chosen permanent type — stays tapped this step
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
-                } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock) {
+                } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
+                        && !hasMatchingDoesntUntap) {
                     p.untap();
                 }
                 p.setSummoningSick(false);
@@ -132,7 +159,7 @@ public class UntapStepService {
 
             for (Permanent p : playerBattlefield) {
                 if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.filter() != null
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
                     p.untap();
                 }
             }
@@ -148,6 +175,34 @@ public class UntapStepService {
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });
+    }
+
+    /**
+     * Returns {@code true} if a Storage Matrix untap restriction is in force for the given active
+     * player: some untapped permanent (any controller) carries a {@link StorageMatrixEffect} and
+     * the active player has at least one tapped permanent to decide about. When there is nothing
+     * tapped, the choice would have no observable effect and is skipped.
+     */
+    public boolean storageMatrixRestrictionApplies(GameData gameData, UUID activePlayerId) {
+        boolean untappedMatrixPresent = gameData.anyPermanentMatches(p -> !p.isTapped()
+                && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof StorageMatrixEffect));
+        if (!untappedMatrixPresent) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        return battlefield != null && battlefield.stream().anyMatch(Permanent::isTapped);
+    }
+
+    /**
+     * Returns {@code true} if any permanent on any battlefield carries a
+     * {@link MatchingPermanentsDoesntUntapEffect} whose filter matches the given permanent
+     * (e.g. Marble Titan locking every creature with power 3 or greater, including its own).
+     */
+    private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
+        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.filter())));
     }
 
     List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(

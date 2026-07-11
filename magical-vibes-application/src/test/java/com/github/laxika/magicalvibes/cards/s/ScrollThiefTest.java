@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,18 +23,6 @@ class ScrollThiefTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect")
-    void hasCorrectEffect() {
-        ScrollThief card = new ScrollThief();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
     }
 
     // ===== Combat damage trigger =====

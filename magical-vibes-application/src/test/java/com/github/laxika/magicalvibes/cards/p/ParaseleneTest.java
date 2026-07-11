@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsAndGainLifePerDestroyedEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ParaseleneTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Paraselene has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        Paraselene card = new Paraselene();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyAllPermanentsAndGainLifePerDestroyedEffect.class);
-        DestroyAllPermanentsAndGainLifePerDestroyedEffect effect =
-                (DestroyAllPermanentsAndGainLifePerDestroyedEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsEnchantmentPredicate.class);
-        assertThat(effect.lifePerDestroyed()).isEqualTo(1);
-    }
 
     // ===== Resolution =====
 

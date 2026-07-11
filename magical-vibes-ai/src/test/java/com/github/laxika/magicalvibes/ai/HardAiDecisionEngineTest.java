@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -52,7 +52,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -137,7 +137,7 @@ class HardAiDecisionEngineTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.forceActivePlayer(player1);
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
         MCTSEngine engine = new MCTSEngine(simulator);
@@ -169,7 +169,7 @@ class HardAiDecisionEngineTest {
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.forceActivePlayer(player2);
-        gd.interaction.beginBlockerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(player1.getId()));
 
         GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
         MCTSEngine engine = new MCTSEngine(simulator);
@@ -189,7 +189,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine engine = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         assertThat(engine).isNotNull();
     }
 
@@ -203,14 +203,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         Permanent mountain = new Permanent(new Mountain());
@@ -235,7 +235,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -243,7 +243,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         for (int i = 0; i < 4; i++) {
@@ -280,14 +280,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Give AI 2 Plains (land mana only)
@@ -313,7 +313,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
@@ -321,7 +321,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Add two Llanowar Elves (creature mana dorks)
@@ -352,14 +352,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // AI has Berserkers of Blood Ridge (4/4 must-attack)
         Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
@@ -384,14 +384,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player2, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         // Player1 attacks with Grizzly Bears
         Permanent humanBears = new Permanent(new GrizzlyBears());
@@ -422,6 +422,8 @@ class HardAiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
@@ -460,10 +462,11 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;
@@ -614,7 +617,7 @@ class HardAiDecisionEngineTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{1}{R}");
             spell.target(null, 1, 3)
-                    .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                    .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
             mockGd.playerHands.get(mockAiPlayer.getId()).add(spell);
 
             ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
@@ -676,7 +679,7 @@ class HardAiDecisionEngineTest {
 
             // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
             Mockito.doAnswer(inv -> {
-                mockGd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(mockMessageHandler).handleTapPermanent(any(), any());
 
@@ -701,6 +704,8 @@ class HardAiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
@@ -739,10 +744,11 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;
@@ -819,14 +825,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         Permanent island = new Permanent(new Island());
@@ -848,7 +854,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -856,7 +862,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // 2 Plains for Pacifism ({1}{W})
@@ -889,7 +895,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         // Set up as opponent's turn, end step — good timing for REMOVAL instants
@@ -897,7 +903,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -932,14 +938,14 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         for (int i = 0; i < 3; i++) {
@@ -971,7 +977,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
 
         // Player 2 (human/opponent) controls Baird (tax {1} per attacker)
@@ -993,7 +999,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 
@@ -1014,7 +1020,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -1022,7 +1028,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Add 3 Islands for mana
@@ -1054,7 +1060,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, player1, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
 
@@ -1062,7 +1068,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         for (int i = 0; i < 3; i++) {
@@ -1097,7 +1103,7 @@ class HardAiDecisionEngineTest {
         HardAiDecisionEngine ai = new HardAiDecisionEngine(
                 gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
         ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
         return ai;
@@ -1116,7 +1122,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
     }
 
@@ -1221,7 +1227,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Opponent controls Trove of Temptation
         Permanent trove = new Permanent(new TroveOfTemptation());
@@ -1350,6 +1356,9 @@ class HardAiDecisionEngineTest {
     void castsPacifismWhenCanAffordTargetingTax() {
         HardAiDecisionEngine ai = createHardAi(player1);
         giveAiPriority(player1);
+        // Postcombat main with a single castable spell takes the deterministic evaluator path;
+        // this test pins the targeting-tax affordability gate, not the MCTS policy choice
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         givePlayerPlains(player1, 4); // 4 mana — enough for {1}{W} + {2} tax
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());
@@ -1374,7 +1383,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -1407,7 +1416,7 @@ class HardAiDecisionEngineTest {
         // after casting their spell, so now AI gets priority to respond
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Put an opponent's creature spell on the stack
         SerraAngel angel = new SerraAngel();
@@ -1440,7 +1449,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Put AI's own creature spell on the stack
         GrizzlyBears bears = new GrizzlyBears();
@@ -1469,7 +1478,7 @@ class HardAiDecisionEngineTest {
         // Opponent passed priority after casting
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Put a low-value opponent spell on the stack (Llanowar Elves, MV=1)
         LlanowarElves elves = new LlanowarElves();
@@ -1512,7 +1521,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         WrathOfGod wrath = new WrathOfGod();
         StackEntry wrathOnStack = new StackEntry(StackEntryType.SORCERY_SPELL, wrath, player2.getId(),
@@ -1544,7 +1553,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Opponent casts Doom Blade (MV=2) targeting the Angel
         DoomBlade doomBlade = new DoomBlade();
@@ -1581,7 +1590,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Opponent casts a mediocre creature (Grizzly Bears, MV=2, 2/2)
         GrizzlyBears bears = new GrizzlyBears();
@@ -1617,7 +1626,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Opponent casts Wrath of God — the most threatening spell possible against a big board
         WrathOfGod wrath = new WrathOfGod();
@@ -1656,7 +1665,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Opponent casts Air Elemental (4/4 flying, MV=5)
         // Normally might not be countered with a strong board, but at low life AI is desperate
@@ -1835,7 +1844,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // 5 mana: 2 mountains + 3 islands
@@ -1870,7 +1879,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // AI has an attacker
@@ -1914,7 +1923,7 @@ class HardAiDecisionEngineTest {
             TestableMulliganEngine(Player player) {
                 super(gd.id, player, harness.getGameRegistry(),
                         harness.getGameService(), harness.getGameQueryService(),
-                        harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                        harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                         harness.getTargetValidationService(), harness.getTargetLegalityService());
             }
 
@@ -2051,7 +2060,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2085,7 +2094,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2116,7 +2125,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2145,7 +2154,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Shivan Dragon with {R} available for pump
@@ -2176,7 +2185,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         Permanent dragon = new Permanent(new com.github.laxika.magicalvibes.cards.s.ShivanDragon());
@@ -2205,7 +2214,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Thrun the Last Troll ({1}{G}: Regenerate)
@@ -2239,7 +2248,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         Permanent thrun = new Permanent(new com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll());
@@ -2271,7 +2280,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // Thrun needs {1}{G} but we have no mana
@@ -2296,7 +2305,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2329,7 +2338,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // AI at 2 life — paying 2 would kill it
@@ -2357,7 +2366,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2388,7 +2397,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2420,7 +2429,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -2528,7 +2537,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            harness.beginAttackerDeclarationInput();
 
             // Opponent at 5 life
             gd.playerLifeTotals.put(player2.getId(), 5);
@@ -2570,7 +2579,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            harness.beginAttackerDeclarationInput();
 
             // Opponent at 20 life — alpha strike + burn won't be enough
             gd.playerLifeTotals.put(player2.getId(), 20);
@@ -2653,7 +2662,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            harness.beginAttackerDeclarationInput();
 
             // Opponent at 6 life
             gd.playerLifeTotals.put(player2.getId(), 6);
@@ -2693,7 +2702,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            harness.beginAttackerDeclarationInput();
 
             // Opponent at 5 life
             gd.playerLifeTotals.put(player2.getId(), 5);
@@ -2739,7 +2748,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            harness.beginAttackerDeclarationInput();
 
             // AI has 4/4 Air Elemental — 5-turn clock vs opponent's 20 life
             Permanent aiCreature = new Permanent(new AirElemental());
@@ -2777,7 +2786,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             // Player1 (attacker) has a small 2/2 — 2 damage, non-lethal
             Permanent humanBears = new Permanent(new GrizzlyBears());
@@ -2805,7 +2814,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             // AI at low life
             gd.playerLifeTotals.put(player2.getId(), 2);
@@ -2836,7 +2845,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             // Player1 (attacker) has a 2/2 — AI is losing the race because it has no creatures to race with
             Permanent humanBears = new Permanent(new GrizzlyBears());
@@ -2880,7 +2889,7 @@ class HardAiDecisionEngineTest {
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             // AI at low life so aiLosingRace is true and we reach handleBlockersWithSimulator
             // rather than the winning-race early-return that only honors mandatory blocks.
@@ -2888,8 +2897,8 @@ class HardAiDecisionEngineTest {
 
             // Opponent attacks with a 2/3 — profitable to block with a 5/5 absent tricks.
             Permanent opp2_3 = new Permanent(new GrizzlyBears());
-            opp2_3.getCard().setPower(2);
-            opp2_3.getCard().setToughness(3);
+            TestCards.mutableCard(opp2_3).setPower(2);
+            TestCards.mutableCard(opp2_3).setToughness(3);
             opp2_3.setSummoningSick(false);
             opp2_3.setAttacking(true);
             gd.playerBattlefields.get(player1.getId()).add(opp2_3);
@@ -2897,8 +2906,8 @@ class HardAiDecisionEngineTest {
             // AI has a single 5/5 blocker — a +3/+3 pump on the attacker would flip
             // the combat (5/5 vs 5/6 → blocker dies, attacker survives).
             Permanent ai5_5 = new Permanent(new GrizzlyBears());
-            ai5_5.getCard().setPower(5);
-            ai5_5.getCard().setToughness(5);
+            TestCards.mutableCard(ai5_5).setPower(5);
+            TestCards.mutableCard(ai5_5).setToughness(5);
             ai5_5.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(ai5_5);
 
@@ -2984,7 +2993,7 @@ class HardAiDecisionEngineTest {
             ai = new HardAiDecisionEngine(
                     gd.id, player1, harness.getGameRegistry(),
                     harness.getGameService(), harness.getGameQueryService(),
-                    harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                    harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setSelfConnection(aiConn);
             ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
@@ -2992,7 +3001,7 @@ class HardAiDecisionEngineTest {
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(null);
+            gd.interaction.clearAwaitingInput();
             gd.stack.clear();
         }
 
@@ -3326,7 +3335,7 @@ class HardAiDecisionEngineTest {
             ai = new HardAiDecisionEngine(
                     gd.id, player1, harness.getGameRegistry(),
                     harness.getGameService(), harness.getGameQueryService(),
-                    harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                    harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                     harness.getTargetValidationService(), harness.getTargetLegalityService());
             ai.setSelfConnection(aiConn);
             ai.setMctsEngine(new MCTSEngine(GameSimulator.forQueryService(harness.getGameQueryService()), 42L, 500));
@@ -3334,7 +3343,7 @@ class HardAiDecisionEngineTest {
             harness.forceActivePlayer(player1);
             harness.clearPriorityPassed();
             gd.status = GameStatus.RUNNING;
-            gd.interaction.setAwaitingInput(null);
+            gd.interaction.clearAwaitingInput();
             gd.stack.clear();
         }
 
@@ -3510,7 +3519,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(opponent.getId());
     }
@@ -3694,7 +3703,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -3783,7 +3792,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(player2.getId());
 
@@ -3805,7 +3814,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         addPlaneswalkerToBattlefield(player1, new com.github.laxika.magicalvibes.cards.j.JaceBeleren(), 3);
@@ -3826,7 +3835,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Put something on the stack
         gd.stack.add(new StackEntry(new GrizzlyBears(), player2.getId()));
@@ -3911,7 +3920,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // Opponent's Serra Angel (MV=5) on the stack
         SerraAngel angel = new SerraAngel();
@@ -3944,7 +3953,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
 
         // AI has Spiketail Hatchling on the battlefield
@@ -3970,7 +3979,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // AI has a strong board — Serra Angels
         for (int i = 0; i < 3; i++) {
@@ -4011,7 +4020,7 @@ class HardAiDecisionEngineTest {
         harness.clearPriorityPassed();
         gd.priorityPassedBy.add(player2.getId());
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
 
         // AI's own spell on the stack
         GrizzlyBears bears = new GrizzlyBears();
@@ -4055,7 +4064,7 @@ class HardAiDecisionEngineTest {
                             List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1)),
                             "You may draw a card");
             gd.pendingMayAbilities.add(pending);
-            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+            gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
             ai.handleMessage("MAY_ABILITY_CHOICE", "");
 
@@ -4077,10 +4086,10 @@ class HardAiDecisionEngineTest {
             com.github.laxika.magicalvibes.model.PendingMayAbility pending =
                     new com.github.laxika.magicalvibes.model.PendingMayAbility(
                             sourceCard, player1.getId(),
-                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect(5)),
+                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(5, com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER)),
                             "You may have this deal 5 damage to you");
             gd.pendingMayAbilities.add(pending);
-            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+            gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));
 
             ai.handleMessage("MAY_ABILITY_CHOICE", "");
 
@@ -4115,7 +4124,8 @@ class HardAiDecisionEngineTest {
             // Set up scry with a land card
             Card landCard = new Island();
             Card spellCard = new GrizzlyBears();
-            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+            gd.interaction.beginInteraction(
+                    new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
             ai.handleMessage("SCRY", "");
 
@@ -4144,7 +4154,8 @@ class HardAiDecisionEngineTest {
             // Set up scry with a land card
             Card landCard = new Island();
             Card spellCard = new EliteVanguard();
-            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+            gd.interaction.beginInteraction(
+                    new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)));
 
             ai.handleMessage("SCRY", "");
 
@@ -4175,8 +4186,10 @@ class HardAiDecisionEngineTest {
             gd.playerBattlefields.get(player1.getId()).add(human);
 
             // Set up a SubtypeChoice
-            gd.interaction.beginColorChoice(player1.getId(), null, null,
-                    new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                            player1.getId(), null, null,
+                            new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null),
+                            java.util.List.of(), "Choose a creature type."));
 
             ai.handleMessage("CHOOSE_FROM_LIST", "");
 
@@ -4208,8 +4221,10 @@ class HardAiDecisionEngineTest {
             harness.setHand(player1, List.of(new SerraAngel()));
 
             // Set up a BasicLandTypeChoice
-            gd.interaction.beginColorChoice(player1.getId(), null, null,
-                    new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                            player1.getId(), null, null,
+                            new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null),
+                            java.util.List.of(), "Choose a basic land type."));
 
             ai.handleMessage("CHOOSE_FROM_LIST", "");
 

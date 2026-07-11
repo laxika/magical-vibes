@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,32 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeartlessPillageTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has discard effect and raid conditional treasure effect targeting opponent")
-    void hasCorrectStructure() {
-        HeartlessPillage card = new HeartlessPillage();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect discard =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(discard.amount()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(raid.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect treasure = (CreateTokenEffect) raid.wrapped();
-        assertThat(treasure.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(treasure.amount()).isEqualTo(1);
-    }
 
     // ===== Casting =====
 
@@ -88,9 +58,9 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent prompted to discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
@@ -114,7 +84,7 @@ class HeartlessPillageTest extends BaseCardTest {
         castHeartlessPillage();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
 
         // No treasure tokens without raid

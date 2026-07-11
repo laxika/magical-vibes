@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,16 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UpwellingTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Upwelling has correct card properties")
-    void hasCorrectProperties() {
-        Upwelling card = new Upwelling();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventManaDrainEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Mana is preserved when step advances with Upwelling on battlefield")

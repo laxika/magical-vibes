@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,28 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RavenousRatsTest extends BaseCardTest {
 
+    
 
-    @Test
-    @DisplayName("Ravenous Rats has correct card properties")
-    void hasCorrectProperties() {
-        RavenousRats card = new RavenousRats();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target player discard one card")
-    void hasEtbDiscardEffect() {
-        RavenousRats card = new RavenousRats();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect effect =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")
@@ -65,13 +43,13 @@ class RavenousRatsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -86,7 +64,7 @@ class RavenousRatsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 

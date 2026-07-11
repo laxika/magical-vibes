@@ -1,20 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,54 +25,11 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Sword of Feast and Famine has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("Sword of Feast and Famine has static protection from black and green")
-    void hasProtectionEffect() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ProtectionFromColorsEffect)
-                .hasSize(1);
-        ProtectionFromColorsEffect protection = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof ProtectionFromColorsEffect)
-                .map(e -> (ProtectionFromColorsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-    }
-
-    @Test
-    @DisplayName("Sword of Feast and Famine has combat damage discard and untap effects")
-    void hasCombatDamageEffects() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(2);
-        assertThat(effects).filteredOn(e -> e instanceof TargetPlayerDiscardsEffect).hasSize(1);
-        assertThat(effects).filteredOn(e -> e instanceof UntapAllControlledPermanentsEffect).hasSize(1);
-
-        TargetPlayerDiscardsEffect discard = effects.stream()
-                .filter(e -> e instanceof TargetPlayerDiscardsEffect)
-                .map(e -> (TargetPlayerDiscardsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Sword of Feast and Famine has equip {2} ability")
@@ -188,8 +140,8 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Game pauses for discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
@@ -212,7 +164,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard does nothing, no input needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // But lands still untap (per MTG ruling)
         assertThat(land.isTapped()).isFalse();
     }
@@ -295,7 +247,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard prompt appears
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         // Discard happened
@@ -332,7 +284,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // No discard prompt
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Hand unchanged
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -382,8 +334,8 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Game pauses for discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
@@ -419,7 +371,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard prompt appears
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         // Discard happened

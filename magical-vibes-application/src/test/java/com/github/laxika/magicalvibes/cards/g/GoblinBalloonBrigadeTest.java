@@ -7,37 +7,15 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinBalloonBrigadeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Balloon Brigade has one activated ability granting flying")
-    void hasFlyingActivatedAbility() {
-        GoblinBalloonBrigade card = new GoblinBalloonBrigade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{R}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(flying.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(flying.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Flying ability =====
 

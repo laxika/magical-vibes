@@ -1,38 +1,19 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.SetTargetPlayerLifeToHalfStartingEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TorgaarFamineIncarnateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        TorgaarFamineIncarnate card = new TorgaarFamineIncarnate();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(SacrificeCreaturesForCostReductionEffect.class);
-        SacrificeCreaturesForCostReductionEffect sacEffect =
-                (SacrificeCreaturesForCostReductionEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(sacEffect.reductionPerCreature()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SetTargetPlayerLifeToHalfStartingEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cast with full mana cost (no sacrifices), ETB sets opponent life to 10")

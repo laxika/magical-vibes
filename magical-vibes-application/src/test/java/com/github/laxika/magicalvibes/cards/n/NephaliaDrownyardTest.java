@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,33 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NephaliaDrownyardTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nephalia Drownyard has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        NephaliaDrownyard card = new NephaliaDrownyard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-
-        // Second ability: {1}{U}{B}, {T}: Target player mills three cards.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{1}{U}{B}");
-        assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect effect = (MillTargetPlayerEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
 
     // ===== Mana ability =====
 

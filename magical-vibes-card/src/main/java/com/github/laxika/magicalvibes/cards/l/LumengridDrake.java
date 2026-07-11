@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -17,7 +18,7 @@ public class LumengridDrake extends Card {
                 "Target must be a creature"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MetalcraftConditionalEffect(
-                                new ReturnTargetPermanentToHandEffect()));
+                        new ConditionalEffect(new Metalcraft(), 
+                                ReturnToHandEffect.target()));
     }
 }

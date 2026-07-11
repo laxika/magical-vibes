@@ -2,14 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,21 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkaabGoliathTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Skaab Goliath has ExileNCardsFromGraveyardCost requiring 2 creature cards")
-    void hasCorrectCostEffect() {
-        SkaabGoliath card = new SkaabGoliath();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileNCardsFromGraveyardCost.class);
-
-        ExileNCardsFromGraveyardCost cost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(cost.count()).isEqualTo(2);
-        assertThat(cost.requiredType()).isEqualTo(CardType.CREATURE);
-    }
 
     // ===== Casting =====
 

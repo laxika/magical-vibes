@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,26 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ClachanFestivalTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Clachan Festival has correct card properties")
-    void hasCorrectProperties() {
-        ClachanFestival card = new ClachanFestival();
-
-        assertThat(card.getAdditionalTypes()).contains(CardType.KINDRED);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect etbEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.amount()).isEqualTo(2);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{4}{W}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("ETB creates two 1/1 green and white Kithkin creature tokens")

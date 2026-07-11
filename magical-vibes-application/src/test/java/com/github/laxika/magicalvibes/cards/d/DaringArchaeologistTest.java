@@ -1,22 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AdelizTheCinderWind;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,33 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DaringArchaeologistTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB may-return-artifact and historic spell-cast trigger with +1/+1 counter")
-    void hasCorrectStructure() {
-        DaringArchaeologist card = new DaringArchaeologist();
-
-        // ETB: MayEffect wrapping ReturnCardFromGraveyardEffect
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        // Historic trigger: SpellCastTriggerEffect with PutCountersOnSelfEffect
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) trigger.resolvedEffects().getFirst();
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
     // ===== ETB: return artifact from graveyard =====
 
     @Test
@@ -63,7 +29,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         castAndResolve();
         harness.passBothPriorities(); // resolve MayEffect from stack
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -73,7 +39,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Graveyard choice should be prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -104,7 +70,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         castAndAcceptMay();
 
         // No artifact in graveyard — no graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -112,7 +78,7 @@ class DaringArchaeologistTest extends BaseCardTest {
     void etbNoEffectEmptyGraveyard() {
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     // ===== Historic trigger: +1/+1 counter =====

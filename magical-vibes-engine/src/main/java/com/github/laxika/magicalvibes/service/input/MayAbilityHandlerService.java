@@ -2,19 +2,18 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -23,19 +22,26 @@ import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPaying
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromExileWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -44,6 +50,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
@@ -60,14 +67,17 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -76,7 +86,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MayAbilityHandlerService {
 
     private final InputCompletionService inputCompletionService;
@@ -85,6 +94,7 @@ public class MayAbilityHandlerService {
     private final MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService;
     private final MayMiscHandlerService mayMiscHandlerService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -92,23 +102,68 @@ public class MayAbilityHandlerService {
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
+    private final ExileFreeCastSupport exileFreeCastSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    // @Lazy breaks the circular dependency:
+    // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
+    private final ParadigmService paradigmService;
+    private final ValidTargetService validTargetService;
+
+    public MayAbilityHandlerService(InputCompletionService inputCompletionService,
+                                    MayCastHandlerService mayCastHandlerService,
+                                    MayCopyHandlerService mayCopyHandlerService,
+                                    MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService,
+                                    MayMiscHandlerService mayMiscHandlerService,
+                                    GameQueryService gameQueryService,
+                                    PredicateEvaluationService predicateEvaluationService,
+                                    GameBroadcastService gameBroadcastService,
+                                    PlayerInputService playerInputService,
+                                    TurnProgressionService turnProgressionService,
+                                    EffectResolutionService effectResolutionService,
+                                    DestructionSupport destructionSupport,
+                                    GraveyardReturnSupport graveyardReturnSupport,
+                                    MayAbilityTapCostService mayAbilityTapCostService,
+                                    ExileFreeCastSupport exileFreeCastSupport,
+                                    com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
+                                    @Lazy ParadigmService paradigmService,
+                                    ValidTargetService validTargetService) {
+        this.inputCompletionService = inputCompletionService;
+        this.mayCastHandlerService = mayCastHandlerService;
+        this.mayCopyHandlerService = mayCopyHandlerService;
+        this.mayPenaltyChoiceHandlerService = mayPenaltyChoiceHandlerService;
+        this.mayMiscHandlerService = mayMiscHandlerService;
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.turnProgressionService = turnProgressionService;
+        this.effectResolutionService = effectResolutionService;
+        this.destructionSupport = destructionSupport;
+        this.graveyardReturnSupport = graveyardReturnSupport;
+        this.mayAbilityTapCostService = mayAbilityTapCostService;
+        this.exileFreeCastSupport = exileFreeCastSupport;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.paradigmService = paradigmService;
+        this.validTargetService = validTargetService;
+    }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
             throw new IllegalStateException("Not awaiting may ability choice");
         }
-        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
+        PendingInteraction.MayAbilityChoice mayAbilityChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         if (mayAbilityChoice == null || !player.getId().equals(mayAbilityChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMayAbilityChoice();
 
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
-        if (gameData.pendingPileSeparation) {
-            if (!gameData.pendingPileSeparationCards.isEmpty()) {
+        PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (pileSeparation != null) {
+            if (pileSeparation.cardPileMode()) {
                 graveyardReturnSupport.completeCardPileSeparationStep2(gameData, accepted);
             } else {
                 destructionSupport.completePileSeparationStep2(gameData, accepted);
@@ -131,11 +186,35 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Cast-from-exile-without-paying — Paradigm delayed trigger copy
-        boolean isMayCastFromExile = ability.effects().stream()
-                .anyMatch(e -> e instanceof MayCastFromExileWithoutPayingManaCostEffect);
-        if (isMayCastFromExile) {
-            mayCastHandlerService.handleCastFromExileWithoutPaying(gameData, player, accepted, ability);
+        // "As it enters, you may reveal a [subtype] card; if you don't, it enters tapped."
+        // (Lorwyn dual lands, e.g. Ancient Amphitheater). Declining taps the just-entered permanent.
+        RevealSubtypeOrEntersTappedEffect revealOrTapped = ability.effects().stream()
+                .filter(e -> e instanceof RevealSubtypeOrEntersTappedEffect)
+                .map(e -> (RevealSubtypeOrEntersTappedEffect) e)
+                .findFirst().orElse(null);
+        if (revealOrTapped != null) {
+            if (accepted) {
+                List<Card> hand = gameData.playerHands.get(ability.controllerId());
+                Card revealed = hand == null ? null : hand.stream()
+                        .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
+                        .findFirst().orElse(null);
+                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
+                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped.");
+                log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
+                        player.getUsername(), revealedName, ability.sourceCard().getName());
+            } else {
+                Permanent source = ability.sourcePermanentId() != null
+                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
+                if (source != null) {
+                    source.tap();
+                }
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declines — "
+                        + ability.sourceCard().getName() + " enters tapped.");
+                log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -144,6 +223,29 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect);
         if (isMayCastFromHand) {
             mayCastHandlerService.handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability);
+            return;
+        }
+
+        boolean isParadigmCast = ability.effects().stream()
+                .anyMatch(e -> e instanceof ParadigmMayCastFromExileEffect);
+        if (isParadigmCast) {
+            paradigmService.handleMayCastChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Play-exiled-countered-card-without-paying — e.g. Guile. Declining leaves the card exiled.
+        boolean isMayPlayExiledCountered = ability.effects().stream()
+                .anyMatch(e -> e instanceof MayPlayExiledCounteredCardEffect);
+        if (isMayPlayExiledCountered) {
+            if (accepted && ability.targetCardId() != null) {
+                exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
+            } else {
+                String logEntry = player.getUsername() + " declines to play " + ability.sourceCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} declines to play exiled {} (Guile)", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 
@@ -170,6 +272,16 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof SurveilEffect);
         if (isSurveil) {
             mayMiscHandlerService.handleSurveilMayGraveyardChoice(gameData, player, accepted);
+            return;
+        }
+
+        // Eye Spy — may put target player's looked-at top card into their graveyard
+        LookAtTargetPlayerTopCardMayGraveyardEffect eyeSpy = ability.effects().stream()
+                .filter(e -> e instanceof LookAtTargetPlayerTopCardMayGraveyardEffect)
+                .map(e -> (LookAtTargetPlayerTopCardMayGraveyardEffect) e)
+                .findFirst().orElse(null);
+        if (eyeSpy != null) {
+            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted, eyeSpy.libraryOwnerId());
             return;
         }
 
@@ -247,6 +359,24 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Play-imprinted-card-without-paying — e.g. Howltooth Hollow (Hideaway)
+        boolean isPlayImprinted = ability.effects().stream()
+                .anyMatch(e -> e instanceof PlayImprintedCardWithoutPayingManaCostEffect);
+        if (isPlayImprinted) {
+            mayCastHandlerService.handlePlayImprintedCardChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Play-from-graveyard-without-paying — e.g. Horde of Notions
+        PlayTargetCardFromGraveyardWithoutPayingManaCostEffect playFromGraveyardEffect = ability.effects().stream()
+                .filter(e -> e instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect)
+                .map(e -> (PlayTargetCardFromGraveyardWithoutPayingManaCostEffect) e)
+                .findFirst().orElse(null);
+        if (playFromGraveyardEffect != null) {
+            mayCastHandlerService.handlePlayFromGraveyardChoice(gameData, player, accepted, ability, playFromGraveyardEffect);
+            return;
+        }
+
         // May-not-untap choice from untap step (e.g. Rust Tick)
         boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
         if (isMayNotUntap) {
@@ -285,6 +415,13 @@ public class MayAbilityHandlerService {
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
         if (isCounterUnlessPays) {
             mayPenaltyChoiceHandlerService.handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Counter-unless-discard (Ward—Discard a card) — handled via the may ability system
+        boolean isCounterUnlessDiscards = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessDiscardsEffect);
+        if (isCounterUnlessDiscards) {
+            mayPenaltyChoiceHandlerService.handleCounterUnlessDiscardsChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -333,6 +470,13 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Optional "you may sacrifice ..., if you don't [penalty]" — e.g. Yawgmoth Demon
+        boolean isForcedCostOrElse = ability.effects().stream().anyMatch(e -> e instanceof ForcedCostOrElseEffect);
+        if (isForcedCostOrElse) {
+            mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(gameData, player, accepted, ability);
+            return;
+        }
+
         // Generic single-draw replacement
         ReplaceSingleDrawEffect replaceSingleDrawEffect = ability.effects().stream()
                 .filter(e -> e instanceof ReplaceSingleDrawEffect)
@@ -355,6 +499,16 @@ public class MayAbilityHandlerService {
         boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
         if (isCopySpellRetarget) {
             mayCopyHandlerService.handleCopySpellRetargetChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Copy activated ability retarget — choose a new target for a copied ability (Rings of Brighthearth)
+        CopyActivatedAbilityRetargetEffect abilityRetarget = ability.effects().stream()
+                .filter(e -> e instanceof CopyActivatedAbilityRetargetEffect)
+                .map(e -> (CopyActivatedAbilityRetargetEffect) e)
+                .findFirst().orElse(null);
+        if (abilityRetarget != null) {
+            mayCopyHandlerService.handleCopyActivatedAbilityRetargetChoice(gameData, player, accepted, ability, abilityRetarget);
             return;
         }
 
@@ -540,8 +694,8 @@ public class MayAbilityHandlerService {
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
                     e instanceof PutCountersOnSelfEffect
-                            || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
-                            || e instanceof AnimateSelfWithStatsEffect || e instanceof BoostSelfEffect
+                            || (e instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF)
+                            || e instanceof BoostSelfEffect
                             || e instanceof ImprintDyingCreatureEffect
                             || e instanceof ExileFromHandToImprintEffect
                             || e instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect);
@@ -592,7 +746,7 @@ public class MayAbilityHandlerService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (gameQueryService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
                             validTargets.add(p.getId());
                         }
                     } else if (gameQueryService.isCreature(gameData, p)) {
@@ -602,10 +756,12 @@ public class MayAbilityHandlerService {
             }
         }
 
-        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillTargetPlayerEffect)
+        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect),
+        // honoring the card's player target filter (e.g. "target opponent") so the controller is excluded.
         boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
         if (canTargetPlayer) {
-            validTargets.addAll(gameData.orderedPlayerIds);
+            validTargets.addAll(validTargetService.filterValidPlayerTargets(
+                    gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId()));
         }
 
         if (validTargets.isEmpty()) {
@@ -671,7 +827,7 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (gameQueryService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }
@@ -715,11 +871,12 @@ public class MayAbilityHandlerService {
 
         // Multiple matches — prompt player to choose
         String filterLabel = CardPredicateUtils.describeFilter(filter);
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.MAY_ABILITY_TARGET, null);
-        gameData.interaction.graveyardChoice().setMayAbilityContext(
-                ability.sourceCard(), controllerId, new ArrayList<>(ability.effects()), ability.sourcePermanentId());
-        playerInputService.beginGraveyardChoice(gameData, graveyardOwnerId, matchingIndices,
-                "Choose a " + filterLabel + " from your graveyard to target.");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(graveyardOwnerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                        "Choose a " + filterLabel + " from your graveyard to target.")
+                .mayAbilityContext(ability.sourceCard(), controllerId,
+                        new ArrayList<>(ability.effects()), ability.sourcePermanentId())
+                .build());
 
         String logEntry = player.getUsername() + " accepts — choosing a graveyard target for " + ability.sourceCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -736,8 +893,15 @@ public class MayAbilityHandlerService {
         // Redirect retarget — ChooseNewTargetsForTargetSpellEffect needs the full retarget UI flow
         boolean isRedirectRetarget = ability.effects().stream().anyMatch(e -> e instanceof ChooseNewTargetsForTargetSpellEffect);
         if (isRedirectRetarget) {
-            gameData.pendingEffectResolutionEntry = null;
-            gameData.pendingEffectResolutionIndex = 0;
+            // Advance past this "may choose new targets" effect (the stored index points at the
+            // MayEffect for re-run) so any following effects on the same spell continue after the
+            // retarget completes — e.g. Wild Ricochet's "Then copy that spell." The entry is kept
+            // so the retarget-completion path (handleSpellRetarget / the decline branch) resumes
+            // the remaining effects. For a standalone Redirect the resumed index is past the end,
+            // so it is a harmless no-op.
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionIndex = gameData.pendingEffectResolutionIndex + 1;
+            }
             mayCopyHandlerService.handleRedirectRetargetChoice(gameData, player, accepted, ability);
             return;
         }
@@ -799,7 +963,7 @@ public class MayAbilityHandlerService {
 
     private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
         if (innerEffect == null) return;
-        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || innerEffect instanceof AnimateSelfEffect || innerEffect instanceof AnimateSelfByChargeCountersEffect || innerEffect instanceof AnimateSelfWithStatsEffect || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || (innerEffect instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
         if (needsSelfTarget && pendingEntry.getTargetId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
             if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetId(p.getId()); break; } } }
@@ -839,7 +1003,7 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (gameQueryService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }
@@ -879,18 +1043,19 @@ public class MayAbilityHandlerService {
         // Multiple matches — prompt player to choose via graveyard choice
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         gameData.resolvedMayTargetingEntry = pendingEntry;
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.MAY_ABILITY_TARGET, null);
-        gameData.interaction.graveyardChoice().setMayAbilityContext(
-                ability.sourceCard(), controllerId, new ArrayList<>(ability.effects()), ability.sourcePermanentId());
-        playerInputService.beginGraveyardChoice(gameData, graveyardOwnerId, matchingIndices,
-                "Choose a " + filterLabel + " from your graveyard to target.");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(graveyardOwnerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                        "Choose a " + filterLabel + " from your graveyard to target.")
+                .mayAbilityContext(ability.sourceCard(), controllerId,
+                        new ArrayList<>(ability.effects()), ability.sourcePermanentId())
+                .build());
     }
 
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
-        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (gameQueryService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
-        if (canTargetPlayer) { validTargets.addAll(gameData.orderedPlayerIds); }
+        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
+        if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId())); }
         if (validTargets.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, ability.sourceCard().getName() + "'s ability has no valid targets.");
             gameData.resolvedMayAccepted = false;

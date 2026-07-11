@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,24 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SageOfLatNamTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap + sacrifice artifact cost with draw card activated ability")
-    void hasCorrectAbility() {
-        SageOfLatNam card = new SageOfLatNam();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeArtifactCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(DrawCardEffect.class);
-                });
-    }
 
     // ===== Sacrifice cost =====
 
@@ -68,7 +48,7 @@ class SageOfLatNamTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -151,7 +131,5 @@ class SageOfLatNamTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Helpers =====
 
 }

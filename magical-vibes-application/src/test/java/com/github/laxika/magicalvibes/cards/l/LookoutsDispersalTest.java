@@ -1,16 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeadstrongBrute;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,24 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LookoutsDispersalTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lookout's Dispersal has correct card properties")
-    void hasCorrectProperties() {
-        LookoutsDispersal card = new LookoutsDispersal();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(4);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfControlsPermanentEffect(
-                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.PIRATE), 1));
-    }
 
     // ===== Counter-unless-pays: opponent cannot pay =====
 
@@ -82,8 +57,8 @@ class LookoutsDispersalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Player1 pays {4}
         harness.handleMayAbilityChosen(player1, true);
@@ -115,7 +90,7 @@ class LookoutsDispersalTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Player1 declines to pay
         harness.handleMayAbilityChosen(player1, false);

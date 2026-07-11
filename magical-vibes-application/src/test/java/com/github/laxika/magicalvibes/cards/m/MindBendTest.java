@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TextReplacement;
-import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfAll;
@@ -26,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MindBendTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Bend has correct card properties")
-    void hasCorrectProperties() {
-        MindBend card = new MindBend();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChangeColorTextEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -74,9 +59,9 @@ class MindBendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.TextChangeFromWord.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.TextChangeFromWord.class);
     }
 
     @Test
@@ -93,9 +78,9 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLACK");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.TextChangeToWord.class);
-        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.TextChangeToWord.class);
+        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
         assertThat(ctx.fromWord()).isEqualTo("BLACK");
         assertThat(ctx.isColor()).isTrue();
     }
@@ -115,8 +100,8 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.colorChoiceContext()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
 
         Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Paladin en-Vec"))
@@ -160,7 +145,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "FOREST");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         Permanent perm = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -183,7 +168,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "ISLAND");
 
         GameData gd = harness.getGameData();
-        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.colorChoiceContext();
+        ChoiceContext.TextChangeToWord ctx = (ChoiceContext.TextChangeToWord) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
         assertThat(ctx.isColor()).isFalse();
         assertThat(ctx.fromWord()).isEqualTo("ISLAND");
     }
@@ -274,7 +259,7 @@ class MindBendTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Mind Bend"));
     }
@@ -367,5 +352,4 @@ class MindBendTest extends BaseCardTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
-
 

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -35,7 +37,7 @@ public class SpiresOfOrazca extends Card {
         // {T}: Untap target attacking creature an opponent controls and remove it from combat.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new UntapTargetPermanentEffect(), new RemoveTargetFromCombatEffect()),
+                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET), new RemoveTargetFromCombatEffect()),
                 "{T}: Untap target attacking creature an opponent controls and remove it from combat.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -25,8 +26,8 @@ class RegisterDelayedCombatDamageLootEffectHandlerTest extends AbstractPlayerInt
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
-                GameData.DelayedCombatDamageLoot loot = gd.pendingDelayedCombatDamageLoots.getFirst();
+                assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
+                DelayedCombatDamageLoot loot = gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst();
                 assertThat(loot.controllerId()).isEqualTo(player1Id);
                 assertThat(loot.drawAmount()).isEqualTo(1);
                 assertThat(loot.discardAmount()).isEqualTo(1);

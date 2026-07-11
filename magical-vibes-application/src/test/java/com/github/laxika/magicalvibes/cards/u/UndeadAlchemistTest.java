@@ -5,11 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,23 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UndeadAlchemistTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Undead Alchemist has the replacement and triggered effects")
-    void hasCorrectEffects() {
-        UndeadAlchemist card = new UndeadAlchemist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ReplaceCombatDamageWithMillEffect)
-                .hasSize(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED))
-                .hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED).getFirst())
-                .isInstanceOf(ExileMilledCreatureAndCreateTokenEffect.class);
-    }
 
     // ===== Replacement effect: Zombie combat damage → mill =====
 

@@ -108,21 +108,22 @@ export interface TurnStepInfo {
   step: TurnStep;
   displayName: string;
   phaseName: string;
+  icon: string;
 }
 
 export const TURN_STEPS: TurnStepInfo[] = [
-  { step: TurnStep.UNTAP, displayName: 'Untap', phaseName: 'Beginning Phase' },
-  { step: TurnStep.UPKEEP, displayName: 'Upkeep', phaseName: 'Beginning Phase' },
-  { step: TurnStep.DRAW, displayName: 'Draw', phaseName: 'Beginning Phase' },
-  { step: TurnStep.PRECOMBAT_MAIN, displayName: 'Precombat Main', phaseName: 'Precombat Main Phase' },
-  { step: TurnStep.BEGINNING_OF_COMBAT, displayName: 'Beginning of Combat', phaseName: 'Combat Phase' },
-  { step: TurnStep.DECLARE_ATTACKERS, displayName: 'Declare Attackers', phaseName: 'Combat Phase' },
-  { step: TurnStep.DECLARE_BLOCKERS, displayName: 'Declare Blockers', phaseName: 'Combat Phase' },
-  { step: TurnStep.COMBAT_DAMAGE, displayName: 'Combat Damage', phaseName: 'Combat Phase' },
-  { step: TurnStep.END_OF_COMBAT, displayName: 'End of Combat', phaseName: 'Combat Phase' },
-  { step: TurnStep.POSTCOMBAT_MAIN, displayName: 'Postcombat Main', phaseName: 'Postcombat Main Phase' },
-  { step: TurnStep.END_STEP, displayName: 'End Step', phaseName: 'Ending Phase' },
-  { step: TurnStep.CLEANUP, displayName: 'Cleanup', phaseName: 'Ending Phase' },
+  { step: TurnStep.UNTAP, displayName: 'Untap', phaseName: 'Beginning Phase', icon: 'UN' },
+  { step: TurnStep.UPKEEP, displayName: 'Upkeep', phaseName: 'Beginning Phase', icon: 'UP' },
+  { step: TurnStep.DRAW, displayName: 'Draw', phaseName: 'Beginning Phase', icon: 'DR' },
+  { step: TurnStep.PRECOMBAT_MAIN, displayName: 'Precombat Main', phaseName: 'Precombat Main Phase', icon: 'M1' },
+  { step: TurnStep.BEGINNING_OF_COMBAT, displayName: 'Beginning of Combat', phaseName: 'Combat Phase', icon: 'BC' },
+  { step: TurnStep.DECLARE_ATTACKERS, displayName: 'Declare Attackers', phaseName: 'Combat Phase', icon: 'AT' },
+  { step: TurnStep.DECLARE_BLOCKERS, displayName: 'Declare Blockers', phaseName: 'Combat Phase', icon: 'BL' },
+  { step: TurnStep.COMBAT_DAMAGE, displayName: 'Combat Damage', phaseName: 'Combat Phase', icon: 'DM' },
+  { step: TurnStep.END_OF_COMBAT, displayName: 'End of Combat', phaseName: 'Combat Phase', icon: 'EC' },
+  { step: TurnStep.POSTCOMBAT_MAIN, displayName: 'Postcombat Main', phaseName: 'Postcombat Main Phase', icon: 'M2' },
+  { step: TurnStep.END_STEP, displayName: 'End Step', phaseName: 'Ending Phase', icon: 'ES' },
+  { step: TurnStep.CLEANUP, displayName: 'Cleanup', phaseName: 'Ending Phase', icon: 'CL' },
 ];
 
 export interface PhaseGroup {
@@ -187,6 +188,32 @@ export interface Card {
   graveyardActivatedAbilities: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
+  modalChoicesRequired: number;
+  modalOptional: boolean;
+  modalOptions: ModalOptionView[] | null;
+}
+
+export interface ModalOptionView {
+  label: string;
+  needsTarget: boolean;
+  needsSpellTarget: boolean;
+  targetCount: number;
+}
+
+/** One attributed contribution of a continuous effect to a permanent's characteristics —
+ * the per-source hover breakdown. Display-only; the aggregates on Permanent stay authoritative. */
+export interface ModifierLine {
+  source: string;
+  power: number;
+  toughness: number;
+  /** Non-null when this source SETS base power; base lines fold in list order, last non-null wins. */
+  basePower: number | null;
+  baseToughness: number | null;
+  gainedKeywords: string[];
+  removedKeywords: string[];
+  losesAllAbilities: boolean;
+  /** Sublayer 7d P/T switch — two switches cancel, only the parity of switch lines matters. */
+  switchesPt: boolean;
 }
 
 export interface Permanent {
@@ -217,6 +244,9 @@ export interface Permanent {
   /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (a castable copy of its
    * prepare spell sits in exile). Not a transform — the front face stays; the prepare spell is shown inset. */
   prepared: boolean;
+  /** Per-source attribution of the continuous effects modifying this permanent (hover breakdown).
+   * Optional: absent in hand-built mock data (e.g. the tutorial). */
+  modifierLines?: ModifierLine[];
 }
 
 export interface StackEntry {
@@ -262,6 +292,7 @@ export interface LobbyGame {
   createdByUsername: string;
   playerCount: number;
   status: GameStatus;
+  allRandom: boolean;
 }
 
 export interface DeckInfo {
@@ -547,6 +578,7 @@ export interface CombatDamageAssignmentNotification {
   validTargets: CombatDamageTargetView[];
   isTrample: boolean;
   isDeathtouch: boolean;
+  singleRecipient: boolean;
 }
 
 export interface BrowseCardInfo {

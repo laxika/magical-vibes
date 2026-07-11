@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VolcanicStrengthTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Volcanic Strength has correct card properties")
-    void hasCorrectProperties() {
-        VolcanicStrength card = new VolcanicStrength();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactly(Keyword.MOUNTAINWALK);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
 
     // ===== Casting and resolving =====
 

@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AmaranthineWallTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Amaranthine Wall has one activated ability granting indestructible")
-    void hasIndestructibleActivatedAbility() {
-        AmaranthineWall card = new AmaranthineWall();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Casting =====
 

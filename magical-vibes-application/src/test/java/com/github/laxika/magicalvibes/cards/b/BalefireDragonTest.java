@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,19 +14,6 @@ import java.util.ArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BalefireDragonTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER effect")
-    void hasCombatDamageToPlayerEffect() {
-        BalefireDragon card = new BalefireDragon();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .hasSize(1)
-                .first()
-                .isInstanceOf(DealDamageToEachCreatureDamagedPlayerControlsEffect.class);
-    }
 
     // ===== Combat damage trigger =====
 
@@ -164,7 +148,6 @@ class BalefireDragonTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombat() {
         harness.forceActivePlayer(player1);

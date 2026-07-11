@@ -1,16 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,40 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HinterlandHermitTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has correct transform trigger configured")
-    void frontFaceHasCorrectEffects() {
-        HinterlandHermit card = new HinterlandHermit();
+    
 
-        assertThat(card.getActivatedAbilities()).isEmpty();
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(HinterlandScourge.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("HinterlandScourge");
-    }
-
-    @Test
-    @DisplayName("Back face has correct static ability and transform trigger configured")
-    void backFaceHasCorrectEffects() {
-        HinterlandHermit card = new HinterlandHermit();
-        HinterlandScourge backFace = (HinterlandScourge) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MustBeBlockedIfAbleEffect.class);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-        TwoOrMoreSpellsCastLastTurnConditionalEffect conditional =
-                (TwoOrMoreSpellsCastLastTurnConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Transforms to Hinterland Scourge when no spells were cast last turn")
@@ -203,6 +166,6 @@ class HinterlandHermitTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

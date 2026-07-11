@@ -1,32 +1,34 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessControllerControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
@@ -38,12 +40,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
-import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,10 +64,13 @@ import java.util.List;
 public class CombatAttackService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
+    private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -73,12 +79,10 @@ public class CombatAttackService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         if (isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
-        UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (canCreatureAttack(gameData, p, defenderId, defenderBattlefield)) {
+            if (canCreatureAttack(gameData, p, playerId)) {
                 indices.add(i);
             }
         }
@@ -97,11 +101,11 @@ public class CombatAttackService {
      * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return List.of();
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -129,20 +133,14 @@ public class CombatAttackService {
             return;
         }
 
-        List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
-        List<AttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, activeId);
-        boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
-        gameData.interaction.beginAttackerDeclaration(activeId);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId),
-                new AvailableAttackersMessage(attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(activeId));
     }
 
     /**
      * Validates and processes a player's attacker declaration.
      */
     public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
         if (!player.getId().equals(gameData.activePlayerId)) {
@@ -185,7 +183,7 @@ public class CombatAttackService {
         }
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison)
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             int totalTax = taxPerCreature * attackerIndices.size();
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -211,6 +209,16 @@ public class CombatAttackService {
             if (attacker.getMustAttackTargetId() != null && !attacker.getMustAttackTargetId().equals(targetId)) {
                 throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
             }
+            // Taunt: a taunted player's attacking creatures must attack the taunter if able.
+            UUID taunter = gameData.tauntedThisTurn.get(playerId);
+            if (taunter != null && validTargetIds.contains(taunter) && !taunter.equals(targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " must attack the taunting player");
+            }
+            // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
+            // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
+            if (isCantAttackDefenderDueToRestriction(gameData, attacker, targetId)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can't attack that player");
+            }
             resolvedTargets.put(idx, targetId);
         }
 
@@ -223,7 +231,7 @@ public class CombatAttackService {
         }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
-        List<ManaColor> phyrexianPayments = gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = 0;
@@ -244,6 +252,7 @@ public class CombatAttackService {
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
+        gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {
@@ -269,32 +278,23 @@ public class CombatAttackService {
             if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK));
 
-                // Filter out AttacksAloneConditionalEffect when not attacking alone (CR 506.5)
-                if (attackerIndices.size() != 1) {
-                    allEffects.removeIf(e -> e instanceof AttacksAloneConditionalEffect);
-                }
+                // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksAlone
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
-                // Filter out ControlsPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> {
-                    if (e instanceof ControlsPermanentConditionalEffect cpc) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-                        return bf == null || bf.stream().noneMatch(
-                                p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
-                    }
-                    return false;
-                });
+                // Filter out controls-permanent conditionals when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControlsPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
-                // Filter out ControlsAnotherPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> {
-                    if (e instanceof ControlsAnotherPermanentConditionalEffect capc) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-                        if (bf == null) return true;
-                        return bf.stream().noneMatch(
-                                p -> !p.getId().equals(attacker.getId())
-                                        && gameQueryService.matchesPermanentPredicate(gameData, p, capc.filter()));
-                    }
-                    return false;
-                });
+                // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -317,7 +317,7 @@ public class CombatAttackService {
                         boolean needsTarget = otherEffects.stream()
                                 .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
-                            gameData.pendingAttackTriggerTargets.add(
+                            gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId()));
                         } else {
@@ -379,11 +379,9 @@ public class CombatAttackService {
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists.
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
-                if (effect instanceof HasAttackerConditionalEffect hasAttacker) {
-                    boolean hasMatch = battlefield.stream()
-                            .filter(Permanent::isAttacking)
-                            .anyMatch(p -> gameQueryService.matchesPermanentPredicate(
-                                    gameData, p, hasAttacker.predicate()));
+                if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
+                    boolean hasMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId));
                     if (!hasMatch) {
                         log.info("Game {} - {} attack trigger skipped (no matching attacker)",
                                 gameData.id, perm.getCard().getName());
@@ -426,7 +424,7 @@ public class CombatAttackService {
                 List<CardEffect> matchingEffects = new ArrayList<>();
                 for (CardEffect effect : perCreatureAttackEffects) {
                     if (effect instanceof TriggeringCardConditionalEffect conditional) {
-                        if (!gameQueryService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
+                        if (!predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
                                 gameData, playerId)) {
                             continue;
                         }
@@ -466,14 +464,17 @@ public class CombatAttackService {
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
 
-                    // Unwrap MinimumAttackersConditionalEffect — check minimum before offering the trigger
-                    if (innerEffect instanceof MinimumAttackersConditionalEffect mac) {
-                        if (attackerIndices.size() < mac.minimumAttackers()) {
+                    // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
+                    if (innerEffect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof MinimumAttackers mac) {
+                        ConditionContext ctx = new ConditionContext(playerId, null, null, card,
+                                false, null, attackerIndices.size(), null, null, false);
+                        if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
                             log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
                                     gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
                             continue;
                         }
-                        innerEffect = mac.wrapped();
+                        innerEffect = ce.wrapped();
                     }
 
                     gameData.stack.add(new StackEntry(
@@ -570,8 +571,7 @@ public class CombatAttackService {
     }
 
 
-    private boolean canCreatureAttack(GameData gameData, Permanent creature,
-                                       UUID defenderId, List<Permanent> defenderBattlefield) {
+    private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)) return false;
@@ -580,76 +580,52 @@ public class CombatAttackService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
         if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
-        if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
-        if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
-        if (isCantAttackUnlessControllerControls(gameData, creature)) return false;
-        if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
-        if (isCantAttackUnlessOpponentDealtDamage(gameData, creature)) return false;
+        if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;
     }
 
-    private boolean isCantAttackUnlessDefenderPoisoned(GameData gameData, Permanent creature, UUID defenderId) {
-        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackUnlessDefenderPoisonedEffect.class::isInstance);
-        if (!hasRestriction) return false;
-        int poison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
-        return poison <= 0;
-    }
-
-    private boolean isCantAttackUnlessOpponentDealtDamage(GameData gameData, Permanent creature) {
-        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackUnlessOpponentDealtDamageThisTurnEffect.class::isInstance);
-        if (!hasRestriction) return false;
-        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-        // Check if any opponent of the creature's controller has been dealt damage this turn
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId) && gameData.playersDealtDamageThisTurn.contains(playerId)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker,
-                                                      List<Permanent> defenderBattlefield) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessDefenderControlsMatchingPermanentEffect restriction) {
-                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
-                if (!defenderMatches) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isCantAttackUnlessBattlefieldCount(GameData gameData, Permanent attacker) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect restriction) {
-                int[] count = {0};
-                gameData.forEachBattlefield((playerId, battlefield) ->
-                        count[0] += (int) battlefield.stream()
-                                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.permanentPredicate()))
-                                .count()
-                );
-                if (count[0] < restriction.minimumCount()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isCantAttackUnlessControllerControls(GameData gameData, Permanent creature) {
+    /**
+     * Evaluates the creature's {@link CantAttackUnlessEffect} restrictions (CR 508.1a): the
+     * creature can't attack while any attached condition is unmet. Each restriction's condition
+     * (controller controls a permanent, defending player poisoned, N Islands on the battlefield, …)
+     * is routed through {@link ConditionEvaluationService} with the attacker as source.
+     */
+    private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
+        ConditionContext ctx = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessControllerControlsMatchingPermanentEffect restriction) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
-                boolean controllerMatches = controllerBattlefield != null && controllerBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.controllerPermanentPredicate()));
-                if (!controllerMatches) {
+            Condition condition = null;
+            if (effect instanceof CantAttackUnlessEffect restriction) {
+                condition = restriction.condition();
+            } else if (effect instanceof CantAttackOrBlockUnlessEffect restriction) {
+                condition = restriction.condition();
+            }
+            if (condition != null) {
+                if (ctx == null) {
+                    ctx = ConditionContext.forPermanent(creature, controllerId);
+                }
+                if (!conditionEvaluationService.isMet(gameData, condition, ctx)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Defender-scoped attack restriction (CR 508.1a): the attacked player controls a permanent with a
+     * {@link CreaturesCantAttackControllerUnlessPredicateEffect}, and the attacker does not match its
+     * exemption predicate (e.g. Form of the Dragon's "Creatures without flying can't attack you").
+     * Only players can carry this restriction, so it never applies to attacks aimed at a planeswalker.
+     */
+    private boolean isCantAttackDefenderDueToRestriction(GameData gameData, Permanent attacker, UUID targetId) {
+        if (!gameData.playerIds.contains(targetId)) return false;
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(targetId);
+        if (defenderBattlefield == null) return false;
+        for (Permanent perm : defenderBattlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
                     return true;
                 }
             }
@@ -662,7 +638,7 @@ public class CombatAttackService {
         gameData.forEachPermanent((playerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (!gameQueryService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
                     }
                 }
@@ -682,6 +658,12 @@ public class CombatAttackService {
         }
 
         UUID creatureControllerId = CombatHelper.findControllerOf(gameData, creature);
+
+        // Taunt: every creature the affected player controls must attack the taunter if able.
+        UUID taunter = gameData.tauntedThisTurn.get(creatureControllerId);
+        if (taunter != null && buildValidAttackTargetIds(gameData, creatureControllerId).contains(taunter)) {
+            count[0]++;
+        }
 
         gameData.forEachPermanent((playerId, permanent) -> {
             if (permanent.isAttached()
@@ -706,11 +688,11 @@ public class CombatAttackService {
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return;
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
 
@@ -744,11 +726,11 @@ public class CombatAttackService {
      * (CR 508.1d — the player is not required to pay optional attack costs).
      */
     public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return false;
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return false;
         }
         for (UUID pid : gameData.orderedPlayerIds) {

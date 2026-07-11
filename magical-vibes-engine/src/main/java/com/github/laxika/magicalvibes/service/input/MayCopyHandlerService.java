@@ -11,15 +11,18 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,7 @@ public class MayCopyHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final CloneService cloneService;
     private final PermanentCopierService permanentCopierService;
     private final StateBasedActionService stateBasedActionService;
@@ -44,6 +48,7 @@ public class MayCopyHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ValidTargetService validTargetService;
 
     public void handleCopyPermanentOnEnterChoice(GameData gameData, Player player, boolean accepted,
                                                   PendingMayAbility ability, CopyPermanentOnEnterEffect copyEffect) {
@@ -55,7 +60,7 @@ public class MayCopyHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (gameQueryService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
                         validIds.add(p.getId());
                     }
                 }
@@ -74,7 +79,7 @@ public class MayCopyHandlerService {
             cloneService.completeCloneEntry(gameData, null);
             stateBasedActionService.performStateBasedActions(gameData);
 
-            if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
                 triggerCollectionService.processNextDeathTriggerTarget(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;
@@ -172,6 +177,65 @@ public class MayCopyHandlerService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
                 "Choose a new target for the copy of " + copiedCard.getName() + ".");
+    }
+
+    /**
+     * "You may choose a new target for the copy" of an activated ability (Rings of Brighthearth).
+     * Recomputes the legal targets for the copy on the stack using the copied ability's targeting,
+     * then reuses the {@link PermanentChoiceContext.SpellRetarget} flow to apply the chosen target.
+     */
+    public void handleCopyActivatedAbilityRetargetChoice(GameData gameData, Player player, boolean accepted,
+                                                         PendingMayAbility ability, CopyActivatedAbilityRetargetEffect retarget) {
+        if (!accepted) {
+            String logEntry = player.getUsername() + " keeps the original target for the copy.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to retarget ability copy", gameData.id, player.getUsername());
+
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        UUID copyCardId = ability.targetCardId();
+        StackEntry copyEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(copyCardId)) {
+                copyEntry = se;
+                break;
+            }
+        }
+        if (copyEntry == null) {
+            log.info("Game {} - Ability copy no longer on stack for retarget", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        int permanentIndex = -1;
+        List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(ability.controllerId());
+        if (controllerBattlefield != null) {
+            for (int i = 0; i < controllerBattlefield.size(); i++) {
+                if (controllerBattlefield.get(i).getId().equals(retarget.sourcePermanentId())) {
+                    permanentIndex = i;
+                    break;
+                }
+            }
+        }
+
+        ValidTargetsResponse valid = validTargetService.computeValidTargetsForAbility(
+                gameData, copyEntry.getCard(), retarget.ability(), ability.controllerId(), permanentIndex);
+        List<UUID> validTargets = new ArrayList<>();
+        validTargets.addAll(valid.validPermanentIds());
+        validTargets.addAll(valid.validPlayerIds());
+
+        if (validTargets.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, "No valid new targets available for the copy.");
+            log.info("Game {} - No valid targets for ability copy retarget", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
+        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
+                "Choose a new target for the copy of " + copyEntry.getCard().getName() + "'s ability.");
     }
 
     public void handleRedirectRetargetChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

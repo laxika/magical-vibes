@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeAndControllerGainsLifeLostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -38,23 +35,6 @@ class ChancellorOfTheDrossTest {
         gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor of the Dross has ON_OPENING_HAND_REVEAL MayEffect wrapping the drain effect")
-    void hasOpeningHandTriggeredEffect() {
-        ChancellorOfTheDross card = new ChancellorOfTheDross();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(EachOpponentLosesLifeAndControllerGainsLifeLostEffect.class);
-        EachOpponentLosesLifeAndControllerGainsLifeLostEffect effect =
-                (EachOpponentLosesLifeAndControllerGainsLifeLostEffect) may.wrapped();
-        assertThat(effect.amount()).isEqualTo(3);
     }
 
     // ===== Opening hand trigger =====

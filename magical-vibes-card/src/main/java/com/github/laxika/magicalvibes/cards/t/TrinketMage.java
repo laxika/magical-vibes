@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -17,7 +17,7 @@ public class TrinketMage extends Card {
 
     public TrinketMage() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new SearchLibraryForCardsToHandEffect(
+                new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.ARTIFACT), new CardMaxManaValuePredicate(1)))),
                         "Search your library for an artifact card with mana value 1 or less?"));
     }

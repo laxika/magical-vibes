@@ -45,7 +45,7 @@ public class ExileTargetPermanentAndImprintEffectHandler implements NormalEffect
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (p.getCard() == entry.getCard()) {
-                    p.getCard().setImprintedCard(exiledCard);
+                    gameData.setImprintedCard(p.getCard(), exiledCard);
                     break;
                 }
             }

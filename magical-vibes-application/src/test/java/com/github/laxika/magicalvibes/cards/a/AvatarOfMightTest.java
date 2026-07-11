@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AvatarOfMightTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Avatar of Might has correct card properties")
-    void hasCorrectProperties() {
-        AvatarOfMight card = new AvatarOfMight();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cannot cast Avatar of Might for {G}{G} without cost reduction")

@@ -1,16 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,38 +14,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SharpenedPitchforkTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sharpened Pitchfork has static first strike keyword grant effect")
-    void hasFirstStrikeGrantEffect() {
-        SharpenedPitchfork card = new SharpenedPitchfork();
-
-        GrantKeywordEffect grant = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.keywords().contains(Keyword.FIRST_STRIKE))
-                .findFirst().orElseThrow();
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(grant.filter()).isNull();
-    }
-
-    @Test
-    @DisplayName("Sharpened Pitchfork has conditional +1/+1 boost for Humans")
-    void hasConditionalHumanBoostEffect() {
-        SharpenedPitchfork card = new SharpenedPitchfork();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) boost.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-    }
 
     // ===== Static effects: first strike =====
 

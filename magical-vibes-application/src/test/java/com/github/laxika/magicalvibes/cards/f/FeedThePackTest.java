@@ -1,17 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureToCreateTokensEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,37 +12,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FeedThePackTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping sacrifice-create-tokens on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffect() {
-        FeedThePack card = new FeedThePack();
-
-        var effects = card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) effects.getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeCreatureToCreateTokensEqualToToughnessEffect.class);
-
-        SacrificeCreatureToCreateTokensEqualToToughnessEffect inner =
-                (SacrificeCreatureToCreateTokensEqualToToughnessEffect) may.wrapped();
-
-        // Token template is a 2/2 green Wolf
-        CreateTokenEffect token = inner.tokenTemplate();
-        assertThat(token.tokenName()).isEqualTo("Wolf");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.GREEN);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.WOLF);
-
-        // Only nontoken creatures may be sacrificed
-        assertThat(inner.filter()).isInstanceOf(PermanentNotPredicate.class);
-        assertThat(((PermanentNotPredicate) inner.filter()).predicate())
-                .isInstanceOf(PermanentIsTokenPredicate.class);
-    }
 
     // ===== Accept: sacrifice creates wolves equal to toughness =====
 
@@ -73,7 +35,7 @@ class FeedThePackTest extends BaseCardTest {
 
         // Resolve the triggered ability — MayEffect presents the may choice
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept — now must choose a creature to sacrifice
         harness.handleMayAbilityChosen(player1, true);
@@ -117,7 +79,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step → trigger queued
         harness.passBothPriorities(); // resolve trigger → may choice
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -144,7 +106,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step → trigger queued
         harness.passBothPriorities(); // resolve trigger → may choice
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 

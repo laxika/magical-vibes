@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSecondTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -21,7 +20,7 @@ public class Skulduggery extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new BoostFirstTargetCreatureEffect(1, 1));
+        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(1, 1));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -29,6 +28,6 @@ public class Skulduggery extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature an opponent controls"
-        )).addEffect(EffectSlot.SPELL, new BoostSecondTargetCreatureEffect(-1, -1));
+        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(-1, -1));
     }
 }

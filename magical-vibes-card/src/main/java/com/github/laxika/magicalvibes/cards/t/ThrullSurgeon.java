@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class ThrullSurgeon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
+                List.of(new SacrificeSelfCost(), new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD)),
                 "Sacrifice Thrull Surgeon: Target player reveals their hand. You choose a card from it. That player discards that card.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

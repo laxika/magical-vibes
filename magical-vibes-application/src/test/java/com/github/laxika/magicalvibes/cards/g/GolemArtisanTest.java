@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,35 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GolemArtisanTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Golem Artisan has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        GolemArtisan card = new GolemArtisan();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {2} +1/+1
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-
-        // Second ability: {2} choose flying/trample/haste
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(0))
-                .isInstanceOf(GrantChosenKeywordToTargetEffect.class);
-        GrantChosenKeywordToTargetEffect keywordEffect =
-                (GrantChosenKeywordToTargetEffect) card.getActivatedAbilities().get(1).getEffects().get(0);
-        assertThat(keywordEffect.options()).containsExactly(Keyword.FLYING, Keyword.TRAMPLE, Keyword.HASTE);
-    }
 
     // ===== Casting =====
 

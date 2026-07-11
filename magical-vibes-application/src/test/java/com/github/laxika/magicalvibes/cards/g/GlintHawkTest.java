@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,21 +14,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GlintHawkTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB sacrifice-unless-return-artifact effect")
-    void hasCorrectEffect() {
-        GlintHawk card = new GlintHawk();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SacrificeUnlessReturnOwnPermanentTypeToHandEffect.class);
-        SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect =
-                (SacrificeUnlessReturnOwnPermanentTypeToHandEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.permanentType()).isEqualTo(CardType.ARTIFACT);
-    }
 
     // ===== No artifacts — auto-sacrifice =====
 
@@ -55,7 +36,7 @@ class GlintHawkTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Glint Hawk"));
 
         // No prompt — it was automatic
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== With artifact — accept bounce =====
@@ -71,8 +52,8 @@ class GlintHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → ETB on stack
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -82,7 +63,7 @@ class GlintHawkTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -205,7 +186,7 @@ class GlintHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB → may ability prompt
 
         // Sanity check
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 }

@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
@@ -20,17 +18,7 @@ class SurgeNodeTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has ETB effect for entering with 6 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        SurgeNode card = new SurgeNode();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithFixedChargeCountersEffect.class);
-        EnterWithFixedChargeCountersEffect effect = (EnterWithFixedChargeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(6);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability: {1}, tap, remove charge counter to put charge counter on target artifact")

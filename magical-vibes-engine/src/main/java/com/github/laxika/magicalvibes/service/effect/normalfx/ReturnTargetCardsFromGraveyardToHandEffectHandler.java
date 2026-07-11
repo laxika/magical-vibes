@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

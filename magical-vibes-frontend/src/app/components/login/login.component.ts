@@ -16,16 +16,26 @@ export class LoginComponent {
   password = signal('');
   loading = signal(false);
   errorMessage = signal('');
-  successMessage = signal('');
+
+  readonly testAccounts = [
+    { username: 'admin', password: 'admin123' },
+    { username: 'testuser', password: 'testpass' },
+    { username: 'player3', password: 'player3pass' }
+  ];
 
   constructor(
     private websocketService: WebsocketService,
     private router: Router
   ) {}
 
+  fillCredentials(account: { username: string; password: string }) {
+    this.username.set(account.username);
+    this.password.set(account.password);
+    this.errorMessage.set('');
+  }
+
   onSubmit() {
     this.errorMessage.set('');
-    this.successMessage.set('');
 
     if (!this.username() || !this.password()) {
       this.errorMessage.set('Please enter both username and password');
@@ -40,16 +50,12 @@ export class LoginComponent {
 
         if (response.type === MessageType.LOGIN_SUCCESS) {
           let destination = '/home';
-          let msg = response.message;
           if (response.activeGame) {
             destination = '/game';
-            msg = 'Rejoining game...';
           } else if (response.activeDraftId) {
             destination = '/draft';
-            msg = 'Rejoining draft...';
           }
-          this.successMessage.set(msg);
-          setTimeout(() => this.router.navigate([destination]), 1000);
+          this.router.navigate([destination]);
         } else if (response.type === MessageType.LOGIN_FAILURE) {
           this.errorMessage.set(response.message);
         } else if (response.type === MessageType.TIMEOUT) {

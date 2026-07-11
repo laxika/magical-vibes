@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,25 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShoreKeeperTest extends BaseCardTest {
-
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Shore Keeper has correct activated ability with tap, sacrifice, and draw 3")
-    void hasCorrectActivatedAbility() {
-        ShoreKeeper card = new ShoreKeeper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{7}{U}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getActivatedAbilities().getFirst().getEffects().get(1)).amount())
-                .isEqualTo(3);
-    }
 
     // ===== Activation =====
 

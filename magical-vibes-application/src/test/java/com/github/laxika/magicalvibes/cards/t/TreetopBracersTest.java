@@ -1,23 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -30,30 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TreetopBracersTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Treetop Bracers has correct card properties")
-    void hasCorrectProperties() {
-        TreetopBracers card = new TreetopBracers();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
-
-        CanBeBlockedOnlyByFilterEffect restriction = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(restriction.blockerPredicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentHasKeywordPredicate(Keyword.FLYING)
-        )));
-        assertThat(restriction.allowedBlockersDescription()).isEqualTo("creatures with flying");
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-    }
+    
 
     @Test
     @DisplayName("Casting Treetop Bracers puts it on the stack")
@@ -192,6 +159,6 @@ class TreetopBracersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

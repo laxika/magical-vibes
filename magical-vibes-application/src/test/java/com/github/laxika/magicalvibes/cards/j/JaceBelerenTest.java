@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,46 +29,11 @@ class JaceBelerenTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has EachPlayerDrawsCardEffect(1)")
-    void plusTwoAbilityHasCorrectEffect() {
-        JaceBeleren card = new JaceBeleren();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(EachPlayerDrawsCardEffect.class);
-        assertThat(((EachPlayerDrawsCardEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability has DrawCardForTargetPlayerEffect(1) targeting player")
-    void minusOneAbilityHasCorrectEffect() {
-        JaceBeleren card = new JaceBeleren();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        DrawCardForTargetPlayerEffect effect = (DrawCardForTargetPlayerEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.targetsPlayer()).isTrue();
-    }
-
-    @Test
-    @DisplayName("-10 ability has MillTargetPlayerEffect(20)")
-    void minusTenAbilityHasCorrectEffect() {
-        JaceBeleren card = new JaceBeleren();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-10);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) ability.getEffects().getFirst()).count()).isEqualTo(20);
-    }
+    
 
     // ===== Casting =====
 

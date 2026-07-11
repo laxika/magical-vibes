@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,18 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EntomberExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Entomber Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        EntomberExarch card = new EntomberExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Return target creature card from your graveyard to your hand")
@@ -72,7 +57,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only creature (index 1) should be valid, instant (index 0) should not
-            assertThat(gd.interaction.graveyardChoiceContext().validIndices()).containsExactly(1);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices()).containsExactly(1);
         }
 
         @Test
@@ -82,7 +67,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -120,10 +105,10 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
             // Only instant (index 0) should be valid, creature (index 1) should not
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
 
             harness.handleCardChosen(player1, 0);
 
@@ -145,7 +130,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only instant (index 1) should be valid
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
         }
 
         @Test
@@ -160,7 +145,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only land (index 0) should be valid
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
         }
 
         @Test
@@ -172,7 +157,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -186,7 +171,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         }
 

@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -23,9 +22,14 @@ public class DestructionTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
 
-    @ValidatesTarget(SacrificeCreatureEffect.class)
-    public void validateSacrificeCreature(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    // The validator is keyed by effect class and runs unconditionally, so only the
+    // target-player recipient requires a targeted player; controller / each-player / each-opponent
+    // recipients take no target.
+    @ValidatesTarget(SacrificePermanentsEffect.class)
+    public void validateSacrificePermanents(TargetValidationContext ctx, SacrificePermanentsEffect effect) {
+        if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(DestroyCreatureBlockingThisEffect.class)
@@ -47,20 +51,13 @@ public class DestructionTargetValidators {
         tvs.checkProtection(ctx, target);
     }
 
-    @ValidatesTarget(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class)
-    public void validateDestroyTargetAndControllerLosesLifePerCreatureDeaths(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class)
-    public void validateDestroyTargetArtifactAndBoostSelfByManaValue(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class)
-    public void validateDestroyTargetPermanentAndGainLifeEqualToManaValue(TargetValidationContext ctx) {
+    // Covers the whole destroy-plus-value family (DestroyTargetPermanentThenEffect). All members are
+    // single-battlefield-target with protection honoured; the type restriction is the card's own
+    // target filter. FoolishFate wraps it in a ConditionalReplacementEffect, whose base effect
+    // (DestroyTargetPermanentEffect) carries the validation instead — checkEffectTargets unwraps to
+    // the base — so this validator does not run for that card.
+    @ValidatesTarget(DestroyTargetPermanentThenEffect.class)
+    public void validateDestroyTargetPermanentThen(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.checkProtection(ctx, target);
     }

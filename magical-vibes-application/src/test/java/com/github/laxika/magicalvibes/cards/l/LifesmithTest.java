@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,26 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LifesmithTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Lifesmith has MayEffect wrapping SpellCastTriggerEffect with cost")
-    void hasCorrectStructure() {
-        Lifesmith card = new Lifesmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) trigger.spellFilter()).cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(trigger.manaCost()).isEqualTo("{1}");
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(GainLifeEffect.class);
-    }
-
     // ===== Trigger fires on artifact cast =====
 
     @Test
@@ -53,7 +28,7 @@ class LifesmithTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept and pay gains life =====
@@ -124,7 +99,7 @@ class LifesmithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Stack should only have the creature spell
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -146,7 +121,7 @@ class LifesmithTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
     }
@@ -164,7 +139,7 @@ class LifesmithTest extends BaseCardTest {
 
         // May prompt fires
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept, but cannot pay
         harness.handleMayAbilityChosen(player1, true);

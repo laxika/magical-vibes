@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,11 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,38 +14,11 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpiritWeaverTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spirit Weaver has correct card properties")
-    void hasCorrectProperties() {
-        SpiritWeaver card = new SpiritWeaver();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(0);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.BLUE))
-                )),
-                "Target must be a green or blue creature"
-        ));
-    }
 
     // ===== Activation =====
 

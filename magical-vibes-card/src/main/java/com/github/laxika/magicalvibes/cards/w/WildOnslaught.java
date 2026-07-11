@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -18,7 +19,7 @@ public class WildOnslaught extends Card {
 
         // Put a +1/+1 counter on each creature you control.
         // If this spell was kicked, put two +1/+1 counters on each creature you control instead.
-        addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2, new PermanentIsCreaturePredicate())
         ));

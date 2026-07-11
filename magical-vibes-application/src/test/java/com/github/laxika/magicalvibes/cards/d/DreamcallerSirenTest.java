@@ -1,19 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.c.CloudElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,34 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DreamcallerSirenTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has blocking restriction static effect")
-    void hasBlockingRestrictionEffect() {
-        DreamcallerSiren card = new DreamcallerSiren();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has controls-another-Pirate conditional ETB tap effect")
-    void hasConditionalEtbEffect() {
-        DreamcallerSiren card = new DreamcallerSiren();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
-
-        ControlsAnotherPermanentConditionalEffect conditional =
-                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(conditional.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
-
     // ===== ETB with another Pirate =====
 
     @Nested
@@ -63,7 +29,7 @@ class DreamcallerSirenTest extends BaseCardTest {
     class EtbWithAnotherPirate {
 
         @Test
-        @DisplayName("ETB triggers when you control another Pirate — taps two targets")
+        @DisplayName("ETB triggers when you control another Pirate — taps two targets chosen at trigger time")
         void etbTapsTwoTargets() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
 
@@ -72,8 +38,10 @@ class DreamcallerSirenTest extends BaseCardTest {
             assertThat(bears1.isTapped()).isFalse();
             assertThat(bears2.isTapped()).isFalse();
 
-            castDreamcallerSiren(List.of(bears1.getId(), bears2.getId()));
-            harness.passBothPriorities(); // resolve creature spell
+            castDreamcallerSiren();
+            harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+            harness.handlePermanentChosen(player1, bears1.getId());
+            harness.handlePermanentChosen(player1, bears2.getId()); // max reached — trigger on stack
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears1.isTapped()).isTrue();
@@ -81,29 +49,39 @@ class DreamcallerSirenTest extends BaseCardTest {
         }
 
         @Test
-        @DisplayName("ETB triggers when you control another Pirate — taps one target")
+        @DisplayName("ETB triggers when you control another Pirate — taps one target, then stops")
         void etbTapsOneTarget() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
 
             Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
             assertThat(bears.isTapped()).isFalse();
 
-            castDreamcallerSiren(List.of(bears.getId()));
-            harness.passBothPriorities(); // resolve creature spell
+            castDreamcallerSiren();
+            harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.handlePermanentChosen(player1, player1.getId()); // choose self to stop at one target
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears.isTapped()).isTrue();
         }
 
         @Test
-        @DisplayName("ETB trigger goes on the stack")
+        @DisplayName("ETB trigger goes on the stack once targets are chosen")
         void etbTriggerGoesOnStack() {
             harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
             harness.addToBattlefield(player2, new GrizzlyBears());
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-            castDreamcallerSiren(List.of(bearsId));
-            harness.passBothPriorities(); // resolve creature spell
+            castDreamcallerSiren();
+            harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+
+            // Casting never asked for a target — the choice happens now, as the
+            // trigger is put on the stack (CR 603.3d)
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.PermanentChoice.class);
+
+            harness.handlePermanentChosen(player1, bearsId);
+            harness.handlePermanentChosen(player1, player1.getId()); // stop after one target
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -117,10 +95,34 @@ class DreamcallerSirenTest extends BaseCardTest {
             harness.addToBattlefield(player2, new GrizzlyBears());
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-            castDreamcallerSiren(List.of(bearsId));
-            harness.passBothPriorities(); // resolve creature spell
+            castDreamcallerSiren();
+            harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+            harness.handlePermanentChosen(player1, bearsId);
+            harness.handlePermanentChosen(player1, player1.getId()); // stop after one target
 
             harness.assertOnBattlefield(player1, "Dreamcaller Siren");
+        }
+
+        @Test
+        @DisplayName("Cannot choose a land as a trigger target")
+        void cannotChooseLandTarget() {
+            harness.addToBattlefield(player1, new DaringSaboteur()); // Pirate
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new Forest());
+
+            castDreamcallerSiren();
+            harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+
+            UUID landId = gd.playerBattlefields.get(player2.getId()).stream()
+                    .filter(p -> p.getCard().getName().equals("Forest"))
+                    .findFirst().orElseThrow().getId();
+            assertThatThrownBy(() -> harness.handlePermanentChosen(player1, landId))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Invalid permanent");
         }
     }
 
@@ -133,11 +135,12 @@ class DreamcallerSirenTest extends BaseCardTest {
         @Test
         @DisplayName("ETB does NOT trigger without another Pirate (only self)")
         void etbDoesNotTriggerWithoutAnotherPirate() {
-            castDreamcallerSiren(List.of());
+            castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell
 
-            // No ETB trigger on the stack
+            // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
             assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
 
             // Creature is still on the battlefield
             harness.assertOnBattlefield(player1, "Dreamcaller Siren");
@@ -148,11 +151,12 @@ class DreamcallerSirenTest extends BaseCardTest {
         void etbDoesNotTriggerWithOpponentPirate() {
             harness.addToBattlefield(player2, new DaringSaboteur());
 
-            castDreamcallerSiren(List.of());
+            castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell
 
             // No ETB trigger
             assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }
 
@@ -164,8 +168,10 @@ class DreamcallerSirenTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DaringSaboteur());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        castDreamcallerSiren(List.of(bears.getId()));
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        castDreamcallerSiren();
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, player1.getId()); // stop — ETB trigger on stack
 
         // Remove the other Pirate before ETB resolves
         gd.playerBattlefields.get(player1.getId()).removeIf(
@@ -198,7 +204,7 @@ class DreamcallerSirenTest extends BaseCardTest {
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -220,7 +226,7 @@ class DreamcallerSirenTest extends BaseCardTest {
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                     .isInstanceOf(IllegalStateException.class)
@@ -230,9 +236,9 @@ class DreamcallerSirenTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-    private void castDreamcallerSiren(List<UUID> targetIds) {
+    private void castDreamcallerSiren() {
         harness.setHand(player1, List.of(new DreamcallerSiren()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castCreature(player1, 0, targetIds);
+        harness.castCreature(player1, 0);
     }
 }

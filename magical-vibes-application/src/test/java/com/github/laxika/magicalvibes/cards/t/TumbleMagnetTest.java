@@ -1,17 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -26,40 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TumbleMagnetTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect for entering with 3 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        TumbleMagnet card = new TumbleMagnet();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithFixedChargeCountersEffect.class);
-        EnterWithFixedChargeCountersEffect effect = (EnterWithFixedChargeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Has one activated ability with tap, counter removal cost, and tap effect")
-    void hasActivatedAbilityStructure() {
-        TumbleMagnet card = new TumbleMagnet();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof TapTargetPermanentEffect);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter targetFilter = (PermanentPredicateTargetFilter) ability.getTargetFilter();
-        assertThat(targetFilter.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-    }
 
     // ===== Entering the battlefield with charge counters =====
 

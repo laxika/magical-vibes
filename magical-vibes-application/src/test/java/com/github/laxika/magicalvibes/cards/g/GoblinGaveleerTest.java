@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,22 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinGaveleerTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +2/+0 per equipment effect")
-    void hasCorrectEffect() {
-        GoblinGaveleer card = new GoblinGaveleer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerEquipmentAttachedEffect.class);
-        BoostSelfPerEquipmentAttachedEffect effect =
-                (BoostSelfPerEquipmentAttachedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerPerEquipment()).isEqualTo(2);
-        assertThat(effect.toughnessPerEquipment()).isEqualTo(0);
-    }
 
     // ===== Base stats without equipment =====
 

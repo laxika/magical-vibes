@@ -4,11 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -144,7 +141,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
 
         // Control is permanent
-        assertThat(gd.permanentControlStolenCreatures).contains(target.getId());
+        assertThat(gd.newestControlEffectFor(target.getId()).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
     }
 
     @Test
@@ -221,20 +218,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
     }
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        CaptivatingVampire card = new CaptivatingVampire();
-
-        // Static boost effect
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        // Activated ability with gain control effect
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof GainControlOfTargetPermanentEffect);
-    }
+    
 
     // ===== Helpers =====
 

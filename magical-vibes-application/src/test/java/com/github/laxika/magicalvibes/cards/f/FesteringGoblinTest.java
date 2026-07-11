@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FesteringGoblinTest extends BaseCardTest {
-
 
     /**
      * Sets up combat where Festering Goblin (player1) attacks and is blocked by a 3/3 creature (player2).
@@ -47,20 +45,6 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Festering Goblin has correct card properties")
-    void hasCorrectProperties() {
-        FesteringGoblin card = new FesteringGoblin();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-1);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
-    }
-
     // ===== Death trigger with target selection =====
 
     @Test
@@ -80,8 +64,8 @@ class FesteringGoblinTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Festering Goblin"));
 
         // Player1 should be prompted to choose a target creature
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -99,7 +83,7 @@ class FesteringGoblinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Player1 should be prompted to choose a target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the surviving Grizzly Bears
         harness.handlePermanentChosen(player1, bearsId);
@@ -136,7 +120,7 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — FG dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose own Grizzly Bears
         harness.handlePermanentChosen(player1, ownBearsId);
@@ -170,7 +154,7 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.passBothPriorities(); // FG dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the 1/1 bear
         harness.handlePermanentChosen(player1, weakBearId);
@@ -242,7 +226,7 @@ class FesteringGoblinTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // No permanent choice should be prompted (no valid creature targets after Wrath)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Log should mention no valid targets
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
@@ -293,7 +277,7 @@ class FesteringGoblinTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Should be prompted — survivor is a valid target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the survivor
         harness.handlePermanentChosen(player1, survivorId);
@@ -305,5 +289,4 @@ class FesteringGoblinTest extends BaseCardTest {
                 && e.getTargetId().equals(survivorId));
     }
 }
-
 

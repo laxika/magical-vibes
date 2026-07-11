@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,21 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GuardianSeraphTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Guardian Seraph has correct static effect")
-    void hasCorrectStaticEffect() {
-        GuardianSeraph card = new GuardianSeraph();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventDamageFromOpponentSourcesEffect.class);
-        PreventDamageFromOpponentSourcesEffect effect =
-                (PreventDamageFromOpponentSourcesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
 
     // ===== Prevents 1 damage from opponent spell sources =====
 

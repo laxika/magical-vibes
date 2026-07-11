@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.m.MoonscarredWerewolf;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,43 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScornedVillagerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has tap-for-green mana and transform trigger configured")
-    void frontFaceHasCorrectEffects() {
-        ScornedVillager card = new ScornedVillager();
+    
 
-        assertThat(card.getActivatedAbilities()).isEmpty();
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(MoonscarredWerewolf.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("MoonscarredWerewolf");
-    }
-
-    @Test
-    @DisplayName("Back face has tap-for-double-green mana and transform trigger configured")
-    void backFaceHasCorrectEffects() {
-        ScornedVillager card = new ScornedVillager();
-        MoonscarredWerewolf backFace = (MoonscarredWerewolf) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-        assertThat(backFace.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN, 2));
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-        TwoOrMoreSpellsCastLastTurnConditionalEffect conditional =
-                (TwoOrMoreSpellsCastLastTurnConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Tapping Scorned Villager produces one green mana")

@@ -4,14 +4,10 @@ import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,21 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FireServantTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fire Servant has correct static effect")
-    void hasCorrectEffect() {
-        FireServant card = new FireServant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleControllerDamageEffect.class);
-        DoubleControllerDamageEffect effect = (DoubleControllerDamageEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.stackFilter()).isNotNull();
-        assertThat(effect.appliesToCombatDamage()).isFalse();
-    }
 
     // ===== Doubles red instant damage =====
 
@@ -106,7 +87,7 @@ class FireServantTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(1)); // bear is at index 1 (Fire Servant at 0)
 

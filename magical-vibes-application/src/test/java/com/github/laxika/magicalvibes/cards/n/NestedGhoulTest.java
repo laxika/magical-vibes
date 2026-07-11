@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -22,26 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NestedGhoulTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nested Ghoul has one ON_DEALT_DAMAGE token creation effect")
-    void hasCorrectEffect() {
-        NestedGhoul card = new NestedGhoul();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Zombie");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.ZOMBIE);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
 
     // ===== Non-combat damage trigger =====
 

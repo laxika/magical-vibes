@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,29 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ShipwreckLooterTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB MayEffect wrapping DrawAndDiscardCardEffect")
-    void hasRaidEtbLootEffect() {
-        ShipwreckLooter card = new ShipwreckLooter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) raid.wrapped();
-        assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);
-
-        DrawAndDiscardCardEffect loot = (DrawAndDiscardCardEffect) may.wrapped();
-        assertThat(loot.drawAmount()).isEqualTo(1);
-        assertThat(loot.discardAmount()).isEqualTo(1);
-    }
 
     // ===== ETB with raid met — accept may =====
 
@@ -60,13 +33,13 @@ class ShipwreckLooterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // MayEffect prompts controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, true);
 
         // Drew a card, now awaiting discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0);
 

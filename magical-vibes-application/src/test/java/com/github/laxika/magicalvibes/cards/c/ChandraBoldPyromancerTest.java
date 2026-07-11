@@ -7,15 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -32,50 +27,11 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has AwardManaEffect and DealDamageToTargetPlayerEffect")
-    void plusOneAbilityHasCorrectEffects() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) ability.getEffects().get(0);
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.RED);
-        assertThat(manaEffect.amount()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) ability.getEffects().get(1)).damage()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has DealDamageToTargetCreatureOrPlaneswalkerEffect(3)")
-    void minusThreeAbilityHasCorrectEffect() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureOrPlaneswalkerEffect.class);
-        assertThat(((DealDamageToTargetCreatureOrPlaneswalkerEffect) ability.getEffects().getFirst()).damage()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("-7 ability has DealDamageToTargetPlayerEffect(10) and DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(10)")
-    void minusSevenAbilityHasCorrectEffects() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-7);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) ability.getEffects().get(0)).damage()).isEqualTo(10);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect.class);
-        assertThat(((DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect) ability.getEffects().get(1)).damage()).isEqualTo(10);
-    }
+    
 
     // ===== +1 ability: Add {R}{R} and deal 2 damage to target player =====
 

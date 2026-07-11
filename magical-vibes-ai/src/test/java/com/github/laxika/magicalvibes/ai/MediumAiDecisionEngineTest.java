@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -86,7 +86,7 @@ class MediumAiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -95,7 +95,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
     }
 
@@ -154,7 +154,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // AI has a 2/2
         Permanent aiBears = new Permanent(new GrizzlyBears());
@@ -180,7 +180,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gd.playerLifeTotals.put(human.getId(), 4);
 
@@ -320,7 +320,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // AI has Berserkers of Blood Ridge (4/4 must-attack)
         Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
@@ -345,7 +345,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gd.playerLifeTotals.put(human.getId(), 20);
 
         // AI has Berserkers (4/4 must-attack) and Bears (2/2 optional)
@@ -409,6 +409,8 @@ class MediumAiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
@@ -447,10 +449,11 @@ class MediumAiDecisionEngineTest {
         }
 
         private MediumAiDecisionEngine createEngine() {
-            Mockito.when(mockGameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;
@@ -601,7 +604,7 @@ class MediumAiDecisionEngineTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{1}{R}");
             spell.target(null, 1, 3)
-                    .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                    .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
             mockGd.playerHands.get(mockAiPlayer.getId()).add(spell);
 
             ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
@@ -657,7 +660,7 @@ class MediumAiDecisionEngineTest {
 
             // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
             Mockito.doAnswer(inv -> {
-                mockGd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(mockMessageHandler).handleTapPermanent(any(), any());
 
@@ -714,7 +717,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(human.getId());
 
@@ -780,7 +783,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 
@@ -936,7 +939,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Opponent controls Trove of Temptation
         Permanent trove = new Permanent(new TroveOfTemptation());
@@ -1007,7 +1010,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(human.getId());
 

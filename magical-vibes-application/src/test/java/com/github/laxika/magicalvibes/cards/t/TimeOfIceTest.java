@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,50 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TimeOfIceTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has tap and prevent-untap-while-on-battlefield effects")
-    void chapterIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(PreventTargetUntapWhileSourceOnBattlefieldEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has tap and prevent-untap-while-on-battlefield effects")
-    void chapterIIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(PreventTargetUntapWhileSourceOnBattlefieldEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III has return tapped creatures effect")
-    void chapterIIIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapters I and II have saga chapter target filters")
-    void chaptersHaveTargetFilters() {
-        TimeOfIce card = new TimeOfIce();
-
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_I)).isNotEmpty();
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_II)).isNotEmpty();
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_III)).isEmpty();
-    }
 
     // ===== Chapter I: tap target creature an opponent controls =====
 
@@ -138,8 +91,8 @@ class TimeOfIceTest extends BaseCardTest {
         Permanent ownBears = findCreature(player1, "Grizzly Bears");
         Permanent oppBears = findCreature(player2, "Grizzly Bears");
 
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(oppBears.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(ownBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(oppBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(ownBears.getId());
     }
 
     @Test

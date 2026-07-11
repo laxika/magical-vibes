@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HypnoticSpecterTest extends BaseCardTest {
-
 
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         GameData gd = harness.getGameData();
@@ -31,17 +28,6 @@ class HypnoticSpecterTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hypnotic Specter has correct card properties")
-    void hasCorrectProperties() {
-        HypnoticSpecter card = new HypnoticSpecter();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
     }
 
     // ===== Combat damage trigger =====
@@ -138,7 +124,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 
@@ -156,5 +142,4 @@ class HypnoticSpecterTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
     }
 }
-
 

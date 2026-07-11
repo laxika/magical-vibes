@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DistantMemoriesTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Distant Memories has DistantMemoriesEffect on SPELL slot")
-    void hasCorrectEffect() {
-        DistantMemories card = new DistantMemories();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DistantMemoriesEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -58,9 +45,9 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
     // ===== Opponent accepts — card goes to hand =====
@@ -74,13 +61,13 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Should now be awaiting opponent's may ability choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -108,13 +95,13 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Should now be awaiting opponent's may ability choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -144,7 +131,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -181,7 +168,7 @@ class DistantMemoriesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in library search mode (library was empty)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Log should mention empty library
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
@@ -215,7 +202,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
     // ===== Helpers =====

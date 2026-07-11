@@ -16,12 +16,14 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -30,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,6 +42,7 @@ public class MayCastHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -48,6 +50,7 @@ public class MayCastHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
+    private final ExileFreeCastSupport exileFreeCastSupport;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -233,7 +236,7 @@ public class MayCastHandlerService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                             validTargets.add(p.getId());
                         }
                     } else if (gameQueryService.isCreature(gameData, p)) {
@@ -348,77 +351,170 @@ public class MayCastHandlerService {
     }
 
     /**
-     * Handles the Paradigm delayed trigger "may cast a copy from exile without paying its mana cost" choice.
+     * Handles the "you may play target [type] card from your graveyard without paying its mana cost"
+     * choice (e.g. Horde of Notions). If accepted: a land is put onto the battlefield, any other card
+     * is cast without paying its mana cost. Restricted to the controller's own graveyard.
      */
-    public void handleCastFromExileWithoutPaying(GameData gameData, Player player, boolean accepted,
-                                                  PendingMayAbility ability) {
-        Card cardToCast = ability.sourceCard();
+    public void handlePlayFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability,
+                                              PlayTargetCardFromGraveyardWithoutPayingManaCostEffect effect) {
+        Card cardToPlay = ability.sourceCard();
         String playerName = player.getUsername();
 
         if (!accepted) {
-            gameData.removeFromExile(cardToCast.getId());
-            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
+            String logEntry = playerName + " declines to play " + cardToPlay.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} declines paradigm copy of {}", gameData.id, playerName, cardToCast.getName());
+            log.info("Game {} - {} declines to play {} from graveyard", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
-        if (gameData.findExiledCard(cardToCast.getId()) == null) {
-            String logEntry = cardToCast.getName() + " is no longer in exile.";
+        // Non-land cards can't be cast from graveyards if a permanent forbids it (e.g. Ashes of the Abhorrent).
+        if (!cardToPlay.hasType(CardType.LAND)
+                && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
+            String logEntry = cardToPlay.getName() + " can't be cast from the graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} no longer in exile for paradigm cast", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
-        gameData.removeFromExile(cardToCast.getId());
+        // Verify the card is still in the controller's own graveyard and matches the filter.
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToPlay.getId());
+        UUID graveyardOwnerId = graveyardCard == null
+                ? null : gameQueryService.findGraveyardOwnerById(gameData, cardToPlay.getId());
+        if (graveyardCard == null || graveyardOwnerId == null || !graveyardOwnerId.equals(player.getId())
+                || !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String logEntry = cardToPlay.getName() + " is no longer a legal target in your graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no longer a legal graveyard target for play-from-graveyard", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
-        List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
-        StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
-                ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+        permanentRemovalService.removeCardFromGraveyardById(gameData, cardToPlay.getId());
 
-        if (EffectResolution.needsTarget(cardToCast)) {
-            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
+        if (cardToPlay.hasType(CardType.LAND)) {
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+
+            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} plays {} (land) from graveyard", gameData.id, playerName, cardToPlay.getName());
+
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        StackEntryType spellType = switch (cardToPlay.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + cardToPlay.getType());
+        };
+
+        // Permanent spells have empty SPELL effects — ETB is processed on battlefield entry.
+        boolean isPermanentSpell = cardToPlay.hasType(CardType.CREATURE)
+                || cardToPlay.hasType(CardType.ARTIFACT)
+                || cardToPlay.hasType(CardType.ENCHANTMENT)
+                || cardToPlay.hasType(CardType.PLANESWALKER);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : new ArrayList<>(cardToPlay.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(cardToPlay)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToPlay, spellEffects);
 
             if (validTargets.isEmpty()) {
-                String logEntry = cardToCast.getName() + " has no valid targets.";
+                // No valid targets — card goes back to owner's graveyard.
+                graveyardService.addCardToGraveyard(gameData, player.getId(), cardToPlay);
+                String logEntry = cardToPlay.getName() + " has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, cardToCast.getName());
-            } else {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ExileCastSpellTarget(
-                                cardToCast, player.getId(), spellEffects, spellType, true));
-                playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
-                        "Choose a target for " + cardToCast.getName() + ".");
-
-                String logEntry = playerName + " casts " + cardToCast.getName()
-                        + " without paying its mana cost — choosing target.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} casts paradigm copy {}, choosing target",
-                        gameData.id, playerName, cardToCast.getName());
+                log.info("Game {} - {} play-from-graveyard has no valid targets", gameData.id, cardToPlay.getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-        } else {
-            StackEntry entry = new StackEntry(
-                    spellType, cardToCast, player.getId(), cardToCast.getName(),
-                    spellEffects, 0, (UUID) null, null
-            );
-            entry.setCopy(true);
-            gameData.stack.add(entry);
 
-            gameData.recordSpellCast(player.getId(), cardToCast);
-            gameData.priorityPassedBy.clear();
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.GraveyardCastSpellTarget(cardToPlay, player.getId(), spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                    "Choose a target for " + cardToPlay.getName() + ".");
 
-            String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost.";
+            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost — choosing target.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} casts paradigm copy {} without paying mana",
-                    gameData.id, playerName, cardToCast.getName());
-
-            triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+            log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToPlay.getName());
+            return; // Wait for target choice
         }
 
+        gameData.stack.add(new StackEntry(
+                spellType, cardToPlay, player.getId(), cardToPlay.getName(),
+                spellEffects, 0, (UUID) null, null
+        ));
+        gameData.recordSpellCast(player.getId(), cardToPlay);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} from graveyard without paying mana", gameData.id, playerName, cardToPlay.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Handles the "you may play the exiled card without paying its mana cost" choice for the
+     * Hideaway lands (e.g. Howltooth Hollow). The imprinted card leaves exile as it's played, so
+     * the imprint pointer is cleared. A land is put onto the battlefield and counts as the land
+     * play for the turn (per the hideaway ruling); any other card is cast from exile.
+     */
+    public void handlePlayImprintedCardChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " declines to play " + cardToPlay.getName() + ".");
+            log.info("Game {} - {} declines to play imprinted {}", gameData.id, playerName, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Verify the card is still in exile (nothing else has moved it out).
+        if (gameData.findExiledCard(cardToPlay.getId()) == null) {
+            gameBroadcastService.logAndBroadcast(gameData, cardToPlay.getName() + " is no longer in exile.");
+            log.info("Game {} - imprinted {} no longer in exile", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // The card leaves exile as it's played — clear the source's imprint pointer.
+        if (ability.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            if (source != null) {
+                gameData.setImprintedCard(source.getCard(), null);
+            }
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " turns the exiled card face up: " + cardToPlay.getName() + ".");
+
+        if (cardToPlay.hasType(CardType.LAND)) {
+            gameData.removeFromExile(cardToPlay.getId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " plays " + cardToPlay.getName() + " without paying its mana cost.");
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
+            log.info("Game {} - {} plays imprinted land {} from exile", gameData.id, playerName, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Non-land: cast from exile without paying (handles targeting, the stack, and cast triggers).
+        exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, cardToPlay.getId());
     }
 
     /**

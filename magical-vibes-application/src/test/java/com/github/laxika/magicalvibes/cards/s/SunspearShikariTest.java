@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,23 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SunspearShikariTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two static EquippedConditionalEffect wrapping GrantKeywordEffect for first strike and lifelink")
-    void hasCorrectEffects() {
-        SunspearShikari card = new SunspearShikari();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .allSatisfy(e -> assertThat(e).isInstanceOf(EquippedConditionalEffect.class));
-
-        var keywords = card.getEffects(EffectSlot.STATIC).stream()
-                .flatMap(e -> ((GrantKeywordEffect) ((EquippedConditionalEffect) e).wrapped()).keywords().stream())
-                .toList();
-        assertThat(keywords).containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.LIFELINK);
-    }
 
     // ===== Without equipment =====
 

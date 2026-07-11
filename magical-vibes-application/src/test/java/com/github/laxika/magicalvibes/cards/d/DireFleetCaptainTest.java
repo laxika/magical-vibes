@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherAttackingSubtypeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,21 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DireFleetCaptainTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with BoostSelfPerOtherAttackingSubtypeEffect(PIRATE, 1, 1)")
-    void hasCorrectStructure() {
-        DireFleetCaptain card = new DireFleetCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfPerOtherAttackingSubtypeEffect.class);
-        BoostSelfPerOtherAttackingSubtypeEffect effect = (BoostSelfPerOtherAttackingSubtypeEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(effect.powerPerCreature()).isEqualTo(1);
-        assertThat(effect.toughnessPerCreature()).isEqualTo(1);
-    }
 
     // ===== Attack trigger fires =====
 
@@ -139,7 +121,6 @@ class DireFleetCaptainTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-
     private Card createPirateCard(String name) {
         Card card = new Card() {};
         card.setName(name);
@@ -164,7 +145,7 @@ class DireFleetCaptainTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

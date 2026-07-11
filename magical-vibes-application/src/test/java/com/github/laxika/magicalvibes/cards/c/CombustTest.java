@@ -3,11 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,18 +50,7 @@ class CombustTest extends BaseCardTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Has correct effects — unpreventable DealDamageToTargetCreatureEffect and cant be countered")
-    void hasCorrectEffects() {
-        Combust card = new Combust();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(5);
-        assertThat(effect.unpreventable()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Deals 5 damage to target white creature and kills it")

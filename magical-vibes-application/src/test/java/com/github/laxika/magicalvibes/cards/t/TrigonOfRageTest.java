@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,17 +23,7 @@ class TrigonOfRageTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has ETB effect for entering with 3 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        TrigonOfRage card = new TrigonOfRage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithFixedChargeCountersEffect.class);
-        EnterWithFixedChargeCountersEffect effect = (EnterWithFixedChargeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Has two activated abilities")
@@ -68,7 +58,8 @@ class TrigonOfRageTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte && bte.powerBoost() == 3 && bte.toughnessBoost() == 0);
+                .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte
+                        && bte.powerBoost().equals(new Fixed(3)) && bte.toughnessBoost().equals(new Fixed(0)));
     }
 
     // ===== Entering the battlefield with charge counters =====

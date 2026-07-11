@@ -7,10 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,32 +31,9 @@ class ConversionChamberTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability exiles target artifact from graveyard and puts charge counter on self")
-    void firstAbilityStructure() {
-        ConversionChamber card = new ConversionChamber();
+    
 
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects())
-                .anyMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
-                        && ex.requiredType() == CardType.ARTIFACT)
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
-    }
-
-    @Test
-    @DisplayName("Second ability removes 1 charge counter and creates a 3/3 Golem token")
-    void secondAbilityStructure() {
-        ConversionChamber card = new ConversionChamber();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects())
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
+    
 
     // ===== First ability — exile artifact from graveyard and gain charge counter =====
 

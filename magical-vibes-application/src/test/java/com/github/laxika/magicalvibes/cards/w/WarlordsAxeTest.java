@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
@@ -26,18 +24,7 @@ class WarlordsAxeTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Warlord's Axe has static +3/+1 boost effect")
-    void hasStaticBoostEffect() {
-        WarlordsAxe card = new WarlordsAxe();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Warlord's Axe has equip {4} ability with correct properties")

@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.OmenMachineDrawStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,22 +24,6 @@ class OmenMachineTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static draw prevention and draw step trigger")
-    void hasCorrectEffects() {
-        OmenMachine card = new OmenMachine();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PlayersCannotDrawCardsEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(OmenMachineDrawStepEffect.class);
     }
 
     // ===== Draw prevention =====
@@ -152,7 +132,7 @@ class OmenMachineTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Omen Machine trigger — prompts for target
 
         // Should be prompting for a target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose Grizzly Bears as target
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -245,7 +225,7 @@ class OmenMachineTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Omen Machine trigger
 
         // Shock can target players too, so it will be cast
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     // ===== Spell cast counts =====

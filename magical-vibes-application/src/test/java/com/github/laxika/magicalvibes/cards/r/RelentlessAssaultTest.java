@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,8 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapAttackedCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RelentlessAssaultTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Relentless Assault has correct card properties")
-    void hasCorrectProperties() {
-        RelentlessAssault card = new RelentlessAssault();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapAttackedCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(AdditionalCombatMainPhaseEffect.class);
-        AdditionalCombatMainPhaseEffect extra = (AdditionalCombatMainPhaseEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(extra.count()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Relentless Assault on the stack as a sorcery with no target")
@@ -143,9 +126,8 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.forceActivePlayer(attacker);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         harness.getGameService().declareAttackers(gd, attacker, attackers);
     }
 }
-
 

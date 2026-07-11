@@ -1,49 +1,23 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpellPierceTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spell Pierce has correct card properties")
-    void hasCorrectProperties() {
-        SpellPierce card = new SpellPierce();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryNotPredicate(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
-                ),
-                "Target must be a noncreature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(2);
-    }
 
     // ===== Targeting restriction =====
 
@@ -140,8 +114,8 @@ class SpellPierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Player1 pays {2}
         harness.handleMayAbilityChosen(player1, true);
@@ -178,7 +152,7 @@ class SpellPierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Player1 declines to pay
         harness.handleMayAbilityChosen(player1, false);

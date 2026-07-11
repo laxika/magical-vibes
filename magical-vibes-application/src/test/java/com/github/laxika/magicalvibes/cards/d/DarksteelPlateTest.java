@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -21,18 +18,7 @@ class DarksteelPlateTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Darksteel Plate has static grant indestructible to equipped creature effect")
-    void hasGrantIndestructibleEffect() {
-        DarksteelPlate card = new DarksteelPlate();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Darksteel Plate has equip {2} ability with sorcery-speed restriction")

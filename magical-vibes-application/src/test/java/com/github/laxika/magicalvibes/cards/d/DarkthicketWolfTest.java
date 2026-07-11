@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,17 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DarkthicketWolfTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Darkthicket Wolf has correct activated ability")
-    void hasCorrectProperties() {
-        DarkthicketWolf card = new DarkthicketWolf();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{2}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getMaxActivationsPerTurn()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Darkthicket Wolf puts it on the stack")

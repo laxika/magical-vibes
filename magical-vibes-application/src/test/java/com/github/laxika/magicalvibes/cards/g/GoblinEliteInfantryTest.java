@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,34 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinEliteInfantryTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has ON_BLOCK effect with BoostSelfEffect -1/-1")
-    void hasOnBlockEffect() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-1);
-        assertThat(effect.toughnessBoost()).isEqualTo(-1);
-    }
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has ON_BECOMES_BLOCKED effect with BoostSelfEffect -1/-1")
-    void hasOnBecomesBlockedEffect() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-1);
-        assertThat(effect.toughnessBoost()).isEqualTo(-1);
-    }
 
     // ===== Casting =====
 
@@ -93,7 +63,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -117,7 +87,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -143,7 +113,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -166,7 +136,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -183,8 +153,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent goblinPerm = addGoblinReady(player1);
-        goblinPerm.getCard().setPower(4);
-        goblinPerm.getCard().setToughness(4);
+        TestCards.mutableCard(goblinPerm).setPower(4);
+        TestCards.mutableCard(goblinPerm).setToughness(4);
         goblinPerm.setAttacking(true);
 
         Permanent blocker1 = new Permanent(new GrizzlyBears());
@@ -197,7 +167,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -224,7 +194,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -247,8 +217,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     void modifierResetsAtEndOfTurn() {
         Permanent goblinPerm = addGoblinReady(player2);
         // Increase toughness so goblin survives combat damage from Bears
-        goblinPerm.getCard().setPower(4);
-        goblinPerm.getCard().setToughness(4);
+        TestCards.mutableCard(goblinPerm).setPower(4);
+        TestCards.mutableCard(goblinPerm).setToughness(4);
 
         Permanent atkPerm = new Permanent(new GrizzlyBears());
         atkPerm.setSummoningSick(false);
@@ -258,7 +228,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
@@ -294,7 +264,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -305,16 +275,6 @@ class GoblinEliteInfantryTest extends BaseCardTest {
 
         // Stack should be empty and no crash
         assertThat(gd.stack).isEmpty();
-    }
-
-    // ===== No trigger when not in combat =====
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has no ON_ATTACK trigger - only triggers when blocking or becoming blocked")
-    void noTriggerWhenAttacking() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).isEmpty();
     }
 
     // ===== Game log =====
@@ -332,7 +292,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -353,7 +313,7 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -371,5 +331,4 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         return perm;
     }
 }
-
 

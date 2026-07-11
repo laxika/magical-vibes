@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeadGamesTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Head Games has correct card properties")
-    void hasCorrectProperties() {
-        HeadGames card = new HeadGames();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(HeadGamesEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -83,13 +67,13 @@ class HeadGamesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         // Library search state should be set up for caster
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().targetPlayerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().targetPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(2);
 
         // Search cards should contain the full library (including former hand cards)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4); // 2 library + 2 from hand
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4); // 2 library + 2 from hand
     }
 
     @Test
@@ -109,9 +93,9 @@ class HeadGamesTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Should still be in library search mode (1 remaining)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(1);
-        assertThat(gd.interaction.librarySearch().targetPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().targetPlayerId()).isEqualTo(player2.getId());
 
         // One card should be in opponent's hand now
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -138,8 +122,8 @@ class HeadGamesTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // State should be fully cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.librarySearch()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Opponent's hand should have exactly 2 cards
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
@@ -165,13 +149,13 @@ class HeadGamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Library now has 3 cards (1 from hand + 2 original)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
 
         // Find the Swamp in search cards
         int swampIndex = -1;
-        for (int i = 0; i < gd.interaction.librarySearch().cards().size(); i++) {
-            if (gd.interaction.librarySearch().cards().get(i).getName().equals("Swamp")) {
+        for (int i = 0; i < gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size(); i++) {
+            if (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().get(i).getName().equals("Swamp")) {
                 swampIndex = i;
                 break;
             }
@@ -197,8 +181,8 @@ class HeadGamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No library search should be initiated
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.librarySearch()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Opponent's hand is still empty
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -220,13 +204,13 @@ class HeadGamesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be in library search with 1 remaining
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
 
         // Pick a card — this is the only pick, so state should be cleared
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -272,7 +256,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
 
         assertThatThrownBy(() -> harness.getGameService().handleLibraryCardChosen(gd, player1, -1))
                 .isInstanceOf(IllegalStateException.class)
@@ -380,13 +364,13 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        int initialSearchSize = gd.interaction.librarySearch().cards().size();
+        int initialSearchSize = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size();
 
         // First pick
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Search cards should have one fewer card
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(initialSearchSize - 1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(initialSearchSize - 1);
     }
 
     // ===== Helpers =====
@@ -403,5 +387,4 @@ class HeadGamesTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Swamp()));
     }
 }
-
 

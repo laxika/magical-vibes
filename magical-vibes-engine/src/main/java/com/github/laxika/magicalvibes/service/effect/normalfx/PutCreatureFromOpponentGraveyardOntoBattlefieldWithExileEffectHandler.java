@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import java.util.Set;
 import java.util.UUID;
 
@@ -41,8 +41,8 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         result.permanent().setExileIfLeavesBattlefield(true);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
-        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
-        gameData.pendingTokenExilesAtEndStep.add(result.permanent().getId());
+        graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), controllerId, result.originalOwnerId());
+        gameData.queueDelayedAction(new ExileTokenAtEndStep(result.permanent().getId()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,

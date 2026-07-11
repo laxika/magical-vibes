@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,25 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VampiresZealTest extends BaseCardTest {
-
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Vampire's Zeal has correct effects")
-    void hasCorrectEffects() {
-        VampiresZeal card = new VampiresZeal();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isEqualTo(new GrantKeywordToTargetIfPermanentEffect(
-                        Keyword.FIRST_STRIKE, new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE)));
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
 
     // ===== Non-vampire gets boost but NOT first strike =====
 

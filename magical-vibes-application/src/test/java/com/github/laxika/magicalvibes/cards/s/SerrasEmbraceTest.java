@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,29 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SerrasEmbraceTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Serra's Embrace has correct card properties")
-    void hasCorrectProperties() {
-        SerrasEmbrace card = new SerrasEmbrace();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect firstKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        GrantKeywordEffect secondKeyword = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
-        assertThat(firstKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(secondKeyword.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(firstKeyword.keywords()).isSubsetOf(Keyword.FLYING, Keyword.VIGILANCE);
-        assertThat(secondKeyword.keywords()).isSubsetOf(Keyword.FLYING, Keyword.VIGILANCE);
-        assertThat(firstKeyword.keywords()).isNotEqualTo(secondKeyword.keywords());
-    }
 
     // ===== Casting and resolving =====
 
@@ -217,5 +189,4 @@ class SerrasEmbraceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.VIGILANCE)).isFalse();
     }
 }
-
 

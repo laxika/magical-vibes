@@ -33,7 +33,10 @@ public class AttachTargetToSourcePermanentEffectHandler implements NormalEffectH
                 Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 if (source == null) return;
 
+                gameData.expireFloatingEffectsForUnattachedSource(target.getId());
                 target.setAttachedTo(source.getId());
+                // CR 613.7e: an attachment receives a new timestamp each time it becomes attached.
+                target.setTimestamp(gameData.nextTimestamp());
                 String attachLog = target.getCard().getName() + " is attached to " + source.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, attachLog);
                 log.info("Game {} - {} attached to {}", gameData.id, target.getCard().getName(), source.getCard().getName());

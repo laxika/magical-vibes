@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,31 +36,54 @@ public class Card {
         oracleRegistry.clear();
     }
 
-    private final UUID id = UUID.randomUUID();
-    @Setter private String name;
-    @Setter private CardType type;
+    private final UUID id;
+    /**
+     * When true, this card is live in a game (part of a deck, on the stack, or wrapped in a
+     * {@link Permanent}) and must no longer be mutated: live Card instances are shared with AI
+     * simulation copies ({@code GameData.simulationCopy()}), so any mutation would leak between
+     * the real game and simulated games. Runtime state belongs on the {@code Permanent}, the
+     * {@code StackEntry}, or {@code GameData} — or mutate a {@link #createRuntimeCopy()} instead.
+     */
+    @Getter(AccessLevel.NONE)
+    private boolean frozen;
+    /**
+     * The player who owns this card — the player whose deck it started the game in. Stamped once
+     * at game setup ({@code GameSetupService}) and preserved across zone changes. Cards created by
+     * the engine (tokens, copies) leave this {@code null}. Distinct from control: used to evaluate
+     * "a spell you don't own" (e.g. Nita, Forum Conciliator).
+     */
+    private UUID ownerId;
+    private String name;
+    private CardType type;
     private String manaCost;
     /** Cached parsed ManaCost, invalidated on setManaCost. */
     @Getter(AccessLevel.NONE)
     private ManaCost parsedManaCost;
-    @Setter private CardColor color;
-    @Setter private List<CardColor> colors = List.of();
+    private CardColor color;
+    private List<CardColor> colors = List.of();
 
-    @Setter private Set<CardType> additionalTypes = Set.of();
-    @Setter private Set<CardSupertype> supertypes = Set.of();
-    @Setter private List<CardSubtype> subtypes = List.of();
-    @Setter private String cardText;
-    @Setter private Integer power;
-    @Setter private Integer toughness;
-    @Setter private Set<Keyword> keywords = Set.of();
-    @Setter private Integer loyalty;
-    @Setter private ManaColor xColorRestriction;
-    @Setter private String setCode;
-    @Setter private String collectorNumber;
+    private Set<CardType> additionalTypes = Set.of();
+    private Set<CardSupertype> supertypes = Set.of();
+    private List<CardSubtype> subtypes = List.of();
+    private String cardText;
+    private Integer power;
+    private Integer toughness;
+    private Set<Keyword> keywords = Set.of();
+    private Integer loyalty;
+    private ManaColor xColorRestriction;
+    private String setCode;
+    private String collectorNumber;
 
-    @Setter private boolean token;
-    @Setter private boolean requiresCreatureMana;
-    @Setter private int additionalCostPerExtraTarget;
+    private boolean token;
+    /** "This spell can't be copied." Honored by the copy effect handlers. */
+    private boolean cantBeCopied;
+    /**
+     * When true, the permanent this card becomes is registered for sacrifice at the beginning of
+     * the next end step (e.g. the token created by copying a creature spell with Choreographed Sparks).
+     */
+    private boolean sacrificeAtEndStep;
+    private boolean requiresCreatureMana;
+    private int additionalCostPerExtraTarget;
     /**
      * When true, the same permanent may be chosen for different target groups (CR 114.6c).
      * By default, targets across groups must be distinct — matching the common MTG pattern
@@ -64,19 +91,21 @@ public class Card {
      * does NOT use "another" and whose target filters can overlap (e.g. "target creature" +
      * "target Merfolk", where a Merfolk satisfies both).
      */
-    @Setter private boolean allowSharedTargets;
+    private boolean allowSharedTargets;
 
     // Target-first targeting system: each target() call adds a SpellTarget
     @Getter(AccessLevel.NONE)
     private final List<SpellTarget> spellTargets = new ArrayList<>();
     @Getter(AccessLevel.NONE)
     private final Map<CardEffect, Integer> effectTargetIndexMap = new IdentityHashMap<>();
-    // Runtime override set by modal spells (ChooseOneEffect) at cast time
-    @Setter private TargetFilter castTimeTargetFilter;
-    @Setter private Card imprintedCard;
-    @Setter private String watermark;
-    @Setter private Card backFaceCard;
+    // Runtime override set by modal spells (ChooseOneEffect) at cast time — only ever written on
+    // an unfrozen runtime copy (see SpellCastingService's modal copy-on-cast)
+    private TargetFilter castTimeTargetFilter;
+    private String watermark;
+    private Card backFaceCard;
     private List<CastingOption> castingOptions = new ArrayList<>();
+    /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
+    private SpellCastTimingRestriction spellCastTimingRestriction;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -90,6 +119,7 @@ public class Card {
     private List<ActivatedAbility> graveyardActivatedAbilities = new ArrayList<>();
 
     public Card() {
+        this.id = UUID.randomUUID();
         OracleData oracle = oracleRegistry.get(getClass().getSimpleName());
         if (oracle != null) {
             this.name = oracle.name();
@@ -108,6 +138,117 @@ public class Card {
             this.watermark = oracle.watermark();
         }
     }
+
+    /**
+     * Copy constructor backing {@link #createRuntimeCopy()}. Copies every field, including the
+     * id, but not {@link #frozen} — the copy starts mutable. Collection fields are copied into
+     * fresh containers (elements shared: effects and abilities are immutable). The copied
+     * {@link SpellTarget}s keep their back-reference to the source card; that reference is only
+     * used by the construction-time builder API, never at runtime. Note the copy is a plain
+     * {@code Card} — subclass identity (only used for oracle-registry lookup at construction
+     * and {@code getBackFaceClassName()} at set load) is not preserved.
+     *
+     * <p>MAINTENANCE: when adding a field to Card, copy it here. {@code CardRuntimeCopyTest}
+     * fails on any newly declared field to force this update.
+     */
+    protected Card(Card source) {
+        this.id = source.id;
+        this.ownerId = source.ownerId;
+        this.name = source.name;
+        this.type = source.type;
+        this.manaCost = source.manaCost;
+        this.parsedManaCost = source.parsedManaCost;
+        this.color = source.color;
+        this.colors = source.colors;
+        this.additionalTypes = source.additionalTypes;
+        this.supertypes = source.supertypes;
+        this.subtypes = source.subtypes;
+        this.cardText = source.cardText;
+        this.power = source.power;
+        this.toughness = source.toughness;
+        this.keywords = source.keywords;
+        this.loyalty = source.loyalty;
+        this.xColorRestriction = source.xColorRestriction;
+        this.setCode = source.setCode;
+        this.collectorNumber = source.collectorNumber;
+        this.token = source.token;
+        this.cantBeCopied = source.cantBeCopied;
+        this.sacrificeAtEndStep = source.sacrificeAtEndStep;
+        this.requiresCreatureMana = source.requiresCreatureMana;
+        this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
+        this.allowSharedTargets = source.allowSharedTargets;
+        this.spellTargets.addAll(source.spellTargets);
+        this.effectTargetIndexMap.putAll(source.effectTargetIndexMap);
+        this.castTimeTargetFilter = source.castTimeTargetFilter;
+        this.watermark = source.watermark;
+        this.backFaceCard = source.backFaceCard;
+        this.castingOptions = new ArrayList<>(source.castingOptions);
+        this.spellCastTimingRestriction = source.spellCastTimingRestriction;
+        source.effectRegistrations.forEach((slot, regs) ->
+                this.effectRegistrations.put(slot, new ArrayList<>(regs)));
+        // effectCache intentionally left empty — rebuilt lazily by getEffects()
+        this.sagaChapterTargetFilters.putAll(source.sagaChapterTargetFilters);
+        this.activatedAbilities = new ArrayList<>(source.activatedAbilities);
+        this.graveyardActivatedAbilities = new ArrayList<>(source.graveyardActivatedAbilities);
+    }
+
+    /**
+     * Creates an unfrozen copy of this card with the same id, for flows that must write
+     * cast-time state onto a card (modal spells choosing a mode, AI mode evaluation). The
+     * copy replaces the original in the zone it is cast from and travels on from there;
+     * the shared original is never mutated.
+     */
+    public Card createRuntimeCopy() {
+        return new Card(this);
+    }
+
+    // ── Freeze guard ─────────────────────────────────────────────────
+
+    /**
+     * Marks this card as live: from now on every mutator throws. Called when the card joins
+     * live game structures (deck stamping in {@code GameSetupService}, {@code Permanent} and
+     * {@code StackEntry} construction). Idempotent.
+     */
+    public void freeze() {
+        this.frozen = true;
+    }
+
+    private void assertMutable() {
+        if (frozen) {
+            throw new IllegalStateException("Card '" + name + "' (" + id + ") is frozen. Live cards are shared"
+                    + " with AI simulation copies and must not be mutated — store runtime state on the Permanent,"
+                    + " the StackEntry, or GameData, or mutate a createRuntimeCopy() instead.");
+        }
+    }
+
+    // ── Guarded setters (hand-written instead of @Setter so assertMutable() runs) ──
+
+    public void setOwnerId(UUID ownerId) { assertMutable(); this.ownerId = ownerId; }
+    public void setName(String name) { assertMutable(); this.name = name; }
+    public void setType(CardType type) { assertMutable(); this.type = type; }
+    public void setColor(CardColor color) { assertMutable(); this.color = color; }
+    public void setColors(List<CardColor> colors) { assertMutable(); this.colors = colors; }
+    public void setAdditionalTypes(Set<CardType> additionalTypes) { assertMutable(); this.additionalTypes = additionalTypes; }
+    public void setSupertypes(Set<CardSupertype> supertypes) { assertMutable(); this.supertypes = supertypes; }
+    public void setSubtypes(List<CardSubtype> subtypes) { assertMutable(); this.subtypes = subtypes; }
+    public void setCardText(String cardText) { assertMutable(); this.cardText = cardText; }
+    public void setPower(Integer power) { assertMutable(); this.power = power; }
+    public void setToughness(Integer toughness) { assertMutable(); this.toughness = toughness; }
+    public void setKeywords(Set<Keyword> keywords) { assertMutable(); this.keywords = keywords; }
+    public void setLoyalty(Integer loyalty) { assertMutable(); this.loyalty = loyalty; }
+    public void setXColorRestriction(ManaColor xColorRestriction) { assertMutable(); this.xColorRestriction = xColorRestriction; }
+    public void setSetCode(String setCode) { assertMutable(); this.setCode = setCode; }
+    public void setCollectorNumber(String collectorNumber) { assertMutable(); this.collectorNumber = collectorNumber; }
+    public void setToken(boolean token) { assertMutable(); this.token = token; }
+    public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
+    public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
+    public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
+    public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
+    public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
+    public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
+    public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
+    public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
+    public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
 
     // ── Target-first builder API ──────────────────────────────────────
 
@@ -131,6 +272,7 @@ public class Card {
      * whose {@code addEffect()} associates effects with this target.
      */
     public SpellTarget target(TargetFilter filter, int minTargets, int maxTargets) {
+        assertMutable();
         SpellTarget st = new SpellTarget(this, filter, minTargets, maxTargets, spellTargets.size());
         spellTargets.add(st);
         return st;
@@ -138,9 +280,35 @@ public class Card {
 
     /**
      * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
+     * Wrapper effects (conditional, may) register their inner effects under the same index,
+     * because resolution unwraps them before dispatching to the handler — the handler must be
+     * able to look up the group by the effect instance it actually receives.
      */
     public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
+        assertMutable();
         effectTargetIndexMap.put(effect, targetIndex);
+        switch (effect) {
+            case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case ConditionalReplacementEffect e -> {
+                if (e.baseEffect() != null) registerEffectTargetIndex(e.baseEffect(), targetIndex);
+                registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
+            }
+            case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayPayManaEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayPayTapPermanentsEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            default -> { }
+        }
+    }
+
+    /**
+     * Clears runtime target-first declarations. Used by modal spells (ChooseOneEffect) whose chosen
+     * mode declares its own {@code target()} slots at cast time, so re-casting the same card instance
+     * does not accumulate stale target declarations.
+     */
+    public void clearRuntimeSpellTargets() {
+        assertMutable();
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────
@@ -225,6 +393,7 @@ public class Card {
      * Copies targeting configuration from another card (used by spell copy effects).
      */
     public void copyTargetingFrom(Card original) {
+        assertMutable();
         for (SpellTarget st : original.spellTargets) {
             spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex()));
         }
@@ -253,6 +422,7 @@ public class Card {
     }
 
     public void removeKeyword(Keyword keyword) {
+        assertMutable();
         if (keywords.contains(keyword)) {
             var mutable = EnumSet.copyOf(keywords);
             mutable.remove(keyword);
@@ -261,12 +431,14 @@ public class Card {
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect) {
+        assertMutable();
         validateEffectSlotType(slot, effect);
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect));
         effectCache.remove(slot);
     }
 
     public void addEffect(EffectSlot slot, CardEffect effect, TriggerMode triggerMode) {
+        assertMutable();
         validateEffectSlotType(slot, effect);
         effectRegistrations.computeIfAbsent(slot, k -> new ArrayList<>()).add(new EffectRegistration(effect, triggerMode));
         effectCache.remove(slot);
@@ -280,6 +452,7 @@ public class Card {
     }
 
     public void addCastingOption(CastingOption option) {
+        assertMutable();
         castingOptions.add(option);
     }
 
@@ -291,6 +464,7 @@ public class Card {
     }
 
     public void setSagaChapterTargetFilter(EffectSlot slot, Set<TargetFilter> filters) {
+        assertMutable();
         sagaChapterTargetFilters.put(slot, filters);
     }
 
@@ -299,10 +473,12 @@ public class Card {
     }
 
     public void addActivatedAbility(ActivatedAbility ability) {
+        assertMutable();
         activatedAbilities.add(ability);
     }
 
     public void addGraveyardActivatedAbility(ActivatedAbility ability) {
+        assertMutable();
         graveyardActivatedAbilities.add(ability);
     }
 
@@ -311,6 +487,7 @@ public class Card {
     }
 
     public void setManaCost(String manaCost) {
+        assertMutable();
         this.manaCost = manaCost;
         this.parsedManaCost = null;
     }

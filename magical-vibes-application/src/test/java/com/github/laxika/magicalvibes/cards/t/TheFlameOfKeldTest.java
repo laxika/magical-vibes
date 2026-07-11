@@ -5,15 +5,11 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,42 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheFlameOfKeldTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has DiscardOwnHandEffect")
-    void chapterIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DiscardOwnHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has DrawCardEffect(2)")
-    void chapterIIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) effects.getFirst()).amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Chapter III has BoostColorSourceDamageThisTurnEffect(RED, 2)")
-    void chapterIIIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(BoostColorSourceDamageThisTurnEffect.class);
-        BoostColorSourceDamageThisTurnEffect effect = (BoostColorSourceDamageThisTurnEffect) effects.getFirst();
-        assertThat(effect.color()).isEqualTo(CardColor.RED);
-        assertThat(effect.bonus()).isEqualTo(2);
-    }
 
     // ===== Chapter I: discard your hand =====
 

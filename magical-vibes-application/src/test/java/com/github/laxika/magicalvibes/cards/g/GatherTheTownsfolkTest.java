@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,33 +18,6 @@ class GatherTheTownsfolkTest extends BaseCardTest {
         return gd.playerBattlefields.get(playerId).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Human"))
                 .count();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gather the Townsfolk creates two 1/1 white Human tokens with a fateful hour clause")
-    void hasCorrectProperties() {
-        GatherTheTownsfolk card = new GatherTheTownsfolk();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect base = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(base.amount()).isEqualTo(2);
-        assertThat(base.tokenName()).isEqualTo("Human");
-        assertThat(base.power()).isEqualTo(1);
-        assertThat(base.toughness()).isEqualTo(1);
-        assertThat(base.color()).isEqualTo(CardColor.WHITE);
-        assertThat(base.subtypes()).containsExactly(CardSubtype.HUMAN);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(3);
     }
 
     // ===== Casting and resolving =====

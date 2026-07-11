@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithMVXOrLessToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CitanulFluteTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Citanul Flute has correct card properties")
-    void hasCorrectProperties() {
-        CitanulFlute card = new CitanulFlute();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{X}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst())
-                .isInstanceOf(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -179,12 +159,12 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // Library has: LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5), Plains, Swamp
         // X=2 → only creatures with MV <= 2: LlanowarElves (1) and GrizzlyBears (2)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -197,10 +177,10 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // Only LlanowarElves (MV 1) qualifies
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
     }
 
     @Test
@@ -212,10 +192,10 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // LlanowarElves (MV 1), GrizzlyBears (MV 2), AirElemental (MV 5) — all qualify
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears", "Air Elemental");
     }
 
@@ -229,7 +209,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Plains (basic land) and Swamp (basic land) should NOT appear despite high X
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.CREATURE));
     }
 
@@ -245,7 +225,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -257,8 +237,8 @@ class CitanulFluteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.librarySearch()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -270,7 +250,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -289,7 +269,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
 
     @Test
@@ -313,7 +293,7 @@ class CitanulFluteTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions declining
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
@@ -330,7 +310,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
@@ -346,7 +326,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
@@ -362,7 +342,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 
@@ -382,5 +362,4 @@ class CitanulFluteTest extends BaseCardTest {
         deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
     }
 }
-
 

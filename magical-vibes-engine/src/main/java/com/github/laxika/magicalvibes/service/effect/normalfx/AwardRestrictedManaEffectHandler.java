@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -34,8 +33,8 @@ public class AwardRestrictedManaEffectHandler implements NormalEffectHandlerBean
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " adds " + e.amount() + " " + e.color().getCode()
-                + " (" + e.allowedSpellTypes() + " spells only).";
+                + " (" + e.restriction().description() + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} adds {} {} (restricted to {})", gameData.id, playerName, e.amount(), e.color(), e.allowedSpellTypes());
+        log.info("Game {} - {} adds {} {} (restricted: {})", gameData.id, playerName, e.amount(), e.color(), e.restriction().description());
     }
 }

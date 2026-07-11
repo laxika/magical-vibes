@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,21 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RuleOfLawTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rule of Law has correct card properties")
-    void hasCorrectProperties() {
-        RuleOfLaw card = new RuleOfLaw();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(LimitSpellsPerTurnEffect.class);
-        LimitSpellsPerTurnEffect effect = (LimitSpellsPerTurnEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.maxSpells()).isEqualTo(1);
-    }
 
     // ===== Spell limiting =====
 

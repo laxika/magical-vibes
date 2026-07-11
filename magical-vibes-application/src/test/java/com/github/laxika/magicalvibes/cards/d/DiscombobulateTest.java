@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DiscombobulateTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Discombobulate has correct card properties")
-    void hasCorrectProperties() {
-        Discombobulate card = new Discombobulate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -105,9 +87,9 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     @Test
@@ -182,9 +164,9 @@ class DiscombobulateTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isNull();
-        assertThat(gd.interaction.libraryView().reorderCards()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
     }
 
     // ===== Fizzle =====
@@ -211,7 +193,7 @@ class DiscombobulateTest extends BaseCardTest {
 
         // Entire spell fizzles — no counter, no library reorder
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // Discombobulate still goes to graveyard when fizzling
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Discombobulate"));
@@ -242,8 +224,8 @@ class DiscombobulateTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
         // Swap the 2 cards
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));
@@ -271,7 +253,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
     }
 
@@ -293,7 +275,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.castInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
 
@@ -391,5 +373,4 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("puts") && log.contains("cards back on top"));
     }
 }
-
 

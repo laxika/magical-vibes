@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,32 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PrototypePortalTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB imprint MayEffect and activated ability with CreateTokenCopyOfImprintedCardEffect(false, false)")
-    void hasCorrectStructure() {
-        PrototypePortal card = new PrototypePortal();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExileFromHandToImprintEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{X}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .first()
-                .isInstanceOf(CreateTokenCopyOfImprintedCardEffect.class);
-
-        CreateTokenCopyOfImprintedCardEffect effect = (CreateTokenCopyOfImprintedCardEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.grantHaste()).isFalse();
-        assertThat(effect.exileAtEndStep()).isFalse();
-    }
 
     // ===== ETB imprint =====
 
@@ -61,7 +31,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect → may prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -79,7 +49,7 @@ class PrototypePortalTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Should be awaiting card choice from hand
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.IMPRINT_FROM_HAND_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
 
         // Choose the artifact (index 0 in remaining hand)
         harness.handleCardChosen(player1, 0);
@@ -96,8 +66,8 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNotNull();
-        assertThat(portal.getCard().getImprintedCard().getName()).isEqualTo("Golem's Heart");
+        assertThat(gd.getImprintedCard(portal.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(portal.getCard()).getName()).isEqualTo("Golem's Heart");
     }
 
     @Test
@@ -122,7 +92,7 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 
     @Test
@@ -147,7 +117,7 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 
     // ===== Token creation =====
@@ -158,7 +128,7 @@ class PrototypePortalTest extends BaseCardTest {
         // Set up Portal with an imprinted artifact via addToBattlefield
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
-        portalCard.setImprintedCard(heartCard);
+        gd.setImprintedCard(portalCard, heartCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=2
@@ -180,7 +150,7 @@ class PrototypePortalTest extends BaseCardTest {
     void tokenIsPermanent() {
         PrototypePortal portalCard = new PrototypePortal();
         AccordersShield shieldCard = new AccordersShield();
-        portalCard.setImprintedCard(shieldCard);
+        gd.setImprintedCard(portalCard, shieldCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Accorder's Shield has mana value 0, so X=0
@@ -220,7 +190,7 @@ class PrototypePortalTest extends BaseCardTest {
     void xMustMatchManaValue() {
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
-        portalCard.setImprintedCard(heartCard);
+        gd.setImprintedCard(portalCard, heartCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=3 should fail

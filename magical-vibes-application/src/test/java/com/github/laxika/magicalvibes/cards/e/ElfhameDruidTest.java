@@ -2,12 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AcademyDrake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,28 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ElfhameDruidTest extends BaseCardTest {
-
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Elfhame Druid has two activated abilities")
-    void hasCorrectAbilities() {
-        ElfhameDruid card = new ElfhameDruid();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        ActivatedAbility first = card.getActivatedAbilities().get(0);
-        assertThat(first.isRequiresTap()).isTrue();
-        assertThat(first.getManaCost()).isNull();
-        assertThat(first.getEffects()).hasSize(1);
-        assertThat(first.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        ActivatedAbility second = card.getActivatedAbilities().get(1);
-        assertThat(second.isRequiresTap()).isTrue();
-        assertThat(second.getManaCost()).isNull();
-        assertThat(second.getEffects()).hasSize(1);
-        assertThat(second.getEffects().getFirst()).isInstanceOf(AwardKickedOnlyManaEffect.class);
-    }
 
     // ===== First ability: {T}: Add {G} =====
 

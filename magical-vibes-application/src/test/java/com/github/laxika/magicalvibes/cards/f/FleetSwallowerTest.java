@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,19 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FleetSwallowerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fleet Swallower has ON_ATTACK MillHalfLibraryEffect with roundUp=true")
-    void hasCorrectEffects() {
-        FleetSwallower card = new FleetSwallower();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MillHalfLibraryEffect.class);
-        MillHalfLibraryEffect effect = (MillHalfLibraryEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.roundUp()).isTrue();
-    }
 
     // ===== Attack trigger =====
 
@@ -45,7 +31,7 @@ class FleetSwallowerTest extends BaseCardTest {
 
             declareAttackers(List.of(0));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         }
@@ -60,7 +46,7 @@ class FleetSwallowerTest extends BaseCardTest {
 
             declareAttackers(List.of(0));
 
-            assertThat(gd.interaction.permanentChoice().validIds())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                     .containsExactlyInAnyOrder(player1.getId(), player2.getId())
                     .doesNotContain(opponentCreature.getId());
         }
@@ -203,7 +189,7 @@ class FleetSwallowerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

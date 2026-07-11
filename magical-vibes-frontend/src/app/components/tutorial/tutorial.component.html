@@ -2,10 +2,26 @@
   <div class="game-layout">
     <div class="game-area">
 
+    <div class="board-row">
+    <!-- Phase tracker -->
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          @for (stepInfo of group.steps; track stepInfo.step) {
+            <div class="step-pip"
+                 [class.active]="game().currentStep === stepInfo.step"
+                 [class.force-stop]="stepInfo.step === TurnStep.PRECOMBAT_MAIN || stepInfo.step === TurnStep.POSTCOMBAT_MAIN"
+                 [attr.data-tip]="group.steps.length > 1 ? group.phaseName + ' — ' + stepInfo.displayName : group.phaseName">
+              {{ stepInfo.icon }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <div class="battlefield-area">
       <!-- Opponent's battlefield -->
       <div class="battlefield-row opponent-battlefield">
-        <div class="battlefield-label">{{ game().playerNames[1] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
@@ -51,7 +67,6 @@
 
       <!-- Your battlefield -->
       <div class="battlefield-row">
-        <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row my-creatures-row">
           @for (ip of myCreatures; track ip.originalIndex) {
             <app-card-display
@@ -97,24 +112,6 @@
         }
       </div>
     </div>
-
-    <!-- Phase tracker -->
-    <div class="phase-tracker">
-      @for (group of phaseGroups; track group.phaseName) {
-        <div class="phase-group">
-          <div class="phase-label">{{ group.phaseName }}</div>
-          <div class="phase-steps">
-            @for (stepInfo of group.steps; track stepInfo.step) {
-              <div class="step-pip"
-                   [class.active]="game().currentStep === stepInfo.step"
-                   [class.force-stop]="stepInfo.step === TurnStep.PRECOMBAT_MAIN || stepInfo.step === TurnStep.POSTCOMBAT_MAIN"
-                   [title]="stepInfo.displayName">
-                {{ stepInfo.displayName }}
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
 
     <!-- Mana pool -->
@@ -122,9 +119,7 @@
       <div class="mana-pool-bar">
         <div class="mana-pool">
           @for (entry of manaEntries; track entry.color) {
-            <div class="mana-pip" [attr.data-color]="entry.color">
-              <span class="mana-count">{{ entry.count }}</span>
-            </div>
+            <div class="mana-pool-entry" [innerHTML]="formatManaEntry(entry)"></div>
           }
         </div>
       </div>
@@ -132,7 +127,6 @@
 
     <!-- Hand -->
     <div class="hand-area">
-      <div class="hand-label">Your Hand ({{ game().hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of game().hand; track $index) {
           <app-card-display

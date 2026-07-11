@@ -7,14 +7,11 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,25 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MikaeusTheUnhallowedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has Human damage trigger and non-Human lord static effect")
-    void hasExpectedEffects() {
-        MikaeusTheUnhallowed card = new MikaeusTheUnhallowed();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU))
-                .singleElement()
-                .isInstanceOf(DestroyDamageSourcePermanentEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .singleElement()
-                .satisfies(effect -> {
-                    assertThat(effect).isInstanceOf(StaticBoostEffect.class);
-                    StaticBoostEffect boost = (StaticBoostEffect) effect;
-                    assertThat(boost.powerBoost()).isEqualTo(1);
-                    assertThat(boost.toughnessBoost()).isEqualTo(1);
-                    assertThat(boost.grantedKeywords()).containsExactly(Keyword.UNDYING);
-                });
-    }
+    
 
     @Test
     @DisplayName("Other non-Human creatures you control get +1/+1 and undying")

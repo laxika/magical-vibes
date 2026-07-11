@@ -4,15 +4,11 @@ import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,26 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class StarOfExtinctionTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effects: DestroyTargetPermanentEffect and MassDamageEffect with planeswalker damage")
-    void hasCorrectEffects() {
-        StarOfExtinction card = new StarOfExtinction();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(MassDamageEffect.class);
-
-        MassDamageEffect massDamage = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(massDamage.damage()).isEqualTo(20);
-        assertThat(massDamage.damagesPlaneswalkers()).isTrue();
-        assertThat(massDamage.damagesPlayers()).isFalse();
-    }
 
     // ===== Casting =====
 

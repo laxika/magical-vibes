@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,24 +20,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloneShellTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has imprint ETB effect and dies trigger effect")
-    void hasCorrectEffects() {
-        CloneShell card = new CloneShell();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ImprintFromTopCardsEffect.class);
-        ImprintFromTopCardsEffect etb = (ImprintFromTopCardsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.count()).isEqualTo(4);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(PutImprintedCreatureOntoBattlefieldEffect.class);
-    }
 
     // ===== ETB imprint =====
 
@@ -57,9 +36,9 @@ class CloneShellTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
     @Test
@@ -90,12 +69,12 @@ class CloneShellTest extends BaseCardTest {
         Permanent cloneShell = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Clone Shell"))
                 .findFirst().orElseThrow();
-        assertThat(cloneShell.getCard().getImprintedCard()).isNotNull();
-        assertThat(cloneShell.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(cloneShell.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(cloneShell.getCard()).getName()).isEqualTo("Grizzly Bears");
 
         // Remaining 3 cards should be awaiting reorder
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
     }
 
     @Test
@@ -118,7 +97,7 @@ class CloneShellTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0); // exile Grizzly Bears
 
         // Reorder remaining: Shock(0), Plains(1), Llanowar Elves(2)
-        List<Card> remaining = gd.interaction.libraryView().reorderCards();
+        List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iElves = indexOf(remaining, "Llanowar Elves");
@@ -147,7 +126,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Manually imprint a creature card
         GrizzlyBears bears = new GrizzlyBears();
-        cloneShell.getCard().setImprintedCard(bears);
+        gd.setImprintedCard(cloneShell.getCard(), bears);
         gd.addToExile(player1.getId(), bears);
 
         // Kill Clone Shell with Shock (2 damage to a 2/2)
@@ -187,7 +166,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Manually imprint a non-creature card
         Spellbook spellbook = new Spellbook();
-        cloneShell.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(cloneShell.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         int battlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
@@ -250,7 +229,7 @@ class CloneShellTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
 

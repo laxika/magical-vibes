@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,25 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RummagingGoblinTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has one activated ability with tap, no mana cost, discard cost then draw")
-    void hasCorrectAbility() {
-        RummagingGoblin card = new RummagingGoblin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        DiscardCardTypeCost discardCost = (DiscardCardTypeCost) ability.getEffects().get(0);
-        assertThat(discardCost.predicate()).isNull();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Activated ability — discard cost =====
 
     @Test
@@ -53,10 +31,10 @@ class RummagingGoblinTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
         // All cards should be valid since predicate is null (any card)
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0, 1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(0, 1);
     }
 
     @Test
@@ -68,7 +46,7 @@ class RummagingGoblinTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));

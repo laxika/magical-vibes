@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,18 +20,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class HellriderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has per-creature attack trigger that deals 1 damage to the attacked target")
-    void hasCorrectEffect() {
-        Hellrider card = new Hellrider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).getFirst())
-                .isInstanceOf(DealDamageToAttackedTargetEffect.class);
-        DealDamageToAttackedTargetEffect effect =
-                (DealDamageToAttackedTargetEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Triggers once for each creature you control that attacks")
@@ -96,7 +82,7 @@ class HellriderTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 

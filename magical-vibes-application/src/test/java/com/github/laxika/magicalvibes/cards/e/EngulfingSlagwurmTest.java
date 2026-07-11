@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,19 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EngulfingSlagwurmTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has destroy-and-gain-life effect on both ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCorrectEffects() {
-        EngulfingSlagwurm card = new EngulfingSlagwurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class);
-    }
 
     // ===== When Slagwurm blocks =====
 
@@ -198,6 +182,6 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

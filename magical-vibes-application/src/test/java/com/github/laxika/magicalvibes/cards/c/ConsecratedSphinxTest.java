@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,18 +22,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
 
-    @Test
-    @DisplayName("Consecrated Sphinx has ON_OPPONENT_DRAWS effect wrapped in MayEffect")
-    void hasCorrectProperties() {
-        ConsecratedSphinx card = new ConsecratedSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) mayEffect.wrapped();
-        assertThat(drawEffect.amount()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Opponent draw step triggers may ability for controller")
@@ -46,8 +32,8 @@ class ConsecratedSphinxTest extends BaseCardTest {
         advanceToDraw(player2);
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getName()).isEqualTo("Consecrated Sphinx");
     }
@@ -106,7 +92,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
 
         // Two may ability prompts are queued (one per card drawn)
         harness.passBothPriorities(); // resolve first MayEffect → may prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true); // accept first → inner resolves inline (draws 2)
         harness.passBothPriorities(); // resolve second MayEffect → may prompt

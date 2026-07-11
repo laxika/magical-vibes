@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 
 public sealed interface ChoiceContext {
 
@@ -13,18 +12,41 @@ public sealed interface ChoiceContext {
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
 
-    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly) implements ChoiceContext {
+    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
+                           boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
-            this(playerId, fromCreature, 1, null, false);
+            this(playerId, fromCreature, 1, null, false, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount) {
-            this(playerId, fromCreature, amount, null, false);
+            this(playerId, fromCreature, amount, null, false, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype) {
-            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, false);
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, false, false, false);
+        }
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, false, false);
+        }
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly, boolean instantSorceryOnly) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, false);
+        }
+
+        /** "Add N mana of any one color, spendable only to cast instant/sorcery spells" (e.g. Resonating Lute). */
+        public static ManaColorChoice instantSorceryOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(playerId, false, amount, null, false, true, false);
+        }
+
+        /**
+         * "Add N mana in any combination of colors, spendable only to cast spells of {@code subtype}
+         * or activate abilities of permanents of that subtype" (e.g. Smokebraider). Each mana's color
+         * is chosen individually (any combination).
+         */
+        public static ManaColorChoice subtypeSpellOrAbility(UUID playerId, int amount, CardSubtype subtype) {
+            return new ManaColorChoice(playerId, false, amount, subtype, false, false, true);
         }
     }
 
@@ -46,16 +68,26 @@ public sealed interface ChoiceContext {
 
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
+    /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
+    record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
+
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
 
     /**
-     * Choosing a basic land type to add to a target land "in addition to its other types"
-     * (e.g. Navigator's Compass activated ability).
+     * Choosing a basic land type for a target land: either added "in addition to its other types"
+     * (Navigator's Compass) or, when {@code replacing} is {@code true}, replacing the land's other
+     * types and mana ability per rule 305.7 (Tideshaper Mystic).
      *
-     * @param targetLandId the target land that gains the chosen basic land type
-     * @param duration     how long the granted type lasts
+     * @param targetLandId the target land that gains/becomes the chosen basic land type
+     * @param duration     how long the granted/overriding type lasts
+     * @param replacing    {@code true} to replace the land's types, {@code false} to add
      */
-    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) implements ChoiceContext {}
+    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing) implements ChoiceContext {
+
+        public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) {
+            this(targetLandId, duration, false);
+        }
+    }
 
     /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.
@@ -71,9 +103,15 @@ public sealed interface ChoiceContext {
     /**
      * Sphinx Ambassador: the damaged player names a card after the controller has selected
      * a card from their library. The selected card is stored in
-     * {@code GameData.pendingSphinxAmbassadorChoice}.
+     * the queued {@code PendingSphinxAmbassadorChoice} interaction.
      */
     record SphinxAmbassadorNameChoice(UUID namingPlayerId, UUID controllerId) implements ChoiceContext {}
+
+    /**
+     * Lammastide Weave: the controller names a card, then the target player mills one card. If the
+     * milled card matches the chosen name, the controller gains life equal to its mana value.
+     */
+    record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),
@@ -90,4 +128,16 @@ public sealed interface ChoiceContext {
      * @param attackerCount  the number of attacking creatures (amount of mana to add)
      */
     record AttackManaSplitChoice(UUID playerId, int attackerCount) implements ChoiceContext {}
+
+    /**
+     * The controller chooses a color at resolution, then {@code targetPlayerId} reveals their hand
+     * and discards every card of that color (Persecute).
+     */
+    record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,
+     * creature, or land; only permanents of the chosen type untap this step.
+     */
+    record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
 }

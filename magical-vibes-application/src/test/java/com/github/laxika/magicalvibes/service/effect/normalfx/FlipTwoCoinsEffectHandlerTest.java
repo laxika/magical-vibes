@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest
             void broadcastsTwoFlipResults() {
                 Card card = createCard("Tavern Swindler");
                 DrawCardEffect headsEffect = new DrawCardEffect(2);
-                DiscardCardEffect tailsEffect = new DiscardCardEffect(1);
+                DiscardEffect tailsEffect = new DiscardEffect(1, DiscardRecipient.CONTROLLER);
                 FlipTwoCoinsEffect effect = new FlipTwoCoinsEffect(headsEffect, tailsEffect);
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
 

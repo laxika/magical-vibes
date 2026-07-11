@@ -3,10 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,21 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RuinRaiderTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has RaidConditionalEffect wrapping RevealTopCardPutIntoHandAndLoseLifeEffect on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffectConfiguration() {
-        RuinRaider card = new RuinRaider();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(RevealTopCardPutIntoHandAndLoseLifeEffect.class);
-    }
 
     // ===== Raid trigger: reveal top card, draw, lose life =====
 

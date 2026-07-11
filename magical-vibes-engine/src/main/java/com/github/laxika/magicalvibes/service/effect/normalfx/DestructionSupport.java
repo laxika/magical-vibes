@@ -5,17 +5,21 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -24,6 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -55,39 +60,40 @@ public class DestructionSupport {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
 
-    public void beginNextDestroyRestChoice(GameData gameData) {
-        if (gameData.pendingForcedSacrificeQueue.isEmpty()) return;
-        PendingForcedSacrifice next = gameData.pendingForcedSacrificeQueue.removeFirst();
-        gameData.pendingForcedSacrificeCount = next.count();
-        gameData.pendingForcedSacrificePlayerId = next.playerId();
+    public void beginNextDestroyRestChoice(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                           List<UUID> protectedIds, String sourceName) {
+        if (choosers.isEmpty()) return;
+        PendingForcedSacrifice next = choosers.getFirst();
+        List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
-                next.count(), "Choose a creature to keep. The rest will be destroyed.");
+                next.count(),
+                new MultiPermanentChoiceContext.DestroyRestChoice(remainingChoosers, List.copyOf(protectedIds), sourceName),
+                "Choose a creature to keep. The rest will be destroyed.");
     }
 
-    public void completeDestroyRestChoice(GameData gameData, List<UUID> permanentIds) {
-        gameData.pendingForcedSacrificeCount = 0;
-        gameData.pendingForcedSacrificePlayerId = null;
-
+    public void completeDestroyRestChoice(GameData gameData, List<UUID> permanentIds,
+                                          MultiPermanentChoiceContext.DestroyRestChoice context) {
         // Add the chosen creature to the protected set
-        gameData.pendingDestroyRestProtectedIds.addAll(permanentIds);
+        List<UUID> protectedIds = new ArrayList<>(context.protectedIds());
+        protectedIds.addAll(permanentIds);
 
-        if (!gameData.pendingForcedSacrificeQueue.isEmpty()) {
+        if (!context.remainingChoosers().isEmpty()) {
             // More players need to choose — prompt the next one
-            beginNextDestroyRestChoice(gameData);
+            beginNextDestroyRestChoice(gameData, context.remainingChoosers(), protectedIds, context.sourceName());
             return;
         }
 
         // All players have chosen — destroy all non-protected creatures
-        String sourceName = gameData.pendingDestroyRestSourceName;
-        performDestroyAllCreaturesExcept(gameData, sourceName != null ? sourceName : "unknown");
+        String sourceName = context.sourceName();
+        performDestroyAllCreaturesExcept(gameData, sourceName != null ? sourceName : "unknown", protectedIds);
     }
 
-    public void performDestroyAllCreaturesExcept(GameData gameData, String sourceName) {
-        Set<UUID> protectedIds = new HashSet<>(gameData.pendingDestroyRestProtectedIds);
-        gameData.pendingDestroyRestProtectedIds.clear();
-        gameData.pendingDestroyRestMode = false;
+    public void performDestroyAllCreaturesExcept(GameData gameData, String sourceName, List<UUID> protectedIdList) {
+        Set<UUID> protectedIds = new HashSet<>(protectedIdList);
 
         List<Permanent> toDestroy = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) -> {
@@ -176,6 +182,33 @@ public class DestructionSupport {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
     }
 
+    /**
+     * A single player sacrifices {@code count} permanents matching {@code filter}: if they control
+     * more than {@code count} they choose which (multi-select), otherwise all matching are sacrificed.
+     * Reuses the same {@link MultiPermanentChoiceContext.ForcedSacrifice} direct-select flow as the
+     * forced-sacrifice family. Callers must ensure at least {@code count} matching permanents exist.
+     */
+    public void sacrificePlayerMatchingPermanents(GameData gameData, UUID playerId, int count,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null || battlefield.isEmpty()) {
+            return;
+        }
+        List<Permanent> matching = battlefield.stream()
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
+                .toList();
+        if (matching.size() <= count) {
+            for (Permanent perm : matching) {
+                sacrificeAndLog(gameData, perm, playerId);
+            }
+        } else {
+            List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
+            playerInputService.beginMultiPermanentChoice(gameData, playerId, matchingIds, count,
+                    new MultiPermanentChoiceContext.ForcedSacrifice(playerId, List.of(), List.of()),
+                    "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
+        }
+    }
+
     public void dealNoncombatDamageToPlayer(GameData gameData, UUID playerId, int baseDamage,
                                               String cardName, CardColor sourceColor) {
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage);
@@ -245,10 +278,7 @@ public class DestructionSupport {
         return ids;
     }
 
-    public void performSimultaneousSacrifice(GameData gameData) {
-        List<UUID> ids = new ArrayList<>(gameData.pendingSimultaneousSacrificeIds);
-        gameData.pendingSimultaneousSacrificeIds.clear();
-
+    public void performSimultaneousSacrifice(GameData gameData, List<UUID> ids) {
         for (UUID permId : ids) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
@@ -258,16 +288,19 @@ public class DestructionSupport {
         }
     }
 
-    public void beginNextForcedSacrificeFromQueue(GameData gameData) {
-        if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
+    public void beginNextForcedSacrificeFromQueue(GameData gameData, List<PendingForcedSacrifice> choosers,
+                                                  List<UUID> accumulatedSacrificeIds) {
+        if (choosers.isEmpty()) {
             return;
         }
 
-        PendingForcedSacrifice next = gameData.pendingForcedSacrificeQueue.removeFirst();
-        gameData.pendingForcedSacrificeCount = next.count();
-        gameData.pendingForcedSacrificePlayerId = next.playerId();
+        PendingForcedSacrifice next = choosers.getFirst();
+        List<PendingForcedSacrifice> remainingChoosers = List.copyOf(choosers.subList(1, choosers.size()));
         playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
-                next.count(), "Choose " + next.count() + " permanent"
+                next.count(),
+                new MultiPermanentChoiceContext.ForcedSacrifice(next.playerId(), remainingChoosers,
+                        List.copyOf(accumulatedSacrificeIds)),
+                "Choose " + next.count() + " permanent"
                         + (next.count() > 1 ? "s" : "") + " to sacrifice.");
     }
 
@@ -316,18 +349,37 @@ public class DestructionSupport {
         sacrificeAndLog(gameData, target, context.controllerId());
     }
 
-    void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
+    public void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         for (var elseEffect : effect.elseEffects()) {
-            if (elseEffect instanceof TapSelfEffect) {
+            if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
                 tapSourcePermanent(gameData, entry);
-            } else if (elseEffect instanceof DealDamageToControllerEffect damage) {
-                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage.damage(),
+            } else if (elseEffect instanceof DealDamageToPlayersEffect damage
+                    && damage.recipient() == DamageRecipient.CONTROLLER
+                    && damage.amount() instanceof Fixed fixed) {
+                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
                         entry.getCard().getName(), entry.getCard().getColor());
                 gameOutcomeService.checkWinCondition(gameData);
+            } else if (elseEffect instanceof SacrificeSelfEffect) {
+                sacrificeSource(gameData, entry);
             } else {
                 log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
                         gameData.id, elseEffect.getClass().getSimpleName());
             }
+        }
+    }
+
+    private void sacrificeSource(GameData gameData, StackEntry entry) {
+        if (entry.getSourcePermanentId() == null) {
+            return;
+        }
+        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (self == null) {
+            return;
+        }
+        if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
+            triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
+            gameBroadcastService.logAndBroadcast(gameData, self.getCard().getName() + " is sacrificed.");
+            permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
 
@@ -400,21 +452,28 @@ public class DestructionSupport {
     }
 
     public void completePileSeparationStep1(GameData gameData, List<UUID> pile1Ids) {
-        UUID targetPlayerId = gameData.pendingPileSeparationTargetPlayerId;
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+        UUID targetPlayerId = state.targetPlayerId();
 
-        gameData.pendingPileSeparationPile1Ids.addAll(pile1Ids);
+        List<UUID> pile1 = new ArrayList<>(state.pile1Ids());
+        pile1.addAll(pile1Ids);
         // Pile 2 is everything not in pile 1
-        for (UUID permId : gameData.pendingPileSeparationAllPermanentIds) {
+        List<UUID> pile2 = new ArrayList<>(state.pile2Ids());
+        for (UUID permId : state.allPermanentIds()) {
             if (!pile1Ids.contains(permId)) {
-                gameData.pendingPileSeparationPile2Ids.add(permId);
+                pile2.add(permId);
             }
         }
 
-        // Build pile descriptions for the prompt
-        String pile1Desc = buildPileDescription(gameData, gameData.pendingPileSeparationPile1Ids);
-        String pile2Desc = buildPileDescription(gameData, gameData.pendingPileSeparationPile2Ids);
+        // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
+        gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), targetPlayerId,
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2));
 
-        String controllerName = gameData.playerIdToName.get(gameData.pendingPileSeparationControllerId);
+        // Build pile descriptions for the prompt
+        String pile1Desc = buildPileDescription(gameData, pile1);
+        String pile2Desc = buildPileDescription(gameData, pile2);
+
+        String controllerName = gameData.playerIdToName.get(state.controllerId());
         gameBroadcastService.logAndBroadcast(gameData,
                 controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
 
@@ -425,21 +484,14 @@ public class DestructionSupport {
     }
 
     public void completePileSeparationStep2(GameData gameData, boolean accepted) {
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         List<UUID> pileToSacrifice = accepted
-                ? new ArrayList<>(gameData.pendingPileSeparationPile1Ids)
-                : new ArrayList<>(gameData.pendingPileSeparationPile2Ids);
+                ? new ArrayList<>(state.pile1Ids())
+                : new ArrayList<>(state.pile2Ids());
         String pileName = accepted ? "Pile 1" : "Pile 2";
 
-        UUID targetPlayerId = gameData.pendingPileSeparationTargetPlayerId;
+        UUID targetPlayerId = state.targetPlayerId();
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-
-        // Clean up pending state
-        gameData.pendingPileSeparation = false;
-        gameData.pendingPileSeparationControllerId = null;
-        gameData.pendingPileSeparationTargetPlayerId = null;
-        gameData.pendingPileSeparationAllPermanentIds.clear();
-        gameData.pendingPileSeparationPile1Ids.clear();
-        gameData.pendingPileSeparationPile2Ids.clear();
 
         String sacrificedDesc = buildPileDescription(gameData, pileToSacrifice);
         gameBroadcastService.logAndBroadcast(gameData,

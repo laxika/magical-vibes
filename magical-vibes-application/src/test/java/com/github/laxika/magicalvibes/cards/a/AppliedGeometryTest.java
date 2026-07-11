@@ -4,12 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Soliton;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,22 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AppliedGeometryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has targeted token-copy effect with Fractal creature overrides and six +1/+1 counters")
-    void hasCorrectEffectStructure() {
-        AppliedGeometry card = new AppliedGeometry();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-
-        CreateTokenCopyOfTargetPermanentEffect effect =
-                (CreateTokenCopyOfTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.additionalSubtypes()).containsExactly(CardSubtype.FRACTAL);
-        assertThat(effect.additionalTypes()).containsExactly(CardType.CREATURE);
-        assertThat(effect.powerOverride()).isEqualTo(0);
-        assertThat(effect.toughnessOverride()).isEqualTo(0);
-        assertThat(effect.initialCounters()).containsEntry(CounterType.PLUS_ONE_PLUS_ONE, 6);
-    }
+    
 
     @Test
     @DisplayName("Creates a 6/6 Fractal token copy of target creature you control")

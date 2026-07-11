@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -26,7 +28,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -59,7 +60,6 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
 
-    @InjectMocks
     private LibraryChoiceHandlerService service;
 
     private GameData gd;
@@ -70,6 +70,17 @@ class LibraryChoiceHandlerServiceTest {
 
     @BeforeEach
     void setUp() {
+        com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+        registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
+                sessionManager, cardViewFactory, mock(LibraryChoiceHandlerService.class)));
+        service = new LibraryChoiceHandlerService(gameQueryService,
+                mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
+                stateBasedActionService, gameBroadcastService, turnProgressionService,
+                playerInputService, effectResolutionService, exileService, registry,
+                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class),
+                mock(com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport.class));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -123,83 +134,85 @@ class LibraryChoiceHandlerServiceTest {
      * to put onto the battlefield (the state left by Field of Ruin's resolution).
      */
     private void beginBasicLandBattlefieldSearch(UUID playerId, List<Card> searchCards) {
+        beginBasicLandBattlefieldSearch(playerId, searchCards, LibrarySearchFollowUp.NONE);
+    }
+
+    private void beginBasicLandBattlefieldSearch(UUID playerId, List<Card> searchCards, LibrarySearchFollowUp followUp) {
         LibrarySearchParams params = LibrarySearchParams.builder(playerId, searchCards)
                 .reveals(false)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD)
+                .followUp(followUp)
                 .build();
-        gd.interaction.beginLibrarySearch(params);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Search your library for a basic land card and put it onto the battlefield.", true));
     }
 
     // =========================================================================
-    // handleLibraryCardChosen — pendingEachPlayerBasicLandSearchQueue processing
+    // handleLibraryCardChosen — each-player basic-land-search follow-up processing
     // =========================================================================
 
     @Nested
-    @DisplayName("handleLibraryCardChosen with pendingEachPlayerBasicLandSearchQueue")
+    @DisplayName("handleLibraryCardChosen with each-player basic-land-search follow-up")
     class HandleLibraryCardChosenWithEachPlayerQueue {
 
         @Test
-        @DisplayName("After successful choice, starts next player's search from queue")
+        @DisplayName("After successful choice, starts next player's search from follow-up")
         void successfulChoiceStartsNextPlayerSearch() {
             stubCardViewFactory();
 
-            // Player1 is currently searching; player2 is queued
+            // Player1 is currently searching; player2 rides the follow-up remainder
             Card plains = createBasicLand("Plains");
             gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
+                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
             Card forest = createBasicLand("Forest");
             gd.playerDecks.get(player2Id).add(forest);
-            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
 
             // Player1 picks index 0
             service.handleLibraryCardChosen(gd, player1, 0);
 
-            // Player2 should now be prompted to search
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
-            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+            // Player2 should now be prompted to search, with an exhausted remainder
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                    .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
         }
 
         @Test
-        @DisplayName("After fail-to-find, starts next player's search from queue")
+        @DisplayName("After fail-to-find, starts next player's search from follow-up")
         void failToFindStartsNextPlayerSearch() {
             stubCardViewFactory();
 
-            // Player1 is currently searching; player2 is queued
+            // Player1 is currently searching; player2 rides the follow-up remainder
             Card plains = createBasicLand("Plains");
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
+                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
             gd.playerDecks.get(player1Id).add(plains);
 
             Card forest = createBasicLand("Forest");
             gd.playerDecks.get(player2Id).add(forest);
-            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
             // Player1 declines (-1)
             service.handleLibraryCardChosen(gd, player1, -1);
 
             // Player2 should now be prompted to search
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
         }
 
         @Test
         @DisplayName("After last player in queue completes, resolves auto-pass")
         void lastPlayerCompletesResolvesAutoPass() {
-            // Player2 is searching; queue is empty
+            // Player2 is searching; follow-up remainder is empty
             Card forest = createBasicLand("Forest");
             gd.playerDecks.get(player2Id).add(forest);
             beginBasicLandBattlefieldSearch(player2Id, List.of(forest));
 
-
-            // Queue is empty — no more pending searches
-            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
-
             service.handleLibraryCardChosen(gd, player2, 0);
 
-            // Should resolve auto-pass since queue is empty
+            // Should resolve auto-pass since no searcher remains
             verify(turnProgressionService).resolveAutoPass(gd);
         }
 
@@ -211,17 +224,16 @@ class LibraryChoiceHandlerServiceTest {
             // Player1 is currently searching
             Card plains = createBasicLand("Plains");
             gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
+                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
-            // Queue: player2 has no basic lands
+            // Remainder: player2 has no basic lands
             gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
-            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
 
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 was skipped (no basic lands), auto-pass called
-            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             verify(turnProgressionService).resolveAutoPass(gd);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("Player2") && msg.contains("finds no basic land cards")));
@@ -235,16 +247,15 @@ class LibraryChoiceHandlerServiceTest {
             // Player1 is currently searching
             Card plains = createBasicLand("Plains");
             gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
+                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
-            // Queue: player2 has empty library (already empty from setUp)
-            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
+            // Remainder: player2 has empty library (already empty from setUp)
 
 
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 was skipped (empty library), auto-pass called
-            assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             verify(turnProgressionService).resolveAutoPass(gd);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("Player2") && msg.contains("it is empty")));
@@ -253,7 +264,7 @@ class LibraryChoiceHandlerServiceTest {
         @Test
         @DisplayName("Queue is not processed when it is empty")
         void emptyQueueDoesNothing() {
-            // Player1 searches with empty queue
+            // Player1 searches with no follow-up remainder
             Card plains = createBasicLand("Plains");
             gd.playerDecks.get(player1Id).add(plains);
             beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
@@ -273,23 +284,23 @@ class LibraryChoiceHandlerServiceTest {
             // Player1 is currently searching
             Card plains = createBasicLand("Plains");
             gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains));
+            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
+                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
-            // Queue: player2 has mixed library
+            // Remainder: player2 has mixed library
             gd.playerDecks.get(player2Id).addAll(List.of(
                     createBasicLand("Forest"),
                     createBasicLand("Island"),
                     createCard("Grizzly Bears", CardType.CREATURE),
                     createCard("Ghost Quarter", CardType.LAND) // nonbasic
             ));
-            gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
 
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 should only see basic land cards
-            assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-            assertThat(gd.interaction.librarySearch().cards())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
     }
@@ -312,7 +323,9 @@ class LibraryChoiceHandlerServiceTest {
             List<Card> allCards = List.of(dino, land, instant);
             Set<UUID> validIds = Set.of(dino.getId());
 
-            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                    player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
+                    false, false, false, true, 0, null, validIds.size(), "Choose."));
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
@@ -334,7 +347,9 @@ class LibraryChoiceHandlerServiceTest {
             List<Card> allCards = List.of(dino, land);
             Set<UUID> validIds = Set.of(dino.getId());
 
-            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                    player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
+                    false, false, false, true, 0, null, validIds.size(), "Choose."));
 
             service.handleLibraryRevealChoice(gd, player1, List.of());
 

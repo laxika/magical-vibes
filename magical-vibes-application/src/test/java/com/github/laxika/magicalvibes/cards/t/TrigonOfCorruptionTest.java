@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,44 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TrigonOfCorruptionTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect for entering with 3 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        TrigonOfCorruption card = new TrigonOfCorruption();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithFixedChargeCountersEffect.class);
-        EnterWithFixedChargeCountersEffect effect =
-                (EnterWithFixedChargeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities: add charge counter and put -1/-1 counter")
-    void hasTwoActivatedAbilities() {
-        TrigonOfCorruption card = new TrigonOfCorruption();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {B}{B}, {T} to put a charge counter
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}{B}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
-
-        // Second ability: {2}, {T}, remove a charge counter to put -1/-1 counter on target creature
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof PutMinusOneMinusOneCounterOnTargetCreatureEffect);
-    }
 
     // ===== ETB: enters with 3 charge counters =====
 

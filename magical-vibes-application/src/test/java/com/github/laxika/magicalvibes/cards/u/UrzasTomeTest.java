@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,26 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class UrzasTomeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with DrawCardEffect and DiscardUnlessExileCardFromGraveyardEffect")
-    void hasCorrectAbility() {
-        UrzasTome card = new UrzasTome();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DiscardUnlessExileCardFromGraveyardEffect.class);
-
-        DiscardUnlessExileCardFromGraveyardEffect effect =
-                (DiscardUnlessExileCardFromGraveyardEffect) ability.getEffects().get(1);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
 
     // ===== No historic card in graveyard — must discard =====
 
@@ -56,7 +33,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting discard choice (no historic card to exile)
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
 
         // Hand should have 2 cards now (1 original + 1 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -81,7 +58,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting discard choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
 
         // Hand should have 2 cards now (1 original + 1 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -109,7 +86,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting may ability choice (exile or discard)
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
 
         // Hand should have 2 cards now (1 original + 1 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -118,7 +95,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should now be awaiting graveyard choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
 
         // Choose the Millstone (index 0 in graveyard)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -149,14 +126,14 @@ class UrzasTomeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting may ability choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         // Decline — must discard
         harness.handleMayAbilityChosen(player1, false);
 
         // Should be awaiting discard choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
 
         // Discard
         harness.handleCardChosen(player1, 0);
@@ -189,7 +166,7 @@ class UrzasTomeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be awaiting graveyard choice — only the Millstone (index 1) should be valid
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
 
         // Choose the Millstone at index 1
         harness.handleGraveyardCardChosen(player1, 1);

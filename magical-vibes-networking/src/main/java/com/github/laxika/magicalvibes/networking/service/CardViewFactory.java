@@ -11,11 +11,14 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
+import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
 import org.springframework.stereotype.Service;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -47,7 +50,8 @@ public class CardViewFactory {
                 base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
                 base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
                 base.alternateCostTapCount(), base.alternateCostManaCost(),
-                base.graveyardActivatedAbilities(), base.transformable(), base.kickerCost());
+                base.graveyardActivatedAbilities(), base.transformable(), base.kickerCost(),
+                base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
     }
 
     public CardView create(Card card) {
@@ -68,6 +72,10 @@ public class CardViewFactory {
         List<ActivatedAbilityView> graveyardAbilityViews = card.getGraveyardActivatedAbilities().stream()
                 .map(this::createAbilityView)
                 .toList();
+
+        ChooseOneEffect modalEffect = findModalEffect(card);
+        List<ModalOptionView> modalOptions = modalEffect == null ? null
+                : modalEffect.options().stream().map(this::createModalOptionView).toList();
 
         var altCastOpt = card.getCastingOption(AlternateHandCast.class);
         boolean hasAlternateCastingCost = altCastOpt.isPresent();
@@ -117,7 +125,34 @@ public class CardViewFactory {
                             if (ke.hasSacrificeCost()) return "Sacrifice " + ke.sacrificeDescription();
                             return null;
                         })
-                        .findFirst().orElse(null));
+                        .findFirst().orElse(null),
+                modalEffect != null ? modalEffect.choicesRequired() : 0,
+                modalEffect != null && modalEffect.optional(),
+                modalOptions);
+    }
+
+    /**
+     * Finds the card's modal ("choose one/two") effect, whether it is a modal spell (SPELL slot)
+     * or a modal ETB trigger whose mode is picked at cast time (ON_ENTER_BATTLEFIELD slot).
+     */
+    private ChooseOneEffect findModalEffect(Card card) {
+        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+            if (e instanceof ChooseOneEffect coe) return coe;
+        }
+        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (e instanceof ChooseOneEffect coe) return coe;
+        }
+        return null;
+    }
+
+    private ModalOptionView createModalOptionView(ChooseOneEffect.ChooseOneOption option) {
+        boolean needsSpellTarget = EffectResolution.needsSpellTarget(option.effects());
+        boolean needsTarget = !needsSpellTarget
+                && (option.targetFilter() != null || option.targetFilters() != null
+                        || EffectResolution.needsTarget(option.effects(), List.of(), false, false));
+        int targetCount = option.targetFilters() != null ? option.targetFilters().size()
+                : (needsTarget || needsSpellTarget ? 1 : 0);
+        return new ModalOptionView(option.label(), needsTarget, needsSpellTarget, targetCount);
     }
 
     public ActivatedAbilityView createAbilityView(ActivatedAbility ability) {

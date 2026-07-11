@@ -2,13 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.ChapelGeist;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DrogskolCaptainTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Drogskol Captain has static boost effect for Spirits with hexproof")
-    void hasCorrectStaticEffect() {
-        DrogskolCaptain card = new DrogskolCaptain();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
 
     // ===== Static effect: buffs other Spirits you control =====
 

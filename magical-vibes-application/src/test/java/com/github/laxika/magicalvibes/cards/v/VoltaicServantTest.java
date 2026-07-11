@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,20 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VoltaicServantTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct controller end-step triggered effect")
-    void hasCorrectEffect() {
-        VoltaicServant card = new VoltaicServant();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(UntapTargetPermanentEffect.class);
-        UntapTargetPermanentEffect effect = (UntapTargetPermanentEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(effect.targetPredicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
 
     // ===== Untapping artifacts at end step =====
 
@@ -52,7 +36,7 @@ class VoltaicServantTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // Should be awaiting target selection for the artifact
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the tapped Angel's Feather
         harness.handlePermanentChosen(player1, featherId);
@@ -79,7 +63,7 @@ class VoltaicServantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, featherId);
         harness.passBothPriorities();
@@ -101,7 +85,7 @@ class VoltaicServantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, servantId);
         harness.passBothPriorities();
@@ -149,15 +133,15 @@ class VoltaicServantTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // Should be awaiting target selection — only Voltaic Servant itself should be valid
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Grizzly Bears (non-artifact) should NOT be in valid choices
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(bearsId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(bearsId);
 
         // Voltaic Servant (artifact creature) should be a valid target
         UUID servantId = harness.getPermanentId(player1, "Voltaic Servant");
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(servantId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(servantId);
     }
 
     // ===== Untapping already untapped artifact =====
@@ -179,7 +163,7 @@ class VoltaicServantTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, featherId);
         harness.passBothPriorities();

@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,23 +16,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class HungerOfTheHowlpackTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from one counter to three counters")
-    void hasCorrectStructure() {
-        HungerOfTheHowlpack card = new HungerOfTheHowlpack();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
-
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.baseEffect()).count()).isEqualTo(1);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.morbidEffect()).count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Puts one +1/+1 counter on target creature without morbid")

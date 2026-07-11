@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -24,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOr
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -37,46 +37,14 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -85,6 +53,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +64,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -114,6 +82,14 @@ class GameQueryServiceTest {
 
     @BeforeEach
     void setUp() {
+        PredicateEvaluationService evaluator = new PredicateEvaluationService(gqs);
+        ReflectionTestUtils.setField(gqs, "predicateEvaluationService", evaluator);
+        LayerSystemService layerSystemService = new LayerSystemService();
+        ReflectionTestUtils.setField(layerSystemService, "predicateEvaluationService", evaluator);
+        ReflectionTestUtils.setField(layerSystemService, "staticEffectRegistry", staticEffectRegistry);
+        ReflectionTestUtils.setField(layerSystemService, "gameQueryService", gqs);
+        ReflectionTestUtils.setField(gqs, "layerSystemService", layerSystemService);
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -1241,7 +1217,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false for null spell color")
         void returnsFalseForNullColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, null)).isFalse();
         }
@@ -1249,7 +1225,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns true when matching color protection exists")
         void returnsTrueWithMatchingColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLUE)).isTrue();
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLACK)).isTrue();
@@ -1258,7 +1234,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false for non-matching color")
         void returnsFalseForNonMatchingColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.RED)).isFalse();
         }
@@ -1268,7 +1244,7 @@ class GameQueryServiceTest {
         void returnsTrueWhenGrantedByStaticEffect() {
             addLordWithHandler(player1Id,
                     (ctx, eff, acc) -> acc.addGrantedEffect(
-                            new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE))));
+                            TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE))));
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLUE)).isTrue();
@@ -1943,669 +1919,6 @@ class GameQueryServiceTest {
         }
     }
 
-    // ===== matchesCardPredicate =====
-
-    @Nested
-    @DisplayName("matchesCardPredicate")
-    class MatchesCardPredicate {
-
-        @Test
-        @DisplayName("null predicate returns true")
-        void nullPredicateReturnsTrue() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, null, null)).isTrue();
-        }
-
-        @Test
-        @DisplayName("CardTypePredicate matches primary type")
-        void cardTypePredicateMatchesPrimaryType() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardTypePredicate(CardType.CREATURE), null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(card, new CardTypePredicate(CardType.ARTIFACT), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardTypePredicate matches additional type")
-        void cardTypePredicateMatchesAdditionalType() {
-            Card card = createArtifactCreature("Myr Sire", 1, 1, List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardTypePredicate(CardType.ARTIFACT), null)).isTrue();
-        }
-
-        @Test
-        @DisplayName("CardSubtypePredicate matches subtype")
-        void cardSubtypePredicateMatches() {
-            Card card = createCreature("Elf", 1, 1, CardColor.GREEN);
-            card.setSubtypes(List.of(CardSubtype.ELF));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardSubtypePredicate(CardSubtype.ELF), null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(card, new CardSubtypePredicate(CardSubtype.GOBLIN), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardKeywordPredicate matches keyword")
-        void cardKeywordPredicateMatches() {
-            Card card = createMirranCrusader();
-
-            assertThat(gqs.matchesCardPredicate(card, new CardKeywordPredicate(Keyword.DOUBLE_STRIKE), null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(card, new CardKeywordPredicate(Keyword.FLYING), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardIsSelfPredicate matches source card")
-        void cardIsSelfPredicateMatches() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardIsSelfPredicate(), card.getId())).isTrue();
-            assertThat(gqs.matchesCardPredicate(card, new CardIsSelfPredicate(), UUID.randomUUID())).isFalse();
-            assertThat(gqs.matchesCardPredicate(card, new CardIsSelfPredicate(), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardColorPredicate matches card color")
-        void cardColorPredicateMatches() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardColorPredicate(CardColor.GREEN), null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(card, new CardColorPredicate(CardColor.RED), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardIsAuraPredicate matches aura cards")
-        void cardIsAuraPredicateMatches() {
-            Card aura = createAura("Heart of Light", new PreventAllDamageToAndByEnchantedCreatureEffect());
-            Card nonAura = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(aura, new CardIsAuraPredicate(), null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(nonAura, new CardIsAuraPredicate(), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardAllOf(LAND, BASIC) matches only basic lands")
-        void cardAllOfBasicLandMatches() {
-            Card basicLand = createLand("Forest");
-            basicLand.setSupertypes(Set.of(CardSupertype.BASIC));
-            Card nonBasicLand = createLand("Wasteland");
-            Card nonLand = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            CardAllOfPredicate basicLandFilter = new CardAllOfPredicate(List.of(
-                    new CardSupertypePredicate(CardSupertype.BASIC),
-                    new CardTypePredicate(CardType.LAND)));
-
-            assertThat(gqs.matchesCardPredicate(basicLand, basicLandFilter, null)).isTrue();
-            assertThat(gqs.matchesCardPredicate(nonBasicLand, basicLandFilter, null)).isFalse();
-            assertThat(gqs.matchesCardPredicate(nonLand, basicLandFilter, null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardNotPredicate negates")
-        void cardNotPredicateNegates() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)), null)).isFalse();
-            assertThat(gqs.matchesCardPredicate(card, new CardNotPredicate(new CardTypePredicate(CardType.ARTIFACT)), null)).isTrue();
-        }
-
-        @Test
-        @DisplayName("CardAllOfPredicate requires all sub-predicates")
-        void cardAllOfPredicateRequiresAll() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardAllOfPredicate(List.of(
-                    new CardTypePredicate(CardType.CREATURE),
-                    new CardColorPredicate(CardColor.GREEN)
-            )), null)).isTrue();
-
-            assertThat(gqs.matchesCardPredicate(card, new CardAllOfPredicate(List.of(
-                    new CardTypePredicate(CardType.CREATURE),
-                    new CardColorPredicate(CardColor.RED)
-            )), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("CardAnyOfPredicate requires any sub-predicate")
-        void cardAnyOfPredicateRequiresAny() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-
-            assertThat(gqs.matchesCardPredicate(card, new CardAnyOfPredicate(List.of(
-                    new CardTypePredicate(CardType.ARTIFACT),
-                    new CardColorPredicate(CardColor.GREEN)
-            )), null)).isTrue();
-
-            assertThat(gqs.matchesCardPredicate(card, new CardAnyOfPredicate(List.of(
-                    new CardTypePredicate(CardType.ARTIFACT),
-                    new CardColorPredicate(CardColor.RED)
-            )), null)).isFalse();
-        }
-    }
-
-    // ===== matchesPermanentPredicate =====
-
-    @Nested
-    @DisplayName("matchesPermanentPredicate")
-    class MatchesPermanentPredicate {
-
-        @Test
-        @DisplayName("PermanentIsCreaturePredicate matches creature")
-        void creaturePredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsCreaturePredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsCreaturePredicate rejects non-creature")
-        void creaturePredicateRejectsNonCreature() {
-            Permanent perm = addPermanent(player1Id, createLand("Forest"));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsCreaturePredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsLandPredicate matches land")
-        void landPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createLand("Forest"));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsLandPredicate rejects non-land")
-        void landPredicateRejectsNonLand() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsArtifactPredicate matches artifact")
-        void artifactPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createArtifact("Angel's Feather"));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsArtifactPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsArtifactPredicate rejects non-artifact")
-        void artifactPredicateRejectsNonArtifact() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsArtifactPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsEnchantmentPredicate matches enchantment")
-        void enchantmentPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createEnchantmentWithStaticEffect("Furnace of Rath", new DoubleDamageEffect()));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsEnchantmentPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsEnchantmentPredicate rejects non-enchantment")
-        void enchantmentPredicateRejectsNonEnchantment() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsEnchantmentPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsTappedPredicate matches tapped permanent")
-        void tappedPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.tap();
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsTappedPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsTappedPredicate rejects untapped permanent")
-        void tappedPredicateRejectsUntapped() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsTappedPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsTokenPredicate matches token")
-        void tokenPredicateMatches() {
-            Card tokenCard = createCreature("Soldier Token", 1, 1, CardColor.WHITE);
-            tokenCard.setToken(true);
-            Permanent perm = addPermanent(player1Id, tokenCard);
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsTokenPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsTokenPredicate rejects non-token")
-        void tokenPredicateRejectsNonToken() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsTokenPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsAttackingPredicate matches attacking creature")
-        void attackingPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setAttacking(true);
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsAttackingPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsAttackingPredicate rejects non-attacking")
-        void attackingPredicateRejectsNonAttacking() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsAttackingPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsBlockingPredicate matches blocking creature")
-        void blockingPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setBlocking(true);
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsBlockingPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsBlockingPredicate rejects non-blocking")
-        void blockingPredicateRejectsNonBlocking() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsBlockingPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentHasSubtypePredicate matches subtype")
-        void subtypePredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.BEAR))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentHasSubtypePredicate rejects non-matching subtype")
-        void subtypePredicateRejectsNonMatching() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.ELF))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentHasSubtypePredicate matches changeling for creature subtypes")
-        void subtypePredicateMatchesChangeling() {
-            Permanent perm = addPermanent(player1Id, createChangelingCreature("Changeling Wayfinder"));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.ELF))).isTrue();
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.GOBLIN))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentHasSubtypePredicate changeling does not match non-creature subtypes")
-        void changelingDoesNotMatchNonCreatureSubtypes() {
-            Permanent perm = addPermanent(player1Id, createChangelingCreature("Changeling Wayfinder"));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT))).isFalse();
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasSubtypePredicate(CardSubtype.AURA))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentHasAnySubtypePredicate matches any matching subtype")
-        void hasAnySubtypePredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentHasAnySubtypePredicate(EnumSet.of(CardSubtype.BEAR, CardSubtype.ELF)))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentHasAnySubtypePredicate rejects when no subtypes match")
-        void hasAnySubtypePredicateRejectsNonMatching() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentHasAnySubtypePredicate(EnumSet.of(CardSubtype.ELF, CardSubtype.GOBLIN)))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentHasKeywordPredicate matches keyword")
-        void keywordPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createMirranCrusader());
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasKeywordPredicate(Keyword.DOUBLE_STRIKE))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentHasKeywordPredicate rejects non-matching keyword")
-        void keywordPredicateRejectsNonMatching() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentHasKeywordPredicate(Keyword.FLYING))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentPowerAtMostPredicate matches when power is at or below threshold")
-        void powerAtMostPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(2))).isTrue();
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(3))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentPowerAtMostPredicate rejects when power exceeds threshold")
-        void powerAtMostPredicateRejectsAboveThreshold() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR))); // power 2
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentPowerAtMostPredicate(1))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentColorInPredicate matches color")
-        void colorInPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentColorInPredicate(EnumSet.of(CardColor.GREEN)))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentColorInPredicate rejects non-matching color")
-        void colorInPredicateRejectsNonMatching() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentColorInPredicate(EnumSet.of(CardColor.RED)))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentColorInPredicate matches overridden color")
-        void colorInPredicateMatchesOverriddenColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setColorOverridden(true);
-            perm.getTransientColors().add(CardColor.BLUE);
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentColorInPredicate(EnumSet.of(CardColor.BLUE)))).isTrue();
-            // Original color should not match when overridden
-            assertThat(gqs.matchesPermanentPredicate(gd, perm,
-                    new PermanentColorInPredicate(EnumSet.of(CardColor.GREEN)))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentDealtDamageThisTurnPredicate matches permanent dealt damage this turn")
-        void dealtDamageThisTurnPredicateMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            gd.permanentsDealtDamageThisTurn.add(perm.getId());
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentDealtDamageThisTurnPredicate rejects permanent not dealt damage this turn")
-        void dealtDamageThisTurnPredicateRejects() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentDealtDamageThisTurnPredicate returns false when gameData is null")
-        void dealtDamageThisTurnPredicateReturnsFalseWithNullGameData() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            gd.permanentsDealtDamageThisTurn.add(perm.getId());
-
-            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentDealtDamageThisTurnPredicate(), null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentTruePredicate always returns true")
-        void truePredicateAlwaysTrue() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentTruePredicate())).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentNotPredicate negates")
-        void notPredicateNegates() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentNotPredicate(new PermanentIsCreaturePredicate()))).isFalse();
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentNotPredicate(new PermanentIsArtifactPredicate()))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentAllOfPredicate requires all")
-        void allOfPredicateRequiresAll() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentAllOfPredicate(List.of(
-                    new PermanentIsCreaturePredicate(),
-                    new PermanentHasSubtypePredicate(CardSubtype.BEAR)
-            )))).isTrue();
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentAllOfPredicate(List.of(
-                    new PermanentIsCreaturePredicate(),
-                    new PermanentIsArtifactPredicate()
-            )))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentAnyOfPredicate requires any")
-        void anyOfPredicateRequiresAny() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentAnyOfPredicate(List.of(
-                    new PermanentIsArtifactPredicate(),
-                    new PermanentIsCreaturePredicate()
-            )))).isTrue();
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentAnyOfPredicate(List.of(
-                    new PermanentIsArtifactPredicate(),
-                    new PermanentIsLandPredicate()
-            )))).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsSourceCardPredicate matches source card")
-        void sourceCardPredicateMatches() {
-            Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
-            Permanent perm = addPermanent(player1Id, card);
-            FilterContext ctx = FilterContext.of(gd).withSourceCardId(card.getId());
-
-            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentIsSourceCardPredicate(), ctx)).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentIsSourceCardPredicate rejects different card")
-        void sourceCardPredicateRejectsDifferent() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceCardId(UUID.randomUUID());
-
-            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentIsSourceCardPredicate(), ctx)).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentControlledBySourceControllerPredicate matches controlled permanent")
-        void controlledBySourceControllerMatches() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentControlledBySourceControllerPredicate(), ctx)).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentControlledBySourceControllerPredicate rejects opponent's permanent")
-        void controlledBySourceControllerRejectsOpponent() {
-            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThat(gqs.matchesPermanentPredicate(perm, new PermanentControlledBySourceControllerPredicate(), ctx)).isFalse();
-        }
-
-        @Test
-        @DisplayName("PermanentIsPlaneswalkerPredicate rejects non-planeswalker")
-        void planeswalkerPredicateRejectsNonPlaneswalker() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesPermanentPredicate(gd, perm, new PermanentIsPlaneswalkerPredicate())).isFalse();
-        }
-    }
-
-    // ===== matchesFilters =====
-
-    @Nested
-    @DisplayName("matchesFilters")
-    class MatchesFilters {
-
-        @Test
-        @DisplayName("PermanentPredicateTargetFilter passes when predicate matches")
-        void permanentFilterPasses() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesFilters(gd, perm, Set.of(
-                    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be creature")
-            ))).isTrue();
-        }
-
-        @Test
-        @DisplayName("PermanentPredicateTargetFilter fails when predicate doesn't match")
-        void permanentFilterFails() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThat(gqs.matchesFilters(gd, perm, Set.of(
-                    new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Must be artifact")
-            ))).isFalse();
-        }
-
-        @Test
-        @DisplayName("ControlledPermanentPredicateTargetFilter passes for controlled permanent")
-        void controlledFilterPasses() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThat(gqs.matchesFilters(perm, Set.of(
-                    new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be controlled creature")
-            ), ctx)).isTrue();
-        }
-
-        @Test
-        @DisplayName("ControlledPermanentPredicateTargetFilter fails for opponent's permanent")
-        void controlledFilterFailsForOpponent() {
-            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThat(gqs.matchesFilters(perm, Set.of(
-                    new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be controlled creature")
-            ), ctx)).isFalse();
-        }
-
-        @Test
-        @DisplayName("multiple filters must all match")
-        void multipleFiltersMustAllMatch() {
-            Permanent perm = addPermanent(player1Id, createArtifactCreature("Myr Sire", 1, 1, List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR)));
-
-            assertThat(gqs.matchesFilters(gd, perm, Set.of(
-                    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be creature"),
-                    new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Must be artifact")
-            ))).isTrue();
-        }
-    }
-
-    // ===== validateTargetFilter =====
-
-    @Nested
-    @DisplayName("validateTargetFilter")
-    class ValidateTargetFilter {
-
-        @Test
-        @DisplayName("PermanentPredicateTargetFilter passes when matches")
-        void permanentFilterPasses() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            gqs.validateTargetFilter(gd,
-                    new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be creature"),
-                    perm);
-        }
-
-        @Test
-        @DisplayName("PermanentPredicateTargetFilter throws when doesn't match")
-        void permanentFilterThrows() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThatThrownBy(() -> gqs.validateTargetFilter(gd,
-                    new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Must be artifact"),
-                    perm))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must be artifact");
-        }
-
-        @Test
-        @DisplayName("ControlledPermanentPredicateTargetFilter passes for controlled permanent")
-        void controlledFilterPasses() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            gqs.validateTargetFilter(
-                    new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be controlled creature"),
-                    perm, ctx);
-        }
-
-        @Test
-        @DisplayName("ControlledPermanentPredicateTargetFilter throws when not controlled")
-        void controlledFilterThrowsWhenNotControlled() {
-            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThatThrownBy(() -> gqs.validateTargetFilter(
-                    new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be controlled creature"),
-                    perm, ctx))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must be controlled creature");
-        }
-
-        @Test
-        @DisplayName("OwnedPermanentPredicateTargetFilter passes for owned permanent")
-        void ownedFilterPasses() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            gqs.validateTargetFilter(
-                    new OwnedPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be owned creature"),
-                    perm, ctx);
-        }
-
-        @Test
-        @DisplayName("OwnedPermanentPredicateTargetFilter throws when not owned")
-        void ownedFilterThrowsWhenNotOwned() {
-            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
-
-            assertThatThrownBy(() -> gqs.validateTargetFilter(
-                    new OwnedPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Must be owned creature"),
-                    perm, ctx))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Must be owned creature");
-        }
-
-        @Test
-        @DisplayName("ControlledPermanentPredicateTargetFilter throws when gameData is null")
-        void controlledFilterThrowsWithNullGameData() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-
-            assertThatThrownBy(() -> gqs.validateTargetFilter(
-                    new ControlledPermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Error"),
-                    perm, FilterContext.empty()))
-                    .isInstanceOf(IllegalStateException.class);
-        }
-    }
-
     /**
      * Tests for {@link GameQueryService#permanentWouldHaveSubtype} — the CR 614.12
      * replacement-effect lookahead that determines what subtypes a permanent would have
@@ -2652,6 +1965,13 @@ class GameQueryServiceTest {
             });
 
             lookaheadGqs = new GameQueryService(realRegistry);
+            PredicateEvaluationService lookaheadEvaluator = new PredicateEvaluationService(lookaheadGqs);
+            ReflectionTestUtils.setField(lookaheadGqs, "predicateEvaluationService", lookaheadEvaluator);
+            LayerSystemService lookaheadLayerSystem = new LayerSystemService();
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "predicateEvaluationService", lookaheadEvaluator);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "staticEffectRegistry", realRegistry);
+            ReflectionTestUtils.setField(lookaheadLayerSystem, "gameQueryService", lookaheadGqs);
+            ReflectionTestUtils.setField(lookaheadGqs, "layerSystemService", lookaheadLayerSystem);
 
             playerId = UUID.randomUUID();
             opponentId = UUID.randomUUID();
@@ -3104,71 +2424,35 @@ class GameQueryServiceTest {
             assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
             assertThat(gqs.getOverriddenLandManaColor(gd, otherLand)).isEqualTo(ManaColor.BLACK);
         }
-    }
 
-    @Nested
-    @DisplayName("matchesStackEntryPredicate — enchanted-player filter")
-    class MatchesStackEntryPredicateEnchantedPlayer {
+        @Test
+        @DisplayName("of two land-type-setting auras, the later timestamp wins (CR 613.7)")
+        void laterLandTypeSetterWins() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
 
-        private StackEntry instantControlledBy(UUID controllerId) {
-            Card bolt = new Card();
-            bolt.setName("Lightning Bolt");
-            bolt.setType(CardType.INSTANT);
-            return new StackEntry(StackEntryType.INSTANT_SPELL, bolt, controllerId, "Lightning Bolt", new ArrayList<>());
+            Permanent first = addPermanent(player1Id, createAura("Sea's Claim",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND)));
+            first.setAttachedTo(land.getId());
+            Permanent second = addPermanent(player1Id, createAura("Evil Presence",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP)));
+            second.setAttachedTo(land.getId());
+
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.BLACK);
         }
 
         @Test
-        @DisplayName("matches when the entry is controlled by the enchanted player")
-        void matchesWhenControlledByEnchantedPlayer() {
-            StackEntry entry = instantControlledBy(player2Id);
+        @DisplayName("a later-entering Blood Moon effect beats an earlier land-type aura (CR 613.7)")
+        void bloodMoonAfterAuraWins() {
+            Permanent land = addPermanent(player1Id, createLand("Nonbasic Land"));
+            Permanent aura = addPermanent(player1Id, createAura("Sea's Claim",
+                    new EnchantedPermanentBecomesTypeEffect(CardSubtype.ISLAND)));
+            aura.setAttachedTo(land.getId());
 
-            boolean result = gqs.matchesStackEntryPredicate(
-                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), player2Id);
+            Card bloodMoon = createEnchantment("Blood Moon");
+            bloodMoon.addEffect(EffectSlot.STATIC, new NonbasicLandsBecomeTypeEffect(CardSubtype.MOUNTAIN));
+            addPermanent(player2Id, bloodMoon);
 
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("does not match when the entry is controlled by another player")
-        void doesNotMatchWhenControlledByAnotherPlayer() {
-            StackEntry entry = instantControlledBy(player1Id);
-
-            boolean result = gqs.matchesStackEntryPredicate(
-                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), player2Id);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("does not match when there is no enchanted-player context")
-        void doesNotMatchWithoutEnchantedPlayerContext() {
-            StackEntry entry = instantControlledBy(player2Id);
-
-            boolean result = gqs.matchesStackEntryPredicate(
-                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), null);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("AllOf combines instant/sorcery type with the enchanted-player filter")
-        void allOfTypeAndEnchantedPlayer() {
-            StackEntryAllOfPredicate filter = new StackEntryAllOfPredicate(List.of(
-                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
-                    new StackEntryControlledByEnchantedPlayerPredicate()));
-
-            // Instant cast by the enchanted player → matches.
-            assertThat(gqs.matchesStackEntryPredicate(instantControlledBy(player2Id), filter, player2Id)).isTrue();
-            // Instant cast by someone else → fails the enchanted-player clause.
-            assertThat(gqs.matchesStackEntryPredicate(instantControlledBy(player1Id), filter, player2Id)).isFalse();
-
-            // Creature cast by the enchanted player → fails the type clause.
-            Card bears = new Card();
-            bears.setName("Grizzly Bears");
-            bears.setType(CardType.CREATURE);
-            StackEntry creature = new StackEntry(
-                    StackEntryType.CREATURE_SPELL, bears, player2Id, "Grizzly Bears", new ArrayList<>());
-            assertThat(gqs.matchesStackEntryPredicate(creature, filter, player2Id)).isFalse();
+            assertThat(gqs.getOverriddenLandManaColor(gd, land)).isEqualTo(ManaColor.RED);
         }
     }
 

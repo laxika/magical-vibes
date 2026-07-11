@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,36 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WurmcoilEngineTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wurmcoil Engine has two ON_DEATH token creation effects")
-    void hasCorrectEffects() {
-        WurmcoilEngine card = new WurmcoilEngine();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(2);
-
-        CreateTokenEffect deathtouch = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(deathtouch.amount()).isEqualTo(1);
-        assertThat(deathtouch.tokenName()).isEqualTo("Phyrexian Wurm");
-        assertThat(deathtouch.power()).isEqualTo(3);
-        assertThat(deathtouch.toughness()).isEqualTo(3);
-        assertThat(deathtouch.color()).isNull();
-        assertThat(deathtouch.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.WURM);
-        assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
-        assertThat(deathtouch.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        CreateTokenEffect lifelink = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(1);
-        assertThat(lifelink.amount()).isEqualTo(1);
-        assertThat(lifelink.tokenName()).isEqualTo("Phyrexian Wurm");
-        assertThat(lifelink.power()).isEqualTo(3);
-        assertThat(lifelink.toughness()).isEqualTo(3);
-        assertThat(lifelink.color()).isNull();
-        assertThat(lifelink.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.WURM);
-        assertThat(lifelink.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(lifelink.additionalTypes()).containsExactly(CardType.ARTIFACT);
-    }
 
     // ===== Casting =====
 

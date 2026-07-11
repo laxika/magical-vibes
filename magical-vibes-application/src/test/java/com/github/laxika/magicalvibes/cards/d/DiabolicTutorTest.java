@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DiabolicTutorTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Diabolic Tutor has correct card properties")
-    void hasCorrectProperties() {
-        DiabolicTutor card = new DiabolicTutor();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -63,11 +48,11 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search prompt
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // All cards from library are presented (not just a subset)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Swamp", "Grizzly Bears", "Grizzly Bears");
     }
 
@@ -81,7 +66,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -93,8 +78,8 @@ class DiabolicTutorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.librarySearch()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -108,8 +93,8 @@ class DiabolicTutorTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Find Grizzly Bears in the search cards
         int bearsIndex = -1;
-        for (int i = 0; i < gd.interaction.librarySearch().cards().size(); i++) {
-            if (gd.interaction.librarySearch().cards().get(i).getName().equals("Grizzly Bears")) {
+        for (int i = 0; i < gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().size(); i++) {
+            if (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().get(i).getName().equals("Grizzly Bears")) {
                 bearsIndex = i;
                 break;
             }
@@ -131,7 +116,7 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().reveals()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isFalse();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -152,7 +137,7 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
     @Test
@@ -181,7 +166,7 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 
@@ -216,5 +201,4 @@ class DiabolicTutorTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
-
 

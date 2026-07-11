@@ -3,13 +3,15 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "184")
+@CardRegistration(set = "9ED", collectorNumber = "167")
 @CardRegistration(set = "M10", collectorNumber = "115")
 public class UnderworldDreams extends Card {
 
     public UnderworldDreams() {
-        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(1));
+        addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
     }
 }

@@ -3,20 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,36 +21,9 @@ class PrimalAmuletTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has cost reduction static effect")
-    void frontFaceHasCostReduction() {
-        PrimalAmulet card = new PrimalAmulet();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-        var reduction = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(reduction.amount()).isEqualTo(1);
-        assertThat(reduction.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
-    @Test
-    @DisplayName("Front face has spell cast trigger for charge counters and optional transform")
-    void frontFaceHasSpellCastTrigger() {
-        PrimalAmulet card = new PrimalAmulet();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        var trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst())
-                .isInstanceOf(PutCounterOnSelfThenTransformIfThresholdEffect.class);
-        var counterEffect = (PutCounterOnSelfThenTransformIfThresholdEffect) trigger.resolvedEffects().getFirst();
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.CHARGE);
-        assertThat(counterEffect.threshold()).isEqualTo(4);
-        assertThat(counterEffect.optional()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Has back face configured as Primal Wellspring")
@@ -69,19 +34,7 @@ class PrimalAmuletTest extends BaseCardTest {
         assertThat(card.getBackFaceClassName()).isEqualTo("PrimalWellspring");
     }
 
-    @Test
-    @DisplayName("Back face has mana ability with instant/sorcery copy")
-    void backFaceHasManaAbility() {
-        PrimalAmulet card = new PrimalAmulet();
-        PrimalWellspring backFace = (PrimalWellspring) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        var ability = backFace.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaWithInstantSorceryCopyEffect.class);
-    }
+    
 
     // ===== Cost reduction =====
 

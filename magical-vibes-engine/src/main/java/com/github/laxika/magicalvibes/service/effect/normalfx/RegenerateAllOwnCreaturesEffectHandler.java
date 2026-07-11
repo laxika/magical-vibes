@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -41,7 +43,7 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
                 for (Permanent perm : battlefield) {
                     if (gameQueryService.isCreature(gameData, perm)
                             && (e.filter() == null
-                                || gameQueryService.matchesPermanentPredicate(perm, e.filter(), filterContext))) {
+                                || predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext))) {
                         perm.setRegenerationShield(perm.getRegenerationShield() + 1);
                         count++;
                     }

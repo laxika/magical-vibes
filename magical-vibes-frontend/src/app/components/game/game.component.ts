@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -7,9 +7,9 @@ import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNo
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
-import { CombatZoneComponent } from './combat-zone/combat-zone.component';
 import { SidePanelComponent } from './side-panel/side-panel.component';
-import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
+import { ModifierTooltipComponent } from './modifier-tooltip/modifier-tooltip.component';
+import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
@@ -17,7 +17,7 @@ import { PermanentClickResolverService } from '../../services/permanent-click-re
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, CombatZoneComponent, SidePanelComponent],
+  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent, ModifierTooltipComponent],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css']
 })
@@ -25,23 +25,42 @@ export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
+  // Anchor for the board-card modifier tooltip; set only after 3s of continuous hover
+  // over a battlefield permanent (the timer below defers it).
+  modifierTooltipAnchor = signal<{ x: number; y: number; below: boolean } | null>(null);
+  private modifierTooltipTimer: ReturnType<typeof setTimeout> | null = null;
   stackTargetId = signal<string | null>(null);
   private subscriptions: Subscription[] = [];
 
   @ViewChild(MulliganModalComponent) mulliganModal?: MulliganModalComponent;
   @ViewChild(SidePanelComponent) sidePanel?: SidePanelComponent;
 
+  private battlefieldAreaObserver: ResizeObserver | null = null;
+  readonly battlefieldAreaSize = signal<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  @ViewChild('battlefieldArea')
+  set battlefieldArea(ref: ElementRef<HTMLElement> | undefined) {
+    this.battlefieldAreaObserver?.disconnect();
+    this.battlefieldAreaEl = ref?.nativeElement ?? null;
+    if (!ref) return;
+    this.battlefieldAreaObserver ??= new ResizeObserver(entries => {
+      const rect = entries[entries.length - 1].contentRect;
+      this.ngZone.run(() => {
+        this.battlefieldAreaSize.set({ width: rect.width, height: rect.height });
+        this.scheduleCombatShiftUpdate();
+      });
+    });
+    this.battlefieldAreaObserver.observe(ref.nativeElement);
+  }
+
+  private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
   readonly choice = inject(GameChoiceService);
   private clickResolver = inject(PermanentClickResolverService);
   private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
 
   // Bound function references for child component inputs
-  readonly boundIsValidTarget = (perm: Permanent) => this.choice.targeting.isValidTarget(perm);
-  readonly boundIsSelectedAttacker = (index: number) => this.isSelectedAttacker(index);
-  readonly boundGetAttachedAuras = (permanentId: string) => this.getAttachedAuras(permanentId);
-  readonly boundGetDamageAssigned = (permanentId: string) => this.choice.damage.getDamageAssigned(permanentId);
-  readonly boundUnassignDamage = (permanentId: string) => this.choice.damage.unassignDamage(permanentId);
   readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
   readonly boundIsGraveyardAbilityActivatable = (index: number) => this.isGraveyardAbilityActivatable(index);
   readonly boundIsFlashbackPlayable = (index: number) => this.isFlashbackPlayable(index);
@@ -84,7 +103,10 @@ export class GameComponent implements OnInit, OnDestroy {
     this.searchTaxCost.set(0);
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+    this.clearModifierTooltip();
     this.stackTargetId.set(null);
+    this.combatShiftX.set(new Map());
+    this.showShortcutsPopup.set(false);
 
     this.choice.init(
       this.game,
@@ -120,11 +142,24 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+    if (this.modifierTooltipTimer != null) {
+      clearTimeout(this.modifierTooltipTimer);
+    }
+    this.battlefieldAreaObserver?.disconnect();
+    if (this.combatShiftFrame != null) {
+      cancelAnimationFrame(this.combatShiftFrame);
+    }
     this.websocketService.pendingGameInputMessage = null;
   }
 
   private processGameMessage(message: WebSocketMessage): void {
     console.log(message);
+
+    // The app is zoneless, and WebSocket callbacks don't schedule change detection.
+    // Most messages update signals (which do), but some (e.g. VALID_TARGETS_RESPONSE)
+    // only mutate plain service state that templates read — mark the view dirty so
+    // every message renders.
+    this.cdr.markForCheck();
 
     if (message.type === MessageType.OPPONENT_JOINED) {
       const notification = message as GameNotification;
@@ -283,6 +318,209 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentBattlefield(): Permanent[] {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
+  }
+
+  /* Dimensions mirrored from shared-game-styles.css, used to fit both
+     battlefields into the area's flex-allocated size. */
+  private static readonly CARD_HEIGHT = 231;
+  private static readonly CARD_WIDTH = 165;
+  /* A tapped card reserves its full rotated footprint (full size, neighbours
+     shift aside — overlapping or shrinking tapped cards were both rejected).
+     Widths are therefore tap-accurate: tapping can re-wrap a crowded row and,
+     rarely, change the side's zoom — the accepted tradeoff. */
+  private static readonly TAPPED_CARD_WIDTH = 231;
+  /* Box offset between stacked basic lands: the visible strip of each land. */
+  private static readonly STACK_STRIP = 32;
+  /* Vertical step between stacked basic lands (MTGO-style diagonal fan);
+     matches the horizontal STACK_STRIP. */
+  private static readonly LAND_STACK_Y_STEP = 32;
+  private static readonly ROW_GAP = 10;
+  /* Attached auras peek out from under their host: 50px to the side
+     (margin-left) and 41px above (231px card minus the -190px overlap). */
+  private static readonly AURA_X_OFFSET = 50;
+  private static readonly AURA_STRIP = 41;
+  private static readonly LANDS_ROW_MODIFIER = 0.9;
+  private static readonly SUB_ROW_PADDING = 8;
+  private static readonly SIDE_LABEL_HEIGHT = 0;
+  /* CSS zoom rounds each scaled line up to whole pixels, so a modeled line runs
+     a few px short of what renders; this per-line and global slack keeps the
+     model a hair conservative so a tight fit shrinks instead of hairline-scrolling. */
+  private static readonly LINE_SLACK = 3;
+  private static readonly FIT_SAFETY = 12;
+  private static readonly ROW_MARGIN = 0;
+  private static readonly EMPTY_MESSAGE_HEIGHT = 20;
+  private static readonly REVEALED_ROW_HEIGHT = 250;
+  /* The divider between the two halves; grows to a visible red line during combat. */
+  private static readonly DIVIDER_HEIGHT = 3;
+  /* Clear strip between each side and the divider (the divider's CSS margin)
+     that attacking/blocking creatures advance into via the ±30px combat nudge,
+     so combat cards never overlap the opposing row. */
+  private static readonly COMBAT_CORRIDOR = 30;
+  /* Low floor so an unbalanced board (one side's content is much taller than
+     half) scales its cards down to stay inside its half instead of scrolling. */
+  private static readonly MIN_BATTLEFIELD_ZOOM = 0.3;
+  /* Cards never render above 80% of natural size; they only shrink further to fit. */
+  private static readonly MAX_BATTLEFIELD_ZOOM = 0.8;
+
+  /** Greedy flex-wrap simulation: how many lines the given item widths need. */
+  private static packedLines(widths: number[], gap: number, rowWidth: number): number {
+    let lines = 1;
+    let x = 0;
+    for (const w of widths) {
+      const next = x === 0 ? w : x + gap + w;
+      if (next > rowWidth && x > 0) {
+        lines++;
+        x = w;
+      } else {
+        x = next;
+      }
+    }
+    return lines;
+  }
+
+  /** Footprint width (zoom 1) of a permanent plus any attached auras. */
+  private stackWidth(perm: Permanent): number {
+    const C = GameComponent;
+    const base = perm.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
+    return base + (this.getAttachedAuras(perm.id).length > 0 ? C.AURA_X_OFFSET : 0);
+  }
+
+  /** Reserved footprint height (zoom 1) of a permanent plus any attached auras.
+      Tap state is intentionally ignored: a tapped card renders shorter (rotated,
+      165px), but if the modeled height shrank on tap the whole side's cards would
+      rescale every time a land is tapped for mana or a creature attacks. Reserving
+      the upright height keeps the per-side zoom stable across tap/untap — a tapped
+      card just leaves a little unused vertical space, never an overflow. */
+  private stackHeight(perm: Permanent): number {
+    const C = GameComponent;
+    return C.CARD_HEIGHT + this.getAttachedAuras(perm.id).length * C.AURA_STRIP;
+  }
+
+  /** Height of one player's battlefield (creatures row + lands row + revealed rows)
+      at the given zoom, including horizontal wrapping of crowded rows. */
+  private computeSideHeight(
+    creatures: IndexedPermanent[],
+    lands: (IndexedPermanent | LandStack)[],
+    isEmpty: boolean,
+    revealedRows: number,
+    zoom: number,
+    rowWidth: number,
+  ): number {
+    const C = GameComponent;
+    const rowHeight = (widths: number[], lineHeight: number): number => {
+      if (widths.length === 0) return 0;
+      const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
+      return lines * (Math.ceil(lineHeight) + C.LINE_SLACK) + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
+    };
+    const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
+      if (isLandStack(item)) {
+        /* Each land after the first advances by its predecessor's visible
+           strip, so the stack ends at the LAST land's box: strips + that
+           land's (tap-dependent) width. Mirrors the land-stack CSS margins. */
+        const last = item.lands[item.lands.length - 1].perm;
+        const lastWidth = last.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
+        return ((item.lands.length - 1) * C.STACK_STRIP + lastWidth) * landZoom;
+      }
+      return this.stackWidth(item.perm) * landZoom;
+    };
+    /* Reserve the upright line height regardless of tap state so the lands row
+       (and thus the side's zoom) doesn't jump when lands tap/untap; see stackHeight. */
+    const landItemHeight = (item: IndexedPermanent | LandStack): number => {
+      if (isLandStack(item)) {
+        /* Each land after the first steps down by LAND_STACK_Y_STEP, so the
+           stack is one card plus the accumulated vertical fan. */
+        return C.CARD_HEIGHT + (item.lands.length - 1) * C.LAND_STACK_Y_STEP;
+      }
+      return this.stackHeight(item.perm);
+    };
+
+    let h = C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
+    if (isEmpty) {
+      return h + C.EMPTY_MESSAGE_HEIGHT;
+    }
+    const creatureLine = creatures.length > 0
+      ? Math.max(...creatures.map(ip => this.stackHeight(ip.perm)))
+      : 0;
+    h += rowHeight(creatures.map(ip => this.stackWidth(ip.perm) * zoom), creatureLine * zoom);
+    const landZoom = zoom * C.LANDS_ROW_MODIFIER;
+    const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
+    h += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
+    return h;
+  }
+
+  private opponentSideHeight(zoom: number, rowWidth: number): number {
+    return this.computeSideHeight(
+      this.opponentCreatures(),
+      this.opponentLandStacks,
+      this.opponentBattlefield.length === 0,
+      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0),
+      zoom, rowWidth);
+  }
+
+  private mySideHeight(zoom: number, rowWidth: number): number {
+    return this.computeSideHeight(
+      this.myCreatures(),
+      this.myLandStacks,
+      this.myBattlefield.length === 0,
+      (this.myRevealedTopCard.length > 0 ? 1 : 0) + (this.playableExileCards().length > 0 ? 1 : 0),
+      zoom, rowWidth);
+  }
+
+  /** Total board height at the given zoom. The two players are flex halves, so
+      the board fits when the taller side fits into its half; the divider (red
+      during combat) sits between them. Combat doesn't add its own space — the
+      attacking/blocking creatures stay in their rows and merely nudge toward the
+      divider — so the fit is the same in and out of combat. */
+  private modeledBoardHeight(zoom: number, rowWidth: number): number {
+    const C = GameComponent;
+    const total = 2 * Math.max(
+      this.opponentSideHeight(zoom, rowWidth),
+      this.mySideHeight(zoom, rowWidth));
+    return total + C.DIVIDER_HEIGHT + 2 * C.COMBAT_CORRIDOR;
+  }
+
+  /** Largest zoom (MAX→MIN) at which one side's content fits in its half of the
+      area. Each half = (area - safety - divider - corridors) / 2, matching the
+      flex layout. */
+  private sideZoom(sideHeightAtZoom: (zoom: number, width: number) => number): number {
+    const C = GameComponent;
+    const { width, height } = this.battlefieldAreaSize();
+    if (!width || !height) return 1;
+    const budget = (height - C.FIT_SAFETY - C.DIVIDER_HEIGHT) / 2 - C.COMBAT_CORRIDOR;
+    for (let z = C.MAX_BATTLEFIELD_ZOOM; z > C.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
+      if (sideHeightAtZoom(z, width) <= budget) {
+        return Math.round(z * 100) / 100;
+      }
+    }
+    return C.MIN_BATTLEFIELD_ZOOM;
+  }
+
+  /* Each player's row is zoomed to fit only its own content into its own half, so
+     the opponent's board never resizes our cards (and vice versa) — unchanged by
+     combat, since combat creatures stay in their rows at the same size. */
+  get myBattlefieldZoom(): number {
+    return this.sideZoom((z, w) => this.mySideHeight(z, w));
+  }
+
+  get opponentBattlefieldZoom(): number {
+    return this.sideZoom((z, w) => this.opponentSideHeight(z, w));
+  }
+
+  /** Board-wide zoom, kept as the battlefield area's fallback density. */
+  get battlefieldZoom(): number {
+    const { width, height } = this.battlefieldAreaSize();
+    if (!width || !height) return 1;
+    const budget = height - GameComponent.FIT_SAFETY;
+    for (let z = GameComponent.MAX_BATTLEFIELD_ZOOM; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
+      if (this.modeledBoardHeight(z, width) <= budget) {
+        return Math.round(z * 100) / 100;
+      }
+    }
+    return GameComponent.MIN_BATTLEFIELD_ZOOM;
+  }
+
+  get handZoom(): number {
+    return this.hand.length > 9 ? 0.6 : 0.68;
   }
 
   get myGraveyard(): Card[] {
@@ -450,7 +688,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (state.stack.length > 0) {
       this.sidePanel?.switchToStackTab();
     } else {
-      this.sidePanel?.switchToGameTabIfOnStack();
+      this.sidePanel?.switchToLogTabIfOnStack();
     }
 
     // Clear pending combat state when server confirms battlefield
@@ -460,6 +698,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.declaringBlockers()) {
       this.blockerAssignments.set(new Map());
     }
+
+    this.scheduleCombatShiftUpdate();
   }
 
   // ========== Mulligan ==========
@@ -536,12 +776,19 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playExileCard(card: Card): void {
     if (card.id) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromExileCardId: card.id });
+      this.choice.targeting.startExilePlay(card);
     }
   }
 
+  get isLibraryTopPlayable(): boolean {
+    return this.playableLibraryTopCards().length > 0;
+  }
+
   playLibraryTopCard(): void {
-    this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromLibraryTop: true });
+    const card = this.playableLibraryTopCards()[0];
+    if (card) {
+      this.choice.targeting.startLibraryTopPlay(card);
+    }
   }
 
   passPriority(): void {
@@ -635,6 +882,7 @@ export class GameComponent implements OnInit, OnDestroy {
       reqs.set(Number(key), value);
     }
     this.mustBlockRequirements.set(reqs);
+    this.scheduleCombatShiftUpdate();
   }
 
   private handleGameOver(msg: GameOverNotification): void {
@@ -738,6 +986,7 @@ export class GameComponent implements OnInit, OnDestroy {
       const updated = new Map(this.blockerAssignments());
       updated.delete(index);
       this.blockerAssignments.set(updated);
+      this.scheduleCombatShiftUpdate();
       return;
     }
     this.selectedBlockerIndex.set(index);
@@ -760,6 +1009,7 @@ export class GameComponent implements OnInit, OnDestroy {
     updated.set(this.selectedBlockerIndex()!, attackerIndex);
     this.blockerAssignments.set(updated);
     this.selectedBlockerIndex.set(null);
+    this.scheduleCombatShiftUpdate();
   }
 
   confirmBlockers(): void {
@@ -826,87 +1076,210 @@ export class GameComponent implements OnInit, OnDestroy {
     return isPermanentCreature(perm);
   }
 
-  myCreaturesNotInCombat = computed(() => {
-    const selectedAttackers = this.selectedAttackerIndices();
-    const assignedBlockers = this.blockerAssignments();
-    return splitBattlefield(this.myBattlefield).creatures.filter(c => {
-      if (selectedAttackers.has(c.originalIndex)) return false;
-      if (assignedBlockers.has(c.originalIndex)) return false;
-      if (c.perm.attacking || c.perm.blocking) return false;
-      return true;
-    });
-  });
+  /* All creatures render in their own row; attacking/blocking ones stay in place
+     and merely nudge toward the divider (see the combat CSS), so nothing is
+     filtered out of the rows during combat. */
+  myCreatures = computed(() => splitBattlefield(this.myBattlefield).creatures);
+  opponentCreatures = computed(() => splitBattlefield(this.opponentBattlefield).creatures);
 
-  opponentCreaturesNotInCombat = computed(() => {
-    return splitBattlefield(this.opponentBattlefield).creatures.filter(c => {
-      if (c.perm.attacking || c.perm.blocking) return false;
-      return true;
-    });
-  });
+  // ========== Combat ==========
 
-  // ========== Combat zone ==========
-
-  get showCombatZone(): boolean {
-    return this.combatPairings.length > 0;
+  /** True while attackers/blockers are being declared or are committed, so the
+      divider turns red and combat creatures nudge toward it. */
+  get inCombat(): boolean {
+    if (this.declaringAttackers() || this.declaringBlockers()) return true;
+    if (this.selectedAttackerIndices().size > 0 || this.blockerAssignments().size > 0) return true;
+    return this.myBattlefield.some(p => p.attacking || p.blocking)
+      || this.opponentBattlefield.some(p => p.attacking || p.blocking);
   }
 
-  get combatPairings(): CombatGroup[] {
-    const groups: CombatGroup[] = [];
+  /** Whether the creature at the given index (on the given side) is attacking —
+      either committed or currently being declared. */
+  isAttackingCreature(index: number, isMine: boolean): boolean {
+    const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
+    if (perm?.attacking) return true;
+    return isMine && this.isSelectedAttacker(index);
+  }
 
-    const selectedAttackers = this.selectedAttackerIndices();
-    if (this.declaringAttackers() || selectedAttackers.size > 0) {
-      for (const idx of selectedAttackers) {
-        groups.push({
-          attackerIndex: idx,
-          attacker: this.myBattlefield[idx],
-          attackerIsMine: true,
-          blockers: []
-        });
+  /** Whether the creature at the given index (on the given side) is blocking —
+      either committed or currently being assigned. */
+  isBlockingCreature(index: number, isMine: boolean): boolean {
+    const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
+    if (perm?.blocking) return true;
+    return isMine && this.isAssignedBlocker(index);
+  }
+
+  // ========== Blocker alignment ==========
+
+  /* Blockers slide horizontally to sit directly in front of the attacker they
+     block (MTGO-style). The shift is pure transform (--card-shift-x), so the
+     blocker keeps its layout slot and the fit/zoom model is unaffected.
+     Positions are measured from the .permanent-stack wrappers, which never
+     carry transforms, making the measurement stable and idempotent; the screen
+     delta is divided by the blocker side's zoom because the transform runs
+     inside the zoomed card. */
+  private static readonly BLOCKER_SPREAD = 110;
+
+  private battlefieldAreaEl: HTMLElement | null = null;
+  private combatShiftFrame: number | null = null;
+  readonly combatShiftX = signal(new Map<string, number>());
+
+  /** Style value for a creature's --card-shift-x, or null when unshifted. */
+  combatShift(permId: string): string | null {
+    const v = this.combatShiftX().get(permId);
+    return v ? `${v}px` : null;
+  }
+
+  /** Coalesces recomputes to one per frame, after layout has settled. */
+  private scheduleCombatShiftUpdate(): void {
+    if (this.combatShiftFrame != null) return;
+    this.combatShiftFrame = requestAnimationFrame(() => {
+      this.combatShiftFrame = null;
+      this.updateCombatShifts();
+    });
+  }
+
+  private updateCombatShifts(): void {
+    const area = this.battlefieldAreaEl;
+    const next = new Map<string, number>();
+    if (area) {
+      type Pair = { blockerId: string; attackerId: string; zoom: number };
+      const pairs: Pair[] = [];
+      // Local assignments while declaring (cleared once the server state lands)
+      for (const [bIdx, aIdx] of this.blockerAssignments()) {
+        const b = this.myBattlefield[bIdx];
+        const a = this.opponentBattlefield[aIdx];
+        if (b && a) pairs.push({ blockerId: b.id, attackerId: a.id, zoom: this.myBattlefieldZoom });
       }
-      return groups;
-    }
-
-    const myBf = this.myBattlefield;
-    const oppBf = this.opponentBattlefield;
-    const myAttacking = myBf.some(p => p.attacking);
-    const oppAttacking = oppBf.some(p => p.attacking);
-
-    if (myAttacking) {
-      myBf.forEach((perm, idx) => {
-        if (!perm.attacking) return;
-        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: true, blockers: [] };
-        oppBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
-            group.blockers.push({ index: defIdx, perm: defPerm, isMine: false });
-          }
-        });
-        groups.push(group);
-      });
-    } else if (oppAttacking) {
-      oppBf.forEach((perm, idx) => {
-        if (!perm.attacking) return;
-        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: false, blockers: [] };
-        myBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
-            group.blockers.push({ index: defIdx, perm: defPerm, isMine: true });
-          }
-        });
-        const assignments = this.blockerAssignments();
-        if (this.declaringBlockers() || assignments.size > 0) {
-          for (const [blockerIdx, atkIdx] of assignments) {
-            if (atkIdx === idx) {
-              const alreadyIncluded = group.blockers.some(b => b.index === blockerIdx && b.isMine);
-              if (!alreadyIncluded) {
-                group.blockers.push({ index: blockerIdx, perm: myBf[blockerIdx], isMine: true });
-              }
+      // Committed blocks from the game state, either side
+      const addCommitted = (own: Permanent[], enemy: Permanent[], zoom: number) => {
+        for (const p of own) {
+          if (p.blocking && p.blockingTargets?.length > 0) {
+            const a = enemy[p.blockingTargets[0]];
+            if (a && !pairs.some(pr => pr.blockerId === p.id)) {
+              pairs.push({ blockerId: p.id, attackerId: a.id, zoom });
             }
           }
         }
-        groups.push(group);
+      };
+      addCommitted(this.myBattlefield, this.opponentBattlefield, this.myBattlefieldZoom);
+      addCommitted(this.opponentBattlefield, this.myBattlefield, this.opponentBattlefieldZoom);
+
+      const centerX = (id: string): number | null => {
+        const el = area.querySelector(`[data-combat-id="${id}"]`);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return rect.left + rect.width / 2;
+      };
+
+      const byAttacker = new Map<string, Pair[]>();
+      for (const pr of pairs) {
+        const group = byAttacker.get(pr.attackerId);
+        if (group) group.push(pr); else byAttacker.set(pr.attackerId, [pr]);
+      }
+      for (const [attackerId, group] of byAttacker) {
+        const aCx = centerX(attackerId);
+        if (aCx == null) continue;
+        // Multiple blockers fan out side by side under their attacker,
+        // ordered by their natural row position to avoid crossing paths.
+        const blockers = group
+          .map(pr => ({ pr, cx: centerX(pr.blockerId) }))
+          .filter((b): b is { pr: Pair; cx: number } => b.cx != null)
+          .sort((x, y) => x.cx - y.cx);
+        blockers.forEach((b, i) => {
+          const slot = (i - (blockers.length - 1) / 2) * GameComponent.BLOCKER_SPREAD * b.pr.zoom;
+          next.set(b.pr.blockerId, Math.round((aCx + slot - b.cx) / b.pr.zoom));
+        });
+      }
+
+      this.resolveRowOverlaps(this.myCreatures(), this.myBattlefieldZoom, next, area);
+      this.resolveRowOverlaps(this.opponentCreatures(), this.opponentBattlefieldZoom, next, area);
+    }
+    const current = this.combatShiftX();
+    if (next.size !== current.size || [...next].some(([k, v]) => current.get(k) !== v)) {
+      this.combatShiftX.set(next);
+    }
+  }
+
+  /** After blockers align with their attackers, push aside any same-line
+      creature an aligned blocker would come to rest on, cascading so a pushed
+      card can't just land on the next one — no two cards end up on top of
+      each other. Works in screen px on the transform-free stack rects; pushes
+      go into the same local-px shift map as the blocker alignment. */
+  private resolveRowOverlaps(creatures: IndexedPermanent[], zoom: number, next: Map<string, number>, area: HTMLElement): void {
+    const gap = GameComponent.ROW_GAP * zoom;
+    type Box = { id: string; left: number; right: number; top: number; bottom: number; aligned: boolean };
+    const boxes: Box[] = [];
+    for (const ip of creatures) {
+      const el = area.querySelector(`[data-combat-id="${ip.perm.id}"]`);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      const shift = (next.get(ip.perm.id) ?? 0) * zoom;
+      boxes.push({
+        id: ip.perm.id,
+        left: rect.left + shift,
+        right: rect.right + shift,
+        top: rect.top,
+        bottom: rect.bottom,
+        aligned: next.has(ip.perm.id)
       });
     }
+    if (!boxes.some(b => b.aligned)) return;
 
-    return groups;
+    const push = new Map<string, number>();
+    const pos = (b: Box) => {
+      const p = push.get(b.id) ?? 0;
+      return { left: b.left + p, right: b.right + p, moved: b.aligned || p !== 0 };
+    };
+    for (let pass = 0, changed = true; pass < 4 && changed; pass++) {
+      changed = false;
+      for (const m of boxes) {
+        if (m.aligned) continue;
+        const mp = pos(m);
+        for (const o of boxes) {
+          if (o.id === m.id) continue;
+          const op = pos(o);
+          // Only moved cards repel; untouched neighbours are already spaced.
+          if (!op.moved) continue;
+          const sameLine = m.top < o.bottom && m.bottom > o.top;
+          if (!sameLine || mp.left >= op.right + gap || mp.right <= op.left - gap) continue;
+          const escapesLeft = (mp.left + mp.right) / 2 <= (op.left + op.right) / 2;
+          push.set(m.id, escapesLeft ? op.left - gap - m.right : op.right + gap - m.left);
+          changed = true;
+          break;
+        }
+      }
+    }
+    for (const [id, p] of push) {
+      const local = Math.round(p / zoom);
+      if (local !== 0) next.set(id, local);
+    }
+  }
+
+  /** During blocker declaration: whether a blocker is already assigned to the
+      opponent's attacker at the given index. */
+  isAttackerBlocked(attackerIndex: number): boolean {
+    for (const assigned of this.blockerAssignments().values()) {
+      if (assigned === attackerIndex) return true;
+    }
+    return false;
+  }
+
+  /** Badge text for a blocking creature: names the blocked attacker(s) — from
+      the local assignment while declaring, from the committed combat state
+      (blockingTargets index into the attacker's battlefield) afterwards. */
+  getBlockingBadgeText(index: number, isMine: boolean): string {
+    const own = isMine ? this.myBattlefield : this.opponentBattlefield;
+    const enemy = isMine ? this.opponentBattlefield : this.myBattlefield;
+    if (isMine && this.declaringBlockers()) {
+      const attackerIndex = this.blockerAssignments().get(index);
+      const name = attackerIndex != null ? enemy[attackerIndex]?.card.name : null;
+      return name ? `Blocks ${name}` : 'Blocking';
+    }
+    const names = (own[index]?.blockingTargets ?? [])
+      .map(t => enemy[t]?.card.name)
+      .filter(n => n != null);
+    return names.length > 0 ? `Blocks ${names.join(', ')}` : 'Blocking';
   }
 
   // ========== Click dispatch ==========
@@ -934,12 +1307,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.awaitingXValueChoice || (this.choice.awaitingMayAbility && this.choice.mayAbilityManaCost != null)) {
       if (perm && this.choice.canTapForMana(perm)) {
-        const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
-        if (manaAbilityIndex >= 0) {
-          this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });
-        } else {
-          this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
-        }
+        this.tapPermanentForMana(index, perm);
       }
       return;
     }
@@ -968,26 +1336,6 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  onCombatAttackerClick(group: CombatGroup): void {
-    if (this.clickResolver.tryResolveClick(group.attacker, () => true)) return;
-    if (this.declaringAttackers() && group.attackerIsMine) {
-      this.toggleAttacker(group.attackerIndex);
-    } else if (this.declaringBlockers() && !group.attackerIsMine) {
-      this.assignBlock(group.attackerIndex);
-    } else if (group.attackerIsMine) {
-      this.choice.targeting.tapPermanent(group.attackerIndex);
-    }
-  }
-
-  onCombatBlockerClick(blocker: CombatBlocker): void {
-    if (this.clickResolver.tryResolveClick(blocker.perm)) return;
-    if (this.declaringBlockers() && blocker.isMine) {
-      this.selectBlocker(blocker.index);
-    } else if (blocker.isMine) {
-      this.choice.targeting.tapPermanent(blocker.index);
-    }
-  }
-
   // ========== Attack tax mana helpers ==========
 
   canTapPermanentForMana(perm: Permanent): boolean {
@@ -998,6 +1346,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private tapPermanentForMana(index: number, perm: Permanent): void {
+    // Prefer the intrinsic ON_TAP mana (a basic land's own color) over granted/activated
+    // mana abilities so e.g. a Plains that also gained "{T}: Add {U}" still pays white
+    if (perm.card.hasTapAbility && !perm.tapped) {
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+      return;
+    }
     const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
     if (manaAbilityIndex >= 0) {
       this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });
@@ -1075,14 +1429,123 @@ export class GameComponent implements OnInit, OnDestroy {
     }
   }
 
-  onCardHover(card: Card, permanent: Permanent | null = null): void {
+  onCardHover(card: Card, permanent: Permanent | null = null, event?: MouseEvent): void {
     this.hoveredCard.set(card);
     this.hoveredPermanent.set(permanent);
+    this.clearModifierTooltip();
+    if (permanent && event) {
+      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      // Not enough room above the card (opponent's rows at the top) — flip under it.
+      const below = rect.top < 240;
+      const halfTooltipWidth = 120;
+      const anchor = {
+        x: Math.min(Math.max(rect.left + rect.width / 2, halfTooltipWidth), window.innerWidth - halfTooltipWidth),
+        y: below ? rect.bottom + 6 : rect.top - 6,
+        below,
+      };
+      this.modifierTooltipTimer = setTimeout(() => {
+        this.modifierTooltipTimer = null;
+        this.modifierTooltipAnchor.set(anchor);
+      }, 3000);
+    }
   }
 
   onCardHoverEnd(): void {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+    this.clearModifierTooltip();
+  }
+
+  private clearModifierTooltip(): void {
+    if (this.modifierTooltipTimer != null) {
+      clearTimeout(this.modifierTooltipTimer);
+      this.modifierTooltipTimer = null;
+    }
+    this.modifierTooltipAnchor.set(null);
+  }
+
+  // ========== Keyboard shortcuts ==========
+
+  showShortcutsPopup = signal(false);
+
+  toggleShortcutsPopup(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShortcutsPopup.update(v => !v);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showShortcutsPopup.set(false);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (this.game()?.status !== GameStatus.RUNNING) return;
+    const target = event.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
+
+    if (event.key === 'Escape') {
+      if (this.handleEscape()) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      // A focused button already handles Space/Enter natively — don't double-fire.
+      if (target && target.tagName === 'BUTTON') return;
+      event.preventDefault();
+      if (event.repeat) return;
+      this.handlePrimaryAction();
+    }
+  }
+
+  /** Space/Enter: the action the big side-panel button would perform. */
+  private handlePrimaryAction(): void {
+    if (this.isChoicePending) return;
+    if (this.declaringAttackers()) {
+      this.confirmAttackers();
+    } else if (this.declaringBlockers()) {
+      this.confirmBlockers();
+    } else if (this.hasPriority) {
+      this.passPriority();
+    }
+  }
+
+  /** Esc: back out of the innermost cancelable interaction. Returns whether it consumed the key. */
+  private handleEscape(): boolean {
+    const t = this.choice.targeting;
+    if (this.showShortcutsPopup()) { this.showShortcutsPopup.set(false); return true; }
+    if (this.showSurrenderConfirm()) { this.cancelSurrender(); return true; }
+    if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
+    if (t.choosingMode) { t.cancelModes(); return true; }
+    if (t.choosingKicker) { t.cancelKicker(); return true; }
+    if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures) { t.cancelAlternateCost(); return true; }
+    if (t.choosingXValue) { t.cancelXValue(); return true; }
+    if (t.convoking) { t.cancelConvoke(); return true; }
+    if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
+    if (t.multiTargeting) { t.cancelMultiTargeting(); return true; }
+    if (t.targetingSpell) { t.cancelSpellTargeting(); return true; }
+    if (t.selectingTarget) { t.cancelTargeting(); return true; }
+    if (this.declaringBlockers() && this.selectedBlockerIndex() !== null) { this.cancelBlockerSelection(); return true; }
+    return false;
+  }
+
+  /** Any pending choice/targeting flow the server or UI is waiting on — Space
+      must not pass priority (or confirm combat) out from under it. */
+  private get isChoicePending(): boolean {
+    const c = this.choice;
+    const t = c.targeting;
+    return c.choosingFromHand || c.choosingFromList || c.awaitingMayAbility
+      || c.choosingPermanent || c.choosingMultiplePermanents || c.choosingGraveyardCards
+      || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
+      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
+      || c.damage.assigningCombatDamage || c.damage.distributingDamage
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
+      || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
+      || t.targetingGraveyard;
   }
 
   // ========== Formatting ==========

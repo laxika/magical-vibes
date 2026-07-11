@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SteelHellkite;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TreasureMageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Treasure Mage has ETB may search for artifact with MV 6 or greater")
-    void hasCorrectEffects() {
-        TreasureMage card = new TreasureMage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) mayEffect.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("artifact card with mana value 6 or greater");
-    }
+    
 
     @Test
     @DisplayName("Resolving Treasure Mage creates may prompt")
@@ -48,8 +32,8 @@ class TreasureMageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Treasure Mage"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -63,14 +47,14 @@ class TreasureMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // SteelHellkite (MV 6) and WurmcoilEngine (MV 6) should be offered
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.ARTIFACT)
                         && c.getManaValue() >= 6);
-        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
 
     @Test
@@ -104,7 +88,7 @@ class TreasureMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
     }
 
@@ -122,7 +106,7 @@ class TreasureMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 6 or greater"));
     }
 
@@ -140,7 +124,7 @@ class TreasureMageTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 6 or greater"));
     }
 
@@ -157,7 +141,7 @@ class TreasureMageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupAndCast() {

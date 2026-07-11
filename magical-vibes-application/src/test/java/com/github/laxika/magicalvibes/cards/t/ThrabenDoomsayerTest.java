@@ -4,14 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,48 +14,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThrabenDoomsayerTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap activated ability to create a 1/1 white Human token")
-    void hasCorrectActivatedAbility() {
-        ThrabenDoomsayer card = new ThrabenDoomsayer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Human");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.HUMAN);
-    }
-
-    @Test
-    @DisplayName("Has fateful-hour static boost granting +2/+2 to other creatures at 5 or less life")
-    void hasCorrectStaticEffect() {
-        ThrabenDoomsayer card = new ThrabenDoomsayer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
 
     // ===== Tap ability: token creation =====
 

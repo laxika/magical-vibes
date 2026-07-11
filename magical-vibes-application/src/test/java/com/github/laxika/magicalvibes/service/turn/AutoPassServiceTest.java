@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -119,14 +119,52 @@ class AutoPassServiceTest {
         }
 
         @Test
-        @DisplayName("Stops when priority holder has playable cards")
-        void stopsWhenPriorityHolderHasPlayableCards() {
+        @DisplayName("Stops when AI priority holder has playable cards")
+        void stopsWhenAiPriorityHolderHasPlayableCards() {
+            gd.aiPlayerIds.add(player1Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+            verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("Auto-passes human priority holder with playable cards at a non-stop step")
+        void autoPassesHumanWithPlayableCardsAtNonStopStep() {
+            // Human (not in aiPlayerIds) holds a castable instant (e.g. Mutagenic Growth) but the
+            // current step is not in their auto-stop set — they should be auto-passed, not stopped.
+            gd.currentStep = TurnStep.UPKEEP;
+            gd.playerAutoStopSteps.put(player1Id,
+                    java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN));
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id, (UUID) null);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of());
+
+            boolean[] advanceCalled = {false};
+            sut.resolveAutoPass(gd, ignored -> {
+                advanceCalled[0] = true;
+                ignored.status = GameStatus.FINISHED;
+            });
+
+            assertThat(advanceCalled[0]).isTrue();
+            assertThat(gd.priorityPassedBy).contains(player1Id);
+        }
+
+        @Test
+        @DisplayName("Stops human priority holder with playable cards at a configured stop step")
+        void stopsHumanWithPlayableCardsAtConfiguredStopStep() {
+            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            gd.playerAutoStopSteps.put(player1Id, java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+            assertThat(gd.priorityPassedBy).doesNotContain(player1Id);
             verify(gameBroadcastService).broadcastGameState(gd);
         }
 
@@ -196,13 +234,13 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending spell-target triggers before loop")
         void processesSpellTargetTriggers() {
-            gd.pendingSpellTargetTriggers.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), false));
             // After trigger processing, stop via finished status
             gd.status = GameStatus.RUNNING;
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingSpellTargetTriggers.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextSpellTargetTrigger(gd);
@@ -215,11 +253,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending discard self-triggers before loop")
         void processesDiscardSelfTriggers() {
-            gd.pendingDiscardSelfTriggers.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DiscardTriggerAnyTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingDiscardSelfTriggers.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextDiscardSelfTrigger(gd);
@@ -232,11 +270,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending attack trigger targets before loop")
         void processesAttackTriggerTargets() {
-            gd.pendingAttackTriggerTargets.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.AttackTriggerTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), UUID.randomUUID()));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingAttackTriggerTargets.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextAttackTriggerTarget(gd);
@@ -249,11 +287,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending death trigger targets before loop")
         void processesDeathTriggerTargets() {
-            gd.pendingDeathTriggerTargets.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DeathTriggerTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingDeathTriggerTargets.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextDeathTriggerTarget(gd);
@@ -266,7 +304,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Returns when awaiting input inside loop")
         void returnsWhenAwaitingInput() {
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -403,7 +441,8 @@ class AutoPassServiceTest {
         @DisplayName("Broadcasts once when second player has playable cards after first auto-passes")
         void broadcastsAfterSingleAutoPass() {
             // First call: player1 has priority, nothing to play → auto-pass
-            // Second call: player2 has priority, has playable cards → stop
+            // Second call: player2 (AI) has priority, has playable cards → stop
+            gd.aiPlayerIds.add(player2Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of(0));
@@ -664,7 +703,7 @@ class AutoPassServiceTest {
                     "Test trigger",
                     List.of()
             ));
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             sut.resolveAutoPassCombatTriggers(gd);
 
@@ -710,7 +749,7 @@ class AutoPassServiceTest {
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(null);
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
                 return null;
             }).when(stackResolutionService).resolveTopOfStack(gd);
 

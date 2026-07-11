@@ -1,25 +1,18 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LostVale;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,44 +28,11 @@ class DowsingDaggerTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has static +2/+1 boost for equipped creature")
-    void hasStaticBoost() {
-        DowsingDagger card = new DowsingDagger();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
-    @Test
-    @DisplayName("Has ETB effect that creates tokens for target opponent")
-    void hasEtbTokenEffect() {
-        DowsingDagger card = new DowsingDagger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenForTargetPlayerEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has combat damage trigger with MayEffect wrapping TransformSelfEffect")
-    void hasCombatDamageTransformTrigger() {
-        DowsingDagger card = new DowsingDagger();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has equip {2} ability")
@@ -92,32 +52,7 @@ class DowsingDaggerTest extends BaseCardTest {
                 .isInstanceOf(EquipEffect.class);
     }
 
-    @Test
-    @DisplayName("Has back face set to LostVale")
-    void hasBackFace() {
-        DowsingDagger card = new DowsingDagger();
-
-        assertThat(card.getBackFaceClassName()).isEqualTo("LostVale");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(LostVale.class);
-    }
-
-    // ===== Back face structure =====
-
-    @Test
-    @DisplayName("Lost Vale has tap-for-3-mana-of-any-color activated ability")
-    void backFaceHasManaAbility() {
-        LostVale card = new LostVale();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).isEmpty();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
-        AwardAnyColorManaEffect manaEffect = (AwardAnyColorManaEffect) ability.getEffects().getFirst();
-        assertThat(manaEffect.amount()).isEqualTo(3);
-    }
+    
 
     // ===== Static effects =====
 
@@ -219,7 +154,7 @@ class DowsingDaggerTest extends BaseCardTest {
             resolveCombat();
 
             // Should be awaiting may ability choice
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         }
 
         @Test
@@ -270,7 +205,7 @@ class DowsingDaggerTest extends BaseCardTest {
 
             // Add blocker with high toughness
             Permanent blocker = addReadyCreature(player2);
-            blocker.getCard().setToughness(10);
+            TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
 

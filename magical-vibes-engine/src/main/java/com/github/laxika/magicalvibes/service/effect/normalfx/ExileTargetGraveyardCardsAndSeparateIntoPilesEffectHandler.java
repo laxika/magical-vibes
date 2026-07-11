@@ -2,11 +2,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -27,7 +26,6 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
     private final GraveyardService graveyardService;
 
     @Override
@@ -85,22 +83,12 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
                 .findFirst()
                 .orElseThrow();
 
-        // Store pile separation state (reusing shared pile separation fields)
-        gameData.pendingPileSeparation = true;
-        gameData.pendingPileSeparationControllerId = controllerId;
-        gameData.pendingPileSeparationTargetPlayerId = opponentId;
-        gameData.pendingPileSeparationCards.clear();
-        gameData.pendingPileSeparationCards.addAll(exiledCards);
-        gameData.pendingPileSeparationCardOwners.clear();
-        gameData.pendingPileSeparationCardOwners.putAll(cardOwners);
-        gameData.pendingPileSeparationAllPermanentIds.clear();
-        gameData.pendingPileSeparationPile1Ids.clear();
-        gameData.pendingPileSeparationPile2Ids.clear();
+        // Store pile separation state (card-pile mode)
+        gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
+                List.of(), exiledCards, cardOwners, List.of(), List.of()));
 
         // Prompt opponent to separate into two piles
-        List<UUID> cardIds = exiledCards.stream().map(Card::getId).toList();
-        List<CardView> cardViews = exiledCards.stream().map(cardViewFactory::create).toList();
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, cardIds, cardViews, cardIds.size(),
+        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
                 "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 }

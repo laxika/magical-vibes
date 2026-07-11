@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,11 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,38 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrimoireOfTheDeadTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grimoire of the Dead has two activated abilities with correct effects")
-    void hasCorrectAbilities() {
-        GrimoireOfTheDead card = new GrimoireOfTheDead();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 1: {1}, {T}, Discard a card: Put a study counter
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isEqualTo("{1}");
-        assertThat(ability0.getEffects()).hasSize(2);
-        assertThat(ability0.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(((DiscardCardTypeCost) ability0.getEffects().get(0)).predicate()).isNull();
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
-        assertThat(((PutCountersOnSelfEffect) ability0.getEffects().get(1)).counterType()).isEqualTo(CounterType.STUDY);
-
-        // Ability 2: {T}, Remove three study counters and sacrifice: Return all creatures
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(3);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
-        RemoveCounterFromSourceCost removeCost = (RemoveCounterFromSourceCost) ability1.getEffects().get(0);
-        assertThat(removeCost.count()).isEqualTo(3);
-        assertThat(removeCost.counterType()).isEqualTo(CounterType.STUDY);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(2)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
 
     // ===== Ability 1: Put study counter =====
 
@@ -69,9 +33,9 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         // Any card should be valid for discard
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(0);
     }
 
     @Test

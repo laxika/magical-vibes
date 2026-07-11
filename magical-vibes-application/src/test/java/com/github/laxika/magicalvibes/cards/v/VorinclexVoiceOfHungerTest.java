@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,21 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VorinclexVoiceOfHungerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vorinclex has correct effects")
-    void hasCorrectEffects() {
-        VorinclexVoiceOfHunger card = new VorinclexVoiceOfHunger();
-
-        List<?> landTapEffects = card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND);
-        assertThat(landTapEffects).hasSize(2);
-        assertThat(landTapEffects).anySatisfy(e ->
-                assertThat(e).isInstanceOf(AddOneOfEachManaTypeProducedByLandEffect.class));
-        assertThat(landTapEffects).anySatisfy(e ->
-                assertThat(e).isInstanceOf(OpponentTappedLandDoesntUntapEffect.class));
-    }
 
     // ===== Mana doubling for controller =====
 

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ public class TargetValidationService {
             CardEffect effectToValidate = effect;
             // Unwrap replacement conditional effects to validate the inner effects.
             // Both paths share the same targeting, so validate the base effect.
-            if (effect instanceof ReplacementConditionalEffect replacement) {
+            if (effect instanceof ConditionalReplacementEffect replacement) {
                 effectToValidate = replacement.baseEffect();
             }
             TargetValidator validator = registry.getValidator(effectToValidate);

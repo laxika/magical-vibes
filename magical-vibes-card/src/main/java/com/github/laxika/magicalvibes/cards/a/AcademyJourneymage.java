@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -19,8 +22,9 @@ import java.util.List;
 public class AcademyJourneymage extends Card {
 
     public AcademyJourneymage() {
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfControlsPermanentEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.WIZARD), 1));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
+                new ReduceOwnCastCostEffect(new Fixed(1))));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
@@ -28,6 +32,6 @@ public class AcademyJourneymage extends Card {
                 )),
                 "Target must be a creature an opponent controls"
         ))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ReturnTargetPermanentToHandEffect());
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, ReturnToHandEffect.target());
     }
 }

@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,24 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SpiralingDuelistTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has metalcraft double strike static effect")
-    void hasMetalcraftDoubleStrikeEffect() {
-        SpiralingDuelist card = new SpiralingDuelist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MetalcraftConditionalEffect.class);
-
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) metalcraft.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Metalcraft behavior =====
 

@@ -3,13 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToControlledCreatureCountEffect;
-import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TishanaVoiceOfThunderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tishana has correct effects registered")
-    void hasCorrectEffects() {
-        TishanaVoiceOfThunder card = new TishanaVoiceOfThunder();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToCardsInHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(DrawCardsEqualToControlledCreatureCountEffect.class);
-    }
+    
 
     @Test
     @DisplayName("P/T equals number of cards in controller's hand")

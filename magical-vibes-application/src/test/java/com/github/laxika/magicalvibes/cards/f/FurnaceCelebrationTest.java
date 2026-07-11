@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DrossHopper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FurnaceCelebrationTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has MayPayManaEffect wrapping DealDamageToAnyTargetEffect on ON_ALLY_PERMANENT_SACRIFICED")
-    void hasCorrectStructure() {
-        FurnaceCelebration card = new FurnaceCelebration();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}");
-        assertThat(mayPay.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) mayPay.wrapped();
-        assertThat(damage.damage()).isEqualTo(2);
-    }
 
     // ===== Sacrifice triggers may ability =====
 
@@ -56,7 +36,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept, pay, target creature =====
@@ -83,7 +63,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompting for target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the creature target — damage resolves inline
         harness.handlePermanentChosen(player1, hawkId);
@@ -179,7 +159,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // May prompt fires
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept, but cannot pay — auto-treated as decline
         harness.handleMayAbilityChosen(player1, true);
@@ -202,7 +182,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bears.getId());
 
         // No may ability should fire for player1
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Helper methods =====

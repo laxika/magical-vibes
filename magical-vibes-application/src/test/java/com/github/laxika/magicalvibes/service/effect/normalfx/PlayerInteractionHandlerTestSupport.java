@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.lang.reflect.Constructor;
@@ -34,11 +35,13 @@ final class PlayerInteractionHandlerTestSupport {
                                                  SessionManager sessionManager,
                                                  CardViewFactory cardViewFactory,
                                                  GameQueryService gameQueryService,
+                                                 com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService,
                                                  PlayerInputService playerInputService,
                                                  TriggerCollectionService triggerCollectionService,
                                                  BattlefieldEntryService battlefieldEntryService,
                                                  PermanentRemovalService permanentRemovalService,
-                                                 GraveyardService graveyardService) {
+                                                 GraveyardService graveyardService,
+                                                 InteractionHandlerRegistry interactionHandlerRegistry) {
         try {
             Class<?> handlerClass = Class.forName(
                     PlayerInteractionHandlerTestSupport.class.getPackageName() + "." + handlerSimpleName);
@@ -50,11 +53,18 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(SessionManager.class, sessionManager);
             deps.put(CardViewFactory.class, cardViewFactory);
             deps.put(GameQueryService.class, gameQueryService);
+            deps.put(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class, predicateEvaluationService);
             deps.put(PlayerInputService.class, playerInputService);
             deps.put(TriggerCollectionService.class, triggerCollectionService);
             deps.put(BattlefieldEntryService.class, battlefieldEntryService);
             deps.put(PermanentRemovalService.class, permanentRemovalService);
             deps.put(GraveyardService.class, graveyardService);
+            deps.put(InteractionHandlerRegistry.class, interactionHandlerRegistry);
+            // Real amount evaluator on top of the mocked collaborators — Fixed amounts
+            // evaluate without touching any mock.
+            deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,
+                    new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
+                            predicateEvaluationService, gameQueryService));
 
             Constructor<?> chosen = null;
             Object[] chosenArgs = null;

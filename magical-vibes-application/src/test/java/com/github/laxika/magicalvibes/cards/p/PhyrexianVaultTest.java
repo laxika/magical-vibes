@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,29 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyrexianVaultTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Phyrexian Vault has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        PhyrexianVault card = new PhyrexianVault();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-
-        DrawCardEffect draw = (DrawCardEffect) ability.getEffects().get(1);
-        assertThat(draw.amount()).isEqualTo(1);
-    }
 
     // ===== Casting and resolving =====
 

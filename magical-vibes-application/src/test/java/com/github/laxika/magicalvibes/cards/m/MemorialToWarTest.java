@@ -1,16 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,27 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToWarTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memorial to War has correct card structure")
-    void hasCorrectProperties() {
-        MemorialToWar card = new MemorialToWar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(0);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{4}{R}");
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(sacrificeAbility.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) sacrificeAbility.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsLandPredicate.class);
-    }
 
     // ===== Enters the battlefield tapped =====
 

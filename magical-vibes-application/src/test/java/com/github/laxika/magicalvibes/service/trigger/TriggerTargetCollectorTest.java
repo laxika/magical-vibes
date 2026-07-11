@@ -4,15 +4,22 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +41,9 @@ class TriggerTargetCollectorTest {
     @Mock
     private GameQueryService gameQueryService;
 
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
     private TriggerTargetCollector collector;
 
     private GameData gd;
@@ -43,7 +53,7 @@ class TriggerTargetCollectorTest {
 
     @BeforeEach
     void setUp() {
-        collector = new TriggerTargetCollector(gameQueryService);
+        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -67,7 +77,7 @@ class TriggerTargetCollectorTest {
     @Test
     @DisplayName("Player-only effect with no target filter yields every player")
     void playerOnlyNoFilterYieldsAllPlayers() {
-        List<CardEffect> effects = List.of(new MillTargetPlayerEffect(1));
+        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -83,7 +93,7 @@ class TriggerTargetCollectorTest {
     void opponentOnlyExcludesController() {
         TargetFilter filter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must be an opponent");
-        List<CardEffect> effects = List.of(new MillTargetPlayerEffect(1));
+        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
 
         TriggerTargetCollector.Result result = collector.collect(
                 gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
@@ -97,7 +107,7 @@ class TriggerTargetCollectorTest {
     void opponentOnlyHonouredForEveryOptionPreset() {
         TargetFilter filter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Must be an opponent");
-        List<CardEffect> effects = List.of(new MillTargetPlayerEffect(1));
+        List<CardEffect> effects = List.of(new MillEffect(1, MillRecipient.TARGET_PLAYER));
 
         assertThat(collector.collect(gd, effects, filter, player1Id, sourceCard,
                 TriggerTargetCollector.Options.ATTACK).validTargets())
@@ -108,11 +118,11 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
-    @DisplayName("END_STEP unwraps ConditionalEffect that does not delegate canTarget*")
-    void endStepUnwrapsConditionalEffect() {
-        // DidntAttackConditionalEffect does NOT override canTargetPlayer — so without unwrapping
-        // the helper sees canTargetPlayer=false (the CardEffect default).
-        List<CardEffect> effects = List.of(new DidntAttackConditionalEffect(new MillTargetPlayerEffect(1)));
+    @DisplayName("ConditionalEffect delegates canTarget* to the wrapped effect in every mode")
+    void conditionalEffectDelegatesTargeting() {
+        // The generic ConditionalEffect delegates canTargetPlayer to its wrapped effect,
+        // so target visibility no longer depends on the unwrapConditional option.
+        List<CardEffect> effects = List.of(new ConditionalEffect(new DidntAttack(), new MillEffect(1, MillRecipient.TARGET_PLAYER)));
 
         TriggerTargetCollector.Result withUnwrap = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.END_STEP);
@@ -121,8 +131,8 @@ class TriggerTargetCollectorTest {
 
         TriggerTargetCollector.Result withoutUnwrap = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
-        assertThat(withoutUnwrap.canTargetPlayers()).isFalse();
-        assertThat(withoutUnwrap.validTargets()).isEmpty();
+        assertThat(withoutUnwrap.canTargetPlayers()).isTrue();
+        assertThat(withoutUnwrap.validTargets()).containsExactly(player1Id, player2Id);
     }
 
     @Test
@@ -144,5 +154,26 @@ class TriggerTargetCollectorTest {
         assertThat(result.canTargetPermanents()).isTrue();
         assertThat(result.validTargets()).contains(creature.getId());
         assertThat(result.validTargets()).doesNotContain(noncreature.getId());
+    }
+
+    @Test
+    @DisplayName("DEATH option with an explicit permanent filter allows non-creature targets")
+    void deathExplicitPermanentFilterAllowsNonCreatures() {
+        Permanent noncreature = new Permanent(new Card());
+        gd.playerBattlefields.get(player2Id).add(noncreature);
+        lenient().when(gameQueryService.isCreature(gd, noncreature)).thenReturn(false);
+        lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class)))
+                .thenReturn(true);
+
+        // Fire Snake's "destroy target land": the filter's predicate governs, not creaturesOnly.
+        TargetFilter filter = new PermanentPredicateTargetFilter(
+                new PermanentTruePredicate(), "Target can be any permanent");
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(1));
+
+        TriggerTargetCollector.Result result = collector.collect(
+                gd, effects, filter, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
+
+        assertThat(result.validTargets()).contains(noncreature.getId());
     }
 }

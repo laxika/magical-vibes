@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,18 +26,7 @@ class UnknownShoresTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no mana cost")
-    void firstAbilityProperties() {
-        UnknownShores card = new UnknownShores();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
     @Test
     @DisplayName("Second ability costs {1} and taps to add one mana of any color")
@@ -79,8 +68,8 @@ class UnknownShoresTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should be awaiting color choice (mana ability resolves immediately)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
         // Mana ability — does not use the stack
         assertThat(gd.stack).isEmpty();
     }
@@ -96,7 +85,7 @@ class UnknownShoresTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

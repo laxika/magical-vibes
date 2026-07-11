@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,23 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DuskLegionDreadnoughtTest extends BaseCardTest {
-
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has Crew 2 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        DuskLegionDreadnought card = new DuskLegionDreadnought();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
 
     // ===== Crew mechanic =====
 

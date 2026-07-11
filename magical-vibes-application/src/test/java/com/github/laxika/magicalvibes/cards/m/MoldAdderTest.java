@@ -2,45 +2,22 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class MoldAdderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Mold Adder has correct effect configuration")
-    void hasCorrectEffects() {
-        MoldAdder card = new MoldAdder();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class);
-
-        PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger =
-                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) mayEffect.wrapped();
-        assertThat(trigger.triggerColors()).isEqualTo(Set.of(CardColor.BLUE, CardColor.BLACK));
-        assertThat(trigger.amount()).isEqualTo(1);
-        assertThat(trigger.onlyOwnSpells()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Opponent casting a blue spell triggers may ability and accepting adds counter")

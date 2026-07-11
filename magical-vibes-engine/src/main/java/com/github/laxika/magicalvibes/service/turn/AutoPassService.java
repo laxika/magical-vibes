@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -78,52 +79,57 @@ public class AutoPassService {
         }
 
         // Process any pending spell-target triggers (e.g. Livewire Lash)
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellTargetTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
         // Process any pending spell-cast graveyard-target triggers (e.g. Teshar, Ancestor's Apostle)
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
 
         // Process any pending discard self-triggers before death triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
         // Process any pending targeted attack triggers before death triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingAttackTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
         }
 
         // Process any pending targeted death triggers before auto-passing
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
 
         // Process any pending explore targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
         }
 
+        // Process any pending clash targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            triggerCollectionService.processNextClashTriggerTarget(gameData);
+        }
+
         // Process any pending life-gain targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
         }
 
         // Process any pending enters-from-graveyard targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
         }
 
         // Process any pending saga chapter targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
 
         // Process any pending end-step targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEndStepTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             stepTriggerService.processNextEndStepTriggerTarget(gameData);
         }
 
@@ -149,7 +155,7 @@ public class AutoPassService {
             }
 
             List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
-            if (!playable.isEmpty()) {
+            if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
                 // Priority holder can act — stop and let them decide
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
@@ -183,9 +189,10 @@ public class AutoPassService {
                 return;
             }
 
-            // Priority holder has nothing to play — auto-pass for them
+            // Priority holder has nothing to play, or is a human with no auto-stop configured
+            // for this step — auto-pass for them.
             String playerName = gameData.playerIdToName.get(priorityHolder);
-            log.info("Game {} - Auto-passing priority for {} on step {} (no playable cards)",
+            log.info("Game {} - Auto-passing priority for {} on step {}",
                     gameData.id, playerName, gameData.currentStep);
 
             gameData.priorityPassedBy.add(priorityHolder);
@@ -246,6 +253,21 @@ public class AutoPassService {
     }
 
     /**
+     * Decides whether a merely-playable card should halt auto-pass for the given priority holder.
+     *
+     * <p>AI-controlled players (and headless simulation, where every player is policy-driven)
+     * must always be handed a priority window whenever they can act, so the AI gets a chance to
+     * respond at instant speed. Human players, by contrast, only stop where they have explicitly
+     * configured an auto-stop (handled later in the loop) — otherwise a single always-castable
+     * card in hand (e.g. a free Phyrexian-mana instant like Mutagenic Growth, which
+     * {@code getPlayableCardIndices} reports as playable every step) would defeat auto-pass and
+     * force the player to manually pass at every phase.
+     */
+    private boolean shouldStopForPlayableCards(GameData gameData, UUID priorityHolder) {
+        return gameData.simulation || gameData.aiPlayerIds.contains(priorityHolder);
+    }
+
+    /**
      * Checks whether the given player has any creatures currently declared as attackers.
      */
     private boolean hasAttackingCreatures(GameData gameData, UUID playerId) {
@@ -298,6 +320,12 @@ public class AutoPassService {
                 // Skip attack-only abilities when the permanent is not attacking
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING
                         && !perm.isAttacking()) {
+                    continue;
+                }
+
+                // Skip combat-only abilities when not in the combat phase
+                if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_COMBAT
+                        && !gameData.currentStep.isCombatPhase()) {
                     continue;
                 }
 

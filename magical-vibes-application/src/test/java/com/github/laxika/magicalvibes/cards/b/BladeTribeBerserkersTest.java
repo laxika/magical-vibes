@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,29 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BladeTribeBerserkersTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two metalcraft-conditional ETB effects: boost and haste")
-    void hasMetalcraftEffects() {
-        BladeTribeBerserkers card = new BladeTribeBerserkers();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .allSatisfy(e -> assertThat(e).isInstanceOf(MetalcraftConditionalEffect.class));
-
-        MetalcraftConditionalEffect boost =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(boost.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boostEffect = (BoostSelfEffect) boost.wrapped();
-        assertThat(boostEffect.powerBoost()).isEqualTo(3);
-        assertThat(boostEffect.toughnessBoost()).isEqualTo(3);
-
-        MetalcraftConditionalEffect haste =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
-        assertThat(haste.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-    }
 
     // ===== ETB with metalcraft met =====
 

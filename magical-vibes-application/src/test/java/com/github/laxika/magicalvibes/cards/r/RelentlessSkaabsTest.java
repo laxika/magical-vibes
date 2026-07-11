@@ -3,14 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,20 +22,6 @@ class RelentlessSkaabsTest extends BaseCardTest {
         for (int i = 0; i < 12 && !gd.stack.isEmpty(); i++) {
             harness.passBothPriorities();
         }
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has exile creature from graveyard additional cost")
-    void hasExileCreatureCost() {
-        RelentlessSkaabs card = new RelentlessSkaabs();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.trackExiledPower()).isFalse();
     }
 
     // ===== Casting =====

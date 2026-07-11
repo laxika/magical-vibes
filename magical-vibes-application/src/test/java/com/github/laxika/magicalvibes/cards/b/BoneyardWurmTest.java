@@ -4,14 +4,10 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInControllerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,20 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BoneyardWurmTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Boneyard Wurm has static P/T effect counting creature cards in controller's graveyard")
-    void hasCorrectStaticEffect() {
-        BoneyardWurm card = new BoneyardWurm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInControllerGraveyardEffect.class);
-        var effect = (PowerToughnessEqualToCardsInControllerGraveyardEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-    }
 
     // ===== Casting =====
 

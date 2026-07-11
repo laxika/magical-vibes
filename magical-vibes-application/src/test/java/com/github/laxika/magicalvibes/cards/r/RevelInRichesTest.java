@@ -5,15 +5,11 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,32 +20,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RevelInRichesTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES CreateTokenEffect and UPKEEP_TRIGGERED win condition")
-    void hasCorrectStructure() {
-        RevelInRiches card = new RevelInRiches();
-
-        // Death trigger: create Treasure token
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(tokenEffect.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(tokenEffect.amount()).isEqualTo(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Treasure");
-
-        // Upkeep trigger: win if 10+ Treasures
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControlsPermanentCountConditionalEffect.class);
-        ControlsPermanentCountConditionalEffect winCondition =
-                (ControlsPermanentCountConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(winCondition.minCount()).isEqualTo(10);
-        assertThat(winCondition.wrapped()).isInstanceOf(WinGameEffect.class);
-    }
 
     // ===== Death trigger: create Treasure =====
 

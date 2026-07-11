@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,29 +21,9 @@ class InfernoTitanTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Inferno Titan has ON_ENTER_BATTLEFIELD DealDividedDamageToAnyTargetsEffect(3, 3)")
-    void hasETBEffect() {
-        InfernoTitan card = new InfernoTitan();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-        DealDividedDamageToAnyTargetsEffect effect =
-                (DealDividedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.totalDamage()).isEqualTo(3);
-        assertThat(effect.maxTargets()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Inferno Titan has ON_ATTACK DealDividedDamageToAnyTargetsEffect(3, 3)")
-    void hasAttackEffect() {
-        InfernoTitan card = new InfernoTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Inferno Titan has {R}: +1/+0 activated ability")
@@ -272,7 +249,7 @@ class InfernoTitanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

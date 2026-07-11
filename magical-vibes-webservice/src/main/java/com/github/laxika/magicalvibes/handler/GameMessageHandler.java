@@ -197,7 +197,8 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId());
+        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId(),
+                Boolean.TRUE.equals(request.allRandom()));
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -368,9 +369,11 @@ public class GameMessageHandler implements MessageHandler {
             } else if (Boolean.TRUE.equals(request.flashback())) {
                 CardType chosenGraveyardType = request.chosenGraveyardType() != null
                         ? CardType.valueOf(request.chosenGraveyardType()) : null;
+                java.util.List<UUID> tapPermanentIds = request.alternateCostSacrificePermanentIds() != null
+                        ? request.alternateCostSacrificePermanentIds() : java.util.List.of();
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.exileGraveyardCardIndices(), chosenGraveyardType);
+                        request.exileGraveyardCardIndices(), chosenGraveyardType, tapPermanentIds);
             } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
@@ -391,6 +394,12 @@ public class GameMessageHandler implements MessageHandler {
                         request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         null, request.exileGraveyardCardIndex());
+            } else if (request.discardHandCardIndex() != null) {
+                gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
+                        request.targetIds() != null ? request.targetIds() : java.util.List.of(),
+                        request.convokeCreatureIds() != null ? request.convokeCreatureIds() : java.util.List.of(),
+                        Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
+                        null, null, null, Boolean.TRUE.equals(request.kicked()), request.discardHandCardIndex());
             } else {
                 gameService.playCard(gameData, player, request.cardIndex(), request.xValue(), request.targetId(), request.damageAssignments(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
@@ -958,7 +967,7 @@ public class GameMessageHandler implements MessageHandler {
                         return;
                     }
                     com.github.laxika.magicalvibes.model.Permanent permanent = battlefield.get(request.permanentIndex());
-                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities = permanent.getCard().getActivatedAbilities();
+                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities = gameService.getEffectiveActivatedAbilities(gameData, permanent);
                     if (request.abilityIndex() < 0 || request.abilityIndex() >= abilities.size()) {
                         handleError(connection, "Invalid ability index");
                         return;
@@ -1054,7 +1063,7 @@ public class GameMessageHandler implements MessageHandler {
             if (gameData.status == GameStatus.WAITING) {
                 // Leaving a WAITING game: cancel it and notify lobby users
                 LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,
-                        gameData.createdByUsername, gameData.playerIds.size(), gameData.status);
+                        gameData.createdByUsername, gameData.playerIds.size(), gameData.status, gameData.allRandom);
                 gameRegistry.remove(gameData.id);
                 broadcastToLobby(MessageType.GAME_REMOVED, lobbyGame);
             } else if (gameData.status != GameStatus.FINISHED) {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
@@ -18,7 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -32,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,15 +57,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastTriggerCollectorServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @InjectMocks
     private SpellCastTriggerCollectorService sut;
@@ -125,7 +138,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -143,13 +156,13 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Shrine of Burning Rage");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
             var effect = new SpellCastTriggerEffect(filter, List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -168,7 +181,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -176,6 +189,27 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("snapshots spell mana spent into xValue when a resolved amount references X")
+        void snapshotsSpellManaSpentForXValueAmounts() {
+            Permanent perm = createPermanent("Aberrant Manawurm");
+            var innerEffect = new BoostSelfEffect(new XValue(), new Fixed(0));
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
+            gd.addSpellCastManaSpent(spellCard.getId(), 3);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
         }
 
         @Test
@@ -188,7 +222,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, mayEffect),
@@ -392,7 +426,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             // Put the spell on the stack with a single target
             Permanent targetPerm = createPermanent("Goblin Guide");
-            targetPerm.getCard().setSubtypes(List.of(CardSubtype.GOBLIN));
+            TestCards.mutableCard(targetPerm).setSubtypes(List.of(CardSubtype.GOBLIN));
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
             spellOnStack.setTargetId(targetPerm.getId());
             gd.stack.add(spellOnStack);
@@ -545,7 +579,7 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry spellOnStack = new StackEntry(
                     StackEntryType.INSTANT_SPELL, spellCard, player1Id, "Lightning Bolt", new ArrayList<>());
             gd.stack.add(spellOnStack);
-            when(gameQueryService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
+            when(predicateEvaluationService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
                     .thenReturn(true);
 
             boolean result = registry.dispatch(
@@ -601,7 +635,7 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry spellOnStack = new StackEntry(
                     StackEntryType.CREATURE_SPELL, spellCard, player1Id, "Grizzly Bears", new ArrayList<>());
             gd.stack.add(spellOnStack);
-            when(gameQueryService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
+            when(predicateEvaluationService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
                     .thenReturn(false);
 
             boolean result = registry.dispatch(
@@ -685,7 +719,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -698,7 +732,7 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("puts targeting triggered ability into pendingSpellTargetTriggers")
+        @DisplayName("queues targeting triggered ability as a SpellTargetTriggerAnyTarget interaction")
         void putsTargetingTriggeredAbilityIntoPendingQueue() {
             Permanent perm = createPermanent("Guttersnipe");
             var innerEffect = new DealDamageToAnyTargetEffect(2);
@@ -706,7 +740,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -714,20 +748,20 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Guttersnipe");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var innerEffect = new DealDamageToAnyTargetEffect(2);
             var effect = new SpellCastTriggerEffect(filter, List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -794,7 +828,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -824,72 +858,72 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("adds to pending target triggers when spell matches filter")
         void addsToPendingTargetTriggers() {
             Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
             Card spellCard = createCard("Grizzly Bears");
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
         @DisplayName("resolved effect has damage equal to spell's mana value")
         void resolvedEffectHasCorrectDamage() {
             Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
             Card spellCard = createCard("Grizzly Bears");
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            var resolved = (DealDamageToAnyTargetEffect) gd.pendingSpellTargetTriggers.getFirst().effects().getFirst();
-            assertThat(resolved.damage()).isEqualTo(2);
+            var resolved = (DealDamageToAnyTargetEffect) gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).effects().getFirst();
+            assertThat(resolved.damage()).isEqualTo(new Fixed(2));
         }
 
         @Test
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
-            assertThat(gd.pendingSpellTargetTriggers).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
         }
 
         @Test
         @DisplayName("broadcasts log message with damage amount")
         void broadcastsLogMessage() {
             Permanent perm = createPermanent("Kaervek the Merciless");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new DealDamageEqualToSpellManaValueToAnyTargetEffect(filter);
             Card spellCard = createCard("Grizzly Bears");
             spellCard.setManaCost("{1}{G}");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -900,37 +934,37 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — GiveTargetPlayerPoisonCountersEffect =====
+    // ===== ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER) =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GiveTargetPlayerPoisonCountersEffect")
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER)")
     class ControllerPoisonOnSpellCast {
 
         @Test
         @DisplayName("adds to pending target triggers when spell matches filter")
         void addsToPendingTargetTriggers() {
             Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardPredicate() {};
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
-            assertThat(gd.pendingSpellTargetTriggers.getFirst().playerTargetOnly()).isTrue();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).playerTargetOnly()).isTrue();
         }
 
         @Test
         @DisplayName("returns false when spell filter is null")
         void returnsFalseWhenFilterNull() {
             Permanent perm = createPermanent("Hand of the Praetors");
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -945,12 +979,12 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("returns false when spell does not match filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardPredicate() {};
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -963,12 +997,12 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("broadcasts log message")
         void broadcastsLogMessage() {
             Permanent perm = createPermanent("Hand of the Praetors");
-            CardPredicate filter = new CardPredicate() {};
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
@@ -1138,12 +1172,12 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("returns false when spell does not match spell filter")
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Kambal, Consul of Allocation");
-            CardPredicate filter = new CardPredicate() {};
+            CardPredicate filter = new CardNamedPredicate("Test Filter");
             var effect = new LoseLifeUnlessPaysEffect(2, 1, filter);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            when(gameQueryService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter), eq(null), any(), any())).thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),

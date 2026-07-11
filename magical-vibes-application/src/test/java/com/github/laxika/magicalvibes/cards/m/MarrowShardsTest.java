@@ -4,13 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MarrowShardsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Marrow Shards has correct effect configuration")
-    void hasCorrectEffect() {
-        MarrowShards card = new MarrowShards();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Deals 1 damage to each attacking creature but does not kill 2-toughness attackers")

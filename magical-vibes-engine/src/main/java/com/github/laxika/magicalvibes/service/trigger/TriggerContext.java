@@ -75,6 +75,25 @@ public sealed interface TriggerContext {
      */
     record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
+    /**
+     * Context for enter-the-battlefield triggers (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+     * ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
+     * ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
+     *
+     * @param enteringCard          the permanent that entered and caused the scan
+     * @param enteringControllerId  the controller of the permanent that entered
+     * @param defaultTargetPlayerId the player recorded as the queued ability's target
+     *                              ({@code null} for scans that leave the target unset, e.g. the
+     *                              ally/any-creature scans)
+     * @param perEffectTriggerCount how many copies of each triggered ability to enqueue
+     *                              (e.g. Naban doubling on the any-creature scan)
+     * @param mayPayTargetCardId    the card id preserved on a {@code MayPayManaEffect} stack entry
+     *                              so the wrapped effect can reference the entering permanent
+     *                              (e.g. Mirrorworks); {@code null} when unused
+     */
+    record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
+                           int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
+
     // ── Death / leaves-battlefield contexts ────────────────────────────
 
     /**
@@ -114,6 +133,16 @@ public sealed interface TriggerContext {
      */
     record ArtifactGraveyard(UUID graveyardOwnerId,
                              UUID artifactControllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
+     *
+     * @param landCard          the land card that was put into the graveyard from the battlefield
+     * @param graveyardOwnerId  the owner of the graveyard the land was put into
+     * @param causeControllerId the controller of the spell or ability that caused it (an opponent)
+     */
+    record LandPutIntoGraveyard(Card landCard, UUID graveyardOwnerId,
+                                UUID causeControllerId) implements TriggerContext {}
 
     /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.

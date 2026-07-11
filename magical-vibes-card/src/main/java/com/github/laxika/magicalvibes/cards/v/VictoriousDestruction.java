@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -21,6 +23,7 @@ public class VictoriousDestruction extends Card {
                         new PermanentIsLandPredicate()
                 )),
                 "Target must be an artifact or land"
-        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentAndControllerLosesLifeEffect(1));
+        )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
+                new LoseLifeEffect(1), ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

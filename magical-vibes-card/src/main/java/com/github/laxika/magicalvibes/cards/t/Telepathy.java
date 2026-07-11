@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "113")
 @CardRegistration(set = "M10", collectorNumber = "74")
+@CardRegistration(set = "9ED", collectorNumber = "101")
 public class Telepathy extends Card {
 
     public Telepathy() {

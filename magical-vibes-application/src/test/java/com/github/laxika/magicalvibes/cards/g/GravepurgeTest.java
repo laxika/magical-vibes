@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,20 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GravepurgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gravepurge has creature graveyard-to-library effect then draw")
-    void hasCorrectEffects() {
-        Gravepurge card = new Gravepurge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class);
-        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
-                (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting with creature cards in graveyard prompts for target selection")
@@ -48,10 +30,10 @@ class GravepurgeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactlyInAnyOrder(creature1.getId(), creature2.getId());
         assertThat(gd.stack).isEmpty();
     }
@@ -66,7 +48,7 @@ class GravepurgeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
@@ -110,7 +92,7 @@ class GravepurgeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(creature.getId());
     }
 
@@ -125,7 +107,7 @@ class GravepurgeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,9 +13,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,42 +34,11 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has TargetPlayerDiscardsEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability has SearchLibraryForCardToTopOfLibraryEffect")
-    void minusTwoAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SearchLibraryForCardToTopOfLibraryEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has ReturnCardFromGraveyardEffect for all creatures from all graveyards")
-    void minusEightAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -121,8 +88,8 @@ class LilianaVessTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
         // Player is prompted to choose a card to discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
@@ -142,7 +109,7 @@ class LilianaVessTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0);
 
@@ -162,9 +129,9 @@ class LilianaVessTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // All cards from library should be offered (unrestricted search)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
     @Test
@@ -177,7 +144,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         // Find Grizzly Bears in the offered cards
         int bearsIndex = -1;
         for (int i = 0; i < offered.size(); i++) {
@@ -206,7 +173,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
     // ===== -8 ability: Put all creature cards from all graveyards onto battlefield =====

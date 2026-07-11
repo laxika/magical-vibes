@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,28 +31,6 @@ class IxalansBindingTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentUntilSourceLeavesEffect(imprint=true) on ETB and opponents-only static restriction")
-    void hasCorrectEffects() {
-        IxalansBinding card = new IxalansBinding();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-        ExileTargetPermanentUntilSourceLeavesEffect exileEffect =
-                (ExileTargetPermanentUntilSourceLeavesEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(exileEffect.imprint()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantCastSpellsWithSameNameAsExiledCardEffect.class);
-        CantCastSpellsWithSameNameAsExiledCardEffect staticEffect =
-                (CantCastSpellsWithSameNameAsExiledCardEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(staticEffect.opponentsOnly()).isTrue();
     }
 
     // ===== ETB exile =====

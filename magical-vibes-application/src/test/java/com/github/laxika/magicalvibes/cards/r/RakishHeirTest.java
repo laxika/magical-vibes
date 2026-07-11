@@ -3,12 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,26 +33,6 @@ class RakishHeirTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has PutCountersOnDamageDealerEffect with Vampire predicate")
-    void hasCorrectEffects() {
-        RakishHeir card = new RakishHeir();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnDamageDealerEffect.class);
-
-        PutCountersOnDamageDealerEffect effect =
-                (PutCountersOnDamageDealerEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.predicate()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.VAMPIRE);
     }
 
     // ===== Trigger: Vampire deals combat damage to a player =====

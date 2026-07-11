@@ -9,13 +9,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ImprintDyingCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -175,7 +172,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                         .noneMatch(c -> c.getName().equals("Grizzly Bears"));
                 verify(exileService).exileCard(gd, player2Id, dyingCard);
                 // Card imprinted on source
-                assertThat(vatPerm.getCard().getImprintedCard()).isSameAs(dyingCard);
+                assertThat(gd.getImprintedCard(vatPerm.getCard())).isSameAs(dyingCard);
             }
 
             @Test
@@ -186,7 +183,7 @@ class ImprintDyingCreatureEffectHandlerTest {
 
                 // Set up previously imprinted card
                 Card previousCard = createCreatureCard("Giant Spider");
-                vatPerm.getCard().setImprintedCard(previousCard);
+                gd.setImprintedCard(vatPerm.getCard(), previousCard);
                 gd.getPlayerExiledCards(player1Id).add(previousCard);
 
                 // New dying creature
@@ -204,7 +201,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
                 // New card should be imprinted
-                assertThat(vatPerm.getCard().getImprintedCard()).isSameAs(dyingCard);
+                assertThat(gd.getImprintedCard(vatPerm.getCard())).isSameAs(dyingCard);
                 // Previous card returned to owner's graveyard
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, previousCard);
                 // Previous card removed from exile
@@ -253,7 +250,7 @@ class ImprintDyingCreatureEffectHandlerTest {
 
                 imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
-                assertThat(vatPerm.getCard().getImprintedCard()).isNull();
+                assertThat(gd.getImprintedCard(vatPerm.getCard())).isNull();
             }
 
             @Test

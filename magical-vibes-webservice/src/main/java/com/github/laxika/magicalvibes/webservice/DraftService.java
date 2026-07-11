@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.ai.EasyAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.HardAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.MediumAiDecisionEngine;
 import com.github.laxika.magicalvibes.ai.AiDraftEngine;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -73,6 +75,8 @@ public class DraftService {
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
+    private final CastingCostService castingCostService;
+    private final CastingPermissionService castingPermissionService;
     private final SessionManager sessionManager;
     private final WebSocketSessionManager webSocketSessionManager;
     private final CardViewFactory cardViewFactory;
@@ -89,6 +93,8 @@ public class DraftService {
                         GameService gameService,
                         GameQueryService gameQueryService,
                         CombatAttackService combatAttackService,
+                        CastingCostService castingCostService,
+                        CastingPermissionService castingPermissionService,
                         SessionManager sessionManager,
                         WebSocketSessionManager webSocketSessionManager,
                         CardViewFactory cardViewFactory,
@@ -101,6 +107,8 @@ public class DraftService {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
+        this.castingCostService = castingCostService;
+        this.castingPermissionService = castingPermissionService;
         this.sessionManager = sessionManager;
         this.webSocketSessionManager = webSocketSessionManager;
         this.cardViewFactory = cardViewFactory;
@@ -589,9 +597,9 @@ public class DraftService {
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName, AiDifficulty aiDifficulty) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         };
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
@@ -649,7 +657,7 @@ public class DraftService {
     private void initializePlayerForDraftGame(GameData gameData, UUID playerId, List<Card> deck) {
         gameData.playerDecks.put(playerId, deck);
         gameData.mulliganCounts.put(playerId, 0);
-        gameData.playerBattlefields.put(playerId, new ArrayList<>());
+        gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
         gameData.playerGraveyards.put(playerId, new ArrayList<>());
         gameData.playerManaPools.put(playerId, new ManaPool());
         gameData.playerLifeTotals.put(playerId, 20);

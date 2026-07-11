@@ -7,11 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCre
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -26,22 +25,8 @@ public class DamageTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
 
-    @ValidatesTarget(DealXDamageToTargetCreatureEffect.class)
-    public void validateDealXDamageToTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
     @ValidatesTarget(DealDamageToTargetCreatureEffect.class)
     public void validateDealDamageToTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
-    public void validateDealDamageToTargetCreatureEqualToSubtypeCount(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
         tvs.checkProtection(ctx, target);
@@ -72,6 +57,20 @@ public class DamageTargetValidators {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         if (!target.getCard().hasType(CardType.PLANESWALKER)) {
             throw new IllegalStateException("Target must be an opponent or planeswalker");
+        }
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(DealDamageToTargetPlayerOrPlaneswalkerEffect.class)
+    public void validateDealDamageToTargetPlayerOrPlaneswalker(TargetValidationContext ctx) {
+        tvs.requireTarget(ctx);
+        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
+            // Any player is a legal target (including the controller).
+            return;
+        }
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        if (!target.getCard().hasType(CardType.PLANESWALKER)) {
+            throw new IllegalStateException("Target must be a player or planeswalker");
         }
         tvs.checkProtection(ctx, target);
     }
@@ -119,13 +118,13 @@ public class DamageTargetValidators {
         tvs.checkProtection(ctx, target);
     }
 
-    @ValidatesTarget(DealDamageToTargetPlayerEffect.class)
-    public void validateDealDamageToTargetPlayer(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
-
-    @ValidatesTarget(DealDamageToTargetPlayerByHandSizeEffect.class)
-    public void validateDealDamageToTargetPlayerByHandSize(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(DealDamageToPlayersEffect.class)
+    public void validateDealDamageToPlayers(TargetValidationContext ctx, DealDamageToPlayersEffect effect) {
+        // Only the TARGET_PLAYER recipient chooses a player target; every other recipient
+        // (CONTROLLER, EACH_*, ENCHANTED_PLAYER, the two permanent-controller riders) takes no
+        // player target and must not trip the class-keyed validator, which runs unconditionally.
+        if (effect.recipient() == DamageRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 }

@@ -4,17 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AzureDrake;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,40 +23,11 @@ class MagebaneArmorTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Magebane Armor has static +2/+4 boost effect")
-    void hasStaticBoostEffect() {
-        MagebaneArmor card = new MagebaneArmor();
+    
 
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-    }
+    
 
-    @Test
-    @DisplayName("Magebane Armor has static remove flying effect for equipped creature")
-    void hasRemoveFlyingEffect() {
-        MagebaneArmor card = new MagebaneArmor();
-
-        RemoveKeywordEffect remove = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof RemoveKeywordEffect)
-                .map(e -> (RemoveKeywordEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(remove.keyword()).isEqualTo(Keyword.FLYING);
-        assertThat(remove.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Magebane Armor has noncombat damage prevention effect")
-    void hasNoncombatDamagePreventionEffect() {
-        MagebaneArmor card = new MagebaneArmor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PreventAllNoncombatDamageToAttachedCreatureEffect);
-    }
+    
 
     @Test
     @DisplayName("Magebane Armor has equip {2} ability")

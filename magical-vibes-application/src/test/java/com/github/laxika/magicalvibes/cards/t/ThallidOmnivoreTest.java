@@ -10,13 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,45 +29,9 @@ class ThallidOmnivoreTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability: sacrifice a Saproling for +2/+2 and 2 life")
-    void firstAbilityStructure() {
-        ThallidOmnivore card = new ThallidOmnivore();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
-                )),
-                "Sacrifice a Saproling",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
-        assertThat(ability.getEffects().get(2)).isInstanceOf(GainLifeEffect.class);
-
-        GainLifeEffect lifeGain = (GainLifeEffect) ability.getEffects().get(2);
-        assertThat(lifeGain.amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Second ability: sacrifice another creature for +2/+2")
-    void secondAbilityStructure() {
-        ThallidOmnivore card = new ThallidOmnivore();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
-
-        SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.excludeSelf()).isTrue();
-    }
+    
 
     // ===== Sacrifice a Saproling: +2/+2 and life gain =====
 

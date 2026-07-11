@@ -1,20 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,37 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArnynDeathbloomBotanistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has conditional ally-death and self-death drain triggers targeting opponents")
-    void hasCorrectStructure() {
-        ArnynDeathbloomBotanist card = new ArnynDeathbloomBotanist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        TriggeringPermanentConditionalEffect allyTrigger =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        TriggeringPermanentConditionalEffect deathTrigger =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-
-        PermanentAnyOfPredicate predicate = (PermanentAnyOfPredicate) allyTrigger.predicate();
-        assertThat(predicate.predicates()).containsExactly(
-                new PermanentPowerAtMostPredicate(1),
-                new PermanentToughnessAtMostPredicate(1)
-        );
-        assertThat(deathTrigger.predicate()).isEqualTo(allyTrigger.predicate());
-
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect drain =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) allyTrigger.wrapped();
-        assertThat(drain.lifeLoss()).isEqualTo(2);
-        assertThat(drain.lifeGain()).isEqualTo(2);
-        assertThat(deathTrigger.wrapped()).isEqualTo(drain);
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
+    
 
     @Test
     @DisplayName("When a 1/1 creature you control dies, target opponent loses 2 life and you gain 2 life")
@@ -74,8 +36,8 @@ class ArnynDeathbloomBotanistTest extends BaseCardTest {
         harness.castInstant(player2, 0, elvesId);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

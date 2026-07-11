@@ -156,6 +156,4 @@ class ShannaSisaysLegacyTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Shanna, Sisay's Legacy"));
     }
 
-    // ===== Helpers =====
-
 }

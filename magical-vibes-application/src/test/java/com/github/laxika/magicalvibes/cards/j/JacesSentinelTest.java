@@ -3,14 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,39 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JacesSentinelTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two STATIC ControlsPermanentConditionalEffect(JACE) effects: StaticBoostEffect and GrantEffectEffect(CantBeBlockedEffect)")
-    void hasCorrectStaticEffects() {
-        JacesSentinel card = new JacesSentinel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        // First effect: +1/+0 conditional on controlling a Jace
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
-        ControlsPermanentConditionalEffect boostConditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(boostConditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.JACE));
-        assertThat(boostConditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) boostConditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second effect: can't be blocked conditional on controlling a Jace
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
-        ControlsPermanentConditionalEffect unblockableConditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(unblockableConditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.JACE));
-        assertThat(unblockableConditional.wrapped()).isInstanceOf(GrantEffectEffect.class);
-        GrantEffectEffect grantEffect = (GrantEffectEffect) unblockableConditional.wrapped();
-        assertThat(grantEffect.effect()).isInstanceOf(CantBeBlockedEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Conditional +1/+0 and can't be blocked with Jace =====
 

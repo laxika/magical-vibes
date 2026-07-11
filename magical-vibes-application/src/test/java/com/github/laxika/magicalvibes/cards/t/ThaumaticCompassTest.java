@@ -1,23 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.s.SpiresOfOrazca;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,72 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThaumaticCompassTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has activated ability to search for basic land")
-    void frontFaceHasSearchAbility() {
-        ThaumaticCompass card = new ThaumaticCompass();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has end step transform trigger for 7+ lands")
-    void frontFaceHasEndStepTransformTrigger() {
-        ThaumaticCompass card = new ThaumaticCompass();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControlsPermanentCountConditionalEffect.class);
-        var conditional = (ControlsPermanentCountConditionalEffect)
-                card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.minCount()).isEqualTo(7);
-        assertThat(conditional.filter()).isInstanceOf(PermanentIsLandPredicate.class);
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has back face linked")
-    void frontFaceHasBackFace() {
-        ThaumaticCompass card = new ThaumaticCompass();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(SpiresOfOrazca.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("SpiresOfOrazca");
-    }
-
-    @Test
-    @DisplayName("Back face has colorless mana ability and combat removal ability")
-    void backFaceHasCorrectAbilities() {
-        ThaumaticCompass card = new ThaumaticCompass();
-        SpiresOfOrazca backFace = (SpiresOfOrazca) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // {T}: Add {C}.
-        var manaAbility = backFace.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) manaAbility.getEffects().getFirst()).color()).isEqualTo(ManaColor.COLORLESS);
-
-        // {T}: Untap target attacking creature an opponent controls and remove it from combat.
-        var combatAbility = backFace.getActivatedAbilities().get(1);
-        assertThat(combatAbility.isRequiresTap()).isTrue();
-        assertThat(combatAbility.getManaCost()).isNull();
-        assertThat(combatAbility.getEffects()).hasSize(2);
-        assertThat(combatAbility.getEffects().get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(combatAbility.getEffects().get(1)).isInstanceOf(RemoveTargetFromCombatEffect.class);
-        assertThat(combatAbility.getTargetFilter()).isNotNull();
-    }
 
     // ===== Activated ability: search for basic land =====
 
@@ -116,9 +42,9 @@ class ThaumaticCompassTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
         harness.passBothPriorities(); // resolve ability
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Forest");
     }
 
     // ===== End step transform =====

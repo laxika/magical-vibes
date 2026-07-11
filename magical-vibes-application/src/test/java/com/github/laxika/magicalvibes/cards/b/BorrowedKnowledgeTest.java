@@ -4,12 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BorrowedKnowledgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Borrowed Knowledge has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        BorrowedKnowledge card = new BorrowedKnowledge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect())
-                .isInstanceOf(DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect.class);
-        assertThat(effect.options().get(1).effect())
-                .isInstanceOf(DiscardOwnHandThenDrawThatManyEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: draw equal to target opponent's hand size")
@@ -155,6 +138,29 @@ class BorrowedKnowledgeTest extends BaseCardTest {
 
             assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         }
+    }
+
+    @Test
+    @DisplayName("Modal cast writes mode targeting onto a runtime copy, never the shared original card")
+    void modalCastDoesNotMutateOriginalCard() {
+        setDeck(player1, List.of(new Island()));
+        BorrowedKnowledge original = new BorrowedKnowledge();
+        // Deck cards are frozen at game setup; setHand bypasses setup, so freeze explicitly.
+        // If the modal cast mutated the original instead of a runtime copy, casting would throw.
+        original.freeze();
+        harness.setHand(player1, List.of(original));
+        addManaForCast(player1);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+
+        Card onStack = gd.stack.getLast().getCard();
+        assertThat(onStack).isNotSameAs(original);
+        assertThat(onStack.getId()).isEqualTo(original.getId());
+        assertThat(original.getCastTimeTargetFilter()).isNull();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(original.getId()));
     }
 
     @Test

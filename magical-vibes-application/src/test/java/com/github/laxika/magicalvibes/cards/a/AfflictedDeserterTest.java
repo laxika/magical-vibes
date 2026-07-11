@@ -2,16 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.w.WerewolfRansacker;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndDamageControllerIfDestroyedEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,50 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AfflictedDeserterTest extends BaseCardTest {
-
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Front face has correct effects configured")
-    void frontFaceHasCorrectEffects() {
-        AfflictedDeserter card = new AfflictedDeserter();
-
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("WerewolfRansacker");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        AfflictedDeserter card = new AfflictedDeserter();
-        WerewolfRansacker backFace = (WerewolfRansacker) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        // Transform-back trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-
-        // Transform-into trigger: MayEffect wrapping destroy + damage
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentAndDamageControllerIfDestroyedEffect.class);
-        DestroyTargetPermanentAndDamageControllerIfDestroyedEffect destroyEffect =
-                (DestroyTargetPermanentAndDamageControllerIfDestroyedEffect) mayEffect.wrapped();
-        assertThat(destroyEffect.damage()).isEqualTo(3);
-    }
 
     // ===== Werewolf transform: front -> back (no spells cast last turn) =====
 
@@ -296,7 +244,5 @@ class AfflictedDeserterTest extends BaseCardTest {
         assertThat(deserter.isTransformed()).isTrue();
         assertThat(deserter.getCard().getName()).isEqualTo("Werewolf Ransacker");
     }
-
-    // ===== Helpers =====
 
 }

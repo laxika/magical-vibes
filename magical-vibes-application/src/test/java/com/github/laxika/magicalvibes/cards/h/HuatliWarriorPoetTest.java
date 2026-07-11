@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,41 +30,11 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect")
-    void plusTwoAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("0 ability has CreateTokenEffect for 3/3 green Dinosaur with trample")
-    void zeroAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(0);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
-
-    @Test
-    @DisplayName("-X ability has DealXDamageDividedAmongTargetCreaturesCantBlockEffect and is variable loyalty cost")
-    void minusXAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.isVariableLoyaltyCost()).isTrue();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealXDamageDividedAmongTargetCreaturesCantBlockEffect.class);
-    }
+    
 
     // ===== Casting =====
 

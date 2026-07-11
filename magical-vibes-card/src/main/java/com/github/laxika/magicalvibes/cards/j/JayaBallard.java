@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.JayaBallardEmblemEffect;
 
@@ -19,7 +20,7 @@ public class JayaBallard extends Card {
         // +1: Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new AwardRestrictedManaEffect(ManaColor.RED, 3, Set.of(CardType.INSTANT, CardType.SORCERY))),
+                List.of(new AwardRestrictedManaEffect(ManaColor.RED, 3, new ManaRestriction.SpellTypes(Set.of(CardType.INSTANT, CardType.SORCERY)))),
                 "+1: Add {R}{R}{R}. Spend this mana only to cast instant or sorcery spells."
         ));
 

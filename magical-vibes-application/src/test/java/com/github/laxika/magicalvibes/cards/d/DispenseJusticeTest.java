@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,18 +20,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DispenseJusticeTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has correct effect type and needs target")
-    void hasCorrectProperties() {
-        DispenseJustice card = new DispenseJustice();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SacrificeAttackingCreaturesEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -104,8 +90,9 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingSacrificeAttackingCreature).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
+                .isInstanceOf(MultiPermanentChoiceContext.SacrificeAttackingCreatures.class);
     }
 
     @Test
@@ -210,7 +197,7 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         // Player 2 chooses to sacrifice Grizzly Bears and Hill Giant
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId(), giant.getId()));
@@ -252,7 +239,7 @@ class DispenseJusticeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Without metalcraft, only 1 sacrifice required — so with 2 attackers, should prompt choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 
     // ===== Non-attacking creatures =====

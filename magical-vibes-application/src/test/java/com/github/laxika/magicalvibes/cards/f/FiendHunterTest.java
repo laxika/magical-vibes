@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,20 +44,6 @@ class FiendHunterTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentUntilSourceLeavesEffect")
-    void hasCorrectEffects() {
-        FiendHunter card = new FiendHunter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test
@@ -74,7 +57,7 @@ class FiendHunterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test

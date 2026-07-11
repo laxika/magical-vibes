@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -45,7 +47,7 @@ public class GrandArchitect extends Card {
                 false, null,
                 List.of(
                         new TapCreatureCost(new PermanentColorInPredicate(Set.of(CardColor.BLUE))),
-                        new AwardArtifactOnlyColorlessManaEffect(2)),
+                        new AwardRestrictedManaEffect(ManaColor.COLORLESS, 2, new ManaRestriction.ArtifactSpells())),
                 "Tap an untapped blue creature you control: Add {C}{C}. Spend this mana only to cast artifact spells or activate abilities of artifacts."
         ));
     }

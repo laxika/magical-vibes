@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,26 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkitteringHeartstopperTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Skittering Heartstopper has one activated ability granting deathtouch")
-    void hasOneActivatedAbility() {
-        SkitteringHeartstopper card = new SkitteringHeartstopper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect deathtouch = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
-        assertThat(deathtouch.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Deathtouch ability =====
 

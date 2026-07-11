@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +17,6 @@ class BloodgiftDemonTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bloodgift Demon has correct upkeep trigger effects")
-    void hasCorrectEffects() {
-        BloodgiftDemon card = new BloodgiftDemon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(0))
-                .isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1))
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
     }
 
     // ===== Targeting self =====

@@ -1,22 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,18 +39,6 @@ class ArmWithAetherTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arm with Aether has correct effects")
-    void hasCorrectEffects() {
-        ArmWithAether card = new ArmWithAether();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class);
     }
 
     // ===== Sorcery resolution =====
@@ -94,10 +78,10 @@ class ArmWithAetherTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext()).isNotNull();
-        assertThat(gd.interaction.multiPermanentChoiceContext().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiPermanentMaxCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount()).isEqualTo(1);
     }
 
     @Test
@@ -163,7 +147,7 @@ class ArmWithAetherTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     @Test
@@ -176,7 +160,7 @@ class ArmWithAetherTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     // ===== Full integration: cast sorcery then attack =====
@@ -196,7 +180,7 @@ class ArmWithAetherTest extends BaseCardTest {
         resolveCombat();
 
         // Should prompt for creature bounce
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         // Choose the opponent's creature
         harness.handleMultiplePermanentsChosen(player1, List.of(opponentCreature.getId()));

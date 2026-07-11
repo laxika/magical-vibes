@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
+
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,9 +15,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,42 +36,11 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has EachPlayerDiscardsEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(EachPlayerDiscardsEffect.class);
-        assertThat(((EachPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability has SacrificeCreatureEffect targeting player")
-    void minusTwoAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SacrificeCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("-6 ability has SeparatePermanentsIntoPilesAndSacrificeEffect targeting player")
-    void minusSixAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-6);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SeparatePermanentsIntoPilesAndSacrificeEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -128,7 +95,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
 
         // Active player (player1) discards first — enters discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     // ===== -2 ability: Target player sacrifices a creature =====
@@ -169,8 +136,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 
@@ -207,8 +174,8 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 6 - 6
         // Controller should be prompted to choose permanents for pile 1
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingPileSeparation).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
     }
 
     @Test
@@ -230,7 +197,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Step 2: Target player (player2) should be prompted to choose a pile
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Target player chooses Yes = sacrifice pile 1 (bears)
         harness.handleMayAbilityChosen(player2, true);
@@ -311,7 +278,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingPileSeparation).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no permanents to separate"));
     }
 

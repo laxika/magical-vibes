@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class DiscardUnlessExileCardFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -34,7 +36,7 @@ public class DiscardUnlessExileCardFromGraveyardEffectHandler implements NormalE
 
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         boolean hasMatchingCards = graveyard != null && graveyard.stream()
-                .anyMatch(card -> gameQueryService.matchesCardPredicate(card, e.predicate(), null));
+                .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, e.predicate(), null));
 
         if (!hasMatchingCards) {
             // No matching cards in graveyard — must discard

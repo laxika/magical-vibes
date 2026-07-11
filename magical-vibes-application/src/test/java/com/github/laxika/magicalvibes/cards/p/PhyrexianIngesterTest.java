@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,22 +26,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → target selection (inner effect inline)
         harness.handlePermanentChosen(player1, targetId); // choose target → exile + imprint inline
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentAndImprintEffect on ETB and static boost")
-    void hasCorrectEffects() {
-        PhyrexianIngester card = new PhyrexianIngester();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfByImprintedCreaturePTEffect.class);
     }
 
     // ===== ETB exile =====

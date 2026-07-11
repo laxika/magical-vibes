@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -20,7 +21,7 @@ public class PanicSpellbomb extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new TargetCreatureCantBlockThisTurnEffect()),
+                List.of(new SacrificeSelfCost(), new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
                 "{T}, Sacrifice Panic Spellbomb: Target creature can't block this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

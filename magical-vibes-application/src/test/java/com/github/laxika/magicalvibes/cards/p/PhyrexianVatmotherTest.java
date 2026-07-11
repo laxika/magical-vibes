@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GiveControllerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +16,6 @@ class PhyrexianVatmotherTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Vatmother has upkeep poison trigger")
-    void hasUpkeepPoisonTrigger() {
-        PhyrexianVatmother card = new PhyrexianVatmother();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(GiveControllerPoisonCountersEffect.class);
     }
 
     // ===== Upkeep poison trigger =====

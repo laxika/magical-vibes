@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,18 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RegenerateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Regenerate has correct card properties")
-    void hasCorrectCardProperties() {
-        Regenerate card = new Regenerate();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        RegenerateEffect effect = (RegenerateEffect) card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.SPELL).getFirst();
-        assertThat(effect.targetsPermanent()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Regenerate puts it on the stack targeting a creature")

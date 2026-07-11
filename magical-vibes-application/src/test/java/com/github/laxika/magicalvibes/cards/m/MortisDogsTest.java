@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,30 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MortisDogsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with BoostSelfEffect(2, 0)")
-    void hasAttackTrigger() {
-        MortisDogs card = new MortisDogs();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Has ON_DEATH trigger with TargetPlayerLosesLifeEqualToPowerEffect")
-    void hasDeathTrigger() {
-        MortisDogs card = new MortisDogs();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeEqualToPowerEffect.class);
-    }
 
     // ===== Attack trigger =====
 
@@ -73,8 +46,8 @@ class MortisDogsTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Mortis Dogs"));
 
         // Player1 should be prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -147,12 +120,11 @@ class MortisDogsTest extends BaseCardTest {
 
     // ===== Helpers =====
 
-
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

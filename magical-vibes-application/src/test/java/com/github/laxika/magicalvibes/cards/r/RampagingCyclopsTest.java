@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,16 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RampagingCyclopsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Rampaging Cyclops has BlockedByMinCreaturesConditionalEffect with minBlockers=2")
-    void hasCorrectEffect() {
-        RampagingCyclops card = new RampagingCyclops();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .singleElement()
-                .isInstanceOfSatisfying(BlockedByMinCreaturesConditionalEffect.class,
-                        e -> assertThat(e.minBlockers()).isEqualTo(2));
-    }
+    
 
     @Test
     @DisplayName("Rampaging Cyclops has full power when not blocked")

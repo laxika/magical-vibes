@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -21,6 +20,7 @@ import java.util.UUID;
 public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,12 +65,14 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
 
         // Store the controller ID so the library reveal choice handler knows
         // to redirect the selected card to the controller's hand
-        gameData.pendingKarnScionControllerId = controllerId;
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice(controllerId));
 
         // Present both cards to the opponent for selection
-        Set<UUID> validIds = Set.of(card1.getId(), card2.getId());
-        gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(revealedCards), validIds,
-                false, true, false);
+        List<UUID> validIds = List.of(card1.getId(), card2.getId());
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                opponentId, new ArrayList<>(revealedCards), validIds,
+                false, true, false, false, 0, null, 1,
+                "Choose a card to put into " + controllerName + "'s hand. The other will be exiled with a silver counter."));
 
         gameBroadcastService.broadcastGameState(gameData);
 

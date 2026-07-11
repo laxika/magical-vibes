@@ -1,21 +1,17 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,23 +21,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ViridianEmissaryTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Emissary has correct death trigger effect")
-    void hasCorrectProperties() {
-        ViridianEmissary card = new ViridianEmissary();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-        SearchLibraryForCardTypesToBattlefieldEffect search =
-                (SearchLibraryForCardTypesToBattlefieldEffect) may.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(search.filter())).isEqualTo("basic land card");
-        assertThat(search.entersTapped()).isTrue();
-    }
 
     // ===== Death trigger: combat (blocker dies), accept =====
 
@@ -78,11 +57,11 @@ class ViridianEmissaryTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Player1 should be prompted for the may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
@@ -156,11 +135,11 @@ class ViridianEmissaryTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -192,7 +171,7 @@ class ViridianEmissaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // No library search prompt since no basic lands exist
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND));
     }

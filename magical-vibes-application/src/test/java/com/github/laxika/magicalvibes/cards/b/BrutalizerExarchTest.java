@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,18 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BrutalizerExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Brutalizer Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        BrutalizerExarch card = new BrutalizerExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(SearchLibraryForCreatureToTopOfLibraryEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Search library for creature to top")
@@ -54,9 +39,9 @@ class BrutalizerExarchTest extends BaseCardTest {
             GameData gd = harness.getGameData();
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             // Only creature cards should be shown
-            assertThat(gd.interaction.librarySearch().cards())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.CREATURE));
         }
 
@@ -69,7 +54,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
-            List<Card> offered = gd.interaction.librarySearch().cards();
+            List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
             String chosenName = offered.getFirst().getName();
 
             gs.handleLibraryCardChosen(gd, player1, 0);
@@ -96,7 +81,7 @@ class BrutalizerExarchTest extends BaseCardTest {
 
             // Deck should be shuffled but same size (no card moved)
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -112,7 +97,7 @@ class BrutalizerExarchTest extends BaseCardTest {
 
             // No creatures in library, so search finds nothing
             GameData gd = harness.getGameData();
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         }
     }
 

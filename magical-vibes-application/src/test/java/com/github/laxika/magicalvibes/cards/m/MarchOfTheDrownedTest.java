@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DireFleetCaptain;
 import com.github.laxika.magicalvibes.cards.h.HeadstrongBrute;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -31,10 +31,10 @@ class MarchOfTheDrownedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(creature.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class MarchOfTheDrownedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
@@ -63,7 +63,7 @@ class MarchOfTheDrownedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -81,11 +81,11 @@ class MarchOfTheDrownedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .contains(pirate1.getId(), pirate2.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
     }
 
     @Test
@@ -98,7 +98,7 @@ class MarchOfTheDrownedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, 1);
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 
@@ -119,9 +119,9 @@ class MarchOfTheDrownedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(pirate.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(pirate.getId());
     }
 
     @Test
@@ -133,7 +133,7 @@ class MarchOfTheDrownedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -148,7 +148,7 @@ class MarchOfTheDrownedTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
         harness.passBothPriorities();
 

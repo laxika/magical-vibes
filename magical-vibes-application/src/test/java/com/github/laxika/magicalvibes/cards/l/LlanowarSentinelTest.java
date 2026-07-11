@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,18 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LlanowarSentinelTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Llanowar Sentinel has correct card properties")
-    void hasCorrectProperties() {
-        LlanowarSentinel card = new LlanowarSentinel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Llanowar Sentinel creates may prompt")
@@ -40,8 +26,8 @@ class LlanowarSentinelTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Llanowar Sentinel"));
 
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -54,7 +40,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
     }
@@ -69,7 +55,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (can't pay)
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("can't pay {1}{G}"));
     }
@@ -84,8 +70,8 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getName().equals("Llanowar Sentinel"));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,27 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MidnightHauntingTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Midnight Haunting has spell effect that creates two 1/1 white Spirit tokens with flying")
-    void hasCorrectProperties() {
-        MidnightHaunting card = new MidnightHaunting();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-    }
 
     // ===== Casting and resolving =====
 

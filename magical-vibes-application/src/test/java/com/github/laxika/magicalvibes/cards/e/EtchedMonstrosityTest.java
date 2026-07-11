@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,32 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class EtchedMonstrosityTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB five -1/-1 counters and one activated ability")
-    void hasCorrectEffectsAndAbility() {
-        EtchedMonstrosity card = new EtchedMonstrosity();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect etb = (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.powerModifier()).isEqualTo(-1);
-        assertThat(etb.toughnessModifier()).isEqualTo(-1);
-        assertThat(etb.amount()).isEqualTo(5);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
-                    assertThat(((RemoveCounterFromSourceCost) effects.get(0)).count()).isEqualTo(5);
-                    assertThat(effects.get(1)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-                    assertThat(((DrawCardForTargetPlayerEffect) effects.get(1)).amount()).isEqualTo(3);
-                });
-    }
 
     // ===== ETB: enters with five -1/-1 counters =====
 

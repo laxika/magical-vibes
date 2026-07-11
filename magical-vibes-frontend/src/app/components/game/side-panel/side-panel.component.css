@@ -3,10 +3,8 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  position: sticky;
-  top: 10px;
-  height: calc(100vh - 20px);
-  align-self: flex-start;
+  height: 100%;
+  box-sizing: border-box;
   background: var(--gradient-parchment);
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
@@ -14,12 +12,13 @@
 }
 
 .card-preview-panel {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   width: 264px;
   height: 370px;
-  margin: 6px auto 0;
+  margin: 6px auto;
   flex-shrink: 0;
 }
 
@@ -32,18 +31,146 @@
 .card-preview-empty {
   width: 264px;
   height: 370px;
-  border-radius: 4px;
+  border-radius: 14px;
   background: var(--gradient-dark-wood);
   border: 3px solid var(--color-dark-border);
   box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
 }
 
-.game-tab {
+.log-tab {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+}
+
+/* Mana pool strip — same dark-wood panel as the player badges; height is
+   always reserved so pips appearing (tapping a land) never shifts the panel. */
+.mana-strip {
+  display: flex;
+  flex-direction: column;
+  height: 41px;
+  box-sizing: border-box;
+  padding: 3px 6px 6px;
+  background: var(--gradient-dark-wood);
+  border: 2px solid var(--color-dark-border);
+  border-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.mana-strip-pips {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 11px;
+}
+
+/* One socket per mana color (W U B R G C), always present so the strip never
+   reshuffles. Empty sockets read as carvings in the wood; floating mana lights
+   the socket up with a color-tinted halo. font-size drives the symbol <img>
+   (it renders at height: 1em). */
+.mana-socket {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  font-size: 17px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 32%, #221511 0%, #100b08 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.85),
+    inset 0 -1px 1px rgba(196, 168, 130, 0.14),
+    0 1px 0 rgba(196, 168, 130, 0.08);
+}
+
+.mana-socket-symbol {
+  display: flex;
+  /* Optical correction: the top inset shadow makes a geometrically centered
+     symbol read high, so nudge it down half a pixel. */
+  transform: translateY(0.5px);
+  filter: grayscale(1) brightness(1.3) opacity(0.16);
+  transition: filter 0.25s ease-out;
+}
+
+.mana-socket.filled .mana-socket-symbol {
+  filter: none;
+}
+
+.mana-socket.filled {
+  background: radial-gradient(circle at 50% 30%, #3a2a1e 0%, #1a1210 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.6),
+    0 0 7px var(--socket-halo),
+    0 0 1px var(--socket-halo);
+  animation: socket-light 0.4s ease-out;
+}
+
+.mana-socket[data-color="W"] { --socket-halo: rgba(248, 231, 185, 0.6); }
+.mana-socket[data-color="U"] { --socket-halo: rgba(110, 170, 255, 0.6); }
+.mana-socket[data-color="B"] { --socket-halo: rgba(178, 150, 200, 0.5); }
+.mana-socket[data-color="R"] { --socket-halo: rgba(255, 115, 70, 0.6); }
+.mana-socket[data-color="G"] { --socket-halo: rgba(100, 205, 125, 0.6); }
+.mana-socket[data-color="C"] { --socket-halo: rgba(205, 195, 175, 0.5); }
+
+.mana-socket-count {
+  position: absolute;
+  bottom: -4px;
+  right: -6px;
+  min-width: 13px;
+  height: 13px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #e2c98e 0%, #a8874a 100%);
+  color: var(--color-dark-wood);
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  animation: count-pop 0.25s ease-out;
+}
+
+@keyframes socket-light {
+  0% {
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.6),
+      0 0 0 var(--socket-halo);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.6),
+      0 0 13px var(--socket-halo),
+      0 0 3px var(--socket-halo);
+  }
+  100% {
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.6),
+      0 0 7px var(--socket-halo),
+      0 0 1px var(--socket-halo);
+  }
+}
+
+@keyframes count-pop {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mana-socket.filled,
+  .mana-socket-count {
+    animation: none;
+  }
 }
 
 .tab-header {
@@ -53,17 +180,29 @@
 
 .tab {
   flex: 1;
-  padding: 8px 12px;
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 2px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--color-text-muted);
   font-family: var(--font-display);
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-badges {
+  display: flex;
+  gap: 3px;
 }
 
 .tab:hover {
@@ -79,18 +218,15 @@
   display: inline-block;
   background: var(--color-red-primary);
   color: var(--color-parchment);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   padding: 1px 5px;
   border-radius: 8px;
-  margin-left: 4px;
-  vertical-align: middle;
   line-height: 1.2;
 }
 
 .tab-badge-opponent {
   background: #4a2a1a;
-  margin-left: 8px;
 }
 
 .tab-content {
@@ -159,7 +295,7 @@
   border-radius: 4px;
   border: 2px solid var(--color-dark-border);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-  margin: 6px 6px 0;
+  margin: 6px;
   flex-shrink: 0;
 }
 
@@ -169,10 +305,12 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  padding: 0 4px;
+  padding: 0 2px;
+  flex-shrink: 0;
 }
 
 .turn-number {
+  white-space: nowrap;
   font-size: 10px;
   font-weight: 600;
   color: var(--color-border-tan);
@@ -190,9 +328,9 @@
 
 .player-badge {
   flex: 1;
-  padding: 8px 10px;
+  padding: 6px 4px;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   transition: all 0.3s;
@@ -245,71 +383,68 @@
   cursor: pointer;
 }
 
-.life-total {
+.badge-name {
   display: block;
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 3px;
-  color: #d4a060;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Life/poison/hand/deck as one row of icon+number pairs; priority is signalled
+   by the gold outline on the badge itself, so no text row is reserved for it. */
+.badge-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px 5px;
+  margin-top: 4px;
   font-family: var(--font-body);
 }
 
-.player-badge.active .life-total {
+.badge-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.badge-stat svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.badge-life {
+  color: #d4a060;
+}
+
+.player-badge.active .badge-life {
   color: #e8c888;
 }
 
-.poison-total {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
+.badge-poison {
   color: #4caf50;
-  font-family: var(--font-body);
 }
 
-.player-badge.active .poison-total {
+.player-badge.active .badge-poison {
   color: #66ff66;
 }
 
-.hand-size {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  margin-top: 2px;
+.badge-hand,
+.badge-deck {
   opacity: 0.8;
-  font-family: var(--font-body);
-}
-
-.deck-size {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  margin-top: 2px;
-  opacity: 0.8;
-  font-family: var(--font-body);
-}
-
-.priority-indicator {
-  display: block;
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 3px;
-  color: var(--color-gold);
-  visibility: visible;
-}
-
-.priority-indicator.hidden {
-  visibility: hidden;
-}
-
-.player-badge.inactive .priority-indicator {
-  color: var(--color-gold);
 }
 
 .player-badge-wrapper {
   position: relative;
   flex: 1;
+  /* Allow shrinking below content width so long player names ellipsize
+     instead of pushing the row past the panel edge. */
+  min-width: 0;
 }
 
 .player-menu {
@@ -348,6 +483,181 @@
 .player-menu-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(139, 26, 26, 0.5);
+}
+
+/* Choice prompts — live here instead of above the battlefield so popping up
+   never shifts the board layout. */
+
+.side-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 6px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 45vh;
+}
+
+.side-prompts:empty {
+  display: none;
+}
+
+.side-prompt {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 2px solid;
+}
+
+.side-prompt-text {
+  display: block;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.side-prompt-buttons {
+  display: flex;
+}
+
+.side-prompt-buttons-stacked {
+  flex-direction: column;
+}
+
+.btn-side-prompt {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.side-prompt-buttons:not(.side-prompt-buttons-stacked) .btn-side-prompt + .btn-side-prompt {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-side-prompt:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.btn-side-prompt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-side-prompt.mode-option {
+  text-align: left;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.btn-side-prompt.mode-option-selected {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 3px 0 0 var(--color-parchment);
+}
+
+.side-prompt.prompt-targeting {
+  background: linear-gradient(135deg, var(--color-green-primary), var(--color-green-dark));
+  border-color: var(--color-green-dark);
+  box-shadow: 0 4px 12px rgba(45, 122, 80, 0.4);
+}
+
+.side-prompt.prompt-spell-targeting {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-color: #8e2418;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.side-prompt.prompt-mind-control {
+  background: linear-gradient(135deg, #6a1b9a, #4a148c);
+  border-color: #38006b;
+  box-shadow: 0 4px 12px rgba(106, 27, 154, 0.4);
+}
+
+.side-prompt.prompt-hand-choice {
+  background: linear-gradient(135deg, #4b0082, #2e0854);
+  border-color: #3a0068;
+  box-shadow: 0 4px 12px rgba(75, 0, 130, 0.4);
+}
+
+.side-prompt.prompt-list-choice {
+  background: linear-gradient(135deg, var(--color-dark-wood), var(--color-darkest-wood));
+  border-color: var(--color-dark-border);
+  box-shadow: 0 4px 12px rgba(43, 27, 23, 0.4);
+}
+
+.side-prompt.prompt-permanent-choice {
+  background: linear-gradient(135deg, #c9854a, #a06020);
+  border-color: #8a5010;
+  box-shadow: 0 4px 12px rgba(201, 133, 74, 0.4);
+}
+
+.color-choice-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 0 8px 8px;
+}
+
+.btn-color-choice {
+  padding: 8px 16px;
+  border: 2px solid rgba(245, 230, 200, 0.5);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-color-choice:hover {
+  transform: scale(1.05);
+}
+
+.btn-color-choice[data-color="WHITE"],
+.btn-color-choice[data-color="PLAINS"] {
+  background: var(--color-border-gold);
+  color: var(--color-dark-wood);
+  border-color: #a08030;
+}
+
+.btn-color-choice[data-color="BLUE"],
+.btn-color-choice[data-color="ISLAND"] {
+  background: var(--color-blue-primary);
+  border-color: var(--color-blue-dark);
+}
+
+.btn-color-choice[data-color="BLACK"],
+.btn-color-choice[data-color="SWAMP"] {
+  background: var(--color-darkest-wood);
+  border-color: var(--color-dark-border);
+}
+
+.btn-color-choice[data-color="RED"],
+.btn-color-choice[data-color="MOUNTAIN"] {
+  background: var(--color-red-primary);
+  border-color: #6b1010;
+}
+
+.btn-color-choice[data-color="GREEN"],
+.btn-color-choice[data-color="FOREST"] {
+  background: var(--color-green-primary);
+  border-color: var(--color-green-dark);
 }
 
 .action-bar {

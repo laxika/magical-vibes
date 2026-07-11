@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "211")
+@CardRegistration(set = "9ED", collectorNumber = "196")
 public class GuerrillaTactics extends Card {
 
     public GuerrillaTactics() {

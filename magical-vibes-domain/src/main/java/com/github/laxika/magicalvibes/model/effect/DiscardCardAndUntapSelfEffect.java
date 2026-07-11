@@ -5,8 +5,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Commonly wrapped in {@link MayEffect} for "you may discard a card. If you do, untap [source]."
  * <p>
- * Uses {@code pendingUntapAfterDiscardPermanentId} on GameData to track which permanent to untap
- * after the interactive discard completes.
+ * Uses {@code DiscardFollowUp.untap} carried on the discard choice to track which permanent to
+ * untap after the interactive discard completes.
  */
 public record DiscardCardAndUntapSelfEffect() implements CardEffect {
 }

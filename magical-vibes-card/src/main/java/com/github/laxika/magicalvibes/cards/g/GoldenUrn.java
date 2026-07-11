@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -24,7 +25,7 @@ public class GoldenUrn extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new GainLifeEqualToChargeCountersOnSourceEffect()),
+                List.of(new SacrificeSelfCost(), new GainLifeEffect(new CountersOnSource(CounterType.CHARGE))),
                 "{T}, Sacrifice Golden Urn: You gain life equal to the number of charge counters on Golden Urn."
         ));
     }

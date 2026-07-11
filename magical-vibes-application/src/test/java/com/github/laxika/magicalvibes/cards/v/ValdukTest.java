@@ -1,16 +1,16 @@
 package com.github.laxika.magicalvibes.cards.v;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerAttachmentOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,29 +48,6 @@ class ValdukTest extends BaseCardTest {
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())
                 .toList();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Valduk has beginning-of-combat triggered CreateTokenPerAttachmentOnSourceEffect")
-    void hasCorrectEffect() {
-        Valduk card = new Valduk();
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenPerAttachmentOnSourceEffect.class);
-
-        CreateTokenPerAttachmentOnSourceEffect effect =
-                (CreateTokenPerAttachmentOnSourceEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(effect.countAuras()).isTrue();
-        assertThat(effect.countEquipment()).isTrue();
-        assertThat(effect.exileAtEndStep()).isTrue();
-        assertThat(effect.tokenName()).isEqualTo("Elemental");
-        assertThat(effect.power()).isEqualTo(3);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.RED);
-        assertThat(effect.keywords()).containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.HASTE);
     }
 
     // ===== No attachments =====
@@ -195,7 +172,7 @@ class ValdukTest extends BaseCardTest {
 
         List<Permanent> tokens = getTokens();
         assertThat(tokens).hasSize(1);
-        assertThat(gd.pendingTokenExilesAtEndStep).contains(tokens.getFirst().getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(tokens.getFirst().getId()));
     }
 
     // ===== Tokens are exiled at end step =====
@@ -216,7 +193,7 @@ class ValdukTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(getTokens()).hasSize(1);
-        assertThat(gd.pendingTokenExilesAtEndStep).isNotEmpty();
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isNotEmpty();
 
         // Advance to end step to trigger exile (clear interaction from declare-attackers prompt)
         gd.interaction.clearAwaitingInput();

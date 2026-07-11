@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,20 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SoulFeastTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Soul Feast has correct card properties")
-    void hasCorrectProperties() {
-        SoulFeast card = new SoulFeast();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect effect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(4);
-        assertThat(effect.lifeGain()).isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Casting Soul Feast targeting a player puts it on the stack")

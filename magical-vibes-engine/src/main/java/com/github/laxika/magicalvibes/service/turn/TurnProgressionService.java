@@ -1,4 +1,11 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageReflection;
+import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -6,6 +13,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -34,13 +43,15 @@ public class TurnProgressionService {
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
-                && (!gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()
-                    || !gameData.pendingTokenExilesAtEndOfCombat.isEmpty()
-                    || !gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.isEmpty()
-                    || !gameData.pendingExileAndReturnTransformedAtEndOfCombat.isEmpty())) {
+                && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(ExileTokenAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
+            combatService.processEndOfCombatDestructions(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
             return;
@@ -69,6 +80,21 @@ public class TurnProgressionService {
         if (gameData.currentStep == TurnStep.POSTCOMBAT_MAIN && gameData.additionalCombatMainPhasePairs > 0) {
             next = TurnStep.BEGINNING_OF_COMBAT;
             gameData.additionalCombatMainPhasePairs--;
+        }
+
+        // Blinding Angel: the active player skips their next combat phase — jump straight from the
+        // precombat main phase to the postcombat main phase.
+        if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
+            next = TurnStep.POSTCOMBAT_MAIN;
+            int remaining = gameData.skipNextCombatPhaseCount.get(gameData.activePlayerId) - 1;
+            if (remaining > 0) {
+                gameData.skipNextCombatPhaseCount.put(gameData.activePlayerId, remaining);
+            } else {
+                gameData.skipNextCombatPhaseCount.remove(gameData.activePlayerId);
+            }
+            String skipLog = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their combat phase.";
+            gameBroadcastService.logAndBroadcast(gameData, skipLog);
         }
 
         turnCleanupService.drainManaPools(gameData);
@@ -111,8 +137,7 @@ public class TurnProgressionService {
                     int discardCount = hand.size() - maxHandSize;
                     gameData.cleanupDiscardPending = true;
                     gameData.discardCausedByOpponent = false;
-                    gameData.interaction.setDiscardRemainingCount(discardCount);
-                    playerInputService.beginDiscardChoice(gameData, activePlayerId);
+                    playerInputService.beginDiscardChoice(gameData, activePlayerId, discardCount);
                     return;
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects
@@ -140,6 +165,17 @@ public class TurnProgressionService {
 
         gameData.activePlayerId = nextActive;
 
+        // Check for pending Taunt on the new active player: promote it to an active this-turn requirement
+        gameData.tauntedThisTurn.clear();
+        UUID taunter = gameData.tauntedNextTurn.remove(nextActive);
+        if (taunter != null && gameData.playerIds.contains(taunter)) {
+            gameData.tauntedThisTurn.put(nextActive, taunter);
+            String taunterName = gameData.playerIdToName.get(taunter);
+            String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
+            gameBroadcastService.logAndBroadcast(gameData, tauntLog);
+            log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
+        }
+
         // Check for pending Mindslaver control on the new active player
         UUID pendingController = gameData.pendingTurnControl.remove(nextActive);
         if (pendingController != null && gameData.playerIds.contains(pendingController)) {
@@ -155,21 +191,27 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
         gameData.priorityPassedBy.clear();
         gameData.landsPlayedThisTurn.clear();
+        gameData.additionalLandsThisTurn.clear();
         gameData.permanentsEnteredBattlefieldThisTurn.clear();
         gameData.snapshotSpellCountsAndClear(gameData.spellsCastLastTurn);
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
         gameData.playersDeclaredAttackersThisTurn.clear();
+        gameData.creaturesAttackedCountThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
+        gameData.lifeGainedThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
-        gameData.pendingDelayedCombatDamageLoots.clear();
+        gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
+        gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
+        gameData.damageDealtToPlayersThisTurn.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
@@ -186,6 +228,29 @@ public class TurnProgressionService {
         if (activePlayerBf != null) {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
         }
+        // "Until your next turn" floating continuous effects controlled by the player whose turn
+        // is beginning wear off now. An expiring layer-1 copy effect (e.g. Shapesharer) reverts
+        // the copied permanent's card — which may sit on any player's battlefield. A newer copy
+        // effect overwrites {@code copyUntilNextTurnControllerId}, so an older effect expiring
+        // first must not revert the card out from under the still-active newer one.
+        for (FloatingContinuousEffect expired : gameData.expireFloatingEffectsAtTurnStart(nextActive)) {
+            if (expired.effect() instanceof MakeTargetCopyOfTargetCreatureUntilNextTurnEffect
+                    && expired.affectedPermanentId() != null) {
+                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
+                if (copy != null && copy.isCopyUntilControllerNextTurn()
+                        && nextActive.equals(copy.getCopyUntilNextTurnControllerId())) {
+                    copy.revertUntilNextTurnCopy();
+                }
+            }
+        }
+
+        // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
+        // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
+        if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
+            playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
+            gameBroadcastService.broadcastGameState(gameData);
+            return;
+        }
 
         untapStepService.untapPermanents(gameData, nextActive);
 
@@ -196,6 +261,36 @@ public class TurnProgressionService {
         }
 
         completeTurnAdvance(gameData);
+    }
+
+    /**
+     * Resumes the paused untap step after the active player answers a Storage Matrix type choice.
+     * Only permanents matching {@code restrictPredicate} untap; the rest of the untap-step
+     * bookkeeping and turn advance then proceeds exactly as {@link #advanceTurn} would have.
+     */
+    public void resumeStorageMatrixUntap(GameData gameData, UUID activePlayerId,
+                                         com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrictPredicate) {
+        untapStepService.untapPermanents(gameData, activePlayerId, restrictPredicate);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        completeTurnAdvance(gameData);
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(permanentId)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -236,6 +331,10 @@ public class TurnProgressionService {
 
     public void applyCleanupResets(GameData gameData) {
         turnCleanupService.applyCleanupResets(gameData);
+    }
+
+    public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
+        stepTriggerService.processNextUpkeepAnyTargetTrigger(gameData);
     }
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {

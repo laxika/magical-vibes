@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,18 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MindcrankTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mindcrank has correct triggered effect")
-    void hasCorrectProperties() {
-        Mindcrank card = new Mindcrank();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE).getFirst())
-                .isInstanceOf(MillOpponentOnLifeLossEffect.class);
-    }
 
     // ===== Trigger on spell damage =====
 

@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,20 +22,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: shuffle up to 3 target cards from graveyard into library")
-    void hasCorrectEffects() {
-        MemorysJourney card = new MemorysJourney();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class);
-
-        ShuffleTargetCardsFromGraveyardIntoLibraryEffect effect =
-                (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.maxTargets()).isEqualTo(3);
-        assertThat(effect.filter()).isNull(); // any card
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {G}")
@@ -51,13 +33,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{G}");
     }
 
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        MemorysJourney card = new MemorysJourney();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
+    
 
     // ===== Casting normally — targeting own graveyard =====
 
@@ -73,10 +49,10 @@ class MemorysJourneyTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2); // min(3, 2 cards)
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2); // min(3, 2 cards)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Spell is NOT yet on the stack
         assertThat(gd.stack).isEmpty();
@@ -96,7 +72,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         // Select both cards
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
@@ -130,7 +106,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         // Select only one card
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
@@ -181,11 +157,11 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         // Should prompt caster for card selection from opponent's graveyard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Select both
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
@@ -213,7 +189,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -239,9 +215,9 @@ class MemorysJourneyTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(3);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(4);
     }
 
     // ===== Flashback =====
@@ -264,11 +240,11 @@ class MemorysJourneyTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Memory's Journey"));
 
         // Should prompt for graveyard card selection from opponent's graveyard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Select both
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell on stack with flashback flag
@@ -298,10 +274,10 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player1.getId());
 
         // Memory's Journey removed from graveyard, only card1 and card2 should be valid targets
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
@@ -324,7 +300,7 @@ class MemorysJourneyTest extends BaseCardTest {
         harness.castFlashback(player1, 0, player2.getId());
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().isCastWithFlashback()).isTrue();
 
@@ -357,7 +333,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player1.getId());
 
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();

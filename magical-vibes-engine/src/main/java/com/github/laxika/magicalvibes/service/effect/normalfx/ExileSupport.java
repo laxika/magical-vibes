@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -45,10 +45,12 @@ public class ExileSupport {
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped) {
@@ -67,9 +69,23 @@ public class ExileSupport {
         log.info("Game {} - {} exiles {}; will return at next {}",
                 gameData.id, entry.getCard().getName(), card.getName(), returnStep);
 
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId, returnTapped, false, returnStep));
+        gameData.queueDelayedAction(new PendingExileReturn(card, ownerId, returnTapped, false, returnStep));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Grants {@code ownerId} permission to play (cast) the exiled card until the end of their next
+     * turn, using {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireAtTurnEnd}.
+     *
+     * <p>The expiry turn is owner-relative: if the owner is the active player, their next turn is
+     * two turns away; otherwise the upcoming turn is theirs. The permission is cleared at the end of
+     * that turn by {@code TurnCleanupService}.
+     */
+    public void grantPlayUntilOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
+        gameData.exilePlayPermissions.put(cardId, ownerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
     }
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
@@ -90,12 +106,11 @@ public class ExileSupport {
      */
     public void handleKnowledgePoolCastChoice(GameData gameData, Player player, List<UUID> cardIds) {
         UUID playerId = player.getId();
-        UUID kpPermanentId = gameData.knowledgePoolSourcePermanentId;
+        PendingKnowledgePoolCast pendingCast = gameData.pollPendingInteraction(PendingKnowledgePoolCast.class);
+        UUID kpPermanentId = pendingCast != null ? pendingCast.sourcePermanentId() : null;
 
         // Clear interaction state
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearKnowledgePoolCastChoice();
-        gameData.knowledgePoolSourcePermanentId = null;
 
         if (cardIds == null || cardIds.isEmpty()) {
             // Player declined
@@ -152,7 +167,7 @@ public class ExileSupport {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                                 validTargets.add(p.getId());
                             }
                         } else if (gameQueryService.isCreature(gameData, p)) {
@@ -209,16 +224,17 @@ public class ExileSupport {
      * Called from GameService.handleMultipleCardsChosen dispatch.
      */
     public void handleMirrorOfFateChoice(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MIRROR_OF_FATE_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class) == null) {
             throw new IllegalStateException("Not awaiting Mirror of Fate choice");
         }
-        InteractionContext.MirrorOfFateChoice ctx = gameData.interaction.mirrorOfFateChoiceContext();
+        PendingInteraction.MirrorOfFateChoice ctx =
+                gameData.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class);
         if (ctx == null || !player.getId().equals(ctx.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         // Validate selected card IDs against valid set
-        Set<UUID> validIds = ctx.validCardIds();
+        List<UUID> validIds = ctx.validCardIds();
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
@@ -229,7 +245,6 @@ public class ExileSupport {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMirrorOfFateChoice();
 
         exileLibraryAndPutChosenOnTop(gameData, player.getId(), cardIds);
     }
@@ -291,7 +306,9 @@ public class ExileSupport {
             gameBroadcastService.logAndBroadcast(gameData, putLog);
             log.info("Game {} - {} puts {} exiled cards on top of library, awaiting order (Mirror of Fate)",
                     gameData.id, controllerName, chosenCards.size());
-            playerInputService.beginLibraryReorderFromExile(gameData, controllerId, chosenCards);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, chosenCards, false, controllerId,
+                    "Put these cards on top of your library in any order (top to bottom)."));
             gameBroadcastService.broadcastGameState(gameData);
         }
     }

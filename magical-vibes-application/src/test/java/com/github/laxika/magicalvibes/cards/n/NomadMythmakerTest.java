@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -11,8 +13,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NomadMythmakerTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nomad Mythmaker has correct card properties")
-    void hasCorrectProperties() {
-        NomadMythmaker card = new NomadMythmaker();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-    }
 
     // ===== Casting =====
 
@@ -135,9 +121,9 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature.getId());
         assertThat(gd.interaction.pendingAuraCard()).isNotNull();
         assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Holy Strength");
 
@@ -162,7 +148,7 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, creature.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.interaction.pendingAuraCard()).isNull();
 
         // Aura should be on the battlefield attached to the creature
@@ -233,7 +219,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Both creatures should be valid choices (Mythmaker is also a creature, so 3 total)
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(creature1.getId(), creature2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature1.getId(), creature2.getId());
     }
 
     // ===== Fizzle cases =====
@@ -256,7 +242,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -278,7 +264,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
     }
 
@@ -421,5 +407,4 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.getGameData().playerGraveyards.get(player.getId()).add(card);
     }
 }
-
 

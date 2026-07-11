@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CounterlashEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,19 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CounterlashTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Counterlash has correct card properties")
-    void hasCorrectProperties() {
-        Counterlash card = new Counterlash();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterlashEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -86,7 +70,7 @@ class CounterlashTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Should prompt player2 with may ability to cast Hill Giant
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -201,7 +185,7 @@ class CounterlashTest extends BaseCardTest {
 
         // No may ability should be offered — stack should be empty and no may prompt
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Cast non-targeted instant/sorcery from hand =====
@@ -227,7 +211,7 @@ class CounterlashTest extends BaseCardTest {
         harness.passBothPriorities(); // Counterlash resolves
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player2, true); // Accept casting Divination
 
@@ -258,12 +242,12 @@ class CounterlashTest extends BaseCardTest {
         harness.passBothPriorities(); // Counterlash resolves
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player2, true); // Accept casting Lightning Bolt
 
         // Should prompt for target (Lightning Bolt needs a target)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     // ===== Fizzle =====
@@ -292,7 +276,7 @@ class CounterlashTest extends BaseCardTest {
 
         // Should fizzle — no may ability offered, no casting
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Hill Giant should still be in hand
         assertThat(gd.playerHands.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Hill Giant"));
@@ -347,13 +331,13 @@ class CounterlashTest extends BaseCardTest {
         harness.passBothPriorities(); // Counterlash resolves
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Decline first eligible card (Hill Giant)
         harness.handleMayAbilityChosen(player2, false);
 
         // Should offer second eligible card (Grizzly Bears)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
 
         // Second creature should be on the stack

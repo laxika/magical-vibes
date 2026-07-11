@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,21 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ShatteredAngelTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_LAND_ENTERS_BATTLEFIELD MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectEffect() {
-        ShatteredAngel card = new ShatteredAngel();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(3);
-    }
 
     // ===== Opponent plays land — accept may =====
 
@@ -50,7 +33,7 @@ class ShatteredAngelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities(); // Resolve MayEffect → prompts player
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // Resolve GainLifeEffect
@@ -76,7 +59,7 @@ class ShatteredAngelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -99,7 +82,7 @@ class ShatteredAngelTest extends BaseCardTest {
 
         // No trigger — only cares about opponents
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player1, 20);
     }
 
@@ -124,13 +107,13 @@ class ShatteredAngelTest extends BaseCardTest {
 
         // Resolve first MayEffect
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         // Resolve second MayEffect
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 

@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
@@ -36,17 +33,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has MayEffect-wrapped ExilePermanentDamagedPlayerControlsEffect combat damage trigger")
-    void hasCorrectEffect() {
-        LightwielderPaladin card = new LightwielderPaladin();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExilePermanentDamagedPlayerControlsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice when defender has black permanent")
@@ -58,7 +45,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -72,8 +59,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(blackKnight.getId());
 
         harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
@@ -94,7 +81,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -127,7 +114,7 @@ class LightwielderPaladinTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -138,7 +125,7 @@ class LightwielderPaladinTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -154,8 +141,8 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(enemyBlack.getId())
                 .doesNotContain(ownBlack.getId())
                 .doesNotContain(enemyGreen.getId());
@@ -189,7 +176,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
         harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 }

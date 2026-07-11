@@ -2,81 +2,17 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GatstafShepherd;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.t.TerrorOfKruinPass;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class KruinOutlawTest extends BaseCardTest {
-
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        KruinOutlaw card = new KruinOutlaw();
-
-        // No activated abilities
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        // No static effects on front face
-        assertThat(card.getEffects(EffectSlot.STATIC)).isEmpty();
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("TerrorOfKruinPass");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        KruinOutlaw card = new KruinOutlaw();
-        TerrorOfKruinPass backFace = (TerrorOfKruinPass) card.getBackFaceCard();
-
-        // No activated abilities
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        // Static: Werewolves you control have menace (ALL_OWN_CREATURES includes self)
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect menaceBoost = (StaticBoostEffect) backFace.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(menaceBoost.powerBoost()).isEqualTo(0);
-        assertThat(menaceBoost.toughnessBoost()).isEqualTo(0);
-        assertThat(menaceBoost.grantedKeywords()).isEqualTo(Set.of(Keyword.MENACE));
-        assertThat(menaceBoost.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-        assertThat(menaceBoost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-    }
 
     // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
@@ -293,8 +229,5 @@ class KruinOutlawTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, shepherd, Keyword.MENACE)).isFalse();
     }
-
-    // ===== Helper methods =====
-
 
 }

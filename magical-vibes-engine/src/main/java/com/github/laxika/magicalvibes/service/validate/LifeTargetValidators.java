@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -23,9 +24,13 @@ public class LifeTargetValidators {
         tvs.requireTargetPlayer(ctx);
     }
 
-    @ValidatesTarget(TargetPlayerLosesLifeEffect.class)
-    public void validateTargetPlayerLosesLife(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(LoseLifeEffect.class)
+    public void validateLoseLife(TargetValidationContext ctx, LoseLifeEffect effect) {
+        // Only the target-player recipient targets a player; controller / each-player / each-opponent
+        // take no target and must not have a player-target requirement forced on them.
+        if (effect.recipient() == LoseLifeRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(TargetPlayerGainsLifeEffect.class)
@@ -33,18 +38,17 @@ public class LifeTargetValidators {
         tvs.requireTargetPlayer(ctx);
     }
 
-    @ValidatesTarget(GiveTargetPlayerPoisonCountersEffect.class)
-    public void validateGiveTargetPlayerPoisonCounters(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(GivePoisonCountersEffect.class)
+    public void validateGivePoisonCounters(TargetValidationContext ctx, GivePoisonCountersEffect effect) {
+        // Only the target-player recipient targets a player; controller / each-player / enchanted-
+        // permanent-controller take no player target and must not have one forced on them.
+        if (effect.recipient() == PoisonRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(DrainLifePerControlledPermanentEffect.class)
     public void validateDrainLifePerControlledPermanent(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
-
-    @ValidatesTarget(TargetPlayerLosesLifePerControlledPermanentEffect.class)
-    public void validateTargetPlayerLosesLifePerControlledPermanent(TargetValidationContext ctx) {
         tvs.requireTargetPlayer(ctx);
     }
 }

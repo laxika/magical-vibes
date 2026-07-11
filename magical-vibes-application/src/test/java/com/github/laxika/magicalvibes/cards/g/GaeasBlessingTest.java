@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,43 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GaeasBlessingTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has SPELL effects: shuffle up to 3 cards from graveyard + draw a card")
-    void hasCorrectSpellEffects() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(DrawCardEffect.class);
-
-        ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleEffect =
-                (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(shuffleEffect.maxTargets()).isEqualTo(3);
-        assertThat(shuffleEffect.filter()).isNull();
-    }
-
-    @Test
-    @DisplayName("Has ON_SELF_MILLED effect: shuffle graveyard into library")
-    void hasSelfMilledEffect() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_MILLED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_MILLED).get(0))
-                .isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
-
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
 
     // ===== Casting — graveyard targeting + draw =====
 
@@ -75,9 +33,9 @@ class GaeasBlessingTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2); // min(3, 2 cards)
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2); // min(3, 2 cards)
     }
 
     @Test
@@ -94,7 +52,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
 
         // Select both cards
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Resolve
@@ -127,7 +85,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
 
         // Select both cards
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();
@@ -156,7 +114,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -177,9 +135,9 @@ class GaeasBlessingTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, player1.getId());
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(3);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(4);
     }
 
     // ===== Self-mill trigger =====

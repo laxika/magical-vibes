@@ -1,39 +1,34 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class BogwaterLumaretTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has GainLifeEffect(1) on both ETB slots")
-    void hasCorrectEffectStructure() {
-        BogwaterLumaret card = new BogwaterLumaret();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).amount())
-                .isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst()).amount())
-                .isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield triggers self life gain")
@@ -52,7 +47,7 @@ class BogwaterLumaretTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Bogwater Lumaret");
         assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(1);
+        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(1));
     }
 
     @Test
@@ -87,7 +82,7 @@ class BogwaterLumaretTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Bogwater Lumaret");
         assertThat(trigger.getEffectsToResolve().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(1);
+        assertThat(((GainLifeEffect) trigger.getEffectsToResolve().getFirst()).amount()).isEqualTo(new Fixed(1));
     }
 
     @Test

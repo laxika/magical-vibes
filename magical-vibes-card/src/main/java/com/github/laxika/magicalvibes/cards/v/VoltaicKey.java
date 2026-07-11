@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -16,7 +18,7 @@ public class VoltaicKey extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new UntapTargetPermanentEffect()),
+                List.of(new UntapPermanentsEffect(TapUntapScope.TARGET)),
                 "{1}, {T}: Untap target artifact.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsArtifactPredicate(),

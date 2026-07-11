@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -12,10 +13,11 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "8")
+@CardRegistration(set = "9ED", collectorNumber = "5")
 public class BallistaSquad extends Card {
 
     public BallistaSquad() {
-        addActivatedAbility(new ActivatedAbility(true, "{X}{W}", List.of(new DealXDamageToTargetCreatureEffect()),
+        addActivatedAbility(new ActivatedAbility(true, "{X}{W}", List.of(new DealDamageToTargetCreatureEffect(new XValue())),
                 "{X}{W}, {T}: Ballista Squad deals X damage to target attacking or blocking creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

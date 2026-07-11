@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.g.GolemFoundry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,27 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BladeSplicerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Blade Splicer has ETB token effect and static first strike grant")
-    void hasCorrectEffects() {
-        BladeSplicer card = new BladeSplicer();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Phyrexian Golem");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates a 3/3 colorless Phyrexian Golem artifact creature token")

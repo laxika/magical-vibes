@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "90")
+@CardRegistration(set = "9ED", collectorNumber = "85")
 public class MahamotiDjinn extends Card {
 }

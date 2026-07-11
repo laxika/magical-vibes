@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,31 +11,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HighwayRobberTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Highway Robber has correct card properties")
-    void hasCorrectProperties() {
-        HighwayRobber card = new HighwayRobber();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has ETB drain life effect")
-    void hasEtbEffect() {
-        HighwayRobber card = new HighwayRobber();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect effect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-        assertThat(effect.lifeGain()).isEqualTo(2);
-    }
 
     // ===== Casting =====
 

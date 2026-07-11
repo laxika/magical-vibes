@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,29 +11,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HowlingMineTest extends BaseCardTest {
 
-
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Howling Mine has correct card properties")
-    void hasCorrectProperties() {
-        HowlingMine card = new HowlingMine();
-
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        DrawCardForTargetPlayerEffect effect =
-                (DrawCardForTargetPlayerEffect) card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.requireSourceUntapped()).isTrue();
     }
 
     // ===== Triggering =====

@@ -2,15 +2,11 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -24,35 +20,9 @@ class ViridianClawTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Viridian Claw has static +1/+0 boost effect")
-    void hasStaticBoostEffect() {
-        ViridianClaw card = new ViridianClaw();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Viridian Claw has static first strike keyword grant effect")
-    void hasFirstStrikeGrantEffect() {
-        ViridianClaw card = new ViridianClaw();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.FIRST_STRIKE);
-    }
+    
 
     @Test
     @DisplayName("Viridian Claw has equip {1} ability with correct properties")

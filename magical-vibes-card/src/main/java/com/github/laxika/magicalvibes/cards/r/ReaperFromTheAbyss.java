@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +27,7 @@ public class ReaperFromTheAbyss extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DEMON))
                 )),
                 "Target must be a non-Demon creature"
-        )).addEffect(EffectSlot.END_STEP_TRIGGERED, new MorbidConditionalEffect(
+        )).addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(new Morbid(), 
                 new DestroyTargetPermanentEffect()
         ));
     }

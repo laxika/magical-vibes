@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,30 +8,24 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +45,6 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
 
-    private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -62,12 +54,16 @@ public class ChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
         }
-        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
+        PendingInteraction.ColorChoice colorChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -120,8 +116,16 @@ public class ChoiceHandlerService {
             handleMassProtectionColorChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.DiscardChosenColorChoice ctx) {
+            handleDiscardChosenColorChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
+            handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
@@ -144,12 +148,19 @@ public class ChoiceHandlerService {
             handleSphinxAmbassadorNameChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.StorageMatrixUntapChoice ctx) {
+            handleStorageMatrixUntapChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.NameCardMillGainLifeChoice ctx) {
+            handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
+            return;
+        }
         CardColor color = CardColor.valueOf(colorName);
         UUID permanentId = colorChoice.permanentId();
         UUID etbTargetId = colorChoice.etbTargetId();
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
         if (perm != null) {
@@ -173,11 +184,31 @@ public class ChoiceHandlerService {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         int amount = ctx.amount();
-        if (ctx.flashbackOnly()) {
+        if (ctx.spellOrAbilitySubtype()) {
+            // "Any combination of colors" — add 1 mana of the chosen color per choice
+            manaPool.addSubtypeSpellOrAbilityMana(ctx.restrictedToCreatureSubtype(), manaColor, 1);
+
+            String subtypeLabel = ctx.restrictedToCreatureSubtype().getDisplayName();
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase()
+                    + " mana (" + subtypeLabel + " spells or abilities only).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} adds one {} {}-spell-or-ability mana", gameData.id, player.getUsername(), colorName.toLowerCase(), subtypeLabel);
+
+            // If more mana to choose, prompt again for the next color
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(
+                        ctx.playerId(), remaining, ctx.restrictedToCreatureSubtype());
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+        } else if (ctx.flashbackOnly()) {
             // "Any combination of colors" — add 1 mana of the chosen color per choice
             manaPool.addFlashbackOnlyMana(manaColor, 1);
 
@@ -189,14 +220,16 @@ public class ChoiceHandlerService {
             int remaining = amount - 1;
             if (remaining > 0) {
                 ChoiceContext.ManaColorChoice nextCtx = new ChoiceContext.ManaColorChoice(ctx.playerId(), ctx.fromCreature(), remaining, null, true);
-                gameData.interaction.beginColorChoice(ctx.playerId(), null, null, nextCtx);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                sessionManager.sendToPlayer(ctx.playerId(), new ChooseFromListMessage(colors, "Choose a color of mana to add (flashback only)."));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add (flashback only)."));
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
+        } else if (ctx.instantSorceryOnly()) {
+            manaPool.addInstantSorceryOnlyColored(manaColor, amount);
         } else {
             manaPool.add(manaColor, amount);
             if (ctx.fromCreature()) {
@@ -204,7 +237,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        if (!ctx.flashbackOnly()) {
+        if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype()) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -225,7 +258,6 @@ public class ChoiceHandlerService {
         ManaColor manaColor = ManaColor.valueOf(colorName);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         ManaPool manaPool = gameData.playerManaPools.get(ctx.playerId());
         // Add as persistent mana — doesn't drain at step/phase transitions until end of turn
@@ -250,7 +282,6 @@ public class ChoiceHandlerService {
 
         ChoiceContext.TextChangeToWord choiceContext =
                 new ChoiceContext.TextChangeToWord(ctx.targetId(), chosenWord, isColor);
-        gameData.interaction.beginColorChoice(player.getId(), null, null, choiceContext);
 
         List<String> remainingOptions;
         String promptType;
@@ -262,7 +293,8 @@ public class ChoiceHandlerService {
             promptType = "basic land type";
         }
 
-        sessionManager.sendToPlayer(player.getId(), new ChooseFromListMessage(remainingOptions, "Choose the replacement " + promptType + "."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                player.getId(), null, null, choiceContext, remainingOptions, "Choose the replacement " + promptType + "."));
         log.info("Game {} - Awaiting {} to choose replacement word for text change", gameData.id, player.getUsername());
     }
 
@@ -278,7 +310,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
@@ -323,7 +354,6 @@ public class ChoiceHandlerService {
 
     private void handleCardNameChosen(GameData gameData, Player player, String cardName, ChoiceContext.CardNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Card card = ctx.card();
         UUID controllerId = ctx.controllerId();
@@ -360,7 +390,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
@@ -395,7 +424,6 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(playerId);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         if (deck == null || deck.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, playerName + " has no cards to reveal for Abundance.");
@@ -457,7 +485,6 @@ public class ChoiceHandlerService {
 
     private void handleProtectionColorChoice(GameData gameData, Player player, String chosenValue, ChoiceContext.ProtectionColorChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
@@ -484,7 +511,6 @@ public class ChoiceHandlerService {
     private void handleMassProtectionColorChoice(GameData gameData, Player player, String chosenValue,
             ChoiceContext.MassProtectionColorChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         CardColor color = CardColor.valueOf(chosenValue);
         String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
@@ -514,6 +540,57 @@ public class ChoiceHandlerService {
         resumeAndAutoPass(gameData);
     }
 
+    private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
+            ChoiceContext.DiscardChosenColorChoice ctx) {
+        CardColor color = CardColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String colorLabel = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " chooses " + colorLabel.toLowerCase()
+                    + ". " + targetName + " reveals an empty hand.");
+        } else {
+            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " chooses " + colorLabel.toLowerCase()
+                    + ". " + targetName + " reveals their hand: " + cardNames + ".");
+        }
+
+        // A card is "of that color" per its actual color (Scryfall colors array, honouring
+        // hybrid/multicolor). Lands are excluded: the oracle loader derives a colorless land's
+        // "colors" from its color identity (e.g. Forest -> green), but a Forest is a colorless card
+        // and must not be discarded. Genuinely colored lands (color indicator) don't exist this era.
+        List<Card> toDiscard = hand == null ? List.of()
+                : new ArrayList<>(hand.stream()
+                        .filter(c -> !c.hasType(CardType.LAND) && c.getColors().contains(color))
+                        .toList());
+        if (!toDiscard.isEmpty()) {
+            gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
+            hand.removeAll(toDiscard);
+            for (Card card : toDiscard) {
+                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, targetName + " discards " + toDiscard.size()
+                    + " " + colorLabel.toLowerCase() + " card" + (toDiscard.size() != 1 ? "s" : "") + ".");
+            log.info("Game {} - {} discards {} {} card(s) to Persecute-style effect",
+                    gameData.id, targetName, toDiscard.size(), colorLabel.toLowerCase());
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + " has no " + colorLabel.toLowerCase()
+                    + " cards to discard.");
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
     /**
      * Resumes resolving any remaining effects on the spell/ability that paused for this choice,
      * then continues the normal auto-pass flow.
@@ -534,7 +611,6 @@ public class ChoiceHandlerService {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
@@ -550,11 +626,30 @@ public class ChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    private void handleManaValueParityChoice(GameData gameData, Player player, String parityName, ChoiceContext.ManaValueParityChoice ctx) {
+        com.github.laxika.magicalvibes.model.ManaValueParity parity =
+                com.github.laxika.magicalvibes.model.ManaValueParity.valueOf(parityName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenManaValueParity(parity);
+
+            String logEntry = player.getUsername() + " chooses " + parityName.toLowerCase() + " for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     private void handleBasicLandTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.BasicLandTypeChoice ctx) {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
         if (perm != null) {
@@ -574,34 +669,15 @@ public class ChoiceHandlerService {
         CardSubtype subtype = CardSubtype.valueOf(subtypeName);
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
         if (targetLand != null) {
-            ManaColor manaColor = EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype);
-            ActivatedAbility manaAbility = new ActivatedAbility(
-                    true, null, List.of(new AwardManaEffect(manaColor)),
-                    "{T}: Add {" + manaColor.getCode() + "}.");
+            GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
 
-            if (ctx.duration() == EffectDuration.UNTIL_END_OF_TURN) {
-                // Transient: cleared at end of turn by resetModifiers()
-                if (!targetLand.getTransientSubtypes().contains(subtype)) {
-                    targetLand.getTransientSubtypes().add(subtype);
-                }
-                targetLand.getTemporaryActivatedAbilities().add(manaAbility);
-            } else {
-                // Permanent: survives turn resets
-                if (!targetLand.getGrantedSubtypes().contains(subtype)) {
-                    targetLand.getGrantedSubtypes().add(subtype);
-                }
-                targetLand.getCard().addActivatedAbility(manaAbility);
-            }
-
-            String durationText = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
-            String logEntry = targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName()
-                    + " in addition to its other types" + durationText + ".";
+            String logEntry = GrantBasicLandTypeToTargetEffectHandler.describeBasicLandTypeChange(
+                    targetLand, subtype, ctx.duration(), ctx.replacing());
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} becomes a {}{}", gameData.id, targetLand.getCard().getName(), subtype, durationText);
+            log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
         }
 
         gameData.priorityPassedBy.clear();
@@ -616,7 +692,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         UUID controllerId = ctx.controllerId();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
@@ -666,6 +741,26 @@ public class ChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    private void handleStorageMatrixUntapChoice(GameData gameData, Player player, String typeName,
+                                                ChoiceContext.StorageMatrixUntapChoice ctx) {
+        com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrict = switch (typeName) {
+            case "ARTIFACT" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate();
+            case "CREATURE" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate();
+            case "LAND" -> new com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate();
+            default -> throw new IllegalArgumentException("Invalid Storage Matrix untap choice: " + typeName);
+        };
+
+        gameData.interaction.clearAwaitingInput();
+
+        String playerName = gameData.playerIdToName.get(ctx.playerId());
+        String logEntry = playerName + " chooses " + typeName.toLowerCase() + " (Storage Matrix): only "
+                + typeName.toLowerCase() + " permanents untap this step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chooses {} for Storage Matrix untap", gameData.id, playerName, typeName);
+
+        turnProgressionService.resumeStorageMatrixUntap(gameData, ctx.playerId(), restrict);
+    }
+
     private void handleEachPlayerCardNameRevealChoice(GameData gameData, Player player, String cardName,
                                                       ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
         // Store this player's chosen name
@@ -689,14 +784,13 @@ public class ChoiceHandlerService {
         if (nextPlayerId != null) {
             // Prompt next player
             gameData.interaction.clearAwaitingInput();
-            gameData.interaction.clearColorChoice();
 
             var nextContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                     ctx.playerOrder(), updatedNames);
-            gameData.interaction.beginColorChoice(nextPlayerId, null, null, nextContext);
 
             List<String> cardNames = collectAllCardNamesInGame(gameData);
-            sessionManager.sendToPlayer(nextPlayerId, new ChooseFromListMessage(cardNames, "Choose a card name."));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    nextPlayerId, null, null, nextContext, cardNames, "Choose a card name."));
 
             String nextPlayerName = gameData.playerIdToName.get(nextPlayerId);
             log.info("Game {} - Awaiting {} to choose a card name (each player name/reveal)",
@@ -707,7 +801,6 @@ public class ChoiceHandlerService {
 
         // All players have named — resolve reveals
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         for (UUID pid : ctx.playerOrder()) {
             String chosenName = updatedNames.get(pid);
@@ -742,6 +835,44 @@ public class ChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
+                                                  ChoiceContext.NameCardMillGainLifeChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
+                gameData.id, player.getUsername(), cardName);
+
+        // Peek the card that is about to be milled so we can inspect it after the mill resolves.
+        List<Card> deck = gameData.playerDecks.get(ctx.targetPlayerId());
+        Card topCard = (deck != null && !deck.isEmpty()) ? deck.getFirst() : null;
+
+        graveyardService.resolveMillPlayer(gameData, ctx.targetPlayerId(), 1);
+
+        // "If a card with the chosen name was milled this way" — the card must have both matched the
+        // chosen name and actually reached the graveyard (a replacement effect could redirect it).
+        if (topCard != null && topCard.getName().equals(cardName)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(ctx.targetPlayerId());
+            boolean reachedGraveyard = graveyard != null
+                    && graveyard.stream().anyMatch(c -> c.getId().equals(topCard.getId()));
+            if (reachedGraveyard) {
+                int manaValue = topCard.getManaValue();
+                lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
+                String controllerName = gameData.playerIdToName.get(ctx.controllerId());
+                String lifeLog = controllerName + " gains " + manaValue + " life.";
+                gameBroadcastService.logAndBroadcast(gameData, lifeLog);
+                log.info("Game {} - {} milled the named card {}, {} gains {} life",
+                        gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
+                        topCard.getName(), controllerName, manaValue);
+            }
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
     private List<String> collectAllCardNamesInGame(GameData gameData) {
         Set<String> names = new TreeSet<>();
         for (UUID pid : gameData.playerIds) {
@@ -762,7 +893,6 @@ public class ChoiceHandlerService {
 
     private void handleExileByNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.ExileByNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
         UUID targetPlayerId = ctx.targetPlayerId();
         UUID controllerId = ctx.controllerId();
@@ -815,9 +945,8 @@ public class ChoiceHandlerService {
 
     private void handleSphinxAmbassadorNameChoice(GameData gameData, Player player, String cardName, ChoiceContext.SphinxAmbassadorNameChoice ctx) {
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearColorChoice();
 
-        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
         if (pending == null || pending.selectedCard() == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
@@ -855,7 +984,7 @@ public class ChoiceHandlerService {
 
             gameData.playerDecks.get(targetPlayerId).add(selectedCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameData.pendingSphinxAmbassadorChoice = null;
+            gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
 
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);
@@ -864,16 +993,17 @@ public class ChoiceHandlerService {
     }
 
     public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_ZONE_EXILE_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-zone exile choice");
         }
-        InteractionContext.MultiZoneExileChoice ctx = gameData.interaction.multiZoneExileChoiceContext();
+        PendingInteraction.MultiZoneExileChoice ctx =
+                gameData.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
         if (ctx == null || !player.getId().equals(ctx.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         // Validate selected card IDs against valid set
-        Set<UUID> validIds = ctx.validCardIds();
+        List<UUID> validIds = ctx.validCardIds();
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
@@ -881,7 +1011,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMultiZoneExileChoice();
 
         UUID targetPlayerId = ctx.targetPlayerId();
         UUID controllerId = ctx.controllerId();

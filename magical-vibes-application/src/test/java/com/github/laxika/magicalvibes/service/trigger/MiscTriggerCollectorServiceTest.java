@@ -8,21 +8,24 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -41,7 +44,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -62,6 +64,9 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private PermanentControlSupport permanentControlSupport;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @InjectMocks
     private MiscTriggerCollectorService sut;
@@ -229,10 +234,10 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_ENCHANTED_PERMANENT_TAPPED — GiveEnchantedPermanentControllerPoisonCountersEffect =====
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
 
     @Nested
-    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GiveEnchantedPermanentControllerPoisonCountersEffect")
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER)")
     class EnchantedPermanentTapPoison {
 
         @Test
@@ -240,7 +245,7 @@ class MiscTriggerCollectorServiceTest {
         void putsTriggeredAbilityOnStack() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             boolean result = registry.dispatch(
@@ -261,14 +266,14 @@ class MiscTriggerCollectorServiceTest {
         void resolvedEffectContainsControllerId() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            var resolved = (GiveEnchantedPermanentControllerPoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
+            var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
             assertThat(resolved.amount()).isEqualTo(1);
         }
@@ -278,7 +283,7 @@ class MiscTriggerCollectorServiceTest {
         void broadcastsTriggerLog() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
@@ -429,17 +434,18 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — PutPlusOnePlusOneCounterOnEachControlledPermanentEffect =====
+    // ===== ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutPlusOnePlusOneCounterOnEachControlledPermanentEffect")
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutCounterOnEachControlledPermanentEffect")
     class LifeGainPutCountersOnMatching {
 
         @Test
         @DisplayName("puts triggered ability on stack and returns true")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Blech, Loafing Pest");
-            var effect = new PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(
+            var effect = new PutCounterOnEachControlledPermanentEffect(
+                    CounterType.PLUS_ONE_PLUS_ONE, 1,
                     new PermanentAnyOfPredicate(List.of(
                             new PermanentHasSubtypePredicate(CardSubtype.PEST),
                             new PermanentHasSubtypePredicate(CardSubtype.SPIDER)
@@ -461,17 +467,17 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEqualToLifeGainedEffect =====
+    // ===== ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER) =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEqualToLifeGainedEffect")
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER)")
     class LifeGainOpponentLosesLife {
 
         @Test
         @DisplayName("puts triggered ability on stack targeting opponent with life loss equal to life gained")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
@@ -491,27 +497,30 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("resolved effect has TargetPlayerLosesLifeEffect with correct amount")
+        @DisplayName("resolved effect keeps EventValue amount and snapshots life gained onto the entry")
         void resolvedEffectHasCorrectAmount() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 7);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
+            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
-            assertThat(resolved.amount()).isEqualTo(7);
+            var entry = gd.stack.getLast();
+            var resolved = (LoseLifeEffect) entry.getEffectsToResolve().getFirst();
+            assertThat(resolved.amount()).isEqualTo(new EventValue());
+            assertThat(entry.getEventValue()).isEqualTo(7);
         }
 
         @Test
         @DisplayName("broadcasts trigger log message")
         void broadcastsTriggerLog() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);

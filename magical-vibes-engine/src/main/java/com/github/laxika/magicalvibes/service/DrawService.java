@@ -11,13 +11,16 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +56,30 @@ public class DrawService {
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
                     "Replace this draw with Abundance?"
             ));
+            return;
+        }
+
+        Card zursWeirdingSource = findZursWeirdingSourceCard(gameData);
+        if (zursWeirdingSource != null) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck != null && !deck.isEmpty()) {
+                UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
+                Card revealed = deck.getFirst();
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " reveals " + revealed.getName() + " with " + zursWeirdingSource.getName() + ".");
+
+                if (gameData.getLife(otherPlayerId) >= 2) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            zursWeirdingSource,
+                            otherPlayerId,
+                            List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
+                            "Pay 2 life to put " + playerName + "'s revealed " + revealed.getName() + " into their graveyard?"
+                    ));
+                    return;
+                }
+            }
+            performDrawCard(gameData, playerId);
             return;
         }
 
@@ -110,6 +137,21 @@ public class DrawService {
             }
         }
         return false;
+    }
+
+    private Card findZursWeirdingSourceCard(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
+                if (hasEffect) {
+                    return permanent.getCard();
+                }
+            }
+        }
+        return null;
     }
 
     private Card findAbundanceSourceCard(GameData gameData, UUID playerId) {
@@ -176,6 +218,45 @@ public class DrawService {
 
         checkControllerDrawTriggers(gameData, playerId);
         checkOpponentDrawTriggers(gameData, playerId);
+        checkBoobyTraps(gameData, playerId, drawn);
+    }
+
+    /**
+     * Booby Trap: an opponent's Booby Trap makes the drawing (chosen) player reveal each card they
+     * draw; when the revealed card's name matches the trap's chosen name, the trap is sacrificed and
+     * — if it was — deals 10 damage to that player. The chosen player is always an opponent of the
+     * trap's controller.
+     */
+    private void checkBoobyTraps(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            if (controllerId.equals(drawingPlayerId)) return;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                boolean isBoobyTrap = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof BoobyTrapEffect);
+                if (!isBoobyTrap) continue;
+
+                String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + ".");
+
+                if (drawn.getName().equals(perm.getChosenName())) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new SacrificeSelfThenDealDamageToTargetPlayerEffect(10))),
+                            drawingPlayerId,
+                            perm.getId()
+                    ));
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            perm.getCard().getName() + " triggers on " + drawerName + " drawing " + drawn.getName() + ".");
+                    log.info("Game {} - Booby Trap triggers on {} drawing {}",
+                            gameData.id, drawerName, drawn.getName());
+                }
+            }
+        });
     }
 
     public void checkControllerDrawTriggers(GameData gameData, UUID drawingPlayerId) {
@@ -217,7 +298,7 @@ public class DrawService {
             if (!emblem.controllerId().equals(drawingPlayerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
-                    gameData.pendingEmblemTriggerTargets.add(new PermanentChoiceContext.EmblemTriggerTarget(
+                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Teferi's emblem",
                             emblem.controllerId(),
                             List.of(new ExileTargetPermanentEffect()),
@@ -228,7 +309,7 @@ public class DrawService {
             }
         }
 
-        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
         }
     }

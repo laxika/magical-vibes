@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,21 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class InciteTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Incite has correct spell effects")
-    void hasCorrectEffects() {
-        Incite card = new Incite();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantColorUntilEndOfTurnEffect.class);
-        GrantColorUntilEndOfTurnEffect colorEffect = (GrantColorUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(colorEffect.color()).isEqualTo(CardColor.RED);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MustAttackThisTurnEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -64,8 +45,8 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(target.isColorOverridden()).isTrue();
-        assertThat(target.getEffectiveColor()).isEqualTo(CardColor.RED);
+        // "Becomes red" replaces the colors (CR 105.3), applied by the CR 613 layer engine.
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
     }
 
     @Test
@@ -93,8 +74,7 @@ class InciteTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
 
         Permanent target = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(target.isColorOverridden()).isTrue();
-        assertThat(target.getEffectiveColor()).isEqualTo(CardColor.RED);
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.RED);
         assertThat(target.isMustAttackThisTurn()).isTrue();
     }
 

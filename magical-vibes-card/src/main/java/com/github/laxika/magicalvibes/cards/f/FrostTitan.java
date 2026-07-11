@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "55")
 public class FrostTitan extends Card {
@@ -17,9 +19,9 @@ public class FrostTitan extends Card {
 
         // Whenever Frost Titan enters the battlefield or attacks,
         // tap target permanent. It doesn't untap during its controller's next untap step.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SkipNextUntapOnTargetEffect());
-        addEffect(EffectSlot.ON_ATTACK, new TapTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapOnTargetEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addEffect(EffectSlot.ON_ATTACK, new TapPermanentsEffect(TapUntapScope.TARGET));
+        addEffect(EffectSlot.ON_ATTACK, new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

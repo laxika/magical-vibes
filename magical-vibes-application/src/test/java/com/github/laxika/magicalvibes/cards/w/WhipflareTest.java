@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,20 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WhipflareTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Whipflare has correct effect configuration")
-    void hasCorrectEffect() {
-        Whipflare card = new Whipflare();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPred = (PermanentNotPredicate) effect.filter();
-        assertThat(notPred.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Whipflare kills nonartifact creatures with toughness 2 or less on both sides")

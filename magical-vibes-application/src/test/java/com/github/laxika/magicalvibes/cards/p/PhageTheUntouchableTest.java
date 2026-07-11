@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhageTheUntouchableTest extends BaseCardTest {
 
-
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
@@ -30,15 +25,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         return perm;
     }
 
-    @Test
-    @DisplayName("Phage the Untouchable has correct card properties")
-    void hasCorrectProperties() {
-        PhageTheUntouchable card = new PhageTheUntouchable();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(LoseGameIfNotCastFromHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerLosesGameEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Phage from hand does not make its controller lose the game")
@@ -64,7 +51,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 

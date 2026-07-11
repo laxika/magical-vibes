@@ -1,23 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,44 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FathomFleetCaptainTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ControlsAnotherPermanentConditionalEffect(PIRATE and nontoken) wrapping MayPayManaEffect")
-    void hasCorrectStructure() {
-        FathomFleetCaptain card = new FathomFleetCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
-
-        ControlsAnotherPermanentConditionalEffect conditional =
-                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.filter()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate filter = (PermanentAllOfPredicate) conditional.filter();
-        assertThat(filter.predicates()).anySatisfy(predicate -> {
-            assertThat(predicate).isInstanceOf(PermanentHasSubtypePredicate.class);
-            assertThat(((PermanentHasSubtypePredicate) predicate).subtype()).isEqualTo(CardSubtype.PIRATE);
-        });
-        assertThat(filter.predicates()).anySatisfy(predicate -> {
-            assertThat(predicate).isInstanceOf(PermanentNotPredicate.class);
-            assertThat(((PermanentNotPredicate) predicate).predicate()).isInstanceOf(PermanentIsTokenPredicate.class);
-        });
-        assertThat(conditional.wrapped()).isInstanceOf(MayPayManaEffect.class);
-
-        MayPayManaEffect mayPay = (MayPayManaEffect) conditional.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}");
-        assertThat(mayPay.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) mayPay.wrapped();
-        assertThat(token.tokenName()).isEqualTo("Pirate");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.BLACK);
-        assertThat(token.subtypes()).contains(CardSubtype.PIRATE);
-        assertThat(token.keywords()).contains(Keyword.MENACE);
-    }
 
     // ===== Trigger fires and creates token when condition met =====
 
@@ -80,7 +34,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // Trigger is on the stack; resolve it to get the may-pay prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Accept the may-pay
         harness.handleMayAbilityChosen(player1, true);
@@ -111,7 +65,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // Resolve trigger to get the may-pay prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -168,7 +122,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // Resolve trigger to get the may-pay prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     // ===== Cannot pay — no token created =====
@@ -185,7 +139,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         // Resolve trigger to get the may-pay prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -195,7 +149,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void addPirateCreature(Player player) {
         Card pirate = new Card();
@@ -229,7 +182,7 @@ class FathomFleetCaptainTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

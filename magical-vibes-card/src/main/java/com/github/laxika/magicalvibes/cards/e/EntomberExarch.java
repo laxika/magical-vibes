@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +30,7 @@ public class EntomberExarch extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target opponent reveals their hand. You choose a noncreature card from it. That player discards that card.",
-                        new ChooseCardFromTargetHandToDiscardEffect(1, List.of(CardType.CREATURE), List.of()),
+                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.CREATURE), List.of(), HandChoiceDestination.DISCARD),
                         new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent"

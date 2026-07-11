@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,15 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MidnightGuardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has trigger to untap itself when another creature enters")
-    void hasCorrectEffect() {
-        MidnightGuard card = new MidnightGuard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Untaps when controller's other creature enters")

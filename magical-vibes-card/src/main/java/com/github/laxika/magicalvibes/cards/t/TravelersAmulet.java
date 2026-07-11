@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class TravelersAmulet extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeSelfCost(), new SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())),
+                List.of(new SacrificeSelfCost(), new SearchLibraryEffect(CardPredicateUtils.basicLand())),
                 "{1}, Sacrifice Traveler's Amulet: Search your library for a basic land card, reveal it, put it into your hand, then shuffle."
         ));
     }

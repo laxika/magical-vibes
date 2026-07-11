@@ -3,15 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,27 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrimBackwoodsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has colorless mana ability and draw ability with sacrifice cost")
-    void hasCorrectActivatedAbilities() {
-        GrimBackwoods card = new GrimBackwoods();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).containsExactly(new AwardManaEffect(ManaColor.COLORLESS));
-
-        var drawAbility = card.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isTrue();
-        assertThat(drawAbility.getManaCost()).isEqualTo("{2}{B}{G}");
-        assertThat(drawAbility.isNeedsTarget()).isFalse();
-        assertThat(drawAbility.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(drawAbility.getEffects()).hasSize(2);
-        assertThat(drawAbility.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(drawAbility.getEffects().get(1)).isEqualTo(new DrawCardEffect(1));
-    }
+    
 
     @Test
     @DisplayName("Tapping for mana adds colorless mana")

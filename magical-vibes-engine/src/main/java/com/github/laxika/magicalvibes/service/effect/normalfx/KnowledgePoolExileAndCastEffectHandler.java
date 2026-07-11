@@ -7,12 +7,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,8 +26,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final ExileService exileService;
 
     @Override
@@ -93,12 +91,11 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         }
 
         // Step 5: Present choice to the player
-        gameData.knowledgePoolSourcePermanentId = kpPermanentId;
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast(kpPermanentId));
 
         List<UUID> validCardIds = eligible.stream().map(Card::getId).toList();
-        List<CardView> cardViews = eligible.stream().map(cardViewFactory::create).toList();
 
-        gameData.interaction.beginKnowledgePoolCastChoice(castingPlayerId, new java.util.HashSet<>(validCardIds), 1);
-        playerInputService.sendKnowledgePoolCastChoice(gameData, castingPlayerId, validCardIds, cardViews);
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.KnowledgePoolCastChoice(castingPlayerId, validCardIds, 1));
     }
 }

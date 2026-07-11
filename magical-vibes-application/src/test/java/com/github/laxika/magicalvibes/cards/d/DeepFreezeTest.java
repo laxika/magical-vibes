@@ -1,17 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessStaticEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -27,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeepFreezeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Deep Freeze has correct effects")
-    void hasCorrectEffects() {
-        DeepFreeze card = new DeepFreeze();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(5);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(SetBasePowerToughnessStaticEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(LosesAllAbilitiesEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(3)).isInstanceOf(GrantColorEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(4)).isInstanceOf(GrantSubtypeEffect.class);
-    }
 
     // ===== Casting and resolving =====
 

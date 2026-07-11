@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,25 +20,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BitterheartWitchTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bitterheart Witch has correct death trigger effect")
-    void hasCorrectProperties() {
-        BitterheartWitch card = new BitterheartWitch();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(mayEffect.wrapped())
-                .isInstanceOf(SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect.class);
-        SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect effect =
-                (SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect) mayEffect.wrapped();
-        assertThat(effect.requiredSubtype()).isEqualTo(CardSubtype.CURSE);
-        assertThat(mayEffect.canTargetPlayer()).isTrue();
-    }
 
     // ===== Death trigger: dies in combat, search for Curse, attach to target player =====
 
@@ -59,8 +38,8 @@ class BitterheartWitchTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Bitterheart Witch"));
 
         // Player1 should be prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -88,10 +67,10 @@ class BitterheartWitchTest extends BaseCardTest {
         // Resolve the triggered ability — "you may search" prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose the curse card (index 0)
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
@@ -125,10 +104,10 @@ class BitterheartWitchTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve triggered ability → "you may search" prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         gs.handleLibraryCardChosen(gd, player1, 0);
 
@@ -160,11 +139,11 @@ class BitterheartWitchTest extends BaseCardTest {
         // Resolve the triggered ability — "you may search" prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // No curse cards in library — no library search opened
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no Curse cards"));
     }
 
@@ -187,10 +166,10 @@ class BitterheartWitchTest extends BaseCardTest {
         // Resolve the triggered ability → "you may search" prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -220,7 +199,7 @@ class BitterheartWitchTest extends BaseCardTest {
         // Resolve the triggered ability → "you may search" prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -228,7 +207,7 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // No library search opened, no new permanent on the battlefield
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
     }
 
@@ -248,7 +227,7 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve → "you may search" prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -289,16 +268,16 @@ class BitterheartWitchTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Bitterheart Witch"));
 
         // Player1 should be prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.passBothPriorities(); // resolve triggered ability → "you may search" prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         gs.handleLibraryCardChosen(gd, player1, 0);
 

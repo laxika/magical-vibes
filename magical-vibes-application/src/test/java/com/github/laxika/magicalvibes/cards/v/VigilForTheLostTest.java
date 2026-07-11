@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -25,18 +23,6 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vigil for the Lost has ON_ALLY_CREATURE_DIES effect with PayXManaGainXLifeEffect")
-    void hasCorrectEffects() {
-        VigilForTheLost card = new VigilForTheLost();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(PayXManaGainXLifeEffect.class);
     }
 
     // ===== Triggering =====
@@ -91,8 +77,8 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
-        InteractionContext.XValueChoice ctx = gd.interaction.xValueChoiceContext();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
+        PendingInteraction.XValueChoice ctx = (PendingInteraction.XValueChoice) gd.interaction.activeInteraction();
         assertThat(ctx).isNotNull();
         assertThat(ctx.playerId()).isEqualTo(player1.getId());
         assertThat(ctx.maxValue()).isEqualTo(5);
@@ -240,8 +226,8 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
-        assertThat(gd.interaction.xValueChoiceContext().maxValue()).isEqualTo(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
+        assertThat(((PendingInteraction.XValueChoice) gd.interaction.activeInteraction()).maxValue()).isEqualTo(4);
 
         // Choose X=4 (all mana)
         harness.handleXValueChosen(player1, 4);

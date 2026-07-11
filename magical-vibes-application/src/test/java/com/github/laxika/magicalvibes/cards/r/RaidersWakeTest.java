@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,43 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RaidersWakeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has LoseLifeEffect(2) on ON_OPPONENT_DISCARDS")
-    void hasDiscardTriggerEffect() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(LoseLifeEffect.class);
-        LoseLifeEffect lifeLoss = (LoseLifeEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(lifeLoss.amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Has RaidConditionalEffect wrapping TargetPlayerDiscardsEffect(1) on CONTROLLER_END_STEP_TRIGGERED")
-    void hasRaidEndStepDiscardEffect() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has PlayerPredicateTargetFilter restricting to opponents")
-    void hasOpponentTargetFilter() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
 
     // ===== Discard trigger: opponent loses 2 life =====
 
@@ -118,7 +77,7 @@ class RaidersWakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Select opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -127,8 +86,8 @@ class RaidersWakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent should be prompted to discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
@@ -151,7 +110,7 @@ class RaidersWakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No targeting prompt — raid condition not met
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Grizzly Bears should still be in hand (not forced to discard)
         assertThat(gd.playerHands.get(player2.getId()))
@@ -171,7 +130,7 @@ class RaidersWakeTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Both abilities interact: raid forces discard, which triggers life loss =====

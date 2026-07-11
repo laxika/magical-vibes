@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,21 +16,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjanisPridemateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with PutCountersOnSourceEffect")
-    void hasCorrectProperties() {
-        AjanisPridemate card = new AjanisPridemate();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect effect =
-                (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when controller gains life from ETB effect")

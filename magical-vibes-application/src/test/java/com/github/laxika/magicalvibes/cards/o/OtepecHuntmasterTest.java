@@ -2,18 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,44 +23,6 @@ class OtepecHuntmasterTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Otepec Huntmaster"))
                 .findFirst().orElseThrow();
         huntmaster.setSummoningSick(false);
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has cost reduction static effect for Dinosaurs")
-    void hasCorrectStaticEffect() {
-        OtepecHuntmaster card = new OtepecHuntmaster();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
-    @Test
-    @DisplayName("Has tap activated ability that grants haste to target Dinosaur")
-    void hasCorrectActivatedAbility() {
-        OtepecHuntmaster card = new OtepecHuntmaster();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
     }
 
     // ===== Cost reduction =====

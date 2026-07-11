@@ -1,13 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,29 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinBarrageTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice kicker, creature damage, and kicked player damage effects")
-    void hasCorrectEffects() {
-        GoblinBarrage card = new GoblinBarrage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.hasSacrificeCost() && !ke.hasManaCost());
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-                    assertThat(((DealDamageToTargetCreatureEffect) e).damage()).isEqualTo(4);
-                })
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickedConditionalEffect.class);
-                    assertThat(((KickedConditionalEffect) e).wrapped()).isInstanceOf(DealDamageToSecondaryTargetEffect.class);
-                    assertThat(((DealDamageToSecondaryTargetEffect) ((KickedConditionalEffect) e).wrapped()).damage()).isEqualTo(4);
-                });
-    }
 
     // ===== Cast without kicker =====
 

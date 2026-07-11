@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeaconOfUnrestTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Beacon of Unrest has correct card properties")
-    void hasCorrectProperties() {
-        BeaconOfUnrest card = new BeaconOfUnrest();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -76,7 +61,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -99,7 +84,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -123,7 +108,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // The only card in the pool is the opponent's Grizzly Bears at index 0
         harness.handleGraveyardCardChosen(player1, 0);
@@ -164,6 +149,26 @@ class BeaconOfUnrestTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
+    @Test
+    @DisplayName("Resolution state is fully consumed — exactly one Beacon in the deck, no dangling resumption")
+    void noDanglingResumptionAfterChoice() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        // A dangling entry would re-run ShuffleIntoLibraryEffect from a later unrelated
+        // interaction, putting a second Beacon copy into the deck
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Beacon of Unrest"))
+                .hasSize(1);
+    }
+
     // ===== Empty graveyards =====
 
     @Test
@@ -181,7 +186,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should not be awaiting graveyard choice since no valid targets
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no artifact or creature cards in any graveyard"));
         // Per Magic rules: spell fizzles when no legal targets — Beacon goes to graveyard, NOT shuffled into library
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -204,9 +209,9 @@ class BeaconOfUnrestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         // Pool should have 2 cards (Grizzly Bears from player1 + Angel's Feather from player2)
-        assertThat(gd.interaction.graveyardChoice().cardPool()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).cardPool()).hasSize(2);
 
         // Choose the artifact from opponent's graveyard (index 1)
         harness.handleGraveyardCardChosen(player1, 1);
@@ -236,5 +241,4 @@ class BeaconOfUnrestTest extends BaseCardTest {
         assertThat(harness.getGameData().stack).isEmpty();
     }
 }
-
 

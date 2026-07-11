@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,8 +33,8 @@ class DrossRipperTest extends BaseCardTest {
         assertThat(ability.getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
 
         BoostSelfEffect effect = (BoostSelfEffect) ability.getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
     }
 
     // ===== Ability activation =====

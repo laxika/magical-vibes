@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
@@ -22,20 +23,24 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
 
     private final TapCreatureCost cost;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
 
     /**
-     * @param cost                     the cost effect record specifying the creature predicate
-     * @param gameQueryService          used to check creature status and evaluate the predicate
-     * @param gameBroadcastService      used to log and broadcast the tap action
-     * @param triggerCollectionService  used to fire "enchanted permanent becomes tapped" triggers
+     * @param cost                       the cost effect record specifying the creature predicate
+     * @param gameQueryService           used to check creature status
+     * @param predicateEvaluationService used to evaluate the creature predicate
+     * @param gameBroadcastService       used to log and broadcast the tap action
+     * @param triggerCollectionService   used to fire "enchanted permanent becomes tapped" triggers
      */
     public TapCreatureCostHandler(TapCreatureCost cost, GameQueryService gameQueryService,
+                                  PredicateEvaluationService predicateEvaluationService,
                                   GameBroadcastService gameBroadcastService,
                                   TriggerCollectionService triggerCollectionService) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
     }
@@ -57,7 +62,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         return battlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> !p.isTapped())
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.predicate()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.predicate()))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -70,7 +75,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         if (chosen.isTapped()) {
             throw new IllegalStateException("Creature is already tapped");
         }
-        if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.predicate())) {
             throw new IllegalStateException("Creature does not match the required predicate");
         }
         chosen.tap();

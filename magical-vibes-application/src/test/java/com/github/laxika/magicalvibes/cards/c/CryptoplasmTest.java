@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CryptoplasmTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Cryptoplasm has upkeep triggered copy ability")
-    void hasCorrectAbilityStructure() {
-        Cryptoplasm card = new Cryptoplasm();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(BecomeCopyOfTargetCreatureEffect.class);
-    }
-
     // ===== Upkeep trigger: mandatory target selection =====
 
     @Test
@@ -43,8 +31,8 @@ class CryptoplasmTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         // Target selection is presented immediately — no may prompt first
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -167,7 +155,7 @@ class CryptoplasmTest extends BaseCardTest {
 
         // The ability should not trigger at all (CR 603.3c: no legal target)
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -179,8 +167,8 @@ class CryptoplasmTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, bearsId);
 

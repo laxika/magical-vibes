@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetCutthroat;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetFirebrand;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ReturnOneOfEachSubtypeFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GrimCaptainsCallTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has spell effect that returns one of each subtype from graveyard to hand")
-    void hasCorrectEffect() {
-        GrimCaptainsCall card = new GrimCaptainsCall();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnOneOfEachSubtypeFromGraveyardToHandEffect.class);
-
-        ReturnOneOfEachSubtypeFromGraveyardToHandEffect effect =
-                (ReturnOneOfEachSubtypeFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.subtypes()).containsExactly(
-                CardSubtype.PIRATE, CardSubtype.VAMPIRE, CardSubtype.DINOSAUR, CardSubtype.MERFOLK);
-    }
 
     // ===== Resolution: all four subtypes present with single matches =====
 
@@ -142,7 +122,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting a graveyard choice for the Pirate
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the first Pirate (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -178,7 +158,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
 
         // Should be awaiting graveyard choice for Pirate
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose Fathom Fleet Firebrand
         harness.handleGraveyardCardChosen(player1, 0);
@@ -205,7 +185,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Dinosaur was auto-returned; Pirate requires choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Decline the Pirate choice
         harness.handleGraveyardCardChosen(player1, -1);

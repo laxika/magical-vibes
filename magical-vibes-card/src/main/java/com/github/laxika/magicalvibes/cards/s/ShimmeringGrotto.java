@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "246")
+@CardRegistration(set = "LRW", collectorNumber = "273")
 public class ShimmeringGrotto extends Card {
 
     public ShimmeringGrotto() {

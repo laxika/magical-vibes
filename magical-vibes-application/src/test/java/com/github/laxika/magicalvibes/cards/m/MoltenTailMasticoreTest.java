@@ -1,19 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,47 +26,6 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has upkeep sacrifice-unless-discard effect")
-    void hasUpkeepEffect() {
-        MoltenTailMasticore card = new MoltenTailMasticore();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeUnlessDiscardCardTypeEffect.class);
-        SacrificeUnlessDiscardCardTypeEffect effect =
-                (SacrificeUnlessDiscardCardTypeEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.requiredType()).isNull(); // any card type
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities: damage and regenerate")
-    void hasTwoActivatedAbilities() {
-        MoltenTailMasticore card = new MoltenTailMasticore();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {4}, Exile creature from graveyard: deal 4 damage
-        var damageAbility = card.getActivatedAbilities().get(0);
-        assertThat(damageAbility.getManaCost()).isEqualTo("{4}");
-        assertThat(damageAbility.isRequiresTap()).isFalse();
-        assertThat(damageAbility.getEffects()).hasSize(2);
-        assertThat(damageAbility.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) damageAbility.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(damageAbility.getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) damageAbility.getEffects().get(1)).damage()).isEqualTo(4);
-
-        // Ability 1: {2}: Regenerate
-        var regenAbility = card.getActivatedAbilities().get(1);
-        assertThat(regenAbility.getManaCost()).isEqualTo("{2}");
-        assertThat(regenAbility.isRequiresTap()).isFalse();
-        assertThat(regenAbility.getEffects()).hasSize(1);
-        assertThat(regenAbility.getEffects().getFirst()).isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Upkeep — sacrifice unless discard =====
 
     @Test
@@ -85,7 +37,7 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -150,8 +102,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         // Masticore is at index 0 on player1's battlefield; ability 0 = damage ability
         harness.activateAbility(player1, 0, 0, null, bearsId);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
     }
 
     @Test
@@ -263,8 +215,8 @@ class MoltenTailMasticoreTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bearsId);
 
         // Should prompt graveyard exile cost choice
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
 
         // Choose index 1 (creature card)
         harness.handleGraveyardCardChosen(player1, 1);

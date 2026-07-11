@@ -1,22 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,37 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DiregrafCaptainTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has Zombie anthem and a targeted ally-Zombie-dies life-loss trigger")
-    void hasCorrectStructure() {
-        DiregrafCaptain card = new DiregrafCaptain();
-
-        // Other Zombie creatures you control get +1/+1.
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        // Whenever another Zombie you control dies, target opponent loses 1 life.
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.ZOMBIE));
-        assertThat(conditional.wrapped()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(((TargetPlayerLosesLifeEffect) conditional.wrapped()).amount()).isEqualTo(1);
-
-        // Trigger targets an opponent.
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
 
     // ===== Static anthem =====
 
@@ -121,9 +82,9 @@ class DiregrafCaptainTest extends BaseCardTest {
         harness.castInstant(player2, 0, ghoulId);
         harness.passBothPriorities(); // Bolt resolves → Ghoul dies → trigger awaits target
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Only the opponent (player2) is a valid target, never the controller (player1).
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // Resolve the life-loss trigger

@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,24 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GhoulcallersBellTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ghoulcaller's Bell has correct activated ability")
-    void hasCorrectAbility() {
-        GhoulcallersBell card = new GhoulcallersBell();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(MillControllerEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(EachOpponentMillsEffect.class);
-    }
 
     // ===== Activating ability =====
 

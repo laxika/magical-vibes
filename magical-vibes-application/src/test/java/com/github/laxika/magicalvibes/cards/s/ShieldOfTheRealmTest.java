@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,18 +21,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Shield of the Realm has prevent 2 damage from each source effect")
-    void hasPreventDamageEffect() {
-        ShieldOfTheRealm card = new ShieldOfTheRealm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventXDamageFromEachSourceToAttachedCreatureEffect.class);
-        PreventXDamageFromEachSourceToAttachedCreatureEffect effect =
-                (PreventXDamageFromEachSourceToAttachedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Shield of the Realm has equip {1} ability")

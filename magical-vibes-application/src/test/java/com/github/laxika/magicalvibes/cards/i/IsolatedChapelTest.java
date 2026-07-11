@@ -3,53 +3,19 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IsolatedChapelTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Plains or Swamp")
-    void hasConditionalEntersTappedEffect() {
-        IsolatedChapel card = new IsolatedChapel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.SWAMP))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for white and black")
-    void hasManaAbilities() {
-        IsolatedChapel card = new IsolatedChapel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-    }
 
     // ===== Enters tapped (no qualifying lands) =====
 

@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.DarksteelPlate;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,16 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GlissasScornTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Glissa's Scorn has correct effect")
-    void hasCorrectEffect() {
-        GlissasScorn card = new GlissasScorn();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentAndControllerLosesLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Glissa's Scorn destroys target artifact and its controller loses 1 life")

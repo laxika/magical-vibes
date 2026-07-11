@@ -2,11 +2,14 @@
 
 Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPredicate`, and `PlayerPredicate` types. Extracted from ACTIVATED_ABILITY_GUIDE.md for standalone readability.
 
+All of these base interfaces are **sealed**: a new predicate/filter must be added to the interface's `permits` clause, and the exhaustive switch in the engine's `PredicateEvaluationService` (`magical-vibes-engine/.../service/filter/`) must gain a matching case — the compiler enforces both. `StackEntryPredicate` types used for *targeting* are evaluated by `TargetLegalityService` instead.
+
 ## TargetFilter types
 
 | Filter class | Constructor | Use when |
 |-------------|-------------|----------|
 | `PermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target any permanent matching predicate |
+| `AnyTargetPredicateTargetFilter` | `(PermanentPredicate, PlayerPredicate, String errorMsg)` | Restrict an "any target" (creature/planeswalker/player) effect: the `PermanentPredicate` gates permanent targets, the `PlayerPredicate` gates player targets — both expressing the same restriction. Use for "any target that was dealt damage this turn" (Needle Drop): `PermanentDealtDamageThisTurnPredicate` + `PlayerDealtDamageThisTurnPredicate` |
 | `ControlledPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU control matching predicate |
 | `OwnedPermanentPredicateTargetFilter` | `(PermanentPredicate, String errorMsg)` | Target only permanents YOU OWN matching predicate (ownership via stolenCreatures map) |
 | `StackEntryPredicateTargetFilter` | `(StackEntryPredicate, String errorMsg)` | Target a spell on the stack |
@@ -25,6 +28,7 @@ Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPred
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
+| `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal) |
 | `PermanentIsBlockingPredicate` | `()` | blocking creatures |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
@@ -47,7 +51,10 @@ Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPred
 |-----------|-------------|---------|
 | `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
+| `PermanentMaxManaValuePredicate` | `(int maxManaValue)` | permanents with mana value <= N (e.g. Witherbloom Charm) |
+| `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
+| `PermanentToughnessAtLeastPredicate` | `(int minToughness)` | creatures with toughness >= N (uses effective/last-known toughness; e.g. Colfenor's Urn) |
 
 ### Dynamic/game-state predicates (require FilterContext)
 
@@ -61,6 +68,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentToughnessLessThanSourcePowerPredicate` | `()` | creatures with toughness < source permanent's effective power | `gameData` + `sourceCardId` |
 | `PermanentInCombatWithSourcePredicate` | `()` | creatures blocking or blocked by the source permanent | `gameData` + `sourceCardId` |
 | `PermanentHasGreatestPowerAmongControlledCreaturesPredicate` | `()` | creatures with greatest power among source controller's creatures (ties allowed) | `gameData` + `sourceControllerId` |
+| `PermanentHasGreatestManaValueAmongAllCreaturesPredicate` | `()` | creatures with greatest mana value among all creatures on the battlefield across every player (ties allowed) | `gameData` |
 | `PermanentDealtDamageThisTurnPredicate` | `()` | permanents dealt damage this turn (evaluated against `GameData.permanentsDealtDamageThisTurn`) | `gameData` |
 | `PermanentHasSameNameAsSourcePredicate` | `()` | permanents with same name as source (works with clones) | `gameData` + `sourceCardId` |
 
@@ -86,13 +94,16 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|
 | `StackEntryTypeInPredicate` | `(Set<StackEntryType>)` | spells of specific types |
 | `StackEntryColorInPredicate` | `(Set<CardColor>)` | spells of specific colors |
+| `StackEntrySubtypeInPredicate` | `(Set<CardSubtype>)` | spells whose card has any of the given subtypes. Wrap in `StackEntryNotPredicate` for "non-[subtype] spell" (e.g. Faerie Trickery: counter target non-Faerie spell) |
 | `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value |
+| `StackEntryManaValueAtMostControlledCountPredicate` | `(PermanentPredicate countFilter)` | spells whose mana value ≤ the number of permanents the evaluating player controls matching `countFilter`. "counter target spell with mana value X or less, where X is the number of [type] you control" — Spellstutter Sprite with `PermanentHasAnySubtypePredicate(FAERIE)` (counts itself, since it's already on the battlefield when the ETB resolves) |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
-| `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`GameQueryService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
+| `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`PredicateEvaluationService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you or a creature you control |
+| `StackEntryTargetsPermanentPredicate` | `(PermanentPredicate filter)` | spells/abilities targeting at least one permanent matching `filter` (any controller; filter evaluated with the evaluating source's controller as `sourceControllerId`). Used as `SpellCastTriggerEffect.castSpellTargetCondition` — e.g. Repartee ("cast an instant or sorcery spell that targets a creature") with `new PermanentIsCreaturePredicate()` |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |
@@ -102,3 +113,11 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
+| `PlayerDealtDamageThisTurnPredicate` | `()` | players dealt damage this turn (evaluated against `GameData.playersDealtDamageThisTurn`). Player-side counterpart of `PermanentDealtDamageThisTurnPredicate`; pair them in an `AnyTargetPredicateTargetFilter` for "any target that was dealt damage this turn" |
+
+## CardPredicate (spell/card filters)
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `CardIsTokenPredicate` | `()` | token cards. Wrap in `CardNotPredicate` for "nontoken" (e.g. Militia's Pride: nontoken attacker filter on `ON_ALLY_CREATURE_ATTACKS` via `TriggeringCardConditionalEffect`) |
+| `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |

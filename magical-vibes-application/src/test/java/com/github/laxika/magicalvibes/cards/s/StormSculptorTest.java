@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,27 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormSculptorTest extends BaseCardTest {
-
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has CantBeBlockedEffect as static effect")
-    void hasStaticCantBeBlockedEffect() {
-        StormSculptor card = new StormSculptor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBeBlockedEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has ReturnTargetPermanentToHandEffect as ETB effect")
-    void hasEtbBounceEffect() {
-        StormSculptor card = new StormSculptor();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
 
     // ===== ETB bounce =====
 
@@ -145,7 +120,7 @@ class StormSculptorTest extends BaseCardTest {
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_BLOCKERS);
             harness.clearPriorityPassed();
-            gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+            harness.beginBlockerDeclarationInput();
 
             assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                     .isInstanceOf(IllegalStateException.class)

@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,24 +16,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GravetillerWurmTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has MorbidConditionalEffect wrapping PutCountersOnSourceEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        GravetillerWurm card = new GravetillerWurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MorbidConditionalEffect.class);
-
-        MorbidConditionalEffect morbid =
-                (MorbidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect counters = (PutCountersOnSourceEffect) morbid.wrapped();
-        assertThat(counters.powerModifier()).isEqualTo(1);
-        assertThat(counters.toughnessModifier()).isEqualTo(1);
-        assertThat(counters.amount()).isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Enters as a 4/4 without morbid (no counters)")

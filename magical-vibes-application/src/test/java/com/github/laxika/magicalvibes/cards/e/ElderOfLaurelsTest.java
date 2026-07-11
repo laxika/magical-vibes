@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,24 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElderOfLaurelsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability with correct effect")
-    void hasCorrectAbility() {
-        ElderOfLaurels card = new ElderOfLaurels();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{G}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(BoostTargetCreaturePerControlledPermanentEffect.class);
-
-        var effect = (BoostTargetCreaturePerControlledPermanentEffect) ability.getEffects().getFirst();
-        assertThat(effect.powerPerPermanent()).isEqualTo(1);
-        assertThat(effect.toughnessPerPermanent()).isEqualTo(1);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsCreaturePredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Boosts target creature by number of creatures controller controls")

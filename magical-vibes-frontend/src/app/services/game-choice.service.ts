@@ -422,6 +422,8 @@ export class GameChoiceService {
       case 'ENCHANTMENT': return 'Enchantment';
       case 'LAND': return 'Land';
       case 'PLANESWALKER': return 'Planeswalker';
+      case 'ODD': return 'Odd';
+      case 'EVEN': return 'Even';
       default: return color;
     }
   }

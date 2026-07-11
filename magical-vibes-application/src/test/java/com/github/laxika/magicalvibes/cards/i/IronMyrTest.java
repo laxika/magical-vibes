@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,18 +9,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IronMyrTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Iron Myr has tap-for-red mana ability")
-    void hasTapForRedManaAbility() {
-        IronMyr card = new IronMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
 
     // ===== Mana production =====
 

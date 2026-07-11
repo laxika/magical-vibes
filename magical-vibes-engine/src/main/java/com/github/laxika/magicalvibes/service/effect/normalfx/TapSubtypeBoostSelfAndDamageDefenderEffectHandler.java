@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TapSubtypeBoostSelfAndDamageD
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -44,7 +47,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
             for (Permanent perm : battlefield) {
                 if (!perm.isTapped()
                         && gameQueryService.isCreature(gameData, perm)
-                        && gameQueryService.matchesPermanentPredicate(gameData, perm,
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, perm,
                                 new PermanentHasSubtypePredicate(e.subtype()))) {
                     eligibleIds.add(perm.getId());
                 }
@@ -58,8 +61,8 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
             return;
         }
 
-        gameData.pendingTapSubtypeBoostSourcePermanentId = sourcePermanentId;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
+                new MultiPermanentChoiceContext.TapSubtypeBoost(sourcePermanentId),
                 "You may tap any number of untapped " + e.subtype().getDisplayName() + " you control.");
     }
 }

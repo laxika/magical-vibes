@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +15,10 @@ import java.util.Set;
 public class KembaKhaRegent extends Card {
 
     public KembaKhaRegent() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenPerEquipmentOnSourceEffect(
+        // At the beginning of your upkeep, create a 2/2 white Cat creature token
+        // for each Equipment attached to Kemba, Kha Regent.
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new CreateTokenEffect(
+                new AttachmentsOnSource(false, true),
                 "Cat",
                 2,
                 2,

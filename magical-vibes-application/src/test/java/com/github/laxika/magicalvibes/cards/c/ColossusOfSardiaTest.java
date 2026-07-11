@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapSelfEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -22,36 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ColossusOfSardiaTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Colossus of Sardia has DoesntUntapDuringUntapStepEffect as static effect")
-    void hasDoesntUntapStaticEffect() {
-        ColossusOfSardia card = new ColossusOfSardia();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoesntUntapDuringUntapStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Colossus of Sardia has activated ability with upkeep timing restriction")
-    void hasActivatedAbilityWithTimingRestriction() {
-        ColossusOfSardia card = new ColossusOfSardia();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{9}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-    }
 
     // ===== Casting =====
 

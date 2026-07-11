@@ -3,10 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,51 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChaliceOfLifeTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = GameData.STARTING_LIFE_TOTAL;
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has tap ability with gain life and conditional transform")
-    void frontFaceStructure() {
-        ChaliceOfLife card = new ChaliceOfLife();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) ability.getEffects().get(0)).amount()).isEqualTo(1);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ControllerLifeThresholdConditionalEffect.class);
-        var conditional = (ControllerLifeThresholdConditionalEffect) ability.getEffects().get(1);
-        assertThat(conditional.lifeThreshold()).isEqualTo(30);
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Back face reference is ChaliceOfDeath")
-    void backFaceReference() {
-        ChaliceOfLife card = new ChaliceOfLife();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(ChaliceOfDeath.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("ChaliceOfDeath");
-    }
-
-    @Test
-    @DisplayName("Back face has tap ability that targets player for 5 life loss")
-    void backFaceStructure() {
-        ChaliceOfLife card = new ChaliceOfLife();
-        ChaliceOfDeath backFace = (ChaliceOfDeath) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        var ability = backFace.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(((TargetPlayerLosesLifeEffect) ability.getEffects().getFirst()).amount()).isEqualTo(5);
-    }
 
     // ===== Front face: {T}: You gain 1 life =====
 

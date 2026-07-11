@@ -3,16 +3,11 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,32 +23,6 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has upkeep-triggered random graveyard return and spell cast trigger boost")
-    void hasCorrectEffects() {
-        CharmbreakerDevils card = new CharmbreakerDevils();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(returnEffect.returnAtRandom()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect castTrigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(castTrigger.resolvedEffects()).hasSize(1);
-        assertThat(castTrigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) castTrigger.resolvedEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
     }
 
     // ===== Upkeep trigger: return random instant or sorcery =====

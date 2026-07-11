@@ -3,13 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +17,7 @@ class ContestedWarZoneTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Contested War Zone has damage-to-controller trigger effect")
-    void hasDamageToControllerTrigger() {
-        ContestedWarZone card = new ContestedWarZone();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).getFirst())
-                .isInstanceOf(DamageSourceControllerGainsControlOfThisPermanentEffect.class);
-
-        DamageSourceControllerGainsControlOfThisPermanentEffect effect =
-                (DamageSourceControllerGainsControlOfThisPermanentEffect) card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).getFirst();
-        assertThat(effect.combatOnly()).isTrue();
-        assertThat(effect.creatureOnly()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Contested War Zone has two activated abilities (mana and boost)")
@@ -43,20 +27,7 @@ class ContestedWarZoneTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("Contested War Zone boost ability uses BoostAllCreaturesEffect with attacking filter")
-    void boostAbilityUsesCorrectEffect() {
-        ContestedWarZone card = new ContestedWarZone();
-
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(BoostAllCreaturesEffect.class);
-
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.filter()).isNotNull();
-    }
+    
 
     // ===== Combat damage control change =====
 

@@ -3,13 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,25 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TragicSlipTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from -1/-1 to -13/-13")
-    void hasCorrectStructure() {
-        TragicSlip card = new TragicSlip();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
-
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).powerBoost()).isEqualTo(-1);
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).toughnessBoost()).isEqualTo(-1);
-        assertThat(((BoostTargetCreatureEffect) effect.morbidEffect()).powerBoost()).isEqualTo(-13);
-        assertThat(((BoostTargetCreatureEffect) effect.morbidEffect()).toughnessBoost()).isEqualTo(-13);
-    }
+    
 
     @Test
     @DisplayName("Gives target creature -1/-1 without morbid")

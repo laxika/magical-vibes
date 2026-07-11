@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,28 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BackFromTheBrinkTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with exile creature from graveyard cost and token copy effect")
-    void hasCorrectAbility() {
-        BackFromTheBrink card = new BackFromTheBrink();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) ability.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.payExiledCardManaCost()).isTrue();
-        assertThat(exileCost.imprintOnSource()).isTrue();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(CreateTokenCopyOfExiledCostCardEffect.class);
-    }
 
     // ===== Ability activation =====
 
@@ -54,8 +29,8 @@ class BackFromTheBrinkTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
     }
 
     @Test

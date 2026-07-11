@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,16 +16,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SengirVampireTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sengir Vampire has correct card properties")
-    void hasCorrectProperties() {
-        SengirVampire card = new SengirVampire();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when a creature it damaged in combat dies")

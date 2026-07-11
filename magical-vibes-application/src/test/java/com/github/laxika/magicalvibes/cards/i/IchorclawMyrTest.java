@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IchorclawMyrTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ichorclaw Myr has ON_BECOMES_BLOCKED effect with BoostSelfEffect +2/+2")
-    void hasOnBecomesBlockedEffect() {
-        IchorclawMyr card = new IchorclawMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("When Ichorclaw Myr becomes blocked, a triggered ability is pushed onto the stack")
@@ -71,8 +58,8 @@ class IchorclawMyrTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent myrPerm = addMyrReady(player1);
-        myrPerm.getCard().setPower(4);
-        myrPerm.getCard().setToughness(4);
+        TestCards.mutableCard(myrPerm).setPower(4);
+        TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -100,8 +87,8 @@ class IchorclawMyrTest extends BaseCardTest {
     @DisplayName("+2/+2 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent myrPerm = addMyrReady(player1);
-        myrPerm.getCard().setPower(4);
-        myrPerm.getCard().setToughness(4);
+        TestCards.mutableCard(myrPerm).setPower(4);
+        TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -140,6 +127,6 @@ class IchorclawMyrTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

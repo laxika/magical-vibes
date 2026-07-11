@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,12 +31,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -77,8 +78,10 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, predicateEvaluationService, libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -137,7 +140,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
                 // With 2 cards and no creatures, should begin library reorder (to bottom)
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
             }
 
             @Test
@@ -154,7 +157,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 // Single card goes back to deck without reorder prompt
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
             }
 
             @Test
@@ -165,8 +168,8 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
                 gd.playerDecks.get(player1Id).add(createCard("Giant Growth", CardType.INSTANT));
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
                 LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                         new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
@@ -175,7 +178,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 
@@ -187,8 +190,8 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves", CardType.CREATURE));
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
                 LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                         new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE), true);
@@ -197,7 +200,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

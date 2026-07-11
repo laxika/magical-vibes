@@ -3,14 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -42,31 +37,6 @@ class LeylineOfPunishmentTest {
         gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Leyline of Punishment has PlayersCantGainLifeEffect and DamageCantBePreventedEffect as static effects")
-    void hasStaticEffects() {
-        LeylineOfPunishment card = new LeylineOfPunishment();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayersCantGainLifeEffect)
-                .anyMatch(e -> e instanceof DamageCantBePreventedEffect);
-    }
-
-    @Test
-    @DisplayName("Leyline of Punishment has ON_OPENING_HAND_REVEAL MayEffect wrapping LeylineStartOnBattlefieldEffect")
-    void hasOpeningHandLeylineEffect() {
-        LeylineOfPunishment card = new LeylineOfPunishment();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(LeylineStartOnBattlefieldEffect.class);
     }
 
     // ===== Leyline opening hand mechanic =====

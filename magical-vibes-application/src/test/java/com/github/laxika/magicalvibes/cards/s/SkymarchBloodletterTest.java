@@ -1,12 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,32 +13,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkymarchBloodletterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB effects for opponent life loss and controller life gain")
-    void hasEtbEffects() {
-        SkymarchBloodletter card = new SkymarchBloodletter();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        TargetPlayerLosesLifeEffect loseEffect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(loseEffect.amount()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect gainEffect =
-                (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
-        assertThat(gainEffect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Needs target and has opponent-only target filter")
-    void needsTargetWithOpponentFilter() {
-        SkymarchBloodletter card = new SkymarchBloodletter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")

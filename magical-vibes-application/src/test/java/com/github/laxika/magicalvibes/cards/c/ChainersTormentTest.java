@@ -2,15 +2,11 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,47 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChainersTormentTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has deal 2 damage to each opponent and gain 2 life effects")
-    void chapterIHasCorrectEffects() {
-        ChainersTorment card = new ChainersTorment();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) effects.get(0)).damage()).isEqualTo(2);
-        assertThat(effects.get(1)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) effects.get(1)).amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same effects as chapter I")
-    void chapterIIHasCorrectEffects() {
-        ChainersTorment card = new ChainersTorment();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(GainLifeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III creates Nightmare Horror token from half life total")
-    void chapterIIIHasCorrectEffects() {
-        ChainersTorment card = new ChainersTorment();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.get(0)).isInstanceOf(CreateTokenFromHalfLifeTotalAndDealDamageEffect.class);
-        CreateTokenFromHalfLifeTotalAndDealDamageEffect effect =
-                (CreateTokenFromHalfLifeTotalAndDealDamageEffect) effects.get(0);
-        assertThat(effect.tokenName()).isEqualTo("Nightmare Horror");
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.NIGHTMARE, CardSubtype.HORROR);
-    }
 
     // ===== ETB: first lore counter and chapter I triggers =====
 

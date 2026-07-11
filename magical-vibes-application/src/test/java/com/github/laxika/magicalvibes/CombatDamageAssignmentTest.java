@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.r.Rhox;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -65,7 +65,7 @@ class CombatDamageAssignmentTest {
         // Advance from DECLARE_BLOCKERS → COMBAT_DAMAGE (paused for assignment)
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         // Assign 1 damage to each blocker (kills both 1/1s)
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -142,7 +142,7 @@ class CombatDamageAssignmentTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         // Assign lethal (2) to blocker, remaining 6 to defending player
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -259,7 +259,7 @@ class CombatDamageAssignmentTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         // Assign all damage to defending player (using assign-as-though-unblocked)
         harness.handleCombatDamageAssigned(player1, 0, Map.of(player2.getId(), 5));

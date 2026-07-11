@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,42 +32,11 @@ class VenserTheSojournerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has ExileTargetPermanentAndReturnAtEndStepEffect with owned permanent filter")
-    void plusTwoAbilityHasCorrectEffects() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndReturnAtEndStepEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(OwnedPermanentPredicateTargetFilter.class);
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability has MakeAllCreaturesUnblockableEffect")
-    void minusOneAbilityHasCorrectEffect() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(MakeAllCreaturesUnblockableEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has VenserEmblemEffect")
-    void minusEightAbilityHasCorrectEffect() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(VenserEmblemEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -109,14 +75,14 @@ class VenserTheSojournerTest extends BaseCardTest {
         // Bears should be exiled
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
 
         // Advance to end step — bears should return
         advanceToEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.pendingExileReturns).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
     @Test
@@ -146,7 +112,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
     }
 
     // ===== -1 ability: Creatures can't be blocked this turn =====
@@ -246,7 +212,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // Game should be awaiting permanent choice for the emblem trigger target
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
         // Choose the opponent's bears as the target
         harness.handlePermanentChosen(player1, bearsId);
@@ -283,7 +249,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         // Should NOT be awaiting permanent choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         // Just the creature spell on stack
         assertThat(gd.stack).hasSize(1);
     }

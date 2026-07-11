@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -15,23 +14,28 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,10 +52,11 @@ import java.util.*;
 public class CombatBlockService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -104,30 +109,40 @@ public class CombatBlockService {
      * Initiates the declare-blockers step. Sends available blockers and legal block pairs
      * to the defending player. Skips if no blockers or no blockable attackers exist.
      */
+    /**
+     * The attacking creature indices the defender can legally be asked to block: the active
+     * player's attackers filtered by every "can't be blocked" condition. Used by both the
+     * declare-blockers step and the blocker-declaration prompt (including reconnect replay).
+     */
+    public List<Integer> getBlockableAttackerIndices(GameData gameData, UUID activeId, UUID defenderId) {
+        List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        return attackerIndices.stream()
+                .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
+                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(predicateEvaluationService, gameData, attackerBattlefield.get(idx), defenderBattlefield))
+                .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
+                .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameData, attackerBattlefield.get(idx)))
+                .toList();
+    }
+
     public CombatResult handleDeclareBlockersStep(GameData gameData) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
-        List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
-
-        // Filter out attackers that can't be blocked
-        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        attackerIndices = attackerIndices.stream()
-                .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(gameQueryService, gameData, attackerBattlefield.get(idx), defenderBattlefield))
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
-                .toList();
+        List<Integer> attackerIndices = getBlockableAttackerIndices(gameData, activeId, defenderId);
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
             log.info("Game {} - Defending player has no creatures that can block or no blockable attackers", gameData.id);
+            // No blocks are possible, so every attacking creature is unblocked: fire any
+            // "attacks and isn't blocked" triggers before advancing to combat damage.
+            if (collectUnblockedAttackTriggers(gameData, activeId, defenderId) > 0) {
+                return CombatResult.AUTO_PASS_ONLY;
+            }
             return CombatResult.ADVANCE_ONLY;
         }
 
-        AvailableBlockersMessage message = buildAvailableBlockersMessage(gameData, blockable, attackerIndices, defenderId, activeId);
-
-        gameData.interaction.beginBlockerDeclaration(defenderId);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, defenderId), message);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.BlockerDeclaration(defenderId));
         return CombatResult.DONE;
     }
 
@@ -135,7 +150,7 @@ public class CombatBlockService {
      * Validates and processes a player's blocker declaration.
      */
     public CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
 
@@ -194,6 +209,11 @@ public class CombatBlockService {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " can't be blocked by more than " + restriction.maxBlockers()
                             + " creature" + (restriction.maxBlockers() == 1 ? "" : "s"));
+                }
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
                 }
             }
         }
@@ -255,9 +275,10 @@ public class CombatBlockService {
                 // Set target: attacker ID for effects that need it, otherwise blocker's own ID
                 boolean needsAttackerTarget = blockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
-                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect
-                                || e instanceof SkipNextUntapOnTargetEffect
+                                || e instanceof DestroyTargetPermanentThenEffect
+                                || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
                                 || e instanceof DealDamageToTargetCreatureEffect
+                                || e instanceof DestroyCombatOpponentAtEndOfCombatEffect
                                 || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect);
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -280,6 +301,36 @@ public class CombatBlockService {
             Permanent blockerForAura = defenderBattlefield.get(assignment.blockerIndex());
             Permanent attackerForAura = attackerBattlefield.get(assignment.attackerIndex());
             combatTriggerService.checkAuraTriggersForCreature(gameData, blockerForAura, EffectSlot.ON_BLOCK, attackerForAura);
+        }
+
+        // Check for "whenever this creature blocks two or more creatures" triggers (fires once,
+        // not per blocker assignment). Defending player's / NAP's triggers.
+        Map<Integer, Long> blocksPerBlocker = blockerAssignments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        BlockerAssignment::blockerIndex, java.util.stream.Collectors.counting()));
+        for (Map.Entry<Integer, Long> entry : blocksPerBlocker.entrySet()) {
+            if (entry.getValue() < 2) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(entry.getKey());
+            List<CardEffect> multiBlockEffects = blocker.getCard().getEffects(EffectSlot.ON_BLOCKS_MULTIPLE_CREATURES);
+            if (multiBlockEffects.isEmpty()) {
+                continue;
+            }
+            StackEntry multiBlockTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    blocker.getCard(),
+                    defenderId,
+                    blocker.getCard().getName() + "'s multi-block trigger",
+                    new ArrayList<>(multiBlockEffects),
+                    blocker.getId(),
+                    blocker.getId()
+            );
+            multiBlockTrigger.setNonTargeting(true);
+            gameData.stack.add(multiBlockTrigger);
+            String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+            log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
 
         // Check for "when this creature becomes blocked" triggers (active player's / AP's)
@@ -358,6 +409,10 @@ public class CombatBlockService {
             combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
             combatTriggerService.checkAttachedPerBlockerTriggers(gameData, attacker, blockerAssignments, defenderBattlefield, atkIdx);
         }
+
+        // "Whenever this creature attacks and isn't blocked" triggers (active player's / AP's) for
+        // every attacker that ended up unblocked after this block declaration.
+        collectUnblockedAttackTriggers(gameData, activeId, defenderId);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
@@ -443,6 +498,61 @@ public class CombatBlockService {
     }
 
 
+    /**
+     * Collects "whenever this creature attacks and isn't blocked" ({@code ON_ATTACKS_UNBLOCKED})
+     * triggers for every attacking creature the active player controls that no creature is blocking.
+     * Each trigger is the active player's; player-affecting effects (e.g. a discard) read the
+     * defending player from the (non-targeting) {@code targetId}. Returns the number pushed.
+     */
+    private int collectUnblockedAttackTriggers(GameData gameData, UUID activeId, UUID defenderId) {
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        if (attackerBattlefield == null) {
+            return 0;
+        }
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        int pushed = 0;
+        for (Permanent attacker : attackerBattlefield) {
+            if (!attacker.isAttacking()) {
+                continue;
+            }
+            List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
+            if (effects.isEmpty() || isBlocked(defenderBattlefield, attacker)) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    activeId,
+                    attacker.getCard().getName() + "'s unblocked-attack trigger",
+                    new ArrayList<>(effects),
+                    defenderId,
+                    attacker.getId());
+            // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameBroadcastService.logAndBroadcast(gameData, attacker.getCard().getName()
+                    + "'s unblocked-attack ability triggers.");
+            log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            pushed++;
+        }
+        return pushed;
+    }
+
+    /**
+     * Returns {@code true} if any creature on the defending battlefield is blocking the given attacker.
+     */
+    private boolean isBlocked(List<Permanent> defenderBattlefield, Permanent attacker) {
+        if (defenderBattlefield == null) {
+            return false;
+        }
+        for (Permanent blocker : defenderBattlefield) {
+            if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean canBlockAttacker(GameData gameData, Permanent blocker,
                                       Permanent attacker, List<Permanent> defenderBattlefield) {
         return gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
@@ -498,7 +608,8 @@ public class CombatBlockService {
         for (int i = 0; i < attackerBattlefield.size(); i++) {
             Permanent attacker = attackerBattlefield.get(i);
             if (!attacker.isAttacking()) continue;
-            boolean hasRequirement = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasRequirement = attacker.isMustBeBlockedByAllThisTurn()
+                    || attacker.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance)
                     || gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
             if (hasRequirement) {

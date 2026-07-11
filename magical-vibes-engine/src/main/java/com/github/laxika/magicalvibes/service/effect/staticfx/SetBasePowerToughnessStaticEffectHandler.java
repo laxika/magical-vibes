@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +15,12 @@ public class SetBasePowerToughnessStaticEffectHandler implements StaticEffectHan
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return SetBasePowerToughnessStaticEffect.class;
+        return SetBasePowerToughnessEffect.class;
     }
 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var setPT = (SetBasePowerToughnessStaticEffect) effect;
+        var setPT = (SetBasePowerToughnessEffect) effect;
         if (support.matchesCreatureScope(context, setPT.scope(), null)) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         }

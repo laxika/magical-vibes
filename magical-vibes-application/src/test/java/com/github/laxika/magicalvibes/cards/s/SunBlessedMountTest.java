@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,25 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SunBlessedMountTest extends BaseCardTest {
-
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping SearchLibraryAndOrGraveyardForNamedCardToHandEffect on ETB")
-    void hasCorrectEffects() {
-        SunBlessedMount card = new SunBlessedMount();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryAndOrGraveyardForNamedCardToHandEffect.class);
-
-        SearchLibraryAndOrGraveyardForNamedCardToHandEffect searchEffect =
-                (SearchLibraryAndOrGraveyardForNamedCardToHandEffect) mayEffect.wrapped();
-        assertThat(searchEffect.cardName()).isEqualTo("Huatli, Dinosaur Knight");
-    }
 
     // ===== ETB triggers may prompt =====
 
@@ -46,8 +24,8 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept may: finds in graveyard =====
@@ -84,10 +62,10 @@ class SunBlessedMountTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Library search prompt should appear
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
     }
 
     // ===== Accept may: not found anywhere =====

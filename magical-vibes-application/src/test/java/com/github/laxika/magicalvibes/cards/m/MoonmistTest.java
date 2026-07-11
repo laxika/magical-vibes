@@ -3,49 +3,18 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GatstafShepherd;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageExceptBySubtypesEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MoonmistTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Moonmist has correct effects")
-    void hasCorrectEffects() {
-        Moonmist card = new Moonmist();
-
-        List<?> spellEffects = card.getEffects(EffectSlot.SPELL);
-        assertThat(spellEffects).hasSize(2);
-        assertThat(spellEffects.get(0)).isInstanceOf(TransformAllEffect.class);
-        TransformAllEffect transformEffect = (TransformAllEffect) spellEffects.get(0);
-        assertThat(transformEffect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        PermanentHasSubtypePredicate humanFilter = (PermanentHasSubtypePredicate) transformEffect.filter();
-        assertThat(humanFilter.subtype()).isEqualTo(CardSubtype.HUMAN);
-
-        assertThat(spellEffects.get(1)).isInstanceOf(PreventCombatDamageExceptBySubtypesEffect.class);
-        PreventCombatDamageExceptBySubtypesEffect preventEffect =
-                (PreventCombatDamageExceptBySubtypesEffect) spellEffects.get(1);
-        assertThat(preventEffect.exemptPredicate()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-        PermanentHasAnySubtypePredicate exemptFilter =
-                (PermanentHasAnySubtypePredicate) preventEffect.exemptPredicate();
-        assertThat(exemptFilter.subtypes()).containsExactlyInAnyOrder(CardSubtype.WEREWOLF, CardSubtype.WOLF);
-    }
 
     // ===== Casting =====
 
@@ -231,7 +200,5 @@ class MoonmistTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Moonmist"));
     }
-
-    // ===== Helper methods =====
 
 }

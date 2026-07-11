@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -369,7 +370,7 @@ class CombatServiceTest {
         @DisplayName("Sacrifices permanent marked for end-of-combat sacrifice")
         void sacrificesMarkedPermanent() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 
@@ -380,7 +381,7 @@ class CombatServiceTest {
         @DisplayName("Logs sacrifice message for each sacrificed permanent")
         void logsSacrificeMessage() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 
@@ -392,18 +393,18 @@ class CombatServiceTest {
         @DisplayName("Clears sacrifice set after processing")
         void clearsSacrificeSetAfterProcessing() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 
-            assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
+            assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
         }
 
         @Test
         @DisplayName("Removes orphaned auras after sacrificing")
         void removesOrphanedAurasAfterSacrificing() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 
@@ -433,14 +434,14 @@ class CombatServiceTest {
         void sacrificesMultiplePermanentsFromDifferentPlayers() {
             Permanent creature1 = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent creature2 = addPermanent(player2Id, createCreature("Serra Angel"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature1.getId());
-            gd.permanentsToSacrificeAtEndOfCombat.add(creature2.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature1.getId()));
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(creature2.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, creature1);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, creature2);
-            assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
+            assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
         }
 
         @Test
@@ -448,7 +449,7 @@ class CombatServiceTest {
         void doesNotSacrificeUnmarkedPermanent() {
             Permanent marked = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent unmarked = addPermanent(player1Id, createCreature("Serra Angel"));
-            gd.permanentsToSacrificeAtEndOfCombat.add(marked.getId());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(marked.getId()));
 
             combatService.processEndOfCombatSacrifices(gd);
 

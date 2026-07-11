@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -126,7 +127,7 @@ class PraetorsCounselTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_STEP);
         gs.advanceStep(gd);
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
     @Test
@@ -154,8 +155,8 @@ class PraetorsCounselTest extends BaseCardTest {
 
         gs.advanceStep(gd);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
     }
 
     // ===== Does not return opponent's graveyard =====

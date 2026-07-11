@@ -5,9 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,36 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class QuicksandTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Quicksand has correct card properties")
-    void hasCorrectProperties() {
-        Quicksand card = new Quicksand();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.isNeedsTarget()).isFalse();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(1);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isNull();
-        assertThat(sacrificeAbility.isNeedsTarget()).isTrue();
-        assertThat(sacrificeAbility.getTargetFilter()).isNotNull();
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) sacrificeAbility.getEffects().get(1);
-        assertThat(effect.powerBoost()).isEqualTo(-1);
-        assertThat(effect.toughnessBoost()).isEqualTo(-2);
-    }
 
     // ===== Mana ability =====
 

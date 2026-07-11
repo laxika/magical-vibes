@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,20 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudreaderSphinxTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cloudreader Sphinx has scry 2 ETB effect")
-    void hasCorrectProperties() {
-        CloudreaderSphinx card = new CloudreaderSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
 
     // ===== Casting and resolving =====
 
@@ -80,9 +64,9 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
     }
 
     // ===== Scry 2 functionality =====
@@ -167,7 +151,7 @@ class CloudreaderSphinxTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1), List.of());
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.scryContext()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 }

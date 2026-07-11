@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,21 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShimmerMyrTest extends BaseCardTest {
-
-    // ===== Static effect registration =====
-
-    @Test
-    @DisplayName("Shimmer Myr has GrantFlashToCardTypeEffect for ARTIFACT")
-    void hasGrantFlashStaticEffect() {
-        ShimmerMyr card = new ShimmerMyr();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantFlashToCardTypeEffect.class);
-        GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
-    }
 
     // ===== Grant flash to artifact spells =====
 

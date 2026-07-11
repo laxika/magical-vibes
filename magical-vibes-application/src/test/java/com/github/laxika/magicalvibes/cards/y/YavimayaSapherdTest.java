@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,26 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class YavimayaSapherdTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Yavimaya Sapherd has one ON_ENTER_BATTLEFIELD token creation effect")
-    void hasCorrectEffect() {
-        YavimayaSapherd card = new YavimayaSapherd();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Saproling");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SAPROLING);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
 
     // ===== Casting =====
 

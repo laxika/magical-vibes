@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,8 +16,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,29 +37,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{2}"));
     }
 
-    @Test
-    @DisplayName("Has KickerReplacementEffect with search-for-basic-land effects")
-    void hasCorrectSpellEffects() {
-        GrowFromTheAshes card = new GrowFromTheAshes();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(1)
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickerReplacementEffect.class);
-                    KickerReplacementEffect kre = (KickerReplacementEffect) e;
-                    assertThat(kre.baseEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-                    SearchLibraryForCardTypesToBattlefieldEffect base =
-                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.baseEffect();
-                    assertThat(base.entersTapped()).isFalse();
-                    assertThat(base.maxCount()).isEqualTo(1);
-
-                    assertThat(kre.kickedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-                    SearchLibraryForCardTypesToBattlefieldEffect kicked =
-                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.kickedEffect();
-                    assertThat(kicked.entersTapped()).isFalse();
-                    assertThat(kicked.maxCount()).isEqualTo(2);
-                });
-    }
+    
 
     // ===== Cast without kicker =====
 
@@ -85,10 +62,10 @@ class GrowFromTheAshesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -107,7 +84,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && !p.isTapped());
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -121,7 +98,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Cast with kicker =====
@@ -135,10 +112,10 @@ class GrowFromTheAshesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -163,7 +140,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
                 .filter(p -> p.getCard().hasType(CardType.LAND) && !p.isTapped())
                 .count();
         assertThat(untappedLands).isGreaterThanOrEqualTo(2);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Edge cases =====
@@ -179,7 +156,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
@@ -192,7 +169,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 

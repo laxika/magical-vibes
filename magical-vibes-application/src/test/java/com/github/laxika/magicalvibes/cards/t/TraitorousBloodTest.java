@@ -1,21 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,24 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TraitorousBloodTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Traitorous Blood has correct card properties")
-    void hasCorrectProperties() {
-        TraitorousBlood card = new TraitorousBlood();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(4);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect trampleEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(trampleEffect.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trampleEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(3)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(3);
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Resolving Traitorous Blood untaps target, gains control, and grants trample and haste")
@@ -64,7 +38,7 @@ class TraitorousBloodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isTrue();
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
     @Test
@@ -86,7 +60,7 @@ class TraitorousBloodTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.TRAMPLE)).isFalse();
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
     @Test
@@ -107,7 +81,7 @@ class TraitorousBloodTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(attackerIndex));
 

@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,14 +12,18 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -94,9 +97,10 @@ public class AiManaManager {
                     // Basic lands and permanents with ON_TAP mana effects
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
+                            virtual.add(manaEffect.color(), amount);
                             if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                                virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
@@ -154,7 +158,7 @@ public class AiManaManager {
                 } else if (hasOnTapManaEffects(perm.getCard())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
                         } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
@@ -200,16 +204,12 @@ public class AiManaManager {
             EnumMap<ManaColor, Integer> abilityByColor = new EnumMap<>(ManaColor.class);
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof AwardManaEffect manaEffect) {
-                    abilityByColor.merge(manaEffect.color(), manaEffect.amount(), Integer::sum);
+                    int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
+                    if (amount > 0) {
+                        abilityByColor.merge(manaEffect.color(), amount, Integer::sum);
+                    }
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
                     abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
-                } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                    if (permanent != null) {
-                        int count = permanent.getCounterCount(CounterType.CHARGE);
-                        if (count > 0) {
-                            abilityByColor.merge(ManaColor.COLORLESS, count, Integer::sum);
-                        }
-                    }
                 }
             }
 
@@ -270,10 +270,14 @@ public class AiManaManager {
         return switch (ability.getTimingRestriction()) {
             case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
             case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case OPPONENT_CONTROLS_MORE_LANDS -> gameQueryService.anyOpponentControlsMoreLands(gameData, playerId);
             case ONLY_DURING_YOUR_TURN -> playerId.equals(gameData.activePlayerId);
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
+            case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
+                    && gameData.currentStep.isBeforeAttackersDeclared();
+            case ONLY_DURING_COMBAT -> gameData.currentStep.isCombatPhase();
             case ONLY_WHILE_CREATURE -> permanent != null && gameQueryService.isCreature(gameData, permanent);
             case POWER_4_OR_GREATER -> permanent != null && gameQueryService.getEffectivePower(gameData, permanent) >= 4;
             case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(playerId);
@@ -307,6 +311,16 @@ public class AiManaManager {
 
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
                          boolean skipChoiceSources) {
+        tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, skipChoiceSources, null);
+    }
+
+    /**
+     * @param excludePermanentId a permanent that must never be used as a mana source, or null —
+     *                           e.g. the source of a {T}-ability whose mana cost is being paid
+     *                           (tapping it for mana would make its own ability unactivatable)
+     */
+    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
+                         boolean skipChoiceSources, UUID excludePermanentId) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -319,11 +333,18 @@ public class AiManaManager {
             return;
         }
 
-        // Track initial awaiting input so we only bail when a mana ability triggers
+        // Track the initial interaction kind so we only bail when a mana ability triggers
         // a NEW input prompt (e.g. color choice), not when we're already awaiting
-        // input for something else (e.g. ATTACKER_DECLARATION during attack tax payment).
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        // input for something else (e.g. attacker declaration during attack tax payment).
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (excludePermanentId != null) {
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(excludePermanentId)) {
+                    visited.add(p);
+                }
+            }
+        }
 
         while (true) {
             int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,
@@ -339,7 +360,7 @@ public class AiManaManager {
             if (cost.canPay(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -358,7 +379,7 @@ public class AiManaManager {
             return;
         }
 
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
         while (true) {
@@ -375,7 +396,7 @@ public class AiManaManager {
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -394,7 +415,7 @@ public class AiManaManager {
             return;
         }
 
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
         while (true) {
@@ -411,7 +432,7 @@ public class AiManaManager {
             if (isXSpellPaid(cost, card, currentPool, xValue, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -552,7 +573,7 @@ public class AiManaManager {
 
     /**
      * Returns true if any free-tap mana ability on this card has a
-     * {@link DealDamageToControllerEffect} side effect (pain lands).
+     * {@link DealDamageToPlayersEffect} CONTROLLER side effect (pain lands).
      */
     private static boolean hasManaAbilityWithDamageCost(Card card) {
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
@@ -560,7 +581,7 @@ public class AiManaManager {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof DealDamageToControllerEffect) {
+                if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
                     return true;
                 }
             }
@@ -616,7 +637,7 @@ public class AiManaManager {
         if (hasOnTapManaEffects(card)) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect manaEffect) {
-                    pool.add(manaEffect.color(), manaEffect.amount());
+                    pool.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), null, null));
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
                     pool.add(ManaColor.COLORLESS, aace.amount());
                 } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
@@ -649,8 +670,6 @@ public class AiManaManager {
                         colors.add(manaEffect.color());
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         Collections.addAll(colors, ManaColor.values());
-                    } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                        colors.add(ManaColor.COLORLESS);
                     }
                 }
             }
@@ -698,9 +717,10 @@ public class AiManaManager {
                 } else if (hasOnTapManaEffects(perm.getCard())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
+                            virtual.add(manaEffect.color(), amount);
                             if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                                virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
@@ -746,6 +766,31 @@ public class AiManaManager {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Estimates the integer mana quantity an {@link AwardManaEffect} would produce for the AI's
+     * virtual mana pool. A flat {@link Fixed} amount is exact; source-relative amounts the AI can
+     * resolve from the permanent alone — charge counters ({@link CountersOnSource}) and source power
+     * ({@link SourcePower}) — are computed directly. Other dynamic amounts (e.g. per-permanent
+     * counts) aren't estimated here (they contribute 0, matching the pre-collapse behavior where
+     * such mana abilities weren't counted); {@code null} permanent/game data (hypothetical card
+     * evaluation) yields the fixed value or 0.
+     */
+    private int estimateManaAmount(DynamicAmount amount, Permanent permanent, GameData gameData) {
+        if (amount instanceof Fixed fixed) {
+            return fixed.value();
+        }
+        if (permanent == null || gameData == null) {
+            return 0;
+        }
+        if (amount instanceof CountersOnSource counters) {
+            return permanent.getCounterCount(counters.counterType());
+        }
+        if (amount instanceof SourcePower) {
+            return Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
+        }
+        return 0;
+    }
 
     /**
      * Returns true if the card has ON_TAP mana-producing effects (basic lands, mana creatures like Llanowar Elves).
@@ -795,7 +840,7 @@ public class AiManaManager {
      */
     private static int scoreManaAbility(ActivatedAbility ability, ManaCost cost, ManaPool currentPool) {
         boolean hasSideEffects = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof DealDamageToControllerEffect);
+                .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER);
         Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
 
         for (CardEffect effect : ability.getEffects()) {
@@ -813,11 +858,13 @@ public class AiManaManager {
             if (effect instanceof AwardAnyColorManaEffect) {
                 return hasSideEffects ? 1 : 5;
             }
-            if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                // Colorless mana - can contribute to generic costs
-                return hasSideEffects ? 1 : 5;
-            }
         }
         return 0;
+    }
+
+    /** The active interaction kind (record class), or {@code null} when none is active. */
+    private static Class<?> interactionKind(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        return active == null ? null : active.getClass();
     }
 }

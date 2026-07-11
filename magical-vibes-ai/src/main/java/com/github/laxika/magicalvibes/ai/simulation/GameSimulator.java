@@ -4,17 +4,16 @@ import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -24,9 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -37,104 +34,14 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
-import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
-import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
-import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
-import com.github.laxika.magicalvibes.service.combat.CombatBlockService;
-import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
-import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.DraftRegistry;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.trigger.DeathTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
-import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.ReconnectionService;
-import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
-import com.github.laxika.magicalvibes.service.StackResolutionService;
-import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.turn.AutoPassService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
-import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.WarpWorldService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
-import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
-import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.DestructionTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.LibraryTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.LifeTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.PermanentControlTargetValidators;
-import com.github.laxika.magicalvibes.service.trigger.DamageTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.MiscTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
-import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceBattlefieldHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -157,7 +64,9 @@ public class GameSimulator {
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
     private final BoardEvaluator boardEvaluator;
@@ -177,11 +86,14 @@ public class GameSimulator {
     GameSimulator(GameService gameService,
                   GameQueryService gameQueryService,
                   GameBroadcastService gameBroadcastService,
+                  com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
                   CombatAttackService combatAttackService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameBroadcastService = gameBroadcastService;
+        this.castingCostService = castingCostService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
         this.manaManager = new AiManaManager(gameQueryService);
@@ -197,7 +109,7 @@ public class GameSimulator {
     public List<SimulationAction> getLegalActions(GameData gd, UUID playerId) {
         List<SimulationAction> actions = new ArrayList<>();
 
-        AwaitingInput awaitingInput = gd.interaction.awaitingInputType();
+        PendingInteraction awaitingInput = gd.interaction.activeInteraction();
 
         if (awaitingInput == null) {
             // Normal priority — can cast spells or pass
@@ -212,30 +124,35 @@ public class GameSimulator {
                     ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
                     for (int i = 0; i < hand.size(); i++) {
                         Card card = hand.get(i);
+                        // Policy (which legal moves to try): rollouts don't sequence land drops
+                        // here and only cast at sorcery speed, so lands and instants are skipped.
                         if (card.hasType(CardType.LAND)) continue;
                         if (card.hasType(CardType.INSTANT)) continue;
+                        // The simulator's downstream mana-payment / X helpers dereference the mana
+                        // cost, so costless alternate-cast cards are out of its scope.
                         if (card.getManaCost() == null) continue;
-                        ManaCost cost = new ManaCost(card.getManaCost());
-                        if (cost.hasX()) {
-                            if (!cost.canPay(virtualPool, 1)) continue;
-                        } else {
-                            if (!cost.canPay(virtualPool)) continue;
-                        }
-                        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+                        boolean hasX = new ManaCost(card.getManaCost()).hasX();
+                        // Legality/affordability is the engine's call: isCardPlayable covers mana
+                        // (every cost modifier / alternative-cost route, requiresCreatureMana),
+                        // timing, spell limits, target availability, ExileN and legendary-sorcery
+                        // rules. X>=1 stays AI policy — passed as the extra generic requirement,
+                        // mirroring AiDecisionEngine.canAffordSpell.
+                        int minXPolicy = hasX ? 1 : 0;
+                        if (!gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
                             continue;
                         }
-                        // Skip cards whose additional costs can't be paid in simulation
-                        if (!canPayAdditionalCosts(gd, playerId, card)) {
+                        // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.
+                        if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
                             continue;
                         }
-                        // For targeted spells, try to find a target
+                        // For targeted spells, try to find a target (policy: which target to try)
                         UUID targetId = null;
                         if (EffectResolution.needsTarget(card) || card.isAura()) {
                             targetId = findBestTarget(gd, card, playerId);
                             if (targetId == null) continue; // no valid target
                         }
                         int xValue = 0;
-                        if (cost.hasX()) {
+                        if (hasX) {
                             xValue = calculateSmartX(gd, card, targetId, virtualPool);
                             if (xValue <= 0) continue;
                         }
@@ -249,7 +166,7 @@ public class GameSimulator {
         }
 
         switch (awaitingInput) {
-            case ATTACKER_DECLARATION -> {
+            case PendingInteraction.AttackerDeclaration ignored -> {
                 List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
                 List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
                 // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
@@ -273,7 +190,7 @@ public class GameSimulator {
                     actions.add(new SimulationAction.DeclareAttackers(availableIndices));
                 }
             }
-            case BLOCKER_DECLARATION -> {
+            case PendingInteraction.BlockerDeclaration ignored -> {
                 // Offer diverse blocking options for MCTS to explore:
                 // 1) No blocking at all
                 actions.add(new SimulationAction.DeclareBlockers(List.of()));
@@ -315,28 +232,29 @@ public class GameSimulator {
                     }
                 }
             }
-            case CARD_CHOICE, DISCARD_CHOICE, REVEALED_HAND_CHOICE -> {
-                var cardChoice = gd.interaction.cardChoiceContext();
-                if (cardChoice != null && cardChoice.validIndices() != null) {
-                    for (int idx : cardChoice.validIndices()) {
+            case PendingInteraction.HandCardChoice cardChoice -> addHandChoiceActions(actions, cardChoice);
+            case PendingInteraction.DiscardChoice cardChoice -> addHandChoiceActions(actions, cardChoice);
+            case PendingInteraction.RevealedHandChoice rhc -> {
+                if (rhc.validIndices() != null) {
+                    for (int idx : rhc.validIndices()) {
                         actions.add(new SimulationAction.ChooseCard(idx));
                     }
                 }
             }
-            case PERMANENT_CHOICE -> {
-                var permChoice = gd.interaction.permanentChoiceContextView();
-                if (permChoice != null && permChoice.validIds() != null) {
-                    for (UUID id : permChoice.validIds()) {
-                        actions.add(new SimulationAction.ChoosePermanent(id));
-                    }
+            case PendingInteraction.PermanentChoice permChoice -> {
+                for (UUID id : permChoice.validIds()) {
+                    actions.add(new SimulationAction.ChoosePermanent(id));
                 }
             }
-            case COLOR_CHOICE -> {
-                var cc = gd.interaction.colorChoiceContextView();
-                if (cc != null && cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
+            case PendingInteraction.ColorChoice cc -> {
+                if (cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     for (var kw : kgc.options()) {
                         actions.add(new SimulationAction.ChooseColor(kw.name()));
                     }
+                } else if (cc.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
+                    actions.add(new SimulationAction.ChooseColor("LAND"));
+                    actions.add(new SimulationAction.ChooseColor("CREATURE"));
+                    actions.add(new SimulationAction.ChooseColor("ARTIFACT"));
                 } else {
                     actions.add(new SimulationAction.ChooseColor("WHITE"));
                     actions.add(new SimulationAction.ChooseColor("BLUE"));
@@ -345,7 +263,7 @@ public class GameSimulator {
                     actions.add(new SimulationAction.ChooseColor("GREEN"));
                 }
             }
-            case MAY_ABILITY_CHOICE -> {
+            case PendingInteraction.MayAbilityChoice ignored -> {
                 actions.add(new SimulationAction.MayAbilityChoice(true));
                 actions.add(new SimulationAction.MayAbilityChoice(false));
             }
@@ -470,7 +388,7 @@ public class GameSimulator {
         for (int i = 0; i < maxIterations; i++) {
             if (isTerminal(gd)) return;
 
-            AwaitingInput awaiting = gd.interaction.awaitingInputType();
+            PendingInteraction awaiting = gd.interaction.activeInteraction();
             if (awaiting == null) {
                 // Check if we need to pass priority for the non-MCTS player
                 UUID priorityHolder = getPriorityPlayer(gd);
@@ -489,7 +407,7 @@ public class GameSimulator {
             }
 
             // Determine which player the interaction is for
-            UUID interactionPlayer = getInteractionPlayer(gd, awaiting);
+            UUID interactionPlayer = getInteractionPlayer(gd);
             if (interactionPlayer == null) return;
 
             Player resolvePlayer = new Player(interactionPlayer, gd.playerIdToName.getOrDefault(interactionPlayer, "AI"));
@@ -505,9 +423,9 @@ public class GameSimulator {
         }
     }
 
-    private void resolveInteraction(GameData gd, Player player, AwaitingInput awaiting, UUID mctsPlayerId) {
+    private void resolveInteraction(GameData gd, Player player, PendingInteraction awaiting, UUID mctsPlayerId) {
         switch (awaiting) {
-            case ATTACKER_DECLARATION -> {
+            case PendingInteraction.AttackerDeclaration ignored -> {
                 UUID pid = player.getId();
                 List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(pid, List.of());
                 List<Integer> available = new ArrayList<>();
@@ -528,117 +446,101 @@ public class GameSimulator {
                 }
                 gameService.declareAttackers(gd, player, attackers, null);
             }
-            case BLOCKER_DECLARATION -> {
+            case PendingInteraction.BlockerDeclaration ignored -> {
                 List<int[]> blockers = findBestBlockerAssignments(gd, player.getId());
                 List<BlockerAssignment> assignments = blockers.stream()
                         .map(a -> new BlockerAssignment(a[0], a[1]))
                         .toList();
                 gameService.declareBlockers(gd, player, assignments);
             }
-            case CARD_CHOICE, DISCARD_CHOICE -> {
-                var cc = gd.interaction.cardChoiceContext();
-                if (cc != null && cc.validIndices() != null && !cc.validIndices().isEmpty()) {
-                    // Pick lowest value card
-                    List<Card> hand = gd.playerHands.get(player.getId());
-                    int bestIdx = cc.validIndices().iterator().next();
-                    if (hand != null) {
-                        bestIdx = cc.validIndices().stream()
-                                .min(Comparator.comparingDouble(idx ->
-                                        spellEvaluator.estimateSpellValue(gd, hand.get(idx), player.getId())))
-                                .orElse(bestIdx);
-                    }
-                    gameService.handleCardChosen(gd, player, bestIdx);
-                }
-            }
-            case PERMANENT_CHOICE -> {
-                var pc = gd.interaction.permanentChoiceContextView();
-                if (pc != null && pc.validIds() != null && !pc.validIds().isEmpty()) {
+            case PendingInteraction.HandCardChoice cc -> resolveHandCardChoice(gd, player, cc);
+            case PendingInteraction.DiscardChoice cc -> resolveHandCardChoice(gd, player, cc);
+            case PendingInteraction.PermanentChoice pc -> {
+                if (!pc.validIds().isEmpty()) {
                     UUID chosen = pc.validIds().iterator().next();
                     gameService.handlePermanentChosen(gd, player, chosen);
                 }
             }
-            case COLOR_CHOICE -> {
-                var ccCtx = gd.interaction.colorChoiceContextView();
-                if (ccCtx != null && ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
+            case PendingInteraction.ColorChoice ccCtx -> {
+                if (ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     gameService.handleListChoice(gd, player, kgc.options().getFirst().name());
+                } else if (ccCtx.context() instanceof ChoiceContext.StorageMatrixUntapChoice) {
+                    gameService.handleListChoice(gd, player, "LAND");
                 } else {
                     gameService.handleListChoice(gd, player, "RED");
                 }
             }
-            case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);
-            case GRAVEYARD_CHOICE, ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
-                var gc = gd.interaction.graveyardChoiceContext();
-                if (gc != null && gc.validIndices() != null && !gc.validIndices().isEmpty()) {
+            case PendingInteraction.MayAbilityChoice ignored -> gameService.handleMayAbilityChosen(gd, player, true);
+            case PendingInteraction.GraveyardChoice gc -> {
+                if (gc.validIndices() != null && !gc.validIndices().isEmpty()) {
                     gameService.handleGraveyardCardChosen(gd, player, gc.validIndices().iterator().next());
                 }
             }
-            case MULTI_PERMANENT_CHOICE -> {
-                var mpc = gd.interaction.multiPermanentChoiceContext();
-                if (mpc != null && mpc.validIds() != null && !mpc.validIds().isEmpty()) {
+            case PendingInteraction.GraveyardExileCostChoice gec -> {
+                if (gec.validIndices() != null && !gec.validIndices().isEmpty()) {
+                    gameService.handleGraveyardCardChosen(gd, player, gec.validIndices().iterator().next());
+                }
+            }
+            case PendingInteraction.MultiPermanentChoice mpc -> {
+                if (mpc.validIds() != null && !mpc.validIds().isEmpty()) {
                     List<UUID> chosen = mpc.validIds().stream().limit(mpc.maxCount()).toList();
                     gameService.handleMultiplePermanentsChosen(gd, player, chosen);
                 }
             }
-            case MULTI_GRAVEYARD_CHOICE -> {
-                var mgc = gd.interaction.multiGraveyardChoiceContext();
-                if (mgc != null && mgc.validCardIds() != null && !mgc.validCardIds().isEmpty()) {
+            case PendingInteraction.MultiGraveyardChoice mgc -> {
+                if (!mgc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mgc.validCardIds().stream().limit(mgc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case MULTI_ZONE_EXILE_CHOICE -> {
-                var mzec = gd.interaction.multiZoneExileChoiceContext();
-                if (mzec != null && mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
+            case PendingInteraction.MultiZoneExileChoice mzec -> {
+                if (mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
                     List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case MIRROR_OF_FATE_CHOICE -> {
-                var mfc = gd.interaction.mirrorOfFateChoiceContext();
-                if (mfc != null && mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
+            case PendingInteraction.MirrorOfFateChoice mfc -> {
+                if (mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case COMBAT_DAMAGE_ASSIGNMENT -> {
-                var cda = gd.interaction.combatDamageAssignmentContext();
-                if (cda != null) {
-                    Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
-                    gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
-                }
+            case PendingInteraction.CombatDamageAssignment cda -> {
+                Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
+                gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
             }
-            case LIBRARY_SEARCH -> {
-                var ls = gd.interaction.librarySearchContext();
-                if (ls != null && ls.cards() != null && !ls.cards().isEmpty()) {
+            case PendingInteraction.LibrarySearch ls -> {
+                if (ls.params().cards() != null && !ls.params().cards().isEmpty()) {
                     gameService.handleLibraryCardChosen(gd, player, 0);
                 }
             }
-            case SCRY -> {
-                var sc = gd.interaction.scryContext();
-                if (sc != null && sc.cards() != null) {
+            case PendingInteraction.Scry sc -> {
+                if (sc.cards() != null) {
                     List<Integer> topOrder = new ArrayList<>();
                     for (int k = 0; k < sc.cards().size(); k++) topOrder.add(k);
                     gameService.handleScryCompleted(gd, player, topOrder, List.of());
                 }
             }
-            case LIBRARY_REORDER -> {
-                var lr = gd.interaction.libraryReorderContext();
-                if (lr != null && lr.cards() != null) {
+            case PendingInteraction.LibraryReorder lr -> {
+                if (lr.cards() != null) {
                     List<Integer> order = new ArrayList<>();
                     for (int k = 0; k < lr.cards().size(); k++) order.add(k);
                     gameService.handleLibraryCardsReordered(gd, player, order);
                 }
             }
-            case REVEALED_HAND_CHOICE -> {
-                var rhc = gd.interaction.revealedHandChoiceContext();
-                if (rhc != null && rhc.validIndices() != null && !rhc.validIndices().isEmpty()) {
+            case PendingInteraction.RevealedHandChoice rhc -> {
+                if (rhc.validIndices() != null && !rhc.validIndices().isEmpty()) {
                     gameService.handleCardChosen(gd, player, rhc.validIndices().iterator().next());
                 }
             }
-            case HAND_TOP_BOTTOM_CHOICE -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
-            case LIBRARY_REVEAL_CHOICE -> {
-                var lrc = gd.interaction.libraryRevealChoiceContext();
-                if (lrc != null && lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
+            case PendingInteraction.RevealCardsDiscardChoice rcdc -> {
+                if (rcdc.validIndices() != null && !rcdc.validIndices().isEmpty()) {
+                    gameService.handleCardChosen(gd, player, rcdc.validIndices().iterator().next());
+                }
+            }
+            case PendingInteraction.HandTopBottomChoice ignored -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
+            case PendingInteraction.LibraryRevealChoice lrc -> {
+                if (lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
                     if (lrc.lifeCostPerSelection() > 0) {
                         // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
                         gameService.handleMultipleCardsChosen(gd, player, List.of());
@@ -654,31 +556,60 @@ public class GameSimulator {
         }
     }
 
-    private UUID getInteractionPlayer(GameData gd, AwaitingInput awaiting) {
-        var ctx = gd.interaction.currentContext();
-        if (ctx == null) return null;
-        return switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
-            case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
-            case InteractionContext.CardChoice cc -> cc.playerId();
-            case InteractionContext.PermanentChoice pc -> pc.playerId();
-            case InteractionContext.GraveyardChoice gc -> gc.playerId();
-            case InteractionContext.ColorChoice cc -> cc.playerId();
-            case InteractionContext.MayAbilityChoice mc -> mc.playerId();
-            case InteractionContext.MultiPermanentChoice mpc -> mpc.playerId();
-            case InteractionContext.MultiGraveyardChoice mgc -> mgc.playerId();
-            case InteractionContext.LibraryReorder lr -> lr.playerId();
-            case InteractionContext.LibrarySearch ls -> ls.playerId();
-            case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
-            case InteractionContext.HandTopBottomChoice htbc -> htbc.playerId();
-            case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
-            case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
-            case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
-            case InteractionContext.XValueChoice xvc -> xvc.playerId();
-            case InteractionContext.Scry sc -> sc.playerId();
-            case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
-            case InteractionContext.MirrorOfFateChoice mfc -> mfc.playerId();
-        };
+    private static void addHandChoiceActions(List<SimulationAction> actions, PendingInteraction.HandChoice cardChoice) {
+        if (cardChoice.validIndices() != null) {
+            for (int idx : cardChoice.validIndices()) {
+                actions.add(new SimulationAction.ChooseCard(idx));
+            }
+        }
+    }
+
+    private void resolveHandCardChoice(GameData gd, Player player, PendingInteraction.HandChoice cc) {
+        if (cc.validIndices() != null && !cc.validIndices().isEmpty()) {
+            // Pick lowest value card
+            List<Card> hand = gd.playerHands.get(player.getId());
+            int bestIdx = cc.validIndices().iterator().next();
+            if (hand != null) {
+                bestIdx = cc.validIndices().stream()
+                        .min(Comparator.comparingDouble(idx ->
+                                spellEvaluator.estimateSpellValue(gd, hand.get(idx), player.getId())))
+                        .orElse(bestIdx);
+            }
+            gameService.handleCardChosen(gd, player, bestIdx);
+        }
+    }
+
+    private UUID getInteractionPlayer(GameData gd) {
+        // The active interaction record carries the decider
+        PendingInteraction active = gd.interaction.activeInteraction();
+        if (active != null) {
+            return switch (active) {
+                case PendingInteraction.XValueChoice xvc -> xvc.playerId();
+                case PendingInteraction.Scry s -> s.playerId();
+                case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
+                case PendingInteraction.LibraryReorder lr -> lr.playerId();
+                case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
+                case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
+                case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
+                case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
+                case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
+                case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
+                case PendingInteraction.ColorChoice cc -> cc.playerId();
+                case PendingInteraction.RevealedHandChoice rhc -> rhc.choosingPlayerId();
+                case PendingInteraction.RevealCardsDiscardChoice rcdc -> rcdc.decidingPlayerId();
+                case PendingInteraction.GraveyardChoice gc -> gc.playerId();
+                case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
+                case PendingInteraction.HandChoice hc -> hc.playerId();
+                case PendingInteraction.LibraryRevealChoice lrc -> lrc.playerId();
+                case PendingInteraction.LibrarySearch ls -> ls.params().playerId();
+                case PendingInteraction.PermanentChoice pc -> pc.playerId();
+                case PendingInteraction.CombatDamageAssignment cda -> cda.playerId();
+                case PendingInteraction.AttackerDeclaration ad -> ad.activePlayerId();
+                case PendingInteraction.BlockerDeclaration bd -> bd.defenderId();
+                default -> null;
+            };
+        }
+        return null;
     }
 
     private UUID getPriorityPlayer(GameData gd) {
@@ -761,36 +692,6 @@ public class GameSimulator {
     }
 
     /**
-     * Checks whether the player can pay all additional (non-mana) costs for the card,
-     * including graveyard exile costs and sacrifice costs.
-     */
-    private boolean canPayAdditionalCosts(GameData gd, UUID playerId, Card card) {
-        List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
-        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
-                long matchingCount = graveyard.stream()
-                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
-                        .count();
-                if (matchingCount < cost.count()) return false;
-            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
-                boolean hasMatch = graveyard.stream()
-                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
-                if (!hasMatch) return false;
-            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
-                if (graveyard.isEmpty()) return false;
-            } else if (effect instanceof SacrificeCreatureCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gd, p))) return false;
-            } else if (effect instanceof SacrificeArtifactCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gd, p))) return false;
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))) return false;
-            }
-        }
-        return true;
-    }
-
-    /**
      * Computes graveyard card indices to exile for {@link ExileNCardsFromGraveyardCost}.
      * Returns null if the card has no such cost.
      */
@@ -829,7 +730,7 @@ public class GameSimulator {
                         .findFirst().map(Permanent::getId).orElse(null);
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 return battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, sacCost.filter()))
                         .findFirst().map(Permanent::getId).orElse(null);
             }
         }
@@ -866,7 +767,8 @@ public class GameSimulator {
 
     private int scoreAbilityForSim(com.github.laxika.magicalvibes.model.ActivatedAbility ability, ManaCost cost, ManaPool pool) {
         boolean hasSideEffects = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect);
+                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect dmg
+                        && dmg.recipient() == com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER);
         var coloredCosts = cost.getColoredCosts();
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof AwardManaEffect award) {
@@ -882,7 +784,7 @@ public class GameSimulator {
 
     private int calculateSmartX(GameData gd, Card card, UUID targetId, ManaPool virtualPool) {
         ManaCost cost = new ManaCost(card.getManaCost());
-        int costModifier = gameBroadcastService.getCastCostModifier(gd, gd.activePlayerId, card);
+        int costModifier = castingCostService.getCastCostModifier(gd, gd.activePlayerId, card);
         int maxX;
         if (card.getXColorRestriction() != null) {
             maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), costModifier);
@@ -970,7 +872,7 @@ public class GameSimulator {
                 candidates = getSimGraveyardCandidates(gd, rge.source(), playerId, opponentId);
                 if (rge.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId()))
                             .toList();
                 }
             } else {
@@ -1012,7 +914,7 @@ public class GameSimulator {
             return true;
         }
         try {
-            gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+            predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,
                     FilterContext.of(gd)
                             .withSourceCardId(card.getId())
                             .withSourceControllerId(controllerId));
@@ -1030,9 +932,26 @@ public class GameSimulator {
         return -1;
     }
 
-    private Map<UUID, Integer> autoAssignCombatDamage(InteractionContext.CombatDamageAssignment cda) {
+    private Map<UUID, Integer> autoAssignCombatDamage(PendingInteraction.CombatDamageAssignment cda) {
         Map<UUID, Integer> assignments = new HashMap<>();
-        int remaining = cda.totalDamage();
+        int totalDamage = cda.totalDamage();
+
+        // Single-recipient assignment (e.g. an unblocked Cunning Giant): all damage to one target,
+        // preferring a defending creature this attacker can kill, otherwise the player.
+        if (cda.singleRecipient()) {
+            var killable = cda.validTargets().stream()
+                    .filter(t -> !t.isPlayer())
+                    .filter(t -> t.effectiveToughness() - t.currentDamage() <= totalDamage)
+                    .findFirst();
+            var chosen = killable.orElseGet(() -> cda.validTargets().stream()
+                    .filter(com.github.laxika.magicalvibes.model.CombatDamageTarget::isPlayer)
+                    .findFirst()
+                    .orElse(cda.validTargets().get(0)));
+            assignments.put(chosen.id(), totalDamage);
+            return assignments;
+        }
+
+        int remaining = totalDamage;
         for (var target : cda.validTargets()) {
             if (target.isPlayer()) continue;
             int lethal = cda.isDeathtouch()

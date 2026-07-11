@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanBasiliskTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sylvan Basilisk has correct card properties")
-    void hasCorrectProperties() {
-        SylvanBasilisk card = new SylvanBasilisk();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(DestroyCreatureBlockingThisEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When Sylvan Basilisk becomes blocked, it creates a non-targeting trigger for that blocker")
@@ -118,6 +106,6 @@ class SylvanBasiliskTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

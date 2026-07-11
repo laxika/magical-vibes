@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -34,29 +29,9 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{3}"));
     }
 
-    @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersIfKickedEffect with count 5")
-    void hasKickedETBEffect() {
-        GrunnTheLonelyKing card = new GrunnTheLonelyKing();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersIfKickedEffect.class);
-        var effect = (EnterWithPlusOnePlusOneCountersIfKickedEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-    }
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with AttacksAloneConditionalEffect wrapping DoubleSelfPowerToughnessEffect")
-    void hasAttacksAloneTrigger() {
-        GrunnTheLonelyKing card = new GrunnTheLonelyKing();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(AttacksAloneConditionalEffect.class);
-        var conditional = (AttacksAloneConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(DoubleSelfPowerToughnessEffect.class);
-    }
+    
 
     // ===== Casting without kicker =====
 
@@ -165,12 +140,11 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

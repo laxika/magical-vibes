@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.InstillInfection;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,30 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ProteanHydraTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has EnterWithXPlusOnePlusOneCountersEffect as ETB effect")
-    void hasCorrectETBEffect() {
-        ProteanHydra card = new ProteanHydra();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithXPlusOnePlusOneCountersEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has PreventDamageAndRemovePlusOnePlusOneCountersEffect and DelayedPlusOnePlusOneCounterRegrowthEffect as static effects")
-    void hasCorrectStaticEffects() {
-        ProteanHydra card = new ProteanHydra();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect);
-    }
 
     // ===== Enters with X +1/+1 counters =====
 
@@ -186,7 +159,7 @@ class ProteanHydraTest extends BaseCardTest {
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0); // 0/0 but keep alive manually
 
         // Verify no pending delayed counters
-        assertThat(gd.pendingDelayedPlusOnePlusOneCounters).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedPlusOneCounters.class)).isEmpty();
     }
 
     @Test

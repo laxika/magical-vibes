@@ -51,6 +51,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                 if (targetId.equals(p.getAttachedTo())
                         && p.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)) {
                     p.setAttachedTo(null);
+                    gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     String unattachLog = entry.getCard().getName() + " unattaches " + p.getCard().getName()
                             + " from " + target.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, unattachLog);

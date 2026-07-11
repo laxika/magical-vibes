@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +17,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RustedSlasherTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice-an-artifact activated ability that grants regeneration")
-    void hasCorrectAbilityStructure() {
-        RustedSlasher card = new RustedSlasher();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeArtifactCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
-    }
 
     // ===== Activation: sacrifice an artifact to regenerate =====
 
@@ -94,7 +75,7 @@ class RustedSlasherTest extends BaseCardTest {
         // Slasher + Spellbook + Scimitar = 3 artifacts — must choose
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 

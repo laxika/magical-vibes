@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,25 +16,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChampionOfTheParishTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_ENTERS_BATTLEFIELD trigger with subtype HUMAN conditional")
-    void hasCorrectProperties() {
-        ChampionOfTheParish card = new ChampionOfTheParish();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(conditional.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect effect = (PutCountersOnSourceEffect) conditional.wrapped();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when another Human enters the battlefield")

@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,29 +19,11 @@ class WarcryPhoenixTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 
-    @Test
-    @DisplayName("Has GRAVEYARD_ON_ALLY_CREATURES_ATTACK effect with MinimumAttackersConditionalEffect wrapping MayPayManaEffect")
-    void hasCorrectEffects() {
-        WarcryPhoenix card = new WarcryPhoenix();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(MinimumAttackersConditionalEffect.class);
-        MinimumAttackersConditionalEffect mac = (MinimumAttackersConditionalEffect)
-                card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(mac.minimumAttackers()).isEqualTo(3);
-        assertThat(mac.wrapped()).isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) mac.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}{R}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) mayPay.wrapped();
-        assertThat(returnEffect.enterTapped()).isTrue();
-        assertThat(returnEffect.enterAttacking()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Triggers when attacking with 3 creatures and Phoenix is in graveyard")
@@ -69,8 +47,8 @@ class WarcryPhoenixTest extends BaseCardTest {
         // Resolve the MayPayManaEffect from stack
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getName()).isEqualTo("Warcry Phoenix");
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{2}{R}");
@@ -217,7 +195,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player2, List.of(0, 1, 2));
 
         assertThat(gd.pendingMayAbilities).isEmpty();

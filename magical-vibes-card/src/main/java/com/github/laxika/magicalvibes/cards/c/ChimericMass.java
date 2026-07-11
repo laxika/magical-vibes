@@ -1,25 +1,34 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "141")
 public class ChimericMass extends Card {
 
     public ChimericMass() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXChargeCountersEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new AnimateSelfByChargeCountersEffect(List.of(CardSubtype.CONSTRUCT))),
+                List.of(new AnimatePermanentsEffect(
+                        new CountersOnSource(CounterType.CHARGE), new CountersOnSource(CounterType.CHARGE),
+                        List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
+                        GrantScope.SELF, EffectDuration.UNTIL_END_OF_TURN, null)),
                 "{1}: Until end of turn, Chimeric Mass becomes a Construct artifact creature with \"This creature's power and toughness are each equal to the number of charge counters on it.\""
         ));
     }

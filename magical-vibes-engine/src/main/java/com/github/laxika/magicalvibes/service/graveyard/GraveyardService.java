@@ -144,6 +144,17 @@ public class GraveyardService {
             return false;
         }
 
+        // Per-card "if that spell would be put into a graveyard, exile it instead" replacement
+        // (e.g. a spell cast via Nita, Forum Conciliator). Tracked for the specific card until cleanup.
+        if (gameData.exileInsteadOfGraveyard.remove(card.getId())) {
+            exileService.exileCard(gameData, ownerId, card);
+            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} replacement effect: exiled instead of graveyard (cast permission)",
+                    gameData.id, card.getName());
+            return false;
+        }
+
         // Leyline of the Void — if an opponent controls a permanent with
         // ExileOpponentCardsInsteadOfGraveyardEffect, exile the card instead
         if (opponentHasExileReplacementEffect(gameData, ownerId)) {
@@ -157,7 +168,29 @@ public class GraveyardService {
         gameData.playerGraveyards.get(ownerId).add(card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
+        collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
+    }
+
+    /**
+     * Fires "when this card is put into a graveyard from anywhere" triggered abilities
+     * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, e.g. Purity). The card has already
+     * entered the graveyard; the trigger goes on the stack under its owner's control.
+     */
+    private void collectPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID ownerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    ownerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    (UUID) null
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
+            log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
+        }
     }
 
 
@@ -352,6 +385,9 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        // Record that one or more cards left this player's graveyard this turn (regardless of
+        // batching), for "if one or more cards left your graveyard this turn" effects.
+        gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
             return;

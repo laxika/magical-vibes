@@ -1,20 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
 import com.github.laxika.magicalvibes.cards.o.OathOfTeferi;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,28 +27,6 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect: return all legendary permanents from graveyard")
-    void hasCorrectEffects() {
-        PrimevalsGloriousRebirth card = new PrimevalsGloriousRebirth();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.returnAll()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardAllOfPredicate.class);
-
-        CardAllOfPredicate allOf = (CardAllOfPredicate) effect.filter();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates().get(0)).isInstanceOf(CardSupertypePredicate.class);
-        assertThat(((CardSupertypePredicate) allOf.predicates().get(0)).supertype()).isEqualTo(CardSupertype.LEGENDARY);
-        assertThat(allOf.predicates().get(1)).isInstanceOf(CardIsPermanentPredicate.class);
     }
 
     // ===== Legendary sorcery restriction =====

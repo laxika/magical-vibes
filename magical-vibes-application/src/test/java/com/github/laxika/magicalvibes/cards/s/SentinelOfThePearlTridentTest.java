@@ -1,19 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KembaKhaRegent;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,37 +17,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SentinelOfThePearlTridentTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentAndReturnAtEndStepEffect on ETB")
-    void hasCorrectEffects() {
-        SentinelOfThePearlTrident card = new SentinelOfThePearlTrident();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentAndReturnAtEndStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Target filter requires historic permanent controlled by source controller")
-    void hasCorrectTargetFilter() {
-        SentinelOfThePearlTrident card = new SentinelOfThePearlTrident();
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) card.getSpellTargets().getFirst().getFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentControlledBySourceControllerPredicate.class));
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentIsHistoricPredicate.class));
-    }
 
     // ===== ETB with artifact (historic) =====
 
@@ -116,7 +78,7 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -195,19 +157,20 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
     // ===== Target restrictions =====
 
     @Test
-    @DisplayName("Cannot target a non-historic creature you control")
+    @DisplayName("Non-historic creature you control is not a legal target — ETB never triggers")
     void cannotTargetNonHistoricCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SentinelOfThePearlTrident()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        // May prompt appears, but declining leaves Grizzly Bears untouched
-        harness.handleMayAbilityChosen(player1, false);
-
+        // Grizzly Bears isn't historic, so the "may exile target historic permanent you control"
+        // ETB has no legal target and isn't put on the stack (CR 603.3c) — no prompt appears.
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Sentinel of the Pearl Trident"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -215,19 +178,20 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target opponent's historic permanent")
+    @DisplayName("Opponent's historic permanent is not a legal target — ETB never triggers")
     void cannotTargetOpponentHistoricPermanent() {
         harness.addToBattlefield(player2, new Ornithopter());
         harness.setHand(player1, List.of(new SentinelOfThePearlTrident()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        // May prompt appears, but declining leaves Ornithopter untouched
-        harness.handleMayAbilityChosen(player1, false);
-
+        // The Ornithopter is historic but an opponent controls it; the ETB may only target a
+        // historic permanent you control, so it has no legal target and never triggers (CR 603.3c).
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
     }

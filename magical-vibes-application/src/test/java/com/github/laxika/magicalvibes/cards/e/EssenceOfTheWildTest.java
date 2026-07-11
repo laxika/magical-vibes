@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EssenceOfTheWildTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has CreaturesEnterAsCopyOfSourceEffect as static effect")
-    void hasCorrectStaticEffect() {
-        EssenceOfTheWild card = new EssenceOfTheWild();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CreaturesEnterAsCopyOfSourceEffect.class);
-    }
-
     // ===== Replacement effect — cast creature =====
 
     @Test

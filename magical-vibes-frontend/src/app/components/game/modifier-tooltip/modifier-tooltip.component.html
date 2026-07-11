@@ -1,0 +1,42 @@
+@if (modifierBreakdown; as bd) {
+  <div class="modifier-tooltip">
+    <div class="tooltip-header">
+      <div class="tooltip-card-name">{{ permanent.card.name }}</div>
+      <div class="tooltip-type-line">{{ typeLine }}</div>
+      @if (printedKeywords; as kw) {
+        <div class="tooltip-keywords">{{ kw }}</div>
+      }
+    </div>
+    @if (bd.rows.length > 0) {
+      @if (bd.showPt) {
+        <div class="breakdown-row breakdown-base">
+          <span class="breakdown-label">Base</span>
+          <span class="breakdown-value">{{ bd.basePower }}/{{ bd.baseToughness }}</span>
+        </div>
+      }
+      @for (row of bd.rows; track $index) {
+        <div class="breakdown-row">
+          <span class="breakdown-label">{{ row.label }}</span>
+          <span class="breakdown-value" [class.positive]="row.tone === 'positive'" [class.negative]="row.tone === 'negative'">{{ row.value }}</span>
+        </div>
+      }
+      @if (bd.showPt) {
+        <div class="breakdown-row breakdown-total">
+          <span class="breakdown-label">Current</span>
+          <span class="breakdown-value">{{ bd.finalPower }}/{{ bd.finalToughness }}</span>
+        </div>
+      }
+    } @else if (bd.showPt) {
+      <div class="breakdown-row">
+        <span class="breakdown-label">P/T</span>
+        <span class="breakdown-value">{{ bd.finalPower }}/{{ bd.finalToughness }}</span>
+      </div>
+    }
+    @if (displayLoyalty != null) {
+      <div class="breakdown-row">
+        <span class="breakdown-label">Loyalty</span>
+        <span class="breakdown-value">{{ displayLoyalty }}</span>
+      </div>
+    }
+  </div>
+}

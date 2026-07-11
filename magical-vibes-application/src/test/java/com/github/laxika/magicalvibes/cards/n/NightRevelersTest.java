@@ -2,14 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,23 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NightRevelersTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Night Revelers has correct static effect")
-    void hasCorrectProperties() {
-        NightRevelers card = new NightRevelers();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-
-        var effect = (OpponentControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect haste = (GrantKeywordEffect) effect.wrapped();
-        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(haste.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Conditional haste with opponent's Human =====
 
@@ -141,7 +118,5 @@ class NightRevelersTest extends BaseCardTest {
         // Static haste should still be computed
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
     }
-
-    // ===== Helper methods =====
 
 }

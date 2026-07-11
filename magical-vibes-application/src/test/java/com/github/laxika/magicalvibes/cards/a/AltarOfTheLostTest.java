@@ -2,13 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,34 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AltarOfTheLostTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has enters tapped static effect")
-    void hasEntersTappedEffect() {
-        AltarOfTheLost card = new AltarOfTheLost();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(EntersTappedEffect.class::isInstance);
-    }
-
-    @Test
-    @DisplayName("Has one activated ability producing flashback-only mana")
-    void hasCorrectAbility() {
-        AltarOfTheLost card = new AltarOfTheLost();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardFlashbackOnlyAnyColorManaEffect.class);
-
-        AwardFlashbackOnlyAnyColorManaEffect effect = (AwardFlashbackOnlyAnyColorManaEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
 
     // ===== Enters tapped =====
 

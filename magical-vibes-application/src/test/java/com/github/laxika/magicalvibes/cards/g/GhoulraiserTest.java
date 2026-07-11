@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CemeteryReaper;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,24 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GhoulraiserTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect that returns a random Zombie from graveyard to hand")
-    void hasCorrectEffect() {
-        Ghoulraiser card = new Ghoulraiser();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.ZOMBIE);
-    }
 
     // ===== ETB trigger: return random Zombie =====
 

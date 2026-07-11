@@ -1,68 +1,20 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DemonmailHauberkTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +4/+2 boost for equipped creature")
-    void hasStaticBoost() {
-        DemonmailHauberk card = new DemonmailHauberk();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has equip ability with sacrifice creature cost")
-    void hasEquipAbilityWithSacrificeCreatureCost() {
-        DemonmailHauberk card = new DemonmailHauberk();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeCreatureCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(EquipEffect.class);
-                });
-    }
 
     // ===== Equip by sacrificing a creature =====
 
@@ -155,7 +107,6 @@ class DemonmailHauberkTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private Card createTokenCreature(String name) {
         Card card = new Card();

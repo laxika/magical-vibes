@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,37 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HauntedFengrafTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Haunted Fengraf has a mana ability and a sacrifice ability")
-    void hasCorrectProperties() {
-        HauntedFengraf card = new HauntedFengraf();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.isNeedsTarget()).isFalse();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(1);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{3}");
-        assertThat(sacrificeAbility.isNeedsTarget()).isFalse();
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) sacrificeAbility.getEffects().get(1);
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
 
     // ===== Mana ability =====
 

@@ -1,5 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
+import com.github.laxika.magicalvibes.model.PendingKarnRestart;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,6 +18,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +39,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final SessionManager sessionManager;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -142,23 +153,22 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.stack.clear();
         gameData.clearAllSourceTracking();
         gameData.stolenCreatures.clear();
-        gameData.untilEndOfTurnStolenCreatures.clear();
-        gameData.enchantmentDependentStolenCreatures.clear();
-        gameData.permanentControlStolenCreatures.clear();
-        gameData.pendingExileReturns.clear();
+        gameData.floatingEffects.clear();
+        gameData.clearDelayedActions(PendingExileReturn.class);
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
-        gameData.pendingTokenExilesAtEndStep.clear();
+        gameData.clearDelayedActions(ExileTokenAtEndStep.class);
+        gameData.clearDelayedActions(SacrificeAtEndStep.class);
         gameData.pendingMayAbilities.clear();
-        gameData.pendingDeathTriggerTargets.clear();
-        gameData.pendingDiscardSelfTriggers.clear();
-        gameData.pendingAttackTriggerTargets.clear();
-        gameData.pendingSpellTargetTriggers.clear();
-        gameData.pendingEmblemTriggerTargets.clear();
-        gameData.pendingUpkeepPlayerTargets.clear();
-        gameData.pendingUpkeepMultiPlayerTargets.clear();
-        gameData.pendingUpkeepCopyTargets.clear();
-        gameData.pendingEachPlayerDiscardQueue.clear();
+        gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.emblems.clear();
         gameData.extraTurns.clear();
         gameData.pendingLibraryBottomReorders.clear();
@@ -167,14 +177,15 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.priorityPassedBy.clear();
-        gameData.permanentsToSacrificeAtEndOfCombat.clear();
-        gameData.pendingTokenExilesAtEndOfCombat.clear();
+        gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
+        gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.pendingTurnControl.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();
@@ -189,19 +200,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingEffectResolutionIndex = 0;
         gameData.chosenXValue = null;
         gameData.pendingAbilityActivation = null;
-        gameData.knowledgePoolSourcePermanentId = null;
-        gameData.imprintSourcePermanentId = null;
-        gameData.pendingOpponentExileChoice = null;
-        gameData.pendingCombatDamageBounceTargetPlayerId = null;
-        gameData.pendingSacrificeSelfToDestroySourceId = null;
-        gameData.pendingTransformAndAttachSourceId = null;
-        gameData.pendingProliferateCount = 0;
+        gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
-        gameData.pendingRummageDrawCount = 0;
-        gameData.pendingUntapAfterDiscardPermanentId = null;
-        gameData.pendingEachPlayerDiscardControllerId = null;
-        gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;
         gameData.globalDamagePreventionShield = 0;
         gameData.damageRedirectShields.clear();
@@ -213,9 +214,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.discardCausedByOpponent = false;
         gameData.cleanupDiscardPending = false;
-        gameData.pendingSacrificeAttackingCreature = false;
-        gameData.pendingAwakeningCounterPlacement = false;
-        gameData.pendingTapSubtypeBoostSourcePermanentId = null;
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
         gameData.pendingSearchContext = null;
@@ -229,6 +227,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.playerPoisonCounters.put(playerId, 0);
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.landsPlayedThisTurn.put(playerId, 0);
+            gameData.additionalLandsThisTurn.put(playerId, 0);
             gameData.cardsDrawnThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));
@@ -240,7 +239,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.playerColorDamagePreventionCount.put(playerId, new ConcurrentHashMap<>());
 
             if (gameData.playerBattlefields.get(playerId) == null) {
-                gameData.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
+                gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             }
         }
 
@@ -263,8 +262,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         // Step 6: Enter mulligan phase. After mulligans complete, Karn's exiled cards
         // will be put onto the battlefield (handled by MulliganService.startGame).
-        gameData.pendingKarnRestartCards = karnExiledCards;
-        gameData.karnRestartControllerId = controllerId;
+        gameData.queueInteraction(new PendingKarnRestart(karnExiledCards, controllerId));
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.mulliganCounts.put(playerId, 0);
@@ -275,5 +273,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         gameBroadcastService.logAndBroadcast(gameData, "Mulligan phase — decide to keep or mulligan.");
         gameBroadcastService.broadcastGameState(gameData);
+
+        // Kick off the new mulligan round for message-driven clients (AI players decide on
+        // MULLIGAN_RESOLVED; without this the restarted game waits forever on their answer)
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,
+                new MulliganResolvedMessage(controllerName, false, 0));
     }
 }

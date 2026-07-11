@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,43 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GuerrillaTacticsTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Guerrilla Tactics has correct card properties")
-    void hasCorrectProperties() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Guerrilla Tactics has spell effect dealing 2 damage")
-    void hasSpellEffect() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Guerrilla Tactics has discard trigger dealing 4 damage")
-    void hasDiscardTrigger() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect discardEffect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).getFirst();
-        assertThat(discardEffect.damage()).isEqualTo(4);
-    }
 
     // ===== Casting as a spell =====
 
@@ -158,8 +119,8 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -263,8 +224,8 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
 
         // Player2 chooses player1 as target
         harness.handlePermanentChosen(player2, player1.getId());
@@ -297,7 +258,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // Discard the Guerrilla Tactics
 
         // No trigger — self-discard does not activate the ability
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -376,7 +337,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Megrim deals 2 damage to player2 (the discarding player)
         // Guerrilla Tactics trigger prompts player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Player2 targets player1 with the 4 damage
         harness.handlePermanentChosen(player2, player1.getId());
@@ -388,5 +349,4 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
-
 

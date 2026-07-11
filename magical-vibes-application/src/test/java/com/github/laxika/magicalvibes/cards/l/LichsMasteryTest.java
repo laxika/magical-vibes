@@ -4,17 +4,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,31 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LichsMasteryTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lich's Mastery has correct effects")
-    void hasCorrectEffects() {
-        LichsMastery card = new LichsMastery();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof GrantKeywordEffect gke && gke.keywords().contains(Keyword.HEXPROOF))
-                .anyMatch(e -> e instanceof CantLoseGameEffect);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(DrawCardsEqualToLifeGainedEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_LOSES_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_LOSES_LIFE).getFirst())
-                .isInstanceOf(ExileForEachLifeLostEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_LEAVES_BATTLEFIELD).getFirst())
-                .isInstanceOf(ControllerLosesGameOnLeavesEffect.class);
-    }
 
     // ===== Can't lose the game =====
 

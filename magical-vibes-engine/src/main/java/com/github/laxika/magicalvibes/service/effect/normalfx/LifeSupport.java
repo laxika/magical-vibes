@@ -54,6 +54,9 @@ public class LifeSupport {
         }
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
+        if (amount > 0) {
+            gameData.lifeGainedThisTurn.merge(controllerId, amount, Integer::sum);
+        }
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = source != null
@@ -89,6 +92,7 @@ public class LifeSupport {
                 return false;
             }
             gameData.playerLifeTotals.put(playerId, newLife);
+            gameData.lifeGainedThisTurn.merge(playerId, newLife - currentLife, Integer::sum);
             triggerCollectionService.checkLifeGainTriggers(gameData, playerId, newLife - currentLife);
         } else {
             gameData.playerLifeTotals.put(playerId, newLife);

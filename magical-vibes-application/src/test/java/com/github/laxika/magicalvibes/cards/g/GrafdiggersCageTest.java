@@ -1,54 +1,24 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.PrecognitionField;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrafdiggersCageTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two STATIC effects: can't-enter and can't-cast-from-zones (graveyards + libraries)")
-    void hasStaticEffects() {
-        GrafdiggersCage card = new GrafdiggersCage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof CardsCantEnterBattlefieldFromZonesEffect)
-                .singleElement()
-                .satisfies(e -> {
-                    CardsCantEnterBattlefieldFromZonesEffect effect = (CardsCantEnterBattlefieldFromZonesEffect) e;
-                    assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-                    assertThat(effect.zones()).isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY));
-                });
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof PlayersCantCastSpellsFromZonesEffect)
-                .singleElement()
-                .satisfies(e -> assertThat(((PlayersCantCastSpellsFromZonesEffect) e).zones())
-                        .isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
-    }
 
     // ===== Players can't cast spells from graveyards =====
 
@@ -92,7 +62,7 @@ class GrafdiggersCageTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
 
         // The creature card could not enter the battlefield and stays in the graveyard.

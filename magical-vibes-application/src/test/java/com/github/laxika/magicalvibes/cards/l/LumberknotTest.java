@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class LumberknotTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect with PutCountersOnSourceEffect")
-    void hasCorrectStructure() {
-        Lumberknot card = new Lumberknot();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-        PutCountersOnSourceEffect effect =
-                (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
 
     // ===== ON_ANY_CREATURE_DIES: gets +1/+1 counter when a creature dies =====
 

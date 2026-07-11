@@ -5,19 +5,6 @@ export interface IndexedPermanent {
   originalIndex: number;
 }
 
-export interface CombatBlocker {
-  index: number;
-  perm: Permanent;
-  isMine: boolean;
-}
-
-export interface CombatGroup {
-  attackerIndex: number;
-  attacker: Permanent;
-  attackerIsMine: boolean;
-  blockers: CombatBlocker[];
-}
-
 export interface AttachedAura {
   perm: Permanent;
   originalIndex: number;
@@ -52,8 +39,9 @@ export function stackBasicLands(lands: IndexedPermanent[]): (IndexedPermanent | 
 
   for (const ip of lands) {
     if (ip.perm.card.type === 'LAND' && ip.perm.card.supertypes?.includes('BASIC')) {
-      // Group by name + tapped state so tapped/untapped form separate stacks
-      const key = ip.perm.card.name + (ip.perm.tapped ? ':tapped' : ':untapped');
+      // Group by name only: a land stays in its stack when tapped and just
+      // rotates in place, instead of teleporting to a separate tapped stack.
+      const key = ip.perm.card.name;
       if (!basicGroups.has(key)) {
         basicGroups.set(key, []);
       }

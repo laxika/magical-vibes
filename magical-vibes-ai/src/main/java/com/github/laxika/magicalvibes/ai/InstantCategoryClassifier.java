@@ -13,14 +13,14 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 
 /**
@@ -75,23 +75,21 @@ public final class InstantCategoryClassifier {
         // Hard removal (destroy, exile, bounce)
         if (effect instanceof DestroyTargetPermanentEffect) return InstantCategory.REMOVAL;
         if (effect instanceof ExileTargetPermanentEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof ReturnTargetPermanentToHandEffect) return InstantCategory.REMOVAL;
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return InstantCategory.REMOVAL;
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return InstantCategory.REMOVAL;
 
         // Damage-based removal (targets creatures)
         if (effect instanceof DealDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof DealXDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;
 
         // Damage to any target — primarily removal (can also go face)
         if (effect instanceof DealDamageToAnyTargetEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof DealXDamageToAnyTargetEffect) return InstantCategory.REMOVAL;
 
         // Combat tricks (pump spells)
         if (effect instanceof BoostTargetCreatureEffect) return InstantCategory.COMBAT_TRICK;
 
         // Burn to face
-        if (effect instanceof DealDamageToTargetPlayerEffect) return InstantCategory.BURN_TO_FACE;
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) return InstantCategory.BURN_TO_FACE;
 
         // Card advantage
         if (effect instanceof DrawCardEffect) return InstantCategory.CARD_ADVANTAGE;

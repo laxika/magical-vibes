@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -30,7 +31,7 @@ public class DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler 
                 }
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target != null) {
-                    gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.add(targetId);
+                    gameData.queueDelayedAction(new DestroyEquipmentAtEndOfCombat(targetId));
                     String logEntry = "Equipment attached to " + target.getCard().getName()
                             + " will be destroyed at end of combat.";
                     gameData.gameLog.add(logEntry);

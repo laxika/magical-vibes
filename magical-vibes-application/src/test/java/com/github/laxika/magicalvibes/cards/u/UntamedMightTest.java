@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UntamedMightTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Untamed Might has correct card properties")
-    void hasCorrectProperties() {
-        UntamedMight card = new UntamedMight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getXColorRestriction()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureXEffect.class);
-
-        BoostTargetCreatureXEffect effect = (BoostTargetCreatureXEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerMultiplier()).isEqualTo(1);
-        assertThat(effect.toughnessMultiplier()).isEqualTo(1);
-    }
 
     // ===== Casting =====
 

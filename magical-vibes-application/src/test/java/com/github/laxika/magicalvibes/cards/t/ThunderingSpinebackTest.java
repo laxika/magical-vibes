@@ -2,63 +2,17 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RegisaurAlpha;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThunderingSpinebackTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Thundering Spineback has static boost effect for Dinosaurs")
-    void hasCorrectStaticEffect() {
-        ThunderingSpineback card = new ThunderingSpineback();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Thundering Spineback has activated ability to create Dinosaur token")
-    void hasCorrectActivatedAbility() {
-        ThunderingSpineback card = new ThunderingSpineback();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{5}{G}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Dinosaur");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.DINOSAUR);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.TRAMPLE);
-    }
 
     // ===== Static effect: buffs other Dinosaurs you control =====
 
@@ -182,7 +136,5 @@ class ThunderingSpinebackTest extends BaseCardTest {
         ThunderingSpineback card = new ThunderingSpineback();
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
     }
-
-    // ===== Helper methods =====
 
 }

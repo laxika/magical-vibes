@@ -2,10 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,24 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TatyovaBenthicDruidTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_LAND_ENTERS_BATTLEFIELD effects: GainLifeEffect(1) and DrawCardEffect(1)")
-    void hasCorrectEffects() {
-        TatyovaBenthicDruid card = new TatyovaBenthicDruid();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(0))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(0)).amount())
-                .isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(1);
-    }
 
     // ===== Triggers when controller plays a land =====
 

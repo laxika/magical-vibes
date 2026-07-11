@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,9 +14,6 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -123,9 +121,9 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                         argThat(p -> p.getGrantedKeywords().contains(Keyword.HASTE)
                                 && p.isExileIfLeavesBattlefield()),
                         eq(Set.of()));
-                assertThat(gd.pendingTokenExilesAtEndStep).isNotEmpty();
+                assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isNotEmpty();
                 assertThat(gd.stolenCreatures).isNotEmpty();
-                assertThat(gd.permanentControlStolenCreatures).isNotEmpty();
+                assertThat(gd.floatingEffects).anyMatch(fe -> fe.isControlEffect());
             }
 
             @Test

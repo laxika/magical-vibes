@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnOneOfEachSubtypeFromGra
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final GraveyardService graveyardService;
@@ -48,7 +49,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
             }
 
             List<Card> matching = graveyard.stream()
-                    .filter(card -> gameQueryService.matchesCardPredicate(card, filter, null))
+                    .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, null))
                     .toList();
 
             if (matching.isEmpty()) {

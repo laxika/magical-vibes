@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "273")
+@CardRegistration(set = "9ED", collectorNumber = "249")
 public class KavuClimber extends Card {
 
     public KavuClimber() {

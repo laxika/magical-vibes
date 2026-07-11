@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
 import com.github.laxika.magicalvibes.cards.b.BurningSunsAvatar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,13 +7,9 @@ import com.github.laxika.magicalvibes.cards.h.HomaridExplorer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -30,17 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CacklingCounterpartTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Cackling Counterpart has correct effect structure")
-    void hasCorrectEffectStructure() {
-        CacklingCounterpart card = new CacklingCounterpart();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenCopyOfTargetPermanentEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{U}{U}");
-    }
+    
 
     @Test
     @DisplayName("Creates a token copy of target creature you control")

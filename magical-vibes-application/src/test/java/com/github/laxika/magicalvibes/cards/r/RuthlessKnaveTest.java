@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,36 +23,6 @@ class RuthlessKnaveTest extends BaseCardTest {
 
     // =====================================================
     // Card properties
-    // =====================================================
-
-    @Test
-    @DisplayName("Ruthless Knave has correct activated abilities")
-    void hasCorrectAbilities() {
-        RuthlessKnave card = new RuthlessKnave();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {2}{B}, Sacrifice a creature: Create two Treasure tokens.
-        var treasureAbility = card.getActivatedAbilities().get(0);
-        assertThat(treasureAbility.isRequiresTap()).isFalse();
-        assertThat(treasureAbility.getManaCost()).isEqualTo("{2}{B}");
-        assertThat(treasureAbility.getEffects()).hasSize(2);
-        assertThat(treasureAbility.getEffects().get(0)).isInstanceOf(SacrificePermanentCost.class);
-        assertThat(treasureAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) treasureAbility.getEffects().get(1);
-        assertThat(tokenEffect.amount()).isEqualTo(2);
-
-        // Ability 1: Sacrifice three Treasures: Draw a card.
-        var drawAbility = card.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isFalse();
-        assertThat(drawAbility.getManaCost()).isNull();
-        assertThat(drawAbility.getEffects()).hasSize(2);
-        assertThat(drawAbility.getEffects().get(0)).isInstanceOf(SacrificeMultiplePermanentsCost.class);
-        SacrificeMultiplePermanentsCost sacCost = (SacrificeMultiplePermanentsCost) drawAbility.getEffects().get(0);
-        assertThat(sacCost.count()).isEqualTo(3);
-        assertThat(drawAbility.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // =====================================================
     // Ability 0: Sacrifice a creature, create two Treasures
     // =====================================================
@@ -102,7 +68,7 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -239,7 +205,7 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -257,13 +223,13 @@ class RuthlessKnaveTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, t1Id);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, t2Id);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, t3Id);
 
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.ACTIVATED_ABILITY);

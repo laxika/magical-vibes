@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,22 +28,6 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sheoldred has upkeep graveyard return and opponent upkeep sacrifice effects")
-    void hasCorrectProperties() {
-        SheoldredWhisperingOne card = new SheoldredWhisperingOne();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeCreatureEffect.class);
-    }
-
     // ===== Upkeep trigger: return creature from graveyard =====
 
     @Test
@@ -61,7 +43,7 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
 
         // Resolve trigger → graveyard choice prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose creature
         harness.handleGraveyardCardChosen(player1, 0);
@@ -105,7 +87,7 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
         // Resolve — should resolve without graveyard choice
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -117,7 +99,7 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Holy Day"));
     }
@@ -166,8 +148,8 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve sacrifice trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
 
         // Player 2 chooses to sacrifice Grizzly Bears

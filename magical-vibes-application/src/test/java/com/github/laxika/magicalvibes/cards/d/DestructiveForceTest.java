@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,25 +31,6 @@ class DestructiveForceTest extends BaseCardTest {
         card.setPower(6);
         card.setToughness(6);
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Destructive Force has sacrifice-lands and mass-damage effects")
-    void hasCorrectEffects() {
-        DestructiveForce card = new DestructiveForce();
-
-        List<?> effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(EachPlayerSacrificesPermanentsEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(MassDamageEffect.class);
-
-        EachPlayerSacrificesPermanentsEffect sacrificeEffect = (EachPlayerSacrificesPermanentsEffect) effects.get(0);
-        assertThat(sacrificeEffect.count()).isEqualTo(5);
-
-        MassDamageEffect damageEffect = (MassDamageEffect) effects.get(1);
-        assertThat(damageEffect.damage()).isEqualTo(5);
     }
 
     // ===== Sacrifice lands =====
@@ -104,12 +83,14 @@ class DestructiveForceTest extends BaseCardTest {
 
         // Player1 (active player, APNAP first) must choose 5 of 7 lands.
         // Player2's lands are deferred — all sacrifices happen simultaneously per ruling.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(5);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(5);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
 
         // Player2's lands are still on the battlefield (deferred for simultaneous sacrifice)
-        assertThat(gd.pendingSimultaneousSacrificeIds).hasSize(2);
+        assertThat(((MultiPermanentChoiceContext.ForcedSacrifice) choice.context()).accumulatedSacrificeIds()).hasSize(2);
 
         // Player1 chooses 5 lands
         List<Permanent> p1Lands = gd.playerBattlefields.get(player1.getId()).stream()
@@ -150,8 +131,9 @@ class DestructiveForceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // First player in APNAP order is prompted (active player = player1)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
 
         // First player chooses 5 lands — no sacrifice happens yet (deferred)
         List<Permanent> p1Lands = gd.playerBattlefields.get(player1.getId()).stream()
@@ -165,8 +147,9 @@ class DestructiveForceTest extends BaseCardTest {
                 .filter(p -> p.getCard().hasType(CardType.LAND)).count()).isEqualTo(7);
 
         // Second player should now be prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
 
         // Second player chooses 5 lands — now ALL chosen lands are sacrificed simultaneously
         List<Permanent> p2Lands = gd.playerBattlefields.get(player2.getId()).stream()

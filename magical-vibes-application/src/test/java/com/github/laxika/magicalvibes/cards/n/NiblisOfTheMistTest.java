@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Telepathy;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,17 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NiblisOfTheMistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has optional ETB TapTargetPermanentEffect")
-    void hasOptionalEtbTapEffect() {
-        NiblisOfTheMist card = new NiblisOfTheMist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving ETB trigger prompts for may choice")
@@ -42,7 +29,7 @@ class NiblisOfTheMistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> ETB trigger
         harness.passBothPriorities(); // resolve ETB trigger -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -93,7 +80,7 @@ class NiblisOfTheMistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, telepathyId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");

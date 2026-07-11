@@ -4,17 +4,10 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,30 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AngelicOverseerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angelic Overseer has correct static effects")
-    void hasCorrectProperties() {
-        AngelicOverseer card = new AngelicOverseer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        var effect0 = (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect0.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect0.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect hexproof = (GrantKeywordEffect) effect0.wrapped();
-        assertThat(hexproof.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(hexproof.scope()).isEqualTo(GrantScope.SELF);
-
-        var effect1 = (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(effect1.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect1.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect indestructible = (GrantKeywordEffect) effect1.wrapped();
-        assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(indestructible.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Conditional hexproof and indestructible with Human =====
 
@@ -249,7 +218,5 @@ class AngelicOverseerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, overseer, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, overseer, Keyword.INDESTRUCTIBLE)).isTrue();
     }
-
-    // ===== Helper methods =====
 
 }

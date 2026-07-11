@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.util.List;
@@ -21,19 +21,19 @@ public class TapXPermanentsCostHandler implements PermanentChoiceCostHandler {
 
     private final TapXPermanentsCost cost;
     private final int xValue;
-    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
     private final UUID sourcePermanentId;
 
     public TapXPermanentsCostHandler(TapXPermanentsCost cost, int xValue,
-                                     GameQueryService gameQueryService,
+                                     PredicateEvaluationService predicateEvaluationService,
                                      GameBroadcastService gameBroadcastService,
                                      TriggerCollectionService triggerCollectionService,
                                      UUID sourcePermanentId) {
         this.cost = cost;
         this.xValue = xValue;
-        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
         this.sourcePermanentId = sourcePermanentId;
@@ -58,7 +58,7 @@ public class TapXPermanentsCostHandler implements PermanentChoiceCostHandler {
         return battlefield.stream()
                 .filter(p -> !p.isTapped())
                 .filter(p -> !cost.excludeSource() || !p.getId().equals(sourcePermanentId))
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cost.filter()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.filter()))
                 .map(Permanent::getId)
                 .toList();
     }
@@ -71,7 +71,7 @@ public class TapXPermanentsCostHandler implements PermanentChoiceCostHandler {
         if (cost.excludeSource() && chosen.getId().equals(sourcePermanentId)) {
             throw new IllegalStateException("Cannot tap the source permanent for this cost");
         }
-        if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, cost.filter())) {
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
         chosen.tap();

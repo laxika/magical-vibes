@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -28,10 +29,9 @@ public class ItlimocCradleOfTheSun extends Card {
         // {T}: Add {G} for each creature you control.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new AddManaPerControlledPermanentEffect(
+                List.of(new AwardManaEffect(
                         ManaColor.GREEN,
-                        new PermanentIsCreaturePredicate(),
-                        "creatures"
+                        new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)
                 )),
                 "{T}: Add {G} for each creature you control."
         ));

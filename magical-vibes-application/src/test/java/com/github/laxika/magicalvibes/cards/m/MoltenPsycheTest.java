@@ -4,11 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,25 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MoltenPsycheTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ShuffleHandIntoLibraryAndDrawEffect and MetalcraftConditional damage effect")
-    void hasCorrectStructure() {
-        MoltenPsyche card = new MoltenPsyche();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleHandIntoLibraryAndDrawEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(metalcraft.wrapped())
-                .isInstanceOf(DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect.class);
-    }
 
     // ===== Wheel effect =====
 

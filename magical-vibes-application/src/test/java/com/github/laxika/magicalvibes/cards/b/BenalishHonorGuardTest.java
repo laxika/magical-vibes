@@ -85,6 +85,4 @@ class BenalishHonorGuardTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
-
 }

@@ -22,8 +22,19 @@ public enum GrantScope {
     ALL_OWN_CREATURES,
     OPPONENT_CREATURES,
     OWN_PERMANENTS,
+    /** All creatures the targeted player controls (one-shot, e.g. Shields of Velis Vel). */
+    TARGET_PLAYERS_CREATURES,
     ALL_CREATURES,
     ALL_PERMANENTS,
     ENCHANTED_PLAYER_CREATURES,
-    OWN_LANDS
+    OWN_LANDS,
+    /** All lands on the battlefield, regardless of controller (Natural Affinity). */
+    ALL_LANDS,
+    /**
+     * The tokens created by earlier effects in this same resolution (read from
+     * {@code StackEntry.createdPermanentIds}). Use for "those tokens gain [keyword]" clauses that
+     * follow a token-creation effect on the same spell/ability, e.g. Gilt-Leaf Ambush's clash-win
+     * deathtouch grant.
+     */
+    TOKENS_CREATED_THIS_RESOLUTION
 }

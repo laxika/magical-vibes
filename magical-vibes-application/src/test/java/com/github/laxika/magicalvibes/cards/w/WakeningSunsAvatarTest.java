@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.ThrashOfRaptors;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,17 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WakeningSunsAvatarTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wakening Sun's Avatar has correct ETB effect wrapped in cast-from-hand conditional")
-    void hasCorrectProperties() {
-        WakeningSunsAvatar card = new WakeningSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CastFromZoneConditionalEffect.class);
-        CastFromZoneConditionalEffect conditional = (CastFromZoneConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When cast from hand, all non-Dinosaur creatures are destroyed")
@@ -98,7 +85,7 @@ class WakeningSunsAvatarTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 

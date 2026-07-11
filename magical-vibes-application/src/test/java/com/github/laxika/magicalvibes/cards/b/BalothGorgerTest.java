@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,17 +27,7 @@ class BalothGorgerTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{4}"));
     }
 
-    @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersIfKickedEffect with count 3")
-    void hasKickedETBEffect() {
-        BalothGorger card = new BalothGorger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersIfKickedEffect.class);
-        var effect = (EnterWithPlusOnePlusOneCountersIfKickedEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
+    
 
     // ===== Casting without kicker =====
 

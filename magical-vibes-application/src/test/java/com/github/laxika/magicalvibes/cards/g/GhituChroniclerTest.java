@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -70,7 +70,7 @@ class GhituChroniclerTest extends BaseCardTest {
         castKicked();
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -87,7 +87,7 @@ class GhituChroniclerTest extends BaseCardTest {
         castKicked();
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         harness.handleGraveyardCardChosen(player1, 0);
 
@@ -104,7 +104,7 @@ class GhituChroniclerTest extends BaseCardTest {
         castKicked();
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -113,7 +113,7 @@ class GhituChroniclerTest extends BaseCardTest {
         castKicked();
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     // ===== Helpers =====

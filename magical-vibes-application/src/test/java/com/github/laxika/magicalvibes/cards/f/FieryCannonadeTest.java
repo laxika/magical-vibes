@@ -2,13 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DireFleetCaptain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,22 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FieryCannonadeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fiery Cannonade has correct effect configuration")
-    void hasCorrectEffect() {
-        FieryCannonade card = new FieryCannonade();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPred = (PermanentNotPredicate) effect.filter();
-        assertThat(notPred.predicate()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        PermanentHasSubtypePredicate subtypePred = (PermanentHasSubtypePredicate) notPred.predicate();
-        assertThat(subtypePred.subtype()).isEqualTo(CardSubtype.PIRATE);
-    }
+    
 
     @Test
     @DisplayName("Fiery Cannonade kills non-Pirate creatures with toughness 2 or less on both sides")

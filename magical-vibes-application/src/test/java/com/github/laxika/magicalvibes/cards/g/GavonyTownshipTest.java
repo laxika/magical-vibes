@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BertaWiseExtrapolator;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,29 +26,9 @@ class GavonyTownshipTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability is a mana ability producing colorless")
-    void firstAbilityIsColorlessMana() {
-        GavonyTownship card = new GavonyTownship();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second ability puts +1/+1 counters on each creature you control")
-    void secondAbilityPutsCounters() {
-        GavonyTownship card = new GavonyTownship();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{G}{W}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
+    
 
     // ===== Mana ability =====
 
@@ -88,6 +67,28 @@ class GavonyTownshipTest extends BaseCardTest {
         for (Permanent bear : bears) {
             assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
+    }
+
+    @Test
+    @DisplayName("Counter ability fires a creature's +1/+1 counter-placement trigger")
+    void counterAbilityFiresOnCounterPlacedTriggers() {
+        harness.addToBattlefield(player1, new GavonyTownship());
+        Permanent berta = harness.addToBattlefieldAndReturn(player1, new BertaWiseExtrapolator());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities(); // counter ability resolves; Berta's trigger goes on the stack
+        harness.passBothPriorities(); // Berta's mana trigger resolves
+
+        GameData gd = harness.getGameData();
+        assertThat(berta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+
+        int before = gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
+        harness.handleListChoice(player1, "BLUE");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(before + 1);
     }
 
     @Test

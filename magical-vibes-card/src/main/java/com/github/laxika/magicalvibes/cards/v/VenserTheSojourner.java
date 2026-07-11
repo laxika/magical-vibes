@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllCreaturesUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -19,7 +19,7 @@ public class VenserTheSojourner extends Card {
         // at the beginning of the next end step.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new ExileTargetPermanentAndReturnAtEndStepEffect()),
+                List.of(FlickerEffect.exileTargetReturnAtEndStep()),
                 "+2: Exile target permanent you own. Return it to the battlefield under your control at the beginning of the next end step.",
                 new OwnedPermanentPredicateTargetFilter(
                         new PermanentTruePredicate(),

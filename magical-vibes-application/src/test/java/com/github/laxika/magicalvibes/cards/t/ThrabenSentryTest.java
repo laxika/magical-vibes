@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,24 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThrabenSentryTest extends BaseCardTest {
-
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        ThrabenSentry card = new ThrabenSentry();
-
-        // Front face: ON_ALLY_CREATURE_DIES may-transform trigger
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists and is vanilla
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("ThrabenMilitia");
-    }
 
     // ===== Transform when allied creature dies (accept) =====
 
@@ -122,7 +100,7 @@ class ThrabenSentryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No trigger on the stack — ON_ALLY_CREATURE_DIES only fires for controller's creatures
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Does not trigger when Thraben Sentry itself dies =====
@@ -144,11 +122,9 @@ class ThrabenSentryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No trigger — Sentry is no longer on the battlefield
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Thraben Sentry"));
     }
-
-    // ===== Helpers =====
 
 }

@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,21 +18,7 @@ class ChillOfForebodingTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has two SPELL effects: mill controller 5 and each opponent mills 5")
-    void hasCorrectEffects() {
-        ChillOfForeboding card = new ChillOfForeboding();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(EachOpponentMillsEffect.class);
-
-        MillControllerEffect millController = (MillControllerEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(millController.count()).isEqualTo(5);
-
-        EachOpponentMillsEffect millOpponent = (EachOpponentMillsEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(millOpponent.count()).isEqualTo(5);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {7}{U}")

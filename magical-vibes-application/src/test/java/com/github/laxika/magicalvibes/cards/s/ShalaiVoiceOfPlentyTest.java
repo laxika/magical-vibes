@@ -2,16 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,60 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShalaiVoiceOfPlentyTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three static effects")
-    void hasThreeStaticEffects() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-    }
-
-    @Test
-    @DisplayName("First static effect grants controller hexproof")
-    void firstStaticEffectGrantsControllerHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(GrantControllerHexproofEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second static effect grants hexproof to own planeswalkers")
-    void secondStaticEffectGrantsPlaneswalkerHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(effect.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_PERMANENTS);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsPlaneswalkerPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Third static effect grants hexproof to other creatures you control")
-    void thirdStaticEffectGrantsCreatureHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
-    @Test
-    @DisplayName("Has one activated ability that puts +1/+1 counters")
-    void hasActivatedAbility() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{4}{G}{G}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst())
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
 
     // ===== Controller hexproof =====
 

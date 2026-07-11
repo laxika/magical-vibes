@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,26 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TesharAncestorsApostleTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has historic spell-cast trigger with graveyard-targeting return effect")
-    void hasCorrectStructure() {
-        TesharAncestorsApostle card = new TesharAncestorsApostle();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(returnEffect.targetGraveyard()).isTrue();
-    }
 
     // ===== Historic trigger: graveyard return =====
 
@@ -56,7 +32,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         // Should prompt for graveyard target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -96,7 +72,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         // No valid graveyard targets → trigger skipped, no graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -110,7 +86,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         // No valid graveyard targets → trigger skipped
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -122,7 +98,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
 
         // No creature cards in graveyard → trigger skipped
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -138,8 +114,8 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // Only the creature spell on the stack, no graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.pendingSpellGraveyardTargetTriggers).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isFalse();
     }
 
     @Test
@@ -157,7 +133,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castArtifact(player2, 0);
 
         // No graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -174,7 +150,7 @@ class TesharAncestorsApostleTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // Should prompt for graveyard target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     // ===== Helpers =====

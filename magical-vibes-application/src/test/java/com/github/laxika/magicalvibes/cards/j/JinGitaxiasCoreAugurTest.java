@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,26 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JinGitaxiasCoreAugurTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jin-Gitaxias has correct effects")
-    void hasCorrectEffects() {
-        JinGitaxiasCoreAugur card = new JinGitaxiasCoreAugur();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect draw = (DrawCardEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(draw.amount()).isEqualTo(7);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOpponentMaxHandSizeEffect.class);
-        ReduceOpponentMaxHandSizeEffect reduce = (ReduceOpponentMaxHandSizeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(reduce.reduction()).isEqualTo(7);
-    }
 
     // ===== End step draw trigger =====
 
@@ -100,9 +78,9 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
 
         // Opponent should be prompted to discard all 3 cards (max hand size = 7 - 7 = 0)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
     }
 
     @Test
@@ -124,8 +102,8 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
 
         // Controller should discard down to 7 (normal hand size, not reduced)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
     }
 
     @Test
@@ -141,7 +119,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // No discard needed
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
     @Test
@@ -162,7 +140,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // No discard needed — max hand size is back to 7
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 }

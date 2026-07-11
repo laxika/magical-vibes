@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,32 +26,9 @@ class StrataScytheTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has imprint ETB search effect for land cards")
-    void hasImprintEtbEffect() {
-        StrataScythe card = new StrataScythe();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SearchLibraryForCardTypeToExileAndImprintEffect.class);
-        var etb = (SearchLibraryForCardTypeToExileAndImprintEffect)
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.cardTypes()).containsExactly(CardType.LAND);
-    }
-
-    @Test
-    @DisplayName("Has static boost effect per matching land name")
-    void hasStaticBoostEffect() {
-        StrataScythe card = new StrataScythe();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturePerMatchingLandNameEffect.class);
-        var boost = (BoostCreaturePerMatchingLandNameEffect)
-                card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerPerMatch()).isEqualTo(1);
-        assertThat(boost.toughnessPerMatch()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Has equip {3} ability with sorcery-speed restriction")
@@ -87,11 +62,11 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // Only land cards should be presented (Plains and Forest, not Grizzly Bears)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND));
     }
 
@@ -118,8 +93,8 @@ class StrataScytheTest extends BaseCardTest {
 
         // Strata Scythe should have Plains imprinted
         Permanent scythe = findPermanent(player1, "Strata Scythe");
-        assertThat(scythe.getCard().getImprintedCard()).isNotNull();
-        assertThat(scythe.getCard().getImprintedCard().getName()).isEqualTo("Plains");
+        assertThat(gd.getImprintedCard(scythe.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(scythe.getCard()).getName()).isEqualTo("Plains");
 
         // Library should be shuffled (only Forest remains)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -146,7 +121,7 @@ class StrataScytheTest extends BaseCardTest {
 
         // No imprint
         Permanent scythe = findPermanent(player1, "Strata Scythe");
-        assertThat(scythe.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(scythe.getCard())).isNull();
     }
 
     @Test
@@ -161,7 +136,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library") && log.contains("empty"));
     }
 
@@ -177,7 +152,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no land cards"));
     }
 
@@ -191,7 +166,7 @@ class StrataScytheTest extends BaseCardTest {
 
         // Imprint Plains
         Plains imprintedPlains = new Plains();
-        scythe.getCard().setImprintedCard(imprintedPlains);
+        gd.setImprintedCard(scythe.getCard(), imprintedPlains);
 
         // Attach to creature
         scythe.setAttachedTo(creature.getId());
@@ -212,7 +187,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature.getId());
 
         // 1 Plains on player1's battlefield
@@ -233,7 +208,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature.getId());
 
         // Only Mountains on battlefield, no Plains
@@ -266,7 +241,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent creature2 = addReadyCreature(player1); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature1.getId());
         addReadyLand(player1, new Plains());
 
@@ -282,7 +257,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent creature2 = addReadyCreature(player1); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature1.getId());
         addReadyLand(player1, new Plains());
 

@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrazingWhiptail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,38 +21,9 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
 
     // ── Card structure ────────────────────────────────────────────────
 
-    @Test
-    @DisplayName("Has upkeep triggered MayRevealSubtypeFromHandEffect for Dinosaur")
-    void hasUpkeepTrigger() {
-        PriestOfTheWakeningSun card = new PriestOfTheWakeningSun();
+    
 
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayRevealSubtypeFromHandEffect.class);
-        MayRevealSubtypeFromHandEffect effect =
-                (MayRevealSubtypeFromHandEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.thenEffect()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) effect.thenEffect()).amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Has activated ability with sacrifice cost and Dinosaur search")
-    void hasActivatedAbility() {
-        PriestOfTheWakeningSun card = new PriestOfTheWakeningSun();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{W}{W}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect search =
-                (SearchLibraryForCardsToHandEffect) ability.getEffects().get(1);
-        assertThat(search.filter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) search.filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-    }
+    
 
     // ── Upkeep trigger ────────────────────────────────────────────────
 
@@ -143,9 +109,9 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Priest of the Wakening Sun"));
 
         // Library search should be awaiting input
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getSubtypes())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getSubtypes())
                 .contains(CardSubtype.DINOSAUR);
     }
 

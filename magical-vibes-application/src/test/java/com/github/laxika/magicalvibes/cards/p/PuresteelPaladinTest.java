@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,32 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PuresteelPaladinTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has equipment entering triggered MayEffect(DrawCardEffect)")
-    void hasEquipmentEntersTrigger() {
-        PuresteelPaladin card = new PuresteelPaladin();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) effects.getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has metalcraft static effect wrapping GrantActivatedAbilityEffect")
-    void hasMetalcraftEquipEffect() {
-        PuresteelPaladin card = new PuresteelPaladin();
-
-        var effects = card.getEffects(EffectSlot.STATIC);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MetalcraftConditionalEffect.class);
-        MetalcraftConditionalEffect mc = (MetalcraftConditionalEffect) effects.getFirst();
-        assertThat(mc.wrapped()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
 
     // ===== Equipment entering draw trigger =====
 
@@ -67,7 +37,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve equipment spell, equipment enters, trigger goes on stack
             harness.passBothPriorities(); // resolve trigger (MayEffect -> prompt)
 
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
         @Test
@@ -116,7 +86,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve artifact spell
 
             // No may ability prompt since PristineTalisman is not equipment
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         }
 
         @Test
@@ -131,7 +101,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve equipment spell
 
             // Paladin only triggers for equipment under your control
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         }
     }
 

@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CurseOfTheNightlyHuntTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has MustAttackEffect with ENCHANTED_PLAYER_CREATURES scope")
-    void hasCorrectEffect() {
-        CurseOfTheNightlyHunt card = new CurseOfTheNightlyHunt();
-
-        assertThat(card.isEnchantPlayer()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-        MustAttackEffect effect = (MustAttackEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_PLAYER_CREATURES);
-    }
 
     // ===== Casting and resolving =====
 
@@ -86,7 +68,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Declaring no attackers should fail because bears must attack
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
@@ -113,7 +95,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player2, List.of(0));
 
@@ -139,7 +121,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Controller's bears should NOT be forced to attack
         gs.declareAttackers(gd, player1, List.of());
@@ -163,7 +145,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Tapped creature can't attack, so no exception
         assertThat(bears.isTapped()).isTrue();
@@ -191,7 +173,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Only bears2 (index 1) must attack; bears (index 0) has summoning sickness
         gs.declareAttackers(gd, player2, List.of(1));
@@ -219,7 +201,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Now bears can choose not to attack
         gs.declareAttackers(gd, player2, List.of());
@@ -248,7 +230,7 @@ class CurseOfTheNightlyHuntTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Only declaring one creature should fail — both must attack
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of(0)))

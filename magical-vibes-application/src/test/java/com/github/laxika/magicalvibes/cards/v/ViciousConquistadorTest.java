@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,21 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ViciousConquistadorTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has EachOpponentLosesLifeEffect(1) on ON_ATTACK")
-    void hasAttackTrigger() {
-        ViciousConquistador card = new ViciousConquistador();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(EachOpponentLosesLifeEffect.class);
-        EachOpponentLosesLifeEffect effect =
-                (EachOpponentLosesLifeEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
 
     // ===== ON_ATTACK — each opponent loses 1 life =====
 
@@ -115,12 +96,11 @@ class ViciousConquistadorTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

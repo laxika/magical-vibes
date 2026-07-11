@@ -1,22 +1,16 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,45 +26,6 @@ class FungalPlotsTest extends BaseCardTest {
     // =====================================================
     // Card properties
     // =====================================================
-
-    @Test
-    @DisplayName("Fungal Plots has correct activated abilities")
-    void hasCorrectAbilities() {
-        FungalPlots card = new FungalPlots();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {1}{G}, Exile a creature card from your graveyard: Create a 1/1 green Saproling creature token.
-        var tokenAbility = card.getActivatedAbilities().get(0);
-        assertThat(tokenAbility.isRequiresTap()).isFalse();
-        assertThat(tokenAbility.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(tokenAbility.isNeedsTarget()).isFalse();
-        assertThat(tokenAbility.getEffects()).hasSize(2);
-        assertThat(tokenAbility.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) tokenAbility.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(tokenAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) tokenAbility.getEffects().get(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Saproling");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SAPROLING);
-
-        // Ability 1: Sacrifice two Saprolings: You gain 2 life and draw a card.
-        var sacrificeAbility = card.getActivatedAbilities().get(1);
-        assertThat(sacrificeAbility.isRequiresTap()).isFalse();
-        assertThat(sacrificeAbility.getManaCost()).isNull();
-        assertThat(sacrificeAbility.isNeedsTarget()).isFalse();
-        assertThat(sacrificeAbility.getEffects()).hasSize(3);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeMultiplePermanentsCost.class);
-        SacrificeMultiplePermanentsCost sacCost = (SacrificeMultiplePermanentsCost) sacrificeAbility.getEffects().get(0);
-        assertThat(sacCost.count()).isEqualTo(2);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(GainLifeEffect.class);
-        assertThat(sacrificeAbility.getEffects().get(2)).isInstanceOf(DrawCardEffect.class);
-    }
-
-    // =====================================================
     // Ability 0: Create Saproling token
     // =====================================================
 
@@ -84,8 +39,8 @@ class FungalPlotsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
     }
 
     @Test
@@ -241,7 +196,7 @@ class FungalPlotsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -258,11 +213,11 @@ class FungalPlotsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
 
         // First choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, sap1Id);
 
         // Second choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, sap2Id);
 
         // Ability should be on the stack

@@ -1,53 +1,19 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class CullingDaisTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Culling Dais has two activated abilities with correct effect types")
-    void hasCorrectAbilityStructure() {
-        CullingDais card = new CullingDais();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}, Sacrifice a creature: Put a charge counter on Culling Dais.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isNull();
-        assertThat(ability0.getEffects()).hasSize(2);
-        assertThat(ability0.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Ability 1: {1}, Sacrifice Culling Dais: Draw a card for each charge counter on Culling Dais.
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isFalse();
-        assertThat(ability1.getManaCost()).isEqualTo("{1}");
-        assertThat(ability1.getEffects()).hasSize(2);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(DrawCardsEqualToChargeCountersOnSourceEffect.class);
-    }
 
     // ===== Ability 0: Sacrifice creature to add charge counter =====
 

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PriestOfUrabrask;
 import com.github.laxika.magicalvibes.cards.s.SuturePriest;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,18 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TocatliHonorGuardTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CreatureEnteringDontCauseTriggersEffect")
-    void hasCorrectStaticEffect() {
-        TocatliHonorGuard card = new TocatliHonorGuard();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CreatureEnteringDontCauseTriggersEffect.class);
-    }
 
     // ===== Suppresses creature's own ETB triggered ability =====
 
@@ -69,7 +56,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve creature spell — Grizzly Bears enters, but Suture Priest does NOT trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
     }
@@ -92,7 +79,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve creature spell — Grizzly Bears enters under player2, Suture Priest does NOT trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 20);
     }

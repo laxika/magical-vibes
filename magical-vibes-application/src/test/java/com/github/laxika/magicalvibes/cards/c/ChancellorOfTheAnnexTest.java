@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -22,33 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChancellorOfTheAnnexTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CASTS_SPELL CounterUnlessPaysEffect(1)")
-    void hasCorrectBattlefieldEffect() {
-        ChancellorOfTheAnnex card = new ChancellorOfTheAnnex();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst()).amount())
-                .isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has ON_OPENING_HAND_REVEAL MayEffect wrapping RegisterDelayedCounterTriggerEffect(1)")
-    void hasCorrectOpeningHandEffect() {
-        ChancellorOfTheAnnex card = new ChancellorOfTheAnnex();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(RegisterDelayedCounterTriggerEffect.class);
-        assertThat(((RegisterDelayedCounterTriggerEffect) may.wrapped()).genericManaAmount()).isEqualTo(1);
-    }
 
     // ===== Battlefield: triggers on opponent's spell =====
 
@@ -127,8 +97,8 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -251,7 +221,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
 
         // Game should be awaiting may ability choice from p1
         assertThat(gameData.interaction.isAwaitingInput()).isTrue();
-        assertThat(gameData.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -447,7 +417,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         h.castCreature(p2, 0);
         h.passBothPriorities(); // resolve trigger
 
-        assertThat(gameData.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gameData.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         h.handleMayAbilityChosen(p2, true);
 

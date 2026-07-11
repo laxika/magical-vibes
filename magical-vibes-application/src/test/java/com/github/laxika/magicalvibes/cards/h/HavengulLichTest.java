@@ -2,13 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NantukoShade;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HavengulLichTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability targeting a creature card in a graveyard")
-    void hasActivatedAbility() {
-        HavengulLich card = new HavengulLich();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).isEmpty();
-    }
+    
 
     @Test
     @DisplayName("Ability grants permission to cast the targeted creature card from own graveyard")

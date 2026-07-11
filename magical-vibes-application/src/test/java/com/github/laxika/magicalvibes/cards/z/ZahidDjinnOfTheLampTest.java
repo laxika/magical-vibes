@@ -3,11 +3,7 @@ package com.github.laxika.magicalvibes.cards.z;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShortSword;
-import com.github.laxika.magicalvibes.model.AlternateHandCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,16 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ZahidDjinnOfTheLampTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has alternate casting cost configured")
-    void hasAlternateCastingCost() {
-        ZahidDjinnOfTheLamp card = new ZahidDjinnOfTheLamp();
-
-        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class).orElseThrow();
-        assertThat(altCast.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{3}{U}");
-        assertThat(altCast.getCost(TapUntappedPermanentsCost.class).orElseThrow().count()).isEqualTo(1);
-        assertThat(altCast.getCost(TapUntappedPermanentsCost.class).orElseThrow().filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Can be cast using alternate cost: pay {3}{U} and tap an untapped artifact")

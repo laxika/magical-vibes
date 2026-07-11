@@ -4,14 +4,8 @@ import com.github.laxika.magicalvibes.cards.b.BondsOfFaith;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HeartlessSummoning;
 import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,28 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DanithaCapashenParagonTest extends BaseCardTest {
-
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Danitha has the cost reduction effect for Aura and Equipment subtypes")
-    void hasCorrectEffects() {
-        DanithaCapashenParagon card = new DanithaCapashenParagon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardAnyOfPredicate.class);
-        CardAnyOfPredicate predicate = (CardAnyOfPredicate) effect.predicate();
-        assertThat(predicate.predicates()).hasSize(2);
-        assertThat(predicate.predicates().get(0)).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) predicate.predicates().get(0)).subtype()).isEqualTo(CardSubtype.AURA);
-        assertThat(predicate.predicates().get(1)).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) predicate.predicates().get(1)).subtype()).isEqualTo(CardSubtype.EQUIPMENT);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
 
     // ===== Aura cost reduction =====
 

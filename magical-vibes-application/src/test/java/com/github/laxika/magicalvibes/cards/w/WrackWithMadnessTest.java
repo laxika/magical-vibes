@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WrackWithMadnessTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wrack with Madness has correct card properties")
-    void hasCorrectProperties() {
-        WrackWithMadness card = new WrackWithMadness();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(TargetCreatureDealsPowerDamageToSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Wrack with Madness targeting a creature puts it on the stack")

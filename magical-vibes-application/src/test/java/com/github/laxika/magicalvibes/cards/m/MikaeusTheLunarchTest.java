@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,44 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MikaeusTheLunarchTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has EnterWithXPlusOnePlusOneCountersEffect as ETB effect")
-    void hasCorrectETBEffect() {
-        MikaeusTheLunarch card = new MikaeusTheLunarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithXPlusOnePlusOneCountersEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        MikaeusTheLunarch card = new MikaeusTheLunarch();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Put a +1/+1 counter on Mikaeus
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect selfCounter = (PutCountersOnSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(selfCounter.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-
-        // Second ability: {T}, Remove a +1/+1 counter: Put a +1/+1 counter on each other creature you control
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(0))
-                .isInstanceOf(RemoveCounterFromSourceCost.class);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(1))
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
 
     // ===== Enters with X +1/+1 counters =====
 

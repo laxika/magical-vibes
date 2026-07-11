@@ -28,9 +28,12 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_DURING_YOUR_TURN` | Activate only during your turn (any phase/step, instant speed) |
 | `ONLY_DURING_YOUR_UPKEEP` | Abilities that can only be used during your upkeep |
 | `ONLY_WHILE_ATTACKING` | Activate only if this creature is attacking (checks `permanent.isAttacking()`) |
+| `ONLY_BEFORE_ATTACKERS_DECLARED` | Activate only during your turn, before attackers are declared (active player + step before `DECLARE_ATTACKERS`). Stern Marshal |
+| `ONLY_DURING_COMBAT` | Activate only during the combat phase (checks `gameData.currentStep.isCombatPhase()`). Jade Statue |
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
+| `OPPONENT_CONTROLS_MORE_LANDS` | Activate only if an opponent controls strictly more lands than you (checks `gameQueryService.anyOpponentControlsMoreLands()`). Weathered Wayfarer |
 | `POWER_4_OR_GREATER` | Activate only if this creature's power is 4 or greater (checks effective power incl. static bonuses) |
 | `RAID` | Activate only if you attacked this turn (checks `playersDeclaredAttackersThisTurn`). Works with both battlefield and graveyard activated abilities |
 
@@ -56,7 +59,7 @@ new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
     "{R}: Furnace Whelp gets +1/+0 until end of turn.")
 
 // Tap + mana to mill
-new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)),
+new ActivatedAbility(true, "{2}", List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
     "{2}, {T}: Target player mills two cards.")
 ```
 
@@ -134,7 +137,7 @@ new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
 
 // Sorcery-speed sacrifice ability
 new ActivatedAbility(false, null,
-    List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
+    List.of(new SacrificeSelfCost(), new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD)),
     "Sacrifice: Target player reveals their hand...",
     ActivationTimingRestriction.SORCERY_SPEED)
 ```
@@ -200,7 +203,7 @@ ActivatedAbility.variableLoyaltyAbility(effects, description, targetFilter)
 ```java
 // −X: Chandra Nalaar deals X damage to target creature.
 ActivatedAbility.variableLoyaltyAbility(
-    List.of(new DealXDamageToTargetCreatureEffect()),
+    List.of(new DealDamageToTargetCreatureEffect(new XValue())),
     "\u2212X: Chandra Nalaar deals X damage to target creature.",
     null)
 ```
@@ -226,6 +229,31 @@ new ActivatedAbility(false, "{B}",
 ```
 
 Cards: `BloodlineKeeper`
+
+---
+
+### 8b. Ability any player may activate
+
+```java
+new ActivatedAbility(false, null, effects, description).withActivatableByAnyPlayer()
+```
+
+**Use when:** Ability text says "Any player may activate this ability" (e.g. Oona's Prowler).
+The `.withActivatableByAnyPlayer()` fluent flag lets a player who does **not** control the
+source activate it; that activating player pays the costs (mana/discard/etc.) from their own
+resources, while the effect still resolves against the source permanent (e.g. `BoostSelfEffect`
+applies to the source regardless of who activated). Resolution finds the source across all
+battlefields when the activator isn't the controller.
+
+```java
+// Discard a card: Oona's Prowler gets -2/-0 until end of turn. Any player may activate this ability.
+new ActivatedAbility(false, null,
+    List.of(new DiscardCardTypeCost(null, null), new BoostSelfEffect(-2, 0)),
+    "Discard a card: Oona's Prowler gets -2/-0 until end of turn. Any player may activate this ability.")
+    .withActivatableByAnyPlayer()
+```
+
+Cards: `OonasProwler`
 
 ---
 
@@ -297,6 +325,10 @@ Cards: `MagmaPhoenix`
 
 ---
 
+## Mana ability riders ("Add {X}. When you do, ...")
+
+An ability that produces mana and has no target/loyalty cost is a **mana ability** (resolves immediately, no stack). Any non-mana effects in its list are treated as reflexive "when you do" riders resolved inline by `ActivatedAbilityExecutionService.doResolveManaAbility`. Only a fixed set of rider effects are supported there: `GainLifeEffect`, `DealDamageToPlayersEffect` with recipient `CONTROLLER`, and `DealDamageToPlayersEffect` with recipient `EACH_OPPONENT` (Rubble Rouser: `{T}, Exile a card from your graveyard: Add {R}. When you do, deal 1 damage to each opponent.`). To support a new rider, add a branch in `doResolveManaAbility` — a rider effect placed on a mana ability but not handled there is silently dropped.
+
 ## Costs in the effects list
 
 Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. The engine processes them in order.
@@ -314,8 +346,10 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any |
-| `ExileCardFromGraveyardCost` | `(CardType)` or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
+| `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Slate of Ancestry |
+| `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
+| `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java
 // {1}{R}, Sacrifice a Goblin: Deal 2 damage to any target
@@ -338,7 +372,7 @@ new ActivatedAbility(true, null,
 // {T}, Sacrifice three artifacts: Search library for artifact to battlefield
 new ActivatedAbility(true, null,
     List.of(new SacrificeMultiplePermanentsCost(3, new PermanentIsArtifactPredicate()),
-            new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.ARTIFACT), false, false)),
+            new SearchLibraryEffect(new CardTypePredicate(CardType.ARTIFACT), LibrarySearchDestination.BATTLEFIELD)),
     "{T}, Sacrifice three artifacts: Search your library for an artifact card, put it onto the battlefield, then shuffle.")
 ```
 
@@ -390,7 +424,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
 | `ON_TAP` | Permanent is tapped for mana (lands) |
 | `STATIC` | Continuous effect, always active while on battlefield |
-| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports single-player targeting (e.g. Bloodgift Demon via `pendingUpkeepPlayerTargets`) and multi-player targeting (e.g. Axis of Mortality via `pendingUpkeepMultiPlayerTargets` when any effect has `requiredPlayerTargetCount() >= 2`) |
+| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/player) when an effect is true "any target" (`canTargetPlayer() && canTargetPermanent()`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `requiredPlayerTargetCount() >= 2`) |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |
@@ -407,12 +441,14 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |
 | `ON_ATTACK` | This creature attacks |
 | `ON_ALLY_CREATURES_ATTACK` | One or more creatures the controller controls attack (fires once per combat, not per creature). Scans all controller's permanents after attackers declared |
-| `GRAVEYARD_ON_ALLY_CREATURES_ATTACK` | Like ON_ALLY_CREATURES_ATTACK but fires from the controller's graveyard. The attacker count is passed via xValue. Supports `MinimumAttackersConditionalEffect` wrapper for "N or more creatures" conditions. Used by Warcry Phoenix |
+| `GRAVEYARD_ON_ALLY_CREATURES_ATTACK` | Like ON_ALLY_CREATURES_ATTACK but fires from the controller's graveyard. The attacker count is passed via xValue. Supports `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` wrapper for "N or more creatures" conditions. Used by Warcry Phoenix |
 | `ON_ALLY_CREATURE_ATTACKS` | Fires once per attacking creature the controller controls (unlike ON_ALLY_CREATURES_ATTACK which fires once per combat). Scans all controller's permanents for each attacker. Supports `TriggeringCardConditionalEffect` to filter by the attacking creature. Used by Sanctum Seeker |
 | `ON_CREATURE_ATTACKS_YOU` | Whenever a creature attacks you or a planeswalker you control. Fires once per attacking creature, on the defending player's permanents (the player being attacked, directly or via their planeswalker). The attacking creature's permanent ID is set as the non-targeting `targetId` on the stack entry. Checked in `CombatAttackService.declareAttackers`. Used by Lost in the Woods |
-| `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `pendingExploreTriggerTargets` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
+| `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | Whenever ANY creature (any controller) becomes the target of ANY spell or ability. Fires on ALL permanents with this slot across every battlefield. The targeted creature is set as the non-targeting `targetId`. Checked in `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers`. Used by Cowardice (`ReturnToHandEffect.target()`) |
+| `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `ExploreTriggerTarget` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
 | `ON_BLOCK` | This creature blocks |
 | `ON_BECOMES_BLOCKED` | This creature becomes blocked. Register effects with `TriggerMode.PER_BLOCKER` to fire once per blocker |
+| `ON_ATTACKS_UNBLOCKED` | This creature attacks and isn't blocked. Fires once per unblocked attacker during the declare-blockers step (after blocks are declared, or immediately if the defender can't block) — before combat damage, and independent of whether damage is dealt. Player-affecting effects read the defending player from the non-targeting `targetId`. Checked in `CombatBlockService`. Used by Abyssal Nightstalker |
 | `ON_COMBAT_DAMAGE_TO_PLAYER` | This creature deals combat damage to a player. Fires once per combat damage step, so double strike can trigger in both first-strike and regular damage steps |
 | `ON_COMBAT_DAMAGE_TO_CREATURE` | This creature deals combat damage to a creature. Fires once per combat damage step |
 | `ON_DAMAGE_TO_PLAYER` | Any damage to a player (not just combat) |
@@ -421,7 +457,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature enters battlefield under your control |
 | `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` | An artifact enters battlefield under your control (not this permanent) |
 | `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` | A nontoken artifact enters battlefield under your control (not this permanent). Used with MayPayManaEffect for Mirrorworks' copy trigger. Entering permanent ID is passed via PendingMayAbility.targetCardId |
-| `ON_ANY_CREATURE_DIES` | Any creature (including tokens) on any battlefield dies. Fires for all permanents on all battlefields. Supports targeted effects via pendingDeathTriggerTargets (e.g. Falkenrath Noble) |
+| `ON_ANY_CREATURE_DIES` | Any creature (including tokens) on any battlefield dies. Fires for all permanents on all battlefields. Supports targeted effects via DeathTriggerTarget (e.g. Falkenrath Noble) |
 | `ON_ANY_NONTOKEN_CREATURE_DIES` | Any nontoken creature on any battlefield dies (not just controller's). Used with MayEffect for Mimic Vat's imprint trigger |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any artifact (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. |
 | `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | An artifact is put into an opponent's graveyard from the battlefield. Only fires when the graveyard owner is an opponent of this permanent's controller. Supports MayEffect wrapping. |
@@ -443,7 +479,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_EQUIPPED_CREATURE_DIES` | Equipped creature dies |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted permanent dies (graveyard only) |
 | `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD` | Enchanted permanent leaves battlefield (any destination) |
-| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `PermanentEnteredThisTurnConditionalEffect` for "second+ land" |
+| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` for "second+ land" |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Your land enters (landfall) |
 | `ON_OPPONENT_CREATURE_DIES` | An opponent's creature dies |
 | `ON_DEALT_DAMAGE` | This creature is dealt damage (combat or non-combat) |
@@ -463,8 +499,10 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
 | `PRECOMBAT_MAIN_TRIGGERED` | Beginning of precombat main phase on controller's turn |
 | `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | An opponent's creature is dealt damage |
+| `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature (yours or an opponent's) is dealt damage. Queued stack entry targets the damaged creature (targetId set, non-targeting). Register a target-taking effect like `DestroyTargetPermanentEffect(true)` — Death Pits of Rath |
 | `ON_CONTROLLER_LOSES_LIFE` | Controller loses life |
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
+| `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | This card is put into a graveyard from anywhere (battlefield/hand/library/stack). Fired for every zone→graveyard transition in `GraveyardService.addCardToGraveyard` (card enters graveyard first, then trigger). Used by Purity with `ShuffleSelfFromGraveyardIntoLibraryEffect` |
 | `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Your Aura or Equipment dies |
 | `ON_TRANSFORM_TO_BACK_FACE` | This permanent transforms to back face |
 | `ON_TRANSFORM_TO_FRONT_FACE` | This permanent transforms back to front face |

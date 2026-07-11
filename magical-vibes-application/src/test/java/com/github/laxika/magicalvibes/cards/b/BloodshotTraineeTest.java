@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,27 +13,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodshotTraineeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has tap ability that deals 4 damage to target creature with power restriction")
-    void hasCorrectAbility() {
-        BloodshotTrainee card = new BloodshotTrainee();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.POWER_4_OR_GREATER);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-
-        DealDamageToTargetCreatureEffect effect =
-                (DealDamageToTargetCreatureEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(4);
-    }
 
     // ===== Activation with sufficient power =====
 

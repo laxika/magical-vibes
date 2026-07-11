@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsHandTopBottomEffectHandler;
+import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,8 +77,13 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
+        interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
+                sessionManager, cardViewFactory, gameBroadcastService, mock(TurnProgressionService.class)));
+        lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(
+                gameBroadcastService, interactionHandlerRegistry, libraryRevealSupport);
 
     }
 
@@ -116,7 +122,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("library is empty")));
@@ -134,7 +140,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             }
@@ -153,9 +159,9 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-                assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1Id);
-                assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

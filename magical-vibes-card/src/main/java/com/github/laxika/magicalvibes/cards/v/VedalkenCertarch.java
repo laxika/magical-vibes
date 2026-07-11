@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +22,7 @@ public class VedalkenCertarch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TapTargetPermanentEffect()),
+                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "Metalcraft — {T}: Tap target artifact, creature, or land. Activate only if you control three or more artifacts.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAnyOfPredicate(List.of(

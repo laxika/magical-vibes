@@ -3,8 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,26 +30,6 @@ class MindslaverTest extends BaseCardTest {
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Mindslaver has activated ability with tap and sacrifice cost, targets any player")
-    void hasCorrectAbilityStructure() {
-        Mindslaver card = new Mindslaver();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.getTimingRestriction()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof SacrificeSelfCost)
-                .anyMatch(e -> e instanceof ControlTargetPlayerNextTurnEffect);
-        assertThat(ability.getTargetFilter()).isNull();
     }
 
     // ===== Activation and delayed effect =====

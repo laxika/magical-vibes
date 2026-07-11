@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "290")
+@CardRegistration(set = "9ED", collectorNumber = "265")
 public class Regeneration extends Card {
 
     public Regeneration() {

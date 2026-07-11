@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +15,7 @@ import java.util.Set;
 
 public record CreateTokenEffect(
         CardType primaryType,
-        int amount,
+        DynamicAmount amount,
         String tokenName,
         int power,
         int toughness,
@@ -33,6 +35,17 @@ public record CreateTokenEffect(
         Set<Keyword> grantedKeywordsUntilEndOfTurn
 ) implements CardEffect {
 
+    /** Canonical shape with a fixed token count */
+    public CreateTokenEffect(CardType primaryType, int amount, String tokenName, int power, int toughness,
+                             CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes,
+                             Set<Keyword> keywords, Set<CardType> additionalTypes,
+                             boolean tappedAndAttacking, boolean tapped,
+                             Map<EffectSlot, CardEffect> tokenEffects, List<ActivatedAbility> tokenAbilities,
+                             boolean exileAtEndOfCombat, boolean exileAtEndStep, boolean legendary,
+                             int initialPlusOnePlusOneCounters, Set<Keyword> grantedKeywordsUntilEndOfTurn) {
+        this(primaryType, new Fixed(amount), tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn);
+    }
+
     /** Single-color creature token (existing pattern) */
     public CreateTokenEffect(String tokenName, int power, int toughness,
                              CardColor color, List<CardSubtype> subtypes,
@@ -42,6 +55,13 @@ public record CreateTokenEffect(
 
     /** Single-color creature token with amount */
     public CreateTokenEffect(int amount, String tokenName, int power, int toughness,
+                             CardColor color, List<CardSubtype> subtypes,
+                             Set<Keyword> keywords, Set<CardType> additionalTypes) {
+        this(CardType.CREATURE, amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), List.of(), false, false, false, 0, Set.of());
+    }
+
+    /** Single-color creature token with a dynamically computed count ("for each …" wordings) */
+    public CreateTokenEffect(DynamicAmount amount, String tokenName, int power, int toughness,
                              CardColor color, List<CardSubtype> subtypes,
                              Set<Keyword> keywords, Set<CardType> additionalTypes) {
         this(CardType.CREATURE, amount, tokenName, power, toughness, color, null, subtypes, keywords, additionalTypes, false, false, Map.of(), List.of(), false, false, false, 0, Set.of());

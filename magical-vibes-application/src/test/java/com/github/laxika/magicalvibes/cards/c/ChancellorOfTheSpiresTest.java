@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -20,9 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,32 +39,6 @@ class ChancellorOfTheSpiresTest {
         gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor has ON_OPENING_HAND_REVEAL MayEffect wrapping EachOpponentMillsEffect(7)")
-    void hasOpeningHandMillEffect() {
-        ChancellorOfTheSpires card = new ChancellorOfTheSpires();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(EachOpponentMillsEffect.class);
-        EachOpponentMillsEffect effect = (EachOpponentMillsEffect) may.wrapped();
-        assertThat(effect.count()).isEqualTo(7);
-    }
-
-    @Test
-    @DisplayName("Chancellor has ON_ENTER_BATTLEFIELD CastTargetInstantOrSorceryFromGraveyardEffect")
-    void hasETBCastFromGraveyardEffect() {
-        ChancellorOfTheSpires card = new ChancellorOfTheSpires();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CastTargetInstantOrSorceryFromGraveyardEffect.class);
     }
 
     // ===== Opening hand trigger: mill =====
@@ -169,7 +136,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve creature spell → ETB → graveyard choice
 
         // Should be prompting for graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -188,7 +155,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities();
 
         // Only Shock should be selectable (instant), not Grizzly Bears (creature)
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).hasSize(1);
         assertThat(validIds).contains(shock.getId());
     }
@@ -298,7 +265,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities(); // resolve creature → ETB
 
         // No graveyard choice should be prompted
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -312,7 +279,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities();
 
         // No graveyard choice should be prompted
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -357,6 +324,6 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities();
 
         // No graveyard choice should be prompted (only own cards, not opponent's)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 }

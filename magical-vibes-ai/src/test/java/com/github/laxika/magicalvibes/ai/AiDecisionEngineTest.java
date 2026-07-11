@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.cards.u.UnburialRites;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -97,7 +97,7 @@ class AiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -109,7 +109,7 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
     }
 
@@ -599,7 +599,7 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 
     @Test
@@ -670,7 +670,7 @@ class AiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
     }
 
     @Test
@@ -1679,7 +1679,7 @@ class AiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 
@@ -1739,7 +1739,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         // Both creatures are at indices 0 (elves) and 1 (bears) — request both as attackers
         // Tax for 2 attackers = {2}, but only 1 mana available from elves.
@@ -1769,7 +1769,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         // Plains at index 0, Bears at index 1 — only Bears is an attacker
         // Tax for 1 attacker = {1}, paid by tapping Plains
@@ -1795,7 +1795,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         // Request elves (index 0) as sole attacker. Tax = {1}, paid by tapping elves itself.
         List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0));
@@ -1845,7 +1845,7 @@ class AiDecisionEngineTest {
 
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
 
@@ -1881,6 +1881,8 @@ class AiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
@@ -1922,6 +1924,7 @@ class AiDecisionEngineTest {
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;

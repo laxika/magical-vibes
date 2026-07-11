@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VaultSkywardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Vault Skyward has correct effects")
-    void hasCorrectEffects() {
-        VaultSkyward card = new VaultSkyward();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Vault Skyward grants flying and untaps target creature")

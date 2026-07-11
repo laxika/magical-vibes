@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class PriestOfTheWakeningSun extends Card {
                 "{3}{W}{W}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new SearchLibraryForCardsToHandEffect(
+                        new SearchLibraryEffect(
                                 new CardSubtypePredicate(CardSubtype.DINOSAUR))
                 ),
                 "{3}{W}{W}, Sacrifice Priest of the Wakening Sun: Search your library for a Dinosaur card, reveal it, put it into your hand, then shuffle."

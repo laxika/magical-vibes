@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,7 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,9 +71,8 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
                     permanentsToShuffleByOwner.get(ownerId).add(permanent.getOriginalCard());
                 }
                 gameData.stolenCreatures.remove(permanent.getId());
-                gameData.untilEndOfTurnStolenCreatures.remove(permanent.getId());
-                gameData.enchantmentDependentStolenCreatures.remove(permanent.getId());
-                gameData.permanentControlStolenCreatures.remove(permanent.getId());
+                gameData.expireControlEffectsForDepartedPermanent(permanent.getId());
+                gameData.expireFloatingEffectsForDepartedSource(permanent.getId());
                 iterator.remove();
             }
         }
@@ -228,7 +229,7 @@ public class WarpWorldEffectHandler implements NormalEffectHandlerBean {
             }
             if (auraCard.getTargetFilter() != null) {
                 try {
-                    gameQueryService.validateTargetFilter(auraCard.getTargetFilter(),
+                    predicateEvaluationService.validateTargetFilter(auraCard.getTargetFilter(),
                             candidate,
                             FilterContext.of(gameData)
                                     .withSourceCardId(auraCard.getId())

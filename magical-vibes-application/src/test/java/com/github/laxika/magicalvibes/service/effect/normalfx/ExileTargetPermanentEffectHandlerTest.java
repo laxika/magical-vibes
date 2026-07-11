@@ -9,12 +9,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -51,6 +48,7 @@ class ExileTargetPermanentEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private DestructionSupport destructionSupport;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -78,7 +76,7 @@ class ExileTargetPermanentEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, destructionSupport);
 
     }
 

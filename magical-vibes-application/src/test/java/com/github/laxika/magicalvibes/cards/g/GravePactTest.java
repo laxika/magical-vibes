@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +22,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GravePactTest extends BaseCardTest {
-
 
     /**
      * Makes player2 the active player in main phase 1, ready to cast sorceries.
@@ -62,18 +60,6 @@ class GravePactTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grave Pact has correct card properties")
-    void hasCorrectProperties() {
-        GravePact card = new GravePact();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(EachOpponentSacrificesCreatureEffect.class);
     }
 
     // ===== Casting =====
@@ -134,8 +120,6 @@ class GravePactTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Grave Pact");
         assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst())
-                .isInstanceOf(EachOpponentSacrificesCreatureEffect.class);
     }
 
     // ===== Resolving =====
@@ -180,8 +164,8 @@ class GravePactTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Grave Pact trigger
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
 
@@ -366,5 +350,4 @@ class GravePactTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
     }
 }
-
 

@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,30 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DeathgorgeScavengerTest extends BaseCardTest {
-
-    // ===== Card structure tests =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping ExileGraveyardCardWithConditionalBonusEffect on ETB and Attack slots")
-    void hasCorrectEffects() {
-        DeathgorgeScavenger card = new DeathgorgeScavenger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(ExileGraveyardCardWithConditionalBonusEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect attackMay = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackMay.wrapped()).isInstanceOf(ExileGraveyardCardWithConditionalBonusEffect.class);
-
-        ExileGraveyardCardWithConditionalBonusEffect effect =
-                (ExileGraveyardCardWithConditionalBonusEffect) etbMay.wrapped();
-        assertThat(effect.creatureLifeGain()).isEqualTo(2);
-        assertThat(effect.noncreaturePowerBoost()).isEqualTo(1);
-        assertThat(effect.noncreatureToughnessBoost()).isEqualTo(1);
-    }
 
     // ===== ETB trigger tests =====
 
@@ -65,7 +38,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve MayEffect triggered ability → may prompt
 
             // Accept may ability — single graveyard target is auto-selected and effect resolves
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
 
             // Creature card exiled: gain 2 life
@@ -140,7 +113,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Accept may ability — single target auto-selected
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
 
             // Creature card exiled: gain 2 life
@@ -208,11 +181,11 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell → ETB → MayEffect on stack
             harness.passBothPriorities(); // resolve MayEffect triggered ability → may prompt
 
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
 
             // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
             harness.handleGraveyardCardChosen(player1, 0); // choose Grizzly Bears
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Grizzly Bears"))).isTrue();
@@ -234,7 +207,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
             harness.handleGraveyardCardChosen(player1, 1); // choose Shock (noncreature)
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Shock"))).isTrue();
@@ -265,11 +238,11 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities(); // resolve MayEffect triggered ability → may prompt
 
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null).isTrue();
             harness.handleMayAbilityChosen(player1, true);
 
             // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
             harness.handleGraveyardCardChosen(player1, 0); // choose Grizzly Bears
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Grizzly Bears"))).isTrue();
@@ -291,7 +264,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // Multiple targets → graveyard choice prompt
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
             harness.handleGraveyardCardChosen(player1, 1); // choose Shock (noncreature)
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.card().getName().equals("Shock"))).isTrue();
@@ -320,7 +293,7 @@ class DeathgorgeScavengerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

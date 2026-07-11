@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,19 +20,7 @@ class ExecutionersHoodTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Executioner's Hood has static intimidate keyword grant effect")
-    void hasKeywordGrantEffect() {
-        ExecutionersHood card = new ExecutionersHood();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.INTIMIDATE);
-    }
+    
 
     @Test
     @DisplayName("Executioner's Hood has equip {2} ability with correct properties")

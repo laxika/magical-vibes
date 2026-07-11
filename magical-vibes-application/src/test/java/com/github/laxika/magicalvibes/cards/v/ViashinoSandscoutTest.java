@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.v;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,16 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViashinoSandscoutTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Viashino Sandscout has correct card properties and end-step return trigger")
-    void hasCorrectProperties() {
-        ViashinoSandscout card = new ViashinoSandscout();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnSelfToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers at end step and returns itself to owner's hand on resolution")

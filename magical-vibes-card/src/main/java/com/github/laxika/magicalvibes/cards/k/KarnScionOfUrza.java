@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
@@ -33,11 +34,13 @@ public class KarnScionOfUrza extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(new KarnScionReturnSilverCounterCardEffect()),
-                "\u22121: Put a card you own with a silver counter on it from exile into your hand."
+                "−1: Put a card you own with a silver counter on it from exile into your hand."
         ));
 
         // −2: Create a 0/0 colorless Construct artifact creature token with
         // "This creature gets +1/+1 for each artifact you control."
+        PermanentCount artifactsYouControl =
+                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new CreateTokenEffect(
@@ -45,10 +48,9 @@ public class KarnScionOfUrza extends Card {
                         null, List.of(CardSubtype.CONSTRUCT),
                         Set.of(), Set.of(CardType.ARTIFACT),
                         Map.of(EffectSlot.STATIC,
-                                new BoostSelfPerControlledPermanentEffect(1, 1,
-                                        new PermanentIsArtifactPredicate()))
+                                new BoostSelfEffect(artifactsYouControl, artifactsYouControl))
                 )),
-                "\u22122: Create a 0/0 colorless Construct artifact creature token with \"This creature gets +1/+1 for each artifact you control.\""
+                "−2: Create a 0/0 colorless Construct artifact creature token with \"This creature gets +1/+1 for each artifact you control.\""
         ));
     }
 }

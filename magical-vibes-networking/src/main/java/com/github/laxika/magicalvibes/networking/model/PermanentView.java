@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.networking.model;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 
 import java.util.List;
 import java.util.Map;
@@ -31,5 +32,8 @@ public record PermanentView(
         /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (a castable copy of
          *  its prepare spell sits in exile). Not a transform — the front face stays visible; the prepare
          *  spell is shown inset on the card. */
-        boolean prepared
+        boolean prepared,
+        /** Per-source attribution of the continuous effects modifying this permanent, for the
+         *  client's hover breakdown. Display-only; the aggregate fields above stay authoritative. */
+        List<ModifierLine> modifierLines
 ) {}

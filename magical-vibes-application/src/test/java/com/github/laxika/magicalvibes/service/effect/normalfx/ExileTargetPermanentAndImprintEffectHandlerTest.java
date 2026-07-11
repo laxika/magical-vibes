@@ -9,13 +9,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentAndImprintEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -171,7 +168,7 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
                 exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
-                assertThat(source.getCard().getImprintedCard()).isSameAs(targetCard);
+                assertThat(gd.getImprintedCard(source.getCard())).isSameAs(targetCard);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd),
                         eq("Grizzly Bears is exiled by Exclusion Ritual."));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);

@@ -40,7 +40,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.hasProtectionFromSource(gameData, target, target)) {
-            CardColor targetColor = target.getEffectiveColor();
+            CardColor targetColor = gameQueryService.getEffectiveColor(gameData, target);
             String logEntry = target.getCard().getName() + " has protection from "
                     + (targetColor != null ? targetColor.name().toLowerCase() : "source")
                     + " — damage prevented.";

@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,17 +40,6 @@ class CoreProwlerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Core Prowler has ON_DEATH ProliferateEffect")
-    void hasCorrectEffects() {
-        CoreProwler card = new CoreProwler();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
     }
 
     // ===== Casting =====

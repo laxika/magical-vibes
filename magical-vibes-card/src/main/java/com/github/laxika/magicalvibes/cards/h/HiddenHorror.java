@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "149")
+@CardRegistration(set = "P02", collectorNumber = "75")
 public class HiddenHorror extends Card {
 
     public HiddenHorror() {

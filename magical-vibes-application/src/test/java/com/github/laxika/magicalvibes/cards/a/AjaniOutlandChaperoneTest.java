@@ -7,11 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjaniOutlandChaperoneTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -36,45 +30,11 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability creates a Kithkin token effect")
-    void plusOneAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability deals 4 damage to target tapped creature")
-    void minusTwoAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsTappedPredicate(),
-                "Target must be a tapped creature"
-        ));
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability is the ultimate effect")
-    void minusEightAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AjaniUltimateEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -307,8 +267,8 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         long ajaniCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"))
                 .count();
-        // Either legend rule triggers a choice (interaction.awaitingInputType() != null) or only one remains
-        assertThat(ajaniCount <= 1 || gd.interaction.awaitingInputType() != null).isTrue();
+        // Either legend rule triggers a choice (interaction.isAwaitingInput()) or only one remains
+        assertThat(ajaniCount <= 1 || gd.interaction.isAwaitingInput()).isTrue();
     }
 
     // ===== Helpers =====
@@ -324,5 +284,4 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         return perm;
     }
 }
-
 

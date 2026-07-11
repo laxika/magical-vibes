@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TwistedImageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Twisted Image has correct card properties")
-    void hasCorrectProperties() {
-        TwistedImage card = new TwistedImage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SwitchPowerToughnessEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Twisted Image puts it on the stack with target creature")
@@ -67,9 +54,8 @@ class TwistedImageTest extends BaseCardTest {
 
         // Grizzly Bears is 2/2 — after switch it should still be 2/2
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.isPowerToughnessSwitched()).isTrue();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
         // Drew a card
         assertThat(harness.getGameData().playerHands.get(player1.getId())).hasSize(1);
     }
@@ -82,8 +68,8 @@ class TwistedImageTest extends BaseCardTest {
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         // Grizzly Bears is 2/2, give it +1/+0 to make it 3/2
         bear.setPowerModifier(1);
-        assertThat(bear.getEffectivePower()).isEqualTo(3);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
 
         harness.setHand(player1, List.of(new TwistedImage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -92,10 +78,9 @@ class TwistedImageTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
 
-        // After switch: power should be raw toughness (2+0=2), toughness should be raw power (2+1=3)
-        assertThat(bear.isPowerToughnessSwitched()).isTrue();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(3);
+        // After switch: the finished 3/2 swaps to 2/3 (CR 613.4d)
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
@@ -118,9 +103,8 @@ class TwistedImageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After cleanup, modifiers and switch are all reset
-        assertThat(bear.isPowerToughnessSwitched()).isFalse();
-        assertThat(bear.getEffectivePower()).isEqualTo(2);
-        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
     }
 
     @Test

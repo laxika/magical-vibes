@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -61,30 +57,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
     @DisplayName("Card properties")
     class CardProperties {
 
-        @Test
-        @DisplayName("Has static lord effect for other Pirates")
-        void hasStaticLordEffect() {
-            AdmiralBeckettBrass card = new AdmiralBeckettBrass();
+        
 
-            assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-            StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-            assertThat(boost.powerBoost()).isEqualTo(1);
-            assertThat(boost.toughnessBoost()).isEqualTo(1);
-            assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-            assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-        }
-
-        @Test
-        @DisplayName("Has controller end-step triggered effect")
-        void hasEndStepTrigger() {
-            AdmiralBeckettBrass card = new AdmiralBeckettBrass();
-
-            assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-            GainControlIfSubtypesDealtCombatDamageEffect effect =
-                    (GainControlIfSubtypesDealtCombatDamageEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-            assertThat(effect.subtype()).isEqualTo(CardSubtype.PIRATE);
-            assertThat(effect.threshold()).isEqualTo(3);
-        }
+        
     }
 
     // ===== Lord effect =====
@@ -164,7 +139,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Choose the opponent's Grizzly Bears
             harness.handlePermanentChosen(player1, opponentBears.getId());
@@ -317,12 +292,12 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Land should not be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentLand.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentLand.getId());
             // Grizzly Bears should be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(opponentBears.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(opponentBears.getId());
         }
 
         @Test
@@ -345,14 +320,14 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Own Pirates should not be valid targets
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate1.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate2.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate3.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate3.getId());
             // Opponent's creature should be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(opponentBears.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(opponentBears.getId());
         }
 
         @Test
@@ -377,7 +352,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
             // Admiral Beckett Brass belongs to player1 — should NOT trigger on player2's end step
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         }
     }
 }

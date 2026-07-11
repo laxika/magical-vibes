@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,23 +17,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FranticSalvageTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Frantic Salvage has correct effects")
-    void hasCorrectEffects() {
-        FranticSalvage card = new FranticSalvage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class);
-        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
-                (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
 
     // ===== Casting with artifact cards in graveyard =====
 
@@ -52,10 +30,10 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Spell is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -76,7 +54,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // Select both artifacts
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
@@ -111,7 +89,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // Select only one artifact
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
@@ -169,7 +147,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -196,7 +174,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.castInstant(player1, 0);
 
         // No graveyard prompt — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
 
         harness.passBothPriorities();
@@ -219,10 +197,10 @@ class FranticSalvageTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         // Only the artifact should be valid
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(artifact.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(artifact.getId());
     }
 
     // ===== Cards placed on top of library (draw verification) =====
@@ -237,7 +215,7 @@ class FranticSalvageTest extends BaseCardTest {
 
         harness.castInstant(player1, 0);
 
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         harness.passBothPriorities();

@@ -15,16 +15,16 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,8 @@ public class MayMiscHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final SessionManager sessionManager;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final LifeSupport lifeSupport;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -68,7 +69,10 @@ public class MayMiscHandlerService {
             Permanent equipPerm = gameQueryService.findPermanentById(gameData, equipId);
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
             if (equipPerm != null && targetPerm != null) {
+                gameData.expireFloatingEffectsForUnattachedSource(equipPerm.getId());
                 equipPerm.setAttachedTo(targetPerm.getId());
+                // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+                equipPerm.setTimestamp(gameData.nextTimestamp());
                 String attachLog = equipPerm.getCard().getName() + " is attached to " + targetPerm.getCard().getName() + ".";
                 gameBroadcastService.logAndBroadcast(gameData, attachLog);
                 log.info("Game {} - {} attached to {}", gameData.id, equipPerm.getCard().getName(), targetPerm.getCard().getName());
@@ -181,17 +185,35 @@ public class MayMiscHandlerService {
         }
 
         if (effect.kind() == DrawReplacementKind.ABUNDANCE) {
-            gameData.interaction.beginColorChoice(
-                    drawingPlayerId,
-                    null,
-                    null,
-                    new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
-            );
-            sessionManager.sendToPlayer(drawingPlayerId, new ChooseFromListMessage(
-                    List.of("LAND", "NONLAND"),
-                    "Choose land or nonland for Abundance."
-            ));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    drawingPlayerId, null, null,
+                    new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind()),
+                    List.of("LAND", "NONLAND"), "Choose land or nonland for Abundance."));
             log.info("Game {} - Awaiting {} to choose land or nonland for Abundance", gameData.id, playerName);
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
+            // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
+            // drawing player's library goes into that player's graveyard instead of being drawn.
+            lifeSupport.applyLifeLoss(gameData, player.getId(), 2, ability.sourceCard().getName());
+
+            List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+            if (deck != null && !deck.isEmpty()) {
+                Card top = deck.removeFirst();
+                gameData.playerGraveyards.get(drawingPlayerId).add(top);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + "'s " + top.getName() + " is put into their graveyard.");
+                log.info("Game {} - {}'s revealed {} put into graveyard by {}",
+                        gameData.id, playerName, top.getName(), ability.sourceCard().getName());
+            }
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
             return;
         }
 
@@ -274,6 +296,31 @@ public class MayMiscHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Eye Spy — the controller may put the looked-at top card into the target
+     * player's graveyard. The library/graveyard owner is the targeted player, not
+     * the prompted controller.
+     */
+    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, boolean accepted, UUID libraryOwnerId) {
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        String ownerName = gameData.playerIdToName.get(libraryOwnerId);
+
+        if (accepted && deck != null && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            gameData.playerGraveyards.get(libraryOwnerId).add(topCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    topCard.getName() + " is put into " + ownerName + "'s graveyard.");
+            log.info("Game {} - {} put into {}'s graveyard (Eye Spy)",
+                    gameData.id, topCard.getName(), ownerName);
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "The card is left on top of " + ownerName + "'s library.");
+            log.info("Game {} - card left on top of {}'s library (Eye Spy)", gameData.id, ownerName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleExploreMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -295,7 +342,7 @@ public class MayMiscHandlerService {
         // Explore is complete — check for "whenever a creature you control explores" triggers
         triggerCollectionService.checkExploreTriggers(gameData, controllerId);
 
-        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             return;
         }
@@ -354,7 +401,7 @@ public class MayMiscHandlerService {
     }
 
     public void handleSphinxAmbassadorChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
         if (pending == null || pending.selectedCard() == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
@@ -387,7 +434,7 @@ public class MayMiscHandlerService {
         }
 
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-        gameData.pendingSphinxAmbassadorChoice = null;
+        gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

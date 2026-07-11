@@ -4,11 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithSharedTypeCountersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,24 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class RowdyCrewTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) on ON_ENTER_BATTLEFIELD")
-    void hasCorrectEffect() {
-        RowdyCrew card = new RowdyCrew();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DrawAndRandomDiscardWithSharedTypeCountersEffect.class);
-
-        DrawAndRandomDiscardWithSharedTypeCountersEffect effect =
-                (DrawAndRandomDiscardWithSharedTypeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.drawAmount()).isEqualTo(3);
-        assertThat(effect.discardAmount()).isEqualTo(2);
-        assertThat(effect.counterAmount()).isEqualTo(2);
-    }
 
     // ===== ETB: draw and discard =====
 

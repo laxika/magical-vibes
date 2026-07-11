@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -39,12 +41,16 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected DamagePreventionService damagePreventionService;
     @Mock protected GameOutcomeService gameOutcomeService;
     @Mock protected GameQueryService gameQueryService;
+    @Mock protected PredicateEvaluationService predicateEvaluationService;
     @Mock protected GameBroadcastService gameBroadcastService;
     @Mock protected PermanentRemovalService permanentRemovalService;
     @Mock protected TriggerCollectionService triggerCollectionService;
     @Mock protected LifeSupport lifeSupport;
 
     @InjectMocks protected DamageSupport damageSupport;
+
+    /** Real evaluator over the mocked collaborators — Fixed/XValue amounts never touch the mocks. */
+    protected AmountEvaluationService amountEvaluationService;
 
     protected GameData gd;
     protected UUID player1Id;
@@ -56,6 +62,7 @@ abstract class AbstractDamageHandlerTest {
         player1Id = game.player1Id();
         player2Id = game.player2Id();
         gd = game.gameData();
+        amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
         setUpHandler();
     }
@@ -110,7 +117,9 @@ abstract class AbstractDamageHandlerTest {
 
     protected void stubCreatureSourceRedirects() {
         when(damagePreventionService.applySourceRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyCreatureRedirectShields(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
         when(damagePreventionService.applyTargetSourcePreventionShield(eq(gd), any(), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
+        when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(eq(gd), any(), anyInt())).thenAnswer(inv -> inv.getArgument(2));
     }
 
     protected void stubLethalDamage(boolean isLethal) {

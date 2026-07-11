@@ -134,8 +134,7 @@ public class StateBasedActionService {
                 // from it for any reason" — SBA counter annihilation triggers regrowth
                 if (p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
-                    int pending = gameData.pendingDelayedPlusOnePlusOneCounters.getOrDefault(p.getId(), 0);
-                    gameData.pendingDelayedPlusOnePlusOneCounters.put(p.getId(), pending + cancelled * 2);
+                    gameData.addDelayedPlusOneCounters(p.getId(), cancelled * 2);
                 }
             }
         });

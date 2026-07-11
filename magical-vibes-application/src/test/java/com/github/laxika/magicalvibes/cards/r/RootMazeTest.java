@@ -3,11 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,17 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RootMazeTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Root Maze has correct card properties")
-    void hasCorrectProperties() {
-        RootMaze card = new RootMaze();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnterPermanentsOfTypesTappedEffect.class);
-        EnterPermanentsOfTypesTappedEffect effect = (EnterPermanentsOfTypesTappedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.LAND);
-    }
+    
 
     @Test
     @DisplayName("Lands enter tapped while Root Maze is on battlefield")

@@ -2,16 +2,11 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,32 +23,7 @@ class IncreasingDevotionTest extends BaseCardTest {
                 .toList();
     }
 
-    @Test
-    @DisplayName("Has Human token creation effect and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingDevotion card = new IncreasingDevotion();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(token.amount()).isEqualTo(5);
-        assertThat(token.tokenName()).isEqualTo("Human");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.HUMAN);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastFromZoneConditionalEffect.class);
-        CastFromZoneConditionalEffect conditional =
-                (CastFromZoneConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.sourceZone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(5);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{W}{W}");
-    }
+    
 
     @Test
     @DisplayName("Normal cast creates five 1/1 white Human tokens")

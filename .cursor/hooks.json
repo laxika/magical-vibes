@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"./scripts/block-fast-models.ps1\""
+      }
+    ]
+  }
+}

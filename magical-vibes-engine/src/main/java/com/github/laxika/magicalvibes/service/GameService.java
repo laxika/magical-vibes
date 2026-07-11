@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,13 +19,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -48,13 +44,7 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final ChoiceHandlerService listChoiceHandlerService;
-    private final CardChoiceHandlerService cardChoiceHandlerService;
-    private final PermanentChoiceHandlerService permanentChoiceHandlerService;
-    private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
-    private final MayAbilityHandlerService mayAbilityHandlerService;
-    private final XValueChoiceHandlerService xValueChoiceHandlerService;
-    private final LibraryChoiceHandlerService libraryChoiceHandlerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
     private final AbilityActivationService abilityActivationService;
@@ -89,8 +79,7 @@ public class GameService {
      * is the declaring player. Per CR 508.1i, mana abilities may be activated during this window.
      */
     private boolean isAttackTaxManaPayment(GameData gameData, Player player) {
-        return gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)
-                && gameData.interaction.currentContext() instanceof InteractionContext.AttackerDeclaration ad
+        return gameData.interaction.activeInteraction() instanceof PendingInteraction.AttackerDeclaration ad
                 && ad.activePlayerId().equals(player.getId());
     }
 
@@ -108,8 +97,8 @@ public class GameService {
 
         // Check if the controlled player is the expected respondent for an interaction
         if (gameData.interaction.isAwaitingInput()) {
-            InteractionContext ctx = gameData.interaction.currentContext();
-            if (ctx != null && controlledPlayerMatchesContext(ctx, controlledId)) {
+            UUID activeDecider = interactionHandlerRegistry.activeDecidingPlayerId(gameData);
+            if (controlledId.equals(activeDecider)) {
                 return new Player(controlledId, gameData.playerIdToName.get(controlledId));
             }
         }
@@ -121,31 +110,6 @@ public class GameService {
         }
 
         return player; // Controller acts as themselves
-    }
-
-    private boolean controlledPlayerMatchesContext(InteractionContext ctx, UUID controlledId) {
-        return switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
-            case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
-            case InteractionContext.CardChoice cc -> controlledId.equals(cc.playerId());
-            case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
-            case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
-            case InteractionContext.ColorChoice cc -> controlledId.equals(cc.playerId());
-            case InteractionContext.MayAbilityChoice mc -> controlledId.equals(mc.playerId());
-            case InteractionContext.MultiPermanentChoice mpc -> controlledId.equals(mpc.playerId());
-            case InteractionContext.MultiGraveyardChoice mgc -> controlledId.equals(mgc.playerId());
-            case InteractionContext.LibraryReorder lr -> controlledId.equals(lr.playerId());
-            case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
-            case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
-            case InteractionContext.HandTopBottomChoice htbc -> controlledId.equals(htbc.playerId());
-            case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
-            case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
-            case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
-            case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
-            case InteractionContext.Scry sc -> controlledId.equals(sc.playerId());
-            case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
-            case InteractionContext.MirrorOfFateChoice mfc -> controlledId.equals(mfc.playerId());
-        };
     }
 
     public void passPriority(GameData gameData, Player player) {
@@ -341,6 +305,14 @@ public class GameService {
         }
     }
 
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId, Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex, List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex);
+        }
+    }
+
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue, UUID targetId) {
         playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, List.of(), null, null);
     }
@@ -358,10 +330,19 @@ public class GameService {
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+            spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                    exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
         }
     }
 
@@ -372,6 +353,16 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardId, xValue, targetId, targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+        }
+    }
+
+    public void playCardWithEvoke(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                  Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithEvoke(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of());
         }
     }
 
@@ -409,6 +400,14 @@ public class GameService {
         }
     }
 
+    public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.tapForeignLandForMana(gameData, player, permanentId);
+        }
+    }
+
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null);
     }
@@ -440,6 +439,29 @@ public class GameService {
         }
     }
 
+    /**
+     * Pure legality query: could {@code playerId} activate the ability at {@code abilityIndex} on
+     * {@code permanent} right now? Runs the engine's own activation checks (everything except
+     * target choice, with X assumed 0) against the given mana pool, which may be hypothetical.
+     * Never mutates game state. Exposed so AI players share the engine's legality rules instead
+     * of re-implementing them.
+     */
+    public boolean canActivateAbility(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, ManaPool manaPool) {
+        synchronized (gameData) {
+            return abilityActivationService.canActivateAbility(gameData, playerId, permanent, abilityIndex, manaPool);
+        }
+    }
+
+    /**
+     * Returns the activated abilities currently available on a permanent (own + static-granted +
+     * temporary), in {@code abilityIndex} order. Read-only.
+     */
+    public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
+        synchronized (gameData) {
+            return abilityActivationService.getEffectiveActivatedAbilities(gameData, permanent);
+        }
+    }
+
     public void setAutoStops(GameData gameData, Player player, List<TurnStep> stops) {
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -459,31 +481,39 @@ public class GameService {
     public void handleListChoice(GameData gameData, Player player, String choiceName) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            listChoiceHandlerService.handleListChoice(gameData, player, choiceName);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.ListChoiceMade(choiceName))) {
+                throw new IllegalStateException("Not awaiting color choice");
+            }
         }
     }
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            cardChoiceHandlerService.handleCardChosen(gameData, player, cardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardIndexChosen(cardIndex))) {
+                throw new IllegalStateException("Not awaiting card choice");
+            }
         }
     }
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            permanentChoiceHandlerService.handlePermanentChosen(gameData, player, permanentId);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.PermanentChosen(permanentId))) {
+                throw new IllegalStateException("Not awaiting permanent choice");
+            }
         }
     }
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (gameData.interaction.awaitingInputType() == AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE) {
-                abilityActivationService.handleActivatedAbilityGraveyardExileCostChosen(gameData, player, cardIndex);
-            } else {
-                graveyardChoiceHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.GraveyardCardChosen(cardIndex))) {
+                throw new IllegalStateException("Not awaiting graveyard choice");
             }
         }
     }
@@ -491,66 +521,81 @@ public class GameService {
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            permanentChoiceHandlerService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.PermanentsChosen(permanentIds))) {
+                throw new IllegalStateException("Not awaiting multi-permanent choice");
+            }
         }
     }
 
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
-                libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
-                listChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
-                exileSupport.handleKnowledgePoolCastChoice(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
-                exileSupport.handleMirrorOfFateChoice(gameData, player, cardIds);
-            } else {
-                graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardsChosen(cardIds))) {
+                return;
             }
+            throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            mayAbilityHandlerService.handleMayAbilityChosen(gameData, player, accepted);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.MayAbilityChosen(accepted))) {
+                throw new IllegalStateException("Not awaiting may ability choice");
+            }
         }
     }
 
     public void handleXValueChosen(GameData gameData, Player player, int chosenValue) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            xValueChoiceHandlerService.handleXValueChosen(gameData, player, chosenValue);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.NumberChosen(chosenValue))) {
+                throw new IllegalStateException("Not awaiting X value choice");
+            }
         }
     }
 
     public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleScryCompleted(gameData, player, topCardOrder, bottomCardOrder);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.ScryOrder(topCardOrder, bottomCardOrder))) {
+                throw new IllegalStateException("Not awaiting scry");
+            }
         }
     }
 
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleLibraryCardsReordered(gameData, player, cardOrder);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardOrder(cardOrder))) {
+                throw new IllegalStateException("Not awaiting library reorder");
+            }
         }
     }
 
     public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleHandTopBottomChosen(gameData, player, handCardIndex, topCardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.HandTopBottom(handCardIndex, topCardIndex))) {
+                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
+            }
         }
     }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleLibraryCardChosen(gameData, player, cardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.LibraryCardChosen(cardIndex))) {
+                throw new IllegalStateException("Not awaiting library search");
+            }
         }
     }
 
@@ -562,6 +607,12 @@ public class GameService {
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.AttackersDeclared(attackerIndices, attackTargets))) {
+                return;
+            }
+            // No declaration is active — preserve the legacy stray-message path (the combat
+            // flow rejects with "Not awaiting attacker declaration" and re-sends).
             try {
                 turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
             } catch (IllegalStateException | IllegalArgumentException e) {
@@ -575,6 +626,12 @@ public class GameService {
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.BlockersDeclared(blockerAssignments))) {
+                return;
+            }
+            // No declaration is active — preserve the legacy stray-message path (the combat
+            // flow rejects with "Not awaiting blocker declaration").
             turnProgressionService.handleCombatResult(combatService.declareBlockers(gameData, player, blockerAssignments), gameData);
         }
     }
@@ -582,15 +639,14 @@ public class GameService {
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            try {
-                combatService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
-            } catch (IllegalStateException e) {
-                // Re-send the assignment notification so the player can retry
-                // (the frontend already cleared its popup when it sent the invalid request)
-                combatService.resolveCombatDamage(gameData);
-                throw e;
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CombatDamageAssigned(attackerIndex, assignments))) {
+                // No assignment prompt is active — preserve the legacy stray-message path
+                // (the combat flow itself rejects with "Not in combat damage assignment
+                // phase" and re-sends; the legacy entry never consulted the interaction).
+                CombatDamageAssignmentInteractionHandler.applyAssignment(gameData, player,
+                        attackerIndex, assignments, combatService, turnProgressionService);
             }
-            turnProgressionService.handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
         }
     }
 

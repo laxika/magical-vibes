@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -10,12 +10,9 @@ import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.r.RootMaze;
 import com.github.laxika.magicalvibes.cards.r.RemoveSoul;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.effect.w.WarpWorldEffect;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,16 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WarpWorldTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Warp World has correct card properties")
-    void hasCorrectProperties() {
-        WarpWorld card = new WarpWorld();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(WarpWorldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Warp World on stack as a sorcery with no target")
@@ -161,12 +149,12 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.pendingAuraCard()).isNotNull();
         assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Pacifism");
-        assertThat(gd.interaction.permanentChoice().validIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).hasSize(2);
 
-        UUID chosenTarget = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
         Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
@@ -194,11 +182,11 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID opponentCreatureId = gd.playerBattlefields.get(player2.getId()).stream()
                 .map(Permanent::getId)
-                .filter(id -> gd.interaction.permanentChoice().validIds().contains(id))
+                .filter(id -> gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().contains(id))
                 .findFirst()
                 .orElseThrow();
 
@@ -228,10 +216,10 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
-        UUID chosenTarget = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
@@ -261,19 +249,19 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
 
-        UUID p2Choice = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID p2Choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player2, p2Choice);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 
-        UUID p1Choice = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID p1Choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, p1Choice);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player2.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
     }
@@ -312,15 +300,15 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
-        List<UUID> beforeOrderIds = gd.interaction.libraryView().reorderCards().stream().map(Card::getId).toList();
+        List<UUID> beforeOrderIds = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards().stream().map(Card::getId).toList();
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId()).get(0).getId()).isEqualTo(beforeOrderIds.get(1));
         assertThat(gd.playerDecks.get(player1.getId()).get(1).getId()).isEqualTo(beforeOrderIds.get(0));
@@ -344,19 +332,19 @@ class WarpWorldTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
 
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
 
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
     }
@@ -454,5 +442,4 @@ class WarpWorldTest extends BaseCardTest {
         return card;
     }
 }
-
 

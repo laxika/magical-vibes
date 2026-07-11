@@ -1,9 +1,9 @@
 - Do not start committing changes until I tell you to do so.
 - You should always work on the main branch!
 - Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
-- Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToControllerEffect`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
+- Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
 - If unit tests exist for a service you extend, add tests for the new behavior too.
-- When running the full test suite, always use `run_in_background: true` on the Bash tool call (the tests take 20+ minutes, exceeding the max timeout).
+- Do not ever run the full test suite! Ask me and I'll run it for you.
 
 ## Implementing cards
 
@@ -36,9 +36,10 @@ application → engine, websocket, ai (config @Imports)
 ### Key Patterns
 
 - **Jackson 3.x**: Import `tools.jackson.databind.ObjectMapper` (not `com.fasterxml`).
-- **Domain model is mutable, views are immutable**: `Card` uses `@Setter` with defaults; `Permanent` has mutable state. View records (`CardView`, `PermanentView`) are created by factory services for serialization — never mutate domain objects for serialization purposes.
+- **Domain model is mutable, views are immutable**: `Permanent` has mutable state. View records (`CardView`, `PermanentView`) are created by factory services for serialization — never mutate domain objects for serialization purposes.
+- **Cards freeze once live**: `Card` objects are shared between the real game and AI simulation copies. They are mutable during construction/assembly but freeze (every mutator throws) once they join a game — deck stamping, `Permanent` or `StackEntry` creation. Runtime state belongs on the `Permanent`, the `StackEntry`, or `GameData` (e.g. imprint: `gameData.get/setImprintedCard`); modal casts mutate a `Card.createRuntimeCopy()`. Enforced by `Card.freeze()` at runtime and `CardImmutabilityArchTest` at build time; tests that tweak a wrapped card's stats use `TestCards.mutableCard(permanent)`. When adding a field to `Card`, also copy it in `Card(Card source)` and bump the count in `CardFreezeTest`.
 - **Effect system**: Effects are records implementing the marker interface `CardEffect`. `GameService.resolveStackEntry()` dispatches each effect to a `resolve*` method via `instanceof` pattern matching.
-- **Static/continuous effects**: Computed on-the-fly via `computeStaticBonus()` and baked into `PermanentView`, never stored on the `Permanent`.
+- **Static/continuous effects**: Computed on-the-fly by the CR 613 layered pass — `LayerSystemService` applies every continuous effect (static slots + floating effects) in layer, timestamp, and dependency order, and `GameQueryService.computeStaticBonus()` assembles the result (see `agent-docs/LAYER_SYSTEM.md`) — then baked into `PermanentView`, never stored on the `Permanent`. The finished board state is memoized per `GameData` behind a structural fingerprint (LAYER_SYSTEM.md §10) — if the layered pass starts reading a new game-state input, extend `LayerSystemService.computeBoardFingerprint` to cover it.
 - **Thread safety**: `GameData` uses `ConcurrentHashMap` + `synchronized(gameData)` blocks in `GameService`. Validation checks must go INSIDE synchronized blocks.
 - **Frontend signals**: `game = signal<Game | null>(null)`, updated via spread + `game.set()`. RxJS Subjects for WebSocket messages.
 
@@ -48,4 +49,4 @@ All card metadata (name, type, mana cost, color, supertypes, subtypes, card text
 
 ### Testing
 
-Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/CardNameTest.java` and extend `BaseCardTest` (JUnit 5 + AssertJ). The harness (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`, `TestWebSocketSessionManager`, `GameTestDoublesConfig`) lives in `magical-vibes-engine/src/testFixtures` and is shared with the AI suite via `testFixtures(project(":magical-vibes-engine"))`; AI tests live in `magical-vibes-ai/src/test/.../ai/`. Never assert Scryfall-loaded metadata (name, type, mana, color, P/T, subtypes, keywords) — test only engine logic (effects, abilities, targeting, interactions). The `implement-card` skill covers the card-authoring and test-writing workflow in detail.
+Card tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/CardNameTest.java` and extend `BaseCardTest` (JUnit 5 + AssertJ). The harness (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`, `TestWebSocketSessionManager`, `GameTestDoublesConfig`) lives in `magical-vibes-engine/src/testFixtures` and is shared with the AI suite via `testFixtures(project(":magical-vibes-engine"))`; AI tests live in `magical-vibes-ai/src/test/.../ai/`. Never assert Scryfall-loaded metadata (name, type, mana, color, P/T, subtypes, keywords) — test only engine logic (effects, abilities, targeting, interactions). Do NOT write white-box "wiring" tests (commonly named `hasCorrectProperties`) that inspect a freshly-constructed card's `getEffects(...)`, `EffectSlot`, `EffectResolution.needsTarget`, or effect field values by reflection — they duplicate what the behavioral tests already prove and break on every effect refactor. Assert behavior by resolving the card through the engine (`harness`/`gs`/`gd`) instead. The `implement-card` skill covers the card-authoring and test-writing workflow in detail.

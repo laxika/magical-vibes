@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
@@ -12,7 +12,7 @@ import { CardDisplayComponent } from '../card-display/card-display.component';
   templateUrl: './side-panel.component.html',
   styleUrl: './side-panel.component.css'
 })
-export class SidePanelComponent {
+export class SidePanelComponent implements OnChanges, AfterViewChecked {
   readonly choice = inject(GameChoiceService);
   private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
@@ -32,6 +32,7 @@ export class SidePanelComponent {
   @Input() opponentGraveyard: Card[] = [];
   @Input() opponentPlayerName = '';
   @Input() gameLog: string[] = [];
+  @Input() manaEntries: { color: string; count: number }[] = [];
   @Input() declaringAttackers = false;
   @Input() declaringBlockers = false;
   @Input() attackTaxPerCreature = 0;
@@ -57,6 +58,8 @@ export class SidePanelComponent {
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
   @Input() searchTaxCost = 0;
   @Input() myPlayerIndex = 0;
+  @Input() isMindControlling = false;
+  @Input() mindControlledPlayerName = '';
 
   @Output() passPriority = new EventEmitter<void>();
   @Output() paySearchTax = new EventEmitter<void>();
@@ -72,8 +75,50 @@ export class SidePanelComponent {
   @Output() graveyardAbilityActivate = new EventEmitter<number>();
   @Output() flashbackPlay = new EventEmitter<number>();
 
-  activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
+  activeTab = signal<'log' | 'stack' | 'graveyard'>('log');
   showPlayerMenu = signal(false);
+  logUnreadCount = signal(0);
+
+  @ViewChild('logEntries') private logEntriesRef?: ElementRef<HTMLElement>;
+  private logPinnedToBottom = true;
+  private shouldScrollLog = false;
+  private seenLogCount = 0;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['gameLog']) {
+      if (this.activeTab() === 'log') {
+        this.seenLogCount = this.gameLog.length;
+        if (this.logPinnedToBottom) {
+          this.shouldScrollLog = true;
+        }
+      } else {
+        this.logUnreadCount.set(this.gameLog.length - this.seenLogCount);
+      }
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollLog && this.logEntriesRef) {
+      const el = this.logEntriesRef.nativeElement;
+      el.scrollTop = el.scrollHeight;
+      this.shouldScrollLog = false;
+    }
+  }
+
+  openLogTab(): void {
+    this.activeTab.set('log');
+    this.seenLogCount = this.gameLog.length;
+    this.logUnreadCount.set(0);
+    this.logPinnedToBottom = true;
+    this.shouldScrollLog = true;
+  }
+
+  onLogScroll(): void {
+    const el = this.logEntriesRef?.nativeElement;
+    if (el) {
+      this.logPinnedToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    }
+  }
 
   // Opponent is always shown on the left, my player on the right
   get opponentPlayerIndex(): number { return 1 - this.myPlayerIndex; }
@@ -99,9 +144,9 @@ export class SidePanelComponent {
     this.activeTab.set('stack');
   }
 
-  switchToGameTabIfOnStack(): void {
+  switchToLogTabIfOnStack(): void {
     if (this.activeTab() === 'stack') {
-      this.activeTab.set('game');
+      this.openLogTab();
     }
   }
 
@@ -112,6 +157,18 @@ export class SidePanelComponent {
 
   isStackTargetSpell(entry: StackEntry): boolean {
     return this.stackTargetId === entry.cardId;
+  }
+
+  readonly manaColors = ['W', 'U', 'B', 'R', 'G', 'C'];
+
+  manaCount(color: string): number {
+    return this.manaEntries.find(e => e.color === color)?.count ?? 0;
+  }
+
+  manaSymbol(color: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(`{${color}}`)
+    );
   }
 
   formatAbilityDescription(description: string): SafeHtml {

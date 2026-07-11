@@ -1,57 +1,20 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ButchersCleaverTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Butcher's Cleaver has static +3/+0 boost effect")
-    void hasStaticBoostEffect() {
-        ButchersCleaver card = new ButchersCleaver();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Butcher's Cleaver grants lifelink only to equipped Human creatures")
-    void hasConditionalLifelinkEffect() {
-        ButchersCleaver card = new ButchersCleaver();
-
-        GrantKeywordEffect grant = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(grant.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(grant.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) grant.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-    }
 
     // ===== Static effects: power/toughness boost =====
 

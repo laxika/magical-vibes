@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -31,7 +31,7 @@ public class MystifyingMaze extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new ExileTargetPermanentAndReturnAtEndStepEffect(true)),
+                List.of(FlickerEffect.exileTargetReturnAtEndStep(true)),
                 "{4}, {T}: Exile target attacking creature an opponent controls. At the beginning of the next end step, return it to the battlefield tapped under its owner's control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

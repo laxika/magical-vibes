@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,10 +9,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,41 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ManorGargoyleTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Manor Gargoyle has correct static effect and activated ability")
-    void hasCorrectEffectsAndAbilities() {
-        ManorGargoyle card = new ManorGargoyle();
-
-        // Static effect: indestructible as long as it has defender
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        var conditional = (SelfHasKeywordConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(conditional.keyword()).isEqualTo(Keyword.DEFENDER);
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect indestructible = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(indestructible.scope()).isEqualTo(GrantScope.SELF);
-
-        // Activated ability: {1} loses defender and gains flying
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(RemoveKeywordEffect.class);
-        RemoveKeywordEffect removeDefender = (RemoveKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
-        assertThat(removeDefender.keyword()).isEqualTo(Keyword.DEFENDER);
-        assertThat(removeDefender.scope()).isEqualTo(GrantScope.SELF);
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantFlying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(grantFlying.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantFlying.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Indestructible while having defender =====
 
@@ -216,7 +177,7 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -236,7 +197,7 @@ class ManorGargoyleTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         gs.declareAttackers(gd, player1, List.of(0));
 

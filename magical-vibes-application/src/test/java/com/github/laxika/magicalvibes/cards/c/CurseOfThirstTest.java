@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfThirstTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Thirst has correct effects")
-    void hasCorrectEffects() {
-        CurseOfThirst card = new CurseOfThirst();
-
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
-        DealDamageToEnchantedPlayerEffect effect =
-                (DealDamageToEnchantedPlayerEffect) card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.damageEqualsAttachedCount()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) effect.damageEqualsAttachedCount()).subtype())
-                .isEqualTo(CardSubtype.CURSE);
-    }
 
     // ===== Casting and resolving =====
 

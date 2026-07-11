@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,23 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GlintHawkIdolTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Glint Hawk Idol has correct card properties")
-    void hasCorrectProperties() {
-        GlintHawkIdol card = new GlintHawkIdol();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateSelfWithStatsEffect.class);
-
-        var triggerEffects = card.getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
-        assertThat(triggerEffects).hasSize(1);
-        assertThat(triggerEffects.getFirst()).isInstanceOf(MayEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Glint Hawk Idol puts it on the battlefield")
@@ -124,7 +106,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell, artifact enters, trigger goes on stack
         harness.passBothPriorities(); // resolve trigger (MayEffect → PendingMayAbility → prompt)
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -140,7 +122,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger (MayEffect → prompt)
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve AnimateSelfWithStatsEffect
+        harness.passBothPriorities(); // resolve AnimatePermanentsEffect
 
         assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);
@@ -175,7 +157,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourcePowerToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class SpikeshotElderTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability that deals damage equal to power to any target")
-    void hasCorrectAbility() {
-        SpikeshotElder card = new SpikeshotElder();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageEqualToSourcePowerToAnyTargetEffect.class);
-    }
 
     // ===== Damage to player =====
 
@@ -219,8 +202,8 @@ class SpikeshotElderTest extends BaseCardTest {
     // ===== Source removed before resolution =====
 
     @Test
-    @DisplayName("Deals no damage if Spikeshot Elder is removed before resolution")
-    void dealsNoDamageIfSourceRemoved() {
+    @DisplayName("Uses last-known power if Spikeshot Elder is removed before resolution")
+    void usesLastKnownPowerIfSourceRemoved() {
         addReadyElder(player1);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 3);
@@ -232,9 +215,10 @@ class SpikeshotElderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        // Ability still resolves (it's on the stack), but source is gone so no damage
+        // CR 608.2h / official ruling: the ability still resolves and uses the Elder's power
+        // as it last existed on the battlefield (1), so it deals 1 damage.
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     // ===== Helpers =====

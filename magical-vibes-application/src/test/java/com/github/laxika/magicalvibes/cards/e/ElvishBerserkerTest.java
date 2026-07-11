@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerBlockingCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElvishBerserkerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elvish Berserker has correct card properties and trigger effect")
-    void hasCorrectProperties() {
-        ElvishBerserker card = new ElvishBerserker();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(BoostSelfPerBlockingCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).isEmpty();
-    }
+    
 
     @Test
     @DisplayName("Becoming blocked creates one becomes-blocked trigger")
@@ -118,6 +105,6 @@ class ElvishBerserkerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

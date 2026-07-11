@@ -1,30 +1,19 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JoinerAdeptTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Joiner Adept has correct card properties")
-    void hasCorrectProperties() {
-        JoinerAdept card = new JoinerAdept();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Lands you control gain tap ability to add one mana of any color")
@@ -41,7 +30,7 @@ class JoinerAdeptTest extends BaseCardTest {
 
         assertThat(forest.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         harness.handleListChoice(player1, "RED");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);

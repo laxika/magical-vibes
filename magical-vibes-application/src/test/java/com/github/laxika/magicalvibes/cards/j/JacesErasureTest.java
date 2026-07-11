@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,22 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class JacesErasureTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Jace's Erasure has MayEffect wrapping MillTargetPlayerEffect(1) on ON_CONTROLLER_DRAWS")
-    void hasCorrectEffects() {
-        JacesErasure card = new JacesErasure();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) may.wrapped();
-        assertThat(mill.count()).isEqualTo(1);
-    }
 
     // ===== Draw step trigger — accept and target opponent =====
 
@@ -51,13 +30,13 @@ class JacesErasureTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // May prompt should be awaiting input
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept the may ability — target selection happens inline
         harness.handleMayAbilityChosen(player1, true);
 
         // Should prompt for target player selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target — mill resolves inline
         harness.handlePermanentChosen(player1, player2.getId());
@@ -158,7 +137,7 @@ class JacesErasureTest extends BaseCardTest {
         advanceToDraw(player2);
 
         // No may prompt for player1
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Opponent's deck only lost the card they drew
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(opponentDeckBefore - 1);

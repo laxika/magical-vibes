@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -13,6 +13,6 @@ public class ArcanisTheOmnipotent extends Card {
 
     public ArcanisTheOmnipotent() {
         addActivatedAbility(new ActivatedAbility(true, null, List.of(new DrawCardEffect(3)), "{T}: Draw three cards."));
-        addActivatedAbility(new ActivatedAbility(false, "{2}{U}{U}", List.of(new ReturnSelfToHandEffect()), "{2}{U}{U}: Return Arcanis the Omnipotent to its owner's hand."));
+        addActivatedAbility(new ActivatedAbility(false, "{2}{U}{U}", List.of(ReturnToHandEffect.self()), "{2}{U}{U}: Return Arcanis the Omnipotent to its owner's hand."));
     }
 }

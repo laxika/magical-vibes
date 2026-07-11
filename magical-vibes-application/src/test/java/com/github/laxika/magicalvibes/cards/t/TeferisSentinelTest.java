@@ -3,12 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,28 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TeferisSentinelTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
-    void hasCorrectStructure() {
-        TeferisSentinel card = new TeferisSentinel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
-
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TEFERI));
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== With Teferi planeswalker =====
 

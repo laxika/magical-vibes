@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -24,7 +25,7 @@ public class HuatliDinosaurKnight extends Card {
         // +2: Put two +1/+1 counters on up to one target Dinosaur you control.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)),
+                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),
                 "+2: Put two +1/+1 counters on up to one target Dinosaur you control.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
@@ -40,7 +41,7 @@ public class HuatliDinosaurKnight extends Card {
         // −3: Target Dinosaur you control deals damage equal to its power to target creature you don't control.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new FirstTargetDealsPowerDamageToSecondTargetEffect()),
+                List.of(new TargetDealsPowerDamageToTargetEffect()),
                 "\u22123: Target Dinosaur you control deals damage equal to its power to target creature you don't control.",
                 null, -3, null, null,
                 List.of(

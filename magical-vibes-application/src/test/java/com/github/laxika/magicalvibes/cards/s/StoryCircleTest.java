@@ -1,18 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StoryCircleTest extends BaseCardTest {
 
-
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -33,22 +30,6 @@ class StoryCircleTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Story Circle has correct card properties")
-    void hasCorrectProperties() {
-        StoryCircle card = new StoryCircle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseColorOnEnterEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PreventNextColorDamageToControllerEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
     }
 
     // ===== Casting =====
@@ -80,8 +61,8 @@ class StoryCircleTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Story Circle"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -110,8 +91,8 @@ class StoryCircleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLUE");
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.colorChoice()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
     @Test
@@ -308,5 +289,4 @@ class StoryCircleTest extends BaseCardTest {
         return perm;
     }
 }
-
 

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -10,9 +10,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -28,7 +33,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -69,7 +73,6 @@ class CombatDamageServiceTest {
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
 
-    @InjectMocks
     private CombatDamageService combatDamageService;
 
     private GameData gameData;
@@ -80,6 +83,19 @@ class CombatDamageServiceTest {
 
     @BeforeEach
     void setUp() {
+        com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+        registry.register(new com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler(
+                sessionManager,
+                org.mockito.Mockito.mock(CombatService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.TurnProgressionService.class)));
+        combatDamageService = new CombatDamageService(gameQueryService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
+                gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService,
+                permanentRemovalService, playerInputService, registry, triggerCollectionService,
+                lifeSupport, combatAttackService, combatTriggerService);
+
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -167,6 +183,15 @@ class CombatDamageServiceTest {
                     return null;
                 });
         when(damagePreventionService.applySourceRedirectShields(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyCreatureRedirectShields(
+                eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(3));
+        lenient().when(damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(
+                eq(gameData), any(UUID.class), anyInt()))
+                .thenAnswer(inv -> (int) inv.getArgument(2));
+        lenient().when(damagePreventionService.applyPlayerNextSourceDamageShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
         when(damagePreventionService.applyPlayerPreventionShield(
@@ -801,8 +826,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
                     gameData, player1, 0, Map.of(
@@ -822,8 +847,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
                     gameData, player1, 0, Map.of(
@@ -843,8 +868,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             combatDamageService.handleCombatDamageAssigned(gameData, player1, 0, Map.of(
                     blocker1.getId(), 1,
@@ -990,42 +1015,45 @@ class CombatDamageServiceTest {
         @DisplayName("TargetPlayerDiscardsEffect stack entry has defenderId as targetId")
         void targetPlayerDiscardsEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerDiscardsEffect(1));
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
-                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof TargetPlayerDiscardsEffect))
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof DiscardEffect))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
         }
 
         @Test
-        @DisplayName("MillTargetPlayerEffect stack entry has defenderId as targetId")
+        @DisplayName("MillEffect (target player) stack entry has defenderId as targetId")
         void millTargetPlayerEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillTargetPlayerEffect(10));
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(10, MillRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
-                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof MillTargetPlayerEffect))
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof MillEffect))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
         }
 
         @Test
-        @DisplayName("DealDamageToTargetPlayerByHandSizeEffect stack entry has defenderId as targetId")
+        @DisplayName("DealDamageToPlayersEffect(TARGET_PLAYER) stack entry has defenderId as targetId")
         void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DealDamageToTargetPlayerByHandSizeEffect());
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
-                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof DealDamageToTargetPlayerByHandSizeEffect))
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(e -> e instanceof DealDamageToPlayersEffect d && d.recipient() == DamageRecipient.TARGET_PLAYER))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);

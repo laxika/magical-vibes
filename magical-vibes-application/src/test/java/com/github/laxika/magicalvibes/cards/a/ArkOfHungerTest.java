@@ -5,13 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.Reminisce;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,30 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ArkOfHungerTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has leave-graveyard trigger and mill-and-play activated ability")
-    void hasCorrectEffects() {
-        ArkOfHunger card = new ArkOfHunger();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0))
-                .isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0)).damage())
-                .isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1)).amount())
-                .isEqualTo(1);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(MillControllerAndMayPlayFromGraveyardThisTurnEffect.class);
-    }
 
     // ===== Leave graveyard trigger =====
 

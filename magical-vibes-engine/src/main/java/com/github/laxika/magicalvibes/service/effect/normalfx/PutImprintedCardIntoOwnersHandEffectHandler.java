@@ -28,7 +28,7 @@ public class PutImprintedCardIntoOwnersHandEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
-        Card imprintedCard = entry.getCard().getImprintedCard();
+        Card imprintedCard = gameData.getImprintedCard(entry.getCard());
         String cardName = entry.getCard().getName();
 
         if (imprintedCard == null) {

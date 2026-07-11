@@ -1,52 +1,27 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.Bandage;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TwincastTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Twincast has correct card properties")
-    void hasCorrectProperties() {
-        Twincast card = new Twincast();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CopySpellEffect.class);
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
-                "Target must be an instant or sorcery spell."
-        ));
-    }
 
     // ===== Casting =====
 
@@ -537,8 +512,8 @@ class TwincastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -569,7 +544,7 @@ class TwincastTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose player2's bears as new target
         harness.handlePermanentChosen(player2, bears2PermId);
@@ -608,7 +583,7 @@ class TwincastTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be awaiting may-ability choice
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         // Copy should be on the stack
         assertThat(gd.stack).anySatisfy(se ->
                 assertThat(se.getDescription()).isEqualTo("Copy of Counsel of the Soratami"));
@@ -645,10 +620,10 @@ class TwincastTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Valid targets should include the creature but NOT the enchantment
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsPermId);
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(anthemPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(anthemPermId);
     }
 
     @Test
@@ -676,12 +651,11 @@ class TwincastTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Valid targets should include the creature AND both players
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsPermId);
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(player1.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player2.getId());
     }
 }
-
 

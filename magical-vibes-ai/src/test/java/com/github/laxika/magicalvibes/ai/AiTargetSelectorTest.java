@@ -18,36 +18,35 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -55,7 +54,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
-import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -77,7 +75,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
@@ -286,19 +283,20 @@ class AiTargetSelectorTest {
                         Set.of("GY Instant", "GY Sorcery")
                 ),
                 Arguments.of(
-                        "ExileTargetCardFromGraveyard(CREATURE) filters to creatures only",
-                        new ExileTargetCardFromGraveyardEffect(CardType.CREATURE),
+                        "ExileGraveyardCards(CREATURE) filters to creatures only",
+                        new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                                new CardTypePredicate(CardType.CREATURE)),
                         Set.of("GY Creature")
                 ),
                 Arguments.of(
-                        "ExileTargetCardFromGraveyard(null) allows all card types",
-                        new ExileTargetCardFromGraveyardEffect(null),
+                        "ExileGraveyardCards(null) allows all card types",
+                        new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
                         Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
                 ),
                 Arguments.of(
-                        "GrantFlashbackToTargetGraveyardCard filters to matching card types",
+                        "GrantFlashbackToTargetGraveyardCard ignores the opponent's graveyard (controller-only)",
                         new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
-                        Set.of("GY Instant", "GY Sorcery")
+                        Set.of()
                 ),
                 Arguments.of(
                         "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
@@ -338,6 +336,26 @@ class AiTargetSelectorTest {
 
         Set<String> resultNames = results.stream().map(Card::getName).collect(java.util.stream.Collectors.toSet());
         assertThat(resultNames).isEqualTo(expectedNames);
+    }
+
+    @Test
+    @DisplayName("findValidGraveyardTargets searches own graveyard for controller-only effects")
+    void findValidGraveyardTargets_controllerOnlyEffectUsesOwnGraveyard() {
+        setupGraveyardWithAllTypes(); // opponent's graveyard — must be ignored
+        harness.setGraveyard(aiPlayer, List.of(
+                makeGraveyardCard("Own GY Instant", CardType.INSTANT),
+                makeGraveyardCard("Own GY Creature", CardType.CREATURE)
+        ));
+
+        Card spellCard = new Card();
+        spellCard.setName("Test Spell");
+        spellCard.setType(CardType.SORCERY);
+        spellCard.addEffect(EffectSlot.SPELL,
+                new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+
+        List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
+
+        assertThat(results).extracting(Card::getName).containsExactly("Own GY Instant");
     }
 
     @Test
@@ -422,7 +440,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -435,21 +453,21 @@ class AiTargetSelectorTest {
         void returnsNullForCreatureOnlyWithNoTargets() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(unitSelector.buildDamageAssignments(unitGd, spell, aiId)).isNull();
         }
 
         @Test
-        @DisplayName("Handles DealDividedDamageAmongAnyTargetsEffect inside KickerReplacementEffect")
+        @DisplayName("Handles CHOSEN any-targets DealDividedDamageEffect inside ConditionalReplacementEffect")
         void handlesAnyTargetDividedDamageFromKicker() {
             addCreature(opponentId, "Bear", 2);
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -464,7 +482,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -476,7 +494,7 @@ class AiTargetSelectorTest {
         void anyTargetTargetsOpponentWhenNoCreatures() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -492,7 +510,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -538,7 +556,7 @@ class AiTargetSelectorTest {
             Card spell = new Card();
             spell.setName("Test Player Spell");
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerEffect(3));
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
             return spell;
         }
 
@@ -590,15 +608,15 @@ class AiTargetSelectorTest {
         }
 
         @Test
-        @DisplayName("KickerReplacementEffect uses only base effect targeting")
+        @DisplayName("ConditionalReplacementEffect uses only base effect targeting")
         void kickerReplacementUsesBaseOnly() {
             // Base: creature only (canTargetPermanent=true, canTargetPlayer=false)
             // Kicked: any targets (canTargetPermanent=true, canTargetPlayer=true)
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -640,19 +658,19 @@ class AiTargetSelectorTest {
     class NeedsDamageDistributionUnit {
 
         @Test
-        @DisplayName("Returns true for DealDividedDamageAmongTargetCreaturesEffect")
+        @DisplayName("Returns true for CHOSEN among-target-creatures DealDividedDamageEffect")
         void trueForCreatureOnlyDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
 
         @Test
-        @DisplayName("Returns true for direct DealDividedDamageAmongAnyTargetsEffect")
+        @DisplayName("Returns true for direct CHOSEN any-targets DealDividedDamageEffect")
         void trueForDirectAnyTargetDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(5));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(5));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
@@ -667,14 +685,14 @@ class AiTargetSelectorTest {
         }
 
         @Test
-        @DisplayName("Returns false when effect is wrapped in KickerReplacementEffect")
+        @DisplayName("Returns false when effect is wrapped in ConditionalReplacementEffect")
         void falseForWrappedKickerEffect() {
-            // The DealDividedDamageAmongAnyTargetsEffect is inside a KickerReplacementEffect,
+            // The DealDividedDamageEffect is inside a ConditionalReplacementEffect,
             // so needsDamageDistribution should return false (the wrapper type doesn't match)
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
         }
@@ -931,7 +949,7 @@ class AiTargetSelectorTest {
             gd.stack.add(creatureSpell);
 
             // Use null target filter (like Spiketail Hatchling — targets any spell)
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isEqualTo(bears.getId());
         }
@@ -939,7 +957,7 @@ class AiTargetSelectorTest {
         @Test
         @DisplayName("TargetFilter overload returns null when no opponent spells")
         void targetFilterOverloadReturnsNullForEmptyStack() {
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isNull();
         }
@@ -952,7 +970,7 @@ class AiTargetSelectorTest {
             gd.stack.add(new StackEntry(bears, human.getId()));
             gd.stack.add(new StackEntry(angel, human.getId()));
 
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isEqualTo(angel.getId());
         }

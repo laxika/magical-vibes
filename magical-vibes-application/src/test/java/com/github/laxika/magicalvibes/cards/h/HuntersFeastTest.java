@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,17 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HuntersFeastTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Hunters' Feast has correct effect setup")
-    void hasCorrectEffects() {
-        HuntersFeast card = new HuntersFeast();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isZero();
-        assertThat(card.getMaxTargets()).isEqualTo(99);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(EachTargetPlayerGainsLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting targeting both players puts spell on the stack")

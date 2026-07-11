@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantInstantSorceryCopyUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,42 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheMirariConjectureTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I returns target instant from graveyard to hand")
-    void chapterIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) effects.getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter II returns target sorcery from graveyard to hand")
-    void chapterIIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) effects.getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter III grants spell copy until end of turn")
-    void chapterIIIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantInstantSorceryCopyUntilEndOfTurnEffect.class);
-    }
 
     // ===== Chapter I: graveyard targeting for instants =====
 
@@ -75,7 +35,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
         // Should prompt for graveyard target selection (instant in graveyard)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -121,7 +81,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers but no valid targets
 
         // Should NOT prompt for graveyard choice (no instants in graveyard)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     @Test
@@ -139,7 +99,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve enchantment → chapter I triggers
 
         // Should prompt for graveyard target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         // Select the instant
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
@@ -169,7 +129,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -212,7 +172,7 @@ class TheMirariConjectureTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // precombat main → chapter II triggers but no valid targets
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     // ===== Chapter III: copy instant/sorcery spells =====

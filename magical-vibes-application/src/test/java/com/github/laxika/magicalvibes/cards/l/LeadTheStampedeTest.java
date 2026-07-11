@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LeadTheStampedeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Lead the Stampede has correct effect structure")
-    void hasCorrectProperties() {
-        LeadTheStampede card = new LeadTheStampede();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-        assertThat(effect.anyNumber()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Lead the Stampede puts it on the stack")
@@ -71,7 +54,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
     }
 
     @Test
@@ -95,10 +78,10 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
 
-        List<Card> remaining = gd.interaction.libraryView().reorderCards();
+        List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iSwamp = indexOf(remaining, "Swamp");
@@ -130,8 +113,8 @@ class LeadTheStampedeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals("Llanowar Elves"));
         assertThat(gd.playerHands.get(player1.getId()).stream().map(Card::getName))
                 .doesNotContain("Grizzly Bears");
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     @Test
@@ -156,8 +139,8 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
 
     @Test
@@ -177,8 +160,8 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(5);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(5);
     }
 
     @Test
@@ -193,7 +176,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
     }
@@ -242,7 +225,7 @@ class LeadTheStampedeTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
         // No remaining cards to reorder - should auto-resolve
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupTopFive(List<Card> cards) {

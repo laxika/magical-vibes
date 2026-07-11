@@ -20,41 +20,36 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfRaidEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.service.spell.ParadigmService;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
@@ -73,6 +68,38 @@ public class StackResolutionService {
     private final ExileService exileService;
     private final ParadigmService paradigmService;
 
+    public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
+                                  CloneService cloneService,
+                                  GraveyardService graveyardService,
+                                  LegendRuleService legendRuleService,
+                                  StateBasedActionService stateBasedActionService,
+                                  GameQueryService gameQueryService,
+                                  TargetLegalityService targetLegalityService,
+                                  GameBroadcastService gameBroadcastService,
+                                  EffectResolutionService effectResolutionService,
+                                  PlayerInputService playerInputService,
+                                  TriggerCollectionService triggerCollectionService,
+                                  CreatureControlService creatureControlService,
+                                  StateTriggerService stateTriggerService,
+                                  ExileService exileService,
+                                  @Lazy ParadigmService paradigmService) {
+        this.battlefieldEntryService = battlefieldEntryService;
+        this.cloneService = cloneService;
+        this.graveyardService = graveyardService;
+        this.legendRuleService = legendRuleService;
+        this.stateBasedActionService = stateBasedActionService;
+        this.gameQueryService = gameQueryService;
+        this.targetLegalityService = targetLegalityService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.effectResolutionService = effectResolutionService;
+        this.playerInputService = playerInputService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.creatureControlService = creatureControlService;
+        this.stateTriggerService = stateTriggerService;
+        this.exileService = exileService;
+        this.paradigmService = paradigmService;
+    }
+
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
 
@@ -82,13 +109,21 @@ public class StackResolutionService {
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
         stateTriggerService.cleanupResolvedStateTrigger(gameData, entry);
 
-        switch (entry.getEntryType()) {
-            case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
-            case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
-            case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
-            case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
-            case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
-                    resolveSpellOrAbility(gameData, entry);
+        // Track who controls the resolving spell/ability so that causation-sensitive triggers
+        // (e.g. Sacred Ground) can tell whether a permanent left the battlefield because of an
+        // opponent's spell or ability. Cleared once resolution finishes.
+        gameData.currentlyResolvingControllerId = entry.getControllerId();
+        try {
+            switch (entry.getEntryType()) {
+                case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
+                case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
+                case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
+                case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
+                case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
+                        resolveSpellOrAbility(gameData, entry);
+            }
+        } finally {
+            gameData.currentlyResolvingControllerId = null;
         }
 
         // If the ETB handler already set up a user interaction (e.g. Clone copy choice),
@@ -100,42 +135,49 @@ public class StackResolutionService {
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
 
-        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            triggerCollectionService.processNextClashTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -160,47 +202,12 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
-        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
-        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
-        }
-
-        // "If kicked, enters with N +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        if (entry.isKicked() && !cantHaveCounters) {
-            int kickedCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect)
-                    .map(e -> ((EnterWithPlusOnePlusOneCountersIfKickedEffect) e).count())
-                    .findFirst().orElse(0);
-            if (kickedCounters > 0) {
-                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + kickedCounters);
-            }
-        }
-
-        // "Raid — enters with N +1/+1 counters if you attacked this turn" — replacement effect (MTG Rule 614.1c)
-        if (gameData.playersDeclaredAttackersThisTurn.contains(controllerId) && !cantHaveCounters) {
-            int raidCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersIfRaidEffect)
-                    .map(e -> ((EnterWithPlusOnePlusOneCountersIfRaidEffect) e).count())
-                    .findFirst().orElse(0);
-            if (raidCounters > 0) {
-                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + raidCounters);
-            }
-        }
-
-        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedWishCountersCreature = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
-                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedWishCountersCreature > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.WISH, fixedWishCountersCreature);
-        }
-
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
+        // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                entry.getXValue(), entry.isKicked());
+        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
+        perm.setEvoked(entry.isEvoked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -208,15 +215,7 @@ public class StackResolutionService {
         Card enteredCard = perm.getCard();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        boolean hasSubtypeCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect);
-        boolean hasDeathCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect);
-        boolean hasKickedCounterEffect = entry.isKicked() && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect);
-        boolean hasRaidCounterEffect = gameData.playersDeclaredAttackersThisTurn.contains(controllerId) && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfRaidEffect);
-        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasDeathCounterEffect || hasKickedCounterEffect || hasRaidCounterEffect) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+        if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
@@ -232,6 +231,19 @@ public class StackResolutionService {
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
         checkLegendRuleIfIdle(gameData, controllerId);
+    }
+
+    /**
+     * Whether the card has an "enters with … counters" replacement effect of the given counter
+     * type, bare or wrapped in a {@link ConditionalEffect} ("if kicked", "Raid —"). Used only to
+     * pick the entry log message; the counters themselves are applied during battlefield entry.
+     */
+    private boolean hasEnterWithCountersEffect(Card card, CounterType type) {
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> (e instanceof EnterWithCountersEffect enterWith && enterWith.type() == type)
+                        || (e instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof EnterWithCountersEffect wrapped
+                        && wrapped.type() == type));
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -276,11 +288,14 @@ public class StackResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
 
-                // Handle control-changing auras (e.g., Persuasion)
+                // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
+                // layer-2 control effect keyed to the aura permanent
                 boolean hasControlEffect = card.getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
                 if (hasControlEffect) {
-                    creatureControlService.stealPermanent(gameData, controllerId, target);
+                    creatureControlService.applyControlEffect(gameData, controllerId, target,
+                            new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                            perm.getId(), card.getName());
                 }
 
                 // Check if aura has "as enters" basic land type choice (e.g. Convincing Mirage)
@@ -343,6 +358,15 @@ public class StackResolutionService {
                 playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
             }
 
+            // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
+            boolean needsParityChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(e -> e instanceof ChooseManaValueParityOnEnterEffect);
+            if (needsParityChoice) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                Permanent justEntered = bf.get(bf.size() - 1);
+                playerInputService.beginManaValueParityChoice(gameData, controllerId, justEntered.getId());
+            }
+
             // Process general ETB effects (e.g., token creation, exile-until-leaves)
             if (!gameData.interaction.isAwaitingInput()) {
                 battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, card, entry.getTargetId(), true, entry.getTargetIds());
@@ -376,42 +400,12 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
-        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-
-        // "Enters with X charge counters" — replacement effect (MTG Rule 614.1c)
-        boolean hasXChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
-        if (hasXChargeCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.CHARGE, entry.getXValue());
-        }
-
-        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
-        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
-        }
-
-        // "Enters with N charge counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedChargeCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedChargeCountersEffect)
-                .map(e -> ((EnterWithFixedChargeCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedChargeCounters > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.CHARGE, fixedChargeCounters);
-        }
-
-        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedWishCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
-                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedWishCounters > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.WISH, fixedWishCounters);
-        }
-
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
+        // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                entry.getXValue(), entry.isKicked());
+        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
+        perm.setEvoked(entry.isEvoked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -495,6 +489,7 @@ public class StackResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
+            countAbilityResolution(gameData, entry);
             effectResolutionService.resolveEffects(gameData, entry);
 
             // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
@@ -508,11 +503,31 @@ public class StackResolutionService {
             }
 
             handleSpellDisposition(gameData, entry);
-            paradigmService.handleParadigmSpellResolved(gameData, entry);
         }
 
         if (entry.getCard() != null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
+        }
+    }
+
+    /**
+     * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
+     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * Counted at resolution (not activation), so copies of the ability count but activations
+     * countered on the stack do not; fizzled abilities never reach this point. Incremented before
+     * effect dispatch so the condition sees the count including the current resolution, and only
+     * here (not on async resume) so each resolution counts exactly once.
+     */
+    private void countAbilityResolution(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+            return;
+        }
+        boolean countsResolutions = entry.getEffectsToResolve().stream()
+                .anyMatch(e -> e instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
+        if (countsResolutions) {
+            gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
         }
     }
 
@@ -540,10 +555,6 @@ public class StackResolutionService {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
             // otherwise to graveyard).
-        } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
-            gameData.addToExile(entry.getControllerId(), entry.getCard());
-            String exileLog = entry.getCard().getName() + " is exiled (paradigm).";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());
@@ -567,6 +578,8 @@ public class StackResolutionService {
             deck.add(entry.getCard());
             String bottomLog = entry.getCard().getName() + " is put on the bottom of its owner's library.";
             gameBroadcastService.logAndBroadcast(gameData, bottomLog);
+        } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
+            paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
             graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
         }
@@ -631,7 +644,7 @@ public class StackResolutionService {
         boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
         boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
         if (needsPermanentTarget) {
-            gameData.pendingSagaChapterTargets.add(
+            gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
                             card.getSagaChapterTargetFilters(chapterSlot)));
@@ -640,7 +653,7 @@ public class StackResolutionService {
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         } else if (needsGraveyardTarget) {
-            gameData.pendingSagaChapterGraveyardTargets.add(
+            gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";

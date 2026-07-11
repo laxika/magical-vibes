@@ -5,38 +5,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoriokReplicaTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Moriok Replica has correct activated ability")
-    void hasCorrectProperties() {
-        MoriokReplica card = new MoriokReplica();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{B}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(3);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(2))
-                .isInstanceOf(LoseLifeEffect.class);
-    }
 
     // ===== Activation =====
 

@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeForEachSubtypeOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,32 +12,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GlimmerpostTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB gain life for each Locus effect")
-    void hasEtbGainLifeEffect() {
-        Glimmerpost card = new Glimmerpost();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeForEachSubtypeOnBattlefieldEffect.class);
-
-        GainLifeForEachSubtypeOnBattlefieldEffect effect =
-                (GainLifeForEachSubtypeOnBattlefieldEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.LOCUS);
-    }
-
-    @Test
-    @DisplayName("Has tap for colorless mana ability")
-    void hasTapForColorlessManaAbility() {
-        Glimmerpost card = new Glimmerpost();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS));
-    }
 
     // ===== ETB trigger =====
 

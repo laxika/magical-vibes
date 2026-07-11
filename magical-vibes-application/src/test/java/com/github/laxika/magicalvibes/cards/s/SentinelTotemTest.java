@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,36 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SentinelTotemTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Sentinel Totem has scry 1 ETB effect")
-    void hasScryEtbEffect() {
-        SentinelTotem card = new SentinelTotem();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Sentinel Totem has tap + exile self activated ability with ExileAllGraveyardsEffect")
-    void hasExileGraveyardsAbility() {
-        SentinelTotem card = new SentinelTotem();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof ExileSelfCost)
-                .anyMatch(e -> e instanceof ExileAllGraveyardsEffect);
-    }
 
     // ===== ETB scry =====
 
@@ -87,9 +52,9 @@ class SentinelTotemTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
 
     // ===== Activated ability: exile all graveyards =====

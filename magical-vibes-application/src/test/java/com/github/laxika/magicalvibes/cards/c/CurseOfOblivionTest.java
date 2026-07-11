@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,18 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfOblivionTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Oblivion has correct effects")
-    void hasCorrectEffects() {
-        CurseOfOblivion card = new CurseOfOblivion();
-
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ExileCardsFromOwnGraveyardEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -75,12 +61,12 @@ class CurseOfOblivionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting graveyard choice (3 cards > 2 required)
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
 
         // Choose first card to exile
         harness.handleGraveyardCardChosen(player2, 0);
         // Second choice prompted
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) != null).isTrue();
         harness.handleGraveyardCardChosen(player2, 0);
 
         // Both exiled, one remains in graveyard

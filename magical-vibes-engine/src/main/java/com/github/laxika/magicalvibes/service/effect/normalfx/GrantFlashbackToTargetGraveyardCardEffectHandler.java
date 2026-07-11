@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -30,12 +31,18 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantFlashbackToTargetGraveyardCardEffect) effect;
+        UUID targetCardId;
         if (entry.getTargetCardIds().isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
-            return;
+            if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
+                targetCardId = entry.getTargetId();
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+                return;
+            }
+        } else {
+            targetCardId = entry.getTargetCardIds().getFirst();
         }
 
-        UUID targetCardId = entry.getTargetCardIds().getFirst();
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");

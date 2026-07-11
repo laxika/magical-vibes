@@ -7,13 +7,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
 @CardRegistration(set = "SOS", collectorNumber = "180")
+@CardRegistration(set = "SOS", collectorNumber = "299")
 public class ColorstormStallion extends Card {
 
     public ColorstormStallion() {
@@ -26,7 +28,7 @@ public class ColorstormStallion extends Card {
                 )),
                 List.of(
                         new BoostSelfEffect(1, 1),
-                        new SpellManaSpentAtLeastConditionalEffect(5, new CreateTokenCopyOfSourceEffect())
+                        new ConditionalEffect(new SpellManaSpentAtLeast(5), new CreateTokenCopyOfSourceEffect())
                 )
         ));
     }

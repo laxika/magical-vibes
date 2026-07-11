@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,20 +16,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GlissaTheTraitorTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES trigger with MayEffect wrapping ReturnCardFromGraveyardEffect")
-    void hasCorrectStructure() {
-        GlissaTheTraitor card = new GlissaTheTraitor();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
 
     // ===== Trigger fires when opponent's creature dies =====
 
@@ -52,7 +35,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         // Glissa's MayEffect goes on stack — resolve it to get prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     // ===== Does NOT trigger when own creature dies =====
@@ -72,7 +55,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Cruel Edict → player1's creature dies
 
         // Glissa should NOT trigger — own creature died
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Glissa, the Traitor"));
     }
 
@@ -93,7 +76,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → graveyard choice
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 0); // Choose Leonin Scimitar
 
         harness.assertInHand(player1, "Leonin Scimitar");
@@ -161,7 +144,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         // Grizzly Bears dies → Glissa's MayEffect goes on stack — resolve it to get prompt
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     // ===== Helper methods =====

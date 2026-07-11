@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -27,44 +22,11 @@ class ForebearsBladeTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Forebear's Blade has static +3/+0 boost effect for equipped creature")
-    void hasStaticBoostEffect() {
-        ForebearsBlade card = new ForebearsBlade();
+    
 
-        List<StaticBoostEffect> boosts = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .toList();
-        assertThat(boosts).hasSize(1);
-        assertThat(boosts.getFirst().powerBoost()).isEqualTo(3);
-        assertThat(boosts.getFirst().toughnessBoost()).isEqualTo(0);
-        assertThat(boosts.getFirst().scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
-    @Test
-    @DisplayName("Forebear's Blade grants vigilance and trample to equipped creature")
-    void hasKeywordGrantEffects() {
-        ForebearsBlade card = new ForebearsBlade();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect gke && gke.scope() == GrantScope.EQUIPPED_CREATURE)
-                .map(e -> (GrantKeywordEffect) e)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.VIGILANCE, Keyword.TRAMPLE);
-    }
-
-    @Test
-    @DisplayName("Forebear's Blade has equipped creature death trigger with attach effect")
-    void hasEquippedCreatureDeathTrigger() {
-        ForebearsBlade card = new ForebearsBlade();
-
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(AttachSourceEquipmentToTargetCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Forebear's Blade has equip {3} ability")

@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "347")
+@CardRegistration(set = "9ED", collectorNumber = "317")
 public class AdarkarWastes extends Card {
 
     public AdarkarWastes() {
@@ -24,14 +26,14 @@ public class AdarkarWastes extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {W}. Adarkar Wastes deals 1 damage to you."
         ));
         // {T}: Add {U}. Adarkar Wastes deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.BLUE), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {U}. Adarkar Wastes deals 1 damage to you."
         ));
     }

@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapAllTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -20,13 +21,14 @@ import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "183")
 @CardRegistration(set = "M11", collectorNumber = "175")
+@CardRegistration(set = "LRW", collectorNumber = "213")
 public class GarrukWildspeaker extends Card {
 
     public GarrukWildspeaker() {
         // +1: Untap two target lands.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new UntapAllTargetPermanentsEffect()),
+                List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
                 "+1: Untap two target lands.",
                 null, 1, null, null,
                 List.of(

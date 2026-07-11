@@ -179,7 +179,7 @@ class RaceEvaluatorTest {
         }
 
         @Test
-        @DisplayName("Lava Axe deals 5 face damage (DealDamageToTargetPlayerEffect)")
+        @DisplayName("Lava Axe deals 5 face damage (DealDamageToPlayersEffect TARGET_PLAYER)")
         void lavaAxeFaceDamage() {
             int damage = raceEvaluator.getBurnToFaceDamage(new LavaAxe());
             assertThat(damage).isEqualTo(5);

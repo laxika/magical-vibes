@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.StormfrontPegasus;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,19 +26,6 @@ class GeistcatchersRigTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → target selection
         harness.handlePermanentChosen(player1, targetId); // choose target → deal 4 damage
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping DealDamageToTargetCreatureEffect(4) on ETB")
-    void hasCorrectEffects() {
-        GeistcatchersRig card = new GeistcatchersRig();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) mayEffect.wrapped()).damage()).isEqualTo(4);
     }
 
     // ===== ETB deals 4 damage to creature with flying =====

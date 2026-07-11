@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,9 +12,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,26 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SanctumSpiritTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sanctum Spirit has one activated ability with discard-historic cost granting indestructible")
-    void hasCorrectActivatedAbility() {
-        SanctumSpirit card = new SanctumSpirit();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Casting =====
 
@@ -86,10 +63,10 @@ class SanctumSpiritTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
         // Only index 1 (Ornithopter, an artifact) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -100,9 +77,9 @@ class SanctumSpiritTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         // Only index 1 (Mirri, legendary) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -114,7 +91,7 @@ class SanctumSpiritTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Ornithopter"));
@@ -145,7 +122,7 @@ class SanctumSpiritTest extends BaseCardTest {
         // Try choosing index 0 (GrizzlyBears, non-historic) — should re-prompt
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 

@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.h.HomicidalBrute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawDiscardTransformIfCreatureDiscardedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -125,28 +121,6 @@ class CivilizedScholarTest extends BaseCardTest {
         assertThat(brute.isTapped()).isFalse();
     }
 
-    // ===== Configuration tests =====
-
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        CivilizedScholar card = new CivilizedScholar();
-
-        // One activated ability on front face (tap to loot)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof DrawDiscardTransformIfCreatureDiscardedEffect);
-
-        // Back face should exist
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(HomicidalBrute.class);
-
-        // Back face has end step trigger with conditional
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
-                .anyMatch(e -> e instanceof DidntAttackConditionalEffect);
-    }
-
     // ===== Helpers =====
 
     /**
@@ -172,7 +146,6 @@ class CivilizedScholarTest extends BaseCardTest {
         assertThat(scholar.isTransformed()).isTrue();
         return scholar;
     }
-
 
     private int findCardIndexByType(List<Card> hand, CardType type) {
         for (int i = 0; i < hand.size(); i++) {

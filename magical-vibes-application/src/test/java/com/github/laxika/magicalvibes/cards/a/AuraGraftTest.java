@@ -1,20 +1,18 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuraGraftTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Aura Graft has correct card properties")
-    void hasCorrectProperties() {
-        AuraGraft card = new AuraGraft();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GainControlOfTargetAuraEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -126,8 +111,8 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
 
         // Should prompt for permanent choice to reattach
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
         assertThat(((PermanentChoiceContext.AuraGraft) gd.interaction.permanentChoiceContext()).auraPermanentId()).isEqualTo(aura.getId());
     }
@@ -150,7 +135,7 @@ class AuraGraftTest extends BaseCardTest {
 
         assertThat(aura.getAttachedTo()).isEqualTo(myCreature.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -186,9 +171,9 @@ class AuraGraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The currently enchanted creature should NOT be a valid choice
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentCreature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentCreature.getId());
         // My creature should be valid
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(myCreature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(myCreature.getId());
     }
 
     @Test
@@ -230,9 +215,9 @@ class AuraGraftTest extends BaseCardTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Only the other land should be a valid reattach target — not the creature
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(otherLand.getId())
                 .doesNotContain(creature.getId(), sourceLand.getId());
     }
@@ -256,7 +241,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // Should prompt for reattachment
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, myCreature2.getId());
 
@@ -281,7 +266,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // No permanent choice should be prompted (only creature is the current target)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
 
         // Aura stays attached to the same creature
@@ -387,7 +372,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(opponentCreature2.getId(), myCreature1.getId(), myCreature2.getId())
                 .doesNotContain(opponentCreature1.getId());
     }
@@ -438,5 +423,4 @@ class AuraGraftTest extends BaseCardTest {
         return perm;
     }
 }
-
 

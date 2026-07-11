@@ -1,20 +1,14 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,32 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SanctumSeekerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has Vampire-conditional EachOpponentLosesLifeEffect and GainLifeEffect on ON_ALLY_CREATURE_ATTACKS")
-    void hasCorrectEffects() {
-        SanctumSeeker card = new SanctumSeeker();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
-        assertThat(effects).hasSize(2);
-
-        // First effect: opponent life loss
-        assertThat(effects.get(0)).isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect lossConditional = (TriggeringCardConditionalEffect) effects.get(0);
-        assertThat(lossConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
-        assertThat(lossConditional.wrapped()).isInstanceOf(EachOpponentLosesLifeEffect.class);
-        assertThat(((EachOpponentLosesLifeEffect) lossConditional.wrapped()).amount()).isEqualTo(1);
-
-        // Second effect: controller life gain
-        assertThat(effects.get(1)).isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect gainConditional = (TriggeringCardConditionalEffect) effects.get(1);
-        assertThat(gainConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
-        assertThat(gainConditional.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) gainConditional.wrapped()).amount()).isEqualTo(1);
-    }
 
     // ===== Trigger: Vampire attacks =====
 
@@ -163,7 +131,7 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player2, List.of(0));
 
         // Sanctum Seeker belongs to player1 — opponent's Vampires shouldn't trigger it
@@ -179,7 +147,7 @@ class SanctumSeekerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 

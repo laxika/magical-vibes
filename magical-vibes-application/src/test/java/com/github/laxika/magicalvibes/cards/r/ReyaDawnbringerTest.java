@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -24,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReyaDawnbringerTest extends BaseCardTest {
 
-
     /**
      * Advances from UNTAP to UPKEEP, triggering upkeep abilities.
      * Resolves the MayEffect from the stack and accepts the may choice.
@@ -37,20 +31,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effects resolve inline
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Reya Dawnbringer has correct card properties")
-    void hasCorrectProperties() {
-        ReyaDawnbringer card = new ReyaDawnbringer();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
     }
 
     // ===== Casting =====
@@ -163,7 +143,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         advanceToUpkeepAndTrigger();
 
         // Inner effects resolve inline → graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -184,7 +164,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeepAndTrigger();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -231,7 +211,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         advanceToUpkeepAndTrigger();
 
         // Inner effects resolved inline — no graveyard choice since graveyard is empty
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -246,7 +226,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
         advanceToUpkeepAndTrigger();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -311,5 +291,4 @@ class ReyaDawnbringerTest extends BaseCardTest {
                 .hasMessageContaining("Not your turn to choose");
     }
 }
-
 

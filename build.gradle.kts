@@ -3,6 +3,7 @@ import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 plugins {
     id("org.springframework.boot") version "4.0.1" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
+    id("com.diffplug.spotless") version "7.0.2" apply false
 }
 
 group = "com.magicalvibes"
@@ -12,6 +13,7 @@ subprojects {
     if (name != "magical-vibes-frontend") {
         apply(plugin = "java-library")
         apply(plugin = "io.spring.dependency-management")
+        apply(plugin = "com.diffplug.spotless")
 
         repositories {
             mavenCentral()
@@ -37,6 +39,13 @@ subprojects {
             "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
         }
 
+        configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+            java {
+                target("src/**/*.java")
+                removeUnusedImports()
+            }
+        }
+
         tasks.withType<Test> {
             useJUnitPlatform {
                 if (System.getenv("CI") != null) {
@@ -44,11 +53,12 @@ subprojects {
                 }
             }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
-            jvmArgs("-Xmx1g", "-XX:TieredStopAtLevel=1", "-XX:+UseParallelGC")
+            jvmArgs("-Xmx2g", "-XX:TieredStopAtLevel=1", "-XX:+UseParallelGC")
             forkEvery = 2000
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames",
-                    "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed").forEach { prop ->
+                    "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
+                    "layerBench", "disableLayerBoardCache").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {

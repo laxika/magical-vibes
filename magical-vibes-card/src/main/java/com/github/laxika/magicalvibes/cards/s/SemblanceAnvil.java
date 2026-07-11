@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
@@ -18,6 +19,6 @@ public class SemblanceAnvil extends Card {
                 new MayEffect(new ExileFromHandToImprintEffect(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)), "a nonland card"),
                         "You may exile a nonland card from your hand."));
-        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForSharedCardTypeWithImprintEffect(2));
+        addEffect(EffectSlot.STATIC, new ReduceOwnCastCostForSharedCardTypeWithImprintEffect(new Fixed(2)));
     }
 }

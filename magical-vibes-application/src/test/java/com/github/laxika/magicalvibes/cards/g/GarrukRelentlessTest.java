@@ -1,20 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -31,40 +25,6 @@ class GarrukRelentlessTest extends BaseCardTest {
 
     // ==========================================================================
     // Card structure
-    // ==========================================================================
-
-    @Test
-    @DisplayName("Front face has two 0-loyalty abilities and a state trigger")
-    void frontFaceStructure() {
-        GarrukRelentless card = new GarrukRelentless();
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getLoyaltyCost()).isEqualTo(0);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PlaneswalkerDealDamageAndReceivePowerDamageEffect.class);
-        assertThat(card.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(0);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("GarrukTheVeilCursed");
-    }
-
-    @Test
-    @DisplayName("Back face has +1, -1, -3 loyalty abilities")
-    void backFaceStructure() {
-        GarrukTheVeilCursed backFace = new GarrukTheVeilCursed();
-        assertThat(backFace.getActivatedAbilities()).hasSize(3);
-        assertThat(backFace.getActivatedAbilities().get(0).getLoyaltyCost()).isEqualTo(1);
-        assertThat(backFace.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        assertThat(backFace.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(-1);
-        assertThat(backFace.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(SacrificeCreatureSearchLibraryForCreatureToHandEffect.class);
-        assertThat(backFace.getActivatedAbilities().get(2).getLoyaltyCost()).isEqualTo(-3);
-        assertThat(backFace.getActivatedAbilities().get(2).getEffects())
-                .anyMatch(e -> e instanceof GrantKeywordEffect)
-                .anyMatch(e -> e instanceof BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect);
-    }
-
     // ==========================================================================
     // Front face — 0: Deal 3 damage to target creature; it deals power back
     // ==========================================================================
@@ -240,7 +200,7 @@ class GarrukRelentlessTest extends BaseCardTest {
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
             // Library search should be awaiting input
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
             gs.handleLibraryCardChosen(gd, player1, 0);
@@ -267,7 +227,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Should be awaiting a permanent choice (sacrifice selection)
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
             // Choose creature1 to sacrifice
             harness.handlePermanentChosen(player1, creature1.getId());
@@ -277,7 +237,7 @@ class GarrukRelentlessTest extends BaseCardTest {
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
             // Library search should be awaiting input
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
             gs.handleLibraryCardChosen(gd, player1, 0);

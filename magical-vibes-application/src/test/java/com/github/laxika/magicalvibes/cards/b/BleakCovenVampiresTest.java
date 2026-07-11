@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,47 +14,42 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BleakCovenVampiresTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft-conditional ETB drain effect")
-    void hasMetalcraftEtbEffect() {
-        BleakCovenVampires card = new BleakCovenVampires();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect drain =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) metalcraft.wrapped();
-        assertThat(drain.lifeLoss()).isEqualTo(4);
-        assertThat(drain.lifeGain()).isEqualTo(4);
-    }
-
-    @Test
-    @DisplayName("Card needs target (delegates from metalcraft wrapper)")
-    void needsTarget() {
-        BleakCovenVampires card = new BleakCovenVampires();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== ETB with metalcraft met =====
+
+    @Test
+    @DisplayName("ETB target is chosen as the trigger goes on the stack, not at cast time")
+    void etbTargetChosenAtTriggerTime() {
+        setupMetalcraft();
+        castBleakCovenVampires();
+
+        // Casting the creature never asks for a target (CR 601.2c) — the stack holds
+        // only the creature spell, with no target attached.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+
+        harness.passBothPriorities(); // resolve creature spell
+
+        // Metalcraft is met, so the trigger fires and the controller is prompted
+        // for the target as the ability is put on the stack (CR 603.3d).
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+    }
 
     @Test
     @DisplayName("ETB triggers drain when metalcraft is met (3+ artifacts)")
     void etbTriggersWithMetalcraft() {
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
 
-        // ETB trigger should be on the stack
+        // ETB trigger should be on the stack with the chosen target
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Bleak Coven Vampires");
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -65,7 +57,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
     void etbDrainsLifeWithMetalcraft() {
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -80,7 +73,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
 
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(11);
@@ -92,7 +86,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
     void gameLogRecordsLifeChanges() {
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("loses 4 life"));
@@ -102,13 +97,15 @@ class BleakCovenVampiresTest extends BaseCardTest {
     // ===== ETB without metalcraft =====
 
     @Test
-    @DisplayName("ETB does NOT trigger without metalcraft (0 artifacts)")
+    @DisplayName("ETB does NOT trigger without metalcraft (0 artifacts) — no target prompt")
     void etbDoesNotTriggerWithoutMetalcraft() {
         castBleakCovenVampires();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack
+        // The intervening-if failed (CR 603.4): no trigger, and the controller is
+        // never asked for a target.
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is still on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -128,8 +125,9 @@ class BleakCovenVampiresTest extends BaseCardTest {
         castBleakCovenVampires();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger
+        // No ETB trigger and no target prompt
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Life totals unchanged
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -143,7 +141,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
     void etbFizzlesWhenMetalcraftLost() {
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
 
         // Remove artifacts before ETB resolves (simulating opponent destroying them)
         gd.playerBattlefields.get(player1.getId()).removeIf(
@@ -175,7 +174,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
     void stackEmptyAfterResolution() {
         setupMetalcraft();
         castBleakCovenVampires();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.stack).isEmpty();
@@ -192,6 +192,6 @@ class BleakCovenVampiresTest extends BaseCardTest {
     private void castBleakCovenVampires() {
         harness.setHand(player1, List.of(new BleakCovenVampires()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
     }
 }

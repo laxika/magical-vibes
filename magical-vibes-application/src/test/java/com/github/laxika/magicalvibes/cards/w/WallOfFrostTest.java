@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -18,18 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WallOfFrostTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wall of Frost has SkipNextUntapOnTargetEffect in ON_BLOCK slot")
-    void hasCorrectProperties() {
-        WallOfFrost card = new WallOfFrost();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(SkipNextUntapOnTargetEffect.class);
-    }
 
     // ===== Block trigger pushes onto stack =====
 
@@ -170,7 +155,7 @@ class WallOfFrostTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
         gs.declareBlockers(gd, player2, assignments);
     }
 }

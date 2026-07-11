@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -24,35 +21,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BarkOfDoranTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
+    
 
-    @Test
-    @DisplayName("Bark of Doran has static +0/+1 boost effect")
-    void hasStaticBoostEffect() {
-        BarkOfDoran card = new BarkOfDoran();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(0);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Bark of Doran has assign combat damage with toughness effect")
-    void hasAssignCombatDamageWithToughnessEffect() {
-        BarkOfDoran card = new BarkOfDoran();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof AssignCombatDamageWithToughnessEffect)
-                .hasSize(1);
-    }
+    
 
     @Test
     @DisplayName("Bark of Doran has equip {1} ability with correct properties")

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,8 +75,10 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler = new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(sessionManager, cardViewFactory, libraryRevealSupport);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler = new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -138,7 +138,7 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
                 lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
                 // No matching permanent names â†’ reorder remaining to bottom
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
             }
 
             @Test
@@ -161,7 +161,7 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
 
                 lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

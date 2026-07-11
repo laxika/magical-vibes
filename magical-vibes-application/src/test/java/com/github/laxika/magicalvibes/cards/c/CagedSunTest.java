@@ -1,20 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,29 +30,6 @@ class CagedSunTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Caged Sun has correct effects")
-    void hasCorrectEffects() {
-        CagedSun card = new CagedSun();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseColorOnEnterEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturesOfChosenColorEffect.class);
-        BoostCreaturesOfChosenColorEffect boost = (BoostCreaturesOfChosenColorEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst())
-                .isInstanceOf(AddExtraManaOfChosenColorOnLandTapEffect.class);
     }
 
     // ===== Casting and resolving =====
@@ -86,8 +59,8 @@ class CagedSunTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Caged Sun"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test

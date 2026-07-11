@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,13 +23,10 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final PermanentChoiceSpellHandlerService spellHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
-    private final MultiPermanentChoiceHandlerService multiPermanentHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
-            throw new IllegalStateException("Not awaiting permanent choice");
-        }
-        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
+        PendingInteraction.PermanentChoice permanentChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         if (permanentChoice == null || !player.getId().equals(permanentChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -40,19 +35,20 @@ public class PermanentChoiceHandlerService {
         Set<UUID> validIds = permanentChoice.validIds();
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearPermanentChoice();
+        gameData.interaction.clearPermanentChoiceContext();
 
         if (!validIds.contains(permanentId)) {
             throw new IllegalStateException("Invalid permanent: " + permanentId);
         }
 
         PermanentChoiceContext context = permanentChoice.context();
-        gameData.interaction.clearPermanentChoiceContext();
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
+        } else if (context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach) {
+            battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
             battlefieldHandler.handleLegendRule(gameData, playerId, permanentId, legendRule);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp) {
@@ -75,6 +71,10 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleBounceCreature(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf bounceOrSac) {
             battlefieldHandler.handleBounceOwnPermanentOrSacrificeSelf(gameData, permanentId);
+        } else if (context instanceof PermanentChoiceContext.ChampionCreature championCreature) {
+            battlefieldHandler.handleChampionCreature(gameData, permanentId, championCreature);
+        } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
+            triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
             spellHandler.handleSpellRetarget(gameData, permanentId, retarget);
         } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
@@ -87,8 +87,16 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.RedirectDamageSourceChoice redirectSource) {
             battlefieldHandler.handleRedirectDamageSourceChoice(gameData, permanentId, redirectSource);
+        } else if (context instanceof PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectCreatureSource) {
+            battlefieldHandler.handleRedirectCreatureDamageSourceChoice(gameData, permanentId, redirectCreatureSource);
         } else if (context instanceof PermanentChoiceContext.PreventDamageToTargetFromSourceChoice preventTargetSource) {
             battlefieldHandler.handlePreventDamageToTargetFromSourceChoice(gameData, permanentId, preventTargetSource);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice preventNextColored) {
+            battlefieldHandler.handlePreventNextDamageFromColoredSourceChoice(gameData, permanentId, preventNextColored);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceAndGainLifeChoice preventNextGainLife) {
+            battlefieldHandler.handlePreventNextDamageFromSourceAndGainLifeChoice(gameData, permanentId, preventNextGainLife);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
+            battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {
@@ -113,6 +121,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepMultiPlayerFirstTarget(gameData, permanentId, umpt);
         } else if (context instanceof PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
             triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
+        } else if (context instanceof PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
+            triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
@@ -135,6 +145,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleBeginningOfCombatTrigger(gameData, permanentId, boct);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
             triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.ClashTriggerTarget ctt) {
+            triggerHandler.handleClashTrigger(gameData, permanentId, ctt);
         } else if (context instanceof PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
             triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
         } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {
@@ -150,7 +162,4 @@ public class PermanentChoiceHandlerService {
         }
     }
 
-    public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        multiPermanentHandler.handleMultiplePermanentsChosen(gameData, player, permanentIds);
-    }
 }

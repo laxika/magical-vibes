@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,15 +12,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,14 +34,14 @@ import java.util.UUID;
 public class TriggeredAbilityQueueService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
     private final TriggerTargetCollector triggerTargetCollector;
 
     public void processNextDeathTriggerTarget(GameData gameData) {
-        while (!gameData.pendingDeathTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.DeathTriggerTarget pending = gameData.pendingDeathTriggerTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
+            PermanentChoiceContext.DeathTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
 
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
@@ -54,7 +53,7 @@ public class TriggeredAbilityQueueService {
 
             if (result.validTargets().isEmpty()) {
                 // No valid targets - trigger can't go on the stack, skip it
-                gameData.pendingDeathTriggerTargets.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
                 String logEntry = pending.dyingCard().getName() + "'s death trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} death trigger skipped (no valid creature targets)",
@@ -63,7 +62,7 @@ public class TriggeredAbilityQueueService {
             }
 
             // Remove from queue and begin permanent choice
-            gameData.pendingDeathTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
                     : result.canTargetPlayers()
@@ -80,8 +79,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextAttackTriggerTarget(GameData gameData) {
-        while (!gameData.pendingAttackTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.AttackTriggerTarget pending = gameData.pendingAttackTriggerTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+            PermanentChoiceContext.AttackTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
 
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
@@ -92,7 +91,7 @@ public class TriggeredAbilityQueueService {
                     TriggerTargetCollector.Options.ATTACK);
 
             if (result.validTargets().isEmpty()) {
-                gameData.pendingAttackTriggerTargets.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
                 String logEntry = pending.sourceCard().getName() + "'s attack trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} attack trigger skipped (no valid targets)",
@@ -104,7 +103,7 @@ public class TriggeredAbilityQueueService {
                     : result.canTargetPlayers()
                             ? (result.opponentOnly() ? "target opponent" : "target player")
                             : "target permanent";
-            gameData.pendingAttackTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
                     pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
@@ -117,8 +116,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextDiscardSelfTrigger(GameData gameData) {
-        while (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
-            PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.pendingDiscardSelfTriggers.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
 
             // Collect valid targets: all creatures and planeswalkers on all battlefields + all players
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -136,7 +135,7 @@ public class TriggeredAbilityQueueService {
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players)
-            gameData.pendingDiscardSelfTriggers.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
@@ -150,8 +149,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextSpellTargetTrigger(GameData gameData) {
-        while (!gameData.pendingSpellTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.SpellTargetTriggerAnyTarget pending = gameData.pendingSpellTargetTriggers.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
+            PermanentChoiceContext.SpellTargetTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
 
             // Collect valid targets based on whether this is player-only targeting
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -166,7 +165,7 @@ public class TriggeredAbilityQueueService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (filter != null) {
-                            if (gameQueryService.matchesFilters(p, Set.of(filter), filterContext)) {
+                            if (predicateEvaluationService.matchesFilters(p, Set.of(filter), filterContext)) {
                                 validPermanentTargets.add(p.getId());
                             }
                         } else if (gameQueryService.isCreature(gameData, p)
@@ -178,7 +177,7 @@ public class TriggeredAbilityQueueService {
 
                 // If a target filter is present but no valid targets exist, skip this trigger
                 if (filter != null && validPermanentTargets.isEmpty()) {
-                    gameData.pendingSpellTargetTriggers.removeFirst();
+                    gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                     log.info("Game {} - {} spell-target trigger skipped (no valid targets)",
                             gameData.id, pending.sourceCard().getName());
                     continue;
@@ -194,7 +193,7 @@ public class TriggeredAbilityQueueService {
                     : pending.sourceCard().getName() + "'s ability - Choose any target.";
 
             // There are always valid targets (at least the players, or filtered permanents)
-            gameData.pendingSpellTargetTriggers.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets, prompt);
@@ -207,8 +206,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextLifeGainTriggerTarget(GameData gameData) {
-        while (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.LifeGainTriggerAnyTarget pending = gameData.pendingLifeGainTriggerTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
+            PermanentChoiceContext.LifeGainTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
 
             // Collect valid targets: all creatures on all battlefields + all players
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -225,7 +224,7 @@ public class TriggeredAbilityQueueService {
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players)
-            gameData.pendingLifeGainTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
@@ -239,9 +238,9 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
-        while (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             PermanentChoiceContext.EntersFromGraveyardTriggerTarget pending =
-                    gameData.pendingEntersFromGraveyardTriggerTargets.peekFirst();
+                    gameData.peekPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class);
 
             // "Any target" — every creature and planeswalker on every battlefield, plus every player.
             List<UUID> validPermanentTargets = new ArrayList<>();
@@ -259,7 +258,7 @@ public class TriggeredAbilityQueueService {
             List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
             // There are always valid targets (at least the players).
-            gameData.pendingEntersFromGraveyardTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
@@ -274,8 +273,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextEmblemTriggerTarget(GameData gameData) {
-        while (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.EmblemTriggerTarget pending = gameData.pendingEmblemTriggerTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
+            PermanentChoiceContext.EmblemTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
 
             // Collect valid targets: all permanents (or only opponent permanents if opponentControlledOnly)
             List<UUID> validTargets = new ArrayList<>();
@@ -289,7 +288,7 @@ public class TriggeredAbilityQueueService {
             }
 
             if (validTargets.isEmpty()) {
-                gameData.pendingEmblemTriggerTargets.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
                 String logEntry = pending.emblemDescription() + "'s trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} emblem trigger skipped (no valid permanent targets)",
@@ -297,7 +296,7 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
-            gameData.pendingEmblemTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             String targetDesc = pending.opponentControlledOnly()
                     ? "target permanent an opponent controls to exile"
@@ -313,13 +312,13 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextSagaChapterTarget(GameData gameData) {
-        while (!gameData.pendingSagaChapterTargets.isEmpty()) {
-            PermanentChoiceContext.SagaChapterTarget pending = gameData.pendingSagaChapterTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
+            PermanentChoiceContext.SagaChapterTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
 
             // Collect valid creature targets, applying any saga target filter
             List<UUID> validCreatureTargets = collectSagaChapterTargets(gameData, pending);
 
-            gameData.pendingSagaChapterTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
 
             if (validCreatureTargets.isEmpty()) {
                 // "Up to one target creature" — no valid targets, push ability with no target
@@ -356,9 +355,9 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextSagaChapterGraveyardTarget(GameData gameData) {
-        while (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
             PermanentChoiceContext.SagaChapterGraveyardTarget pending =
-                    gameData.pendingSagaChapterGraveyardTargets.peekFirst();
+                    gameData.peekPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
             // Find the graveyard-targeting effect to extract its filter
             CardPredicate filter = null;
@@ -370,21 +369,19 @@ public class TriggeredAbilityQueueService {
             }
 
             // Collect valid graveyard targets from the controller's graveyard
-            List<UUID> validCardIds = new ArrayList<>();
-            List<CardView> cardViews = new ArrayList<>();
+            List<Card> matchingCards = new ArrayList<>();
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
-                        validCardIds.add(graveyardCard.getId());
-                        cardViews.add(cardViewFactory.create(graveyardCard));
+                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                        matchingCards.add(graveyardCard);
                     }
                 }
             }
 
-            gameData.pendingSagaChapterGraveyardTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
-            if (validCardIds.isEmpty()) {
+            if (matchingCards.isEmpty()) {
                 log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName(), pending.chapterName());
                 continue;
@@ -398,7 +395,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.chapterName = pending.chapterName();
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
                             + " — Choose target " + filterLabel + " from your graveyard.");
 
@@ -412,35 +409,42 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
-        while (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
-                    gameData.pendingSpellGraveyardTargetTriggers.peekFirst();
+                    gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
             // Find the graveyard-targeting effect to extract its filter
             CardPredicate filter = null;
+            boolean lifeGainedCap = false;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
+                    lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                     break;
                 }
             }
 
+            // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
+            int maxManaValue = lifeGainedCap
+                    ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;
+
             // Collect valid graveyard targets from the controller's graveyard
-            List<UUID> validCardIds = new ArrayList<>();
-            List<CardView> cardViews = new ArrayList<>();
+            List<Card> matchingCards = new ArrayList<>();
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
-                        validCardIds.add(graveyardCard.getId());
-                        cardViews.add(cardViewFactory.create(graveyardCard));
+                    if (graveyardCard.getManaValue() > maxManaValue) {
+                        continue;
+                    }
+                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
+                        matchingCards.add(graveyardCard);
                     }
                 }
             }
 
-            gameData.pendingSpellGraveyardTargetTriggers.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
-            if (validCardIds.isEmpty()) {
+            if (matchingCards.isEmpty()) {
                 log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
@@ -452,7 +456,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                     pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from your graveyard.");
 
             String logEntry = pending.sourceCard().getName()
@@ -465,8 +469,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextExploreTriggerTarget(GameData gameData) {
-        while (!gameData.pendingExploreTriggerTargets.isEmpty()) {
-            PermanentChoiceContext.ExploreTriggerTarget pending = gameData.pendingExploreTriggerTargets.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
+            PermanentChoiceContext.ExploreTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);
 
             // Collect valid targets: only creatures controlled by opponents
             List<UUID> validTargets = new ArrayList<>();
@@ -481,7 +485,7 @@ public class TriggeredAbilityQueueService {
             }
 
             if (validTargets.isEmpty()) {
-                gameData.pendingExploreTriggerTargets.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);
                 String logEntry = pending.sourceCard().getName() + "'s explore trigger has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} explore trigger skipped (no valid creature targets)",
@@ -489,7 +493,7 @@ public class TriggeredAbilityQueueService {
                 continue;
             }
 
-            gameData.pendingExploreTriggerTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
@@ -497,6 +501,43 @@ public class TriggeredAbilityQueueService {
             String logEntry = pending.sourceCard().getName() + "'s explore trigger — choose target creature.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} explore trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    public void processNextClashTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            PermanentChoiceContext.ClashTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+
+            // Collect valid targets: only creatures controlled by opponents.
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                if (pid.equals(pending.controllerId())) continue; // opponent only
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, p)) continue;
+                    validTargets.add(p.getId());
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+                String logEntry = pending.sourceCard().getName() + "'s clash trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} clash trigger skipped (no valid creature targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
+
+            String logEntry = pending.sourceCard().getName() + "'s clash trigger — choose target creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} clash trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
     }
@@ -530,11 +571,11 @@ public class TriggeredAbilityQueueService {
             for (Permanent p : battlefield) {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
                 if (targetPredicate != null
-                        && !gameQueryService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
+                        && !predicateEvaluationService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
                     continue;
                 }
                 if (hasChapterFilters
-                        && !gameQueryService.matchesFilters(p, chapterFilters, filterContext)) {
+                        && !predicateEvaluationService.matchesFilters(p, chapterFilters, filterContext)) {
                     continue;
                 }
                 validCreatureTargets.add(p.getId());

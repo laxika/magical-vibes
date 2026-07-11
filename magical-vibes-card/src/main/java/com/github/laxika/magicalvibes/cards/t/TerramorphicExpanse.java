@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "360")
 @CardRegistration(set = "M10", collectorNumber = "229")
 @CardRegistration(set = "M11", collectorNumber = "229")
+@CardRegistration(set = "SOS", collectorNumber = "265")
 public class TerramorphicExpanse extends Card {
 
     public TerramorphicExpanse() {
@@ -24,9 +26,9 @@ public class TerramorphicExpanse extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new SearchLibraryForCardTypesToBattlefieldEffect(
+                        new SearchLibraryEffect(
                                 new CardAllOfPredicate(List.of(new CardSupertypePredicate(CardSupertype.BASIC), new CardTypePredicate(CardType.LAND))),
-                                true)
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED)
                 ),
                 "{T}, Sacrifice Terramorphic Expanse: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle."
         ));

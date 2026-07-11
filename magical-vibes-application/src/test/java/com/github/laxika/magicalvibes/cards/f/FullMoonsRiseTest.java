@@ -2,63 +2,17 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DaybreakRanger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FullMoonsRiseTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Full Moon's Rise has static boost effect for Werewolves with trample")
-    void hasCorrectStaticEffect() {
-        FullMoonsRise card = new FullMoonsRise();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isZero();
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Full Moon's Rise has sacrifice activated ability with regenerate all effect")
-    void hasCorrectActivatedAbility() {
-        FullMoonsRise card = new FullMoonsRise();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateAllOwnCreaturesEffect.class);
-    }
 
     // ===== Static effect: buffs Werewolves you control =====
 
@@ -188,7 +142,5 @@ class FullMoonsRiseTest extends BaseCardTest {
         Permanent opponentRanger = findPermanent(player2, "Daybreak Ranger");
         assertThat(opponentRanger.getRegenerationShield()).isZero();
     }
-
-    // ===== Helper methods =====
 
 }

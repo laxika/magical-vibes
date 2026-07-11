@@ -104,6 +104,11 @@ public class ManaCost {
         return Collections.unmodifiableMap(coloredCosts);
     }
 
+    /** The generic (colorless-symbol) portion of the cost, e.g. 5 for "{5}" or "{5}{W}". */
+    public int getGenericCost() {
+        return genericCost;
+    }
+
     public int getManaValue() {
         int total = genericCost;
         for (int count : coloredCosts.values()) {
@@ -177,6 +182,58 @@ public class ManaCost {
         return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
     }
 
+    /**
+     * Auto-pays Phyrexian symbols, choosing per symbol: colored mana from the pool when the rest
+     * of this cost (colored + hybrid + generic + X) stays payable afterwards, otherwise 2 life.
+     * {@link #canPay} treats Phyrexian symbols as always satisfiable (paying life is always an
+     * option), so auto-payment must never spend mana that the approved payment plan needs
+     * elsewhere — a greedy mana-first assignment could otherwise starve the generic part of a
+     * cost the pre-check already accepted.
+     *
+     * @param xValue same semantics as the second argument of {@link #canPay(ManaPool, int)}
+     * @return the total life that must be paid
+     */
+    public int payPhyrexianManaAuto(ManaPool pool, int xValue) {
+        Map<ManaColor, Integer> reserved = new EnumMap<>(ManaColor.class);
+        int lifeCost = 0;
+        for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                reserved.merge(entry.getKey(), 1, Integer::sum);
+                if (!canPayRestWithReserved(pool, xValue, reserved)) {
+                    reserved.merge(entry.getKey(), -1, Integer::sum);
+                    lifeCost += 2;
+                }
+            }
+        }
+        for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                pool.remove(entry.getKey());
+            }
+        }
+        return lifeCost;
+    }
+
+    /** {@link #canPay(ManaPool, int)} for the non-Phyrexian part, with pool mana pre-reserved for Phyrexian symbols. */
+    private boolean canPayRestWithReserved(ManaPool pool, int xValue, Map<ManaColor, Integer> reserved) {
+        Map<ManaColor, Integer> available = availableByColor(pool);
+        for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
+            int left = available.get(entry.getKey()) - entry.getValue();
+            if (left < 0) {
+                return false;
+            }
+            available.put(entry.getKey(), left);
+        }
+        if (!reserveColoredCosts(available)) {
+            return false;
+        }
+        int[] extraGeneric = {0};
+        if (!assignHybrids(available, extraGeneric)) {
+            return false;
+        }
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
+        return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
+    }
+
     public boolean canPayCreatureOnly(ManaPool pool) {
         return canPayCreatureOnly(pool, 0);
     }
@@ -209,8 +266,23 @@ public class ManaCost {
         if (!assignHybrids(available, extraGeneric)) {
             return false;
         }
-        int remaining = totalOf(available);
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
+    }
+
+    /**
+     * Portion of a pool's {@code flexibleOvercount} not already reflected in its per-color
+     * amounts (which {@link ManaPool#get} corrects for). Summing per-color availability
+     * double-counts mutually-exclusive taps (e.g. a dual land counted as both R and G), so
+     * this must be subtracted from a per-color reconstruction of the generic-payable total.
+     * Always 0 for a plain {@link ManaPool}.
+     */
+    private static int residualFlexibleOvercount(ManaPool pool) {
+        int residual = pool.getFlexibleOvercount();
+        for (ManaColor color : ManaColor.values()) {
+            residual -= pool.getPerColorOvercount(color);
+        }
+        return Math.max(0, residual);
     }
 
     // ── Hybrid mana support (shared by the core canPay/pay path) ───────
@@ -354,16 +426,25 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
-        if (subtypeCreatureContext == null || subtypeCreatureContext.isEmpty()) {
+        return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, null);
+    }
+
+    public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext) {
+        boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
+        boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx) {
             return canPay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
         }
+        Set<CardSubtype> creatureCtx = hasCreatureCtx ? subtypeCreatureContext : Set.of();
+        Set<CardSubtype> soaCtx = hasSpellOrAbilityCtx ? subtypeSpellOrAbilityContext : Set.of();
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
         // Check each colored cost can be paid from combined sources
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
-            available += pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, entry.getKey());
+            available += pool.getSubtypeCreatureManaForColor(creatureCtx, entry.getKey());
+            available += pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, entry.getKey());
             if (instantSorceryOnlyColorlessContext) {
                 available += pool.getInstantSorceryOnlyColored(entry.getKey());
             }
@@ -378,48 +459,36 @@ public class ManaCost {
             }
         }
 
-        // Check generic costs: total available (regular + all restricted) minus colored costs
-        int remaining = pool.getTotal();
-        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= entry.getValue();
+        // Generic feasibility as a pure total check across every usable bucket. Colored feasibility is
+        // already verified per-color above, and all these buckets are fully flexible for this spell
+        // (colored buckets pay their color or generic; colorless-only buckets pay generic), so a total
+        // check avoids the fragile per-restriction compensation that double-counts when a colored cost
+        // is covered by more than one flexible bucket (e.g. a {R} cost paid from subtype mana while
+        // restrictedRedContext is also set for a creature spell).
+        int totalColored = 0;
+        for (int need : coloredCosts.values()) {
+            totalColored += need;
         }
-
+        int totalUsable = pool.getTotal();
         if (artifactContext) {
-            remaining += pool.getArtifactOnlyColorless();
+            totalUsable += pool.getArtifactOnlyColorless();
         }
         if (myrContext) {
-            remaining += pool.getMyrOnlyColorless();
+            totalUsable += pool.getMyrOnlyColorless();
         }
         if (instantSorceryOnlyColorlessContext) {
-            remaining += pool.getInstantSorceryOnlyColorless();
-            for (ManaColor color : ManaColor.values()) {
-                if (color == ManaColor.COLORLESS) {
-                    continue;
-                }
-                int coloredNeeded = coloredCosts.getOrDefault(color, 0);
-                int regular = pool.get(color);
-                int instantSorceryOnlyUsedForColored = Math.max(0, coloredNeeded - regular);
-                remaining += pool.getInstantSorceryOnlyColored(color) - instantSorceryOnlyUsedForColored;
-            }
+            totalUsable += pool.getInstantSorceryOnlyColorless() + pool.getInstantSorceryOnlyColoredTotal();
         }
         if (restrictedRedContext) {
-            int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
-            int regularRed = pool.get(ManaColor.RED);
-            int restrictedRedUsedForColored = Math.max(0, redNeeded - regularRed);
-            remaining += extraRed - restrictedRedUsedForColored;
+            totalUsable += extraRed;
         }
         if (kickedOnlyGreenContext) {
-            int greenNeeded = coloredCosts.getOrDefault(ManaColor.GREEN, 0);
-            int regularGreen = pool.get(ManaColor.GREEN);
-            int kickedOnlyGreenUsedForColored = Math.max(0, greenNeeded - regularGreen);
-            remaining += extraGreen - kickedOnlyGreenUsedForColored;
+            totalUsable += extraGreen;
         }
-        // Subtype creature mana: add the full total. The colored check above ensures each color
-        // has enough individually, and the total (regular + subtype) minus colored costs correctly
-        // accounts for subtype mana used for colored costs being compensated.
-        remaining += pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
+        totalUsable += pool.getSubtypeCreatureManaTotal(creatureCtx);
+        totalUsable += pool.getSubtypeSpellOrAbilityManaTotal(soaCtx);
 
-        return remaining >= genericCost + xValue * effectiveXMultiplier();
+        return totalUsable - totalColored >= genericCost + xValue * effectiveXMultiplier();
     }
 
     /**
@@ -691,19 +760,28 @@ public class ManaCost {
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
-        if (subtypeCreatureContext == null || subtypeCreatureContext.isEmpty()) {
+        pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext, subtypeCreatureContext, null);
+    }
+
+    public void pay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext) {
+        boolean hasCreatureCtx = subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty();
+        boolean hasSpellOrAbilityCtx = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
+        if (!hasCreatureCtx && !hasSpellOrAbilityCtx) {
             pay(pool, xValue, artifactContext, myrContext, restrictedRedContext, kickedOnlyGreenContext, instantSorceryOnlyColorlessContext);
             return;
         }
+        Set<CardSubtype> creatureCtx = hasCreatureCtx ? subtypeCreatureContext : Set.of();
+        Set<CardSubtype> soaCtx = hasSpellOrAbilityCtx ? subtypeSpellOrAbilityContext : Set.of();
         int extraRed = restrictedRedContext ? pool.getRestrictedRed() : 0;
         int extraGreen = kickedOnlyGreenContext ? pool.getKickedOnlyGreen() : 0;
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             for (int i = 0; i < entry.getValue(); i++) {
-                // Prefer spending subtype creature mana first (most restricted)
-                int subtypeAvail = pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, entry.getKey());
-                if (subtypeAvail > 0) {
-                    pool.removeSubtypeCreatureMana(subtypeCreatureContext, entry.getKey(), 1);
+                // Prefer spending subtype mana first (most restricted)
+                if (pool.getSubtypeCreatureManaForColor(creatureCtx, entry.getKey()) > 0) {
+                    pool.removeSubtypeCreatureMana(creatureCtx, entry.getKey(), 1);
+                } else if (pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, entry.getKey()) > 0) {
+                    pool.removeSubtypeSpellOrAbilityMana(soaCtx, entry.getKey(), 1);
                 } else if (restrictedRedContext && entry.getKey() == ManaColor.RED && extraRed > 0) {
                     pool.removeRestrictedRed(1);
                     extraRed--;
@@ -720,19 +798,38 @@ public class ManaCost {
 
         int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
 
-        // Spend subtype creature mana for generic costs first (most restricted)
+        // Spend subtype mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {
-            int subtypeTotal = pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
+            int subtypeTotal = pool.getSubtypeCreatureManaTotal(creatureCtx);
             int fromSubtype = Math.min(remainingGeneric, subtypeTotal);
             if (fromSubtype > 0) {
                 // Remove from subtype pools color by color
                 int toRemove = fromSubtype;
                 for (ManaColor color : ManaColor.values()) {
                     if (toRemove <= 0) break;
-                    int avail = pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, color);
+                    int avail = pool.getSubtypeCreatureManaForColor(creatureCtx, color);
                     int removeNow = Math.min(toRemove, avail);
                     if (removeNow > 0) {
-                        pool.removeSubtypeCreatureMana(subtypeCreatureContext, color, removeNow);
+                        pool.removeSubtypeCreatureMana(creatureCtx, color, removeNow);
+                        toRemove -= removeNow;
+                    }
+                }
+                remainingGeneric -= fromSubtype;
+            }
+        }
+
+        // Spend subtype spell-or-ability mana for generic costs (also fully restricted)
+        if (remainingGeneric > 0) {
+            int subtypeTotal = pool.getSubtypeSpellOrAbilityManaTotal(soaCtx);
+            int fromSubtype = Math.min(remainingGeneric, subtypeTotal);
+            if (fromSubtype > 0) {
+                int toRemove = fromSubtype;
+                for (ManaColor color : ManaColor.values()) {
+                    if (toRemove <= 0) break;
+                    int avail = pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color);
+                    int removeNow = Math.min(toRemove, avail);
+                    if (removeNow > 0) {
+                        pool.removeSubtypeSpellOrAbilityMana(soaCtx, color, removeNow);
                         toRemove -= removeNow;
                     }
                 }

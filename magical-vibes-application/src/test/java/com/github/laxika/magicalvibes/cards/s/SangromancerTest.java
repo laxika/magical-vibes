@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Sift;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,34 +16,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SangromancerTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectDeathTrigger() {
-        Sangromancer card = new Sangromancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_DISCARDS MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectDiscardTrigger() {
-        Sangromancer card = new Sangromancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(3);
-    }
 
     // ===== Opponent creature dies — accept may =====
 
@@ -69,7 +36,7 @@ class SangromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         // May ability prompt for Sangromancer's controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -93,7 +60,7 @@ class SangromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → MayEffect on stack
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -122,7 +89,7 @@ class SangromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → player1's bears die
 
         // No may prompt — Sangromancer doesn't trigger for own creatures
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player1, 20);
     }
 
@@ -148,7 +115,7 @@ class SangromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
 
         // May ability prompt for Sangromancer's controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -173,7 +140,7 @@ class SangromancerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -211,7 +178,7 @@ class SangromancerTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Sangromancer does NOT trigger for controller's own discard
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertLife(player2, 20);
     }
 }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
@@ -51,7 +51,7 @@ class FaithlessLootingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // After drawing two, the effect awaits two discard choices.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
 
         harness.handleCardChosen(player1, 0);
@@ -96,7 +96,7 @@ class FaithlessLootingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Draw two, then discard two.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 

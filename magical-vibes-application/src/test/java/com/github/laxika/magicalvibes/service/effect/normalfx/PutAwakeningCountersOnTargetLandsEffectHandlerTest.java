@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
@@ -11,7 +12,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -31,9 +31,9 @@ class PutAwakeningCountersOnTargetLandsEffectHandlerTest extends AbstractPlayerI
 
                 resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
-                assertThat(gd.pendingAwakeningCounterPlacement).isTrue();
                 verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
-                        argThat(ids -> ids.size() == 1 && ids.contains(land.getId())), eq(1), any());
+                        argThat(ids -> ids.size() == 1 && ids.contains(land.getId())), eq(1),
+                        eq(new MultiPermanentChoiceContext.AwakeningCounterPlacement()), any());
             }
 
             @Test
@@ -51,7 +51,7 @@ class PutAwakeningCountersOnTargetLandsEffectHandlerTest extends AbstractPlayerI
 
                 resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no lands")));
             }

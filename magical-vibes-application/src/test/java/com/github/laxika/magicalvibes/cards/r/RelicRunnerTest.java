@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,15 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RelicRunnerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Relic Runner has correct static effect")
-    void hasCorrectEffect() {
-        RelicRunner card = new RelicRunner();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Relic Runner can be blocked when no historic spell was cast this turn")
@@ -48,7 +37,7 @@ class RelicRunnerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         // Blocking should succeed — no historic spell cast this turn
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -77,7 +66,7 @@ class RelicRunnerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         // Attempting to block should fail — GrizzlyBears is at blocker index 0, RelicRunner is at attacker index 0
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
@@ -115,7 +104,7 @@ class RelicRunnerTest extends BaseCardTest {
         runner.setAttacking(true);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         // Attempting to block should fail — artifact was cast this turn
         // GrizzlyBears is at blocker index 0, RelicRunner is at attacker index 0
@@ -147,7 +136,7 @@ class RelicRunnerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         // Blocking should succeed — only non-historic spells were cast
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));

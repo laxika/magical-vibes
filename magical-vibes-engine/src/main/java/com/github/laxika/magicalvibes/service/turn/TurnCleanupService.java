@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOpponentMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,9 @@ import java.util.UUID;
  *   <li>Computing each player's effective maximum hand size, accounting for
  *       effects that reduce it ({@link ReduceOpponentMaxHandSizeEffect}) or
  *       remove it entirely ({@link NoMaximumHandSizeEffect}).</li>
- *   <li>Returning stolen creatures at end of turn via {@link AuraAttachmentService}.</li>
+ *   <li>Reconciling control at end of turn via {@link CreatureControlService} — expired
+ *       until-end-of-turn control effects fall back to the next most recent still-active
+ *       control effect, or to the owner (CR 613.7).</li>
  * </ul>
  */
 @Slf4j
@@ -35,17 +39,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TurnCleanupService {
 
-    private final AuraAttachmentService auraAttachmentService;
+    private final CreatureControlService creatureControlService;
 
     /**
      * Performs the full cleanup-step reset: clears all "until end of turn"
-     * modifiers on every permanent and returns temporarily stolen creatures.
+     * modifiers on every permanent and recomputes control of temporarily stolen permanents.
      *
      * @param gameData the current game state to modify
      */
     public void applyCleanupResets(GameData gameData) {
         resetEndOfTurnModifiers(gameData);
-        auraAttachmentService.returnStolenCreatures(gameData, true);
+        creatureControlService.reconcileControl(gameData);
     }
 
     /**
@@ -56,17 +60,34 @@ public class TurnCleanupService {
      * @param gameData the current game state to modify
      */
     public void resetEndOfTurnModifiers(GameData gameData) {
+        // CR 613 layer engine: "until end of turn" floating continuous effects wear off here,
+        // before the legacy per-permanent modifier reset below. An expiring layer-1 copy effect
+        // (Tilonalli's Skinshifter) reverts the permanent's card to the pre-copy card — the
+        // official ruling pins this to the same moment damage is removed (the cleanup step).
+        for (FloatingContinuousEffect expired : gameData.expireEndOfTurnFloatingEffects()) {
+            if (expired.effect() instanceof BecomeCopyOfTargetCreatureUntilEndOfTurnEffect
+                    && expired.affectedPermanentId() != null) {
+                Permanent copy = findPermanent(gameData, expired.affectedPermanentId());
+                if (copy != null) {
+                    copy.revertEndOfTurnCopy();
+                }
+            }
+        }
+
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
-                    || p.isAnimatedUntilEndOfTurn() || p.isCantRegenerateThisTurn()
+                    || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
-                    || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
+                    || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
+                    || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
-                    || p.isCopyUntilEndOfTurn() || !p.getTemporaryTriggeredEffects().isEmpty()
-                    || p.isLosesAllAbilitiesUntilEndOfTurn()) {
+                    || !p.getTemporaryTriggeredEffects().isEmpty()
+                    || p.isLosesAllAbilitiesUntilEndOfTurn()
+                    || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
+                    || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
                 p.setRegenerationShield(0);
@@ -76,6 +97,7 @@ public class TurnCleanupService {
         gameData.playerDamagePreventionShields.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
+        gameData.creatureDamageRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
@@ -86,8 +108,13 @@ public class TurnCleanupService {
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.playerSourceDamagePreventionIds.clear();
+        gameData.playerSourceNextDamageShields.clear();
+        gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.playersWithDamageFromAttackersPrevented.clear();
+        gameData.creaturesWithAllDamagePrevented.clear();
+        gameData.damageCantBePreventedThisTurn = false;
         gameData.drawReplacementTargetToController.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
@@ -95,6 +122,7 @@ public class TurnCleanupService {
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);
@@ -106,12 +134,17 @@ public class TurnCleanupService {
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
+        gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {
             gameData.exilePlayPermissions.remove(cardId);
         }
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
+
+        // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
+        gameData.exilePlayAnyManaType.clear();
+        gameData.exileInsteadOfGraveyard.clear();
 
         int currentTurn = gameData.turnNumber;
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
@@ -129,6 +162,19 @@ public class TurnCleanupService {
                 manaPool.clearPersistentMana();
             }
         }
+    }
+
+    private Permanent findPermanent(GameData gameData, UUID permanentId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.getId().equals(permanentId)) {
+                    return p;
+                }
+            }
+        }
+        return null;
     }
 
     /**

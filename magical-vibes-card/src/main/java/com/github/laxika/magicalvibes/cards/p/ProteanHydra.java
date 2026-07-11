@@ -3,16 +3,18 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterRegrowthEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 
 @CardRegistration(set = "M10", collectorNumber = "200")
 @CardRegistration(set = "M11", collectorNumber = "194")
 public class ProteanHydra extends Card {
 
     public ProteanHydra() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
         addEffect(EffectSlot.STATIC, new PreventDamageAndRemovePlusOnePlusOneCountersEffect());
         addEffect(EffectSlot.STATIC, new DelayedPlusOnePlusOneCounterRegrowthEffect());
     }

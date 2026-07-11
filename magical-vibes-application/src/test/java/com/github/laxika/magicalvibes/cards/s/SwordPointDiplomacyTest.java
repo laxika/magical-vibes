@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,19 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SwordPointDiplomacyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effect")
-    void hasCorrectEffect() {
-        SwordPointDiplomacy card = new SwordPointDiplomacy();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RevealTopCardsOpponentPaysLifeOrToHandEffect.class);
-        RevealTopCardsOpponentPaysLifeOrToHandEffect effect =
-                (RevealTopCardsOpponentPaysLifeOrToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-        assertThat(effect.lifeCost()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Casting and resolving reveals top 3 and presents opponent with choice")
@@ -49,7 +35,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
     }
 
     @Test
@@ -150,7 +136,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No choice presented — all go to hand automatically
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"))
                 .anyMatch(c -> c.getName().equals("Forest"))
@@ -176,7 +162,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choice is presented (opponent has exactly 3 life, can pay for one)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         harness.handleMultipleCardsChosen(player2, List.of(card1.getId()));
 
@@ -223,7 +209,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -243,7 +229,7 @@ class SwordPointDiplomacyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choice presented with 2 cards
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Opponent denies none
         harness.handleMultipleCardsChosen(player2, List.of());

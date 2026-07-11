@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -33,7 +34,7 @@ public class DestroyTargetPermanentAtEndStepEffectHandler implements NormalEffec
                     return;
                 }
 
-                gameData.pendingDestroyAtEndStep.add(target.getId());
+                gameData.queueDelayedAction(new DestroyAtEndStep(target.getId()));
 
                 String logEntry = target.getCard().getName() + " will be destroyed at the beginning of the next end step.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

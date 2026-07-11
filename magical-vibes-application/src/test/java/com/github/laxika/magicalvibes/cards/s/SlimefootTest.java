@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,10 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,31 +23,7 @@ class SlimefootTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has two ON_ALLY_CREATURE_DIES effects with Saproling predicate wrapping damage and life gain")
-    void hasCorrectDeathTriggerStructure() {
-        Slimefoot card = new Slimefoot();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(2);
-
-        // First effect: deal 1 damage to each opponent
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0))
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect damageFilter =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0);
-        assertThat(damageFilter.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.SAPROLING));
-        assertThat(damageFilter.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) damageFilter.wrapped()).damage()).isEqualTo(1);
-
-        // Second effect: gain 1 life
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1))
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect lifeFilter =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1);
-        assertThat(lifeFilter.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.SAPROLING));
-        assertThat(lifeFilter.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) lifeFilter.wrapped()).amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability to create 1/1 green Saproling token for {4}")

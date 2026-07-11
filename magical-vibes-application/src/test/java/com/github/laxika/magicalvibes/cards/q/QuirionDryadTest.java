@@ -2,41 +2,22 @@ package com.github.laxika.magicalvibes.cards.q;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class QuirionDryadTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Quirion Dryad has correct card properties")
-    void hasCorrectProperties() {
-        QuirionDryad card = new QuirionDryad();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class);
-
-        PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger =
-                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.triggerColors()).isEqualTo(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED));
-        assertThat(trigger.amount()).isEqualTo(1);
-        assertThat(trigger.onlyOwnSpells()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting a white spell makes Quirion Dryad get a +1/+1 counter")

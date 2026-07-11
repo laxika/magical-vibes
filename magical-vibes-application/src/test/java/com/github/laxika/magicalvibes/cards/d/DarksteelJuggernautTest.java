@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,20 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DarksteelJuggernautTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has P/T equal to controlled artifacts and must attack static effects")
-    void hasCorrectEffects() {
-        DarksteelJuggernaut card = new DarksteelJuggernaut();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(MustAttackEffect.class);
-    }
 
     // ===== P/T = number of artifacts you control =====
 

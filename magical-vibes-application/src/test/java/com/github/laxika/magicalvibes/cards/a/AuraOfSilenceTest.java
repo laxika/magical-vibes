@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,22 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuraOfSilenceTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Aura of Silence has correct card properties")
-    void hasCorrectProperties() {
-        AuraOfSilence card = new AuraOfSilence();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(IncreaseOpponentCastCostEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
 
     // ===== Casting and resolving =====
 

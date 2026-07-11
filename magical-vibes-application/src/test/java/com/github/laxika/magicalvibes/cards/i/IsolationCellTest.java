@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,24 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IsolationCellTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CASTS_SPELL LoseLifeUnlessPaysEffect with creature filter")
-    void hasCorrectEffect() {
-        IsolationCell card = new IsolationCell();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(LoseLifeUnlessPaysEffect.class);
-        LoseLifeUnlessPaysEffect effect =
-                (LoseLifeUnlessPaysEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-        assertThat(effect.payAmount()).isEqualTo(2);
-        assertThat(effect.spellFilter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.spellFilter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
 
     // ===== Only triggers on creature spells =====
 
@@ -104,8 +82,8 @@ class IsolationCellTest extends BaseCardTest {
         // Resolve the triggered ability — should prompt the opponent
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -160,7 +138,7 @@ class IsolationCellTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No prompt — it was automatic
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }

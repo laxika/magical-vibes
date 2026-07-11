@@ -1,16 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,29 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinWarchiefTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Warchief has cost reduction and haste-granting static effects")
-    void hasCorrectEffects() {
-        GoblinWarchief card = new GoblinWarchief();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(StaticBoostEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect costEffect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(costEffect.predicate()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) costEffect.predicate()).subtype()).isEqualTo(CardSubtype.GOBLIN);
-        assertThat(costEffect.amount()).isEqualTo(1);
-        assertThat(costEffect.scope()).isEqualTo(CostModificationScope.SELF);
-
-        StaticBoostEffect hasteEffect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(hasteEffect.powerBoost()).isEqualTo(0);
-        assertThat(hasteEffect.toughnessBoost()).isEqualTo(0);
-        assertThat(hasteEffect.grantedKeywords()).containsExactly(Keyword.HASTE);
-    }
 
     // ===== Casting and resolving =====
 

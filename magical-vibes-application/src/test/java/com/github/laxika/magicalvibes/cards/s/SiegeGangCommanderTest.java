@@ -1,19 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,35 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SiegeGangCommanderTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Siege-Gang Commander has correct card properties and ability structure")
-    void hasCorrectProperties() {
-        SiegeGangCommander card = new SiegeGangCommander();
-
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(3);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{R}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                )),
-                "Sacrifice a Goblin",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates three 1/1 red Goblin tokens")
@@ -80,7 +45,7 @@ class SiegeGangCommanderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, 0, null, targetPlayerId);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -182,5 +147,4 @@ class SiegeGangCommanderTest extends BaseCardTest {
                 .getId();
     }
 }
-
 

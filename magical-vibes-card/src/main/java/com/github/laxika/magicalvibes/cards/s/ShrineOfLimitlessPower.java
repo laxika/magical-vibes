@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -30,7 +32,7 @@ public class ShrineOfLimitlessPower extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}",
-                List.of(new SacrificeSelfCost(), new TargetPlayerDiscardsByChargeCountersEffect()),
+                List.of(new SacrificeSelfCost(), new DiscardEffect(new CountersOnSource(CounterType.CHARGE), DiscardRecipient.TARGET_PLAYER)),
                 "{4}, {T}, Sacrifice Shrine of Limitless Power: Target player discards a card for each charge counter on Shrine of Limitless Power."
         ));
     }

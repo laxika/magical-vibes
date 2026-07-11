@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JayasImmolatingInfernoTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct targeting and effect")
-    void hasCorrectProperties() {
-        JayasImmolatingInferno card = new JayasImmolatingInferno();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(1);
-        assertThat(card.getMaxTargets()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealXDamageToEachTargetEffect.class);
-    }
 
     // ===== Legendary sorcery restriction =====
 

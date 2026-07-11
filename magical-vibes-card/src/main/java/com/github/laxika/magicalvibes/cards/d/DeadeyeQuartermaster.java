@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -16,7 +16,7 @@ public class DeadeyeQuartermaster extends Card {
 
     public DeadeyeQuartermaster() {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new MayEffect(new SearchLibraryForCardsToHandEffect(
+                new MayEffect(new SearchLibraryEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.EQUIPMENT),
                                 new CardSubtypePredicate(CardSubtype.VEHICLE)))),

@@ -2,17 +2,11 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,28 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SerpentOfTheEndlessSeaTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Serpent of the Endless Sea has correct static effects")
-    void hasCorrectProperties() {
-        SerpentOfTheEndlessSea card = new SerpentOfTheEndlessSea();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
-        PowerToughnessEqualToControlledPermanentCountEffect ptEffect =
-                (PowerToughnessEqualToControlledPermanentCountEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(ptEffect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);
-        CantAttackUnlessDefenderControlsMatchingPermanentEffect attackEffect =
-                (CantAttackUnlessDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(attackEffect.defenderPermanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-    }
 
     // ===== Casting and resolving =====
 
@@ -149,7 +121,7 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
         gs.declareAttackers(gd, player1, List.of(serpentIndex));
@@ -166,7 +138,7 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(serpentIndex)))

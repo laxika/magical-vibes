@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -20,23 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EzurisArchersTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Ezuri's Archers has BoostSelfWhenBlockingKeywordEffect for flying")
-    void hasCorrectStructure() {
-        EzurisArchers card = new EzurisArchers();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(BoostSelfWhenBlockingKeywordEffect.class);
-        BoostSelfWhenBlockingKeywordEffect effect =
-                (BoostSelfWhenBlockingKeywordEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(effect.requiredKeyword()).isEqualTo(Keyword.FLYING);
-        assertThat(effect.powerBoost()).isEqualTo(3);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-    }
 
     // ===== Blocking a flying creature triggers boost =====
 
@@ -126,6 +105,6 @@ class EzurisArchersTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

@@ -14,20 +14,22 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -52,8 +54,10 @@ public class MiscTriggerCollectorService {
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ExileService exileService;
     private final DrawService drawService;
+    private final AmountEvaluationService amountEvaluationService;
     // @Lazy to break indirect circular dependency:
     // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlSupport permanentControlSupport;
@@ -62,15 +66,19 @@ public class MiscTriggerCollectorService {
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
+                                       PredicateEvaluationService predicateEvaluationService,
                                        ExileService exileService,
                                        @Lazy DrawService drawService,
+                                       AmountEvaluationService amountEvaluationService,
                                        @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.exileService = exileService;
         this.drawService = drawService;
+        this.amountEvaluationService = amountEvaluationService;
         this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
     }
@@ -117,7 +125,7 @@ public class MiscTriggerCollectorService {
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (as.sacrificedCard() == null
-                || !gameQueryService.matchesPermanentPredicate(match.gameData(),
+                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
                         new Permanent(as.sacrificedCard()), conditional.predicate())) {
             return false;
         }
@@ -139,12 +147,12 @@ public class MiscTriggerCollectorService {
 
     // ── ON_ENCHANTED_PERMANENT_TAPPED ──────────────────────────────────
 
-    @CollectsTrigger(value = GiveEnchantedPermanentControllerPoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
+    @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapPoison(TriggerMatchContext match,
-            GiveEnchantedPermanentControllerPoisonCountersEffect e, TriggerContext ctx) {
+            GivePoisonCountersEffect e, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        GiveEnchantedPermanentControllerPoisonCountersEffect resolved =
-                new GiveEnchantedPermanentControllerPoisonCountersEffect(e.amount(), ept.tappedPermanentControllerId());
+        GivePoisonCountersEffect resolved = new GivePoisonCountersEffect(
+                e.amount(), PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER, null, ept.tappedPermanentControllerId());
         match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -251,10 +259,10 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class,
+    @CollectsTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
             slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainPutCountersOnMatching(TriggerMatchContext match,
-            PutPlusOnePlusOneCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
+            PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
@@ -288,7 +296,7 @@ public class MiscTriggerCollectorService {
         if (lg.sourceCard() == null || !lg.sourceCard().getColors().contains(effect.triggeringColor())) return false;
 
         // Queue for target selection (creature or player)
-        gameData.pendingLifeGainTriggerTargets.add(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
                 List.of(new DealDamageToAnyTargetEffect(effect.damage())),
@@ -302,24 +310,29 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TargetPlayerLosesLifeEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
-            TargetPlayerLosesLifeEqualToLifeGainedEffect effect, TriggerContext ctx) {
+            LoseLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
         UUID opponentId = gameQueryService.getOpponentId(gameData, match.controllerId());
 
-        TargetPlayerLosesLifeEffect resolved = new TargetPlayerLosesLifeEffect(lg.lifeGainedAmount());
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
-                new ArrayList<>(List.of(resolved)),
+                new ArrayList<>(List.of(effect)),
                 opponentId,
-                match.permanent().getId()
-        ));
+                match.permanent().getId());
+        // Snapshot the life gained onto the entry's event value — parallel to the spell-mana-spent
+        // xValue plumbing — so the effect's EventValue amount ("equal to the life gained") reads it
+        // back at resolution.
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(lg.lifeGainedAmount());
+        }
+        gameData.enqueueTrigger(entry);
 
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);

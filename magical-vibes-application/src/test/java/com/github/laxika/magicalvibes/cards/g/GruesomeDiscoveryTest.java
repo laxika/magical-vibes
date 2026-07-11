@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,21 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GruesomeDiscoveryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from target discard to caster choice discard")
-    void hasCorrectStructure() {
-        GruesomeDiscovery card = new GruesomeDiscovery();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MorbidReplacementEffect.class);
-
-        MorbidReplacementEffect effect = (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) effect.baseEffect()).amount()).isEqualTo(2);
-        assertThat(effect.morbidEffect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-        assertThat(((ChooseCardFromTargetHandToDiscardEffect) effect.morbidEffect()).count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Gruesome Discovery on the stack targeting a player")
@@ -76,14 +58,14 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
 
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Peek");
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
@@ -101,19 +83,19 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(2);
-        assertThat(gd.interaction.revealedHandChoice().discardMode()).isTrue();
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1, 2);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).discardMode()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactlyInAnyOrder(0, 1, 2);
 
         harness.handleCardChosen(player1, 1);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player1, 1);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Forest");
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
@@ -131,8 +113,8 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -146,12 +128,12 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
                 .contains("Peek");
@@ -168,7 +150,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
     }
 
@@ -198,12 +180,12 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
                 .contains("Gruesome Discovery", "Forest", "Peek");

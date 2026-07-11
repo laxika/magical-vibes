@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,18 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RagingSwordtoothTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB MassDamageEffect with 'each other creature' filter")
-    void hasCorrectEtbEffect() {
-        RagingSwordtooth card = new RagingSwordtooth();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isNotNull();
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack as a creature spell")

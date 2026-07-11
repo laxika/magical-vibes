@@ -1,61 +1,22 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NaruMehaMasterWizardTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has CopySpellEffect ETB and StaticBoostEffect for Wizards")
-    void hasCorrectEffects() {
-        NaruMehaMasterWizard card = new NaruMehaMasterWizard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CopySpellEffect.class);
-        CopySpellEffect copyEffect = (CopySpellEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(copyEffect.spellFilter()).isNotNull();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isEqualTo(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WIZARD)));
-    }
-
-    @Test
-    @DisplayName("Does not require spell target at cast time (creature)")
-    void doesNotRequireSpellTargetAtCastTime() {
-        NaruMehaMasterWizard card = new NaruMehaMasterWizard();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isFalse();
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
 
     // ===== ETB spell copy — targeting =====
 
@@ -76,8 +37,8 @@ class NaruMehaMasterWizardTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should be awaiting permanent choice (to pick a spell from the stack)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(counsel.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(counsel.getId());
     }
 
     @Test

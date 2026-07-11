@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChimericStaffTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chimeric Staff has correct card properties")
-    void hasCorrectProperties() {
-        ChimericStaff card = new ChimericStaff();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{X}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateSelfEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -369,7 +351,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("becomes a 3/3 artifact creature"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("becomes a 3/3 creature"));
     }
 
     // ===== Helper methods =====

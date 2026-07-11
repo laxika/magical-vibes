@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSecondTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkulduggeryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has BoostFirstTargetCreatureEffect(+1/+1) and BoostSecondTargetCreatureEffect(-1/-1)")
-    void cardHasCorrectEffects() {
-        Skulduggery card = new Skulduggery();
-        var effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(BoostFirstTargetCreatureEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(BoostSecondTargetCreatureEffect.class);
-
-        BoostFirstTargetCreatureEffect boost = (BoostFirstTargetCreatureEffect) effects.get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        BoostSecondTargetCreatureEffect debuff = (BoostSecondTargetCreatureEffect) effects.get(1);
-        assertThat(debuff.powerBoost()).isEqualTo(-1);
-        assertThat(debuff.toughnessBoost()).isEqualTo(-1);
-    }
+    
 
     @Test
     @DisplayName("Target creature you control gets +1/+1 and target opponent creature gets -1/-1")

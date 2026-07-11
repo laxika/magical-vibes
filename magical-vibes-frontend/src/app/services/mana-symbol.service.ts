@@ -60,7 +60,9 @@ export class ManaSymbolService {
     if (cached) return Promise.resolve(cached);
 
     const cacheKey = symbol;
-    const url = `https://svgs.scryfall.io/card-symbols/${encodeURIComponent(symbol)}.svg`;
+    // Scryfall card-symbol filenames strip slashes: {R/P} -> RP.svg, {W/U} -> WU.svg, {2/W} -> 2W.svg.
+    const fileName = symbol.replace(/\//g, '');
+    const url = `https://svgs.scryfall.io/card-symbols/${encodeURIComponent(fileName)}.svg`;
 
     const promise = this.getFromDb(cacheKey).then(blob => {
       if (blob) {

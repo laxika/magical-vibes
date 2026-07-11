@@ -76,6 +76,4 @@ class TempestDjinnTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, djinn)).isEqualTo(4);
     }
 
-    // ===== Helpers =====
-
 }

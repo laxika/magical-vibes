@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,31 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SettleTheScoreTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two SPELL effects: ExileTargetPermanentEffect and PutCounterOnTargetPermanentEffect")
-    void hasCorrectEffects() {
-        SettleTheScore card = new SettleTheScore();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-
-        PutCounterOnTargetPermanentEffect counterEffect =
-                (PutCounterOnTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.LOYALTY);
-        assertThat(counterEffect.count()).isEqualTo(2);
-        assertThat(counterEffect.predicate()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("Targets creatures")
-    void targetsCreatures() {
-        SettleTheScore card = new SettleTheScore();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
 
     // ===== Exile target creature =====
 

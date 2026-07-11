@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCo
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,7 +31,7 @@ import static org.mockito.Mockito.when;
 class MultiplePermanentSacrificeCostHandlerTest {
 
     @Mock
-    private GameQueryService gameQueryService;
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private PermanentSacrificeAction sacrificeAction;
@@ -47,7 +46,7 @@ class MultiplePermanentSacrificeCostHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new MultiplePermanentSacrificeCostHandler(cost, gameQueryService, sacrificeAction);
+        handler = new MultiplePermanentSacrificeCostHandler(cost, predicateEvaluationService, sacrificeAction);
         playerId = UUID.randomUUID();
         player = new Player(playerId, "TestPlayer");
         gameData = new GameData(UUID.randomUUID(), "test", playerId, "TestPlayer");
@@ -77,7 +76,7 @@ class MultiplePermanentSacrificeCostHandlerTest {
     void singlePermanentCostUsesDescription() {
         SacrificePermanentCost singleCost = new SacrificePermanentCost(filter, "Sacrifice a Goblin");
         MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
-                singleCost, gameQueryService, sacrificeAction, null);
+                singleCost, predicateEvaluationService, sacrificeAction, null);
 
         assertThat(singleHandler.costEffect()).isSameAs(singleCost);
         assertThat(singleHandler.requiredCount()).isEqualTo(1);
@@ -92,10 +91,10 @@ class MultiplePermanentSacrificeCostHandlerTest {
         Permanent source = createPermanent("Source Goblin");
         UUID sourceId = source.getId();
         MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
-                singleCost, gameQueryService, sacrificeAction, sourceId);
+                singleCost, predicateEvaluationService, sacrificeAction, sourceId);
         gameData.playerBattlefields.get(playerId).add(source);
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, source, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, source, filter)).thenReturn(true);
 
         assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
     }
@@ -111,8 +110,8 @@ class MultiplePermanentSacrificeCostHandlerTest {
         Permanent artifact2 = createPermanent("Artifact B");
         gameData.playerBattlefields.get(playerId).addAll(List.of(artifact1, artifact2));
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
 
         // Only 2 matching but need 3
         assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
@@ -136,9 +135,9 @@ class MultiplePermanentSacrificeCostHandlerTest {
         Permanent artifact3 = createPermanent("Artifact C");
         gameData.playerBattlefields.get(playerId).addAll(List.of(artifact1, artifact2, artifact3));
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact3, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact3, filter)).thenReturn(true);
 
         handler.validateCanPay(gameData, playerId);
         // no exception = success
@@ -151,8 +150,8 @@ class MultiplePermanentSacrificeCostHandlerTest {
         Permanent enchantment = createPermanent("Enchantment A");
         gameData.playerBattlefields.get(playerId).addAll(List.of(artifact, enchantment));
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact, filter)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
 
         // Only 1 matching but need 3
         assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
@@ -169,7 +168,7 @@ class MultiplePermanentSacrificeCostHandlerTest {
     void getValidChoiceIdsEmptyWhenNoMatching() {
         Permanent enchantment = createPermanent("Enchantment");
         gameData.playerBattlefields.get(playerId).add(enchantment);
-        when(gameQueryService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
 
@@ -194,9 +193,9 @@ class MultiplePermanentSacrificeCostHandlerTest {
         Permanent artifact2 = createPermanent("Artifact B");
         gameData.playerBattlefields.get(playerId).addAll(List.of(artifact1, enchantment, artifact2));
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact1, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact2, filter)).thenReturn(true);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
 
@@ -211,7 +210,7 @@ class MultiplePermanentSacrificeCostHandlerTest {
     @DisplayName("validateAndPay throws when chosen permanent does not match filter")
     void validateAndPayThrowsForNonMatching() {
         Permanent enchantment = createPermanent("Not Matching");
-        when(gameQueryService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, enchantment, filter)).thenReturn(false);
 
         assertThatThrownBy(() -> handler.validateAndPay(gameData, player, enchantment))
                 .isInstanceOf(IllegalStateException.class)
@@ -224,7 +223,7 @@ class MultiplePermanentSacrificeCostHandlerTest {
     @DisplayName("validateAndPay sacrifices the chosen matching permanent")
     void validateAndPaySacrificesMatching() {
         Permanent artifact = createPermanent("Sol Ring");
-        when(gameQueryService.matchesPermanentPredicate(gameData, artifact, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, artifact, filter)).thenReturn(true);
 
         handler.validateAndPay(gameData, player, artifact);
 

@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,38 +16,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LumengridDrakeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has metalcraft-conditional ETB bounce effect")
-    void hasMetalcraftEtbEffect() {
-        LumengridDrake card = new LumengridDrake();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Card needs target (delegates from metalcraft wrapper)")
-    void needsTarget() {
-        LumengridDrake card = new LumengridDrake();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== ETB with metalcraft met =====
 
     @Test
-    @DisplayName("ETB triggers when metalcraft is met (3+ artifacts)")
+    @DisplayName("ETB triggers when metalcraft is met (3+ artifacts) — target chosen at trigger time")
     void etbTriggersWithMetalcraft() {
         setupMetalcraft();
         harness.addToBattlefield(player2, new GrizzlyBears());
         castLumengridDrake();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+
+        // Casting never asked for a target — the prompt fires as the trigger goes on the stack
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
 
         // ETB trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -64,7 +46,8 @@ class LumengridDrakeTest extends BaseCardTest {
         setupMetalcraft();
         harness.addToBattlefield(player2, new GrizzlyBears());
         castLumengridDrake();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -79,7 +62,8 @@ class LumengridDrakeTest extends BaseCardTest {
         setupMetalcraft();
         harness.addToBattlefield(player2, new GrizzlyBears());
         castLumengridDrake();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -92,7 +76,8 @@ class LumengridDrakeTest extends BaseCardTest {
         setupMetalcraft();
         harness.addToBattlefield(player2, new GrizzlyBears());
         castLumengridDrake();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.stack).isEmpty();
@@ -107,14 +92,15 @@ class LumengridDrakeTest extends BaseCardTest {
         castLumengridDrake();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack
+        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Drake is still on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Lumengrid Drake"));
 
-        // Target creature was NOT bounced
+        // No creature was bounced
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
@@ -129,10 +115,11 @@ class LumengridDrakeTest extends BaseCardTest {
         castLumengridDrake();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger
+        // No ETB trigger and no target prompt
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
-        // Target creature was NOT bounced
+        // No creature was bounced
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
@@ -145,7 +132,8 @@ class LumengridDrakeTest extends BaseCardTest {
         setupMetalcraft();
         harness.addToBattlefield(player2, new GrizzlyBears());
         castLumengridDrake();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Grizzly Bears"));
 
         // Remove artifacts before ETB resolves
         gd.playerBattlefields.get(player1.getId()).removeIf(
@@ -171,9 +159,10 @@ class LumengridDrakeTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new LumengridDrake()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -191,9 +180,8 @@ class LumengridDrakeTest extends BaseCardTest {
     }
 
     private void castLumengridDrake() {
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new LumengridDrake()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
     }
 }

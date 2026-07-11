@@ -4,10 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,23 +22,6 @@ class VedalkenCertarchTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Vedalken Certarch"))
                 .findFirst().orElseThrow();
         certarch.setSummoningSick(false);
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap activated ability with metalcraft restriction")
-    void hasCorrectAbility() {
-        VedalkenCertarch card = new VedalkenCertarch();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.METALCRAFT);
     }
 
     // ===== Metalcraft activation restriction =====

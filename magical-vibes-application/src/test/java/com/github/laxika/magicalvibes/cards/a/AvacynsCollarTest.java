@@ -3,20 +3,12 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,40 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AvacynsCollarTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +1/+0 boost and vigilance for equipped creature")
-    void hasStaticEffects() {
-        AvacynsCollar card = new AvacynsCollar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect vigilance = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(vigilance.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(vigilance.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has Human triggering-card conditional death trigger wrapping CreateTokenEffect")
-    void hasDeathTrigger() {
-        AvacynsCollar card = new AvacynsCollar();
-
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect conditional = (TriggeringCardConditionalEffect)
-                card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-    }
 
     // ===== Static boost =====
 

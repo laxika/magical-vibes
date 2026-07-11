@@ -1,0 +1,85 @@
+package com.github.laxika.magicalvibes.cards.w;
+
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class WanderersTwigTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Activating ability sacrifices the twig and searches library for basic land")
+    void activateAbilitySacrificesAndSearches() {
+        harness.addToBattlefield(player1, new WanderersTwig());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        setupLibraryWithBasicLands();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        // Twig should be sacrificed
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Wanderer's Twig"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Wanderer's Twig"));
+
+        // Should be awaiting library search with only basic lands offered
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
+    }
+
+    @Test
+    @DisplayName("Choosing a basic land from search puts it into hand")
+    void choosingBasicLandPutsItIntoHand() {
+        harness.addToBattlefield(player1, new WanderersTwig());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        setupLibraryWithBasicLands();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+        String chosenName = offered.getFirst().getName();
+
+        harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
+    }
+
+    @Test
+    @DisplayName("Empty library auto-completes without searching")
+    void emptyLibraryAutoCompletes() {
+        harness.addToBattlefield(player1, new WanderersTwig());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        gd.playerDecks.get(player1.getId()).clear();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        // Twig should be sacrificed
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Wanderer's Twig"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Wanderer's Twig"));
+    }
+
+    private void setupLibraryWithBasicLands() {
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        deck.clear();
+        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+    }
+}

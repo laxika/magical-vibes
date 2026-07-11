@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeStopTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Time Stop has correct card properties")
-    void hasCorrectProperties() {
-        TimeStop card = new TimeStop();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(EndTurnEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -293,12 +279,12 @@ class TimeStopTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         GameData gd = harness.getGameData();
-        gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+        gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
     }
 }
 

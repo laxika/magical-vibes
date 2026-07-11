@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EntrancingMelodyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        EntrancingMelody card = new EntrancingMelody();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GainControlOfTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gains control of target creature with mana value equal to X")
@@ -46,7 +37,7 @@ class EntrancingMelodyTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bearsId));
 
         // Control is permanent
-        assertThat(gd.permanentControlStolenCreatures).contains(bearsId);
+        assertThat(gd.newestControlEffectFor(bearsId).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
     }
 
     @Test

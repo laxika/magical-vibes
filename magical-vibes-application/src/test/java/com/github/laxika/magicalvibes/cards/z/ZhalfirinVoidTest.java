@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.z;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,30 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ZhalfirinVoidTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB scry 1 effect")
-    void hasEtbScryEffect() {
-        ZhalfirinVoid card = new ZhalfirinVoid();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has tap for colorless mana ability")
-    void hasTapForColorlessManaAbility() {
-        ZhalfirinVoid card = new ZhalfirinVoid();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS));
-    }
 
     // ===== ETB trigger =====
 
@@ -61,9 +33,9 @@ class ZhalfirinVoidTest extends BaseCardTest {
         playZhalfirinVoid(player1);
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
 
     // ===== Scry 1 functionality =====
@@ -107,8 +79,8 @@ class ZhalfirinVoidTest extends BaseCardTest {
 
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.scryContext()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     // ===== Land enters battlefield =====

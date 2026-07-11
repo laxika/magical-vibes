@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,29 +16,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FerventStrikeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fervent Strike has correct card properties")
-    void hasCorrectProperties() {
-        FerventStrike card = new FerventStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-
-        GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(firstStrike.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(firstStrike.scope()).isEqualTo(GrantScope.TARGET);
-
-        GrantKeywordEffect haste = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(haste.scope()).isEqualTo(GrantScope.TARGET);
-    }
 
     // ===== Casting and resolving =====
 

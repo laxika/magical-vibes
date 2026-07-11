@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExtraTurnEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TurnSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;

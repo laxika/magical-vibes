@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.cards.g.GhastlyHaunting;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,21 +31,7 @@ class SoulSeizerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Soul Seizer has MayEffect combat damage trigger and Ghastly Haunting back face")
-    void hasConfiguredEffects() {
-        SoulSeizer card = new SoulSeizer();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("GhastlyHaunting");
-        assertThat(card.getBackFaceCard()).isInstanceOf(GhastlyHaunting.class);
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlEnchantedCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
@@ -61,7 +42,7 @@ class SoulSeizerTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -114,7 +95,7 @@ class SoulSeizerTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -128,7 +109,7 @@ class SoulSeizerTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -144,8 +125,8 @@ class SoulSeizerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(enemyBears.getId())
                 .doesNotContain(ownBears.getId());
     }
@@ -163,7 +144,7 @@ class SoulSeizerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
     }
 }

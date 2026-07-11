@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,22 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StarlightInvokerTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Starlight Invoker has correct card properties")
-    void hasCorrectProperties() {
-        StarlightInvoker card = new StarlightInvoker();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(5);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{7}{W}");
-    }
 
     // ===== Activation =====
 

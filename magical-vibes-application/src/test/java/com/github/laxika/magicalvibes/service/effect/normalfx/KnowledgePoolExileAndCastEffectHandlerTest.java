@@ -7,19 +7,21 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
+import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.interaction.KnowledgePoolCastChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.KnowledgePoolExileAndCastEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -38,7 +40,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -56,6 +57,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
+    @Mock private SessionManager sessionManager;
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
@@ -86,7 +88,9 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, exileService);
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
+        registry.register(new KnowledgePoolCastChoiceInteractionHandler(sessionManager, cardViewFactory, exileSupport));
+        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, registry, exileService);
 
     }
 
@@ -265,9 +269,11 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.knowledgePoolSourcePermanentId).isEqualTo(kp.getId());
-                verify(playerInputService).sendKnowledgePoolCastChoice(
-                        eq(gd), eq(player1Id), eq(List.of(poolCard.getId())), anyList());
+                assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class).sourcePermanentId()).isEqualTo(kp.getId());
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.KnowledgePoolCastChoice.class)
+                        .validCardIds()).containsExactly(poolCard.getId());
+                verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 
 
@@ -276,15 +282,15 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             void playerDeclines() {
                 Player player = new Player(player1Id, "Player1");
                 UUID kpId = UUID.randomUUID();
-                gd.knowledgePoolSourcePermanentId = kpId;
-                gd.interaction.beginKnowledgePoolCastChoice(player1Id, java.util.Set.of(), 1);
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(), 1));
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd),
                         eq("Player1 declines to cast a spell from Knowledge Pool."));
                 verify(gameBroadcastService).broadcastGameState(gd);
-                assertThat(gd.knowledgePoolSourcePermanentId).isNull();
+                assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }
 
             @Test
@@ -294,10 +300,9 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 Card chosenCard = createSorceryCard("Wrath of God");
                 UUID kpId = UUID.randomUUID();
 
-                gd.knowledgePoolSourcePermanentId = kpId;
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
                 gd.addToExile(player1Id, chosenCard, kpId);
-                gd.interaction.beginKnowledgePoolCastChoice(player1Id,
-                        java.util.Set.of(chosenCard.getId()), 1);
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(chosenCard.getId()), 1));
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
 
@@ -319,10 +324,9 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 chosenCard.addEffect(EffectSlot.SPELL, new MillHalfLibraryEffect(false));
                 UUID kpId = UUID.randomUUID();
 
-                gd.knowledgePoolSourcePermanentId = kpId;
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
                 gd.addToExile(player1Id, chosenCard, kpId);
-                gd.interaction.beginKnowledgePoolCastChoice(player1Id,
-                        java.util.Set.of(chosenCard.getId()), 1);
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(chosenCard.getId()), 1));
 
                 // Put a creature on the battlefield — it must NOT appear as a valid target
                 Card creatureCard = createCreatureCard("Baneslayer Angel");
@@ -343,8 +347,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
             void broadcastsWhenPoolNull() {
                 Player player = new Player(player1Id, "Player1");
                 UUID kpId = UUID.randomUUID();
-                gd.knowledgePoolSourcePermanentId = kpId;
-                gd.interaction.beginKnowledgePoolCastChoice(player1Id, java.util.Set.of(), 1);
+                gd.queueInteraction(new PendingKnowledgePoolCast(kpId));
+                gd.interaction.beginInteraction(new PendingInteraction.KnowledgePoolCastChoice(player1Id, List.of(), 1));
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
 

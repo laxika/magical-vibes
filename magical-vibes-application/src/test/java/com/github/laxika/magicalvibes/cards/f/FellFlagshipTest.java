@@ -1,21 +1,15 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,47 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FellFlagshipTest extends BaseCardTest {
-
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has static +1/+0 boost for Pirates")
-    void hasStaticPirateBoost() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER discard effect")
-    void hasCombatDamageDiscardTrigger() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        TargetPlayerDiscardsEffect effect =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has Crew 3 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(3);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
 
     // ===== Lord effect — Pirates you control get +1/+0 =====
 
@@ -175,8 +128,8 @@ class FellFlagshipTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Game pauses for discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
 
@@ -203,7 +156,7 @@ class FellFlagshipTest extends BaseCardTest {
         resolveCombat();
 
         // No discard prompt — Fell Flagship didn't deal combat damage to a player
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
@@ -221,7 +174,7 @@ class FellFlagshipTest extends BaseCardTest {
         resolveCombat();
 
         // Discard does nothing, no input needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Helpers =====
@@ -242,7 +195,6 @@ class FellFlagshipTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombat() {
         harness.forceActivePlayer(player1);

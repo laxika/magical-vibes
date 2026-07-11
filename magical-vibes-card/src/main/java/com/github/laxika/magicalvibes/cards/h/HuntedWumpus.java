@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "269")
+@CardRegistration(set = "9ED", collectorNumber = "248")
 public class HuntedWumpus extends Card {
 
     public HuntedWumpus() {

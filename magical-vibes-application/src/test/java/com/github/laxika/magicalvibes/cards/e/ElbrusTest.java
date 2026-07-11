@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WithengarUnbound;
-import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -23,29 +18,9 @@ class ElbrusTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has static +1/+0 boost for equipped creature")
-    void hasStaticBoost() {
-        Elbrus card = new Elbrus();
+    
 
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has mandatory combat damage trigger that transforms (no may choice)")
-    void hasCombatDamageTransformTrigger() {
-        Elbrus card = new Elbrus();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has equip {1} ability")
@@ -58,30 +33,7 @@ class ElbrusTest extends BaseCardTest {
                 .isInstanceOf(EquipEffect.class);
     }
 
-    @Test
-    @DisplayName("Has back face set to Withengar Unbound")
-    void hasBackFace() {
-        Elbrus card = new Elbrus();
-
-        assertThat(card.getBackFaceClassName()).isEqualTo("WithengarUnbound");
-        assertThat(card.getBackFaceCard()).isInstanceOf(WithengarUnbound.class);
-    }
-
-    // ===== Back face structure =====
-
-    @Test
-    @DisplayName("Withengar Unbound puts thirteen +1/+1 counters on itself when a player loses")
-    void backFaceHasLosesGameTrigger() {
-        WithengarUnbound card = new WithengarUnbound();
-
-        assertThat(card.getEffects(EffectSlot.ON_PLAYER_LOSES_GAME)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_PLAYER_LOSES_GAME).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect effect =
-                (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_PLAYER_LOSES_GAME).getFirst();
-        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(effect.count()).isEqualTo(13);
-    }
+    
 
     // ===== Static effect =====
 
@@ -139,13 +91,13 @@ class ElbrusTest extends BaseCardTest {
         @DisplayName("No transform when equipped creature is blocked and deals no player damage")
         void noTransformWhenBlocked() {
             Permanent creature = addReadyCreature(player1);
-            creature.getCard().setToughness(10); // survives the blocker so the test isolates the "blocked" case
+            TestCards.mutableCard(creature).setToughness(10); // survives the blocker so the test isolates the "blocked" case
             Permanent elbrus = addElbrusReady(player1);
             elbrus.setAttachedTo(creature.getId());
             creature.setAttacking(true);
 
             Permanent blocker = addReadyCreature(player2);
-            blocker.getCard().setToughness(10);
+            TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
 

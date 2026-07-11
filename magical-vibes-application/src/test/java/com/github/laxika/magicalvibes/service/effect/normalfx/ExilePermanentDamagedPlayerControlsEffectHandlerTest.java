@@ -6,17 +6,15 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentDamagedPlayerControlsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -33,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -42,12 +39,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
@@ -82,7 +81,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, gameBroadcastService, playerInputService);
+        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService);
 
     }
 
@@ -170,9 +169,9 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.pendingExileDamagedPlayerControlsPermanent).isTrue();
                 verify(playerInputService).beginMultiPermanentChoice(
-                        eq(gd), eq(player1Id), eq(List.of(defenderPerm.getId())), eq(1), anyString());
+                        eq(gd), eq(player1Id), eq(List.of(defenderPerm.getId())), eq(1),
+                        eq(new MultiPermanentChoiceContext.ExileDamagedPlayerControls()), anyString());
             }
 
             @Test
@@ -190,7 +189,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 );
 
                 // Creature matches, artifact does not
-                when(gameQueryService.matchesPermanentPredicate(eq(gd), any(), any()))
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), any()))
                         .thenAnswer(inv -> {
                             Permanent p = inv.getArgument(1);
                             return p.getCard().getType() == CardType.CREATURE;
@@ -201,7 +200,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 verify(playerInputService).beginMultiPermanentChoice(
                         eq(gd), eq(player1Id),
                         eq(List.of(gd.playerBattlefields.get(player2Id).getFirst().getId())),
-                        eq(1), anyString());
+                        eq(1), any(), anyString());
             }
 
             @Test
@@ -220,7 +219,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
             }
 
             @Test
@@ -237,7 +236,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
                 verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
             }
 }

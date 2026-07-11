@@ -10,12 +10,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BounceCreatureOnUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.BounceCreatureOnUpkeepEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,11 +36,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class BounceCreatureOnUpkeepEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PlayerInputService playerInputService;
@@ -70,7 +69,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         bounceCreatureOnUpkeepHandler = new BounceCreatureOnUpkeepEffectHandler(
-                gameQueryService, gameBroadcastService, playerInputService);
+                gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService);
 
     }
 
@@ -117,7 +116,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
         }
 
         // =========================================================================
-        // ReturnSelfToHandEffect
+        // ReturnToHandEffect (SELF scope)
         // =========================================================================
 
     @Test
@@ -134,7 +133,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
                         List.of(effect), player2Id, UUID.randomUUID());
 
                 when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-                when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
                 bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
@@ -156,7 +155,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
                         List.of(effect), UUID.randomUUID());
 
                 when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-                when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
                 bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
@@ -178,7 +177,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
                         List.of(effect), player1Id, UUID.randomUUID());
 
                 when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
-                when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
                 bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
@@ -222,8 +221,8 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
 
                 when(gameQueryService.isCreature(gd, matchingCreature)).thenReturn(true);
                 when(gameQueryService.isCreature(gd, nonMatchingCreature)).thenReturn(true);
-                when(gameQueryService.matchesFilters(eq(matchingCreature), any(), any())).thenReturn(true);
-                when(gameQueryService.matchesFilters(eq(nonMatchingCreature), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesFilters(eq(matchingCreature), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(eq(nonMatchingCreature), any(), any())).thenReturn(false);
 
                 bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 

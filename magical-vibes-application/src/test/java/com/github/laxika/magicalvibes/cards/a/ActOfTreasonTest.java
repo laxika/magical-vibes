@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,10 +9,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,20 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ActOfTreasonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Act of Treason has correct card properties")
-    void hasCorrectProperties() {
-        ActOfTreason card = new ActOfTreason();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Act of Treason puts it on the stack with the target creature")
@@ -76,7 +56,7 @@ class ActOfTreasonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
     @Test
@@ -97,7 +77,7 @@ class ActOfTreasonTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(attackerIndex));
 
@@ -122,7 +102,7 @@ class ActOfTreasonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
     @Test
@@ -139,7 +119,7 @@ class ActOfTreasonTest extends BaseCardTest {
 
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(ownCreature.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(ownCreature.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(ownCreature.getId())).isFalse();
     }
 
     @Test

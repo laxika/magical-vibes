@@ -181,7 +181,10 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
       alternateCostManaCost: null,
       graveyardActivatedAbilities: [],
       transformable: false,
-      kickerCost: null
+      kickerCost: null,
+      modalChoicesRequired: 0,
+      modalOptional: false,
+      modalOptions: null
     };
   }
 

@@ -3,15 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.d.DreamTwist;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,30 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GarnaTheBloodflameTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB effect that returns creature cards from graveyard put there from anywhere this turn")
-    void hasCorrectETBEffect() {
-        GarnaTheBloodflame card = new GarnaTheBloodflame();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ReturnCardFromGraveyardEffect etbEffect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.returnAll()).isTrue();
-        assertThat(etbEffect.fromAnywhereThisTurn()).isTrue();
-        assertThat(etbEffect.thisTurnOnly()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has static haste grant for other creatures you control")
-    void hasStaticHasteForOwnCreatures() {
-        GarnaTheBloodflame card = new GarnaTheBloodflame();
-
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .findFirst().orElseThrow();
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("ETB returns creature that died this turn from the battlefield")

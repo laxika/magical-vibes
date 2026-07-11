@@ -5,19 +5,18 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import lombok.RequiredArgsConstructor;
@@ -41,10 +40,12 @@ public class DamageSupport {
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
+    private final PermanentControlSupport permanentControlSupport;
 
     /**
      * Applies damage to a creature, handling prevention shield, recording, logging,
@@ -73,9 +74,17 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
+        // a chosen source to the protected creature onto another permanent.
+        if (sourcePermId != null) {
+            rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
+        }
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
+            // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+            rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
@@ -99,6 +108,9 @@ public class DamageSupport {
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
             }
+
+            // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
@@ -163,6 +175,9 @@ public class DamageSupport {
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
             }
+
+            // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
         }
 
         String sourceName = entry.getCard().getName();
@@ -303,6 +318,19 @@ public class DamageSupport {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
                 return;
             }
+            if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
+                // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
+                int loyaltyDamage = Math.max(0, rawDamage);
+                if (loyaltyDamage > 0) {
+                    targetPermanent.setCounterCount(CounterType.LOYALTY,
+                            targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
+                    gameBroadcastService.logAndBroadcast(gameData, cardName + " deals " + loyaltyDamage
+                            + " damage to " + targetPermanent.getCard().getName() + " ("
+                            + targetPermanent.getCounterCount(CounterType.LOYALTY) + " loyalty remaining).");
+                }
+                return;
+            }
             if (cantRegenerate) {
                 targetPermanent.setCantRegenerateThisTurn(true);
             }
@@ -336,6 +364,7 @@ public class DamageSupport {
         // Curse of Bloodletting and similar: double damage dealt to the enchanted player (replacement effect)
         rawDamage *= gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, playerId);
         if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
+                || damagePreventionService.isNoncombatDamageFromAttackerPreventedForPlayer(gameData, playerId, entry.getSourcePermanentId())
                 || isSourcePermanentPreventedFromDealingDamage(gameData, entry)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
@@ -355,10 +384,35 @@ public class DamageSupport {
             // Apply target+source-specific prevention shields (e.g. Healing Grace)
             if (entry.getSourcePermanentId() != null) {
                 rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
+                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage);
             }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+
+            // Purity: prevent all remaining noncombat damage to the controller and gain that much life
+            int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);
+            if (purityPrevented > 0) {
+                effectiveDamage -= purityPrevented;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s " + purityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+                lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
+            }
+
+            // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
+            // create one token per 1 damage prevented (for the spell's controller).
+            var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
+            if (hostility != null) {
+                int hostilityPrevented = effectiveDamage;
+                effectiveDamage = 0;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s " + hostilityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
+                        hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
+            }
 
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
@@ -377,18 +431,29 @@ public class DamageSupport {
                         playerName + "'s life total can't change.");
             } else {
                 int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                int newLife = currentLife - effectiveDamage;
+                // Worship: damage can't reduce the controller's life total below 1 while they control a creature.
+                // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
+                // total reduction is capped. Does nothing if the player is already at 0 or less life.
+                if (currentLife >= 1 && newLife < 1
+                        && gameQueryService.damageCantReduceLifeBelowOne(gameData, playerId)) {
+                    newLife = 1;
+                }
+                gameData.playerLifeTotals.put(playerId, newLife);
+                int lifeLost = currentLife - newLife;
 
                 if (effectiveDamage > 0) {
                     String playerName = gameData.playerIdToName.get(playerId);
                     gameBroadcastService.logAndBroadcast(gameData,
                             playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
-                    triggerCollectionService.checkLifeLossTriggers(gameData, playerId, effectiveDamage);
+                    if (lifeLost > 0) {
+                        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLost);
+                    }
                 }
             }
 
             if (effectiveDamage > 0) {
-                gameData.playersDealtDamageThisTurn.add(playerId);
+                gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
@@ -428,7 +493,7 @@ public class DamageSupport {
                     int currentLife = gameData.getLife(targetId);
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
-                gameData.playersDealtDamageThisTurn.add(targetId);
+                gameData.recordDamageToPlayer(targetId, redirectEffective);
             }
         }
     }
@@ -461,7 +526,7 @@ public class DamageSupport {
                         int currentLife = gameData.getLife(targetId);
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
-                    gameData.playersDealtDamageThisTurn.add(targetId);
+                    gameData.recordDamageToPlayer(targetId, redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
@@ -557,7 +622,7 @@ public class DamageSupport {
         int[] count = {0};
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && playerId.equals(perm.getAttachedTo())
-                    && gameQueryService.matchesPermanentPredicate(gameData, perm, predicate)) {
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, predicate)) {
                 count[0]++;
             }
         });

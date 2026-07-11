@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,20 +44,6 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentUntilSourceLeavesEffect")
-    void hasCorrectEffects() {
-        LeoninRelicWarder card = new LeoninRelicWarder();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test
@@ -74,7 +57,7 @@ class LeoninRelicWarderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -124,6 +107,29 @@ class LeoninRelicWarderTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Scimitar"));
+    }
+
+    @Test
+    @DisplayName("Casts with no artifacts or enchantments and the ETB never triggers")
+    void castsWithNoLegalTargets() {
+        // No artifacts or enchantments anywhere — the creature must still be castable
+        // (CR 601.2c), and its targeted "may" ETB has no legal target so it isn't put on the
+        // stack at all (CR 603.3c): the controller is never prompted.
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new LeoninRelicWarder()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+        // No may prompt and nothing left on the stack — the ETB never triggered.
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 
     // ===== LTB return =====

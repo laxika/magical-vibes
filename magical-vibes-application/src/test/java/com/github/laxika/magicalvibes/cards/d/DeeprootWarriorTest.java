@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -19,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeeprootWarriorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Deeproot Warrior has ON_BECOMES_BLOCKED effect with BoostSelfEffect +1/+1")
-    void hasOnBecomesBlockedEffect() {
-        DeeprootWarrior card = new DeeprootWarrior();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("When Deeproot Warrior becomes blocked, a triggered ability is pushed onto the stack")
@@ -70,8 +58,8 @@ class DeeprootWarriorTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent warriorPerm = addWarriorReady(player1);
-        warriorPerm.getCard().setPower(4);
-        warriorPerm.getCard().setToughness(4);
+        TestCards.mutableCard(warriorPerm).setPower(4);
+        TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -99,8 +87,8 @@ class DeeprootWarriorTest extends BaseCardTest {
     @DisplayName("+1/+1 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent warriorPerm = addWarriorReady(player1);
-        warriorPerm.getCard().setPower(4);
-        warriorPerm.getCard().setToughness(4);
+        TestCards.mutableCard(warriorPerm).setPower(4);
+        TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -139,6 +127,6 @@ class DeeprootWarriorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

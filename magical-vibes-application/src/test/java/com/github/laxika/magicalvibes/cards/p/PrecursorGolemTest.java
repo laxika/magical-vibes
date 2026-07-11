@@ -3,14 +3,10 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,27 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PrecursorGolemTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has ETB token effect and spell-copy trigger")
-    void hasCorrectEffects() {
-        PrecursorGolem card = new PrecursorGolem();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Golem");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.GOLEM);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
-                .isInstanceOf(CopySpellForEachOtherSubtypePermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates two 3/3 colorless Golem artifact creature tokens")

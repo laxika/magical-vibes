@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -21,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +46,23 @@ public class PermanentControlSupport {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
+        if (!(token.amount() instanceof Fixed fixed)) {
+            throw new IllegalStateException("Dynamic token counts must be evaluated before applyCreateToken: " + token.amount());
+        }
+        return applyCreateToken(gameData, controllerId, token, fixed.value(), sourceSetCode);
+    }
+
+    /**
+     * Creates {@code amount} tokens from the blueprint; the count is already evaluated by the caller.
+     * Returns the ids of the created token permanents (used by callers that must act on the new
+     * tokens later in the same resolution, e.g. Gilt-Leaf Ambush's clash-win deathtouch grant).
+     */
+    public List<UUID> applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode) {
+        List<UUID> createdIds = new ArrayList<>();
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
-        int totalAmount = token.amount() * tokenMultiplier;
+        int totalAmount = amount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;
@@ -108,6 +124,7 @@ public class PermanentControlSupport {
                         CounterType.PLUS_ONE_PLUS_ONE, token.initialPlusOnePlusOneCounters());
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
+            createdIds.add(tokenPermanent.getId());
 
             if (token.tappedAndAttacking()) {
                 tokenPermanent.tap();
@@ -121,10 +138,10 @@ public class PermanentControlSupport {
             }
 
             if (token.exileAtEndOfCombat()) {
-                gameData.pendingTokenExilesAtEndOfCombat.add(tokenPermanent.getId());
+                gameData.queueDelayedAction(new ExileTokenAtEndOfCombat(tokenPermanent.getId()));
             }
             if (token.exileAtEndStep()) {
-                gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+                gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
             }
 
             String colorDesc;
@@ -154,5 +171,6 @@ public class PermanentControlSupport {
         }
 
         log.info("Game {} - {} {} token(s) created for player {}", gameData.id, totalAmount, token.tokenName(), controllerId);
+        return createdIds;
     }
 }

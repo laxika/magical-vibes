@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,32 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HelvaultTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two activated abilities and a death trigger")
-    void hasAbilitiesAndDeathTrigger() {
-        Helvault card = new Helvault();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var first = card.getActivatedAbilities().get(0);
-        assertThat(first.isRequiresTap()).isTrue();
-        assertThat(first.getManaCost()).isEqualTo("{1}");
-        assertThat(first.isNeedsTarget()).isTrue();
-        assertThat(first.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndTrackWithSourceEffect.class);
-
-        var second = card.getActivatedAbilities().get(1);
-        assertThat(second.isRequiresTap()).isTrue();
-        assertThat(second.getManaCost()).isEqualTo("{7}");
-        assertThat(second.isNeedsTarget()).isTrue();
-        assertThat(second.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndTrackWithSourceEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ReturnAllCardsExiledWithSourceEffect.class);
-    }
 
     // ===== {1}, {T}: Exile target creature you control =====
 

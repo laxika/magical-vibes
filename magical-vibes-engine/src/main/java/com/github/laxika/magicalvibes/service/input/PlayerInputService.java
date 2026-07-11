@@ -4,27 +4,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +30,7 @@ public class PlayerInputService {
 
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * When mind control is active, redirect messages intended for the controlled player
@@ -55,84 +46,95 @@ public class PlayerInputService {
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginCardChoice(AwaitingInput.CARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
+        beginCardChoice(gameData, playerId, validIndices, prompt, false);
+    }
 
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, boolean enterTapped) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, enterTapped));
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId));
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
-        gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
+                playerId, new ArrayList<>(validIndices), targetId, prompt));
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
-        gameData.interaction.beginPermanentChoice(playerId, new HashSet<>(validIds), gameData.interaction.permanentChoiceContext());
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChoosePermanentMessage(validIds, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
+                playerId, new ArrayList<>(validIds), List.of(),
+                gameData.interaction.permanentChoiceContext(), prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent", gameData.id, playerName);
     }
 
     public void beginAnyTargetChoice(GameData gameData, UUID playerId, List<UUID> validPermanentIds, List<UUID> validPlayerIds, String prompt) {
-        Set<UUID> allValidIds = new HashSet<>(validPermanentIds);
-        allValidIds.addAll(validPlayerIds);
-        gameData.interaction.beginPermanentChoice(playerId, allValidIds, gameData.interaction.permanentChoiceContext());
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChoosePermanentMessage(validPermanentIds, validPlayerIds, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
+                playerId, new ArrayList<>(validPermanentIds), new ArrayList<>(validPlayerIds),
+                gameData.interaction.permanentChoiceContext(), prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose any target", gameData.id, playerName);
     }
 
-    public void beginGraveyardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        boolean allGraveyards = gameData.interaction.graveyardChoice().cardPool() != null;
-        gameData.interaction.beginGraveyardChoice(playerId, new HashSet<>(validIndices),
-                gameData.interaction.graveyardChoice().destination(), gameData.interaction.graveyardChoice().cardPool());
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromGraveyardMessage(validIndices, prompt, allGraveyards));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from graveyard", gameData.id, playerName);
-    }
-
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
-        gameData.interaction.beginMultiPermanentChoice(playerId, new HashSet<>(validIds), maxCount);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
+        beginMultiPermanentChoice(gameData, playerId, validIds, maxCount, null, prompt);
     }
 
-    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
-        gameData.interaction.beginMultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsMessage(validCardIds, cardViews, maxCount, prompt));
+    public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount,
+                                          MultiPermanentChoiceContext context, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
+                playerId, new ArrayList<>(validIds), maxCount, context, prompt));
+    }
 
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt));
     }
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {
-        gameData.interaction.beginColorChoice(playerId, permanentId, etbTargetId, gameData.interaction.colorChoiceContext());
         List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(colors, "Choose a color."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, permanentId, etbTargetId, null, colors, "Choose a color."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
+    public void beginDiscardChosenColorChoice(GameData gameData, UUID controllerId, UUID targetPlayerId) {
+        ChoiceContext.DiscardChosenColorChoice ctx = new ChoiceContext.DiscardChosenColorChoice(controllerId, targetPlayerId);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (discard all cards of that color)", gameData.id, playerName);
+    }
+
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
         ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
-        gameData.interaction.beginColorChoice(playerId, null, null, ctx);
 
         List<String> options = new java.util.ArrayList<>(List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN"));
         if (includeArtifacts) {
             options.addFirst("ARTIFACT");
         }
         String prompt = includeArtifacts ? "Choose a color or artifacts." : "Choose a color.";
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(options, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, options, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
@@ -140,11 +142,10 @@ public class PlayerInputService {
 
     public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId) {
         ChoiceContext.MassProtectionColorChoice ctx = new ChoiceContext.MassProtectionColorChoice(controllerId);
-        gameData.interaction.beginColorChoice(controllerId, null, null, ctx);
 
         List<String> options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, controllerId),
-                new ChooseFromListMessage(options, "Choose a color."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, options, "Choose a color."));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose protection (you and your permanents)", gameData.id, playerName);
@@ -152,10 +153,10 @@ public class PlayerInputService {
 
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
         ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> optionNames = options.stream().map(Keyword::name).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(optionNames, "Choose a keyword to grant."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, optionNames, "Choose a keyword to grant."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a keyword", gameData.id, playerName);
@@ -163,24 +164,35 @@ public class PlayerInputService {
 
     public void beginSubtypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
         ChoiceContext.SubtypeChoice choiceContext = new ChoiceContext.SubtypeChoice(permanentId);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> creatureTypes = Arrays.stream(CardSubtype.values())
                 .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
                 .map(CardSubtype::name)
                 .toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(creatureTypes, "Choose a creature type."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, creatureTypes, "Choose a creature type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
     }
 
+    public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ChoiceContext.ManaValueParityChoice choiceContext = new ChoiceContext.ManaValueParityChoice(permanentId);
+
+        List<String> options = List.of("ODD", "EVEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose odd or even."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
+    }
+
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
         ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> permanentTypes = List.of("ARTIFACT", "CREATURE", "ENCHANTMENT", "LAND", "PLANESWALKER");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(permanentTypes, "Choose a permanent type."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, permanentTypes, "Choose a permanent type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent type", gameData.id, playerName);
@@ -188,24 +200,39 @@ public class PlayerInputService {
 
     public void beginBasicLandTypeChoice(GameData gameData, UUID playerId, UUID permanentId) {
         ChoiceContext.BasicLandTypeChoice choiceContext = new ChoiceContext.BasicLandTypeChoice(permanentId);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(basicLandTypes, "Choose a basic land type."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a basic land type", gameData.id, playerName);
     }
 
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration) {
-        ChoiceContext.AddBasicLandTypeChoice choiceContext = new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
+        beginAddBasicLandTypeChoice(gameData, playerId, targetLandId, duration, false);
+    }
+
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration, boolean replacing) {
+        ChoiceContext.AddBasicLandTypeChoice choiceContext = new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(basicLandTypes, "Choose a basic land type."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a basic land type to add", gameData.id, playerName);
+    }
+
+    public void beginStorageMatrixUntapChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.StorageMatrixUntapChoice choiceContext = new ChoiceContext.StorageMatrixUntapChoice(playerId);
+
+        List<String> options = List.of("ARTIFACT", "CREATURE", "LAND");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose artifact, creature, or land to untap."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
     }
 
     private static List<Integer> allHandIndices(List<Card> hand) {
@@ -220,7 +247,6 @@ public class PlayerInputService {
 
     public void beginCardNameChoice(GameData gameData, UUID playerId, Card card, List<CardType> excludedTypes) {
         ChoiceContext.CardNameChoice choiceContext = new ChoiceContext.CardNameChoice(card, playerId, excludedTypes);
-        gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
 
         List<String> cardNames;
         String prompt;
@@ -232,7 +258,8 @@ public class PlayerInputService {
             String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
             prompt = "Choose a non" + excludedLabel + " card name.";
         }
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseFromListMessage(cardNames, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card name", gameData.id, playerName);
@@ -240,12 +267,12 @@ public class PlayerInputService {
 
     public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes) {
         ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes);
-        gameData.interaction.beginColorChoice(choosingPlayerId, null, null, choiceContext);
 
         List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
         String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
         String prompt = "Choose a non" + excludedLabel + " card name.";
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseFromListMessage(cardNames, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
@@ -253,11 +280,11 @@ public class PlayerInputService {
 
     public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {
         ChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
-        gameData.interaction.beginColorChoice(namingPlayerId, null, null, choiceContext);
 
         List<String> cardNames = collectAllCardNamesInGame(gameData);
         String prompt = "Choose a card name.";
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, namingPlayerId), new ChooseFromListMessage(cardNames, prompt));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                namingPlayerId, null, null, choiceContext, cardNames, prompt));
 
         String playerName = gameData.playerIdToName.get(namingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (Sphinx Ambassador)", gameData.id, playerName);
@@ -306,100 +333,46 @@ public class PlayerInputService {
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        int maxCount = matchingCards.size();
 
-        gameData.interaction.beginMultiZoneExileChoice(choosingPlayerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, choosingPlayerId, cardName);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseMultipleCardsMessage(
-                validCardIds, cardViews, maxCount,
-                "Choose any number of cards named \"" + cardName + "\" to exile."));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose cards to exile (up to {})", gameData.id, playerName, maxCount);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName));
     }
 
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {
-        gameData.interaction.beginCardChoice(AwaitingInput.IMPRINT_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose an artifact from hand to imprint", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprintFromHandChoice(
+                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt));
     }
 
-    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, null, remainingCount);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
-        gameData.interaction.beginCardChoice(AwaitingInput.EXILE_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, "Choose a card to exile."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card to exile from hand", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
+                playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
+                "Choose a card to exile."));
     }
 
-    public void beginDiscardChoice(GameData gameData, UUID playerId) {
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {
+        beginDiscardChoice(gameData, playerId, remainingCount, DiscardFollowUp.NONE);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount, DiscardFollowUp followUp) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.");
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount, followUp);
     }
 
-    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginCardChoice(AwaitingInput.DISCARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount) {
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, DiscardFollowUp.NONE);
     }
 
-    public void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginRevealedHandChoiceFromCurrentState(
-                choosingPlayerId,
-                targetPlayerId,
-                new HashSet<>(validIndices)
-        );
-
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
-    }
-
-    public void beginXValueChoice(GameData gameData, UUID playerId, int maxValue, String prompt, String cardName) {
-        gameData.interaction.beginXValueChoice(playerId, maxValue, prompt, cardName);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new XValueChoiceMessage(prompt, maxValue, cardName));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose X value (max {})", gameData.id, playerName, maxValue);
-    }
-
-    public void sendKnowledgePoolCastChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews) {
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ChooseMultipleCardsMessage(validCardIds, cardViews, 1,
-                        "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from Knowledge Pool", gameData.id, playerName);
-    }
-
-    public void sendMirrorOfFateChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount) {
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ChooseMultipleCardsMessage(validCardIds, cardViews, maxCount,
-                        "Choose up to seven face-up exiled cards you own to put on top of your library."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose exiled cards for Mirror of Fate (up to {})", gameData.id, playerName, maxCount);
-    }
-
-    public void beginLibraryReorderFromExile(GameData gameData, UUID playerId, List<Card> cards) {
-        gameData.interaction.beginLibraryReorder(playerId, cards, false);
-        List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ReorderLibraryCardsMessage(cardViews,
-                        "Put these cards on top of your library in any order (top to bottom)."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to order {} cards on top of library", gameData.id, playerName, cards.size());
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount, DiscardFollowUp followUp) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
+                playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt));
     }
 
     public void processNextMayAbility(GameData gameData) {
@@ -412,19 +385,8 @@ public class PlayerInputService {
         }
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-        gameData.interaction.beginMayAbilityChoice(next.controllerId(), next.description());
-
-        boolean canPay = true;
-        if (next.manaCost() != null) {
-            ManaCost cost = new ManaCost(next.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(next.controllerId());
-            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
-        }
-
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description(), canPay, next.manaCost()));
-
-        String playerName = gameData.playerIdToName.get(next.controllerId());
-        log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                next.controllerId(), next.description(), next.manaCost()));
     }
 }
 

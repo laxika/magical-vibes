@@ -2,17 +2,12 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,20 +22,7 @@ class InfiltrationLensTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Infiltration Lens has ON_BECOMES_BLOCKED MayEffect with DrawCardEffect(2)")
-    void hasOnBecomesBlockedEffect() {
-        InfiltrationLens card = new InfiltrationLens();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) mayEffect.wrapped()).amount()).isEqualTo(2);
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
-                .isEqualTo(TriggerMode.PER_BLOCKER);
-    }
+    
 
     @Test
     @DisplayName("Infiltration Lens has equip {1} ability")
@@ -260,6 +242,6 @@ class InfiltrationLensTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

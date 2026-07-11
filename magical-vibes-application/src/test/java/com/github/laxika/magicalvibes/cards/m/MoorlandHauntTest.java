@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -11,9 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,43 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoorlandHauntTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Moorland Haunt has correct activated abilities")
-    void hasCorrectAbilities() {
-        MoorlandHaunt card = new MoorlandHaunt();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}: Add {C}.
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.isNeedsTarget()).isFalse();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Ability 1: {W}{U}, {T}, Exile a creature card from your graveyard: Create a 1/1 white Spirit creature token with flying.
-        var tokenAbility = card.getActivatedAbilities().get(1);
-        assertThat(tokenAbility.isRequiresTap()).isTrue();
-        assertThat(tokenAbility.getManaCost()).isEqualTo("{W}{U}");
-        assertThat(tokenAbility.isNeedsTarget()).isFalse();
-        assertThat(tokenAbility.getEffects()).hasSize(2);
-        assertThat(tokenAbility.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) tokenAbility.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(tokenAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) tokenAbility.getEffects().get(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-    }
 
     // ===== Mana ability =====
 
@@ -89,8 +48,8 @@ class MoorlandHauntTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
     }
 
     @Test

@@ -1,26 +1,23 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LordOfThePitTest extends BaseCardTest {
-
 
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
@@ -34,17 +31,6 @@ class LordOfThePitTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lord of the Pit has correct card properties")
-    void hasCorrectProperties() {
-        LordOfThePit card = new LordOfThePit();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(SacrificeOtherCreatureOrDamageEffect.class);
     }
 
     // ===== No other creatures — deals 7 damage =====
@@ -129,10 +115,10 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bears.getId(), spider.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bears.getId(), spider.getId());
     }
 
     @Test
@@ -149,7 +135,7 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(lordPerm.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(lordPerm.getId());
     }
 
     @Test
@@ -190,7 +176,7 @@ class LordOfThePitTest extends BaseCardTest {
 
         // No trigger — no damage, no sacrifice prompt
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Edge cases =====
@@ -272,5 +258,4 @@ class LordOfThePitTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
-
 

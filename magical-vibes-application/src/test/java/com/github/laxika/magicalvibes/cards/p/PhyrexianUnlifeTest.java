@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,16 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianUnlifeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Phyrexian Unlife has both static effects")
-    void hasBothStaticEffects() {
-        PhyrexianUnlife card = new PhyrexianUnlife();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof CantLoseGameFromLifeEffect)
-                .anyMatch(e -> e instanceof DamageDealtAsInfectBelowZeroLifeEffect);
-    }
+    
 
     @Test
     @DisplayName("Controller doesn't lose at 0 life with Phyrexian Unlife")

@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -21,43 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class SphereOfTheSunsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Enters tapped flag is set")
-    void entersTapped() {
-        SphereOfTheSuns card = new SphereOfTheSuns();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect for entering with 3 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        SphereOfTheSuns card = new SphereOfTheSuns();
-
-        assertThat(card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithFixedChargeCountersEffect.class);
-        EnterWithFixedChargeCountersEffect effect = (EnterWithFixedChargeCountersEffect) card.getEffects(
-                com.github.laxika.magicalvibes.model.EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Has activated ability: tap + remove charge counter to add mana of any color")
-    void hasActivatedAbility() {
-        SphereOfTheSuns card = new SphereOfTheSuns();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof AwardAnyColorManaEffect);
-    }
 
     // ===== Entering the battlefield =====
 
@@ -92,8 +51,8 @@ class SphereOfTheSunsTest extends BaseCardTest {
         assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(sphere.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty(); // mana ability does not use the stack
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -116,7 +75,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
             harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -41,8 +42,8 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         }
 
         UUID controllerId = entry.getControllerId();
-        gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.add(
-                new GameData.DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
+        gameData.queueDelayedAction(
+                new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,
                 card.getName() + " will return to the battlefield transformed under " + playerName

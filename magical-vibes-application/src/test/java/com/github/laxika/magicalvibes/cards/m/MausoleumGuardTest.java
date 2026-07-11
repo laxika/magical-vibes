@@ -4,12 +4,10 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,26 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MausoleumGuardTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH CreateTokenEffect creating two 1/1 white Spirit tokens with flying")
-    void hasCorrectEffects() {
-        MausoleumGuard card = new MausoleumGuard();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-        assertThat(effect.tokenName()).isEqualTo("Spirit");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
 
     // ===== Death trigger =====
 

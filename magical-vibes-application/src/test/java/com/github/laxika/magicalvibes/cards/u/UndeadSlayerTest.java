@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,23 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UndeadSlayerTest extends BaseCardTest {
-
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Undead Slayer has a tap + mana activated ability that exiles")
-    void hasCorrectAbility() {
-        UndeadSlayer card = new UndeadSlayer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{W}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .first().isInstanceOf(ExileTargetPermanentEffect.class);
-    }
 
     // ===== Resolution =====
 

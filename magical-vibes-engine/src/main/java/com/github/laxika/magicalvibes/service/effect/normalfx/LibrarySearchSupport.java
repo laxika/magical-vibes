@@ -6,14 +6,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
@@ -39,24 +38,25 @@ import java.util.function.Predicate;
 public class LibrarySearchSupport {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
-     * Starts the next pending "each player searches for a basic land" search from the queue.
-     * Returns true if a search was initiated, false if the queue is empty.
-     * Respects {@code pendingEachPlayerBasicLandSearchTapped} for the destination.
+     * Starts the next pending "each player searches for a basic land" search from the
+     * follow-up's remaining-searchers list; the advanced remainder rides the begun search.
+     * Returns true if a search was initiated, false if no searcher remains.
+     * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
      */
-    public boolean startNextEachPlayerBasicLandSearch(GameData gameData) {
-        LibrarySearchDestination destination = gameData.pendingEachPlayerBasicLandSearchTapped
+    public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = gameData.pendingEachPlayerBasicLandSearchTapped
+        String prompt = followUp.eachPlayerSearchTapped()
                 ? "You may search your library for a basic land card and put it onto the battlefield tapped."
                 : "Search your library for a basic land card and put it onto the battlefield.";
 
-        while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
-            UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
             boolean started = performLibrarySearch(
                     gameData,
                     nextPlayerId,
@@ -65,12 +65,68 @@ public class LibrarySearchSupport {
                     prompt,
                     false,
                     true,
-                    destination
+                    destination,
+                    followUp.withRemainingEachPlayerBasicLandSearches(remaining)
             );
             if (started) {
                 return true;
             }
             // If search could not start (empty library, Leonin Arbiter, etc.), try the next player
+        }
+        return false;
+    }
+
+    /**
+     * Starts the next pending "each player may search for up to N creature cards to hand" search
+     * from the follow-up's remaining-searchers list; the advanced remainder rides the begun search.
+     * Each searcher may take up to {@code followUp.eachPlayerCreatureToHandCount()} creature cards,
+     * revealing them to hand, then shuffles. Returns true if a search was initiated, false if no
+     * searcher remains (empty library / no creatures / Leonin Arbiter players are skipped). Used by
+     * Weird Harvest.
+     */
+    public boolean startNextEachPlayerCreatureToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        int count = followUp.eachPlayerCreatureToHandCount();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerCreatureToHandSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            String playerName = gameData.playerIdToName.get(nextPlayerId);
+
+            if (isSearchPrevented(gameData, nextPlayerId)) {
+                continue;
+            }
+
+            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
+            if (deck == null || deck.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " searches their library but it is empty. Library is shuffled.");
+                continue;
+            }
+
+            List<Card> creatures = deck.stream()
+                    .filter(card -> card.hasType(CardType.CREATURE))
+                    .toList();
+
+            if (creatures.isEmpty()) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " searches their library but finds no creature cards. Library is shuffled.");
+                continue;
+            }
+
+            String prompt = "You may search your library for up to " + count + " creature card"
+                    + (count == 1 ? "" : "s") + " to reveal and put into your hand.";
+            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(creatures))
+                    .reveals(true)
+                    .canFailToFind(true)
+                    .remainingCount(count)
+                    .destination(LibrarySearchDestination.HAND)
+                    .filterPredicate(new CardTypePredicate(CardType.CREATURE))
+                    .followUp(followUp.withRemainingEachPlayerCreatureToHandSearches(remaining))
+                    .build();
+
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " searches their library.");
+            return true;
         }
         return false;
     }
@@ -105,6 +161,20 @@ public class LibrarySearchSupport {
             boolean reveals,
             boolean canFailToFind,
             LibrarySearchDestination destination) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, LibrarySearchFollowUp.NONE);
+    }
+
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -131,6 +201,7 @@ public class LibrarySearchSupport {
                 .canFailToFind(canFailToFind)
                 .prompt(prompt)
                 .destination(destination)
+                .followUp(followUp)
                 .build(), prompt, canFailToFind);
 
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());
@@ -194,10 +265,8 @@ public class LibrarySearchSupport {
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind, String logMessage) {
-        gameData.interaction.beginLibrarySearch(params);
-
-        List<CardView> cardViews = params.cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, canFailToFind));
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
+                params, prompt, canFailToFind));
 
         gameBroadcastService.logAndBroadcast(gameData, logMessage);
     }

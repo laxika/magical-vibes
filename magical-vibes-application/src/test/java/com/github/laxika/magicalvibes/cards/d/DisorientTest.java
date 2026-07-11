@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,19 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DisorientTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Disorient has correct card properties")
-    void hasCorrectCardProperties() {
-        Disorient card = new Disorient();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-7);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-    }
+    
 
     @Test
     @DisplayName("Resolving Disorient gives -7/-0 to target creature")

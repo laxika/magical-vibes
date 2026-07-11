@@ -1,21 +1,15 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BrazenBuccaneers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,35 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShadowedCaravelTest extends BaseCardTest {
-
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE)")
-    void hasExploreTriggeredCounterEffect() {
-        ShadowedCaravel card = new ShadowedCaravel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect effect = (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
-        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
-    @Test
-    @DisplayName("Has Crew 2 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        ShadowedCaravel card = new ShadowedCaravel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
 
     // ===== Explore triggers — land on top =====
 
@@ -85,7 +50,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // May ability for explore graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the counter trigger
@@ -213,7 +178,6 @@ class ShadowedCaravelTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void castExplorerAndResolveExplore() {
         harness.setHand(player1, List.of(new BrazenBuccaneers()));

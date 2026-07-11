@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,11 +9,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,31 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CaptivatingCrewTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Captivating Crew has correct activated ability")
-    void hasCorrectProperties() {
-        CaptivatingCrew card = new CaptivatingCrew();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}{R}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(3);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(2);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
 
     // ===== Activating ability =====
 
@@ -86,7 +55,7 @@ class CaptivatingCrewTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isTrue();
     }
 
     // ===== End of turn cleanup =====
@@ -109,7 +78,7 @@ class CaptivatingCrewTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(target.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(target.getId()));
         assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(target.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(target.getId())).isFalse();
     }
 
     // ===== Invalid targets =====

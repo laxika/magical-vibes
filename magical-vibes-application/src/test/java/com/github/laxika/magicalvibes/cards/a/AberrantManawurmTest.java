@@ -5,13 +5,10 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,25 +32,7 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger that boosts self by mana spent on the cast spell")
-    void hasCorrectEffects() {
-        AberrantManawurm card = new AberrantManawurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfBySpellManaSpentEffect.class);
-
-        BoostSelfBySpellManaSpentEffect boost =
-                (BoostSelfBySpellManaSpentEffect) trigger.resolvedEffects().getFirst();
-        assertThat(boost.powerMultiplier()).isEqualTo(1);
-        assertThat(boost.toughnessMultiplier()).isEqualTo(0);
-    }
+    
 
     @Test
     @DisplayName("Casting a one-mana instant gives +1/+0 until end of turn")

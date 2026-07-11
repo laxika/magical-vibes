@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,20 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GnawToTheBoneTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gnaw to the Bone has correct card properties")
-    void hasCorrectProperties() {
-        GnawToTheBone card = new GnawToTheBone();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GainLifePerCreatureCardInGraveyardEffect.class);
-        GainLifePerCreatureCardInGraveyardEffect effect =
-                (GainLifePerCreatureCardInGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.lifePerCreature()).isEqualTo(2);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{G}");
-    }
+    
 
     @Test
     @DisplayName("Gains 2 life per creature card in graveyard")

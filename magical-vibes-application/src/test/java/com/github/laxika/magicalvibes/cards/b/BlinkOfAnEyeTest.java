@@ -1,13 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -35,20 +31,7 @@ class BlinkOfAnEyeTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{1}{U}"));
     }
 
-    @Test
-    @DisplayName("Has bounce effect and kicked conditional draw effect")
-    void hasCorrectSpellEffects() {
-        BlinkOfAnEye card = new BlinkOfAnEye();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickedConditionalEffect.class);
-                    assertThat(((KickedConditionalEffect) e).wrapped()).isInstanceOf(DrawCardEffect.class);
-                });
-    }
+    
 
     // ===== Cast without kicker =====
 

@@ -35,11 +35,12 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -193,7 +194,7 @@ class SpellEvaluatorTest {
         assertThat(stealValue).isGreaterThan(shockValue);
     }
 
-    // ===== Temporary steal (GainControlOfTargetPermanentUntilEndOfTurnEffect) =====
+    // ===== Temporary steal (GainControlOfTargetEffect END_OF_TURN) =====
 
     @Test
     @DisplayName("Temporary steal spell has positive value when opponent has creatures")
@@ -306,19 +307,19 @@ class SpellEvaluatorTest {
     }
 
     @Test
-    @DisplayName("PutPlusOnePlusOneCounterOnTargetCreatureEffect scores count * 3.5")
+    @DisplayName("+1/+1 counter on target creature scores count * 3.5")
     void counterOnTargetCreatureScoring() {
         double value = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)), player1.getId());
+                gd, List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)), player1.getId());
         assertThat(value).isEqualTo(7.0); // 2 * 3.5
     }
 
     @Test
-    @DisplayName("TapTargetPermanentEffect scores based on opponent creature value")
+    @DisplayName("TapPermanentsEffect(TARGET) scores based on opponent creature value")
     void tapTargetPermanentScoring() {
         // No opponent creatures: value should be 0
         double noCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
         assertThat(noCreatures).isEqualTo(0.0);
 
         // Add opponent creature
@@ -327,7 +328,7 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(angel);
 
         double withCreature = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
         assertThat(withCreature).isGreaterThan(0.0);
     }
 
@@ -392,13 +393,13 @@ class SpellEvaluatorTest {
         gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         double value = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
 
         // Value should be based on the untapped 2/2, not the tapped 4/4
         // Remove the tapped creature and check only the untapped one gives the same result
         gd.playerBattlefields.get(player2.getId()).remove(tapped);
         double untappedOnly = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new TapTargetPermanentEffect()), player1.getId());
+                gd, List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), player1.getId());
 
         // The bigger creature is tapped, so the value should be based on the small untapped one
         assertThat(value).isEqualTo(untappedOnly);

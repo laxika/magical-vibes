@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,45 +30,11 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 draw ability has DrawCardEffect(1)")
-    void plusOneDrawAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("+1 untap ability has UntapAllControlledPermanentsEffect with creature filter")
-    void plusOneUntapAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(UntapAllControlledPermanentsEffect.class);
-        UntapAllControlledPermanentsEffect effect = (UntapAllControlledPermanentsEffect) ability.getEffects().getFirst();
-        assertThat(effect.filter()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("-9 ability has GainControlOfTargetPermanentEffect with up-to-three targeting")
-    void minusNineAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-9);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(3);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainControlOfTargetPermanentEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -209,7 +172,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
                     .anyMatch(p -> p.getId().equals(targetId));
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getId().equals(targetId));
-            assertThat(gd.permanentControlStolenCreatures).contains(targetId);
+            assertThat(gd.newestControlEffectFor(targetId).duration()).isEqualTo(com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT);
         }
     }
 

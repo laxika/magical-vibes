@@ -45,6 +45,7 @@ public class VirtualManaPool extends ManaPool {
         flexibleOvercount += amount;
     }
 
+    @Override
     public int getFlexibleOvercount() {
         return flexibleOvercount;
     }
@@ -56,6 +57,7 @@ public class VirtualManaPool extends ManaPool {
         perColorOvercount.merge(color, amount, Integer::sum);
     }
 
+    @Override
     public int getPerColorOvercount(ManaColor color) {
         return perColorOvercount.getOrDefault(color, 0);
     }

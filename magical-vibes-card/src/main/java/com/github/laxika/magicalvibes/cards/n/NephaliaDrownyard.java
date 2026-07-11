@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 import java.util.List;
 
@@ -25,7 +26,7 @@ public class NephaliaDrownyard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{U}{B}",
-                List.of(new MillTargetPlayerEffect(3)),
+                List.of(new MillEffect(3, MillRecipient.TARGET_PLAYER)),
                 "{1}{U}{B}, {T}: Target player mills three cards."
         ));
     }

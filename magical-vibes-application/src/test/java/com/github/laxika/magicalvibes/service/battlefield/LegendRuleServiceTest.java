@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -48,7 +50,7 @@ class LegendRuleServiceTest {
     private UUID player2Id;
 
     private static final GameQueryService.StaticBonus EMPTY_BONUS = new GameQueryService.StaticBonus(
-            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, java.util.Set.of(), false, 0, 0, false);
+            0, 0, java.util.Set.of(), java.util.Set.of(), false, List.of(), List.of(), java.util.Set.of(), List.of(), java.util.Set.of(), java.util.Set.of(), false, false, false, java.util.Set.of(), false, 0, 0, false, false);
 
     @BeforeEach
     void setUp() {
@@ -109,7 +111,7 @@ class LegendRuleServiceTest {
             boolean result = svc.checkLegendRule(gd, player1Id);
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.permanentChoice()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
@@ -121,7 +123,7 @@ class LegendRuleServiceTest {
             boolean result = svc.checkLegendRule(gd, player1Id);
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.permanentChoice()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 

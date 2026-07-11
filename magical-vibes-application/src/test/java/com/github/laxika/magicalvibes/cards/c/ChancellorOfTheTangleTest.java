@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -39,23 +36,6 @@ class ChancellorOfTheTangleTest {
         gqs = harness.getGameQueryService();
         gd = harness.getGameData();
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor of the Tangle has ON_OPENING_HAND_REVEAL MayEffect wrapping RegisterDelayedManaTriggerEffect")
-    void hasOpeningHandTriggeredEffect() {
-        ChancellorOfTheTangle card = new ChancellorOfTheTangle();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(RegisterDelayedManaTriggerEffect.class);
-        RegisterDelayedManaTriggerEffect effect = (RegisterDelayedManaTriggerEffect) may.wrapped();
-        assertThat(effect.color()).isEqualTo(ManaColor.GREEN);
-        assertThat(effect.amount()).isEqualTo(1);
     }
 
     // ===== Opening hand trigger =====

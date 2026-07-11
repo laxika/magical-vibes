@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -17,20 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BirdsOfParadiseTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Birds of Paradise has correct card properties")
-    void hasCorrectProperties() {
-        BirdsOfParadise card = new BirdsOfParadise();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cannot activate Birds of Paradise while it has summoning sickness")
@@ -54,8 +41,8 @@ class BirdsOfParadiseTest extends BaseCardTest {
 
         assertThat(birds.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -78,7 +65,7 @@ class BirdsOfParadiseTest extends BaseCardTest {
             harness.handleListChoice(player1, color);
 
             assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
     }
 

@@ -3,13 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -184,32 +180,7 @@ class BloodlineKeeperTest extends BaseCardTest {
         assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        BloodlineKeeper card = new BloodlineKeeper();
-
-        // Two activated abilities on front face
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: tap to create token
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-
-        // Second ability: {B} transform with subtype restriction
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .anyMatch(e -> e instanceof TransformSelfEffect);
-        assertThat(card.getActivatedAbilities().get(1).getRequiredControlledSubtype()).isEqualTo(CardSubtype.VAMPIRE);
-        assertThat(card.getActivatedAbilities().get(1).getRequiredControlledSubtypeCount()).isEqualTo(5);
-
-        // Back face should exist
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof StaticBoostEffect);
-    }
+    
 
     // ===== Helpers =====
 

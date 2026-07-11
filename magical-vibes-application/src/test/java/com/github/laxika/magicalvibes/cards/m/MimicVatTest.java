@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,26 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MimicVatTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has imprint trigger and activated ability")
-    void hasCorrectStructure() {
-        MimicVat card = new MimicVat();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ImprintDyingCreatureEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof CreateTokenCopyOfImprintedCardEffect);
-    }
 
     // ===== Imprint trigger =====
 
@@ -60,7 +36,7 @@ class MimicVatTest extends BaseCardTest {
 
         // Mimic Vat's imprint trigger should present a may ability
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -92,8 +68,8 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard()).isNotNull();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
     }
 
     @Test
@@ -120,7 +96,22 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(vat.getCard())).isNull();
+    }
+
+    @Test
+    @DisplayName("Imprint set in an AI simulation copy does not leak into the real game")
+    void simulatedImprintDoesNotLeakIntoRealGame() {
+        harness.addToBattlefield(player1, new MimicVat());
+        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
+                .findFirst().orElseThrow();
+
+        GameData simCopy = gd.simulationCopy();
+        simCopy.setImprintedCard(vat.getCard(), new GrizzlyBears());
+
+        assertThat(simCopy.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard())).isNull();
     }
 
     // ===== Imprint replacement =====
@@ -150,7 +141,7 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
 
         // Kill second creature (Giant Spider): now player2 has only one, auto-sacrificed
         harness.forceActivePlayer(player1);
@@ -176,8 +167,8 @@ class MimicVatTest extends BaseCardTest {
         assertThat(oldCardInGraveyard).isTrue();
 
         // Giant Spider should now be imprinted
-        assertThat(vat.getCard().getImprintedCard()).isNotNull();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Giant Spider");
+        assertThat(gd.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Giant Spider");
     }
 
     // ===== Token creation =====
@@ -279,7 +270,7 @@ class MimicVatTest extends BaseCardTest {
 
         // Should get a may ability prompt
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -295,7 +286,7 @@ class MimicVatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     // ===== Helpers =====

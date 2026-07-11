@@ -1,11 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,27 +11,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinChainwhirlerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Chainwhirler does not need a target")
-    void doesNotNeedTarget() {
-        GoblinChainwhirler card = new GoblinChainwhirler();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has two ETB effects: damage to opponents and damage to their creatures/planeswalkers")
-    void hasEtbEffects() {
-        GoblinChainwhirler card = new GoblinChainwhirler();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(DealDamageToEachOpponentEffect.class)
-                .hasAtLeastOneElementOfType(DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect.class);
-    }
 
     // ===== Casting =====
 

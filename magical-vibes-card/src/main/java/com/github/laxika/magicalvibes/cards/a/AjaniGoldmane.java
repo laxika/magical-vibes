@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "LRW", collectorNumber = "1")
 @CardRegistration(set = "M10", collectorNumber = "1")
 @CardRegistration(set = "M11", collectorNumber = "1")
 public class AjaniGoldmane extends Card {

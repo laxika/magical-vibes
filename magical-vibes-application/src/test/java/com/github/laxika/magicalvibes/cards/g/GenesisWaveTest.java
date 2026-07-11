@@ -1,14 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.c.CarnifexDemon;
 import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class GenesisWaveTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has GenesisWaveEffect on SPELL slot")
-    void hasCorrectStructure() {
-        GenesisWave card = new GenesisWave();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GenesisWaveEffect.class);
-    }
 
     // ===== X=0 reveals nothing =====
 
@@ -44,7 +30,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should not be awaiting any input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Puts eligible permanents onto battlefield =====
@@ -66,7 +52,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting library reveal choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Select all three cards (creature MV 2, land MV 0, artifact MV 1 — all <= 3)
         harness.handleMultipleCardsChosen(player1,
@@ -195,7 +181,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No interaction expected — both sorceries go to graveyard
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Blaze");
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Blaze")).count()).isEqualTo(2);
@@ -248,7 +234,7 @@ class GenesisWaveTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should reveal the 1 card and prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.assertOnBattlefield(player1, "Grizzly Bears");

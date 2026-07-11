@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,30 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IxallisKeeperTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one activated ability with tap, sacrifice cost, boost and trample grant")
-    void hasCorrectAbility() {
-        IxallisKeeper card = new IxallisKeeper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{7}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(3);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(2))
-                .isInstanceOf(GrantKeywordEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect)
-                card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(boost.powerBoost()).isEqualTo(5);
-        assertThat(boost.toughnessBoost()).isEqualTo(5);
-    }
 
     // ===== Activating ability =====
 

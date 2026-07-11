@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -34,9 +35,9 @@ public class DiscardCardAndUntapSelfEffectHandler implements NormalEffectHandler
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             return;
         }
-        gameData.pendingUntapAfterDiscardPermanentId = entry.getSourcePermanentId();
         gameData.discardCausedByOpponent = false;
-        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, 1);
+        playerInteractionSupport.resolveDiscardCards(gameData, controllerId, 1,
+                DiscardFollowUp.untap(entry.getSourcePermanentId()));
     
     }
 }

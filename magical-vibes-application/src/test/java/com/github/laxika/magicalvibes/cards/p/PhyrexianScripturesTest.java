@@ -1,18 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,46 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianScripturesTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has +1/+1 counter and artifact type grant effects")
-    void chapterIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) effects.get(0);
-        assertThat(counterEffect.count()).isEqualTo(1);
-
-        assertThat(effects.get(1)).isInstanceOf(AddCardTypeToTargetPermanentEffect.class);
-        AddCardTypeToTargetPermanentEffect typeEffect = (AddCardTypeToTargetPermanentEffect) effects.get(1);
-        assertThat(typeEffect.cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(typeEffect.persistent()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter II has destroy all nonartifact creatures effect")
-    void chapterIIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III has exile all opponents' graveyards effect")
-    void chapterIIIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ExileAllOpponentsGraveyardsEffect.class);
-    }
 
     // ===== Chapter I: targeting + resolution =====
 

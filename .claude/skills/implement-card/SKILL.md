@@ -1,11 +1,13 @@
 ---
 name: implement-card
-description: Implement a Magic card in the magical-vibes engine from its set code and collector number (e.g. "implement DKA 76", "add Tragic Slip"). Handles reprint detection, Scryfall lookup, choosing/reusing effects from agent-docs, writing the card class, and writing focused card tests.
+description: Implement one or more Magic cards in the magical-vibes engine from a set code and collector number(s) (e.g. "implement DKA 76", "implement SOS 1 2 3 4", "add Tragic Slip"). Handles reprint detection, Scryfall lookup, choosing/reusing effects from agent-docs, writing the card class, and writing focused card tests.
 ---
 
 # Implement a card
 
-Input is a **set code + collector number** (e.g. `DKA 76`). If the user gives a card name instead, ask for, or look up, the set/collector number first.
+Input is a **set code + one or more collector numbers** from that set (e.g. `DKA 76`, or `SOS 1 2 3 4`). If the user gives a card name instead, ask for, or look up, the set/collector number first.
+
+**Multiple collector numbers:** implement each card independently, one at a time — run Steps 2–7 fully for one collector number before moving to the next. This keeps each card's context small and lets a failing card not block the others. Report a short per-card summary (implemented / reprint / tests pass-fail) at the end.
 
 Follow the project's hard rules from `CLAUDE.md`:
 - Stay on the `main` branch. **Do not commit** until the user explicitly asks.
@@ -14,19 +16,19 @@ Follow the project's hard rules from `CLAUDE.md`:
 
 ## Step 1 — Gather context
 
-Run the helper once. It fetches Scryfall (name, mana, type, oracle, P/T, keywords), runs the reprint check, decides whether tests are needed, and prints suggested file paths + the test command:
+Run the helper once. It fetches Scryfall (name, mana, type, oracle, P/T, keywords), runs the reprint check, decides whether tests are needed, and prints suggested file paths + the test command. Pass every collector number in one call — the script emits a separate, clearly delimited context block per card:
 
 ```
-bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER>'
+bash -c 'powershell.exe -NoProfile -File scripts/implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> [<COLLECTOR_NUMBER> ...]'
 ```
 
-Once you've picked a likely reference card (see Step 3), re-run with `-Reference` to dump its constructor and test path inline instead of reading the whole file:
+Once you've picked a likely reference card (see Step 3), re-run with `-Reference` to dump its constructor and test path inline instead of reading the whole file (a single card at a time is best here):
 
 ```
 ... implement-card-context.ps1 <SET> <COLLECTOR_NUMBER> -Reference Opt,Shock
 ```
 
-The script is a deterministic lookup only — it does **not** decide the implementation. You do that from the docs in Step 3.
+`-ClassName` is only valid with a single collector number; with several cards each name is derived from Scryfall. The script is a deterministic lookup only — it does **not** decide the implementation. You do that from the docs in Step 3.
 
 ## Step 2 — Reprint short-circuit
 
@@ -49,7 +51,7 @@ Detailed references — grep these when the three above aren't enough:
 - `agent-docs/CARD_IMPLEMENTATION_PLAYBOOK.md` — canonical patterns, targeting checklist, anti-patterns, new-effect/predicate checklists.
 
 Reuse rules (from `CLAUDE.md`):
-- Recreate effects by combining existing ones where possible (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToControllerEffect`).
+- Recreate effects by combining existing ones where possible (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`).
 - Prefer parameterizing an existing effect with a predicate over a new class (e.g. `DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`).
 
 ## Step 4 — Write the card class
@@ -73,9 +75,9 @@ After confirming no existing effect/combination works:
 Skip tests only when the script says **basic land** or **vanilla**. Otherwise add
 `magical-vibes-application/src/test/java/.../cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
-- Test **engine logic only**: effects, abilities, targeting, interactions. **Never** assert Scryfall metadata (name/type/mana/color/P-T/subtypes/keywords).
+- Test **engine logic only** by observing **behavior through the engine**: effects, abilities, targeting, interactions. **Never** assert Scryfall metadata (name/type/mana/color/P-T/subtypes/keywords), and **never** write white-box "wiring" tests (e.g. `hasCorrectProperties`) that inspect `card.getEffects(...)`, `EffectSlot`, `EffectResolution.needsTarget`, or effect fields by reflection — resolve the card and assert the outcome instead.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
-- Typical cases: structure (slots/effect types), each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
+- Typical cases: each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
 - Model new tests on a recent sibling test such as `cards/t/TragicSlipTest.java`.
 
 ## Step 7 — Run the focused test

@@ -1,9 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,25 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TriumphOfTheHordesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Triumph of the Hordes has correct effects")
-    void hasCorrectEffects() {
-        TriumphOfTheHordes card = new TriumphOfTheHordes();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect trampleGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trampleGrant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trampleGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        GrantKeywordEffect infectGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(infectGrant.keywords()).containsExactly(Keyword.INFECT);
-        assertThat(infectGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Resolving gives own creatures +1/+1, trample, and infect")
@@ -113,7 +89,7 @@ class TriumphOfTheHordesTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();

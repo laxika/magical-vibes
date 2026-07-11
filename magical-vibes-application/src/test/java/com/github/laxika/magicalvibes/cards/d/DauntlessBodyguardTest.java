@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,36 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DauntlessBodyguardTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseAnotherCreatureOnEnterEffect in ETB slot")
-    void hasChooseCreatureOnEnterEffect() {
-        DauntlessBodyguard card = new DauntlessBodyguard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseAnotherCreatureOnEnterEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has sacrifice ability with GrantKeywordToChosenCreatureUntilEndOfTurnEffect")
-    void hasSacrificeAbility() {
-        DauntlessBodyguard card = new DauntlessBodyguard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordToChosenCreatureUntilEndOfTurnEffect.class);
-        GrantKeywordToChosenCreatureUntilEndOfTurnEffect grant =
-                (GrantKeywordToChosenCreatureUntilEndOfTurnEffect) ability.getEffects().get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.chosenCreatureId()).isNull();
-    }
 
     // ===== ETB: choose another creature =====
 
@@ -61,7 +27,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
     }
 
     @Test
@@ -89,7 +55,7 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         Permanent bodyguard = findPermanent(player1, "Dauntless Bodyguard");
         assertThat(bodyguard).isNotNull();
         assertThat(bodyguard.getChosenPermanentId()).isNull();

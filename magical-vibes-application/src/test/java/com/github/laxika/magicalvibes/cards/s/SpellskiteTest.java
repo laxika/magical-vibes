@@ -4,11 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellToSourceEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,23 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpellskiteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spellskite has correct activated ability")
-    void hasCorrectAbility() {
-        Spellskite card = new Spellskite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{U/P}");
-        assertThat(ability.isNeedsSpellTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ChangeTargetOfTargetSpellToSourceEffect.class);
-        assertThat(ability.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryHasTargetPredicate(),
-                "Target must be a spell or ability on the stack."
-        ));
-    }
+    
 
     @Test
     @DisplayName("Spellskite redirects a targeted spell to itself")

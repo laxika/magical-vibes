@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,21 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrokenBondTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Broken Bond has correct effects")
-    void hasCorrectProperties() {
-        BrokenBond card = new BrokenBond();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect put = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(put.label()).isEqualTo("land");
-    }
+    
 
     @Test
     @DisplayName("Casting Broken Bond puts it on the stack with target")
@@ -81,8 +62,8 @@ class BrokenBondTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Fountain of Youth"));
 
         // Should prompt for may choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test

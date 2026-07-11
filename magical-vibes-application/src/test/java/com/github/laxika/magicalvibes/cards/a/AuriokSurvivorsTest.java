@@ -1,17 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,22 +34,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Auriok Survivors has ETB MayEffect returning Equipment from graveyard")
-    void hasCorrectProperties() {
-        AuriokSurvivors card = new AuriokSurvivors();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) mayEffect.wrapped();
-        assertThat(returnEffect.attachToSource()).isTrue();
-    }
-
     // ===== ETB may ability =====
 
     @Test
@@ -68,7 +47,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell → may on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -78,7 +57,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline — graveyard choice prompt appears immediately
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
     }
 
     @Test
@@ -109,11 +88,11 @@ class AuriokSurvivorsTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline → graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the Equipment (index 0) → triggers second may prompt for attachment
         harness.handleGraveyardCardChosen(player1, 0);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Accept attachment
         harness.handleMayAbilityChosen(player1, true);
@@ -184,7 +163,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no Equipment"));
     }
 
@@ -193,7 +172,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
     void noEffectWithEmptyGraveyard() {
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     @Test

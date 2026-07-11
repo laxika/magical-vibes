@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,18 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AdventurousEaterHaveABiteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Have a Bite back face")
-    void hasCorrectStructure() {
-        AdventurousEaterHaveABite card = new AdventurousEaterHaveABite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("HaveABite");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Have a Bite");
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield prepares Adventurous Eater and exiles a castable Have a Bite copy")

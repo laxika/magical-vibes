@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "258")
+@CardRegistration(set = "9ED", collectorNumber = "234")
 public class CreepingMold extends Card {
 
     public CreepingMold() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "10E", collectorNumber = "283")
+@CardRegistration(set = "9ED", collectorNumber = "262")
 public class Overgrowth extends Card {
 
     public Overgrowth() {

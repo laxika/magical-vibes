@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDestroyRestEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,22 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DivineReckoningTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Divine Reckoning has correct effect and flashback")
-    void hasCorrectEffectAndFlashback() {
-        DivineReckoning card = new DivineReckoning();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(EachPlayerChoosesCreatureDestroyRestEffect.class);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{W}{W}");
-    }
 
     // ===== No creatures =====
 
@@ -91,10 +71,12 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 (active player) has 2 creatures and must choose
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(1);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
-        assertThat(gd.pendingDestroyRestMode).isTrue();
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.DestroyRestChoice.class);
 
         // Player1 chooses to keep Grizzly Bears
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
@@ -124,16 +106,18 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 (active player, APNAP first) is prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
 
         // Player1 keeps Grizzly Bears
         UUID p1BearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player1, List.of(p1BearsId));
 
         // Player2 is now prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
 
         // Player2 keeps Llanowar Elves
         UUID p2ElvesId = harness.getPermanentId(player2, "Llanowar Elves");
@@ -167,11 +151,13 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 has 2 creatures, must choose
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
+        PendingInteraction.MultiPermanentChoice mixedChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(mixedChoice).isNotNull();
+        assertThat(mixedChoice.playerId()).isEqualTo(player1.getId());
 
         // Player2's single creature was auto-protected
-        assertThat(gd.pendingDestroyRestProtectedIds).hasSize(1);
+        assertThat(((MultiPermanentChoiceContext.DestroyRestChoice) mixedChoice.context()).protectedIds()).hasSize(1);
 
         // Player1 keeps LlanowarElves
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
@@ -265,8 +251,9 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 must choose a creature to keep
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingDestroyRestMode).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
+                .isInstanceOf(MultiPermanentChoiceContext.DestroyRestChoice.class);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
@@ -329,7 +316,7 @@ class DivineReckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Player1 must choose one to keep
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));

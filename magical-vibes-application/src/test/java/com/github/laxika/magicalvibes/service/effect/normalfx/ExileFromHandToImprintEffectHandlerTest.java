@@ -10,15 +10,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFromHandToImprintEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -41,12 +38,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ExileFromHandToImprintEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
@@ -81,7 +80,7 @@ class ExileFromHandToImprintEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileFromHandToImprintHandler = new ExileFromHandToImprintEffectHandler(gameQueryService, playerInputService);
+        exileFromHandToImprintHandler = new ExileFromHandToImprintEffectHandler(gameQueryService, predicateEvaluationService, playerInputService);
 
     }
 
@@ -173,7 +172,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 );
 
                 when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
-                when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(true);
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
@@ -221,7 +220,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 );
 
                 when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
-                when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(false);
 
                 exileFromHandToImprintHandler.resolve(gd, entry, effect);
 

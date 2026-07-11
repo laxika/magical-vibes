@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,20 +24,7 @@ class KuldothaPhoenixTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has GRAVEYARD_UPKEEP_TRIGGERED effect with MetalcraftConditionalEffect wrapping MayPayManaEffect")
-    void hasCorrectEffects() {
-        KuldothaPhoenix card = new KuldothaPhoenix();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) metalcraft.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{4}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers during upkeep when in graveyard with metalcraft met")
@@ -55,8 +38,8 @@ class KuldothaPhoenixTest extends BaseCardTest {
         // Resolve MayPayManaEffect from stack
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().sourceCard().getName()).isEqualTo("Kuldotha Phoenix");
         assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{4}");

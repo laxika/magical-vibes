@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,27 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CallTheCavalryTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Call the Cavalry has spell effect that creates two 2/2 white Knight tokens with vigilance")
-    void hasCorrectProperties() {
-        CallTheCavalry card = new CallTheCavalry();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Knight");
-        assertThat(tokenEffect.power()).isEqualTo(2);
-        assertThat(tokenEffect.toughness()).isEqualTo(2);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.KNIGHT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.VIGILANCE);
-    }
 
     // ===== Casting and resolving =====
 

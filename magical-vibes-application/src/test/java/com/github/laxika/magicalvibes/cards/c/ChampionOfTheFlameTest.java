@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,24 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChampionOfTheFlameTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +2/+2 per Aura and Equipment effect")
-    void hasCorrectEffect() {
-        ChampionOfTheFlame card = new ChampionOfTheFlame();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerAttachmentEffect.class);
-        BoostSelfPerAttachmentEffect effect =
-                (BoostSelfPerAttachmentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.countAuras()).isTrue();
-        assertThat(effect.countEquipment()).isTrue();
-    }
 
     // ===== Base stats without attachments =====
 

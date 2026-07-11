@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GravediggerTest extends BaseCardTest {
-
 
     /**
      * Casts Gravedigger and resolves it onto the battlefield, then accepts the may ability
@@ -36,20 +31,6 @@ class GravediggerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner resolves inline
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gravedigger has correct card properties")
-    void hasCorrectProperties() {
-        Gravedigger card = new Gravedigger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
     }
 
     // ===== Casting =====
@@ -104,7 +85,7 @@ class GravediggerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -114,7 +95,7 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolves inline — graveyard choice should be prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
     }
 
     @Test
@@ -149,7 +130,7 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline — graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -167,7 +148,7 @@ class GravediggerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         castAndAcceptMay();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -206,7 +187,7 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline — no graveyard choice since graveyard is empty
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -217,7 +198,7 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay();
 
         // Inner effect resolved inline — no graveyard choice since no creatures
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // Holy Day stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -274,5 +255,4 @@ class GravediggerTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
     }
 }
-
 

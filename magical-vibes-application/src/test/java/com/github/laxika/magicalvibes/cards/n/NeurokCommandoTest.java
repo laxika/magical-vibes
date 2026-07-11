@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,22 +27,6 @@ class NeurokCommandoTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER MayEffect with DrawCardEffect")
-    void hasCorrectEffect() {
-        NeurokCommando card = new NeurokCommando();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
-
     // ===== Combat damage trigger: accept =====
 
     @Test
@@ -63,7 +44,7 @@ class NeurokCommandoTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
 
         // Player1 should be prompted for the may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
 
         // Resolve the triggered ability

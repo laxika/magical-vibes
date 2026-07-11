@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,18 +18,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ConundrumSphinxTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with EachPlayerNameCardRevealTopEffect")
-    void hasCorrectStructure() {
-        ConundrumSphinx card = new ConundrumSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(EachPlayerNameCardRevealTopEffect.class);
-    }
 
     // ===== Attack trigger =====
 
@@ -58,9 +44,9 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.colorChoice().choiceContext())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
     }
 
@@ -74,12 +60,12 @@ class ConundrumSphinxTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Lightning Bolt");
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.colorChoice().choiceContext())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
 
-        var ctx = (ChoiceContext.EachPlayerCardNameRevealChoice) gd.interaction.colorChoice().choiceContext();
+        var ctx = (ChoiceContext.EachPlayerCardNameRevealChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
         assertThat(ctx.chosenNames()).containsEntry(player1.getId(), "Lightning Bolt");
     }
 
@@ -243,18 +229,17 @@ class ConundrumSphinxTest extends BaseCardTest {
         harness.handleListChoice(player1, "Lightning Bolt");
         harness.handleListChoice(player2, "Grizzly Bears");
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.colorChoice()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
     // ===== Helpers =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

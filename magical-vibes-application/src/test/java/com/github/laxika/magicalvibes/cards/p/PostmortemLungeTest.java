@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,22 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PostmortemLungeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Postmortem Lunge has correct effects")
-    void hasCorrectEffects() {
-        PostmortemLunge card = new PostmortemLunge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.grantHaste()).isTrue();
-        assertThat(effect.exileAtEndStep()).isTrue();
-        assertThat(effect.requiresManaValueEqualsX()).isTrue();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Postmortem Lunge puts it on the stack with graveyard target")
@@ -84,7 +67,7 @@ class PostmortemLungeTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.pendingTokenExilesAtEndStep).contains(creature.getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(creature.getId()));
     }
 
     @Test

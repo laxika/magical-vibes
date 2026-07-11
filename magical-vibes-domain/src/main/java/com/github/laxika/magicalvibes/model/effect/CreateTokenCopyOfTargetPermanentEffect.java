@@ -22,11 +22,27 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         Set<CardType> additionalTypes,
         Integer powerOverride,
         Integer toughnessOverride,
-        Map<CounterType, Integer> initialCounters
+        Map<CounterType, Integer> initialCounters,
+        boolean grantHaste,
+        boolean exileAtEndStep
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect() {
-        this(List.of(), Set.of(), null, null, Map.of());
+        this(List.of(), Set.of(), null, null, Map.of(), false, false);
+    }
+
+    /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
+    public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep);
+    }
+
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, false, false);
     }
 
     @Override

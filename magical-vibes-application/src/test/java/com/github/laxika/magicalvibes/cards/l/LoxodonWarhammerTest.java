@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,40 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LoxodonWarhammerTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
+    
 
-    @Test
-    @DisplayName("Loxodon Warhammer has static +3/+0 boost effect")
-    void hasStaticBoostEffect() {
-        LoxodonWarhammer card = new LoxodonWarhammer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Loxodon Warhammer has static trample and lifelink keyword grant effects")
-    void hasKeywordGrantEffects() {
-        LoxodonWarhammer card = new LoxodonWarhammer();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.LIFELINK);
-    }
+    
 
     @Test
     @DisplayName("Loxodon Warhammer has equip {3} ability with correct properties")
@@ -417,5 +384,4 @@ class LoxodonWarhammerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 }
-
 

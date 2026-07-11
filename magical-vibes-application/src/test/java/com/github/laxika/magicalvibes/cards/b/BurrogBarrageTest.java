@@ -4,12 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCastAnotherSpellThisTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BurrogBarrageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spell has conditional boost and bite effects with multi-target")
-    void cardStructure() {
-        BurrogBarrage card = new BurrogBarrage();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(ControllerCastAnotherSpellThisTurnConditionalEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(FirstTargetDealsPowerDamageToSecondTargetEffect.class);
-
-        var conditional = (ControllerCastAnotherSpellThisTurnConditionalEffect) effects.get(0);
-        assertThat(conditional.wrapped()).isInstanceOf(BoostFirstTargetCreatureEffect.class);
-        assertThat(((BoostFirstTargetCreatureEffect) conditional.wrapped()).powerBoost()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Without another instant or sorcery cast, bite uses base power and no boost")

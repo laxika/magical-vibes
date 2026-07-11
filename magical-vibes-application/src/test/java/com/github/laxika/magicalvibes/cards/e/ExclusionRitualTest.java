@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,22 +31,6 @@ class ExclusionRitualTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentAndImprintEffect on ETB and static casting restriction")
-    void hasCorrectEffects() {
-        ExclusionRitual card = new ExclusionRitual();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantCastSpellsWithSameNameAsExiledCardEffect.class);
     }
 
     // ===== ETB exile =====

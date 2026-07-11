@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 import java.util.List;
@@ -21,8 +22,7 @@ public class GatherTheTownsfolk extends Card {
 
         // Fateful hour — If you have 5 or less life, create five of those tokens instead
         // (i.e. three additional tokens on top of the two above).
-        addEffect(EffectSlot.SPELL, new ControllerLifeAtOrBelowThresholdConditionalEffect(5,
-                new CreateTokenEffect(3, "Human", 1, 1,
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerLifeAtMost(5), new CreateTokenEffect(3, "Human", 1, 1,
                         CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of())));
     }
 }

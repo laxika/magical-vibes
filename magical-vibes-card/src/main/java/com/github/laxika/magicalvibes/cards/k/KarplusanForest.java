@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "354")
+@CardRegistration(set = "9ED", collectorNumber = "321")
 public class KarplusanForest extends Card {
 
     public KarplusanForest() {
@@ -24,14 +26,14 @@ public class KarplusanForest extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {R}. Karplusan Forest deals 1 damage to you."
         ));
         // {T}: Add {G}. Karplusan Forest deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.GREEN), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {G}. Karplusan Forest deals 1 damage to you."
         ));
     }

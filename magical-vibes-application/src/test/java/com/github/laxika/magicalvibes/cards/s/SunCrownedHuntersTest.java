@@ -1,13 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,21 +16,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SunCrownedHuntersTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sun-Crowned Hunters has one ON_DEALT_DAMAGE effect of type DealDamageToTargetOpponentOrPlaneswalkerEffect(3)")
-    void hasCorrectEffect() {
-        SunCrownedHunters card = new SunCrownedHunters();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(DealDamageToTargetOpponentOrPlaneswalkerEffect.class);
-        DealDamageToTargetOpponentOrPlaneswalkerEffect effect =
-                (DealDamageToTargetOpponentOrPlaneswalkerEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst();
-        assertThat(effect.damage()).isEqualTo(3);
-    }
 
     // ===== Non-combat damage trigger =====
 

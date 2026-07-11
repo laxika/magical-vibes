@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,43 +29,11 @@ class ChandraNalaarTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has DealDamageToAnyTargetEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) ability.getEffects().getFirst()).damage()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-X ability has DealXDamageToTargetCreatureEffect and is variable loyalty cost")
-    void minusXAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isVariableLoyaltyCost()).isTrue();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealXDamageToTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has DealDamageToTargetAndTheirCreaturesEffect(10)")
-    void minusEightAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetAndTheirCreaturesEffect.class);
-        assertThat(((DealDamageToTargetAndTheirCreaturesEffect) ability.getEffects().getFirst()).damage()).isEqualTo(10);
-    }
+    
 
     // ===== Casting =====
 

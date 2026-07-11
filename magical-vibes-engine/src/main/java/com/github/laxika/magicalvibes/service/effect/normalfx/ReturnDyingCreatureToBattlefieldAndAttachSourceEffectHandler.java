@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +62,10 @@ public class ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler implem
         // Attach the source equipment to the returned creature
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (equipment != null) {
+            gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
             equipment.setAttachedTo(creature.getId());
+            // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+            equipment.setTimestamp(gameData.nextTimestamp());
             String attachLog = entry.getCard().getName() + " is now attached to " + dyingCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, attachLog);
             log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), dyingCard.getName());

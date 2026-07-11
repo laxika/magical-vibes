@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +16,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -27,45 +24,18 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
-
-import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureCardInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
-import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -93,6 +63,8 @@ public class GameBroadcastService {
     private final StackEntryViewFactory stackEntryViewFactory;
     private final GameQueryService gameQueryService;
     private final ValidTargetService validTargetService;
+    private final CastingCostService castingCostService;
+    private final CastingPermissionService castingPermissionService;
 
     public void broadcastGameState(GameData gameData) {
         // Skip expensive view computation during MCTS simulation (headless session manager discards the result)
@@ -178,14 +150,16 @@ public class GameBroadcastService {
             } else {
                 List<PermanentView> views = new ArrayList<>();
                 for (Permanent p : bf) {
-                    GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(data, p);
+                    GameQueryService.ExplainedBonus explained = gameQueryService.explainStaticBonus(data, p);
+                    GameQueryService.StaticBonus bonus = explained.bonus();
                     // Compute adjusted bonus P/T to account for static base P/T overrides (e.g. Deep Freeze)
                     int adjustedBonusPower = gameQueryService.getEffectivePower(p, bonus) - p.getEffectivePower();
                     int adjustedBonusToughness = gameQueryService.getEffectiveToughness(p, bonus) - p.getEffectiveToughness();
                     List<ActivatedAbility> allGrantedAbilities = new ArrayList<>(bonus.grantedActivatedAbilities());
+                    allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
                     allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
                     allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
-                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes()));
+                    views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes(), explained.lines()));
                 }
                 battlefields.add(views);
             }
@@ -216,17 +190,19 @@ public class GameBroadcastService {
         // Mindslaver: controller always sees the controlled player's hand
         // (handled separately in broadcastGameState — overrides opponentHand for controller)
 
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return List.of();
-        boolean reveals = false;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RevealOpponentHandsEffect) {
-                    reveals = true;
-                    break;
+        boolean reveals = anyPlayerHasPlayWithHandsRevealed(gameData);
+        if (!reveals) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) return List.of();
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof RevealOpponentHandsEffect) {
+                        reveals = true;
+                        break;
+                    }
                 }
+                if (reveals) break;
             }
-            if (reveals) break;
         }
         if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
@@ -237,6 +213,21 @@ public class GameBroadcastService {
             }
         }
         return List.of();
+    }
+
+    private boolean anyPlayerHasPlayWithHandsRevealed(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlayWithHandsRevealedEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {
@@ -333,188 +324,244 @@ public class GameBroadcastService {
             return playable;
         }
 
-        boolean isActivePlayer = playerId.equals(gameData.activePlayerId);
-        boolean isMainPhase = gameData.currentStep == TurnStep.PRECOMBAT_MAIN
-                || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
-        int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
-        boolean spellLimitReached = spellsCast >= maxSpells;
-        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
-
-        boolean stackEmpty = gameData.stack.isEmpty();
-        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        CostModifierSnapshot costSnapshot = buildCostModifierSnapshot(gameData, playerId);
-
-        // Lazy: only computed if a card with Convoke is found
-        int untappedCreatureCount = -1;
-
+        SpellPlayabilityContext ctx = buildSpellPlayabilityContext(gameData, playerId);
         for (int i = 0; i < hand.size(); i++) {
-            Card card = hand.get(i);
-            if (card.hasType(CardType.LAND) && isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+            if (isCardPlayable(gameData, playerId, hand.get(i), pool, extraConvokeMana, 0, ctx)) {
                 playable.add(i);
-            }
-            if (card.getManaCost() != null && !spellLimitReached && !cantCastDueToAttack) {
-                if (isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
-
-                if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
-                    // Alternative zero cost (e.g. Rooftop Storm for Zombie creature spells)
-                    if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
-                        playable.add(i);
-                    } else {
-                        boolean added = false;
-                        ManaCost cost = card.getParsedManaCost();
-                        int additionalCost = getCastCostModifier(gameData, playerId, card, costSnapshot);
-                        boolean isArtifact = card.hasType(CardType.ARTIFACT);
-                        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
-                        boolean hasRestrictedRedContext = isArtifact
-                                || card.hasType(CardType.CREATURE);
-                        boolean hasKicker = false;
-                        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-                            if (e instanceof KickerEffect) { hasKicker = true; break; }
-                        }
-                        boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
-                        boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                                && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
-                        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
-                        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || !subtypeCreatureContext.isEmpty();
-                        boolean canAfford = hasRestricted
-                                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext)
-                                : cost.canPay(pool, additionalCost);
-                        if (canAfford && card.isRequiresCreatureMana()) {
-                            canAfford = cost.canPayCreatureOnly(pool, additionalCost);
-                        }
-                        if (canAfford) {
-                            playable.add(i);
-                            added = true;
-                        } else if (card.getKeywords().contains(Keyword.CONVOKE)) {
-                            // Check if castable with convoke: mana pool + untapped creatures >= total cost
-                            if (untappedCreatureCount < 0) {
-                                untappedCreatureCount = 0;
-                                if (battlefield != null) {
-                                    for (Permanent perm : battlefield) {
-                                        if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
-                                            untappedCreatureCount++;
-                                        }
-                                    }
-                                }
-                            }
-                            int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
-                            int totalAvailable = pool.getTotal() + convokeCreatures;
-                            if (totalAvailable >= cost.getManaValue() + additionalCost) {
-                                playable.add(i);
-                                added = true;
-                            }
-                        }
-                        if (!added) {
-                            // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
-                            SacrificeCreaturesForCostReductionEffect sacReduce = null;
-                            for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-                                if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
-                            }
-                            if (sacReduce != null) {
-                                int creatureCount = 0;
-                                if (battlefield != null) {
-                                    for (Permanent perm : battlefield) {
-                                        if (gameQueryService.isCreature(gameData, perm)) {
-                                            creatureCount++;
-                                        }
-                                    }
-                                }
-                                int maxReduction = creatureCount * sacReduce.reductionPerCreature();
-                                if (cost.canPay(pool, additionalCost - maxReduction)) {
-                                    playable.add(i);
-                                    added = true;
-                                }
-                            }
-                        }
-                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
-                        if (!added) {
-                            ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
-                            ReduceOwnCastCostIfTargetingPermanentEffect generalTargetReduce = null;
-                            ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
-                            for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-                                if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) {
-                                    targetReduce = r;
-                                } else if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
-                                    generalTargetReduce = r;
-                                } else if (e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect r) {
-                                    stackTargetReduce = r;
-                                }
-                            }
-                            if (targetReduce != null && controlsPermanent(gameData, playerId, targetReduce.predicate())) {
-                                if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
-                                    playable.add(i);
-                                    added = true;
-                                }
-                            } else if (generalTargetReduce != null
-                                    && battlefieldHasPermanentMatching(gameData, generalTargetReduce.predicate())) {
-                                if (cost.canPay(pool, additionalCost - generalTargetReduce.amount())) {
-                                    playable.add(i);
-                                    added = true;
-                                }
-                            } else if (stackTargetReduce != null
-                                    && stackHasMatchingSpell(gameData, stackTargetReduce.predicate())) {
-                                if (cost.canPay(pool, additionalCost - stackTargetReduce.amount())) {
-                                    playable.add(i);
-                                    added = true;
-                                }
-                            }
-                        }
-                        // Check non-zero alternative cost from battlefield (e.g. Jodah)
-                        if (!added && canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
-                            playable.add(i);
-                            added = true;
-                        }
-                        if (!added && canAlternateCast(gameData, playerId, card, battlefield)) {
-                            playable.add(i);
-                        }
-                    }
-                }
-            } else if (card.getManaCost() == null && canAlternateCast(gameData, playerId, card, battlefield)) {
-                // Card with no mana cost but has alternate cost (e.g. some future cards)
-                if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)
-                        && !spellLimitReached && !cantCastDueToAttack) {
-                    playable.add(i);
-                }
             }
         }
 
-        // MTG rule 601.2c: a spell can't be cast unless a legal set of targets can be chosen for it
-        playable.removeIf(i -> {
-            Card card = hand.get(i);
-            if (card.hasType(CardType.LAND)) return false;
-            return EffectResolution.needsSpellCastTarget(card) && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
-        });
+        // MTG rule 601.2b: "as an additional cost, discard a card" — need another card in hand to
+        // discard. The spell itself is still in hand here, so at least 2 cards are required.
+        playable.removeIf(i -> hand.get(i).getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(DiscardCardTypeCost.class::isInstance) && hand.size() < 2);
+
+        return playable;
+    }
+
+    /**
+     * Pure single-card playability query: could {@code playerId} legally play {@code card} right
+     * now if their mana pool were {@code pool}? Applies exactly the checks that decide
+     * {@link #getPlayableCardIndices} membership — timing, casting permissions, spell limits,
+     * affordability with every cost modifier and alternative-cost route, target availability
+     * (CR 601.2c), graveyard-exile additional costs (CR 601.2b) and the legendary-sorcery rule
+     * (CR 714.1) — but not the status/awaiting-input/priority gating (callers such as the AI
+     * check priority themselves and may evaluate hypothetical pools). Never mutates game state.
+     *
+     * @param pool                  the pool to check affordability against (the AI passes a
+     *                              virtual pool of producible mana)
+     * @param additionalGenericCost extra generic mana required (e.g. targeting tax); 0 when unknown
+     */
+    public boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalGenericCost) {
+        return isCardPlayable(gameData, playerId, card, pool, 0, additionalGenericCost,
+                buildSpellPlayabilityContext(gameData, playerId));
+    }
+
+    /** Per-player values shared by every card's playability check; computed once per hand scan. */
+    private record SpellPlayabilityContext(boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
+                                           int landsPlayed, boolean spellLimitReached, boolean cantCastDueToAttack,
+                                           Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames,
+                                           CastingCostService.CostModifierSnapshot costSnapshot,
+                                           List<Permanent> battlefield) {
+    }
+
+    private SpellPlayabilityContext buildSpellPlayabilityContext(GameData gameData, UUID playerId) {
+        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
+        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
+        return new SpellPlayabilityContext(
+                playerId.equals(gameData.activePlayerId),
+                gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
+                gameData.stack.isEmpty(),
+                gameData.landsPlayedThisTurn.getOrDefault(playerId, 0),
+                spellsCast >= maxSpells,
+                castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId),
+                castingPermissionService.getRestrictedSpellTypes(gameData, playerId),
+                castingPermissionService.getForbiddenCardNames(gameData, playerId),
+                castingCostService.buildCostModifierSnapshot(gameData, playerId),
+                gameData.playerBattlefields.get(playerId));
+    }
+
+    private boolean isCardPlayable(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                   int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        boolean landPlayable = card.hasType(CardType.LAND)
+                && ctx.isActivePlayer() && ctx.isMainPhase()
+                && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty();
+        boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
+
+        // The 601.2c/601.2b/714.1 filters below never apply to land plays
+        if (card.hasType(CardType.LAND)) {
+            return landPlayable || spellPlayable;
+        }
+        if (!spellPlayable) {
+            return false;
+        }
+
+        // MTG rule 601.2c: a spell can't be cast unless a legal set of targets can be chosen for it.
+        // Spells whose declared targets are all optional ("up to one/N target …") can always be
+        // cast by choosing zero targets, even if no legal target exists (e.g. Stress Dream).
+        boolean allTargetsOptional = !card.getSpellTargets().isEmpty() && card.getMinTargets() == 0;
+        if (!allTargetsOptional
+                && EffectResolution.needsSpellCastTarget(card)
+                && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId)) {
+            return false;
+        }
 
         // MTG rule 601.2b: can't cast if additional cost requiring N graveyard cards can't be paid
-        playable.removeIf(i -> {
-            Card card = hand.get(i);
-            if (card.hasType(CardType.LAND)) return false;
-            ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
-                    .filter(ExileNCardsFromGraveyardCost.class::isInstance)
-                    .findFirst().orElse(null);
-            if (exileCost == null) return false;
+        ExileNCardsFromGraveyardCost exileCost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                .findFirst().orElse(null);
+        if (exileCost != null) {
             List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
             long matchingCount = graveyard.stream()
                     .filter(c -> exileCost.requiredType() == null || c.hasType(exileCost.requiredType()))
                     .count();
-            return matchingCount < exileCost.count();
-        });
+            if (matchingCount < exileCost.count()) {
+                return false;
+            }
+        }
 
         // MTG rule 714.1: can't cast a legendary sorcery unless you control a legendary creature or planeswalker
-        playable.removeIf(i -> {
-            Card card = hand.get(i);
-            if (!card.getSupertypes().contains(CardSupertype.LEGENDARY)) return false;
-            if (!card.hasType(CardType.SORCERY)) return false;
-            return !controlsLegendaryCreatureOrPlaneswalker(gameData, playerId);
-        });
+        if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
+                && card.hasType(CardType.SORCERY)
+                && !castingPermissionService.controlsLegendaryCreatureOrPlaneswalker(gameData, playerId)) {
+            return false;
+        }
 
-        return playable;
+        return true;
+    }
+
+    private boolean isPlayableAsSpell(GameData gameData, UUID playerId, Card card, ManaPool pool,
+                                      int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
+        if (card.getManaCost() == null) {
+            // Card with no mana cost but has alternate cost (e.g. some future cards)
+            return castingCostService.canPayAlternateHandCast(gameData, playerId, card)
+                    && castingPermissionService.canCastWithTiming(gameData, playerId, card,
+                            ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())
+                    && !ctx.spellLimitReached() && !ctx.cantCastDueToAttack();
+        }
+        if (ctx.spellLimitReached() || ctx.cantCastDueToAttack()) {
+            return false;
+        }
+        if (castingPermissionService.isSpellRestricted(card, ctx.restrictedSpellTypes(), ctx.forbiddenCardNames())) {
+            return false;
+        }
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {
+            return false;
+        }
+        if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
+                ctx.isActivePlayer(), ctx.isMainPhase(), ctx.stackEmpty())) {
+            return false;
+        }
+        if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card)) {
+            return false;
+        }
+
+        // Alternative zero cost (e.g. Rooftop Storm for Zombie creature spells)
+        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
+            return true;
+        }
+
+        ManaCost cost = card.getParsedManaCost();
+        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card, ctx.costSnapshot())
+                + additionalGenericCost;
+        boolean isArtifact = card.hasType(CardType.ARTIFACT);
+        boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
+        boolean hasRestrictedRedContext = isArtifact
+                || card.hasType(CardType.CREATURE);
+        boolean hasKicker = false;
+        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+            if (e instanceof KickerEffect) { hasKicker = true; break; }
+        }
+        boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
+        boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
+                && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
+        Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
+        // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching subtype.
+        Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless
+                || !subtypeCreatureContext.isEmpty() || !subtypeSpellOrAbilityContext.isEmpty();
+        boolean canAfford = hasRestricted
+                ? cost.canPay(pool, additionalCost, isArtifact, isMyr, hasRestrictedRedContext, kickedOnlyGreen, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext)
+                : cost.canPay(pool, additionalCost);
+        if (canAfford && card.isRequiresCreatureMana()) {
+            canAfford = cost.canPayCreatureOnly(pool, additionalCost);
+        }
+        if (canAfford) {
+            return true;
+        }
+
+        if (card.getKeywords().contains(Keyword.CONVOKE)) {
+            // Check if castable with convoke: mana pool + untapped creatures >= total cost
+            int untappedCreatureCount = 0;
+            if (ctx.battlefield() != null) {
+                for (Permanent perm : ctx.battlefield()) {
+                    if (gameQueryService.isCreature(gameData, perm) && !perm.isTapped()) {
+                        untappedCreatureCount++;
+                    }
+                }
+            }
+            int convokeCreatures = extraConvokeMana > 0 ? extraConvokeMana : untappedCreatureCount;
+            int totalAvailable = pool.getTotal() + convokeCreatures;
+            if (totalAvailable >= cost.getManaValue() + additionalCost) {
+                return true;
+            }
+        }
+
+        // Check if castable with sacrifice-for-cost-reduction (e.g. Torgaar)
+        SacrificeCreaturesForCostReductionEffect sacReduce = null;
+        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+            if (e instanceof SacrificeCreaturesForCostReductionEffect s) { sacReduce = s; break; }
+        }
+        if (sacReduce != null) {
+            int creatureCount = 0;
+            if (ctx.battlefield() != null) {
+                for (Permanent perm : ctx.battlefield()) {
+                    if (gameQueryService.isCreature(gameData, perm)) {
+                        creatureCount++;
+                    }
+                }
+            }
+            int maxReduction = creatureCount * sacReduce.reductionPerCreature();
+            if (cost.canPay(pool, additionalCost - maxReduction)) {
+                return true;
+            }
+        }
+
+        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
+        ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
+        ReduceOwnCastCostIfTargetingPermanentEffect generalTargetReduce = null;
+        ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
+        for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
+            if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) {
+                targetReduce = r;
+            } else if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
+                generalTargetReduce = r;
+            } else if (e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect r) {
+                stackTargetReduce = r;
+            }
+        }
+        if (targetReduce != null && castingCostService.controlsPermanent(gameData, playerId, targetReduce.predicate())) {
+            if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
+                return true;
+            }
+        } else if (generalTargetReduce != null
+                && castingCostService.battlefieldHasPermanentMatching(gameData, generalTargetReduce.predicate())) {
+            if (cost.canPay(pool, additionalCost - generalTargetReduce.amount())) {
+                return true;
+            }
+        } else if (stackTargetReduce != null
+                && castingCostService.stackHasMatchingSpell(gameData, stackTargetReduce.predicate())) {
+            if (cost.canPay(pool, additionalCost - stackTargetReduce.amount())) {
+                return true;
+            }
+        }
+
+        // Check non-zero alternative cost from battlefield (e.g. Jodah)
+        if (castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost)) {
+            return true;
+        }
+        return castingCostService.canPayAlternateHandCast(gameData, playerId, card);
     }
 
     public List<Integer> getPlayableGraveyardLandIndices(GameData gameData, UUID playerId) {
@@ -528,7 +575,7 @@ public class GameBroadcastService {
             return playable;
         }
 
-        boolean canPlayAnyLandsFromGraveyard = canPlayLandsFromGraveyard(gameData, playerId);
+        boolean canPlayAnyLandsFromGraveyard = castingPermissionService.canPlayLandsFromGraveyard(gameData, playerId);
         boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
                 .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
         if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission) {
@@ -541,7 +588,7 @@ public class GameBroadcastService {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         boolean stackEmpty = gameData.stack.isEmpty();
 
-        if (!isActivePlayer || !isMainPhase || landsPlayed >= 1 || !stackEmpty) {
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty) {
             return playable;
         }
 
@@ -554,7 +601,7 @@ public class GameBroadcastService {
             Card card = graveyard.get(i);
             if (card.hasType(CardType.LAND)
                     && (canPlayAnyLandsFromGraveyard
-                    || hasGraveyardPlayPermission(gameData, card.getId(), playerId))) {
+                    || castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId))) {
                 playable.add(i);
             }
         }
@@ -588,10 +635,10 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
+        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
-        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
-        Optional<UUID> graveyardCastSourceId = findGraveyardCastSourcePermanentId(gameData, playerId);
+        boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
+        Optional<UUID> graveyardCastSourceId = castingPermissionService.findGraveyardCastSourcePermanentId(gameData, playerId);
         Set<CardType> typesCastFromGraveyard = graveyardCastSourceId
                 .map(id -> gameData.permanentTypesCastFromGraveyardThisTurn.getOrDefault(id, Set.of()))
                 .orElse(Set.of());
@@ -607,24 +654,24 @@ public class GameBroadcastService {
             boolean grantedFlashback = flashback.isEmpty()
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
-                    && hasEmblemGrantedFlashback(gameData, playerId, card);
+                    && castingPermissionService.hasEmblemGrantedFlashback(gameData, playerId, card);
             boolean grantedHavengulCast = flashback.isEmpty()
                     && !grantedFlashback
                     && !emblemFlashback
                     && card.hasType(CardType.CREATURE)
-                    && hasHavengulCastPermission(gameData, card, playerId);
+                    && castingPermissionService.hasHavengulCastPermission(gameData, card, playerId);
             boolean isGrantedGraveyardPlay = flashback.isEmpty()
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
-                    && hasGraveyardPlayPermission(gameData, card.getId(), playerId);
+                    && castingPermissionService.hasGraveyardPlayPermission(gameData, card.getId(), playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
                     && !isGrantedGraveyardPlay
-                    && isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
+                    && castingPermissionService.isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
@@ -632,7 +679,7 @@ public class GameBroadcastService {
                     && !isGrantedGraveyardPlay && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
-                isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
+                isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
             if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
@@ -653,11 +700,15 @@ public class GameBroadcastService {
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
+                // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
+                if (flashback.isPresent() && castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get())) {
+                    playable.add(i);
+                }
                 continue;
             }
             ManaCost cost = new ManaCost(manaCostStr);
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = getCastCostModifier(gameData, playerId, card);
+            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
             // Flashback-only mana (e.g. Altar of the Lost) can be spent on any spell with flashback
             // cast from a graveyard, but not on GraveyardCast-only or Muldrotha-style non-flashback casts.
             boolean cardHasFlashback = flashback.isPresent() || grantedFlashback || emblemFlashback;
@@ -712,15 +763,15 @@ public class GameBroadcastService {
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
+        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
-        boolean cantCastDueToAttackExile = isPlayerPreventedFromCasting(gameData, playerId);
-        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
+        boolean cantCastDueToAttackExile = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
+        Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
+        Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
         // Collect card IDs castable via AllowCastFromCardsExiledWithSourceEffect
-        Set<UUID> castableFromExileWithSource = getCastableExiledCardIds(gameData, playerId);
-        Set<UUID> anyManaTypeIds = getAnyManaTypeExiledCardIds(gameData, playerId);
+        Set<UUID> castableFromExileWithSource = castingPermissionService.getCastableExiledCardIds(gameData, playerId);
+        Set<UUID> anyManaTypeIds = castingPermissionService.getAnyManaTypeExiledCardIds(gameData, playerId);
 
         // Include player's own exiled cards plus cards from any exile zone castable via source effect
         List<Card> exiledCards = new ArrayList<>(gameData.getPlayerExiledCards(playerId));
@@ -751,17 +802,18 @@ public class GameBroadcastService {
             }
 
             if (card.hasType(CardType.LAND)) {
-                if (isActivePlayer && isMainPhase && landsPlayed < 1 && stackEmpty) {
+                if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty) {
                     playable.add(cardViewFactory.create(card));
                 }
                 continue;
             }
 
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
-            if (isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
+            if (castingPermissionService.isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
+            if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) continue;
 
-            if (canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
-                if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
+            if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
+                if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
                     playable.add(cardViewFactory.create(card));
                 } else {
                     ManaCost cost = card.getParsedManaCost();
@@ -769,7 +821,7 @@ public class GameBroadcastService {
                     if (anyManaTypeIds.contains(card.getId())) {
                         canAfford = cost.canPayAsGeneric(pool);
                     } else {
-                        int additionalCost = getCastCostModifier(gameData, playerId, card);
+                        int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
                         boolean isArtifact = card.hasType(CardType.ARTIFACT);
                         boolean isMyr = gameQueryService.cardHasSubtype(card, CardSubtype.MYR, gameData, playerId);
                         boolean hasRestrictedRedContext = isArtifact
@@ -779,7 +831,7 @@ public class GameBroadcastService {
                                 : cost.canPay(pool, additionalCost);
                         // Check non-zero alternative cost from battlefield (e.g. Jodah)
                         if (!canAfford) {
-                            canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
+                            canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost);
                         }
                     }
                     if (canAfford) {
@@ -810,7 +862,7 @@ public class GameBroadcastService {
         }
 
         // Collect castable types from all AllowCastFromTopOfLibraryEffect on the player's battlefield
-        Set<CardType> castableTypes = getCastableTypesFromTopOfLibrary(gameData, playerId);
+        Set<CardType> castableTypes = castingPermissionService.getCastableTypesFromTopOfLibrary(gameData, playerId);
         if (castableTypes.isEmpty()) {
             return playable;
         }
@@ -834,31 +886,32 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
+        int maxSpells = castingPermissionService.getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
-        boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
-        Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
-        Set<String> forbiddenCardNames = getForbiddenCardNames(gameData, playerId);
+        boolean cantCastDueToAttack = castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId);
+        Set<CardType> restrictedSpellTypes = castingPermissionService.getRestrictedSpellTypes(gameData, playerId);
+        Set<String> forbiddenCardNames = castingPermissionService.getForbiddenCardNames(gameData, playerId);
 
         if (spellLimitReached || cantCastDueToAttack) return playable;
-        if (isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
+        if (castingPermissionService.isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
+        if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, topCard)) return playable;
 
-        if (!canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
+        if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
         // Check if spell requires a legal target (MTG rule 601.2c)
         if (EffectResolution.needsSpellCastTarget(topCard) && !validTargetService.hasValidTargetsForSpell(gameData, topCard, playerId)) {
             return playable;
         }
 
-        if (hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard)) {
+        if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, topCard)) {
             playable.add(cardViewFactory.create(topCard));
         } else {
             ManaCost cost = topCard.getParsedManaCost();
             ManaPool pool = gameData.playerManaPools.get(playerId);
-            int additionalCost = getCastCostModifier(gameData, playerId, topCard);
+            int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, topCard);
             boolean canAfford = cost.canPay(pool, additionalCost);
             if (!canAfford) {
-                canAfford = canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
+                canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(gameData, playerId, topCard, pool, additionalCost);
             }
             if (canAfford) {
                 playable.add(cardViewFactory.create(topCard));
@@ -866,841 +919,6 @@ public class GameBroadcastService {
         }
 
         return playable;
-    }
-
-    /**
-     * Returns the set of card types that the player can cast from the top of their library,
-     * based on AllowCastFromTopOfLibraryEffect on their permanents.
-     */
-    public Set<CardType> getCastableTypesFromTopOfLibrary(GameData gameData, UUID playerId) {
-        Set<CardType> castableTypes = new HashSet<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return castableTypes;
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AllowCastFromTopOfLibraryEffect allow) {
-                    castableTypes.addAll(allow.castableTypes());
-                }
-            }
-        }
-        return castableTypes;
-    }
-
-    /**
-     * Returns the set of exiled card IDs that the player can cast via
-     * {@link AllowCastFromCardsExiledWithSourceEffect} on their permanents.
-     */
-    private Set<UUID> getCastableExiledCardIds(GameData gameData, UUID playerId) {
-        Set<UUID> castableIds = new HashSet<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return castableIds;
-        for (Permanent perm : battlefield) {
-            boolean hasEffect = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect);
-            if (hasEffect) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    castableIds.add(c.getId());
-                }
-            }
-        }
-        return castableIds;
-    }
-
-    /**
-     * Returns the set of exiled card IDs for which "mana of any type" can be spent,
-     * via {@link AllowCastFromCardsExiledWithSourceEffect#anyManaType()}.
-     */
-    private Set<UUID> getAnyManaTypeExiledCardIds(GameData gameData, UUID playerId) {
-        Set<UUID> anyManaIds = new HashSet<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return anyManaIds;
-        for (Permanent perm : battlefield) {
-            boolean hasAnyMana = perm.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(e -> e instanceof AllowCastFromCardsExiledWithSourceEffect a && a.anyManaType());
-            if (hasAnyMana) {
-                List<Card> exiledWithPerm = gameData.getCardsExiledByPermanent(perm.getId());
-                for (Card c : exiledWithPerm) {
-                    anyManaIds.add(c.getId());
-                }
-            }
-        }
-        return anyManaIds;
-    }
-
-    private boolean isSpellRestricted(Card card, Set<CardType> restrictedSpellTypes, Set<String> forbiddenCardNames) {
-        if (restrictedSpellTypes.contains(card.getType())) return true;
-        for (CardType type : card.getAdditionalTypes()) {
-            if (restrictedSpellTypes.contains(type)) return true;
-        }
-        return forbiddenCardNames.contains(card.getName());
-    }
-
-    private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
-                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
-        boolean isInstantSpeed = card.hasType(CardType.INSTANT)
-                || card.getKeywords().contains(Keyword.FLASH)
-                || hasFlashGrantForCard(gameData, playerId, card);
-        return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
-    }
-
-    private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof GrantFlashToCardTypeEffect grant) {
-                    if (gameQueryService.matchesCardPredicate(card, grant.filter(), null)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean hasAlternativeZeroCostFromBattlefield(GameData gameData, UUID playerId, Card card) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return false;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if any permanent the player controls provides a non-zero alternative mana cost
-     * for the given card AND the player's mana pool can pay that alternative cost (plus any modifiers).
-     */
-    public boolean canAffordAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
-        return findAffordableAlternativeCostFromBattlefield(gameData, playerId, card, pool, additionalCost) != null;
-    }
-
-    /**
-     * Returns the mana cost string of an affordable non-zero alternative cost from the battlefield,
-     * or null if none exists or none is affordable.
-     */
-    public String findAffordableAlternativeCostFromBattlefield(GameData gameData, UUID playerId, Card card, ManaPool pool, int additionalCost) {
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return null;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
-                    ManaCost alternativeManaCost = new ManaCost(altCost.manaCost());
-                    if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
-                        return altCost.manaCost();
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean canAlternateCast(GameData gameData, UUID playerId, Card card, List<Permanent> battlefield) {
-        var altCastOpt = card.getCastingOption(AlternateHandCast.class);
-        if (altCastOpt.isEmpty()) return false;
-        AlternateHandCast altCast = altCastOpt.get();
-
-        var lifeCost = altCast.getCost(LifeCastingCost.class);
-        if (lifeCost.isPresent() && gameData.getLife(playerId) < lifeCost.get().amount()) return false;
-
-        var sacCost = altCast.getCost(SacrificePermanentsCost.class);
-        if (sacCost.isPresent()) {
-            if (battlefield == null) return false;
-            long matchingCount = battlefield.stream()
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
-                    .count();
-            if (matchingCount < sacCost.get().count()) return false;
-        }
-
-        var tapCost = altCast.getCost(TapUntappedPermanentsCost.class);
-        if (tapCost.isPresent()) {
-            if (battlefield == null) return false;
-            long matchingCount = battlefield.stream()
-                    .filter(p -> !p.isTapped() && gameQueryService.matchesPermanentPredicate(gameData, p, tapCost.get().filter()))
-                    .count();
-            if (matchingCount < tapCost.get().count()) return false;
-        }
-
-        var manaCost = altCast.getCost(ManaCastingCost.class);
-        if (manaCost.isPresent()) {
-            ManaPool pool = gameData.playerManaPools.get(playerId);
-            ManaCost cost = new ManaCost(manaCost.get().manaCost());
-            if (!cost.canPay(pool, 0)) return false;
-        }
-
-        return true;
-    }
-
-    private boolean canPlayLandsFromGraveyard(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof PlayLandsFromGraveyardEffect) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns the permanent ID of the first permanent the player controls that has
-     * CastPermanentSpellsFromGraveyardEffect, or empty if none.
-     * The returned UUID is used to key per-instance graveyard cast tracking.
-     */
-    public Optional<UUID> findGraveyardCastSourcePermanentId(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return Optional.empty();
-        for (Permanent perm : battlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CastPermanentSpellsFromGraveyardEffect) {
-                    return Optional.of(perm.getId());
-                }
-            }
-        }
-        return Optional.empty();
-    }
-
-    private boolean hasHavengulCastPermission(GameData gameData, Card card, UUID playerId) {
-        GameData.GraveyardCreatureCastPermission permission =
-                gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.get(card.getId());
-        return permission != null && playerId.equals(permission.castingPlayerId());
-    }
-
-    public boolean hasGraveyardPlayPermission(GameData gameData, UUID cardId, UUID playerId) {
-        UUID permittedPlayer = gameData.graveyardPlayPermissions.get(cardId);
-        return permittedPlayer != null && permittedPlayer.equals(playerId);
-    }
-
-    public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
-        if (graveyardCast.controllerControlsPredicate() == null) {
-            return true;
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return false;
-        }
-        return battlefield.stream()
-                .anyMatch(permanent -> gameQueryService.matchesPermanentPredicate(
-                        gameData, permanent, graveyardCast.controllerControlsPredicate()));
-    }
-
-    /**
-     * Returns true if the card has at least one non-land permanent type whose slot
-     * has not been used this turn (for Muldrotha-style graveyard casting).
-     */
-    public static boolean hasUnusedPermanentTypeSlot(Card card, Set<CardType> typesCastFromGraveyard) {
-        // Check primary type
-        CardType primary = card.getType();
-        if (primary.isPermanentType() && primary != CardType.LAND && !typesCastFromGraveyard.contains(primary)) {
-            return true;
-        }
-        // Check additional types
-        for (CardType t : card.getAdditionalTypes()) {
-            if (t.isPermanentType() && t != CardType.LAND && !typesCastFromGraveyard.contains(t)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if the player is prevented from casting spells (e.g. Angelic Arbiter:
-     * "Each opponent who attacked with a creature this turn can't cast spells").
-     */
-    boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
-        if (gameData.playersSilencedThisTurn.contains(playerId)) return true;
-
-        if (!gameData.playersDeclaredAttackersThisTurn.contains(playerId)) return false;
-
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(playerId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean hasEmblemGrantedFlashback(GameData gameData, UUID playerId, Card card) {
-        for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(playerId)) continue;
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof EmblemGrantsFlashbackEffect egf) {
-                    for (CardType type : egf.cardTypes()) {
-                        if (card.hasType(type)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    int getMaxSpellsPerTurn(GameData gameData, UUID playerId) {
-        int limit = Integer.MAX_VALUE;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    // Rule of Law etc.: applies to every player globally.
-                    if (effect instanceof LimitSpellsPerTurnEffect global) {
-                        limit = Math.min(limit, global.maxSpells());
-                    }
-                    // Curse of Exhaustion etc.: only applies to the enchanted player.
-                    if (effect instanceof LimitSpellsForEnchantedPlayerEffect curse
-                            && perm.isAttached() && playerId.equals(perm.getAttachedTo())) {
-                        limit = Math.min(limit, curse.maxSpells());
-                    }
-                }
-            }
-        }
-        return limit;
-    }
-
-    Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
-        Set<CardType> restricted = EnumSet.noneOf(CardType.class);
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return restricted;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CantCastSpellTypeEffect cantCast) {
-                    restricted.addAll(cantCast.restrictedTypes());
-                }
-            }
-        }
-        return restricted;
-    }
-
-    Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {
-        Set<String> forbidden = new HashSet<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CantCastSpellsWithSameNameAsExiledCardEffect cantCast) {
-                        // If opponentsOnly, skip if the casting player is the controller
-                        if (cantCast.opponentsOnly() && pid.equals(castingPlayerId)) {
-                            continue;
-                        }
-                        Card imprinted = perm.getCard().getImprintedCard();
-                        if (imprinted != null) {
-                            forbidden.add(imprinted.getName());
-                        }
-                    }
-                    if (effect instanceof SpellsWithChosenNameCantBeCastEffect) {
-                        String chosenName = perm.getChosenName();
-                        if (chosenName != null) {
-                            forbidden.add(chosenName);
-                        }
-                    }
-                }
-            }
-        }
-        return forbidden;
-    }
-
-    boolean controlsLegendaryCreatureOrPlaneswalker(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent perm : battlefield) {
-            GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, perm);
-            boolean isLegendary = perm.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                    || bonus.grantedSupertypes().contains(CardSupertype.LEGENDARY);
-            if (isLegendary) {
-                if (gameQueryService.isCreature(gameData, perm)
-                        || perm.getCard().hasType(CardType.PLANESWALKER)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Pre-collects all cost-modifying effects from the battlefield in a single pass,
-     * so that per-card evaluation doesn't re-scan all permanents.
-     */
-    CostModifierSnapshot buildCostModifierSnapshot(GameData gameData, UUID playerId) {
-        List<IncreaseOpponentCastCostEffect> opponentIncreases = new ArrayList<>();
-        int spellCastTaxPerSpell = 0;
-        List<IncreaseSpellCostEffect> predicateIncreases = new ArrayList<>();
-        List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions = new ArrayList<>();
-        List<Card> imprintSources = new ArrayList<>();
-        List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions = new ArrayList<>();
-        List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions = new ArrayList<>();
-        List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions = new ArrayList<>();
-
-        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            boolean isOwn = pid.equals(playerId);
-            boolean isOpponent = pid.equals(opponentId);
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (isOpponent && effect instanceof IncreaseOpponentCastCostEffect inc) {
-                        opponentIncreases.add(inc);
-                    }
-                    if (effect instanceof IncreaseEachPlayerCastCostPerSpellThisTurnEffect tax) {
-                        spellCastTaxPerSpell += tax.amountPerSpell();
-                    }
-                    if (effect instanceof IncreaseSpellCostEffect inc) {
-                        predicateIncreases.add(inc);
-                    }
-                    if (isOwn) {
-                        if (effect instanceof ReduceOwnCastCostForSharedCardTypeWithImprintEffect red) {
-                            Card imprinted = perm.getCard().getImprintedCard();
-                            if (imprinted != null) {
-                                imprintReductions.add(red);
-                                imprintSources.add(imprinted);
-                            }
-                        }
-                        if (effect instanceof ReduceOwnCastCostForCardTypeEffect red) {
-                            cardTypeReductions.add(red);
-                        }
-                        if (effect instanceof ReduceCastCostForMatchingSpellsEffect red
-                                && red.scope() == CostModificationScope.SELF) {
-                            selfMatchReductions.add(red);
-                        }
-                    }
-                    if (!isOwn && effect instanceof ReduceCastCostForMatchingSpellsEffect red
-                            && red.scope() == CostModificationScope.OPPONENT) {
-                        opponentMatchReductions.add(red);
-                    }
-                }
-            }
-        }
-
-        int spellCastTax = spellCastTaxPerSpell > 0
-                ? spellCastTaxPerSpell * gameData.getSpellsCastThisTurnCount(playerId)
-                : 0;
-
-        return new CostModifierSnapshot(
-                opponentIncreases, spellCastTax, predicateIncreases,
-                imprintReductions, imprintSources, cardTypeReductions,
-                selfMatchReductions, opponentMatchReductions);
-    }
-
-    int getCastCostModifier(GameData gameData, UUID playerId, Card card, CostModifierSnapshot snapshot) {
-        int increase = 0;
-        for (IncreaseOpponentCastCostEffect inc : snapshot.opponentIncreases) {
-            if (inc.affectedTypes().contains(card.getType())) {
-                increase += inc.amount();
-            }
-        }
-        increase += snapshot.spellCastTax;
-        for (IncreaseSpellCostEffect inc : snapshot.predicateIncreases) {
-            if (gameQueryService.matchesCardPredicate(card, inc.predicate(), null)) {
-                increase += inc.amount();
-            }
-        }
-
-        int reduction = 0;
-        // Card's own self-reduction effects
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect reduceEffect
-                    && anyOpponentControlsAtLeastNMoreCreatures(gameData, playerId, reduceEffect.minimumCreatureDifference())) {
-                reduction += reduceEffect.amount();
-            }
-            if (effect instanceof ReduceOwnCastCostIfMetalcraftEffect metalcraftReduce) {
-                if (gameQueryService.isMetalcraftMet(gameData, playerId)) {
-                    reduction += metalcraftReduce.amount();
-                }
-            }
-            if (effect instanceof ReduceOwnCastCostPerCreatureOnBattlefieldEffect perCreatureReduce) {
-                int totalCreatures = countCreaturesOnAllBattlefields(gameData);
-                reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
-            }
-            if (effect instanceof ReduceOwnCastCostPerCreatureCardInGraveyardEffect graveyardReduce) {
-                int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
-                reduction += graveyardReduce.amountPerCreature() * creatureCards;
-            }
-            if (effect instanceof ReduceOwnCastCostIfControlsPermanentEffect permanentReduce) {
-                if (controlsPermanent(gameData, playerId, permanentReduce.predicate())) {
-                    reduction += permanentReduce.amount();
-                }
-            }
-        }
-        // Battlefield-based reductions (pre-collected)
-        for (int j = 0; j < snapshot.imprintReductions.size(); j++) {
-            if (sharesCardType(card, snapshot.imprintSources.get(j))) {
-                reduction += snapshot.imprintReductions.get(j).amount();
-            }
-        }
-        for (ReduceOwnCastCostForCardTypeEffect red : snapshot.cardTypeReductions) {
-            if (red.affectedTypes().contains(card.getType())) {
-                reduction += red.amount();
-            }
-        }
-        for (ReduceCastCostForMatchingSpellsEffect red : snapshot.selfMatchReductions) {
-            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
-                reduction += red.amount();
-            }
-        }
-        for (ReduceCastCostForMatchingSpellsEffect red : snapshot.opponentMatchReductions) {
-            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
-                reduction += red.amount();
-            }
-        }
-
-        return increase - reduction;
-    }
-
-    record CostModifierSnapshot(
-            List<IncreaseOpponentCastCostEffect> opponentIncreases,
-            int spellCastTax,
-            List<IncreaseSpellCostEffect> predicateIncreases,
-            List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions,
-            List<Card> imprintSources,
-            List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions,
-            List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions,
-            List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions
-    ) {}
-
-    int getOpponentCostIncrease(GameData gameData, UUID playerId, CardType cardType) {
-        UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
-        List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(opponentId);
-        if (opponentBattlefield == null) return 0;
-
-        int totalIncrease = 0;
-        for (Permanent perm : opponentBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof IncreaseOpponentCastCostEffect increase) {
-                    if (increase.affectedTypes().contains(cardType)) {
-                        totalIncrease += increase.amount();
-                    }
-                }
-            }
-        }
-        return totalIncrease;
-    }
-
-    /**
-     * Returns true if the player is allowed to cast this spell considering non-mana
-     * restrictions: spell limit, type restrictions, forbidden names, silence, etc.
-     */
-    public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
-        if (spellsCast >= maxSpells) return false;
-        if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
-        Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
-        if (restricted.contains(card.getType())
-                || card.getAdditionalTypes().stream().anyMatch(restricted::contains)) return false;
-        Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
-        if (forbidden.contains(card.getName())) return false;
-        // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
-        if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                && card.hasType(CardType.SORCERY)
-                && !controlsLegendaryCreatureOrPlaneswalker(gameData, playerId)) return false;
-        return true;
-    }
-
-    public int getCastCostModifier(GameData gameData, UUID playerId, Card card) {
-        int increase = getOpponentCostIncrease(gameData, playerId, card.getType());
-        increase += getSpellCastTaxIncrease(gameData, playerId);
-        increase += getPredicateSpellCostIncrease(gameData, card);
-        int reduction = getOwnCostReduction(gameData, playerId, card);
-        return increase - reduction;
-    }
-
-    /**
-     * Computes the additional cost imposed by static effects that tax spells or abilities
-     * targeting permanents with a specific subtype (e.g. Kopala, Warden of Waves).
-     * The tax applies once per source permanent with the effect, regardless of how many
-     * matching permanents are targeted.
-     */
-    public int getTargetingSubtypeTax(GameData gameData, UUID casterId, UUID targetId, List<UUID> targetIds) {
-        Set<UUID> allTargetIds = new HashSet<>();
-        if (targetId != null) allTargetIds.add(targetId);
-        if (targetIds != null) allTargetIds.addAll(targetIds);
-        if (allTargetIds.isEmpty()) return 0;
-
-        int tax = 0;
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(casterId)) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
-                        for (UUID tid : allTargetIds) {
-                            Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
-                            if (targetPerm != null) {
-                                UUID targetController = gameQueryService.findPermanentController(gameData, tid);
-                                if (controllerId.equals(targetController)
-                                        && gameQueryService.matchesPermanentPredicate(
-                                                gameData, targetPerm, taxEffect.predicate())) {
-                                    tax += taxEffect.amount();
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return tax;
-    }
-
-    private int getSpellCastTaxIncrease(GameData gameData, UUID playerId) {
-        int taxAmount = 0;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null) {
-                for (Permanent perm : bf) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof IncreaseEachPlayerCastCostPerSpellThisTurnEffect tax) {
-                            taxAmount += tax.amountPerSpell();
-                        }
-                    }
-                }
-            }
-        }
-        if (taxAmount == 0) return 0;
-        int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        return taxAmount * spellsCast;
-    }
-
-    private int getPredicateSpellCostIncrease(GameData gameData, Card card) {
-        int totalIncrease = 0;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null) {
-                for (Permanent perm : bf) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof IncreaseSpellCostEffect increase
-                                && gameQueryService.matchesCardPredicate(card, increase.predicate(), null)) {
-                            totalIncrease += increase.amount();
-                        }
-                    }
-                }
-            }
-        }
-        return totalIncrease;
-    }
-
-    private int getOwnCostReduction(GameData gameData, UUID playerId, Card card) {
-        int reduction = 0;
-        for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect reduceEffect
-                    && anyOpponentControlsAtLeastNMoreCreatures(gameData, playerId, reduceEffect.minimumCreatureDifference())) {
-                reduction += reduceEffect.amount();
-            }
-            if (effect instanceof ReduceOwnCastCostIfMetalcraftEffect metalcraftReduce) {
-                if (gameQueryService.isMetalcraftMet(gameData, playerId)) {
-                    reduction += metalcraftReduce.amount();
-                }
-            }
-            if (effect instanceof ReduceOwnCastCostPerCreatureOnBattlefieldEffect perCreatureReduce) {
-                int totalCreatures = countCreaturesOnAllBattlefields(gameData);
-                reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
-            }
-            if (effect instanceof ReduceOwnCastCostPerCreatureCardInGraveyardEffect graveyardReduce) {
-                int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
-                reduction += graveyardReduce.amountPerCreature() * creatureCards;
-            }
-            if (effect instanceof ReduceOwnCastCostIfControlsPermanentEffect permanentReduce) {
-                if (controlsPermanent(gameData, playerId, permanentReduce.predicate())) {
-                    reduction += permanentReduce.amount();
-                }
-            }
-        }
-
-        // Cost reduction from battlefield permanents (e.g. Semblance Anvil, Heartless Summoning)
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield != null) {
-            for (Permanent perm : battlefield) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof ReduceOwnCastCostForSharedCardTypeWithImprintEffect reduceEffect) {
-                        Card imprinted = perm.getCard().getImprintedCard();
-                        if (imprinted != null && sharesCardType(card, imprinted)) {
-                            reduction += reduceEffect.amount();
-                        }
-                    }
-                    if (effect instanceof ReduceOwnCastCostForCardTypeEffect cardTypeReduce) {
-                        if (cardTypeReduce.affectedTypes().contains(card.getType())) {
-                            reduction += cardTypeReduce.amount();
-                        }
-                    }
-                    if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
-                            && matchReduce.scope() == CostModificationScope.SELF
-                            && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
-                        reduction += matchReduce.amount();
-                    }
-                }
-            }
-        }
-
-        // Cost reduction from opponent's battlefield permanents (OPPONENT-scoped)
-        for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (opponentId.equals(playerId)) continue;
-            List<Permanent> opponentBf = gameData.playerBattlefields.get(opponentId);
-            if (opponentBf != null) {
-                for (Permanent perm : opponentBf) {
-                    for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
-                                && matchReduce.scope() == CostModificationScope.OPPONENT
-                                && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
-                            reduction += matchReduce.amount();
-                        }
-                    }
-                }
-            }
-        }
-
-        return reduction;
-    }
-
-    public boolean controlsPermanent(GameData gameData, UUID playerId, com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) return false;
-        for (Permanent p : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean battlefieldHasPermanentMatching(GameData gameData,
-            com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent p : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    public boolean stackHasMatchingSpell(GameData gameData,
-            com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
-        for (com.github.laxika.magicalvibes.model.StackEntry entry : gameData.stack) {
-            if (gameQueryService.matchesStackEntryPredicate(entry, predicate, null)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean sharesCardType(Card spell, Card imprinted) {
-        EnumSet<CardType> spellTypes = EnumSet.of(spell.getType());
-        spellTypes.addAll(spell.getAdditionalTypes());
-
-        EnumSet<CardType> imprintedTypes = EnumSet.of(imprinted.getType());
-        imprintedTypes.addAll(imprinted.getAdditionalTypes());
-
-        for (CardType type : spellTypes) {
-            if (imprintedTypes.contains(type)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, UUID playerId, int minimumDifference) {
-        int yourCreatures = countCreaturesControlled(gameData, playerId);
-        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
-            if (candidateOpponentId.equals(playerId)) {
-                continue;
-            }
-            int opponentCreatures = countCreaturesControlled(gameData, candidateOpponentId);
-            if (opponentCreatures >= yourCreatures + minimumDifference) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private int countCreaturesControlled(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return 0;
-        }
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (gameQueryService.isCreature(gameData, permanent)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private int countCreaturesOnAllBattlefields(GameData gameData) {
-        int total = 0;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            total += countCreaturesControlled(gameData, pid);
-        }
-        return total;
-    }
-
-    private int countCreatureCardsInGraveyard(GameData gameData, UUID playerId) {
-        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        if (graveyard == null) return 0;
-        int count = 0;
-        for (Card card : graveyard) {
-            if (card.hasType(CardType.CREATURE)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        if (defenderBattlefield == null) return 0;
-
-        int totalTax = 0;
-        for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RequirePaymentToAttackEffect tax) {
-                    totalTax += tax.amountPerAttacker();
-                }
-            }
-        }
-        return totalTax;
-    }
-
-    public List<ManaColor> getPhyrexianAttackPaymentsPerCreature(GameData gameData, UUID attackingPlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        if (defenderBattlefield == null) return List.of();
-
-        List<ManaColor> payments = new java.util.ArrayList<>();
-        for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RequirePhyrexianPaymentToAttackEffect tax) {
-                    payments.add(tax.color());
-                }
-            }
-        }
-        return payments;
     }
 
     public JoinGame getJoinGame(GameData data, UUID playerId) {
@@ -1782,5 +1000,3 @@ public class GameBroadcastService {
         sessionManager.sendToPlayer(controllerId, new RevealHandMessage(cardViews, opponentName));
     }
 }
-
-

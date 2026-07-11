@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SensoryDeprivation;
 import com.github.laxika.magicalvibes.cards.s.StrongholdConfessor;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -72,7 +72,7 @@ class DamageResolutionNegativePowerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The combat damage step must NOT stall on manual assignment input.
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class)).isNull();
 
         // Both blockers receive 0 damage from the attacker and survive.
         assertThat(gd.playerBattlefields.get(player2.getId()))

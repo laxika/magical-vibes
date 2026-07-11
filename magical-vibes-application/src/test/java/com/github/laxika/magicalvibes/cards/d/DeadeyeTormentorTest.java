@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,28 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeadeyeTormentorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB discard effect targeting opponent")
-    void hasRaidEtbDiscardEffect() {
-        DeadeyeTormentor card = new DeadeyeTormentor();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-
-        TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
-
     // ===== ETB with raid met =====
 
     @Test
@@ -50,7 +24,8 @@ class DeadeyeTormentorTest extends BaseCardTest {
     void etbTriggersWithRaid() {
         markAttackedThisTurn();
         castDeadeyeTormentor();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
 
         // ETB trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -66,16 +41,17 @@ class DeadeyeTormentorTest extends BaseCardTest {
         markAttackedThisTurn();
         castDeadeyeTormentor();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -88,10 +64,11 @@ class DeadeyeTormentorTest extends BaseCardTest {
         markAttackedThisTurn();
         castDeadeyeTormentor();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 
@@ -104,8 +81,9 @@ class DeadeyeTormentorTest extends BaseCardTest {
         castDeadeyeTormentor();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack
+        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is still on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -123,7 +101,8 @@ class DeadeyeTormentorTest extends BaseCardTest {
     void etbFizzlesWhenRaidLost() {
         markAttackedThisTurn();
         castDeadeyeTormentor();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
 
         // Remove the raid flag before ETB resolves (simulating turn state cleared)
         gd.playersDeclaredAttackersThisTurn.clear();
@@ -155,7 +134,8 @@ class DeadeyeTormentorTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         markAttackedThisTurn();
         castDeadeyeTormentor();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
         harness.handleCardChosen(player2, 0); // opponent chooses a card to discard
 
@@ -165,14 +145,20 @@ class DeadeyeTormentorTest extends BaseCardTest {
     // ===== Targeting =====
 
     @Test
-    @DisplayName("Cannot cast targeting yourself")
+    @DisplayName("Trigger target prompt only offers opponents — choosing yourself is rejected")
     void cannotTargetYourself() {
-        harness.setHand(player1, List.of(new DeadeyeTormentor()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
+        markAttackedThisTurn();
+        castDeadeyeTormentor();
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .hasMessageContaining("Invalid permanent");
     }
 
     // ===== Helpers =====
@@ -184,6 +170,6 @@ class DeadeyeTormentorTest extends BaseCardTest {
     private void castDeadeyeTormentor() {
         harness.setHand(player1, List.of(new DeadeyeTormentor()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
     }
 }

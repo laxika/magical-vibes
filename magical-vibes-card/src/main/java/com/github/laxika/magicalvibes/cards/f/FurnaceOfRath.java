@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "204")
+@CardRegistration(set = "9ED", collectorNumber = "188")
 public class FurnaceOfRath extends Card {
 
     public FurnaceOfRath() {

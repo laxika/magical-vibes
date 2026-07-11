@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnImmediatelyEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class SirensRuse extends Card {
                 )),
                 "Target must be a creature you control"
         )).addEffect(EffectSlot.SPELL,
-                new ExileTargetPermanentAndReturnImmediatelyEffect(
+                FlickerEffect.flickerTargetWithBonus(
                         CardSubtype.PIRATE, new DrawCardEffect(1)));
     }
 }

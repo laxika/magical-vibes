@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentsEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,30 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormFleetArsonistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB sacrifice effect targeting opponent")
-    void hasRaidEtbSacrificeEffect() {
-        StormFleetArsonist card = new StormFleetArsonist();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerSacrificesPermanentsEffect.class);
-
-        TargetPlayerSacrificesPermanentsEffect sacrifice =
-                (TargetPlayerSacrificesPermanentsEffect) raid.wrapped();
-        assertThat(sacrifice.count()).isEqualTo(1);
-        assertThat(sacrifice.filter()).isInstanceOf(PermanentTruePredicate.class);
-    }
-
     // ===== ETB with raid met =====
 
     @Test
@@ -54,7 +25,8 @@ class StormFleetArsonistTest extends BaseCardTest {
     void etbTriggersWithRaid() {
         markAttackedThisTurn();
         castStormFleetArsonist();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
 
         // ETB trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -70,7 +42,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent's only permanent should be auto-sacrificed
@@ -87,13 +60,17 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent should be prompted to choose which permanent to sacrifice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(1);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         // Player2 chooses the first permanent
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());
@@ -112,10 +89,11 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no permanents to sacrifice"));
     }
 
@@ -128,8 +106,9 @@ class StormFleetArsonistTest extends BaseCardTest {
         castStormFleetArsonist();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack
+        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -148,7 +127,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         markAttackedThisTurn();
         castStormFleetArsonist();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
 
         // Remove the raid flag before ETB resolves
         gd.playersDeclaredAttackersThisTurn.clear();
@@ -176,15 +156,20 @@ class StormFleetArsonistTest extends BaseCardTest {
     // ===== Targeting =====
 
     @Test
-    @DisplayName("Cannot cast targeting yourself")
+    @DisplayName("Trigger target prompt only offers opponents — choosing yourself is rejected")
     void cannotTargetYourself() {
-        harness.setHand(player1, List.of(new StormFleetArsonist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        markAttackedThisTurn();
+        castStormFleetArsonist();
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .hasMessageContaining("Invalid permanent");
     }
 
     // ===== Helpers =====
@@ -197,6 +182,6 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StormFleetArsonist()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
     }
 }

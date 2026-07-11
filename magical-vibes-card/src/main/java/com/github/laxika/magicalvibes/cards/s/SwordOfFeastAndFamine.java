@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,8 +11,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.Set;
@@ -26,10 +29,10 @@ public class SwordOfFeastAndFamine extends Card {
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player discards a card
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new TargetPlayerDiscardsEffect(1));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
 
         // Triggered: ...and you untap all lands you control
-        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new UntapAllControlledPermanentsEffect(new PermanentIsLandPredicate()));
+        addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

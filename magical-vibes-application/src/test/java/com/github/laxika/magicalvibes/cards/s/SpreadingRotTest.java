@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpreadingRotTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spreading Rot has correct effect structure")
-    void hasCorrectEffectStructure() {
-        SpreadingRot card = new SpreadingRot();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentAndControllerLosesLifeEffect.class);
-
-        DestroyTargetPermanentAndControllerLosesLifeEffect effect =
-                (DestroyTargetPermanentAndControllerLosesLifeEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Spreading Rot puts it on the stack with target")

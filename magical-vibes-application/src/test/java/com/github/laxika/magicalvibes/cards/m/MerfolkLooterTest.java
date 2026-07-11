@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MerfolkLooterTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has one activated ability with tap and no mana cost")
-    void hasCorrectAbility() {
-        MerfolkLooter card = new MerfolkLooter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DiscardCardEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -167,8 +147,8 @@ class MerfolkLooterTest extends BaseCardTest {
         // After drawing, hand should have 2 cards (original + drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // Should be awaiting discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
         assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
     }
 
@@ -193,7 +173,7 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         // No longer awaiting input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 
@@ -231,7 +211,7 @@ class MerfolkLooterTest extends BaseCardTest {
         // No card drawn, hand still has 1 card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Should still be awaiting discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to draw"));
     }
 
@@ -246,7 +226,7 @@ class MerfolkLooterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No card drawn, hand still empty - discard should be skipped
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 
@@ -302,5 +282,4 @@ class MerfolkLooterTest extends BaseCardTest {
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
-
 

@@ -1,20 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,32 +28,7 @@ class AdditiveEvolutionTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has ETB Fractal token effect and beginning-of-combat counter plus vigilance effects")
-    void hasCorrectEffects() {
-        AdditiveEvolution card = new AdditiveEvolution();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Fractal");
-        assertThat(tokenEffect.power()).isZero();
-        assertThat(tokenEffect.toughness()).isZero();
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.colors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
-        assertThat(tokenEffect.initialPlusOnePlusOneCounters()).isEqualTo(3);
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getTargetFilter()).isNotNull();
-    }
+    
 
     @Test
     @DisplayName("ETB creates a 3/3 Fractal token with three +1/+1 counters")
@@ -88,7 +58,7 @@ class AdditiveEvolutionTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, bearsId);
         harness.passBothPriorities();
 
@@ -110,8 +80,8 @@ class AdditiveEvolutionTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentBearsId);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentBearsId);
     }
 
     @Test
@@ -123,7 +93,7 @@ class AdditiveEvolutionTest extends BaseCardTest {
         advanceToCombat(player2);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

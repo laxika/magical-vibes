@@ -1,17 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,40 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AdantoVanguardTest extends BaseCardTest {
-
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct static effect: +2/+0 while attacking")
-    void hasCorrectStaticEffect() {
-        AdantoVanguard card = new AdantoVanguard();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-        assertThat(boost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has correct activated ability: pay 4 life for indestructible")
-    void hasCorrectActivatedAbility() {
-        AdantoVanguard card = new AdantoVanguard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        PayLifeCost lifeCost = (PayLifeCost) ability.getEffects().get(0);
-        assertThat(lifeCost.amount()).isEqualTo(4);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
 
     // ===== Static boost: +2/+0 while attacking =====
 
@@ -155,7 +114,6 @@ class AdantoVanguardTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());

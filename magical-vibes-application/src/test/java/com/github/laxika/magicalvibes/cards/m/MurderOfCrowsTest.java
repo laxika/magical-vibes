@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,19 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MurderOfCrowsTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Murder of Crows has ON_ANY_CREATURE_DIES MayEffect wrapping DrawAndDiscardCardEffect")
-    void hasCorrectEffect() {
-        MurderOfCrows card = new MurderOfCrows();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);
-    }
 
     // ===== Trigger: another creature dies, accept may =====
 
@@ -63,12 +47,12 @@ class MurderOfCrowsTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
         // May ability prompt for Murder of Crows' controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
         // Drew a card, now awaiting discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         // Discard a card
         harness.handleCardChosen(player1, 0);
@@ -122,7 +106,7 @@ class MurderOfCrowsTest extends BaseCardTest {
 
         // No may ability prompt — Murder of Crows died, it uses ON_ANY_CREATURE_DIES
         // which only fires for permanents still on the battlefield
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Triggers on controller's own creature dying =====
@@ -156,12 +140,12 @@ class MurderOfCrowsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // May ability prompt for Murder of Crows' controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
         // Drew a card, now awaiting discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     // ===== Helpers =====

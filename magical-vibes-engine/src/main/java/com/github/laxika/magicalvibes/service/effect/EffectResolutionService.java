@@ -1,54 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CastNotFromHandConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCastAnotherSpellThisTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceSubtypeReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +25,9 @@ import java.util.UUID;
  * <p>Iterates through each {@link CardEffect} on a {@link StackEntry}, delegating to the
  * appropriate {@link EffectHandler} via the {@link EffectHandlerRegistry}. Handles conditional
  * effects (e.g. metalcraft, equipped) by re-evaluating their conditions at resolution time
- * per the intervening-if-clause rule, and replacement conditional effects by selecting the
- * base or upgraded effect based on the current game state.</p>
+ * per the intervening-if-clause rule, and conditional replacement effects by selecting the
+ * base or upgraded effect based on the current game state. Condition evaluation is delegated
+ * to {@link ConditionEvaluationService}.</p>
  *
  * <p>Supports asynchronous resolution: when an effect requires player input (e.g. proliferate
  * choices, X value selection), resolution pauses and stores resumption state on the
@@ -75,7 +38,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EffectResolutionService {
 
-    private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final EffectHandlerRegistry registry;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
@@ -110,7 +73,8 @@ public class EffectResolutionService {
 
             // Conditional wrapper: re-check condition at resolution time (intervening-if)
             if (effect instanceof ConditionalEffect conditional) {
-                if (!evaluateCondition(gameData, entry, conditional)) {
+                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStackEntry(entry))) {
                     String logEntry = entry.getCard().getName() + "'s " + conditional.conditionName()
                             + " ability does nothing (" + conditional.conditionNotMetReason() + ").";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -119,8 +83,9 @@ public class EffectResolutionService {
                     continue;
                 }
                 effectToResolve = conditional.wrapped();
-            } else if (effect instanceof ReplacementConditionalEffect replacement) {
-                effectToResolve = evaluateCondition(gameData, entry, replacement)
+            } else if (effect instanceof ConditionalReplacementEffect replacement) {
+                effectToResolve = conditionEvaluationService.isMet(gameData, replacement.condition(),
+                        ConditionContext.forStackEntry(entry))
                         ? replacement.upgradedEffect()
                         : replacement.baseEffect();
             }
@@ -169,13 +134,17 @@ public class EffectResolutionService {
                 }
             }
 
-            // Multi-target support: set entry.targetId to the correct target
-            // for this effect based on the Card's SpellTarget declarations.
+            // Multi-target support: set entry.targetId to this effect's group target based on
+            // the Card's SpellTarget declarations (StackEntry.targetsForEffect slices the flat
+            // target list by group). Single-target handlers read the remapped targetId; handlers
+            // that support several targets per group consult targetsForEffect themselves.
             int targetIdx = entry.getCard().getEffectTargetIndex(effect);
             UUID savedTargetId = entry.getTargetId();
-            if (targetIdx >= 0 && entry.getTargetIds() != null
-                    && targetIdx < entry.getTargetIds().size()) {
-                entry.setTargetId(entry.getTargetIds().get(targetIdx));
+            if (targetIdx >= 0) {
+                List<UUID> groupTargets = entry.targetsForEffect(effect);
+                if (!groupTargets.isEmpty()) {
+                    entry.setTargetId(groupTargets.getFirst());
+                }
             }
 
             EffectHandler handler = registry.getHandler(effectToResolve);
@@ -193,8 +162,9 @@ public class EffectResolutionService {
             if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
                 // Store state for resumption after async input completes.
                 // X_VALUE_CHOICE and resolution-time MayEffect re-run the same effect on re-entry.
-                boolean rerunCurrentEffect = gameData.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)
-                        || gameData.resolvingMayEffectFromStack;
+                boolean rerunCurrentEffect = gameData.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null
+                        || gameData.resolvingMayEffectFromStack
+                        || gameData.rerunCurrentEffectAfterInteraction;
                 gameData.pendingEffectResolutionEntry = entry;
                 gameData.pendingEffectResolutionIndex = rerunCurrentEffect ? i : i + 1;
                 return;
@@ -219,264 +189,5 @@ public class EffectResolutionService {
             log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
         }
         gameData.pendingLethalDamageDestructions.clear();
-    }
-
-    /**
-     * Evaluates whether the condition of a {@link ConditionalEffect} is currently met.
-     */
-    private boolean evaluateCondition(GameData gameData, StackEntry entry, ConditionalEffect conditional) {
-        return switch (conditional) {
-            case MetalcraftConditionalEffect ignored ->
-                    gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
-            case EquippedConditionalEffect ignored ->
-                    isSourceEquipped(gameData, entry);
-            case PermanentEnteredThisTurnConditionalEffect petc ->
-                    isPermanentEnteredThisTurnConditionMet(gameData, entry.getControllerId(), petc);
-            case DefendingPlayerPoisonedConditionalEffect ignored ->
-                    isDefendingPlayerPoisoned(gameData, entry.getControllerId());
-            case ControlsAnotherPermanentConditionalEffect capc ->
-                    isControlsAnotherPermanentConditionMet(gameData, entry, capc);
-            case ControlsPermanentConditionalEffect cpc ->
-                    isControlsPermanentConditionMet(gameData, entry, cpc);
-            case OpponentControlsPermanentConditionalEffect opc ->
-                    isOpponentControlsPermanentConditionMet(gameData, entry, opc);
-            case ControlsPermanentCountConditionalEffect cpcc ->
-                    isControlsPermanentCountConditionMet(gameData, entry, cpcc);
-            case NoOtherPermanentConditionalEffect noOther ->
-                    isNoOtherPermanentConditionMet(gameData, entry, noOther);
-            case ActivationCountConditionalEffect acc ->
-                    isActivationCountConditionMet(gameData, entry, acc);
-            case MorbidConditionalEffect ignored ->
-                    gameQueryService.isMorbidMet(gameData);
-            case KickedConditionalEffect ignored ->
-                    entry.isKicked();
-            case CastFromZoneConditionalEffect sourceCheck ->
-                    sourceCheck.sourceZone() == entry.getSourceZone();
-            case CastNotFromHandConditionalEffect ignored ->
-                    entry.getSourceZone() != Zone.HAND;
-            case NotKickedConditionalEffect ignored ->
-                    !entry.isKicked();
-            case DidntAttackConditionalEffect ignored ->
-                    isSourceDidntAttackThisTurn(gameData, entry);
-            case NoSpellsCastLastTurnConditionalEffect ignored ->
-                    isNoSpellsCastLastTurn(gameData);
-            case TwoOrMoreSpellsCastLastTurnConditionalEffect ignored ->
-                    isTwoOrMoreSpellsCastLastTurn(gameData);
-            case AttacksAloneConditionalEffect ignored ->
-                    isAttackingAlone(gameData, entry);
-            case MinimumAttackersConditionalEffect mac ->
-                    entry.getXValue() >= mac.minimumAttackers();
-            case HasAttackerConditionalEffect hasAttacker ->
-                    hasMatchingAttacker(gameData, entry, hasAttacker);
-            case RaidConditionalEffect ignored ->
-                    gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
-            case ControllerCastAnotherSpellThisTurnConditionalEffect castAnother ->
-                    gameQueryService.hasControllerCastAnotherSpellThisTurn(
-                            gameData, entry.getControllerId(), entry.getCard(), castAnother.filter());
-            case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
-                int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
-                yield lifeTotal <= lifeCheck.lifeThreshold();
-            }
-            case ControllerLifeThresholdConditionalEffect lifeCheck -> {
-                int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
-                yield lifeTotal >= lifeCheck.lifeThreshold();
-            }
-            case ControllerGraveyardCardThresholdConditionalEffect graveCheck -> {
-                List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
-                int count = 0;
-                if (graveyard != null) {
-                    for (Card card : graveyard) {
-                        if (card.isToken()) continue;
-                        if (graveCheck.filter() == null
-                                || gameQueryService.matchesCardPredicate(card, graveCheck.filter(),
-                                        null, gameData, entry.getControllerId())) {
-                            count++;
-                        }
-                    }
-                }
-                yield count >= graveCheck.threshold();
-            }
-            case SpellManaSpentAtLeastConditionalEffect manaCheck ->
-                    entry.getXValue() >= manaCheck.minMana();
-            default -> {
-                log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
-                yield false;
-            }
-        };
-    }
-
-    /**
-     * Evaluates whether the condition of a {@link ReplacementConditionalEffect} is currently met.
-     */
-    private boolean evaluateCondition(GameData gameData, StackEntry entry, ReplacementConditionalEffect replacement) {
-        return switch (replacement) {
-            case MetalcraftReplacementEffect ignored ->
-                    gameQueryService.isMetalcraftMet(gameData, entry.getControllerId());
-            case MorbidReplacementEffect ignored ->
-                    gameQueryService.isMorbidMet(gameData);
-            case RaidReplacementEffect ignored ->
-                    gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
-            case TargetPermanentReplacementEffect tpre -> {
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                yield target != null && gameQueryService.matchesPermanentPredicate(gameData, target, tpre.filter());
-            }
-            case SourceSubtypeReplacementEffect ssre -> {
-                // Check if the source permanent has the required subtype.
-                // Try the battlefield first; fall back to the card on the stack (last-known information).
-                Permanent source = entry.getSourcePermanentId() != null
-                        ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                        : null;
-                if (source != null) {
-                    yield source.getCard().getSubtypes().contains(ssre.subtype());
-                }
-                yield entry.getCard().getSubtypes().contains(ssre.subtype());
-            }
-            case ControlsPermanentReplacementEffect cpre -> {
-                UUID controllerId = entry.getControllerId();
-                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                if (battlefield == null) yield false;
-                yield battlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpre.filter()));
-            }
-            case KickerReplacementEffect ignored ->
-                    entry.isKicked();
-            default -> {
-                log.warn("Unknown replacement conditional effect type: {}", replacement.getClass().getSimpleName());
-                yield false;
-            }
-        };
-    }
-
-    private boolean isSourceEquipped(GameData gameData, StackEntry entry) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) return false;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && sourcePermanentId.equals(perm.getAttachedTo())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
-        UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
-        return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
-    }
-
-    private boolean isControlsAnotherPermanentConditionMet(GameData gameData, StackEntry entry,
-                                                           ControlsAnotherPermanentConditionalEffect capc) {
-        UUID controllerId = entry.getControllerId();
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .anyMatch(p -> !p.getId().equals(sourcePermanentId)
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, capc.filter()));
-    }
-
-    private boolean isControlsPermanentConditionMet(GameData gameData, StackEntry entry,
-                                                    ControlsPermanentConditionalEffect cpc) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
-    }
-
-    private boolean isOpponentControlsPermanentConditionMet(GameData gameData, StackEntry entry,
-                                                            OpponentControlsPermanentConditionalEffect opc) {
-        UUID controllerId = entry.getControllerId();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (playerId.equals(controllerId)) continue;
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            if (battlefield.stream().anyMatch(p ->
-                    gameQueryService.matchesPermanentPredicate(gameData, p, opc.filter()))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isControlsPermanentCountConditionMet(GameData gameData, StackEntry entry,
-                                                         ControlsPermanentCountConditionalEffect cpcc) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        long count = battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpcc.filter()))
-                .count();
-        return count >= cpcc.minCount();
-    }
-
-    private boolean isNoOtherPermanentConditionMet(GameData gameData, StackEntry entry,
-                                                   NoOtherPermanentConditionalEffect noOther) {
-        UUID controllerId = entry.getControllerId();
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return true;
-        return battlefield.stream()
-                .noneMatch(p -> !p.getId().equals(sourcePermanentId)
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, noOther.filter()));
-    }
-
-    private boolean isPermanentEnteredThisTurnConditionMet(GameData gameData, UUID controllerId,
-                                                           PermanentEnteredThisTurnConditionalEffect petc) {
-        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
-                .getOrDefault(controllerId, List.of());
-        long matchCount = entered.stream()
-                .filter(c -> gameQueryService.matchesCardPredicate(c, petc.predicate(), null))
-                .count();
-        return matchCount >= petc.minCount();
-    }
-
-    private boolean isActivationCountConditionMet(GameData gameData, StackEntry entry,
-                                                  ActivationCountConditionalEffect acc) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) return false;
-        var perAbilityCounts = gameData.activatedAbilityUsesThisTurn.get(sourcePermanentId);
-        if (perAbilityCounts == null) return false;
-        int count = perAbilityCounts.getOrDefault(acc.abilityIndex(), 0);
-        return count >= acc.threshold();
-    }
-
-    private boolean isSourceDidntAttackThisTurn(GameData gameData, StackEntry entry) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null) return true;
-        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (source == null) return false;
-        return !source.isAttackedThisTurn();
-    }
-
-    private boolean isNoSpellsCastLastTurn(GameData gameData) {
-        if (gameData.spellsCastLastTurn.isEmpty()) return true;
-        return gameData.spellsCastLastTurn.values().stream().mapToInt(Integer::intValue).sum() == 0;
-    }
-
-    private boolean isTwoOrMoreSpellsCastLastTurn(GameData gameData) {
-        return gameData.spellsCastLastTurn.values().stream().anyMatch(count -> count >= 2);
-    }
-
-    private boolean isAttackingAlone(GameData gameData, StackEntry entry) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        long attackingCount = battlefield.stream().filter(Permanent::isAttacking).count();
-        return attackingCount == 1;
-    }
-
-    private boolean hasMatchingAttacker(GameData gameData, StackEntry entry,
-                                        HasAttackerConditionalEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .filter(Permanent::isAttacking)
-                .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate()));
     }
 }

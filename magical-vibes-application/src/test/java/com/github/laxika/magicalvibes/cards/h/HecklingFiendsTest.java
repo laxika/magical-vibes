@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,19 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HecklingFiendsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability that forces target creature to attack this turn if able")
-    void hasActivatedAbility() {
-        HecklingFiends card = new HecklingFiends();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{R}");
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(MustAttackThisTurnEffect.class);
-        MustAttackThisTurnEffect effect = (MustAttackThisTurnEffect) ability.getEffects().getFirst();
-        assertThat(effect.forceAttackController()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a creature")

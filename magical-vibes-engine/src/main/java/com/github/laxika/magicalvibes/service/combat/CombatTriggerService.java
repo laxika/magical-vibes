@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -107,7 +107,7 @@ public class CombatTriggerService {
                         boolean needsTarget = effectsForStack.stream()
                                 .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
-                            gameData.pendingAttackTriggerTargets.add(
+                            gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
                             String triggerLog = perm.getCard().getName() + "'s ability triggers.";
@@ -240,9 +240,6 @@ public class CombatTriggerService {
      * granted subtypes, and the intrinsic Changeling keyword (which grants all creature subtypes).
      */
     private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
-        return permanent.getCard().getSubtypes().contains(subtype)
-                || permanent.getTransientSubtypes().contains(subtype)
-                || permanent.getGrantedSubtypes().contains(subtype)
-                || permanent.hasKeyword(Keyword.CHANGELING);
+        return GameQueryService.permanentHasSubtype(permanent, subtype);
     }
 }

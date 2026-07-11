@@ -63,43 +63,31 @@
     }
   </div>
 }
-@if (permanent && permanent.markedDamage > 0) {
-  <div class="card-damage-badge">{{ permanent.markedDamage }} dmg</div>
-}
-@if (permanent && permanent.regenerationShield > 0) {
-  <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
-}
-@if (permanent && permanent.prepared) {
-  <div class="card-prepared-badge">Prepared</div>
-}
-@if (!preview && permanent && counter('CHARGE') > 0) {
-  <div class="card-charge-badge">Charge x{{ counter('CHARGE') }}</div>
-}
-@if (!preview && permanent && counter('HATCHLING') > 0) {
-  <div class="card-charge-badge">Hatchling x{{ counter('HATCHLING') }}</div>
-}
-@if (!preview && permanent && counter('PHYLACTERY') > 0) {
-  <div class="card-charge-badge">Phylactery x{{ counter('PHYLACTERY') }}</div>
-}
-@if (!preview && permanent && counter('SLIME') > 0) {
-  <div class="card-charge-badge">Slime x{{ counter('SLIME') }}</div>
-}
-@if (!preview && permanent && counter('STUDY') > 0) {
-  <div class="card-charge-badge">Study x{{ counter('STUDY') }}</div>
-}
-@if (!preview && permanent && counter('WISH') > 0) {
-  <div class="card-charge-badge">Wish x{{ counter('WISH') }}</div>
-}
-@if (!preview && permanent && counter('LORE') > 0) {
-  <div class="card-charge-badge">Lore x{{ counter('LORE') }}</div>
-}
-@if (!preview && permanent && counter('AIM') > 0) {
-  <div class="card-charge-badge">Aim x{{ counter('AIM') }}</div>
-}
-@if (!preview && permanent && counter('LANDMARK') > 0) {
-  <div class="card-charge-badge">Landmark x{{ counter('LANDMARK') }}</div>
-}
-@if (!preview && permanent && counter('EYEBALL') > 0) {
-  <div class="card-charge-badge">Eyeball x{{ counter('EYEBALL') }}</div>
-}
+<!-- Each corner is a stacked column so co-occurring badges never overlap.
+     Combat badges from the game component are projected into a corner via
+     the badge-tl/tr/bl/br marker attributes. -->
+<div class="badge-corner badge-corner-tl">
+  <ng-content select="[badge-tl]"></ng-content>
+  @if (permanent && permanent.prepared) {
+    <div class="card-prepared-badge">Prepared</div>
+  }
+</div>
+<div class="badge-corner badge-corner-tr">
+  <ng-content select="[badge-tr]"></ng-content>
+  @if (permanent && permanent.markedDamage > 0) {
+    <div class="card-damage-badge">{{ permanent.markedDamage }} dmg</div>
+  }
+</div>
+<div class="badge-corner badge-corner-bl">
+  <ng-content select="[badge-bl]"></ng-content>
+  @if (permanent && permanent.regenerationShield > 0) {
+    <div class="card-regen-badge">Regen x{{ permanent.regenerationShield }}</div>
+  }
+</div>
+<div class="badge-corner badge-corner-br">
+  <ng-content select="[badge-br]"></ng-content>
+  @for (c of badgeCounters; track c.type) {
+    <div class="card-counter-badge">{{ formatEnumName(c.type) }} x{{ c.count }}</div>
+  }
+</div>
 <ng-content></ng-content>

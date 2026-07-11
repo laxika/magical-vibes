@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,23 +13,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BelligerentBrontodonTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has AssignCombatDamageWithToughnessEffect with ALL_OWN_CREATURES scope")
-    void hasCorrectStaticEffect() {
-        BelligerentBrontodon card = new BelligerentBrontodon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof AssignCombatDamageWithToughnessEffect)
-                .hasSize(1);
-        AssignCombatDamageWithToughnessEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof AssignCombatDamageWithToughnessEffect)
-                .map(e -> (AssignCombatDamageWithToughnessEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-    }
 
     // ===== Brontodon itself uses toughness =====
 

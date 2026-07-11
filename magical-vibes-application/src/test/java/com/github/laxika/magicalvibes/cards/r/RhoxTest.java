@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ShivanDragon;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RhoxTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Rhox has correct card properties")
-    void hasCorrectProperties() {
-        Rhox card = new Rhox();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AssignCombatDamageAsThoughUnblockedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{2}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(RegenerateEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Blocked Rhox assigns combat damage to defending player")

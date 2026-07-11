@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,22 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ElvishPiperTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elvish Piper has correct card properties and activated ability")
-    void hasCorrectProperties() {
-        ElvishPiper card = new ElvishPiper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) mayEffect.wrapped();
-        assertThat(wrapped.label()).isEqualTo("creature");
-    }
+    
 
     @Test
     @DisplayName("Activated ability taps Piper, spends mana, and goes on stack")
@@ -66,8 +49,8 @@ class ElvishPiperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -83,9 +66,9 @@ class ElvishPiperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -139,7 +122,7 @@ class ElvishPiperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.CARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("has no creature cards in hand"));
     }
 

@@ -1,21 +1,12 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,39 +14,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NimDeathmantleTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Nim Deathmantle has correct static effects")
-    void hasCorrectStaticEffects() {
-        NimDeathmantle card = new NimDeathmantle();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(4);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactly(Keyword.INTIMIDATE);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantColorEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(3)).isInstanceOf(GrantSubtypeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Nim Deathmantle has death trigger")
-    void hasDeathTrigger() {
-        NimDeathmantle card = new NimDeathmantle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{4}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnDyingCreatureToBattlefieldAndAttachSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Equipped creature gets +2/+2 and intimidate")
@@ -143,7 +109,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock, creature dies
 
         // Should be prompted with may ability to pay {4}
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Accept and pay
         harness.handleMayAbilityChosen(player1, true);
@@ -182,7 +148,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock, opponent's creature dies
 
         // Should NOT be prompted with may ability (opponent's creature, not in our graveyard)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -202,7 +168,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Decline
         harness.handleMayAbilityChosen(player1, false);

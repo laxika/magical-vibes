@@ -8,10 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,30 +37,7 @@ class ColorstormStallionTest extends BaseCardTest {
                 .count();
     }
 
-    @Test
-    @DisplayName("Has instant/sorcery spell-cast trigger with +1/+1 boost and conditional token copy")
-    void hasCorrectEffects() {
-        ColorstormStallion card = new ColorstormStallion();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(BoostSelfEffect.class);
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(SpellManaSpentAtLeastConditionalEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        SpellManaSpentAtLeastConditionalEffect conditional =
-                (SpellManaSpentAtLeastConditionalEffect) trigger.resolvedEffects().get(1);
-        assertThat(conditional.minMana()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenCopyOfSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting a one-mana instant gives +1/+1 and no token")

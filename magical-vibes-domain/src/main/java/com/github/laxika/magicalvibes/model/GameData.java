@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -16,12 +16,16 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import java.util.EnumSet;
 import java.util.stream.Collectors;
 
+import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 public class GameData {
 
@@ -31,6 +35,8 @@ public class GameData {
     public final String createdByUsername;
     public final LocalDateTime createdAt;
     public volatile GameStatus status;
+    /** "All Random" game mode: every player is dealt a randomly generated deck. */
+    public volatile boolean allRandom;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
     public final List<UUID> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());
@@ -48,6 +54,8 @@ public class GameData {
     public int turnNumber;
     public final Set<UUID> priorityPassedBy = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> landsPlayedThisTurn = new ConcurrentHashMap<>();
+    /** Extra land plays granted this turn (e.g. Summer Bloom), on top of the normal one-per-turn. */
+    public final Map<UUID, Integer> additionalLandsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
@@ -67,9 +75,32 @@ public class GameData {
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
+    public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Result of each player's most recent clash, keyed by the clashing player's id. Written by the
+     * clash-source effect ({@code ClashEffect}) and read within the same spell/ability resolution by
+     * the {@code WonClash} condition (e.g. Whirlpool Whelm's "if you win, ..." clause).
+     */
+    public final Map<UUID, Boolean> lastClashWonByController = new ConcurrentHashMap<>();
+    /**
+     * Imprinted cards (Mimic Vat, Semblance Anvil, Prototype Portal, ...), keyed by the
+     * imprinting card's id. Lives on GameData rather than as a field on {@link Card} so that
+     * AI simulation copies (which share Card instances with the real game) can't leak a
+     * simulated imprint into the real game. Keyed by card id (not permanent id) because
+     * imprint-consuming abilities may resolve after the source permanent left the battlefield
+     * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
+     */
+    public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
+    /**
+     * Player ids controlled by an AI opponent. Auto-pass must always hand these players a
+     * priority window whenever they can act (so the AI can respond at instant speed), whereas
+     * human players are auto-passed through any step outside their configured auto-stop set.
+     */
+    public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final InteractionState interaction = new InteractionState();
@@ -97,11 +128,9 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks the controller ID during a pending Karn Scion +1 opponent reveal choice. */
-    public UUID pendingKarnScionControllerId;
-    /** Tracks whether a LIBRARY_REVEAL_CHOICE is for Karn Scion -1 (return from exile). */
-    public boolean pendingKarnScionReturnFromExile;
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
+    /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
+    public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
@@ -117,16 +146,6 @@ public class GameData {
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
-    public UUID imprintSourcePermanentId;
-    public List<Card> pendingKarnRestartCards;
-    public UUID karnRestartControllerId;
-    public PendingOpponentExileChoice pendingOpponentExileChoice;
-    public PendingSphinxAmbassadorChoice pendingSphinxAmbassadorChoice;
-    public UUID pendingCombatDamageBounceTargetPlayerId;
-    public UUID pendingSacrificeSelfToDestroySourceId;
-    public UUID pendingTransformAndAttachSourceId;
-    public boolean pendingExileDamagedPlayerControlsPermanent;
-    public int pendingProliferateCount;
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
     public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
@@ -138,76 +157,78 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
-    public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> pendingTokenExilesAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> creaturesWithEquipmentToDestroyAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> pendingExileAndReturnTransformedAtEndOfCombat = ConcurrentHashMap.newKeySet();
+    /**
+     * Generic re-entry signal: when set, {@code EffectResolutionService} re-runs the current
+     * effect (rather than advancing to the next) after the pending interaction completes.
+     * Set by handlers that drive a multi-step, self-continuing flow through an interaction whose
+     * completion is not itself an X-value choice (e.g. the each-player discard-then-draw of Flux).
+     */
+    public boolean rerunCurrentEffectAfterInteraction;
+    /** Progress state for Flux's "each player discards any number, then draws that many" flow. */
+    public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
+    /**
+     * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
+     * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
+     * token-exile/sacrifice/destroy/counter/untap/graveyard-returns, exile-until-step returns,
+     * delayed combat-damage loot). Every producer appends via {@link #queueDelayedAction}; every drain
+     * site takes all entries of its own kind in insertion order via {@link #drainDelayedActions}, so
+     * the cross-family servicing order is fixed by the drain call-site chains, not the field layout.
+     * Accessed under {@code synchronized (gameData)} in the engine, like the fields it replaced.
+     */
+    public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
+
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
+    /** Per-permanent count of how many times its resolution-counting activated ability has resolved
+     *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
+     *  Keyed by source permanent id; reset at the start of each turn. */
+    public final Map<UUID, Integer> permanentAbilityResolutionsThisTurn = new ConcurrentHashMap<>();
+    /** Maps a permanent that is not controlled by its owner to that owner (recorded on the first
+     *  control change away from the owner, removed when control reverts to the owner or the
+     *  permanent leaves the battlefield). This is the OWNERSHIP record used to route cards to the
+     *  right graveyard/hand/library on leave; which player CONTROLS the permanent is derived from
+     *  the floating {@code L2_CONTROL} effects (see {@link #deriveControllerOf}). */
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
-    public final Set<UUID> untilEndOfTurnStolenCreatures = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> enchantmentDependentStolenCreatures = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> permanentControlStolenCreatures = ConcurrentHashMap.newKeySet();
-    /** Maps stolen creature ID → source permanent ID for "gain control for as long as you control [source]" effects.
-     *  When the source permanent leaves the battlefield or changes controllers, the stolen creature is returned. */
-    public final Map<UUID, UUID> sourceDependentStolenCreatures = new ConcurrentHashMap<>();
     public boolean endTurnRequested;
-    public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBSpellTargetTrigger> pendingETBSpellTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBTokenTargetTrigger> pendingETBTokenTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBTokenMultiTargetTrigger> pendingETBTokenMultiTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger> pendingUpkeepMultiPlayerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.BeginningOfCombatTriggerTarget> pendingBeginningOfCombatTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.LifeGainTriggerAnyTarget> pendingLifeGainTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EntersFromGraveyardTriggerTarget> pendingEntersFromGraveyardTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SagaChapterTarget> pendingSagaChapterTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SagaChapterGraveyardTarget> pendingSagaChapterGraveyardTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SpellGraveyardTargetTrigger> pendingSpellGraveyardTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ExploreTriggerTarget> pendingExploreTriggerTargets = new ArrayDeque<>();
-    public PendingCapriciousEfreetState pendingCapriciousEfreetState;
+    /**
+     * Unified queue of pending player interactions (decisions awaiting player input).
+     * Replaces the former per-kind {@code Deque} fields. Consumers service one kind at a
+     * time via the type-filtered helpers below; since every producer appends with
+     * {@link #queueInteraction} and every consumer takes the first entry of its own kind,
+     * the original per-kind FIFO ordering is preserved exactly. Accessed under
+     * {@code synchronized (gameData)} blocks in the engine, like the fields it replaced.
+     */
+    public final Deque<PendingInteraction> pendingInteractions = new ArrayDeque<>();
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
-    /** Number of cards to draw after a "discard up to N, then draw that many" completes. */
-    public int pendingRummageDrawCount;
-    /** Permanent ID to untap after a "discard a card, then untap [source]" completes. */
-    public UUID pendingUntapAfterDiscardPermanentId;
-    /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
-    public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
-    public UUID pendingEachPlayerDiscardControllerId;
-    public int pendingEachPlayerDiscardAmount;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
-    /** Queue of player IDs still needing to search for a basic land for an "each player searches" effect (APNAP order). */
-    public final Deque<UUID> pendingEachPlayerBasicLandSearchQueue = new ArrayDeque<>();
-    /** When true, lands found via pendingEachPlayerBasicLandSearchQueue enter the battlefield tapped. */
-    public boolean pendingEachPlayerBasicLandSearchTapped;
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
-    public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
     /** Tracks exile-until-source-leaves connections (O-ring style).
      *  Maps source permanent UUID to the exiled card + owner info.
      *  When the source permanent leaves the battlefield, the exiled card returns. */
     public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
-    public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
-    /** Permanent IDs scheduled for destruction at the beginning of the next end step (e.g. Stone Giant). */
-    public final Set<UUID> pendingDestroyAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
+    /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
+    public final List<PlayerSourceNextDamageShield> playerSourceNextDamageShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot shields (Sanctum Guardian): prevent the next damage event from a chosen source to ANY target
+     *  (player, planeswalker, or creature). Each entry is a chosen source permanent ID, consumed on first use. */
+    public final List<UUID> sourceNextDamageToAnyTargetShields = Collections.synchronizedList(new ArrayList<>());
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
+    public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
+    /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
+    public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
+    public boolean damageCantBePreventedThisTurn = false;
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
     public final List<DamageRedirectShield> damageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending redirect damage to deal after damage prevention (populated by DamagePreventionService, consumed by callers). */
@@ -218,56 +239,13 @@ public class GameData {
     public final List<TargetSourceDamagePreventionShield> targetSourceDamagePreventionShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
-    public boolean pendingSacrificeAttackingCreature;
-    public int pendingForcedSacrificeCount;
-    public UUID pendingForcedSacrificePlayerId;
-    public final List<PendingForcedSacrifice> pendingForcedSacrificeQueue = Collections.synchronizedList(new ArrayList<>());
-    /** Permanent IDs to sacrifice simultaneously once all players have made forced sacrifice choices. */
-    public final List<UUID> pendingSimultaneousSacrificeIds = Collections.synchronizedList(new ArrayList<>());
-    /** When true, the forced sacrifice queue is being used for "choose creature to keep" (destroy rest) instead of "choose to sacrifice". */
-    public boolean pendingDestroyRestMode;
-    /** Creature IDs chosen to be kept (protected from destruction) during a destroy-rest flow. */
-    public final List<UUID> pendingDestroyRestProtectedIds = Collections.synchronizedList(new ArrayList<>());
+    /** Creature-specific damage redirect shields (e.g. Oracle's Attendants): redirect all damage a chosen source would deal to a specific creature this turn onto another permanent. */
+    public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
-    /** Name of the card that initiated the destroy-rest flow (for logging). */
-    public String pendingDestroyRestSourceName;
-    public boolean pendingAwakeningCounterPlacement;
-    public boolean pendingAimCounterPlacement;
-    public boolean pendingOwnPermanentCounterPlacement;
-    public CounterType pendingOwnPermanentCounterType;
-    public int pendingOwnPermanentCounterCount;
-    public UUID pendingTapSubtypeBoostSourcePermanentId;
-    /** Pile separation state: shared by permanent-pile effects (Liliana of the Veil) and card-pile effects (Boneyard Parley).
-     *  When {@code pendingPileSeparationCards} is non-empty, the pile IDs refer to card UUIDs (card-pile mode);
-     *  otherwise they refer to permanent UUIDs (permanent-pile mode). */
-    public boolean pendingPileSeparation;
-    public UUID pendingPileSeparationControllerId;
-    public UUID pendingPileSeparationTargetPlayerId;
-    public final List<UUID> pendingPileSeparationAllPermanentIds = Collections.synchronizedList(new ArrayList<>());
-    public final List<UUID> pendingPileSeparationPile1Ids = Collections.synchronizedList(new ArrayList<>());
-    public final List<UUID> pendingPileSeparationPile2Ids = Collections.synchronizedList(new ArrayList<>());
-    /** Card-pile mode only: the actual Card objects held during separation (not in any zone). */
-    public final List<Card> pendingPileSeparationCards = Collections.synchronizedList(new ArrayList<>());
-    /** Card-pile mode only: maps card UUID → original owner UUID for returning to owners' graveyards. */
-    public final Map<UUID, UUID> pendingPileSeparationCardOwners = new ConcurrentHashMap<>();
+    /** APNAP-ordered queue of players still to choose for "each player may draw up to N" effects (Temporary Truce). Head player is the one currently prompted. */
+    public final List<UUID> pendingEachPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
-    /** Delayed triggers that untap up to N permanents matching a filter at the beginning of the next end step. */
-    public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedUntapPermanents(UUID controllerId, int count, PermanentPredicate filter, Card sourceCard) {}
-
-    /** Delayed trigger: card UUID → owner UUID, return from graveyard to owner's hand at the beginning
-     *  of the next end step. Used by Tiana, Ship's Caretaker. */
-    public final List<DelayedGraveyardToHandReturn> pendingDelayedGraveyardToHandReturns = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedGraveyardToHandReturn(UUID cardId, UUID ownerId) {}
-
-    /** Delayed trigger: card UUID to owner/controller UUIDs, return from graveyard transformed at the beginning
-     *  of the next end step. Used by Loyal Cathar. */
-    public final List<DelayedGraveyardToBattlefieldTransformedReturn> pendingDelayedGraveyardToBattlefieldTransformedReturns = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedGraveyardToBattlefieldTransformedReturn(UUID cardId, UUID ownerId, UUID controllerId) {}
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
@@ -292,6 +270,10 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
+     *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
+    public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
 
     /** Targeted creature cards that may be cast from a graveyard this turn.
@@ -308,6 +290,20 @@ public class GameData {
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
 
+    /**
+     * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
+     * controller's precombat main phases for the rest of the game.
+     */
+    public final List<ParadigmDelayedTrigger> paradigmDelayedTriggers = Collections.synchronizedList(new ArrayList<>());
+
+    public record ParadigmDelayedTrigger(UUID controllerId, Card spellPrototype) {}
+
+    /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
+    public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
+
+    /** Remaining exiled spells to cast for an in-progress Improvisation Capstone resolution. */
+    public final Deque<UUID> pendingImprovisationCapstoneCastQueue = new ArrayDeque<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -319,20 +315,6 @@ public class GameData {
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
-    /**
-     * Paradigm (Secrets of Strixhaven): spell names a player has already resolved at least once this game.
-     * The delayed trigger is registered only on the first resolution per controller per spell name.
-     */
-    public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
-
-    /**
-     * Paradigm delayed triggers that fire at the beginning of each of the controller's precombat main phases
-     * after the turn the spell was first resolved.
-     */
-    public final List<ParadigmDelayedTrigger> paradigmDelayedTriggers = Collections.synchronizedList(new ArrayList<>());
-
-    public record ParadigmDelayedTrigger(UUID controllerId, Card spellTemplate, int registeredOnTurn) {}
-
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -341,6 +323,14 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
+     *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
+     *  Cleared during cleanup step. */
+    public final Set<UUID> exilePlayAnyManaType = ConcurrentHashMap.newKeySet();
+    /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
+     *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
+     *  Cleared during cleanup step. */
+    public final Set<UUID> exileInsteadOfGraveyard = ConcurrentHashMap.newKeySet();
     /** Maps graveyard card UUID → player UUID who may play it this turn (e.g. Ark of Hunger).
      *  Cleared during cleanup step for entries in {@link #graveyardPlayPermissionsExpireEndOfTurn}. */
     public final Map<UUID, UUID> graveyardPlayPermissions = new ConcurrentHashMap<>();
@@ -350,26 +340,18 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
-    /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
-    public UUID knowledgePoolSourcePermanentId;
+    /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
+    public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
-    public UUID pendingExileFromHandPlayPermissionController;
 
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
 
-    /** Delayed trigger: permanent ID → total +1/+1 counters to put on it at the beginning of the next end step.
-     *  Used by Protean Hydra's regrowth ability: "Whenever a +1/+1 counter is removed from this creature,
-     *  put two +1/+1 counters on it at the beginning of the next end step." */
-    public final Map<UUID, Integer> pendingDelayedPlusOnePlusOneCounters = new ConcurrentHashMap<>();
-
-    /** Delayed triggers: "Whenever one or more creatures you control deal combat damage to a player this turn,
-     *  draw N, then discard N." Registered by Jace, Cunning Castaway's +1. Cleared at start of new turn. */
-    public final List<DelayedCombatDamageLoot> pendingDelayedCombatDamageLoots = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedCombatDamageLoot(UUID controllerId, int drawAmount, int discardAmount, Card sourceCard) {}
+    /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
+     *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
+    public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
@@ -377,6 +359,21 @@ public class GameData {
 
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Tracks how much damage each player has been dealt this turn (from any source — combat, spells,
+     *  abilities; includes damage dealt as poison). Cleared at turn cleanup. Used by Final Punishment. */
+    public final Map<UUID, Integer> damageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that {@code amount} damage was dealt to {@code playerId} this turn: marks the player as
+     *  having been dealt damage and accumulates the amount (for effects that read the total). No-op for
+     *  non-positive amounts. */
+    public void recordDamageToPlayer(UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        playersDealtDamageThisTurn.add(playerId);
+        damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
+    }
 
     /** Tracks which permanents (by UUID) have been dealt damage this turn (from any source — combat, spells, abilities).
      *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
@@ -403,14 +400,22 @@ public class GameData {
     /** Non-null when a player is being controlled this turn (the controlling player's ID). */
     public UUID mindControllerPlayerId;
 
+    // Taunt — "creatures that player controls attack you if able" during their next turn
+    /** Delayed effect: affectedPlayerId -> controllerId to attack, consumed when the affected player's turn begins. */
+    public final Map<UUID, UUID> tauntedNextTurn = new ConcurrentHashMap<>();
+    /** Active this turn: affectedPlayerId -> controllerId all their creatures must attack if able. */
+    public final Map<UUID, UUID> tauntedThisTurn = new ConcurrentHashMap<>();
+
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
 
-    /** When true, a follow-up library search for a basic land to hand is pending (e.g. Cultivate second pick). */
-    public boolean pendingBasicLandToHandSearch;
-
-    /** When true, a follow-up unrestricted library search for a card to graveyard is pending (e.g. Final Parting second pick). */
-    public boolean pendingCardToGraveyardSearch;
+    /**
+     * Controller of the spell or ability currently resolving off the stack, or {@code null} when no
+     * spell/ability is resolving (e.g. during cost payment, combat, or state-based actions). Used to
+     * determine causation for effects like Sacred Ground that care whether a permanent left the
+     * battlefield because of "a spell or ability an opponent controls".
+     */
+    public UUID currentlyResolvingControllerId;
 
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
@@ -436,6 +441,277 @@ public class GameData {
      *  (broadcasting, session messages, registry mutations, logging). */
     public boolean simulation;
 
+    /** Monotonic CR 613.7 timestamp source. Advanced via {@link #nextTimestamp()} whenever a
+     *  permanent enters a battlefield, an Aura/Equipment becomes attached (CR 613.7e), or a
+     *  resolving spell/ability creates a continuous effect. Never reset during a game. */
+    public long timestampCounter;
+
+    /** Returns the next CR 613.7 timestamp (strictly increasing, starting at 1). */
+    public long nextTimestamp() {
+        return ++timestampCounter;
+    }
+
+    /**
+     * Creates a battlefield list that stamps any still-unstamped permanent (timestamp 0) with
+     * this game's next CR 613.7 timestamp as it is inserted. The engine's entry funnel
+     * ({@code BattlefieldEntryService.putPermanentOntoBattlefield}) stamps before adding, so
+     * this is a no-op there; it makes direct insertions (test setups building battlefields by
+     * hand) carry real insertion-order timestamps instead of relying on the position fallback.
+     * Control-change moves re-insert already-stamped permanents and keep their stamp
+     * (CR 613.7c).
+     */
+    public List<Permanent> newBattlefieldList() {
+        return Collections.synchronizedList(new TimestampingBattlefieldList());
+    }
+
+    private final class TimestampingBattlefieldList extends ArrayList<Permanent> {
+        @Override
+        public boolean add(Permanent permanent) {
+            stamp(permanent);
+            return super.add(permanent);
+        }
+
+        @Override
+        public void add(int index, Permanent permanent) {
+            stamp(permanent);
+            super.add(index, permanent);
+        }
+
+        @Override
+        public boolean addAll(Collection<? extends Permanent> permanents) {
+            permanents.forEach(this::stamp);
+            return super.addAll(permanents);
+        }
+
+        @Override
+        public boolean addAll(int index, Collection<? extends Permanent> permanents) {
+            permanents.forEach(this::stamp);
+            return super.addAll(index, permanents);
+        }
+
+        private void stamp(Permanent permanent) {
+            if (permanent.getTimestamp() == 0) {
+                permanent.setTimestamp(nextTimestamp());
+            }
+        }
+    }
+
+    /** Continuous effects created by resolved spells/abilities (CR 611.2), for the CR 613 layer
+     *  engine (see {@code agent-docs/LAYER_SYSTEM.md}). Stamped via {@link #addFloatingEffect}
+     *  and expired by duration: {@code UNTIL_END_OF_TURN} at the cleanup step,
+     *  {@code WHILE_SOURCE_ON_BATTLEFIELD}/{@code WHILE_ATTACHED} when the source permanent
+     *  leaves the battlefield or becomes unattached, {@code UNTIL_YOUR_NEXT_TURN} at the start
+     *  of the controller's next turn. */
+    public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
+
+    /**
+     * Opaque slot for the engine's memoized CR 613 layered board
+     * ({@code LayerSystemService.BoardCache} — the engine owns the type, this module cannot
+     * reference it; see {@code agent-docs/LAYER_SYSTEM.md} "Board cache"). Deliberately NOT
+     * copied by {@link #simulationCopy()}: AI simulation copies must start with a cold cache so
+     * a simulated board can never be served for the real game or vice versa. Holds an immutable
+     * entry published by a volatile write; concurrent fillers race benignly (last write wins).
+     */
+    public transient volatile Object layeredBoardCache;
+
+    /**
+     * Stamps the given floating effect with the next CR 613.7 timestamp, stores it, and returns
+     * the stamped instance (the passed-in effect's own timestamp is ignored).
+     */
+    public FloatingContinuousEffect addFloatingEffect(FloatingContinuousEffect effect) {
+        FloatingContinuousEffect stamped = effect.withTimestamp(nextTimestamp());
+        floatingEffects.add(stamped);
+        return stamped;
+    }
+
+    /** Removes and returns all floating effects with {@code UNTIL_END_OF_TURN} duration (cleanup step). */
+    public List<FloatingContinuousEffect> expireEndOfTurnFloatingEffects() {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_END_OF_TURN);
+    }
+
+    /**
+     * Removes and returns all floating effects that depended on the given source permanent still
+     * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD} and {@code WHILE_ATTACHED}).
+     * Called whenever a permanent leaves any battlefield.
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
+        return expireFloatingEffects(fe ->
+                (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                        || fe.duration() == EffectDuration.WHILE_ATTACHED)
+                        && sourcePermanentId.equals(fe.sourcePermanentId()));
+    }
+
+    /**
+     * Removes and returns all {@code WHILE_ATTACHED} floating effects sourced from the given
+     * Aura/Equipment. Called whenever the attachment becomes unattached or attaches to a new
+     * permanent (the old attachment's effects end either way).
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsForUnattachedSource(UUID sourcePermanentId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_ATTACHED
+                && sourcePermanentId.equals(fe.sourcePermanentId()));
+    }
+
+    /**
+     * Removes and returns all {@code UNTIL_YOUR_NEXT_TURN} floating effects controlled by the
+     * given player. Called when that player's turn begins.
+     */
+    public List<FloatingContinuousEffect> expireFloatingEffectsAtTurnStart(UUID playerId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN
+                && playerId.equals(fe.controllerId()));
+    }
+
+    private List<FloatingContinuousEffect> expireFloatingEffects(Predicate<FloatingContinuousEffect> expired) {
+        List<FloatingContinuousEffect> removed = new ArrayList<>();
+        var it = floatingEffects.iterator();
+        while (it.hasNext()) {
+            FloatingContinuousEffect fe = it.next();
+            if (expired.test(fe)) {
+                removed.add(fe);
+                it.remove();
+            }
+        }
+        return removed;
+    }
+
+    // ── Derived control state (CR 613.2/613.7 layer 2) ─────────────────────────────────────
+
+    /**
+     * Removes and returns all control-changing floating effects that apply to the given
+     * permanent. Called when the permanent leaves the battlefield (its control effects can
+     * never apply to a new object — CR 611.2c).
+     */
+    public List<FloatingContinuousEffect> expireControlEffectsForDepartedPermanent(UUID permanentId) {
+        return expireFloatingEffects(fe -> fe.isControlEffect()
+                && permanentId.equals(fe.affectedPermanentId()));
+    }
+
+    /** All active control-changing floating effects that apply to the given permanent. */
+    public List<FloatingContinuousEffect> controlEffectsFor(UUID permanentId) {
+        List<FloatingContinuousEffect> result = new ArrayList<>();
+        synchronized (floatingEffects) {
+            for (FloatingContinuousEffect fe : floatingEffects) {
+                if (fe.isControlEffect() && permanentId.equals(fe.affectedPermanentId())) {
+                    result.add(fe);
+                }
+            }
+        }
+        return result;
+    }
+
+    /** The newest (highest CR 613.7 timestamp) active control effect for the permanent, or {@code null}. */
+    public FloatingContinuousEffect newestControlEffectFor(UUID permanentId) {
+        FloatingContinuousEffect newest = null;
+        for (FloatingContinuousEffect fe : controlEffectsFor(permanentId)) {
+            if (newest == null || fe.timestamp() > newest.timestamp()) {
+                newest = fe;
+            }
+        }
+        return newest;
+    }
+
+    /**
+     * The player a control effect gives control to. For attachment-backed effects
+     * ({@code WHILE_ATTACHED}, e.g. In Bolas's Clutches) this is the CURRENT controller of the
+     * source Aura — the static ability grants control to whoever controls the Aura right now;
+     * for everything else it is the controller of the spell/ability that created the effect.
+     */
+    public UUID resolveControlEffectController(FloatingContinuousEffect fe) {
+        if (fe.duration() == EffectDuration.WHILE_ATTACHED && fe.sourcePermanentId() != null) {
+            UUID auraController = findControllerOf(fe.sourcePermanentId());
+            if (auraController != null) {
+                return auraController;
+            }
+        }
+        return fe.controllerId();
+    }
+
+    /**
+     * The player who controls the given permanent per CR 613.2: the newest active control
+     * effect wins; with none active, the default controller (see {@link #defaultControllerOf}).
+     * Purely derived — moving the permanent between battlefield lists to match is
+     * {@code CreatureControlService.recomputeControl}'s job.
+     */
+    public UUID deriveControllerOf(UUID permanentId) {
+        FloatingContinuousEffect newest = newestControlEffectFor(permanentId);
+        if (newest != null) {
+            return resolveControlEffectController(newest);
+        }
+        return defaultControllerOf(permanentId);
+    }
+
+    /**
+     * Who controls the permanent when no control effect applies: its recorded original owner
+     * ({@link #stolenCreatures}), else the owner stamped on the card at game setup, else the
+     * battlefield it currently sits on (hand-built test permanents and tokens carry no owner).
+     */
+    public UUID defaultControllerOf(UUID permanentId) {
+        UUID recordedOwner = stolenCreatures.get(permanentId);
+        if (recordedOwner != null) {
+            return recordedOwner;
+        }
+        Permanent permanent = null;
+        UUID holder = null;
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(permanentId)) {
+                    permanent = p;
+                    holder = playerId;
+                    break;
+                }
+            }
+            if (permanent != null) break;
+        }
+        if (permanent != null) {
+            UUID cardOwner = permanent.getCard().getOwnerId();
+            if (cardOwner != null && playerIds.contains(cardOwner)) {
+                return cardOwner;
+            }
+        }
+        return holder;
+    }
+
+    /**
+     * Whether the permanent is currently held by a controller who only has it until end of
+     * turn: the newest active control effect is {@code UNTIL_END_OF_TURN} and control would
+     * fall to a different player once it expires. Derived replacement for the old
+     * {@code untilEndOfTurnStolenCreatures} set (used by the AI to zero a stolen attacker's
+     * loss value).
+     */
+    public boolean isStolenUntilEndOfTurn(UUID permanentId) {
+        FloatingContinuousEffect newest = newestControlEffectFor(permanentId);
+        if (newest == null || newest.duration() != EffectDuration.UNTIL_END_OF_TURN) {
+            return false;
+        }
+        UUID withEffect = resolveControlEffectController(newest);
+        FloatingContinuousEffect newestSurviving = null;
+        for (FloatingContinuousEffect fe : controlEffectsFor(permanentId)) {
+            if (fe.duration() == EffectDuration.UNTIL_END_OF_TURN) continue;
+            if (newestSurviving == null || fe.timestamp() > newestSurviving.timestamp()) {
+                newestSurviving = fe;
+            }
+        }
+        UUID withoutEffect = newestSurviving != null
+                ? resolveControlEffectController(newestSurviving)
+                : defaultControllerOf(permanentId);
+        return withEffect != null && !withEffect.equals(withoutEffect);
+    }
+
+    /** The player whose battlefield currently holds the permanent, or {@code null}. */
+    public UUID findControllerOf(UUID permanentId) {
+        for (UUID playerId : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(permanentId)) {
+                    return playerId;
+                }
+            }
+        }
+        return null;
+    }
+
     public GameData(UUID id, String gameName, UUID createdByUserId, String createdByUsername) {
         this.id = id;
         this.gameName = gameName;
@@ -457,6 +733,172 @@ public class GameData {
         } else {
             stack.add(entry);
         }
+    }
+
+    /**
+     * Appends a pending interaction to the tail of the unified queue.
+     */
+    public void queueInteraction(PendingInteraction interaction) {
+        pendingInteractions.addLast(interaction);
+    }
+
+    /**
+     * Puts a pending interaction at the head of the unified queue. Used when an
+     * in-progress multi-step interaction must be serviced before anything else
+     * (e.g. re-queuing an updated {@code ETBTokenMultiTargetTrigger} between target slots).
+     */
+    public void queueInteractionFirst(PendingInteraction interaction) {
+        pendingInteractions.addFirst(interaction);
+    }
+
+    /**
+     * Returns {@code true} if the queue holds at least one interaction of the given kind.
+     */
+    public boolean hasPendingInteraction(Class<? extends PendingInteraction> type) {
+        for (PendingInteraction interaction : pendingInteractions) {
+            if (type.isInstance(interaction)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the first queued interaction of the given kind without removing it,
+     * or {@code null} if none is queued.
+     */
+    public <T extends PendingInteraction> T peekPendingInteraction(Class<T> type) {
+        for (PendingInteraction interaction : pendingInteractions) {
+            if (type.isInstance(interaction)) return type.cast(interaction);
+        }
+        return null;
+    }
+
+    /**
+     * Removes and returns the first queued interaction of the given kind,
+     * or {@code null} if none is queued.
+     */
+    public <T extends PendingInteraction> T pollPendingInteraction(Class<T> type) {
+        var it = pendingInteractions.iterator();
+        while (it.hasNext()) {
+            PendingInteraction interaction = it.next();
+            if (type.isInstance(interaction)) {
+                it.remove();
+                return type.cast(interaction);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Removes every queued interaction of the given kind (e.g. Karn restart wiping trigger state).
+     */
+    public void clearPendingInteractions(Class<? extends PendingInteraction> type) {
+        pendingInteractions.removeIf(type::isInstance);
+    }
+
+    // ===== Delayed-action queue helpers (mirror the pendingInteractions helpers above) =====
+
+    /**
+     * Appends a scheduled {@link DelayedAction} to the tail of the unified delayed-action queue.
+     */
+    public void queueDelayedAction(DelayedAction action) {
+        delayedActions.add(action);
+    }
+
+    /**
+     * Returns {@code true} if the queue holds at least one delayed action of the given kind.
+     */
+    public boolean hasDelayedAction(Class<? extends DelayedAction> type) {
+        for (DelayedAction action : delayedActions) {
+            if (type.isInstance(action)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns an unmodifiable snapshot of all queued delayed actions of the given kind in insertion
+     * order, WITHOUT removing them (for read-only consumers such as the per-combat-step loot check).
+     */
+    public <T extends DelayedAction> List<T> getDelayedActions(Class<T> type) {
+        List<T> result = new ArrayList<>();
+        for (DelayedAction action : delayedActions) {
+            if (type.isInstance(action)) result.add(type.cast(action));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Removes and returns all queued delayed actions of the given kind, preserving insertion order.
+     */
+    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type) {
+        List<T> drained = new ArrayList<>();
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                drained.add(type.cast(action));
+                it.remove();
+            }
+        }
+        return drained;
+    }
+
+    /**
+     * Removes and returns the queued delayed actions of the given kind that match {@code filter},
+     * preserving insertion order and leaving non-matching entries in place (used by the per-step
+     * exile-return drain, which fires only entries whose scheduled step is the current one).
+     */
+    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type, Predicate<T> filter) {
+        List<T> drained = new ArrayList<>();
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                T typed = type.cast(action);
+                if (filter.test(typed)) {
+                    drained.add(typed);
+                    it.remove();
+                }
+            }
+        }
+        return drained;
+    }
+
+    /**
+     * Removes every queued delayed action of the given kind (e.g. Karn restart wiping scheduled state,
+     * or turn cleanup clearing the delayed combat-damage loot triggers).
+     */
+    public void clearDelayedActions(Class<? extends DelayedAction> type) {
+        delayedActions.removeIf(type::isInstance);
+    }
+
+    /**
+     * Accumulates {@code delta} pending +1/+1 counters for {@code permanentId} at the next end step,
+     * preserving the legacy keyed-map semantics (at most one {@link DelayedPlusOneCounters} per
+     * permanent, holding the running total).
+     */
+    public void addDelayedPlusOneCounters(UUID permanentId, int delta) {
+        int total = delta;
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+                total += existing.totalCounters();
+                it.remove();
+            }
+        }
+        delayedActions.add(new DelayedPlusOneCounters(permanentId, total));
+    }
+
+    /**
+     * Returns the pending +1/+1 counter total scheduled for {@code permanentId} (0 if none).
+     */
+    public int getDelayedPlusOneCounters(UUID permanentId) {
+        for (DelayedAction action : delayedActions) {
+            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+                return existing.totalCounters();
+            }
+        }
+        return 0;
     }
 
     /**
@@ -499,6 +941,11 @@ public class GameData {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
     }
 
+    /** Total lands the given player may play this turn: the normal one plus any additional grants. */
+    public int getMaxLandsThisTurn(UUID playerId) {
+        return 1 + additionalLandsThisTurn.getOrDefault(playerId, 0);
+    }
+
     /**
      * Returns an unmodifiable view of the spells the given player has cast this turn.
      */
@@ -529,6 +976,20 @@ public class GameData {
      */
     public int getLife(UUID playerId) {
         return playerLifeTotals.getOrDefault(playerId, STARTING_LIFE_TOTAL);
+    }
+
+    /**
+     * Returns how much life the given player has gained so far this turn (0 if none).
+     */
+    public int getLifeGainedThisTurn(UUID playerId) {
+        return lifeGainedThisTurn.getOrDefault(playerId, 0);
+    }
+
+    /**
+     * Returns whether the given player has gained life this turn (for Infusion-style conditions).
+     */
+    public boolean hasGainedLifeThisTurn(UUID playerId) {
+        return getLifeGainedThisTurn(playerId) > 0;
     }
 
     /**
@@ -619,6 +1080,20 @@ public class GameData {
                 .filter(e -> e.card().getId().equals(cardId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /** The card imprinted on {@code source} (see {@link #imprintedCards}), or null if none. */
+    public Card getImprintedCard(Card source) {
+        return source != null ? imprintedCards.get(source.getId()) : null;
+    }
+
+    /** Imprints {@code imprinted} on {@code source}; a null {@code imprinted} clears the imprint. */
+    public void setImprintedCard(Card source, Card imprinted) {
+        if (imprinted == null) {
+            imprintedCards.remove(source.getId());
+        } else {
+            imprintedCards.put(source.getId(), imprinted);
+        }
     }
 
     /** Removes all exile entries tracked with the given source permanent. */
@@ -718,19 +1193,24 @@ public class GameData {
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
-        copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
-        copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
-        copy.pendingTransformAndAttachSourceId = this.pendingTransformAndAttachSourceId;
-        copy.pendingExileDamagedPlayerControlsPermanent = this.pendingExileDamagedPlayerControlsPermanent;
-        copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
         copy.resolvingMayEffectFromStack = this.resolvingMayEffectFromStack;
         copy.resolvedMayAccepted = this.resolvedMayAccepted;
-        copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry != null
-                ? new StackEntry(this.resolvedMayTargetingEntry) : null;
+        // resolvedMayTargetingEntry usually aliases pendingEffectResolutionEntry (the CR 603.5
+        // resolution-time targeting flow sets the chosen target through the alias and resumes
+        // through pendingEffectResolutionEntry) — preserve the shared identity in the copy,
+        // otherwise the simulated choice answer would set the target on a dead copy.
+        copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry == this.pendingEffectResolutionEntry
+                ? copy.pendingEffectResolutionEntry
+                : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
+        copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
+        copy.eachPlayerRummage.active = this.eachPlayerRummage.active;
+        copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
+        copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;
+        copy.eachPlayerRummage.remaining.addAll(this.eachPlayerRummage.remaining);
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
@@ -739,49 +1219,29 @@ public class GameData {
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.timestampCounter = this.timestampCounter;
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
-        copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
-        copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;
-        copy.pendingForcedSacrificePlayerId = this.pendingForcedSacrificePlayerId;
-        copy.pendingForcedSacrificeQueue.addAll(this.pendingForcedSacrificeQueue);
-        copy.pendingSimultaneousSacrificeIds.addAll(this.pendingSimultaneousSacrificeIds);
-        copy.pendingDestroyRestMode = this.pendingDestroyRestMode;
-        copy.pendingDestroyRestProtectedIds.addAll(this.pendingDestroyRestProtectedIds);
-        copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
-        copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
-        copy.pendingAimCounterPlacement = this.pendingAimCounterPlacement;
-        copy.pendingOwnPermanentCounterPlacement = this.pendingOwnPermanentCounterPlacement;
-        copy.pendingOwnPermanentCounterType = this.pendingOwnPermanentCounterType;
-        copy.pendingOwnPermanentCounterCount = this.pendingOwnPermanentCounterCount;
-        copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
-        copy.pendingPileSeparation = this.pendingPileSeparation;
-        copy.pendingPileSeparationControllerId = this.pendingPileSeparationControllerId;
-        copy.pendingPileSeparationTargetPlayerId = this.pendingPileSeparationTargetPlayerId;
-        copy.pendingPileSeparationAllPermanentIds.addAll(this.pendingPileSeparationAllPermanentIds);
-        copy.pendingPileSeparationPile1Ids.addAll(this.pendingPileSeparationPile1Ids);
-        copy.pendingPileSeparationPile2Ids.addAll(this.pendingPileSeparationPile2Ids);
-        copy.pendingPileSeparationCards.addAll(this.pendingPileSeparationCards);
-        copy.pendingPileSeparationCardOwners.putAll(this.pendingPileSeparationCardOwners);
+        copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);
+        copy.aiPlayerIds.addAll(this.aiPlayerIds);
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
-        copy.permanentsToSacrificeAtEndOfCombat.addAll(this.permanentsToSacrificeAtEndOfCombat);
-        copy.pendingTokenExilesAtEndOfCombat.addAll(this.pendingTokenExilesAtEndOfCombat);
-        copy.creaturesWithEquipmentToDestroyAtEndOfCombat.addAll(this.creaturesWithEquipmentToDestroyAtEndOfCombat);
-        copy.pendingExileAndReturnTransformedAtEndOfCombat.addAll(this.pendingExileAndReturnTransformedAtEndOfCombat);
-        copy.untilEndOfTurnStolenCreatures.addAll(this.untilEndOfTurnStolenCreatures);
-        copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
-        copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
+        copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
+        copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
+        copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
+        copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
+        copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
+        copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---
@@ -790,32 +1250,34 @@ public class GameData {
 
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
+        copy.imprintedCards.putAll(this.imprintedCards);
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);
         copy.landsPlayedThisTurn.putAll(this.landsPlayedThisTurn);
+        copy.additionalLandsThisTurn.putAll(this.additionalLandsThisTurn);
         this.permanentsEnteredBattlefieldThisTurn.forEach((k, v) ->
                 copy.permanentsEnteredBattlefieldThisTurn.put(k, new ArrayList<>(v)));
         this.spellsCastThisTurn.forEach((k, v) ->
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);
         copy.stolenCreatures.putAll(this.stolenCreatures);
-        copy.sourceDependentStolenCreatures.putAll(this.sourceDependentStolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
+        copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
+        copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
-        copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
-        copy.pendingDelayedCombatDamageLoots.addAll(this.pendingDelayedCombatDamageLoots);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
@@ -827,13 +1289,13 @@ public class GameData {
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
-        copy.pendingKarnScionControllerId = this.pendingKarnScionControllerId;
-        copy.pendingKarnScionReturnFromExile = this.pendingKarnScionReturnFromExile;
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
-        this.playerBattlefields.forEach((k, v) ->
-                copy.playerBattlefields.put(k,
-                        v.stream().map(Permanent::new).collect(Collectors.toCollection(ArrayList::new))));
+        this.playerBattlefields.forEach((k, v) -> {
+            List<Permanent> battlefieldCopy = copy.newBattlefieldList();
+            v.stream().map(Permanent::new).forEach(battlefieldCopy::add);
+            copy.playerBattlefields.put(k, battlefieldCopy);
+        });
 
         // --- Map<UUID, ManaPool> (deep copy each ManaPool) ---
         this.playerManaPools.forEach((k, v) -> copy.playerManaPools.put(k, new ManaPool(v)));
@@ -863,17 +1325,12 @@ public class GameData {
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
 
-        // --- PendingExileReturn list (records with shared Card refs) ---
-        copy.pendingExileReturns.addAll(this.pendingExileReturns);
+        // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
+        //     per-mechanic fields it replaced were copied) ---
+        copy.delayedActions.addAll(this.delayedActions);
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         copy.exileReturnOnPermanentLeave.putAll(this.exileReturnOnPermanentLeave);
-
-        // --- Pending token exiles at end step (Mimic Vat) ---
-        copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);
-
-        // --- Pending destroy at end step (Stone Giant) ---
-        copy.pendingDestroyAtEndStep.addAll(this.pendingDestroyAtEndStep);
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) ->
@@ -885,17 +1342,6 @@ public class GameData {
         copy.graveyardTargetOperation.effects = this.graveyardTargetOperation.effects;
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
-
-        // --- Imprint ---
-        copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
-
-        // --- Karn restart ---
-        copy.pendingKarnRestartCards = this.pendingKarnRestartCards != null ? new ArrayList<>(this.pendingKarnRestartCards) : null;
-        copy.karnRestartControllerId = this.karnRestartControllerId;
-
-        // --- Post-exile search ---
-        copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable
-        copy.pendingSphinxAmbassadorChoice = this.pendingSphinxAmbassadorChoice; // record — immutable
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -918,37 +1364,13 @@ public class GameData {
         // --- Map<UUID, Map<Integer, Integer>> (activated ability uses) ---
         this.activatedAbilityUsesThisTurn.forEach((k, v) ->
                 copy.activatedAbilityUsesThisTurn.put(k, new HashMap<>(v)));
+        copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---
-        copy.pendingDeathTriggerTargets.addAll(this.pendingDeathTriggerTargets);
-        copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
-        copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
-        copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
-        copy.pendingETBSpellTargetTriggers.addAll(this.pendingETBSpellTargetTriggers);
-        copy.pendingETBTokenTargetTriggers.addAll(this.pendingETBTokenTargetTriggers);
-        copy.pendingETBTokenMultiTargetTriggers.addAll(this.pendingETBTokenMultiTargetTriggers);
-        copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
-        copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
-        copy.pendingUpkeepMultiPlayerTargets.addAll(this.pendingUpkeepMultiPlayerTargets);
-        copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
-        copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
-        copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);
-        copy.pendingBeginningOfCombatTriggerTargets.addAll(this.pendingBeginningOfCombatTriggerTargets);
-        copy.pendingLifeGainTriggerTargets.addAll(this.pendingLifeGainTriggerTargets);
-        copy.pendingEntersFromGraveyardTriggerTargets.addAll(this.pendingEntersFromGraveyardTriggerTargets);
-        copy.pendingSagaChapterTargets.addAll(this.pendingSagaChapterTargets);
-        copy.pendingSagaChapterGraveyardTargets.addAll(this.pendingSagaChapterGraveyardTargets);
-        copy.pendingSpellGraveyardTargetTriggers.addAll(this.pendingSpellGraveyardTargetTriggers);
-        copy.pendingExploreTriggerTargets.addAll(this.pendingExploreTriggerTargets);
-        copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
+        copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
-        copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);
-        copy.pendingEachPlayerDiscardControllerId = this.pendingEachPlayerDiscardControllerId;
-        copy.pendingEachPlayerDiscardAmount = this.pendingEachPlayerDiscardAmount;
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
-        copy.pendingEachPlayerBasicLandSearchQueue.addAll(this.pendingEachPlayerBasicLandSearchQueue);
-        copy.pendingEachPlayerBasicLandSearchTapped = this.pendingEachPlayerBasicLandSearchTapped;
 
         // --- Combat damage assignment state ---
         this.combatDamagePlayerAssignments.forEach((k, v) ->
@@ -959,14 +1381,8 @@ public class GameData {
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
 
-        // --- Delayed untap permanents (records are immutable) ---
-        copy.pendingDelayedUntapPermanents.addAll(this.pendingDelayedUntapPermanents);
-
-        // --- Delayed graveyard-to-hand returns (records are immutable) ---
-        copy.pendingDelayedGraveyardToHandReturns.addAll(this.pendingDelayedGraveyardToHandReturns);
-
-        // --- Delayed graveyard-to-battlefield transformed returns (records are immutable) ---
-        copy.pendingDelayedGraveyardToBattlefieldTransformedReturns.addAll(this.pendingDelayedGraveyardToBattlefieldTransformedReturns);
+        // --- Floating continuous effects (immutable records, safe to share) ---
+        copy.floatingEffects.addAll(this.floatingEffects);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
@@ -994,12 +1410,13 @@ public class GameData {
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
+        copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
-        copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
-        copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
+        copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->
@@ -1013,14 +1430,21 @@ public class GameData {
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+        copy.tauntedNextTurn.putAll(this.tauntedNextTurn);
+        copy.tauntedThisTurn.putAll(this.tauntedThisTurn);
+        copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
         copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
-        this.paradigmResolvedSpellNames.forEach((k, v) ->
-                copy.paradigmResolvedSpellNames.put(k, new HashSet<>(v)));
         copy.paradigmDelayedTriggers.addAll(this.paradigmDelayedTriggers);
+        this.paradigmResolvedSpellNames.forEach((k, v) -> {
+            Set<String> names = ConcurrentHashMap.newKeySet();
+            names.addAll(v);
+            copy.paradigmResolvedSpellNames.put(k, names);
+        });
+        copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);
@@ -1034,105 +1458,16 @@ public class GameData {
      */
     private static void copyInteractionInto(GameData target, InteractionState source) {
         // The interaction field is final on GameData, so we replicate its state
-        // by clearing and re-configuring through public methods.
-        // However, since InteractionState uses private fields and public begin*/clear* methods,
-        // we use the context object to reconstruct the state.
-        if (source.awaitingInputType() == null) {
-            return; // default state, nothing to copy
-        }
+        // through its public methods.
 
-        // Copy context through reflection-free approach: re-read the source's context
-        // and call the appropriate begin* method on the target's interaction.
-        InteractionState targetInteraction = target.interaction;
-        var ctx = source.currentContext();
-        if (ctx == null) {
-            return;
-        }
+        // The permanent-choice pre-seed carrier is copied unconditionally: it can be set
+        // outside any awaiting window (e.g. a clone-copy context pre-seeded across the
+        // MAY_ABILITY_CHOICE window).
+        target.interaction.setPermanentChoiceContext(source.permanentChoiceContext());
 
-        switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad ->
-                    targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
-            case InteractionContext.BlockerDeclaration bd ->
-                    targetInteraction.beginBlockerDeclaration(bd.defenderId());
-            case InteractionContext.CardChoice cc ->
-                    targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetId());
-            case InteractionContext.PermanentChoice pc ->
-                    targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
-            case InteractionContext.GraveyardChoice gc ->
-                    targetInteraction.beginGraveyardChoice(gc.playerId(), gc.validIndices(), gc.destination(), gc.cardPool());
-            case InteractionContext.ColorChoice cc ->
-                    targetInteraction.beginColorChoice(cc.playerId(), cc.permanentId(), cc.etbTargetId(), cc.context());
-            case InteractionContext.MayAbilityChoice mc ->
-                    targetInteraction.beginMayAbilityChoice(mc.playerId(), mc.description());
-            case InteractionContext.MultiPermanentChoice mpc ->
-                    targetInteraction.beginMultiPermanentChoice(mpc.playerId(), mpc.validIds(), mpc.maxCount());
-            case InteractionContext.MultiGraveyardChoice mgc ->
-                    targetInteraction.beginMultiGraveyardChoice(mgc.playerId(), mgc.validCardIds(), mgc.maxCount());
-            case InteractionContext.LibraryReorder lr ->
-                    targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom(), lr.deckOwnerId());
-            case InteractionContext.LibrarySearch ls ->
-                    targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
-                                    ls.cards() != null ? new ArrayList<>(ls.cards()) : null)
-                            .reveals(ls.reveals())
-                            .canFailToFind(ls.canFailToFind())
-                            .targetPlayerId(ls.targetPlayerId())
-                            .remainingCount(ls.remainingCount())
-                            .sourceCards(ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null)
-                            .reorderRemainingToBottom(ls.reorderRemainingToBottom())
-                            .reorderRemainingToTop(ls.reorderRemainingToTop())
-                            .shuffleAfterSelection(ls.shuffleAfterSelection())
-                            .prompt(ls.prompt())
-                            .destination(ls.destination())
-                            .filterCardTypes(ls.filterCardTypes())
-                            .build());
-            case InteractionContext.LibraryRevealChoice lrc -> {
-                    if (lrc.randomRemainingToBottom()) {
-                        targetInteraction.beginLibraryRevealChoiceRandomBottom(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null);
-                    } else if (lrc.lifeCostPerSelection() > 0) {
-                        targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
-                                lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom(),
-                                lrc.lifeCostPerSelection(), lrc.beneficiaryPlayerId());
-                    } else {
-                        targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
-                                lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom());
-                    }
-                }
-            case InteractionContext.HandTopBottomChoice htbc ->
-                    targetInteraction.beginHandTopBottomChoice(htbc.playerId(),
-                            htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
-            case InteractionContext.RevealedHandChoice rhc ->
-                    targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
-                            rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.exileMode(), rhc.chosenCards());
-            case InteractionContext.MultiZoneExileChoice mzec ->
-                    targetInteraction.beginMultiZoneExileChoice(mzec.playerId(),
-                            mzec.validCardIds() != null ? new HashSet<>(mzec.validCardIds()) : null,
-                            mzec.maxCount(), mzec.targetPlayerId(), mzec.controllerId(), mzec.cardName());
-            case InteractionContext.CombatDamageAssignment cda ->
-                    targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
-                            cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
-                            cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
-            case InteractionContext.XValueChoice xvc ->
-                    targetInteraction.beginXValueChoice(xvc.playerId(), xvc.maxValue(), xvc.prompt(), xvc.cardName());
-            case InteractionContext.Scry s ->
-                    targetInteraction.beginScry(s.playerId(),
-                            s.cards() != null ? new ArrayList<>(s.cards()) : null);
-            case InteractionContext.KnowledgePoolCastChoice kpc ->
-                    targetInteraction.beginKnowledgePoolCastChoice(kpc.playerId(),
-                            kpc.validCardIds() != null ? new HashSet<>(kpc.validCardIds()) : null, kpc.maxCount());
-            case InteractionContext.MirrorOfFateChoice mfc ->
-                    targetInteraction.beginMirrorOfFateChoice(mfc.playerId(),
-                            mfc.validCardIds() != null ? new HashSet<>(mfc.validCardIds()) : null, mfc.maxCount());
-        }
-
-        // Copy discard remaining count (not part of context reconstruction)
-        if (source.revealedHandChoice() != null && source.revealedHandChoice().discardRemainingCount() > 0) {
-            targetInteraction.setDiscardRemainingCount(source.revealedHandChoice().discardRemainingCount());
+        // The active interaction record carries everything (immutable, shallow copy)
+        if (source.activeInteraction() != null) {
+            target.interaction.beginInteraction(source.activeInteraction());
         }
     }
 }

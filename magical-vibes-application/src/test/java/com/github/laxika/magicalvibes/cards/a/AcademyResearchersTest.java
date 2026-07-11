@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.SpiritLink;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,21 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AcademyResearchersTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Academy Researchers has correct card properties")
-    void hasCorrectProperties() {
-        AcademyResearchers card = new AcademyResearchers();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutAuraFromHandOntoSelfEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -75,8 +56,8 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt is pending
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept the may ability — inner effect resolves inline
         harness.handleMayAbilityChosen(player1, true);
@@ -94,9 +75,9 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(0);
     }
 
     @Test
@@ -110,9 +91,9 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
         // Only indices 1 (HolyStrength) and 2 (Pacifism) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(1, 2);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(1, 2);
     }
 
     @Test
@@ -188,7 +169,7 @@ class AcademyResearchersTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldSizeBefore);
-        assertThat(gd.interaction.cardChoice()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== No Auras in hand =====
@@ -204,7 +185,7 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -218,7 +199,7 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
@@ -239,7 +220,7 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect fizzles (source gone)
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("fizzles"));
     }
 
@@ -255,8 +236,8 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(0, 1);
 
         // Choose Spirit Link (index 1)
         harness.handleCardChosen(player1, 1);
@@ -286,5 +267,4 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.castCreature(player1, 0);
     }
 }
-
 

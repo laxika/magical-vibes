@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -43,8 +44,8 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
                 Card imprintedCard = sourcePermanent != null
-                        ? sourcePermanent.getCard().getImprintedCard()
-                        : entry.getCard().getImprintedCard();
+                        ? gameData.getImprintedCard(sourcePermanent.getCard())
+                        : gameData.getImprintedCard(entry.getCard());
                 if (imprintedCard == null) {
                     log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
                     return;
@@ -94,7 +95,7 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
 
                     // Conditionally schedule for exile at beginning of next end step
                     if (e.exileAtEndStep()) {
-                        gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+                        gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
                     }
 
                     String logMsg = e.grantHaste()

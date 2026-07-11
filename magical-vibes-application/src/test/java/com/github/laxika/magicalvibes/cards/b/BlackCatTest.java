@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,27 +18,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BlackCatTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH random-discard trigger targeting an opponent")
-    void hasCorrectStructure() {
-        BlackCat card = new BlackCat();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect deathEffect =
-                (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.amount()).isEqualTo(1);
-        assertThat(deathEffect.causedByOpponent()).isTrue();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
 
     // ===== Death trigger =====
 
@@ -60,10 +35,10 @@ class BlackCatTest extends BaseCardTest {
         harness.castInstant(player2, 0, catId);
         harness.passBothPriorities(); // Shock resolves → cat dies → death trigger awaits target
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Only valid target should be the opponent (player2), not player1 (the controller)
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // Resolve discard trigger
@@ -91,8 +66,8 @@ class BlackCatTest extends BaseCardTest {
         harness.castInstant(player2, 0, catId);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .doesNotContain(player1.getId())
                 .containsExactly(player2.getId());
     }

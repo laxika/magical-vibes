@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,33 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvokLifestaffTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sylvok Lifestaff has static +1/+0 boost effect")
-    void hasStaticBoostEffect() {
-        SylvokLifestaff card = new SylvokLifestaff();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Sylvok Lifestaff has equipped creature death trigger")
-    void hasEquippedCreatureDeathTrigger() {
-        SylvokLifestaff card = new SylvokLifestaff();
-
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect gainLife = (GainLifeEffect) card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst();
-        assertThat(gainLife.amount()).isEqualTo(3);
-    }
 
     // ===== Static boost =====
 

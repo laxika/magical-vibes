@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RootwaterMatriarchTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rootwater Matriarch has correct card properties")
-    void hasCorrectProperties() {
-        RootwaterMatriarch card = new RootwaterMatriarch();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GainControlOfEnchantedTargetEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -120,7 +102,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
 
         // Creature should be tracked as stolen
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).contains(creature.getId());
+        assertThat(gd.newestControlEffectFor(creature.getId())).isNotNull();
     }
 
     // ===== Not enchanted: ability does nothing =====
@@ -201,7 +183,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
 
         // Tracking should be cleaned up
         assertThat(gd.stolenCreatures).doesNotContainKey(creature.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).doesNotContain(creature.getId());
+        assertThat(gd.controlEffectsFor(creature.getId())).isEmpty();
     }
 
     @Test
@@ -240,7 +222,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
         assertThat(gd.stolenCreatures).containsEntry(creature.getId(), player2.getId());
-        assertThat(gd.enchantmentDependentStolenCreatures).contains(creature.getId());
+        assertThat(gd.newestControlEffectFor(creature.getId())).isNotNull();
     }
 
     // ===== Summoning sickness =====

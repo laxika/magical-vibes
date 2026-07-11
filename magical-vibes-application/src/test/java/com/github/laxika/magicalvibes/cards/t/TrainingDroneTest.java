@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,18 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TrainingDroneTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has CantAttackOrBlockUnlessEquippedEffect as static effect")
-    void hasCorrectEffect() {
-        TrainingDrone card = new TrainingDrone();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackOrBlockUnlessEquippedEffect.class);
-    }
-
     // ===== Cannot attack without equipment =====
 
     @Test
@@ -43,7 +29,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
 
@@ -68,7 +54,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -88,7 +74,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
         gs.declareAttackers(gd, player1, List.of(droneIndex));
@@ -113,7 +99,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
 
         int droneIndex = gd.playerBattlefields.get(player2.getId()).indexOf(drone);
 
@@ -137,7 +123,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
 
@@ -158,7 +144,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
@@ -25,7 +26,7 @@ public class HandOfThePraetors extends Card {
 
         // Whenever you cast a creature spell with infect, target player gets a poison counter.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
-                new GiveTargetPlayerPoisonCountersEffect(1, new CardAllOfPredicate(List.of(
+                new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardKeywordPredicate(Keyword.INFECT)
                 ))));

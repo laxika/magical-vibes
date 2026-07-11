@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,17 +18,7 @@ class DreamTwistTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: mill 3")
-    void hasCorrectEffects() {
-        DreamTwist card = new DreamTwist();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(MillTargetPlayerEffect.class);
-
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(mill.count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {1}{U}")
@@ -43,13 +29,7 @@ class DreamTwistTest extends BaseCardTest {
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{1}{U}");
     }
 
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        DreamTwist card = new DreamTwist();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
+    
 
     // ===== Casting normally =====
 

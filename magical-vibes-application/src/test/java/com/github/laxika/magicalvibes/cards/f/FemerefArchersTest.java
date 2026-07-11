@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +15,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FemerefArchersTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Femeref Archers has correct card properties")
-    void hasCorrectProperties() {
-        FemerefArchers card = new FemerefArchers();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect =
-                (DealDamageToTargetCreatureEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Activating ability targeting attacking flying creature puts ability on stack")

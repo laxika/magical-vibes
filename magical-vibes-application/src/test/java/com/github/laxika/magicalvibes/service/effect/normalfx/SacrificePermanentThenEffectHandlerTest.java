@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -21,7 +22,7 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
             @DisplayName("Begins permanent choice when matching permanents exist")
             void beginsChoiceWithMatching() {
                 Card card = createCard("Goblin Bombardment");
-                PermanentPredicate filter = mock(PermanentPredicate.class);
+                PermanentPredicate filter = new PermanentTruePredicate();
                 DrawCardEffect thenEffect = new DrawCardEffect(1);
                 SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(filter, thenEffect, "a creature");
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
@@ -29,7 +30,7 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
                 Permanent creature = new Permanent(createCard("Grizzly Bears"));
                 gd.playerBattlefields.get(player1Id).add(creature);
 
-                when(gameQueryService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -41,7 +42,7 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
             @DisplayName("Logs and does nothing when no matching permanents")
             void noMatching() {
                 Card card = createCard("Goblin Bombardment");
-                PermanentPredicate filter = mock(PermanentPredicate.class);
+                PermanentPredicate filter = new PermanentTruePredicate();
                 DrawCardEffect thenEffect = new DrawCardEffect(1);
                 SacrificePermanentThenEffect effect = new SacrificePermanentThenEffect(filter, thenEffect, "a creature");
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
@@ -49,7 +50,7 @@ class SacrificePermanentThenEffectHandlerTest extends AbstractPlayerInteractionH
                 Permanent nonMatching = new Permanent(createCard("Mountain"));
                 gd.playerBattlefields.get(player1Id).add(nonMatching);
 
-                when(gameQueryService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 

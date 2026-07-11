@@ -34,6 +34,7 @@ public final class HeadlessSimulationContext {
                     ctx.getBean(GameService.class),
                     ctx.getBean(GameQueryService.class),
                     ctx.getBean(GameBroadcastService.class),
+                    ctx.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class),
                     ctx.getBean(GameRegistry.class),
                     ctx.getBean(CombatAttackService.class));
             simulator = existing;

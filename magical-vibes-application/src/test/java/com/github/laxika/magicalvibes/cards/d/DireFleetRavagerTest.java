@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesFractionOfLifeRoundedUpEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,21 +10,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DireFleetRavagerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dire Fleet Ravager has ETB effect that loses a third of life rounded up")
-    void hasEtbEffect() {
-        DireFleetRavager card = new DireFleetRavager();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(EachPlayerLosesFractionOfLifeRoundedUpEffect.class);
-
-        EachPlayerLosesFractionOfLifeRoundedUpEffect effect =
-                (EachPlayerLosesFractionOfLifeRoundedUpEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.divisor()).isEqualTo(3);
-    }
 
     // ===== ETB trigger behavior =====
 

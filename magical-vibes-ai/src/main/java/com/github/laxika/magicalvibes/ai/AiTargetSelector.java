@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -12,30 +11,26 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -44,6 +39,9 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -65,9 +63,11 @@ import java.util.UUID;
 class AiTargetSelector {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
+    private final AmountEvaluationService amountEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
@@ -78,9 +78,11 @@ class AiTargetSelector {
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
                      TargetLegalityService targetLegalityService, BoardEvaluator boardEvaluator) {
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.validTargetService = new ValidTargetService(gameQueryService);
+        this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.boardEvaluator = boardEvaluator;
     }
 
@@ -404,7 +406,7 @@ class AiTargetSelector {
         }
         for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
             CardEffect effectToCheck = e;
-            if (e instanceof ReplacementConditionalEffect replacement) {
+            if (e instanceof ConditionalReplacementEffect replacement) {
                 effectToCheck = replacement.baseEffect();
             }
             if (effectToCheck.canTargetPlayer()) result.add(TargetType.PLAYER);
@@ -480,7 +482,7 @@ class AiTargetSelector {
                 candidates = getGraveyardCandidates(gameData, rge.source(), aiPlayerId, opponentId);
                 if (rge.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId()))
                             .toList();
                 }
                 if (rge.requiresManaValueEqualsX() && maxAffordableX < Integer.MAX_VALUE) {
@@ -489,10 +491,13 @@ class AiTargetSelector {
                             .toList();
                 }
             } else {
-                // For non-return effects: canTargetAnyGraveyard → all graveyards, otherwise → opponent's
-                GraveyardSearchScope scope = effect.canTargetAnyGraveyard()
-                        ? GraveyardSearchScope.ALL_GRAVEYARDS
-                        : GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                // For non-return effects: controller-only → own graveyard,
+                // canTargetAnyGraveyard → all graveyards, otherwise → opponent's
+                GraveyardSearchScope scope = effect.targetsControllersGraveyardOnly()
+                        ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                        : effect.canTargetAnyGraveyard()
+                                ? GraveyardSearchScope.ALL_GRAVEYARDS
+                                : GraveyardSearchScope.OPPONENT_GRAVEYARD;
                 candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
 
                 // Apply card-type filters matching what GraveyardTargetValidators enforces
@@ -501,14 +506,16 @@ class AiTargetSelector {
                 } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY)).toList();
-                } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
-                    candidates = candidates.stream().filter(c -> c.hasType(e.requiredType())).toList();
+                } else if (effect instanceof ExileGraveyardCardsEffect e
+                        && e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD && e.filter() != null) {
+                    candidates = candidates.stream()
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
                 } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
                     candidates = candidates.stream()
                             .filter(c -> e.cardTypes().stream().anyMatch(c::hasType)).toList();
                 } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
                 } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE)).toList();
@@ -549,13 +556,16 @@ class AiTargetSelector {
      * Returns null if no valid targets exist.
      */
     Map<UUID, Integer> buildDamageAssignments(GameData gameData, Card card, UUID aiPlayerId) {
-        DealDividedDamageAmongTargetCreaturesEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
-                .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
-                .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
+        // Ignite Disorder: fixed total divided among target creatures (no players).
+        DealDividedDamageEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof DealDividedDamageEffect d
+                        && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()
+                        && !d.canTargetPlayers() && d.totalDamage() instanceof Fixed)
+                .map(DealDividedDamageEffect.class::cast)
                 .findFirst()
                 .orElse(null);
 
-        DealDividedDamageAmongAnyTargetsEffect anyTargetEffect = findDividedDamageAnyTargetsEffect(card);
+        DealDividedDamageEffect anyTargetEffect = findDividedDamageAnyTargetsEffect(card);
 
         if (creaturesEffect == null && anyTargetEffect == null) {
             // X-damage divided among attacking creatures — only relevant during combat
@@ -566,11 +576,11 @@ class AiTargetSelector {
         boolean canTargetPlayers;
         int maxTargets;
         if (creaturesEffect != null) {
-            totalDamage = creaturesEffect.totalDamage();
+            totalDamage = ((Fixed) creaturesEffect.totalDamage()).value();
             canTargetPlayers = false;
             maxTargets = Math.max(1, card.getMaxTargets());
         } else {
-            totalDamage = anyTargetEffect.totalDamage();
+            totalDamage = ((Fixed) anyTargetEffect.totalDamage()).value();
             canTargetPlayers = true;
             // "any number of targets" — no creature target limit
             maxTargets = Integer.MAX_VALUE;
@@ -631,20 +641,26 @@ class AiTargetSelector {
     }
 
     /**
-     * Searches for a DealDividedDamageAmongAnyTargetsEffect in the card's spell effects,
-     * including inside KickerReplacementEffect wrappers.
+     * Searches for a CHOSEN "any targets" DealDividedDamageEffect in the card's spell effects,
+     * including inside kicker replacement wrappers.
      */
-    private DealDividedDamageAmongAnyTargetsEffect findDividedDamageAnyTargetsEffect(Card card) {
+    private DealDividedDamageEffect findDividedDamageAnyTargetsEffect(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
-                return anyTarget;
+            if (isChosenAnyTargets(effect)) {
+                return (DealDividedDamageEffect) effect;
             }
-            if (effect instanceof ReplacementConditionalEffect replacement
-                    && replacement.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
-                return anyTarget;
+            if (effect instanceof ConditionalReplacementEffect replacement
+                    && isChosenAnyTargets(replacement.upgradedEffect())) {
+                return (DealDividedDamageEffect) replacement.upgradedEffect();
             }
         }
         return null;
+    }
+
+    private boolean isChosenAnyTargets(CardEffect effect) {
+        return effect instanceof DealDividedDamageEffect d
+                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()
+                && d.canTargetPlayers() && d.totalDamage() instanceof Fixed;
     }
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {
@@ -720,7 +736,8 @@ class AiTargetSelector {
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
-                (e instanceof BoostTargetCreatureEffect boost && boost.powerBoost() >= 0)
+                (e instanceof BoostTargetCreatureEffect boost
+                        && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerateEffect
                         || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGET));
 
@@ -766,11 +783,15 @@ class AiTargetSelector {
                                         List<CardEffect> effects, Permanent source) {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
-        // For damage abilities, prefer creatures we can kill
+        // For damage abilities, prefer creatures we can kill. Amounts evaluate with the
+        // ability's source permanent in context (e.g. power/counter-based damage).
+        AmountContext amountCtx = new AmountContext(aiPlayerId, source, null, 0, 0, false);
         for (CardEffect effect : effects) {
             final int damage;
-            if (effect instanceof DealDamageToAnyTargetEffect dmg) damage = dmg.damage();
-            else if (effect instanceof DealDamageToTargetCreatureEffect dmg) damage = dmg.damage();
+            if (effect instanceof DealDamageToAnyTargetEffect dmg)
+                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
+            else if (effect instanceof DealDamageToTargetCreatureEffect dmg)
+                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
             else damage = 0;
 
             if (damage > 0) {
@@ -796,48 +817,18 @@ class AiTargetSelector {
     }
 
     /**
-     * Simplified target validation for activated abilities. Checks the ability's
-     * TargetFilter, hexproof, shroud, and protection. The server performs full
-     * validation, so this is a best-effort pre-filter.
+     * Target pre-filter for activated abilities: runs the engine's own full targeting
+     * validation ({@code TargetLegalityService}) against the candidate, so the AI's idea
+     * of a legal ability target can never drift from the server's.
      */
     private boolean isValidAbilityPermanentTarget(GameData gameData, ActivatedAbility ability,
                                                   Permanent target, UUID aiPlayerId, Permanent source) {
-        // Hexproof check
-        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (targetController != null && !targetController.equals(aiPlayerId)) {
-            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.HEXPROOF)) {
-                return false;
-            }
-            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
-                return false;
-            }
-        }
-        if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
+        try {
+            targetLegalityService.validateActivatedAbilityTargeting(gameData, aiPlayerId, ability,
+                    ability.getEffects(), target.getId(), null, source.getCard(), 0);
+            return true;
+        } catch (IllegalStateException | IllegalArgumentException e) {
             return false;
         }
-
-        // TargetFilter check
-        TargetFilter filter = ability.getTargetFilter();
-        if (filter != null) {
-            FilterContext ctx = FilterContext.of(gameData)
-                    .withSourceControllerId(aiPlayerId)
-                    .withSourceCardId(source.getCard().getId());
-            if (filter instanceof PermanentPredicateTargetFilter ppf) {
-                if (!gameQueryService.matchesPermanentPredicate(target, ppf.predicate(), ctx)) {
-                    return false;
-                }
-            } else if (filter instanceof ControlledPermanentPredicateTargetFilter cpf) {
-                if (!targetController.equals(aiPlayerId)) return false;
-                if (!gameQueryService.matchesPermanentPredicate(target, cpf.predicate(), ctx)) {
-                    return false;
-                }
-            } else if (filter instanceof OwnedPermanentPredicateTargetFilter opf) {
-                if (!gameQueryService.matchesPermanentPredicate(target, opf.predicate(), ctx)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 }

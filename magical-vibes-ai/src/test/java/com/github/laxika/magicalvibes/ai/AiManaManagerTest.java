@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,11 +15,12 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -34,7 +35,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -122,9 +122,9 @@ class AiManaManagerTest {
                 true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS)), "Add {C}"));
         // Color ability with pain
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color1), new DealDamageToControllerEffect(1)), "Add " + color1));
+                true, null, List.of(new AwardManaEffect(color1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Add " + color1));
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color2), new DealDamageToControllerEffect(1)), "Add " + color2));
+                true, null, List.of(new AwardManaEffect(color2), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Add " + color2));
         return card;
     }
 
@@ -202,7 +202,8 @@ class AiManaManagerTest {
         // Tap, Sacrifice: Add {C} for each charge counter (like Shrine of Boundless Growth)
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new SacrificeSelfCost(), new AddColorlessManaPerChargeCounterOnSourceEffect()),
+                List.of(new SacrificeSelfCost(),
+                        new AwardManaEffect(ManaColor.COLORLESS, new CountersOnSource(CounterType.CHARGE))),
                 "{T}, Sacrifice: Add {C} for each charge counter."));
         return card;
     }
@@ -881,7 +882,7 @@ class AiManaManagerTest {
         @DisplayName("tap + no mana cost + no mana effect = false")
         void tapNoCostNoManaEffect() {
             ActivatedAbility ability = new ActivatedAbility(
-                    true, null, List.of(new DealDamageToControllerEffect(1)), "Ouch");
+                    true, null, List.of(new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Ouch");
             assertThat(AiManaManager.isFreeTapManaAbility(ability)).isFalse();
         }
 
@@ -923,6 +924,23 @@ class AiManaManagerTest {
             };
 
             manager.tapLandsForCost(gd, player1Id, "{G}", 0, action);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("never taps the excluded permanent (a {T}-ability's own source)")
+        void excludedPermanentIsNeverTapped() {
+            Permanent source = addUntappedLand("Conqueror's Foothold", ManaColor.COLORLESS);
+            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, false, source.getId());
+
+            // Only the forest could be tapped; the excluded source is skipped even though
+            // the cost is not fully met
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
         }
 
@@ -1068,7 +1086,7 @@ class AiManaManagerTest {
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             // First tap simulates a mana ability that triggers awaiting input (e.g. Drover of the Mighty)
             lenient().doAnswer(invocation -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(action).tap(eq(0), any());
 
@@ -1083,7 +1101,7 @@ class AiManaManagerTest {
         void continuesTappingDuringAttackerDeclaration() {
             // Simulate the attack tax scenario: game is already awaiting ATTACKER_DECLARATION
             // and the AI needs to tap multiple lands to pay the tax.
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             addUntappedLand("Island 1", ManaColor.BLUE);
             addUntappedLand("Island 2", ManaColor.BLUE);
@@ -1110,14 +1128,14 @@ class AiManaManagerTest {
         void stopsWhenAwaitingInputChangesDuringAttackerDeclaration() {
             // Game is already awaiting ATTACKER_DECLARATION, but a mana ability
             // triggers a COLOR_CHOICE — should bail out.
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             addUntappedLand("Land 1", ManaColor.BLUE);
             addUntappedLand("Land 2", ManaColor.BLUE);
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             lenient().doAnswer(invocation -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(action).tap(eq(0), any());
 
@@ -1423,7 +1441,7 @@ class AiManaManagerTest {
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             lenient().doAnswer(invocation -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(action).tap(eq(0), any());
 
@@ -1436,7 +1454,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("continues tapping when ATTACKER_DECLARATION is already set (attack tax payment)")
         void continuesTappingDuringAttackerDeclaration() {
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             addUntappedCreature("Elf 1", ManaColor.GREEN);
             addUntappedCreature("Elf 2", ManaColor.GREEN);
@@ -1542,7 +1560,7 @@ class AiManaManagerTest {
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
             lenient().doAnswer(invocation -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(action).tap(eq(0), any());
 
@@ -1556,7 +1574,7 @@ class AiManaManagerTest {
         @Test
         @DisplayName("continues tapping when ATTACKER_DECLARATION is already set (attack tax payment)")
         void continuesTappingDuringAttackerDeclaration() {
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             addUntappedLand("Mountain 1", ManaColor.RED);
             addUntappedLand("Mountain 2", ManaColor.RED);

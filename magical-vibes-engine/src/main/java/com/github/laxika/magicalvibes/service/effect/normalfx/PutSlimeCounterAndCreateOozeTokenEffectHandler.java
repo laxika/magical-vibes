@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -64,11 +64,12 @@ public class PutSlimeCounterAndCreateOozeTokenEffectHandler implements NormalEff
                 log.info("Game {} - {} gets a slime counter ({} total)", gameData.id, source.getCard().getName(), slimeCount);
 
                 // Create a 0/0 green Ooze token with a CDA linking to this Gutter Grime
+                CountersOnLinkedPermanent slimeOnGrime = new CountersOnLinkedPermanent(CounterType.SLIME, sourcePermId);
                 CreateTokenEffect tokenEffect = new CreateTokenEffect(
                         1, "Ooze", 0, 0,
                         CardColor.GREEN, List.of(CardSubtype.OOZE),
                         Set.of(), Set.of(),
-                        Map.of(EffectSlot.STATIC, new BoostSelfBySlimeCountersOnLinkedPermanentEffect(sourcePermId))
+                        Map.of(EffectSlot.STATIC, new SetPowerToughnessToAmountEffect(slimeOnGrime, slimeOnGrime))
                 );
                 permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     

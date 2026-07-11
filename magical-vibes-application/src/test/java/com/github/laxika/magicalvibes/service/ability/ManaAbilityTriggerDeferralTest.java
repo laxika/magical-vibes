@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -369,7 +370,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             // Resolve the Viridian Revel trigger (top of stack) — should prompt player1
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
             // Accept the may draw
             int handSizeBefore = gd.playerHands.get(player1.getId()).size();

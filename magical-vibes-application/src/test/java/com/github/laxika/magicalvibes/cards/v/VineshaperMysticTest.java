@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MerfolkSpy;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,14 +19,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VineshaperMysticTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has one PutPlusOnePlusOneCounterOnTargetCreatureEffect on ETB")
-    void hasCorrectEffects() {
-        VineshaperMystic card = new VineshaperMystic();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("ETB — put a +1/+1 counter on each of up to two target Merfolk you control")

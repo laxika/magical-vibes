@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -67,7 +66,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // May prompt: play Pyroclasm?
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Pyroclasm is on the stack
@@ -102,11 +101,11 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // May prompt: play Shock?
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Target prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
@@ -136,7 +135,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // May prompt: play Shock?
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false); // decline
 
         // Card is exiled
@@ -162,7 +161,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // May prompt: play Forest?
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Forest is on the battlefield
@@ -248,7 +247,7 @@ class DjinnOfWishesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the ability
 
         // May prompt: play Grizzly Bears?
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Grizzly Bears is on the stack

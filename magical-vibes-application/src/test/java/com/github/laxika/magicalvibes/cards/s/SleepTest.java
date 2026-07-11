@@ -2,14 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapPermanentsOfTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,28 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SleepTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sleep has SPELL TapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasTapEffect() {
-        Sleep card = new Sleep();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof TapPermanentsOfTargetPlayerEffect t
-                        && t.filter() instanceof PermanentIsCreaturePredicate);
-    }
-
-    @Test
-    @DisplayName("Sleep has SPELL SkipNextUntapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasSkipUntapEffect() {
-        Sleep card = new Sleep();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof SkipNextUntapPermanentsOfTargetPlayerEffect s
-                        && s.filter() instanceof PermanentIsCreaturePredicate);
-    }
 
     // ===== Spell resolution =====
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -40,7 +42,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
             if (remaining <= 0) break;
             if (!p.isTapped()) continue;
             if (e.filter() != null
-                    && !gameQueryService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
 
             p.untap();
             count++;

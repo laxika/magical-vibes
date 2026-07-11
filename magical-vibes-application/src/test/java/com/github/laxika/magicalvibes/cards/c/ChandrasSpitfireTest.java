@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,22 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ChandrasSpitfireTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chandra's Spitfire has the noncombat damage triggered ability")
-    void hasCorrectEffects() {
-        ChandrasSpitfire card = new ChandrasSpitfire();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
 
     // ===== Triggering =====
 

@@ -8,14 +8,18 @@ public enum CounterType {
     EYEBALL,
     GROWTH,
     HATCHLING,
+    HOOFPRINT,
     LANDMARK,
     LOYALTY,
+    MANNEQUIN,
     MINUS_ONE_MINUS_ONE,
     PHYLACTERY,
     PLUS_ONE_PLUS_ONE,
     SLIME,
     STUDY,
+    STUN,
     WISH,
     LORE,
-    SILVER
+    SILVER,
+    PAGE
 }

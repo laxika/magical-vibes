@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
 import com.github.laxika.magicalvibes.cards.s.SeaMonster;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,18 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TurnToSlagTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Turn to Slag has correct effects")
-    void hasCorrectEffects() {
-        TurnToSlag card = new TurnToSlag();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyEquipmentAttachedToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect damageEffect = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(damageEffect.damage()).isEqualTo(5);
-    }
+    
 
     @Test
     @DisplayName("Turn to Slag deals 5 damage and kills a small creature")

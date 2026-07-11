@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @Slf4j
 @Component
@@ -26,6 +27,7 @@ import java.util.UUID;
 public class CloneService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final LegendRuleService legendRuleService;
@@ -41,7 +43,7 @@ public class CloneService {
 
         List<UUID> validIds = new ArrayList<>();
         gameData.forEachPermanent((pid, p) -> {
-            if (gameQueryService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
                 validIds.add(p.getId());
             }
         });

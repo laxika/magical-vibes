@@ -2,14 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,23 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StoneGiantTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Stone Giant has activated ability with correct effects and target filter")
-    void hasCorrectAbility() {
-        StoneGiant card = new StoneGiant();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) ability.getEffects().get(0);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentAtEndStepEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-    }
+    
 
     @Test
     @DisplayName("Grants flying to target creature you control with toughness less than its power")

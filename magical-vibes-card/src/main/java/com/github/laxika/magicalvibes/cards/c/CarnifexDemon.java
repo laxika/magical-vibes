@@ -4,10 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 
@@ -22,7 +27,12 @@ public class CarnifexDemon extends Card {
                 "{B}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.MINUS_ONE_MINUS_ONE),
-                        new PutMinusOneMinusOneCounterOnEachOtherCreatureEffect()
+                        new PutCounterOnEachMatchingPermanentEffect(
+                                CounterType.MINUS_ONE_MINUS_ONE, 1,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
+                                EachPermanentScope.ALL_PLAYERS)
                 ),
                 "{B}, Remove a -1/-1 counter from Carnifex Demon: Put a -1/-1 counter on each other creature."
         ));

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,23 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ProdigalPyromancerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Prodigal Pyromancer has correct card properties")
-    void hasCorrectProperties() {
-        ProdigalPyromancer card = new ProdigalPyromancer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack")

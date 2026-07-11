@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -18,9 +20,10 @@ import java.util.Set;
 public class WoodlandCemetery extends Card {
 
     public WoodlandCemetery() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
-                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.FOREST))
-        ));
+        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new ControlsPermanentCountAtMost(0,
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.FOREST))),
+                new EntersTappedEffect()));
 
         // {T}: Add {B}.
         addActivatedAbility(new ActivatedAbility(

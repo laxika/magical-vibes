@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,58 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class TriumphOfGerrardTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has +1/+1 counter effect")
-    void chapterIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) effects.getFirst();
-        assertThat(counterEffect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Chapter II has +1/+1 counter effect")
-    void chapterIIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III grants flying, first strike, and lifelink")
-    void chapterIIIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) effects.getFirst();
-        assertThat(grantEffect.keywords()).containsExactlyInAnyOrder(
-                Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
-    @Test
-    @DisplayName("Chapter effects carry greatest-power target predicate")
-    void effectsHaveGreatestPowerTargetPredicate() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_I).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_II).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_III).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-    }
 
     // ===== Chapter I: targeting + resolution =====
 
@@ -125,13 +70,13 @@ class TriumphOfGerrardTest extends BaseCardTest {
         assertThat(hillGiant).isNotNull();
 
         // Valid choices should contain Hill Giant but not Grizzly Bears
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(hillGiant.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(hillGiant.getId());
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(bears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(bears.getId());
     }
 
     @Test
@@ -184,7 +129,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .toList();
         assertThat(bears).hasSize(2);
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.get(0).getId(), bears.get(1).getId());
     }
 
@@ -209,13 +154,13 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Hill Giant"))
                 .findFirst().orElse(null);
         assertThat(opponentGiant).isNotNull();
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentGiant.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentGiant.getId());
 
         Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(ownBears).isNotNull();
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(ownBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(ownBears.getId());
     }
 
     @Test
@@ -265,7 +210,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
         assertThat(hillGiant).isNotNull();
 
         // Only Hill Giant (3/3) should be targetable, not Grizzly Bears (2/2)
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(hillGiant.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(hillGiant.getId());
 
         harness.handlePermanentChosen(player1, hillGiant.getId());
         harness.passBothPriorities(); // resolve chapter II

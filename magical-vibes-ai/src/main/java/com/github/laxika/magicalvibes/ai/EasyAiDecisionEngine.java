@@ -16,7 +16,10 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
@@ -44,18 +47,22 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                                 GameService gameService, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
+                                CastingCostService castingCostService,
+                                CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
     public EasyAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 AiGameActions gameActions, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
+                                CastingCostService castingCostService,
+                                CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
     }
 
     // ===== Priority / Main Phase =====
@@ -180,7 +187,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 // X must match the target permanent's mana value — use max affordable X
@@ -221,7 +228,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
         // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -311,7 +318,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int instantCostModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);
@@ -344,7 +351,7 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         send(() -> gameActions.handlePlayCard(selfConnection,
-                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
+                new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
         if (hand.contains(card)) {
@@ -374,16 +381,19 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Mass damage spells are only beneficial if they kill more opponent creatures than our own
         for (var effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof MassDamageEffect aoe) {
+                // Easy AI only reasons about fixed damage; dynamic amounts (X, event value)
+                // estimate as 0, matching the former int-field behavior for X spells.
+                int aoeDamage = aoe.amount() instanceof Fixed fixed ? fixed.value() : 0;
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
                 List<Permanent> oppField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
                 List<Permanent> aiField = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
                 long oppKilled = oppField.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p)
-                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoeDamage)
                         .count();
                 long aiKilled = aiField.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p)
-                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoeDamage)
                         .count();
                 if (oppKilled <= aiKilled) {
                     return 0;

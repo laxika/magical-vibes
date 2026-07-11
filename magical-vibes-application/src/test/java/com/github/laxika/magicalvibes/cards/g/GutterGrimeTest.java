@@ -5,12 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSlimeCounterAndCreateOozeTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class GutterGrimeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_NONTOKEN_CREATURE_DIES PutSlimeCounterAndCreateOozeTokenEffect")
-    void hasCorrectEffects() {
-        GutterGrime card = new GutterGrime();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutSlimeCounterAndCreateOozeTokenEffect.class);
-    }
 
     // ===== Triggered ability =====
 
@@ -80,10 +65,11 @@ class GutterGrimeTest extends BaseCardTest {
             assertThat(ooze.getCard().getType()).isEqualTo(CardType.CREATURE);
             assertThat(ooze.getCard().getSubtypes()).contains(CardSubtype.OOZE);
 
-            // Token base P/T is 0/0 but static effect gives it +1/+1
-            var bonus = gqs.computeStaticBonus(gd, ooze);
-            assertThat(ooze.getCard().getPower() + bonus.power()).isEqualTo(1);
-            assertThat(ooze.getCard().getToughness() + bonus.toughness()).isEqualTo(1);
+            // The token's "P/T equal to slime counters" ability is a characteristic-defining
+            // ability that SETS base P/T in layer 7a (CR 604.3, CR 613.3a) — it is a base
+            // override in the layered queries, not an additive bonus term.
+            assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(1);
         }
 
         @Test
@@ -122,11 +108,12 @@ class GutterGrimeTest extends BaseCardTest {
                     .toList();
             assertThat(oozes).hasSize(2);
 
-            // Both tokens should have P/T equal to 2 (current slime counter count)
+            // Both tokens should have P/T equal to 2 (current slime counter count) — the
+            // CDA sets base P/T in layer 7a (CR 604.3, CR 613.3a), so assert the layered
+            // queries rather than adding a bonus term onto the printed 0/0.
             for (Permanent ooze : oozes) {
-                var bonus = gqs.computeStaticBonus(gd, ooze);
-                assertThat(ooze.getCard().getPower() + bonus.power()).isEqualTo(2);
-                assertThat(ooze.getCard().getToughness() + bonus.toughness()).isEqualTo(2);
+                assertThat(gqs.getEffectivePower(gd, ooze)).isEqualTo(2);
+                assertThat(gqs.getEffectiveToughness(gd, ooze)).isEqualTo(2);
             }
         }
 
@@ -190,34 +177,6 @@ class GutterGrimeTest extends BaseCardTest {
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
-        }
-
-        @Test
-        @DisplayName("Token CDA: token has STATIC BoostSelfBySlimeCountersOnLinkedPermanentEffect")
-        void tokenHasCorrectStaticEffect() {
-            harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-
-            // Use opponent's Wrath so Gutter Grime survives
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
-            harness.forceActivePlayer(player2);
-
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath
-            harness.passBothPriorities(); // Resolve trigger
-
-            GameData gd = harness.getGameData();
-
-            Permanent ooze = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .findFirst().orElse(null);
-            assertThat(ooze).isNotNull();
-
-            // The Ooze token should have the linked static effect
-            assertThat(ooze.getCard().getEffects(EffectSlot.STATIC)).hasSize(1);
-            assertThat(ooze.getCard().getEffects(EffectSlot.STATIC).getFirst())
-                    .isInstanceOf(BoostSelfBySlimeCountersOnLinkedPermanentEffect.class);
         }
 
         @Test

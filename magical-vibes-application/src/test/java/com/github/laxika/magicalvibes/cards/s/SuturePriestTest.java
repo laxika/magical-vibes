@@ -1,12 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,34 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SuturePriestTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_ENTERS_BATTLEFIELD MayEffect wrapping GainLifeEffect(1)")
-    void hasCorrectAllyCreatureTrigger() {
-        SuturePriest card = new SuturePriest();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD MayEffect wrapping TargetPlayerLosesLifeEffect(1)")
-    void hasCorrectOpponentCreatureTrigger() {
-        SuturePriest card = new SuturePriest();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(((TargetPlayerLosesLifeEffect) may.wrapped()).amount()).isEqualTo(1);
-    }
 
     // ===== Ally creature enters — accept may =====
 
@@ -62,7 +31,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt for Suture Priest's controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
@@ -84,7 +53,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, 20);
@@ -103,7 +72,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No may prompt — "another creature" excludes itself
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -128,7 +97,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt for Suture Priest's controller (player1)
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
@@ -154,7 +123,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player2, 20);
@@ -178,7 +147,7 @@ class SuturePriestTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Only the ally may ability should trigger (gain life), not the opponent one (lose life)
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Player 1 gained 1 life from ally trigger

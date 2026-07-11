@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -48,9 +49,23 @@ public class GameSetupService {
      * {@link GameData} so callers can build their own presentation/DTOs from it.
      */
     public GameData createGame(String gameName, Player player, String deckId) {
+        return createGame(gameName, player, deckId, false);
+    }
+
+    /**
+     * Creates and registers a new game. When {@code allRandom} is set, the game runs in the
+     * "All Random" mode: every player's deck choice is ignored and replaced with a freshly
+     * generated {@link RandomDeckGenerator} deck.
+     */
+    public GameData createGame(String gameName, Player player, String deckId, boolean allRandom) {
         UUID gameId = UUID.randomUUID();
 
+        if (allRandom) {
+            deckId = RandomDeckGenerator.RANDOM_DECK_ID;
+        }
+
         GameData gameData = new GameData(gameId, gameName, player.getId(), player.getUsername());
+        gameData.allRandom = allRandom;
         gameData.playerIds.add(player.getId());
         gameData.orderedPlayerIds.add(player.getId());
         gameData.playerNames.add(player.getUsername());
@@ -76,6 +91,10 @@ public class GameSetupService {
                 throw new IllegalStateException("You are already in this game");
             }
 
+            if (gameData.allRandom) {
+                deckId = RandomDeckGenerator.RANDOM_DECK_ID;
+            }
+
             gameData.playerIds.add(player.getId());
             gameData.orderedPlayerIds.add(player.getId());
             gameData.playerNames.add(player.getUsername());
@@ -95,10 +114,19 @@ public class GameSetupService {
             String deckId = gameData.playerDeckChoices.get(playerId);
             List<Card> deck = resolveDeck(deckId);
 
+            // Stamp card ownership: each card is owned by the player whose deck it started in.
+            // Preserved across zone changes; used to evaluate "a spell you don't own".
+            // Then freeze: from here on the Card objects are shared with AI simulation copies
+            // and must never be mutated (runtime state lives on Permanent/StackEntry/GameData).
+            for (Card card : deck) {
+                card.setOwnerId(playerId);
+                card.freeze();
+            }
+
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);
-            gameData.playerBattlefields.put(playerId, new ArrayList<>());
+            gameData.playerBattlefields.put(playerId, gameData.newBattlefieldList());
             gameData.playerGraveyards.put(playerId, new ArrayList<>());
             gameData.playerManaPools.put(playerId, new ManaPool());
             gameData.playerLifeTotals.put(playerId, 20);
@@ -118,7 +146,14 @@ public class GameSetupService {
         gameData.gameLog.add("Game started!");
         for (UUID playerId : gameData.orderedPlayerIds) {
             String deckIdForLog = gameData.playerDeckChoices.get(playerId);
-            String deckName = isCustomDeck(deckIdForLog) ? "a custom deck" : PrebuiltDeck.findById(deckIdForLog).getName();
+            String deckName;
+            if (RandomDeckGenerator.RANDOM_DECK_ID.equals(deckIdForLog)) {
+                deckName = "a randomly generated deck";
+            } else if (isCustomDeck(deckIdForLog)) {
+                deckName = "a custom deck";
+            } else {
+                deckName = PrebuiltDeck.findById(deckIdForLog).getName();
+            }
             String playerName = gameData.playerIdToName.get(playerId);
             gameData.gameLog.add(playerName + " is playing with " + deckName + ".");
         }
@@ -140,6 +175,9 @@ public class GameSetupService {
     }
 
     private List<Card> resolveDeck(String deckId) {
+        if (RandomDeckGenerator.RANDOM_DECK_ID.equals(deckId)) {
+            return RandomDeckGenerator.generate(random).cards();
+        }
         CustomDeckSource source = customDeckSourceProvider.getIfAvailable();
         if (source != null && source.isCustomDeck(deckId)) {
             return source.buildCustomDeck(deckId);

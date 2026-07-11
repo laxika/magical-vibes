@@ -16,15 +16,15 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
@@ -71,12 +70,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class TargetLegalityServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private TargetValidationService targetValidationService;
@@ -116,7 +118,7 @@ class TargetLegalityServiceTest {
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
         // Default: check methods return valid (empty = no error)
-        lenient().when(gameQueryService.checkTargetFilter(any(), any(), any()))
+        lenient().when(predicateEvaluationService.checkTargetFilter(any(), any(), any()))
                 .thenReturn(Optional.empty());
         lenient().when(targetValidationService.checkEffectTargets(any(), any()))
                 .thenReturn(Optional.empty());
@@ -396,12 +398,12 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("throws when opponent's creature has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("throws when opponent's creature has granted hexproof")
         void throwsWhenTargetHasCantBeTargetEffect() {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
                     .isInstanceOf(IllegalStateException.class)
@@ -409,7 +411,7 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("passes when own creature has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("passes when own creature has granted hexproof")
         void passesWhenOwnTargetHasCantBeTargetEffect() {
             Permanent target = addPermanent(player1Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
@@ -458,7 +460,7 @@ class TargetLegalityServiceTest {
             Card spell = createTargetingSpell("Artifact Blast", CardColor.RED);
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
-            when(gameQueryService.checkTargetFilter(any(), eq(target), any()))
+            when(predicateEvaluationService.checkTargetFilter(any(), eq(target), any()))
                     .thenReturn(Optional.of("Target must be an artifact"));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
@@ -602,7 +604,7 @@ class TargetLegalityServiceTest {
         @DisplayName("passes when modal spell with player-targeting mode targets a player")
         void passesWhenModalSpellWithPlayerModeTargetsPlayer() {
             Card spell = createModalSpell("Modal Burn", CardColor.RED,
-                    new DestroyTargetPermanentEffect(), new DealDamageToTargetPlayerEffect(3));
+                    new DestroyTargetPermanentEffect(), new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id, true);
         }
@@ -612,7 +614,7 @@ class TargetLegalityServiceTest {
         void passesWhenModalSpellWithCounterAndBounceModeTargetsPermanent() {
             Permanent target = addPermanent(player2Id, createCreature("Artifact Creature", CardColor.BLUE));
             Card spell = createModalSpell("Steel Sabotage", CardColor.BLUE,
-                    new CounterSpellEffect(), new ReturnTargetPermanentToHandEffect());
+                    new CounterSpellEffect(), ReturnToHandEffect.target());
 
             // Bounce mode: needsTarget=true, targeting a permanent
             sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id, true);
@@ -682,13 +684,13 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("throws when opponent's target has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("throws when opponent's target has granted hexproof")
         void throwsWhenTargetHasCantBeTargetEffect() {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card sourceCard = createCreature("Source", CardColor.RED);
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test");
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -704,7 +706,7 @@ class TargetLegalityServiceTest {
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
                     new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact"));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -965,13 +967,13 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("throws when opponent's creature has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("throws when opponent's creature has granted hexproof")
         void throwsWhenTargetHasCantBeTargetEffect() {
             Card source = createCreature("Source", CardColor.RED);
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test", List.of(), 1, 2);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
@@ -989,7 +991,7 @@ class TargetLegalityServiceTest {
                             new PermanentIsArtifactPredicate(), "Target must be an artifact")),
                     1, 1);
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
@@ -1230,7 +1232,7 @@ class TargetLegalityServiceTest {
             artifact.setManaCost("{1}");
             Permanent target = addPermanent(player2Id, artifact);
             doThrow(new IllegalStateException("Target must be a creature"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1253,7 +1255,7 @@ class TargetLegalityServiceTest {
                     .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1351,14 +1353,14 @@ class TargetLegalityServiceTest {
         }
 
         @Test
-        @DisplayName("returns true when target has CantBeTargetOfSpellsOrAbilitiesEffect from opponent")
+        @DisplayName("returns true when target has granted hexproof from opponent")
         void returnsTrueWhenTargetHasCantBeTargetEffect() {
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             Card spell = createTargetingSpell("Burn", CardColor.RED);
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Burn",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
-            when(gameQueryService.hasGrantedEffect(eq(gd), eq(target), eq(CantBeTargetOfSpellsOrAbilitiesEffect.class))).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gd, target)).thenReturn(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1378,7 +1380,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Destroy",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
             doThrow(new IllegalStateException("Target must be a creature"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1393,7 +1395,7 @@ class TargetLegalityServiceTest {
             entry.setTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1912,18 +1914,6 @@ class TargetLegalityServiceTest {
                     .isFalse();
         }
 
-        @Test
-        @DisplayName("returns false for unknown predicate type")
-        void returnsFalseForUnknownPredicate() {
-            Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1Id);
-
-            assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new UnknownPredicate(), player2Id))
-                    .isFalse();
-        }
-
-        private record UnknownPredicate() implements StackEntryPredicate {}
     }
 
     // ===== validateEffectTargetInZone =====

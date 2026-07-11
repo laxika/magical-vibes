@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +19,7 @@ public class DiscipleOfGriselbrand extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEqualToXValueEffect()),
+                List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEffect(new XValue())),
                 "{1}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

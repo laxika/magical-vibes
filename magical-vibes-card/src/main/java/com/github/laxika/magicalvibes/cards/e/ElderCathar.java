@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,10 +21,6 @@ public class ElderCathar extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature you control"
-        )).addEffect(EffectSlot.ON_DEATH, new TargetPermanentReplacementEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                new PutPlusOnePlusOneCounterOnTargetCreatureEffect(1),
-                new PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)
-        ));
+        )).addEffect(EffectSlot.ON_DEATH, new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1), new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

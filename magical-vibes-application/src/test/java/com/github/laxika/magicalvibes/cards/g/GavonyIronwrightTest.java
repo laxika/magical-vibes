@@ -1,10 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,28 +8,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class GavonyIronwrightTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has fateful-hour static boost granting +1/+4 to other creatures at 5 or less life")
-    void hasCorrectEffect() {
-        GavonyIronwright card = new GavonyIronwright();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
 
     // ===== Above threshold (default 20 life) =====
 

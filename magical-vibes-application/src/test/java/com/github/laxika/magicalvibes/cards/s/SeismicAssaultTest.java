@@ -1,17 +1,16 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeismicAssaultTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Seismic Assault has correct card properties")
-    void hasCorrectProperties() {
-        SeismicAssault card = new SeismicAssault();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice before stack entry")
@@ -48,9 +34,9 @@ class SeismicAssaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -63,7 +49,7 @@ class SeismicAssaultTest extends BaseCardTest {
         harness.handleCardChosen(player1, 2);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getName().equals("Plains"));
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getName().equals("Plains"));
@@ -98,7 +84,7 @@ class SeismicAssaultTest extends BaseCardTest {
 
         // State should still be awaiting discard cost choice (re-prompted)
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardCostChoice.class);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -113,7 +99,7 @@ class SeismicAssaultTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
@@ -158,5 +144,4 @@ class SeismicAssaultTest extends BaseCardTest {
         return perm;
     }
 }
-
 

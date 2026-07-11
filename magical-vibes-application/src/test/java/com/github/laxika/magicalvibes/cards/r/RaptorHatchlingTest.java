@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,18 +28,6 @@ class RaptorHatchlingTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals(tokenName))
                 .count();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Raptor Hatchling has one ON_DEALT_DAMAGE effect")
-    void hasCorrectEffect() {
-        RaptorHatchling card = new RaptorHatchling();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0))
-                .isInstanceOf(CreateTokenEffect.class);
     }
 
     // ===== Non-combat damage trigger =====

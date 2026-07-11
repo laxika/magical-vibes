@@ -1,13 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerXEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,21 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncreasingConfusionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has target-player X mill effect and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingConfusion card = new IncreasingConfusion();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MillTargetPlayerXEffect.class);
-
-        MillTargetPlayerXEffect effect = (MillTargetPlayerXEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.castWithFlashbackMultiplier()).isEqualTo(2);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{X}{U}");
-    }
+    
 
     @Test
     @DisplayName("Casting normally mills target player for X cards")

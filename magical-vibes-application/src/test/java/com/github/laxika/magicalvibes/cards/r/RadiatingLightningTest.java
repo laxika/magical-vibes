@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesTargetControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,21 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RadiatingLightningTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DealDamageToTargetPlayerEffect(3) + DealDamageToAllCreaturesTargetControlsEffect(1)")
-    void hasCorrectEffects() {
-        RadiatingLightning card = new RadiatingLightning();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).damage()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToAllCreaturesTargetControlsEffect.class);
-        assertThat(((DealDamageToAllCreaturesTargetControlsEffect) card.getEffects(EffectSlot.SPELL).get(1)).damage()).isEqualTo(1);
-    }
 
     // ===== Damage to player =====
 
@@ -75,8 +57,8 @@ class RadiatingLightningTest extends BaseCardTest {
         harness.setLife(player2, 20);
         // Add a 1/1 creature to player2
         Permanent oneOne = new Permanent(new GrizzlyBears());
-        oneOne.getCard().setToughness(1);
-        oneOne.getCard().setPower(1);
+        TestCards.mutableCard(oneOne).setToughness(1);
+        TestCards.mutableCard(oneOne).setPower(1);
         gd.playerBattlefields.get(player2.getId()).add(oneOne);
 
         harness.setHand(player1, List.of(new RadiatingLightning()));

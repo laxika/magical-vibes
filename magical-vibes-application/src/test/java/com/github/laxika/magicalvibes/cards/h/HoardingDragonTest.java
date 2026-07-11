@@ -1,18 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,29 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HoardingDragonTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB may-search-artifact and death may-return-to-hand effects")
-    void hasCorrectEffects() {
-        HoardingDragon card = new HoardingDragon();
-
-        // ETB: MayEffect wrapping SearchLibraryForCardTypeToExileAndImprintEffect(ARTIFACT)
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(SearchLibraryForCardTypeToExileAndImprintEffect.class);
-        SearchLibraryForCardTypeToExileAndImprintEffect etb =
-                (SearchLibraryForCardTypeToExileAndImprintEffect) etbMay.wrapped();
-        assertThat(etb.cardTypes()).containsExactly(CardType.ARTIFACT);
-
-        // Death: MayEffect wrapping PutImprintedCardIntoOwnersHandEffect
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect deathMay = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathMay.wrapped()).isInstanceOf(PutImprintedCardIntoOwnersHandEffect.class);
-    }
 
     // ===== ETB trigger =====
 
@@ -61,8 +34,8 @@ class HoardingDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve MayEffect from stack
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -80,11 +53,11 @@ class HoardingDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // Only artifact cards should be presented (Spellbook, not Grizzly Bears)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.ARTIFACT));
     }
 
@@ -111,8 +84,8 @@ class HoardingDragonTest extends BaseCardTest {
 
         // Hoarding Dragon should have Spellbook imprinted
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        assertThat(dragon.getCard().getImprintedCard()).isNotNull();
-        assertThat(dragon.getCard().getImprintedCard().getName()).isEqualTo("Spellbook");
+        assertThat(gd.getImprintedCard(dragon.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(dragon.getCard()).getName()).isEqualTo("Spellbook");
     }
 
     @Test
@@ -143,7 +116,7 @@ class HoardingDragonTest extends BaseCardTest {
         // Manually imprint an artifact
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        dragon.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(dragon.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade
@@ -158,8 +131,8 @@ class HoardingDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         // Death trigger should present may prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
@@ -184,7 +157,7 @@ class HoardingDragonTest extends BaseCardTest {
         // Manually imprint an artifact
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        dragon.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(dragon.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade
@@ -229,7 +202,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         // May prompt should still fire
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
         // Hand should be unchanged

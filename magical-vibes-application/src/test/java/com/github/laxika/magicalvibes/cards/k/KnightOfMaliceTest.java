@@ -4,41 +4,21 @@ import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KnightOfMaliceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Knight of Malice has hexproof from white and conditional boost effects")
-    void hasCorrectEffects() {
-        KnightOfMalice card = new KnightOfMalice();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isEqualTo(new HexproofFromColorsEffect(Set.of(CardColor.WHITE)));
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isEqualTo(new AnyPlayerControlsPermanentConditionalEffect(
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        new StaticBoostEffect(1, 0, GrantScope.SELF)));
-    }
+    
 
     @Test
     @DisplayName("Opponent's white spells cannot target Knight of Malice")

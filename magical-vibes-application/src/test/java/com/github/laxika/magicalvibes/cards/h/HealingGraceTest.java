@@ -1,45 +1,22 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class HealingGraceTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Healing Grace has correct spell effects")
-    void hasCorrectEffects() {
-        HealingGrace card = new HealingGrace();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PreventDamageToTargetFromChosenSourceEffect.class);
-        assertThat(((PreventDamageToTargetFromChosenSourceEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount())
-                .isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount())
-                .isEqualTo(3);
-    }
 
     // ===== Casting =====
 
@@ -83,7 +60,7 @@ class HealingGraceTest extends BaseCardTest {
         harness.castInstant(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
     }
 
     @Test

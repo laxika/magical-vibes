@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -18,8 +20,10 @@ public class Bonehoard extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new LivingWeaponEffect());
 
         // Equipped creature gets +X/+X, where X is the number of creature cards in all graveyards
-        addEffect(EffectSlot.STATIC, new BoostCreaturePerCardsInAllGraveyardsEffect(
-                new CardTypePredicate(CardType.CREATURE), GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
+                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
+                GrantScope.EQUIPPED_CREATURE));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

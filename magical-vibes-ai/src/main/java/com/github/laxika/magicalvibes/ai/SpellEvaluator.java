@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -23,21 +24,20 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -45,17 +45,21 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,9 +70,13 @@ import java.util.UUID;
 public class SpellEvaluator {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     public SpellEvaluator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
     }
@@ -97,7 +105,9 @@ public class SpellEvaluator {
                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
         if (effect instanceof BoostSelfEffect boost) {
-            return boost.powerBoost() * 2.0 + boost.toughnessBoost();
+            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
+            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
+                    + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
         // Regenerate (shield from destruction)
         if (effect instanceof RegenerateEffect) {
@@ -113,14 +123,18 @@ public class SpellEvaluator {
             long creatureCount = aiBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .count();
-            return creatureCount * counters.count() * 3.5;
+            int per = amountEvaluationService.evaluate(gameData, counters.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return creatureCount * per * 3.5;
         }
         // +1/+1 counter on target creature
-        if (effect instanceof PutPlusOnePlusOneCounterOnTargetCreatureEffect counters) {
-            return counters.count() * 3.5;
+        if (effect instanceof PutCounterOnTargetPermanentEffect counters
+                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+            return amountEvaluationService.evaluate(gameData, counters.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 3.5;
         }
         // Tap target permanent
-        if (effect instanceof TapTargetPermanentEffect) {
+        if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
             double bestTapValue = oppBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)
@@ -244,7 +258,7 @@ public class SpellEvaluator {
 
     private boolean isBoardWipeEffect(CardEffect effect) {
         if (effect instanceof MassDamageEffect || effect instanceof DestroyAllPermanentsEffect
-                || effect instanceof ReturnCreaturesToOwnersHandEffect) {
+                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING)) {
             return true;
         }
         if (effect instanceof ChooseOneEffect coe) {
@@ -356,38 +370,49 @@ public class SpellEvaluator {
         if (effect instanceof ExileTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
         }
-        if (effect instanceof GainControlOfTargetPermanentEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         if (effect instanceof DrawCardEffect draw) {
-            return draw.amount() * 6.0;
+            return amountEvaluationService.evaluate(gameData, draw.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
         if (effect instanceof CreateTokenEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
             if (token.primaryType() == CardType.CREATURE) {
                 double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-                return tokenScore * token.amount();
+                return tokenScore * tokenAmount;
             } else {
-                return 3.0 * token.amount();
+                return 3.0 * tokenAmount;
             }
         }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            return evaluateDamageToCreature(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof ReturnTargetPermanentToHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
-        if (effect instanceof TargetPlayerDiscardsEffect discard) {
+        if (effect instanceof DiscardEffect discard
+                && discard.recipient() == DiscardRecipient.TARGET_PLAYER && !discard.random()) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
-            int effectiveDiscards = Math.min(discard.amount(), opponentHandSize);
+            int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            int effectiveDiscards = Math.min(discardAmount, opponentHandSize);
             return effectiveDiscards * 4.0;
         }
         return 0;
@@ -427,31 +452,36 @@ public class SpellEvaluator {
         }
 
         // Steal (opponent loses creature + we gain it)
-        if (effect instanceof GainControlOfTargetPermanentEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         // Temporary steal (attack with opponent's creature this turn)
-        if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.END_OF_TURN) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
         // Damage
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            return evaluateDamageToCreature(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof DealDamageToTargetPlayerEffect dmg) {
-            return dmg.damage() * 1.5;
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) {
+            return estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
-        if (effect instanceof DealDamageToControllerEffect dmg) {
-            return -dmg.damage() * 1.5;
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
+            return -estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
 
         // Board wipes
         if (effect instanceof MassDamageEffect aoe) {
-            return evaluateBoardWipeDamage(gameData, aoe.damage(), aiPlayerId, opponentId,
+            int damage = estimateDamageAmount(gameData, card, aoe.amount(), aiPlayerId);
+            return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
         }
         if (effect instanceof DestroyAllPermanentsEffect wipe) {
@@ -461,17 +491,18 @@ public class SpellEvaluator {
 
         // Draw
         if (effect instanceof DrawCardEffect draw) {
-            return draw.amount() * 6.0;
+            return amountEvaluationService.evaluate(gameData, draw.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
 
         // Bounce
-        if (effect instanceof ReturnTargetPermanentToHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
-        if (effect instanceof ReturnCreaturesToOwnersHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING) {
             double oppValue = oppBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId))
@@ -485,26 +516,54 @@ public class SpellEvaluator {
 
         // Tokens
         if (effect instanceof CreateTokenEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
             if (token.primaryType() == CardType.CREATURE) {
                 double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-                return tokenScore * token.amount();
+                return tokenScore * tokenAmount;
             } else {
-                return 3.0 * token.amount();
+                return 3.0 * tokenAmount;
             }
         }
 
         // Life — scaled by danger level: more valuable when AI is under pressure
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof LoseLifeEffect lose) {
-            return -lose.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            switch (lose.recipient()) {
+                case CONTROLLER -> {
+                    // Controller loses life — a cost/drawback (formerly LoseLifeEffect).
+                    int amount = amountEvaluationService.evaluate(gameData, lose.amount(),
+                            AmountContext.forEstimation(aiPlayerId));
+                    return -amount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+                }
+                case EACH_OPPONENT -> {
+                    // Formerly only the X-scaled drain (Exsanguinate) was scored; the fixed
+                    // "each opponent loses N life" variants were not — kept faithful.
+                    if (lose.controllerGainsLifeLost() && amountEvaluationService.referencesXValue(lose.amount())) {
+                        int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+                        if (estimatedX <= 0) return 0;
+                        return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
+                    }
+                    return 0;
+                }
+                default -> {
+                    // TARGET_PLAYER / EACH_PLAYER were not scored before.
+                    return 0;
+                }
+            }
         }
 
         // Discard
-        if (effect instanceof TargetPlayerDiscardsEffect discard) {
+        if (effect instanceof DiscardEffect discard
+                && discard.recipient() == DiscardRecipient.TARGET_PLAYER && !discard.random()) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
-            int effectiveDiscards = Math.min(discard.amount(), opponentHandSize);
+            int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            int effectiveDiscards = Math.min(discardAmount, opponentHandSize);
             return effectiveDiscards * 4.0;
         }
 
@@ -519,35 +578,24 @@ public class SpellEvaluator {
 
         // P/T boost to target creature
         if (effect instanceof BoostTargetCreatureEffect boost) {
-            return (boost.powerBoost() * 2.0 + boost.toughnessBoost());
+            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
+            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
+                    + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
 
-        // Divided damage among creatures
-        if (effect instanceof DealDividedDamageAmongTargetCreaturesEffect divided) {
-            return evaluateDamageToCreature(gameData, divided.totalDamage(), oppBattlefield, opponentId, aiPlayerId);
+        // Divided damage among creatures (fixed total, no player targets — e.g. Ignite Disorder)
+        if (effect instanceof DealDividedDamageEffect divided
+                && divided.mode() == DivisionMode.CHOSEN && !divided.etbAssignments()
+                && !divided.canTargetPlayers() && divided.totalDamage() instanceof Fixed fixedTotal) {
+            return evaluateDamageToCreature(gameData, fixedTotal.value(), oppBattlefield, opponentId, aiPlayerId);
         }
 
         // X-damage effects
-        if (effect instanceof DealXDamageToAnyTargetEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
-        }
         if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
             if (estimatedX <= 0) return 0;
             return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
                     + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
-        }
-        if (effect instanceof DealXDamageToTargetCreatureEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return evaluateDamageToCreature(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof EachOpponentLosesXLifeAndControllerGainsLifeLostEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
         }
 
         return 0;
@@ -567,7 +615,7 @@ public class SpellEvaluator {
         bonus += equipmentWithEvasionBonus(gameData, card, aiBattlefield);
         bonus += deathTriggerWithSacOutletBonus(gameData, card, aiBattlefield);
         bonus += anthemWithWideBoardBonus(gameData, card, aiBattlefield);
-        bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiBattlefield);
+        bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiPlayerId, aiBattlefield);
         return bonus;
     }
 
@@ -706,17 +754,19 @@ public class SpellEvaluator {
      * Token-making spells are more valuable when the AI controls permanents with
      * "whenever a creature dies" or "whenever a creature enters" triggers.
      */
-    private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+    private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, UUID aiPlayerId, List<Permanent> aiBattlefield) {
         // Check if this card creates creature tokens
         int tokenCount = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += token.amount();
+                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+                        AmountContext.forEstimation(aiPlayerId));
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += token.amount();
+                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+                        AmountContext.forEstimation(aiPlayerId));
             }
         }
         if (tokenCount == 0) return 0;
@@ -783,6 +833,18 @@ public class SpellEvaluator {
         // Detrimental aura - value based on neutralizing opponent's best creature
         double bestOppCreature = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         return bestOppCreature > 0 ? bestOppCreature * 0.8 : 0;
+    }
+
+    /**
+     * Resolves a damage effect's {@link DynamicAmount} for heuristic estimation: X-based
+     * amounts use the maximum X the AI could afford for the card, everything else
+     * evaluates in a source-less estimation context.
+     */
+    int estimateDamageAmount(GameData gameData, Card card, DynamicAmount amount, UUID aiPlayerId) {
+        if (amountEvaluationService.referencesXValue(amount)) {
+            return estimateMaxX(gameData, card, aiPlayerId);
+        }
+        return amountEvaluationService.evaluate(gameData, amount, AmountContext.forEstimation(aiPlayerId));
     }
 
     private double evaluateDamageEffect(GameData gameData, int damage, List<Permanent> oppBattlefield,
@@ -859,7 +921,7 @@ public class SpellEvaluator {
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
 
         double oppValue = oppBattlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
                         return boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId);
@@ -869,7 +931,7 @@ public class SpellEvaluator {
                 .sum();
 
         double aiValue = aiBattlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
                 .mapToDouble(p -> {
                     if (gameQueryService.isCreature(gameData, p)) {
                         return boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId);
@@ -888,7 +950,7 @@ public class SpellEvaluator {
                 int remainingOppDamage = oppBattlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .filter(p -> !gameQueryService.hasKeyword(gameData, p, Keyword.DEFENDER))
-                        .filter(p -> !gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                        .filter(p -> !predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
                         .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
                         .sum();
                 if (remainingOppDamage < aiLife) {
@@ -900,7 +962,7 @@ public class SpellEvaluator {
         // Rebuild potential: if AI has creatures in hand to replay, the effective cost of wiping is lower
         double aiCreatureLosses = aiBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p))
-                .filter(p -> gameQueryService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(p, wipe.filter(), filterContext))
                 .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId))
                 .sum();
         if (aiCreatureLosses > 0) {
@@ -946,7 +1008,9 @@ public class SpellEvaluator {
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
             for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardManaEffect me) {
-                    virtualPool.add(me.color(), me.amount());
+                    // ON_TAP mana (basic lands, mana dorks) is always a flat quantity.
+                    int amt = me.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed f ? f.value() : 0;
+                    virtualPool.add(me.color(), amt);
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
                     virtualPool.add(ManaColor.COLORLESS);
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect) {
@@ -1069,9 +1133,10 @@ public class SpellEvaluator {
                 || effect instanceof ExileTargetPermanentEffect
                 || effect instanceof DealDamageToAnyTargetEffect
                 || effect instanceof DealDamageToTargetCreatureEffect
-                || effect instanceof ReturnTargetPermanentToHandEffect
+                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
                 || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
-                || effect instanceof GainControlOfTargetPermanentEffect;
+                || (effect instanceof GainControlOfTargetEffect steal
+                        && steal.duration() == ControlDuration.PERMANENT);
     }
 
     /**

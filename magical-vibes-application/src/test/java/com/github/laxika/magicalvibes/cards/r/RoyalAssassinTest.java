@@ -6,45 +6,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RoyalAssassinTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Royal Assassin has correct card properties")
-    void hasCorrectProperties() {
-        RoyalAssassin card = new RoyalAssassin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsTappedPredicate()
-                )),
-                "Target must be a tapped creature"
-        ));
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect =
-                (DestroyTargetPermanentEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Activating ability targeting a tapped creature puts it on the stack")

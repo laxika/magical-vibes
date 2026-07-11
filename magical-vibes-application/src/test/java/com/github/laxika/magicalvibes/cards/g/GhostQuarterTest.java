@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,9 +14,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,29 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GhostQuarterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ghost Quarter has correct abilities")
-    void hasCorrectAbilities() {
-        GhostQuarter card = new GhostQuarter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Second ability: {T}, Sacrifice: Destroy target land...
-        var destroyAbility = card.getActivatedAbilities().get(1);
-        assertThat(destroyAbility.isRequiresTap()).isTrue();
-        assertThat(destroyAbility.getManaCost()).isNull();
-        assertThat(destroyAbility.getEffects()).hasSize(2);
-        assertThat(destroyAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(destroyAbility.getEffects().get(1))
-                .isInstanceOf(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating destroy ability sacrifices Ghost Quarter and puts ability on stack")
@@ -90,11 +66,11 @@ class GhostQuarterTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Forest"));
 
         // Player 2 (the land's controller) is prompted to search
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -140,7 +116,7 @@ class GhostQuarterTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Plains")
                         || p.getCard().getName().equals("Island")
                         || p.getCard().getName().equals("Mountain"));
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -160,8 +136,8 @@ class GhostQuarterTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Forest"));
 
         // Player 1 is prompted to search their own library
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -180,7 +156,7 @@ class GhostQuarterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 

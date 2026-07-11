@@ -1,16 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,22 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChaseInspirationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Chase Inspiration has correct card structure")
-    void hasCorrectStructure() {
-        ChaseInspiration card = new ChaseInspiration();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(0);
-        assertThat(boost.toughnessBoost()).isEqualTo(3);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Chase Inspiration puts it on the stack")

@@ -12,7 +12,10 @@ Targeting for triggered abilities happens in two layers:
 
 1. **The collector** that notices the trigger fires and decides whether the resulting ability should:
    - Go straight onto the stack with no user choice (non-targeting), **or**
-   - Be parked in a `pendingXxxTriggerTargets` deque in `GameData` and then processed by a target-choice step.
+   - Be parked in the unified `GameData.pendingInteractions` queue as a `PermanentChoiceContext.XxxTriggerTarget`
+     record (queued via `gameData.queueInteraction(...)`) and then processed by a target-choice step. Each
+     pipeline services only its own record type via the type-filtered helpers
+     (`hasPendingInteraction` / `peekPendingInteraction` / `pollPendingInteraction`), so per-kind FIFO order is preserved.
 
 2. **The target-choice step** that turns a pending entry into a concrete target:
    - For the three central pipelines — death, attack, end-step — target collection runs through the shared
@@ -35,16 +38,16 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 
 | Pipeline                   | `Options` constant | Player target | Permanent target | `PlayerRelationPredicate.OPPONENT` (via `PlayerPredicateTargetFilter`) | `PermanentPredicateTargetFilter` | `ControlledPermanentPredicateTargetFilter` | Effect-level `targetPredicate()` |
 |----------------------------|--------------------|:-------------:|:----------------:|:------:|:---:|:---:|:---:|
-| Death (`pendingDeathTriggerTargets`)        | `Options.DEATH`    | ✅ | ✅ creatures only | ✅ | ✅ | ✅ | ❌ (ignored) |
-| Attack (`pendingAttackTriggerTargets`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
-| End step (`pendingEndStepTriggerTargets`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
-| Discard-self (`pendingDiscardSelfTriggers`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
-| Spell-target (`pendingSpellTargetTriggers`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via generic `TargetFilter.matchesFilters`) | ❌ | ❌ |
-| Life-gain (`pendingLifeGainTriggerTargets`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
-| Enters-from-graveyard (`pendingEntersFromGraveyardTriggerTargets`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
-| Explore (`pendingExploreTriggerTargets`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
-| Emblem (`pendingEmblemTriggerTargets`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
-| Saga chapter (`pendingSagaChapterTargets`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
+| Death (`DeathTriggerTarget`)        | `Options.DEATH`    | ✅ | ✅ creatures only | ✅ | ✅ | ✅ | ❌ (ignored) |
+| Attack (`AttackTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
+| End step (`EndStepTriggerTarget`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
+| Discard-self (`DiscardTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
+| Spell-target (`SpellTargetTriggerAnyTarget`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
+| Life-gain (`LifeGainTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
+| Enters-from-graveyard (`EntersFromGraveyardTriggerTarget`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
+| Explore (`ExploreTriggerTarget`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
+| Emblem (`EmblemTriggerTarget`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
+| Saga chapter (`SagaChapterTarget`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
 
 Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
 
@@ -70,6 +73,8 @@ combat damage step is processed.
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` | Attack |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
+| `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`) | Becomes-target |
+| `UPKEEP_TRIGGERED` (any-target effects only) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect is `canTargetPlayer() && canTargetPermanent()`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
 | `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default) | End step |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
@@ -77,8 +82,10 @@ combat damage step is processed.
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
-| `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `BattlefieldEntryService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
+| `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
+| `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
+| `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
 | Planeswalker ultimate emblems | `DrawService` / `TriggerCollectionService` | Emblem |
 | `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
 
@@ -92,7 +99,12 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_CONTROLLER_DRAWS`, `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
-`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`, `ON_ENCHANTED_PERMANENT_TAPPED`,
+`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`,
+`ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
+graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
+the resolving spell/ability — is an opponent of the graveyard owner; the collector stamps the dying
+land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`), `ON_ENCHANTED_PERMANENT_TAPPED`,
+`ON_ALLY_PERMANENT_BECOMES_TAPPED`,
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
@@ -107,7 +119,10 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
-`ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`.
+`ON_TRANSFORM_TO_BACK_FACE`, `ON_TRANSFORM_TO_FRONT_FACE`,
+`ON_CONTROLLER_ACTIVATES_ABILITY` (Ceaseless Searblades; fires on every permanent with this slot on
+the activating player's battlefield, once per activated-ability activation incl. mana abilities;
+wrap in `TriggeringPermanentConditionalEffect` to filter by the permanent whose ability was activated).
 
 ## `ON_ENTER_BATTLEFIELD` targeted triggers
 
@@ -116,19 +131,32 @@ Pierce Strider, Geralf's Messenger) normally has its target chosen **at cast tim
 is pushed directly onto the stack with that target. When the permanent enters **without a cast** —
 a token copy, or a creature put onto the battlefield from a graveyard via undying / reanimation /
 flicker — there is no cast-time target, so `BattlefieldEntryService.processCreatureETBEffects`
-routes the trigger through `pendingETBTokenTargetTriggers` (single target) or
-`pendingETBTokenMultiTargetTriggers` (multi-target), letting the controller choose the target as the
+routes the trigger through `ETBTokenTargetTrigger` (single target) or
+`ETBTokenMultiTargetTrigger` (multi-target), letting the controller choose the target as the
 ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
 `getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a cast; "up to N" cast
 spells that chose 0 targets are unaffected because they passed through cast-time selection.
+
+**Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
+`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent; e.g. Bleak
+Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren) **never** target at
+cast time: whether the ability triggers at all depends on game state as the permanent enters
+(intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
+spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the
+gate isn't met. When it is met, the same `ETBTokenTargetTrigger` / `ETBTokenMultiTargetTrigger`
+deferred path prompts for the target as the trigger goes on the stack (CR 603.3d); the wrapped
+`ConditionalEffect` stays on the stack entry and the gate is re-checked at resolution. When adding
+a new intervening-if condition that gates a **targeted** ETB, override `isEtbTriggerGate()` on the
+condition — both the cast-time exclusion and the `EtbEffectResolver` gate key off it.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
 or permanent), **that is an engine change**. The work required is:
 
 1. Add a new `PermanentChoiceContext.XxxTriggerTarget` record (or reuse an existing one).
-2. Add a `pendingXxxTriggerTargets` deque on `GameData` (plus copy-on-fork in `GameData.deepCopy`).
-3. In the collector that notices the trigger, route targeting effects into the new deque.
-4. In the step that drains the queue, call
+2. Queue it on the unified `GameData.pendingInteractions` queue via `gameData.queueInteraction(...)`
+   (no new field needed; `simulationCopy` already copies the queue).
+3. In the collector that notices the trigger, route targeting effects into the queue.
+4. In the step that drains it (via `peekPendingInteraction` / `pollPendingInteraction` on the record class), call
    `TriggerTargetCollector.collect(...)` with an appropriate `Options` — or extend `Options` if none of
    `DEATH` / `ATTACK` / `END_STEP` match the semantics you need.
 5. Handle the empty-target case (log + skip) and the prompt wording.
@@ -141,8 +169,10 @@ or permanent), **that is an engine change**. The work required is:
 
 ### `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))`
 
-Card says "target opponent". Honoured only in **Death / Attack / End-step** pipelines (`Options.DEATH`,
-`ATTACK`, `END_STEP`). Any other pipeline will offer the controller as a valid target too — **that's a
+Card says "target opponent". Honoured in the **Death / Attack / End-step** pipelines (`Options.DEATH`,
+`ATTACK`, `END_STEP`) and in the single-player **upkeep** pipeline (`UpkeepPlayerTargetTrigger`, which
+filters candidates through `ValidTargetService.filterValidPlayerTargets` using the card's target filter —
+e.g. Nath of the Gilt-Leaf). Any other pipeline that offers the controller as a valid target too is **a
 bug** and must be fixed in the pipeline, not papered over at the card level.
 
 When used with an effect that also sets `canTargetPermanent()` to `true`, the opponent-only restriction
@@ -156,8 +186,11 @@ controls", combine the two: `PlayerPredicateTargetFilter` for the player side an
 Honoured in **Death / Attack / End-step**. See `PREDICATES_REFERENCE.md` for the full list of
 `PermanentPredicate` compositions (e.g. `opponentControlled(creature())`, `nonToken(creature())`, etc.).
 
-Note that the death pipeline additionally forces `creaturesOnly = true` — a permanent predicate that
-allows non-creatures is silently intersected with "is a creature". End-step has no such restriction.
+Note that the death pipeline defaults to `creaturesOnly = true`, **but** an explicit
+`PermanentPredicateTargetFilter` overrides it — the filter's predicate then fully governs which
+permanents are legal (e.g. Fire Snake's "destroy target land"). A death trigger with **no** target
+filter (or a `ControlledPermanentPredicateTargetFilter`) still narrows to creatures. End-step has no
+such restriction.
 
 ### `ControlledPermanentPredicateTargetFilter(PermanentPredicate)`
 
@@ -175,8 +208,10 @@ unwrap `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before in
 
 ## Common pitfalls
 
-- **"My ON_DEATH trigger targets non-creatures."** It can't. Death forces `creaturesOnly = true`. Use a
-  different slot (or add a new `Options` variant).
+- **"My ON_DEATH trigger targets non-creatures."** Give the card an explicit
+  `PermanentPredicateTargetFilter` — its predicate then governs and the death pipeline's default
+  `creaturesOnly` narrowing is skipped (e.g. Fire Snake targeting a land). Without such a filter,
+  death targets are creatures only.
 - **"My ON_DEATH trigger lets the controller pick themselves as the target."** You forgot the
   `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))` on the card — or
   you wired it on a pipeline that doesn't honour it (everything outside death / attack / end-step).
@@ -201,6 +236,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep | — |
 | "When enchanted creature dies, ..." | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted creature goes to graveyard | Necrotic Plague (return effect) |
 | "Whenever enchanted creature is dealt damage, ..." | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
+| "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
 
 **Key distinction**: "your upkeep" on an aura means the **aura controller's** upkeep → use `UPKEEP_TRIGGERED`. "Enchanted creature's controller's upkeep" means the **enchanted permanent's controller's** upkeep → use `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`. These are different when the aura enchants an opponent's creature.
 

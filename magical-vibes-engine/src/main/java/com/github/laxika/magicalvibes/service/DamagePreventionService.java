@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,10 +15,17 @@ import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterR
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -34,9 +42,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class DamagePreventionService {
 
     private final GameQueryService gameQueryService;
+    private final LifeSupport lifeSupport;
 
-    public DamagePreventionService(GameQueryService gameQueryService) {
+    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
+        this.lifeSupport = lifeSupport;
     }
 
     int applyGlobalPreventionShield(GameData gameData, int damage) {
@@ -86,6 +96,8 @@ public class DamagePreventionService {
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
         // Blinding Fog: prevent all damage to all creatures
         if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
+        // Wellgabber Apothecary: prevent all damage to specific target creatures this turn
+        if (gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithAllDamagePrevented.contains(permanent.getId())) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -117,6 +129,8 @@ public class DamagePreventionService {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
+            if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
             // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
             damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);
@@ -125,6 +139,15 @@ public class DamagePreventionService {
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
                     permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
+                }
+                return 0;
+            }
+            // Vigor: "If damage would be dealt to another creature you control, prevent that damage.
+            // Put a +1/+1 counter on that creature for each 1 damage prevented this way." The effect
+            // lives on a different permanent (Vigor) controlled by this creature's controller.
+            if (damage > 0 && hasOtherCreatureDamagePreventionSource(gameData, permanent)) {
+                if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + damage);
                 }
                 return 0;
             }
@@ -139,6 +162,38 @@ public class DamagePreventionService {
     }
 
     /**
+     * Vigor-style protection: returns true when the given creature's controller controls some other
+     * permanent (i.e. not the creature itself — "another creature you control") carrying
+     * {@link PreventDamageToOtherCreaturesAndAddPlusCountersEffect}. Such damage is fully prevented and
+     * replaced with +1/+1 counters by the caller.
+     */
+    private boolean hasOtherCreatureDamagePreventionSource(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .filter(p -> !p.getId().equals(creature.getId()))
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(e -> e instanceof PreventDamageToOtherCreaturesAndAddPlusCountersEffect);
+    }
+
+    /**
+     * Dolmen Gate-style protection: returns true when the given attacking creature's controller controls
+     * a permanent carrying {@link PreventCombatDamageToAttackingCreaturesYouControlEffect}. Combat damage
+     * dealt to such a creature is fully prevented by the caller.
+     */
+    private boolean hasAttackingCreatureCombatDamagePreventionSource(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(e -> e instanceof PreventCombatDamageToAttackingCreaturesYouControlEffect);
+    }
+
+    /**
      * Registers delayed +1/+1 counter regrowth triggers for Protean Hydra-style effects.
      * Each removed counter creates a separate delayed trigger that adds 2 +1/+1 counters
      * at the beginning of the next end step (ruling: "its last ability will trigger that many times").
@@ -146,9 +201,29 @@ public class DamagePreventionService {
     void registerDelayedRegrowth(GameData gameData, Permanent permanent, int countersRemoved) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
-            int pending = gameData.pendingDelayedPlusOnePlusOneCounters.getOrDefault(permanent.getId(), 0);
-            gameData.pendingDelayedPlusOnePlusOneCounters.put(permanent.getId(), pending + countersRemoved * 2);
+            gameData.addDelayedPlusOneCounters(permanent.getId(), countersRemoved * 2);
         }
+    }
+
+    /**
+     * Deep Wood: whether combat damage dealt to the given player by attacking creatures is prevented this
+     * turn. Combat damage to a defending player always originates from attacking creatures, so this needs
+     * only the player flag.
+     */
+    public boolean isCombatDamageFromAttackersPreventedForPlayer(GameData gameData, UUID playerId) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        return gameData.playersWithDamageFromAttackersPrevented.contains(playerId);
+    }
+
+    /**
+     * Deep Wood: whether noncombat damage dealt to the given player is prevented this turn because its
+     * source permanent is currently an attacking creature.
+     */
+    public boolean isNoncombatDamageFromAttackerPreventedForPlayer(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+        if (!isCombatDamageFromAttackersPreventedForPlayer(gameData, playerId)) return false;
+        if (sourcePermanentId == null) return false;
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return source != null && source.isAttacking();
     }
 
     public int applyPlayerPreventionShield(GameData gameData, UUID playerId, int damage) {
@@ -209,6 +284,45 @@ public class DamagePreventionService {
     }
 
     /**
+     * Applies one-shot Circle-of-Protection shields: if a shield matches this (player, source), the
+     * entire next damage event is prevented and the shield is consumed. Returns the remaining damage.
+     */
+    public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || playerId == null || sourcePermanentId == null
+                || gameData.playerSourceNextDamageShields.isEmpty()) {
+            return damage;
+        }
+        var it = gameData.playerSourceNextDamageShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
+                it.remove();
+                // Reverse Damage: gain life equal to the damage prevented this way.
+                if (shield.gainLife()) {
+                    lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
+                }
+                return 0;
+            }
+        }
+        return damage;
+    }
+
+    /**
+     * Applies one-shot Sanctum Guardian shields: if a shield matches this source, the entire next
+     * damage event it would deal to any target (player, planeswalker, or creature) is prevented and
+     * the shield is consumed. Returns the remaining damage.
+     */
+    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
+            return damage;
+        }
+        // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
+        return gameData.sourceNextDamageToAnyTargetShields.remove(sourcePermanentId) ? 0 : damage;
+    }
+
+    /**
      * Checks source-specific damage redirect shields (e.g. Harm's Way) for damage dealt to a player
      * or permanents they control. This is a redirection effect (replacement), NOT a prevention effect,
      * so it applies even when damage can't be prevented (e.g. Leyline of Punishment).
@@ -251,6 +365,57 @@ public class DamagePreventionService {
         return remaining;
     }
 
+    /**
+     * Checks creature-specific damage redirect shields (e.g. Oracle's Attendants) for damage dealt to a
+     * specific creature by a chosen source. This is a redirection (replacement) effect: when the chosen
+     * source would deal damage to the protected creature this turn, ALL of it (no amount limit) is
+     * redirected to the shield's redirect target. Reuses {@link GameData#pendingSourceRedirectDamage}
+     * so callers deal the redirected damage via their existing {@code processSourceRedirectDamage}.
+     *
+     * @param protectedPermanentId the creature receiving damage
+     * @param sourcePermanentId    the permanent dealing the damage
+     * @param damage               the raw damage amount
+     * @return the remaining damage after redirection (0 if a shield matched)
+     */
+    public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention.
+        if (damage <= 0 || protectedPermanentId == null || sourcePermanentId == null
+                || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
+
+        int remaining = damage;
+        List<CreatureDamageRedirectShield> toReAdd = new ArrayList<>();
+        Iterator<CreatureDamageRedirectShield> it = gameData.creatureDamageRedirectShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            CreatureDamageRedirectShield shield = it.next();
+            if (!shield.protectedPermanentId().equals(protectedPermanentId)) continue;
+            // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
+            if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
+
+            if (shield.isUnlimited()) {
+                // Unlimited (Oracle's Attendants): redirect all remaining damage; the shield persists.
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPermanentId, sourcePermanentId, remaining, shield.redirectTargetId()));
+                remaining = 0;
+            } else {
+                // Amount-limited (Zealous Inquisitor): redirect up to the remaining amount, then consume.
+                int redirected = Math.min(shield.remainingAmount(), remaining);
+                remaining -= redirected;
+                it.remove();
+                if (redirected < shield.remainingAmount()) {
+                    toReAdd.add(shield.withReducedAmount(redirected));
+                }
+                if (redirected > 0) {
+                    gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                            protectedPermanentId, sourcePermanentId, redirected, shield.redirectTargetId()));
+                }
+            }
+        }
+
+        gameData.creatureDamageRedirectShields.addAll(toReAdd);
+        return remaining;
+    }
+
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
         if (!gameQueryService.isDamagePreventable(gameData)) return false;
         if (sourceColor == null) return false;
@@ -286,6 +451,55 @@ public class DamagePreventionService {
 
         if (totalReduction <= 0) return damage;
         return Math.max(0, damage - totalReduction);
+    }
+
+    /**
+     * Purity-style prevention: if the given player controls a permanent with
+     * {@link PreventNoncombatDamageToControllerAndGainLifeEffect}, all noncombat damage that
+     * would be dealt to them is prevented. Returns the amount prevented (the caller gains that
+     * much life). Returns 0 when damage can't be prevented or no such permanent is present.
+     */
+    public int applyControllerNoncombatDamagePrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        boolean hasEffect = battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PreventNoncombatDamageToControllerAndGainLifeEffect));
+        return hasEffect ? damage : 0;
+    }
+
+    /**
+     * Hostility-style prevention: if the damage source is a spell controlled by a player who controls a
+     * permanent with {@link PreventSpellDamageToOpponentAndCreateTokensEffect}, and the damaged player is
+     * an opponent of that controller, all of that damage is prevented. Returns the matching effect (whose
+     * token blueprint the caller uses to create one token per 1 damage prevented), or {@code null} when it
+     * doesn't apply (damage can't be prevented, the source isn't a spell, or no such permanent is present).
+     */
+    public PreventSpellDamageToOpponentAndCreateTokensEffect findSpellDamageToOpponentPrevention(
+            GameData gameData, StackEntry entry, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return null;
+        if (damage <= 0 || entry == null) return null;
+
+        // Only damage dealt by a spell qualifies (not abilities or combat).
+        StackEntryType type = entry.getEntryType();
+        if (type == StackEntryType.TRIGGERED_ABILITY || type == StackEntryType.ACTIVATED_ABILITY) return null;
+
+        // The damaged player must be an opponent of the spell's controller.
+        UUID spellControllerId = entry.getControllerId();
+        if (spellControllerId == null || spellControllerId.equals(playerId)) return null;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(spellControllerId);
+        if (battlefield == null) return null;
+
+        return battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(e -> e instanceof PreventSpellDamageToOpponentAndCreateTokensEffect)
+                .map(e -> (PreventSpellDamageToOpponentAndCreateTokensEffect) e)
+                .findFirst().orElse(null);
     }
 
     /**

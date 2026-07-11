@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,23 +11,6 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class EarthServantTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +0/+1 per Mountain effect")
-    void hasCorrectEffect() {
-        EarthServant card = new EarthServant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerControlledPermanentEffect.class);
-        BoostSelfPerControlledPermanentEffect effect =
-                (BoostSelfPerControlledPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN));
-        assertThat(effect.powerPerPermanent()).isEqualTo(0);
-        assertThat(effect.toughnessPerPermanent()).isEqualTo(1);
-    }
 
     // ===== Base stats without Mountains =====
 

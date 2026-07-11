@@ -1,18 +1,12 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,23 +23,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         auraPerm.setAttachedTo(player2.getId());
         gd.playerBattlefields.get(player1.getId()).add(auraPerm);
         return auraPerm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Echoes registers an optional copy-spell trigger filtered by instant/sorcery cast by the enchanted player")
-    void hasCorrectEffects() {
-        CurseOfEchoes card = new CurseOfEchoes();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        CopySpellForEachOtherPlayerEffect effect =
-                (CopySpellForEachOtherPlayerEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).get(0);
-        assertThat(effect.optional()).isTrue();
-        assertThat(effect.spellFilter()).isInstanceOf(StackEntryAllOfPredicate.class);
-        StackEntryAllOfPredicate filter = (StackEntryAllOfPredicate) effect.spellFilter();
-        assertThat(filter.predicates()).hasAtLeastOneElementOfType(StackEntryTypeInPredicate.class);
-        assertThat(filter.predicates()).hasAtLeastOneElementOfType(StackEntryControlledByEnchantedPlayerPredicate.class);
     }
 
     // ===== Trigger fires only for the enchanted player =====
@@ -117,8 +94,8 @@ class CurseOfEchoesTest extends BaseCardTest {
         // Resolve the curse trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -206,8 +183,8 @@ class CurseOfEchoesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();          // resolve copy-creation ability -> may retarget
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test

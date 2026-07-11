@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,20 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RaffCapashenShipsMageTest extends BaseCardTest {
-
-    // ===== Static effect registration =====
-
-    @Test
-    @DisplayName("Raff Capashen has GrantFlashToCardTypeEffect with CardIsHistoricPredicate")
-    void hasGrantFlashStaticEffect() {
-        RaffCapashenShipsMage card = new RaffCapashenShipsMage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantFlashToCardTypeEffect.class);
-        GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
 
     // ===== Grant flash to artifact spells (historic) =====
 

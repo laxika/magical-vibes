@@ -1,29 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 
-import java.util.Set;
-
-public record AwardRestrictedManaEffect(ManaColor color, int amount, Set<CardType> allowedSpellTypes) implements ManaProducingEffect {
+/**
+ * Produces mana that can only be spent under the given {@link ManaRestriction} (e.g. instant/sorcery
+ * only, artifact spells only, Myr spells only, kicked spells only). The restriction routes the mana
+ * into the matching {@link ManaPool} bucket; the spend side keys on those buckets.
+ */
+public record AwardRestrictedManaEffect(ManaColor color, int amount, ManaRestriction restriction) implements ManaProducingEffect {
 
     public void applyTo(ManaPool pool) {
-        if (allowedSpellTypes.contains(CardType.INSTANT)
-                && allowedSpellTypes.contains(CardType.SORCERY)
-                && !allowedSpellTypes.contains(CardType.CREATURE)
-                && !allowedSpellTypes.contains(CardType.ARTIFACT)) {
-            if (color == ManaColor.COLORLESS) {
-                pool.addInstantSorceryOnlyColorless(amount);
-            } else {
-                pool.addInstantSorceryOnlyColored(color, amount);
-            }
-        } else if (color == ManaColor.RED
-                && allowedSpellTypes.contains(CardType.CREATURE)
-                && allowedSpellTypes.contains(CardType.ARTIFACT)) {
-            pool.addRestrictedRed(amount);
-        } else {
-            pool.add(color, amount);
-        }
+        restriction.applyTo(pool, color, amount);
     }
 }

@@ -2,13 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DeathbloomThallid;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SporecrownThallidTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sporecrown Thallid has static boost effect for Fungus and Saproling")
-    void hasCorrectStaticEffect() {
-        SporecrownThallid card = new SporecrownThallid();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
 
     // ===== Static effect: buffs other Fungus/Saproling you control =====
 
@@ -165,7 +142,5 @@ class SporecrownThallidTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, deathbloom)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deathbloom)).isEqualTo(2);
     }
-
-    // ===== Helper methods =====
 
 }

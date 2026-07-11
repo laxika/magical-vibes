@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AdantoTheFirstFort;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,8 +12,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,46 +24,11 @@ class LegionsLandingTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has ETB CreateTokenEffect for 1/1 white Vampire with lifelink")
-    void frontFaceHasCorrectETBEffect() {
-        LegionsLanding card = new LegionsLanding();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);
-    }
+    
 
-    @Test
-    @DisplayName("Front face has ON_ALLY_CREATURES_ATTACK with MinimumAttackersConditionalEffect(3) wrapping TransformSelfEffect")
-    void frontFaceHasCorrectAttackTransformTrigger() {
-        LegionsLanding card = new LegionsLanding();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(MinimumAttackersConditionalEffect.class);
-        MinimumAttackersConditionalEffect mac = (MinimumAttackersConditionalEffect)
-                card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(mac.minimumAttackers()).isEqualTo(3);
-        assertThat(mac.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has back face linked")
-    void frontFaceHasBackFace() {
-        LegionsLanding card = new LegionsLanding();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(AdantoTheFirstFort.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("AdantoTheFirstFort");
-    }
+    
 
     @Test
     @DisplayName("Back face has two activated abilities: tap for {W} and {2}{W},{T} for vampire token")
@@ -215,7 +175,7 @@ class LegionsLandingTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 

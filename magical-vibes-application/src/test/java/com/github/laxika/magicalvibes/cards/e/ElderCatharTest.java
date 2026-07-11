@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.c.ChampionOfTheParish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -52,27 +48,6 @@ class ElderCatharTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH TargetPermanentReplacementEffect(HUMAN) wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect")
-    void hasCorrectEffects() {
-        ElderCathar card = new ElderCathar();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPermanentReplacementEffect.class);
-
-        TargetPermanentReplacementEffect wrapper =
-                (TargetPermanentReplacementEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(wrapper.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) wrapper.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-        assertThat(wrapper.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) wrapper.baseEffect()).count()).isEqualTo(1);
-        assertThat(wrapper.upgradedEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) wrapper.upgradedEffect()).count()).isEqualTo(2);
-    }
-
     // ===== Death trigger =====
 
     @Nested
@@ -95,8 +70,8 @@ class ElderCatharTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Elder Cathar"));
 
             // Controller should be prompted to choose a target creature
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
         @Test
@@ -169,7 +144,7 @@ class ElderCatharTest extends BaseCardTest {
 
             // No valid targets (player1 has no creatures, can't target opponent's)
             // The trigger should be skipped
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
 
@@ -188,7 +163,7 @@ class ElderCatharTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // All creatures dead — no valid targets for "creature you control"
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
 

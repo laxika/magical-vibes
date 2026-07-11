@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "99")
+@CardRegistration(set = "9ED", collectorNumber = "92")
 public class Reminisce extends Card {
 
     public Reminisce() {

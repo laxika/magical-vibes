@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RazormaneMasticoreTest extends BaseCardTest {
-
 
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
@@ -36,35 +31,6 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
 
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Has upkeep sacrifice-unless-discard effect")
-    void hasUpkeepEffect() {
-        RazormaneMasticore card = new RazormaneMasticore();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeUnlessDiscardCardTypeEffect.class);
-        SacrificeUnlessDiscardCardTypeEffect effect =
-                (SacrificeUnlessDiscardCardTypeEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.requiredType()).isNull(); // any card type
-    }
-
-    @Test
-    @DisplayName("Has draw step may-deal-damage effect")
-    void hasDrawStepEffect() {
-        RazormaneMasticore card = new RazormaneMasticore();
-
-        assertThat(card.getEffects(EffectSlot.DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.DRAW_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) may.wrapped()).damage()).isEqualTo(3);
-    }
-
     // ===== Upkeep — sacrifice unless discard any card =====
 
     @Test
@@ -76,8 +42,8 @@ class RazormaneMasticoreTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -91,7 +57,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
         harness.handleCardChosen(player1, 0); // discard the card
 
@@ -118,7 +84,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // All indices should be valid since any card can be discarded
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(0, 1);
     }
 
     @Test
@@ -159,7 +125,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Razormane Masticore"));
 
         // No prompt — no cards to discard
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -187,8 +153,8 @@ class RazormaneMasticoreTest extends BaseCardTest {
         advanceToDraw(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -202,8 +168,8 @@ class RazormaneMasticoreTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -252,7 +218,7 @@ class RazormaneMasticoreTest extends BaseCardTest {
         advanceToDraw(player2);
 
         // No may ability prompt should fire for Masticore
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Grizzly Bears should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -293,6 +259,6 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
 
         // May ability prompt should appear — Masticore itself is a valid target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

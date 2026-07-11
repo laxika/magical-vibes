@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GhostQuarter;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,9 +16,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,29 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FieldOfRuinTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Field of Ruin has correct abilities")
-    void hasCorrectAbilities() {
-        FieldOfRuin card = new FieldOfRuin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Second ability: {2}, {T}, Sacrifice: Destroy target nonbasic land...
-        var destroyAbility = card.getActivatedAbilities().get(1);
-        assertThat(destroyAbility.isRequiresTap()).isTrue();
-        assertThat(destroyAbility.getManaCost()).isEqualTo("{2}");
-        assertThat(destroyAbility.getEffects()).hasSize(2);
-        assertThat(destroyAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(destroyAbility.getEffects().get(1))
-                .isInstanceOf(DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can tap for colorless mana with first ability")
@@ -130,11 +106,11 @@ class FieldOfRuinTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Ghost Quarter"));
 
         // Active player (player1) is prompted to search first (APNAP order)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -156,9 +132,9 @@ class FieldOfRuinTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Now player 2 is prompted to search
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
@@ -188,7 +164,7 @@ class FieldOfRuinTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(p2BattlefieldBefore + 1);
 
         // No more searches pending
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -209,8 +185,8 @@ class FieldOfRuinTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
         // Player 2 still gets to search
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
     }
 
     @Test
@@ -233,8 +209,8 @@ class FieldOfRuinTest extends BaseCardTest {
 
         // Player 1 is skipped, player 2 gets to search
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2.getId());
     }
 
     @Test

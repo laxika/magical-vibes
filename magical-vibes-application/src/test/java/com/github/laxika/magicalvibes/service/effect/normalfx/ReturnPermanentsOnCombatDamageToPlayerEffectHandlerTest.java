@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -11,9 +12,9 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -32,8 +33,8 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.pendingCombatDamageBounceTargetPlayerId).isEqualTo(player2Id);
-                verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), any(), eq(2), any());
+                verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), any(), eq(2),
+                        eq(new MultiPermanentChoiceContext.CombatDamageBounce(player2Id)), any());
             }
 
             @Test
@@ -45,7 +46,7 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no permanents")));
             }
@@ -54,7 +55,7 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
             @DisplayName("Filters by predicate when filter is set")
             void filtersByPredicate() {
                 Card card = createCard("Scalpelexis");
-                PermanentPredicate filter = mock(PermanentPredicate.class);
+                PermanentPredicate filter = new PermanentTruePredicate();
                 ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect(filter);
                 StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
 
@@ -63,12 +64,12 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
                 gd.playerBattlefields.get(player2Id).add(matching);
                 gd.playerBattlefields.get(player2Id).add(nonMatching);
 
-                when(gameQueryService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
-                        argThat(ids -> ids.size() == 1 && ids.contains(matching.getId())), eq(1), any());
+                        argThat(ids -> ids.size() == 1 && ids.contains(matching.getId())), eq(1), any(), any());
             }
 }

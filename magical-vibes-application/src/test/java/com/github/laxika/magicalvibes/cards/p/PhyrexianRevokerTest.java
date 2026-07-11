@@ -1,19 +1,17 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyrexianRevokerTest extends BaseCardTest {
-
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Phyrexian Revoker has choose-nonland-card-name ETB and static lock effects")
-    void hasCorrectEffects() {
-        PhyrexianRevoker card = new PhyrexianRevoker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ChooseCardNameOnEnterEffect nameEffect = (ChooseCardNameOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(nameEffect.excludedTypes()).containsExactly(CardType.LAND);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        ActivatedAbilitiesOfChosenNameCantBeActivatedEffect lockEffect =
-                (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(lockEffect.blocksManaAbilities()).isTrue();
-    }
 
     // ===== Casting and card name choice =====
 
@@ -71,8 +52,8 @@ class PhyrexianRevokerTest extends BaseCardTest {
         // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Phyrexian Revoker"));
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test

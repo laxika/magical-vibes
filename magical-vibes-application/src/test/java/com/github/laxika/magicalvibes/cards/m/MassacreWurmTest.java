@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,30 +14,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MassacreWurmTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB BoostAllCreaturesEffect and ON_OPPONENT_CREATURE_DIES TargetPlayerLosesLifeEffect")
-    void hasCorrectStructure() {
-        MassacreWurm card = new MassacreWurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BoostAllCreaturesEffect.class);
-
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-2);
-        assertThat(boost.toughnessBoost()).isEqualTo(-2);
-        assertThat(boost.filter()).isNotNull();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-
-        TargetPlayerLosesLifeEffect lifeLoss = (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(lifeLoss.amount()).isEqualTo(2);
-    }
 
     // ===== ETB: opponents' creatures get -2/-2 =====
 

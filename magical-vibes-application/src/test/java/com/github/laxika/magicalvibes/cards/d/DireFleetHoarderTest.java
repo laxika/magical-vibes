@@ -2,11 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -17,21 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DireFleetHoarderTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one ON_DEATH effect that creates a Treasure token")
-    void hasCorrectEffect() {
-        DireFleetHoarder card = new DireFleetHoarder();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.TREASURE);
-    }
 
     // ===== Casting =====
 

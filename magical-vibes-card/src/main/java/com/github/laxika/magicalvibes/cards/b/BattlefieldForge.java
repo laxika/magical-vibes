@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "348")
+@CardRegistration(set = "9ED", collectorNumber = "318")
 public class BattlefieldForge extends Card {
 
     public BattlefieldForge() {
@@ -24,14 +26,14 @@ public class BattlefieldForge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.RED), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {R}. Battlefield Forge deals 1 damage to you."
         ));
         // {T}: Add {W}. Battlefield Forge deals 1 damage to you.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToControllerEffect(1)),
+                List.of(new AwardManaEffect(ManaColor.WHITE), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
                 "{T}: Add {W}. Battlefield Forge deals 1 damage to you."
         ));
     }

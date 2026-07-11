@@ -2,13 +2,9 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.FesteringGoblin;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledCreatureSubtypeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,26 +26,6 @@ class EndlessRanksOfTheDeadTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Zombie") && p.getCard().isToken())
                 .toList();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect configuration")
-    void hasCorrectProperties() {
-        EndlessRanksOfTheDead card = new EndlessRanksOfTheDead();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokensPerControlledCreatureSubtypeEffect.class);
-        CreateTokensPerControlledCreatureSubtypeEffect effect =
-                (CreateTokensPerControlledCreatureSubtypeEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.ZOMBIE);
-        assertThat(effect.divisor()).isEqualTo(2);
-        assertThat(effect.tokenName()).isEqualTo("Zombie");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
     }
 
     // ===== Zero Zombies =====

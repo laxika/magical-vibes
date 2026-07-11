@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
 
@@ -24,6 +25,10 @@ public class ActivatedAbility {
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
+    /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
+    private int minCardsInHandToActivate;
+    /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
+    private boolean activatableByAnyPlayer;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -116,9 +121,31 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
-        return new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
+        ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
                 maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
+        copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
+        copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
+        return copy;
+    }
+
+    /**
+     * Fluent setter for a "activate only if you have N or more cards in your hand" restriction
+     * (e.g. Resonating Lute). Returns this ability for chaining in card constructors.
+     */
+    public ActivatedAbility withMinCardsInHand(int minCards) {
+        this.minCardsInHandToActivate = minCards;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking this ability as activatable by any player, not just the source's
+     * controller (e.g. Oona's Prowler's "Any player may activate this ability."). Returns this
+     * ability for chaining in card constructors.
+     */
+    public ActivatedAbility withActivatableByAnyPlayer() {
+        this.activatableByAnyPlayer = true;
+        return this;
     }
 
     public boolean isNeedsTarget() {

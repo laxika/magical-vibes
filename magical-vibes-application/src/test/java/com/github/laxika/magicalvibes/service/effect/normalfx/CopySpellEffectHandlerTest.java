@@ -1,41 +1,73 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.BeforeEach;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.mockito.Mock;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.Collections;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.ArgumentMatchers.any;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.ArgumentMatchers.anyString;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.ArgumentMatchers.eq;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.Mockito.never;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 @ExtendWith(MockitoExtension.class)
 class CopySpellEffectHandlerTest {
@@ -153,7 +185,7 @@ class CopySpellEffectHandlerTest {
                         .isInstanceOf(DealDamageToAnyTargetEffect.class);
 
                 DealDamageToAnyTargetEffect copiedEffect = (DealDamageToAnyTargetEffect) copyEntry.getEffectsToResolve().getFirst();
-                assertThat(copiedEffect.damage()).isEqualTo(2);
+                assertThat(copiedEffect.damage()).isEqualTo(new Fixed(2));
             }
 
             @Test
@@ -238,7 +270,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");
@@ -256,7 +288,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");
@@ -319,7 +351,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");

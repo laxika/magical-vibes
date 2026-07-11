@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,17 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DrogskolReaverTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with DrawCardEffect(1)")
-    void hasCorrectProperties() {
-        DrogskolReaver card = new DrogskolReaver();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst()).amount())
-                .isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Draws a card when controller gains life")

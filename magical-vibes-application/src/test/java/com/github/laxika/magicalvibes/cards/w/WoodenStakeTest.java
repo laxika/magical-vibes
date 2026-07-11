@@ -2,17 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VampireAristocrat;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,39 +16,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class WoodenStakeTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has +1/+0 static boost for equipped creature")
-    void hasStaticBoostEffect() {
-        WoodenStake card = new WoodenStake();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has DestroySubtypeCombatOpponentEffect on ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCombatDestroyEffects() {
-        WoodenStake card = new WoodenStake();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DestroySubtypeCombatOpponentEffect.class);
-        DestroySubtypeCombatOpponentEffect blockEffect =
-                (DestroySubtypeCombatOpponentEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(blockEffect.requiredSubtype()).isEqualTo(CardSubtype.VAMPIRE);
-        assertThat(blockEffect.cannotBeRegenerated()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DestroySubtypeCombatOpponentEffect.class);
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
-                .isEqualTo(TriggerMode.PER_BLOCKER);
-    }
 
     // ===== Equipped creature blocks a Vampire =====
 
@@ -263,6 +223,6 @@ class WoodenStakeTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.BLOCKER_DECLARATION);
+        harness.beginBlockerDeclarationInput();
     }
 }

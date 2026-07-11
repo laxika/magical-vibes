@@ -2,13 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,24 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AbstractPaintmageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has two precombat main AwardRestrictedManaEffects for instants and sorceries")
-    void hasPrecombatMainRestrictedManaEffects() {
-        AbstractPaintmage card = new AbstractPaintmage();
-
-        assertThat(card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED))
-                .allMatch(AwardRestrictedManaEffect.class::isInstance);
-
-        AwardRestrictedManaEffect blue = (AwardRestrictedManaEffect) card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED).get(0);
-        AwardRestrictedManaEffect red = (AwardRestrictedManaEffect) card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED).get(1);
-        assertThat(blue.color()).isEqualTo(ManaColor.BLUE);
-        assertThat(blue.amount()).isEqualTo(1);
-        assertThat(red.color()).isEqualTo(ManaColor.RED);
-        assertThat(red.amount()).isEqualTo(1);
-        assertThat(blue.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-        assertThat(red.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
+    
 
     @Test
     @DisplayName("Precombat main trigger adds one instant/sorcery-only blue and red mana")

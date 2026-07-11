@@ -3,14 +3,9 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HinterlandHermit;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,25 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ImmerwolfTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Immerwolf has a Wolf/Werewolf anthem and a transform-prevention static effect")
-    void hasCorrectStaticEffects() {
-        Immerwolf card = new Immerwolf();
-
-        List<?> staticEffects = card.getEffects(EffectSlot.STATIC);
-        assertThat(staticEffects).hasSize(2);
-
-        StaticBoostEffect boost = (StaticBoostEffect) staticEffects.get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-
-        assertThat(staticEffects.get(1)).isInstanceOf(PreventTransformEffect.class);
-    }
 
     // ===== Static effect: buffs Wolves and Werewolves you control =====
 

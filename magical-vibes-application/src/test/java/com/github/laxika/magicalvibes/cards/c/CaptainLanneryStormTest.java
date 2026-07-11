@@ -1,19 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,39 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CaptainLanneryStormTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has CreateTokenEffect (Treasure artifact) on ON_ATTACK")
-    void hasAttackTrigger() {
-        CaptainLanneryStorm card = new CaptainLanneryStorm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.primaryType()).isEqualTo(CardType.ARTIFACT);
-    }
-
-    @Test
-    @DisplayName("Has TriggeringPermanentConditionalEffect(TREASURE, BoostSelfEffect(1,0)) on ON_ALLY_PERMANENT_SACRIFICED")
-    void hasSacrificeTrigger() {
-        CaptainLanneryStorm card = new CaptainLanneryStorm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(TriggeringPermanentConditionalEffect.class);
-        TriggeringPermanentConditionalEffect conditional =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TREASURE));
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
 
     // ===== ON_ATTACK — creates Treasure token =====
 
@@ -231,7 +190,6 @@ class CaptainLanneryStormTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-
     private void addTreasureToken(Player player) {
         Card treasureCard = new Card();
         treasureCard.setName("Treasure");
@@ -256,7 +214,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

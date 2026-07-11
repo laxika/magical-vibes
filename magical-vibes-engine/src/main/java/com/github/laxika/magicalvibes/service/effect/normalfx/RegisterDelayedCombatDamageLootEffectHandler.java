@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,8 +29,8 @@ public class RegisterDelayedCombatDamageLootEffectHandler implements NormalEffec
         var e = (RegisterDelayedCombatDamageLootEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        gameData.pendingDelayedCombatDamageLoots.add(
-                new GameData.DelayedCombatDamageLoot(controllerId, e.drawAmount(), e.discardAmount(), entry.getCard()));
+        gameData.queueDelayedAction(
+                new DelayedCombatDamageLoot(controllerId, e.drawAmount(), e.discardAmount(), entry.getCard()));
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - {} registers delayed combat damage loot trigger (draw {}, discard {})",
                 gameData.id, playerName, e.drawAmount(), e.discardAmount());

@@ -2,16 +2,12 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,55 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class HistoryOfBenaliaTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I creates a 2/2 white Knight token with vigilance")
-    void chapterIHasCorrectEffects() {
-        HistoryOfBenalia card = new HistoryOfBenalia();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Knight");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.KNIGHT);
-        assertThat(effect.keywords()).containsExactly(Keyword.VIGILANCE);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same token creation as chapter I")
-    void chapterIIHasCorrectEffects() {
-        HistoryOfBenalia card = new HistoryOfBenalia();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Knight");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Chapter III boosts own Knights +2/+1")
-    void chapterIIIHasCorrectEffects() {
-        HistoryOfBenalia card = new HistoryOfBenalia();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect) effects.getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-    }
 
     // ===== ETB: first lore counter and chapter I triggers =====
 

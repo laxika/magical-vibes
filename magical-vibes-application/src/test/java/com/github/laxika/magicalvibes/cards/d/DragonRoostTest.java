@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,33 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DragonRoostTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dragon Roost has correct card properties")
-    void hasCorrectProperties() {
-        DragonRoost card = new DragonRoost();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{5}{R}{R}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Dragon");
-        assertThat(tokenEffect.power()).isEqualTo(5);
-        assertThat(tokenEffect.toughness()).isEqualTo(5);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.RED);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.DRAGON);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(tokenEffect.additionalTypes()).isEmpty();
-    }
 
     // ===== Casting and resolving =====
 

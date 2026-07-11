@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,11 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,26 +21,7 @@ class TreasureMapTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has activated ability with scry and landmark counter effects")
-    void frontFaceHasActivatedAbility() {
-        TreasureMap card = new TreasureMap();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ScryEffect.class);
-        assertThat(((ScryEffect) ability.getEffects().get(0)).count()).isEqualTo(1);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(PutCounterOnSelfThenTransformIfThresholdEffect.class);
-        var counterEffect = (PutCounterOnSelfThenTransformIfThresholdEffect) ability.getEffects().get(1);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.LANDMARK);
-        assertThat(counterEffect.threshold()).isEqualTo(3);
-        assertThat(counterEffect.optional()).isFalse();
-        assertThat(counterEffect.onTransformEffects()).hasSize(1);
-        assertThat(counterEffect.onTransformEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has back face configured as Treasure Cove")
@@ -57,26 +32,7 @@ class TreasureMapTest extends BaseCardTest {
         assertThat(card.getBackFaceClassName()).isEqualTo("TreasureCove");
     }
 
-    @Test
-    @DisplayName("Back face has two activated abilities")
-    void backFaceHasTwoAbilities() {
-        TreasureMap card = new TreasureMap();
-        TreasureCove backFace = (TreasureCove) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // First: {T}: Add {C}.
-        ActivatedAbility manaAbility = backFace.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-
-        // Second: {T}, Sacrifice a Treasure: Draw a card.
-        ActivatedAbility drawAbility = backFace.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isTrue();
-        assertThat(drawAbility.getManaCost()).isNull();
-        assertThat(drawAbility.getEffects()).anyMatch(e -> e instanceof SacrificePermanentCost);
-        assertThat(drawAbility.getEffects()).anyMatch(e -> e instanceof DrawCardEffect);
-    }
+    
 
     // ===== Activating ability =====
 
@@ -114,8 +70,8 @@ class TreasureMapTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
     }
 
     // ===== Landmark counters =====

@@ -15,8 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAllPermanentsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -39,12 +37,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ExileAllPermanentsEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
@@ -79,7 +79,7 @@ class ExileAllPermanentsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, permanentRemovalService);
 
     }
 
@@ -168,7 +168,7 @@ class ExileAllPermanentsEffectHandlerTest {
                         List.of(effect), 0, (UUID) null, null
                 );
 
-                when(gameQueryService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
+                when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
                         .thenReturn(true);
 
                 exileAllPermanentsHandler.resolve(gd, entry, effect);
@@ -196,9 +196,9 @@ class ExileAllPermanentsEffectHandlerTest {
                         List.of(effect), 0, (UUID) null, null
                 );
 
-                when(gameQueryService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(filter), any()))
                         .thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(eq(land), eq(filter), any()))
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(land), eq(filter), any()))
                         .thenReturn(false);
 
                 exileAllPermanentsHandler.resolve(gd, entry, effect);

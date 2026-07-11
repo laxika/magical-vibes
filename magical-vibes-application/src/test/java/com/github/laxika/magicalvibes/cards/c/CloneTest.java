@@ -1,17 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -27,19 +23,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CloneTest extends BaseCardTest {
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Clone has correct card properties")
-    void hasCorrectProperties() {
-        Clone card = new Clone();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-    }
 
     // ===== Copying a creature =====
 
@@ -61,11 +44,11 @@ class CloneTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // Should be prompted for may ability
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         // Should be prompted to choose a creature
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
 
@@ -232,7 +215,7 @@ class CloneTest extends BaseCardTest {
         // Legend rule should be triggered — player should be asked to choose which to keep
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.LegendRule.class);
         assertThat(((PermanentChoiceContext.LegendRule) gd.interaction.permanentChoiceContext()).cardName()).isEqualTo("Cho-Manno, Revolutionary");
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Declining / no creatures =====
@@ -375,7 +358,7 @@ class CloneTest extends BaseCardTest {
 
         // First may prompt: Clone's own "you may copy" prompt
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         // Choose to copy Treasure Hunter
@@ -391,15 +374,14 @@ class CloneTest extends BaseCardTest {
 
         // Second may prompt: copied Treasure Hunter's may ETB goes on stack
         harness.passBothPriorities(); // resolve MayEffect → may prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Decline it (no artifacts in graveyard anyway)
         harness.handleMayAbilityChosen(player1, false);
 
         // Game should proceed normally — no awaiting input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
-
 

@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,26 +15,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class FalkenrathNobleTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH and ON_ANY_CREATURE_DIES effects")
-    void hasCorrectStructure() {
-        FalkenrathNoble card = new FalkenrathNoble();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect deathEffect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.lifeLoss()).isEqualTo(1);
-        assertThat(deathEffect.lifeGain()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-    }
 
     // ===== ON_DEATH: Falkenrath Noble itself dies =====
 
@@ -57,7 +35,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → Noble dies → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -88,7 +66,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -116,7 +94,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());

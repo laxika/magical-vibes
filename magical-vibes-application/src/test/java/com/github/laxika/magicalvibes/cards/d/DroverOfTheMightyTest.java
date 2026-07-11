@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -27,25 +22,7 @@ class DroverOfTheMightyTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(DINOSAUR) wrapping StaticBoostEffect(2, 2, SELF)")
-    void hasCorrectStaticEffect() {
-        DroverOfTheMighty card = new DroverOfTheMighty();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
-
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability: {T}: Add one mana of any color")
@@ -141,8 +118,8 @@ class DroverOfTheMightyTest extends BaseCardTest {
 
         assertThat(drover.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
-        assertThat(gd.interaction.colorChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -167,7 +144,7 @@ class DroverOfTheMightyTest extends BaseCardTest {
             harness.handleListChoice(player1, color);
 
             assertThat(localGd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(before + 1);
-            assertThat(localGd.interaction.awaitingInputType()).isNull();
+            assertThat(localGd.interaction.activeInteraction()).isNull();
         }
     }
 

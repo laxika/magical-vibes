@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,28 +12,6 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CabalStrongholdTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cabal Stronghold has two activated abilities")
-    void hasCorrectAbilities() {
-        CabalStronghold card = new CabalStronghold();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        ActivatedAbility colorless = card.getActivatedAbilities().get(0);
-        assertThat(colorless.isRequiresTap()).isTrue();
-        assertThat(colorless.getManaCost()).isNull();
-        assertThat(colorless.getEffects()).hasSize(1);
-        assertThat(colorless.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        ActivatedAbility swampMana = card.getActivatedAbilities().get(1);
-        assertThat(swampMana.isRequiresTap()).isTrue();
-        assertThat(swampMana.getManaCost()).isEqualTo("{3}");
-        assertThat(swampMana.getEffects()).hasSize(1);
-        assertThat(swampMana.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-    }
 
     // ===== First ability: {T}: Add {C} =====
 

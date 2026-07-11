@@ -51,7 +51,7 @@ class MetallicMasteryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).noneMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(artifact.isTapped()).isFalse();
         assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).contains(artifact.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class MetallicMasteryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(p -> p.getId().equals(artifact.getId()));
         assertThat(artifact.hasKeyword(Keyword.HASTE)).isFalse();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(artifact.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isFalse();
     }
 
     @Test
@@ -89,7 +89,7 @@ class MetallicMasteryTest extends BaseCardTest {
 
         assertThat(artifact.isTapped()).isFalse();
         assertThat(artifact.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.untilEndOfTurnStolenCreatures).doesNotContain(artifact.getId());
+        assertThat(gd.isStolenUntilEndOfTurn(artifact.getId())).isFalse();
     }
 
     @Test

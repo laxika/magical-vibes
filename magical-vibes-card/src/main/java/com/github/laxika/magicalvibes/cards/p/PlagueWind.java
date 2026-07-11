@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "169")
+@CardRegistration(set = "9ED", collectorNumber = "155")
 public class PlagueWind extends Card {
 
     public PlagueWind() {

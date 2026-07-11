@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class YouthfulKnightTest extends BaseCardTest {
 
 
-    // ===== Card properties =====
-
-
     // ===== Casting =====
 
     @Test

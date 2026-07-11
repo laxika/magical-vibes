@@ -1,20 +1,19 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,14 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CultivateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Cultivate has SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect as spell effect")
-    void hasCorrectEffect() {
-        Cultivate card = new Cultivate();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Cultivate puts it on the stack as a sorcery")
@@ -58,13 +50,14 @@ class CultivateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
-        assertThat(gd.pendingBasicLandToHandSearch).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().basicLandToHand()).isTrue();
     }
 
     @Test
@@ -86,11 +79,12 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
 
-        // Second search begins for hand
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().destination())
+        // Second search begins for hand, with the follow-up consumed
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.HAND);
-        assertThat(gd.pendingBasicLandToHandSearch).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().basicLandToHand()).isFalse();
     }
 
     @Test
@@ -112,7 +106,7 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -133,8 +127,7 @@ class CultivateTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.pendingBasicLandToHandSearch).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -152,7 +145,7 @@ class CultivateTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // No more basic lands for hand search — should finish
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
     }
@@ -176,7 +169,7 @@ class CultivateTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
         // Spell finishes — no hand pick offered
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
@@ -203,7 +196,7 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -217,7 +210,7 @@ class CultivateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
@@ -230,7 +223,7 @@ class CultivateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 

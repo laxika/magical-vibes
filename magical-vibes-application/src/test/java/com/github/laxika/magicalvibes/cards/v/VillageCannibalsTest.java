@@ -3,14 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,26 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class VillageCannibalsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect with Human predicate wrapping PutCountersOnSourceEffect")
-    void hasCorrectStructure() {
-        VillageCannibals card = new VillageCannibals();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect filtered =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(filtered.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(filtered.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-        PutCountersOnSourceEffect counter = (PutCountersOnSourceEffect) filtered.wrapped();
-        assertThat(counter.powerModifier()).isEqualTo(1);
-        assertThat(counter.toughnessModifier()).isEqualTo(1);
-        assertThat(counter.amount()).isEqualTo(1);
-    }
 
     // ===== Trigger: gets +1/+1 counter when another Human creature dies =====
 

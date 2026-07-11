@@ -1,40 +1,22 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionContext;
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategies;
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategy;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
-import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
-import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
-import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -62,18 +44,17 @@ class AiChoiceHandler {
     // ===== Card Choice (discard) =====
 
     void handleCardChoice(GameData gameData) {
-        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
-        if (cardChoice == null) {
+        if (!(gameData.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice)) {
             return;
         }
         UUID choicePlayerId = cardChoice.playerId();
-        Set<Integer> validIndices = cardChoice.validIndices();
+        List<Integer> validIndices = cardChoice.validIndices();
 
-        if (!aiPlayerId.equals(choicePlayerId)) {
+        if (!AiUtils.isRespondingFor(gameData, aiPlayerId, choicePlayerId)) {
             return;
         }
 
-        List<Card> hand = gameData.playerHands.get(aiPlayerId);
+        List<Card> hand = gameData.playerHands.get(choicePlayerId);
         if (hand == null || validIndices == null || validIndices.isEmpty()) {
             return;
         }
@@ -89,562 +70,100 @@ class AiChoiceHandler {
 
     // ===== Permanent Choice =====
 
+    /** Baseline permanent / any-target answer via {@code PermanentChoiceAiStrategy}. */
     void handlePermanentChoice(GameData gameData) {
-        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
-        if (permanentChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = permanentChoice.playerId();
-        Set<UUID> validIds = permanentChoice.validIds();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        List<Permanent> ownField = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
-
-        // Try opponent's best creature first
-        UUID best = opponentField.stream()
-                .filter(p -> validIds.contains(p.getId()))
-                .filter(p -> gameQueryService.isCreature(gameData, p))
-                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
-                .map(Permanent::getId)
-                .orElse(null);
-
-        if (best == null) {
-            best = opponentField.stream()
-                    .filter(p -> validIds.contains(p.getId()))
-                    .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                    .map(Permanent::getId)
-                    .orElse(null);
-        }
-
-        if (best == null) {
-            best = ownField.stream()
-                    .filter(p -> validIds.contains(p.getId()))
-                    .min(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                    .map(Permanent::getId)
-                    .orElse(validIds.iterator().next());
-        }
-
-        log.info("AI: Choosing permanent {} in game {}", best, gameId);
-        final UUID finalBest = best;
-        send(() -> gameActions.handlePermanentChosen(selfConnection, new PermanentChosenRequest(finalBest)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Multiple Permanent Choice =====
 
     void handleMultiPermanentChoice(GameData gameData) {
-        InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
-        if (multiPermanentChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = multiPermanentChoice.playerId();
-        Set<UUID> validIds = multiPermanentChoice.validIds();
-        int maxCount = multiPermanentChoice.maxCount();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-
-        List<UUID> chosen = opponentField.stream()
-                .filter(p -> validIds.contains(p.getId()))
-                .sorted(Comparator.comparingInt((Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed())
-                .limit(maxCount)
-                .map(Permanent::getId)
-                .toList();
-
-        if (chosen.isEmpty()) {
-            chosen = validIds.stream().limit(maxCount).toList();
-        }
-
-        log.info("AI: Choosing {} permanents in game {}", chosen.size(), gameId);
-        final List<UUID> finalChosen = chosen;
-        send(() -> gameActions.handleMultiplePermanentsChosen(selfConnection, new MultiplePermanentsChosenRequest(finalChosen)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Color Choice =====
 
+    /** Baseline color/list-choice answer via {@code ColorChoiceAiStrategy}; Hard AI's override falls back here. */
     void handleColorChoice(GameData gameData) {
-        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
-        if (colorChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = colorChoice.playerId();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.DrawReplacementChoice drc
-                && drc.kind() == DrawReplacementKind.ABUNDANCE) {
-            log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, "NONLAND")));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
-            String chosenKeyword = kgc.options().getFirst().name();
-            log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, chosenKeyword)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice) {
-            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-            List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-            String chosenName = opponentField.stream()
-                    .filter(p -> !p.getCard().getActivatedAbilities().isEmpty())
-                    .map(p -> p.getCard().getName())
-                    .findFirst()
-                    .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
-            log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
-            final String finalName = chosenName;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice) {
-            // For the reveal-top-card game: guess the top card of our library
-            List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
-            String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
-            log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
-            final String finalName = chosenName;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice) {
-            String chosenSubtype = "HUMAN";
-            log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
-            final String subtype = chosenSubtype;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, subtype)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice) {
-            String chosenType = "ISLAND";
-            log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
-            final String landType = chosenType;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
-            String chosenType = "ISLAND";
-            log.info("AI: Choosing basic land type to add {} in game {}", chosenType, gameId);
-            final String landType = chosenType;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
-            // AI names the best creature card from its own library to try to guess what was picked
-            List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
-            String chosenName = ownDeck.stream()
-                    .filter(c -> c.hasType(CardType.CREATURE))
-                    .max(java.util.Comparator.comparingInt(Card::getManaValue))
-                    .map(Card::getName)
-                    .orElse("Sphinx Ambassador");
-            log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
-            final String name = chosenName;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice) {
-            // Pick the permanent type with the most cards in our graveyard
-            List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of());
-            Map<CardType, Long> typeCounts = new HashMap<>();
-            for (CardType type : List.of(CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT, CardType.LAND, CardType.PLANESWALKER)) {
-                typeCounts.put(type, graveyard.stream().filter(c -> c.hasType(type)).count());
-            }
-            CardType bestType = typeCounts.entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse(CardType.CREATURE);
-            log.info("AI: Choosing permanent type {} in game {}", bestType.name(), gameId);
-            final String typeName = bestType.name();
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, typeName)));
-            return;
-        }
-
-        if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
-            UUID targetId = ctx.targetPlayerId();
-            List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
-            String chosenName = targetHand.stream()
-                    .filter(c -> !ctx.excludedTypes().contains(c.getType()))
-                    .map(Card::getName)
-                    .findFirst()
-                    .orElse("Lightning Bolt");
-            log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
-            final String name = chosenName;
-            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
-            return;
-        }
-
-        // Pick the color that appears most on opponent's battlefield
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-
-        int[] colorCounts = new int[CardColor.values().length];
-        for (Permanent perm : opponentField) {
-            CardColor color = perm.getCard().getColor();
-            if (color != null) {
-                colorCounts[color.ordinal()]++;
-            }
-        }
-
-        CardColor bestColor = CardColor.WHITE;
-        int bestCount = 0;
-        for (CardColor color : CardColor.values()) {
-            if (colorCounts[color.ordinal()] > bestCount) {
-                bestCount = colorCounts[color.ordinal()];
-                bestColor = color;
-            }
-        }
-
-        log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
-        final String colorName = bestColor.name();
-        send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, colorName)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== May Ability Choice =====
 
+    /** Baseline may-ability answer via {@code MayAbilityChoiceAiStrategy}; Hard AI's override falls back here. */
     void handleMayAbilityChoice(GameData gameData) {
-        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
-        if (mayAbilityChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = mayAbilityChoice.playerId();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        log.info("AI: Accepting may ability in game {}", gameId);
-        send(() -> gameActions.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
+        handleActiveInteraction(gameData);
     }
 
-    // ===== X Value Choice =====
+    // ===== Registry-managed interactions (per-kind strategies) =====
 
-    void handleXValueChoice(GameData gameData) {
-        InteractionContext.XValueChoice xValueChoice = gameData.interaction.xValueChoiceContext();
-        if (xValueChoice == null) {
+    /**
+     * Answers the active registry-managed interaction via its per-kind
+     * {@link AiInteractionStrategy}. No-ops when no strategy matches (e.g. the
+     * interaction kind has not been migrated yet).
+     */
+    void handleActiveInteraction(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active == null) {
             return;
         }
-        UUID choicePlayerId = xValueChoice.playerId();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
+        AiInteractionStrategy<PendingInteraction> strategy = AiInteractionStrategies.forInteraction(active);
+        if (strategy == null) {
             return;
         }
+        send(() -> strategy.answer(active, contextFor(gameData, aiPlayerId)));
 
-        int chosenValue = xValueChoice.maxValue();
-        log.info("AI: Choosing X={} for {} in game {}", chosenValue, xValueChoice.cardName(), gameId);
-        send(() -> gameActions.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
+        // Mindslaver: prompts for the controlled player's interactions are routed to
+        // the controlling player's connection, and the engine substitutes the acting
+        // player when the controller answers (GameService.resolveActingPlayer). So
+        // when this AI controls another player, also dispatch as that player — each
+        // strategy self-guards on the interaction's player id, so at most one of the
+        // two dispatches answers. The identity check skips this when the first
+        // dispatch already answered (a new interaction may have replaced it).
+        UUID controlledId = gameData.mindControlledPlayerId;
+        if (controlledId != null && aiPlayerId.equals(gameData.mindControllerPlayerId)
+                && gameData.interaction.activeInteraction() == active) {
+            send(() -> strategy.answer(active, contextFor(gameData, controlledId)));
+        }
+    }
+
+    private AiInteractionContext contextFor(GameData gameData, UUID actingPlayerId) {
+        return new AiInteractionContext(gameData, gameId, actingPlayerId, gameQueryService, gameActions, selfConnection);
     }
 
     // ===== Scry =====
 
+    /** Baseline scry answer via {@code ScryAiStrategy}; Hard AI's override falls back here. */
     void handleScry(GameData gameData) {
-        InteractionContext.Scry scryContext = gameData.interaction.scryContext();
-        if (scryContext == null) {
-            return;
-        }
-        UUID choicePlayerId = scryContext.playerId();
-        List<Card> cards = scryContext.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (cards == null || cards.isEmpty()) {
-            return;
-        }
-
-        // AI strategy: keep spells on top (sorted by mana value), put lands on bottom
-        List<Integer> topOrder = new ArrayList<>();
-        List<Integer> bottomOrder = new ArrayList<>();
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            if (card.hasType(CardType.LAND)) {
-                bottomOrder.add(i);
-            } else {
-                topOrder.add(i);
-            }
-        }
-
-        log.info("AI: Scry {} - keeping {} on top, {} on bottom in game {}", cards.size(), topOrder.size(), bottomOrder.size(), gameId);
-        send(() -> gameActions.handleScryCompleted(selfConnection, new ScryCompletedRequest(topOrder, bottomOrder)));
-    }
-
-    // ===== Reorder Cards =====
-
-    void handleReorderCards(GameData gameData) {
-        InteractionContext.LibraryReorder libraryReorder = gameData.interaction.libraryReorderContext();
-        if (libraryReorder == null) {
-            return;
-        }
-        UUID choicePlayerId = libraryReorder.playerId();
-        List<Card> cards = libraryReorder.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (cards == null || cards.isEmpty()) {
-            return;
-        }
-
-        // Put spells on top, lands on bottom; sort by mana value ascending
-        List<int[]> indexedCards = new ArrayList<>();
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            int priority = card.hasType(CardType.LAND) ? 1000 + i : card.getManaValue();
-            indexedCards.add(new int[]{i, priority});
-        }
-        indexedCards.sort(Comparator.comparingInt(a -> a[1]));
-
-        List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
-
-        log.info("AI: Reordering {} library cards in game {}", order.size(), gameId);
-        send(() -> gameActions.handleLibraryCardsReordered(selfConnection, new ReorderLibraryCardsRequest(order)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Library Search =====
 
+    /** Baseline library search answer via {@code LibrarySearchAiStrategy}. */
     void handleLibrarySearch(GameData gameData) {
-        InteractionContext.LibrarySearch librarySearch = gameData.interaction.librarySearchContext();
-        if (librarySearch == null) {
-            return;
-        }
-        UUID choicePlayerId = librarySearch.playerId();
-        List<Card> searchCards = librarySearch.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (searchCards == null || searchCards.isEmpty()) {
-            return;
-        }
-
-        // Pick highest value non-land, or first card
-        int bestIndex = 0;
-        int bestScore = -1;
-        for (int i = 0; i < searchCards.size(); i++) {
-            Card card = searchCards.get(i);
-            int score = card.hasType(CardType.LAND) ? card.getManaValue() : card.getManaValue() * 2 + 10;
-            if (score > bestScore) {
-                bestScore = score;
-                bestIndex = i;
-            }
-        }
-
-        log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), gameId);
-        final int idx = bestIndex;
-        send(() -> gameActions.handleLibraryCardChosen(selfConnection, new LibraryCardChosenRequest(idx)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Graveyard Choice =====
 
+    /** Baseline graveyard answer via {@code GraveyardChoiceAiStrategy} / {@code GraveyardExileCostChoiceAiStrategy}. */
     void handleGraveyardChoice(GameData gameData) {
-        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
-        if (graveyardChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = graveyardChoice.playerId();
-        Set<Integer> validIndices = graveyardChoice.validIndices();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIndices == null || validIndices.isEmpty()) {
-            return;
-        }
-
-        List<Card> graveyard = graveyardChoice.cardPool();
-        if (graveyard == null) {
-            graveyard = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of());
-        }
-
-        final List<Card> gy = graveyard;
-        int bestIndex = validIndices.stream()
-                .max(Comparator.comparingInt(i -> i < gy.size() ? gy.get(i).getManaValue() : 0))
-                .orElse(validIndices.iterator().next());
-
-        log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleGraveyardCardChosen(selfConnection, new GraveyardCardChosenRequest(bestIndex)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Multi-Graveyard Choice =====
 
+    /** All multi-card wire answers are registry-managed (KP / MoF / multi-zone exile / multi-graveyard / library reveal). */
     void handleMultiCardChoice(GameData gameData) {
-        // Knowledge Pool cast choice
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
-            InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
-            if (kpc != null && aiPlayerId.equals(kpc.playerId())) {
-                List<UUID> chosen = kpc.validCardIds().stream().limit(1).toList();
-                log.info("AI: Choosing card from Knowledge Pool in game {}", gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-            return;
-        }
-
-        // Mirror of Fate choice
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
-            InteractionContext.MirrorOfFateChoice mfc = gameData.interaction.mirrorOfFateChoiceContext();
-            if (mfc != null && aiPlayerId.equals(mfc.playerId())) {
-                List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
-                log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-            return;
-        }
-
-        // Multi-zone exile choice (Memoricide, etc.)
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
-            InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();
-            if (mzec != null && aiPlayerId.equals(mzec.playerId())) {
-                List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
-                log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), mzec.cardName(), gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-            return;
-        }
-
-        // Library reveal choice (Lead the Stampede, Commune with Nature, Sword-Point Diplomacy, etc.)
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
-            InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
-            if (lrc != null && aiPlayerId.equals(lrc.playerId())) {
-                List<UUID> chosen;
-                if (lrc.lifeCostPerSelection() > 0) {
-                    // Punisher reveal (e.g. Sword-Point Diplomacy): selecting cards costs life.
-                    // AI denies nothing to avoid paying life.
-                    chosen = List.of();
-                    log.info("AI: Denying 0 revealed cards (punisher reveal, {} life each) in game {}",
-                            lrc.lifeCostPerSelection(), gameId);
-                } else {
-                    chosen = new ArrayList<>(lrc.validCardIds());
-                    log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
-                }
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-            return;
-        }
-
-        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
-        if (multiGraveyardChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = multiGraveyardChoice.playerId();
-        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
-        int maxCount = multiGraveyardChoice.maxCount();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        List<UUID> chosen = validIds.stream().limit(maxCount).toList();
-
-        log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
-        send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-    }
-
-    // ===== Hand Top/Bottom Choice =====
-
-    void handleHandTopBottom(GameData gameData) {
-        InteractionContext.HandTopBottomChoice handTopBottomChoice = gameData.interaction.handTopBottomChoiceContext();
-        if (handTopBottomChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = handTopBottomChoice.playerId();
-        List<Card> cards = handTopBottomChoice.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (cards == null || cards.size() < 2) {
-            return;
-        }
-
-        int handCardIndex = 0;
-        int topCardIndex = 1;
-
-        Card card0 = cards.get(0);
-        Card card1 = cards.get(1);
-
-        boolean card0IsLand = card0.hasType(CardType.LAND);
-        boolean card1IsLand = card1.hasType(CardType.LAND);
-
-        if (card0IsLand && !card1IsLand) {
-            handCardIndex = 1;
-            topCardIndex = 0;
-        } else if (!card0IsLand && card1IsLand) {
-            handCardIndex = 0;
-            topCardIndex = 1;
-        } else {
-            if (card1.getManaValue() > card0.getManaValue()) {
-                handCardIndex = 1;
-                topCardIndex = 0;
-            }
-        }
-
-        log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, gameId);
-        final int h = handCardIndex;
-        final int t = topCardIndex;
-        send(() -> gameActions.handleHandTopBottomChosen(selfConnection, new HandTopBottomChosenRequest(h, t)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Revealed Hand Choice =====
 
+    /** Baseline revealed-hand answer via {@code RevealedHandChoiceAiStrategy}. */
     void handleRevealedHandChoice(GameData gameData) {
-        InteractionContext.RevealedHandChoice revealedHandChoice = gameData.interaction.revealedHandChoiceContext();
-        if (revealedHandChoice == null) {
-            return;
-        }
-        UUID choosingPlayerId = revealedHandChoice.choosingPlayerId();
-
-        if (!aiPlayerId.equals(choosingPlayerId)) {
-            return;
-        }
-
-        UUID targetPlayerId = revealedHandChoice.targetPlayerId();
-        if (targetPlayerId == null) {
-            return;
-        }
-
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        Set<Integer> validIndices = revealedHandChoice.validIndices();
-        if (targetHand == null || validIndices == null || validIndices.isEmpty()) {
-            return;
-        }
-
-        int bestIndex = validIndices.stream()
-                .max(Comparator.comparingInt(i -> targetHand.get(i).getManaValue()))
-                .orElse(validIndices.iterator().next());
-
-        log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Bottom Cards (mulligan) =====
@@ -690,52 +209,9 @@ class AiChoiceHandler {
 
     // ===== Combat Damage Assignment =====
 
+    /** Baseline combat damage assignment via {@code CombatDamageAssignmentAiStrategy}. */
     void handleCombatDamageAssignment(GameData gameData) {
-        InteractionContext.CombatDamageAssignment cda;
-        synchronized (gameData) {
-            cda = gameData.interaction.combatDamageAssignmentContext();
-        }
-        if (cda == null || !aiPlayerId.equals(cda.playerId())) {
-            log.warn("AI: No combat damage assignment context for player {} in game {} (cda={})",
-                    aiPlayerId, gameId, cda);
-            return;
-        }
-
-        int atkIdx = cda.attackerIndex();
-        int totalDamage = cda.totalDamage();
-        var targets = cda.validTargets();
-
-        Map<String, Integer> assignments = new HashMap<>();
-        int remaining = totalDamage;
-
-        for (var target : targets) {
-            if (target.isPlayer()) continue;
-            int lethal = target.effectiveToughness() - target.currentDamage();
-            int dmg = Math.min(remaining, lethal);
-            if (dmg > 0) {
-                assignments.put(target.id().toString(), dmg);
-                remaining -= dmg;
-            }
-        }
-
-        if (remaining > 0) {
-            for (var target : targets) {
-                if (target.isPlayer()) {
-                    assignments.put(target.id().toString(), remaining);
-                    remaining = 0;
-                    break;
-                }
-            }
-        }
-
-        if (remaining > 0 && !targets.isEmpty()) {
-            var firstBlocker = targets.stream().filter(t -> !t.isPlayer()).findFirst().orElse(targets.get(0));
-            assignments.merge(firstBlocker.id().toString(), remaining, Integer::sum);
-        }
-
-        log.info("AI: Assigning combat damage for attacker {} in game {}: {}", atkIdx, gameId, assignments);
-        send(() -> gameActions.handleCombatDamageAssigned(selfConnection,
-                new CombatDamageAssignedRequest(atkIdx, assignments)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Internal =====

@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,35 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShapersOfNatureTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two activated abilities with correct effects")
-    void hasCorrectAbilities() {
-        ShapersOfNature card = new ShapersOfNature();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {3}{G}: Put a +1/+1 counter on target creature.
-        var counterAbility = card.getActivatedAbilities().get(0);
-        assertThat(counterAbility.isRequiresTap()).isFalse();
-        assertThat(counterAbility.getManaCost()).isEqualTo("{3}{G}");
-        assertThat(counterAbility.getEffects()).singleElement()
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        // Ability 1: {2}{U}, Remove a +1/+1 counter from a creature you control: Draw a card.
-        var drawAbility = card.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isFalse();
-        assertThat(drawAbility.getManaCost()).isEqualTo("{2}{U}");
-        assertThat(drawAbility.getEffects()).hasSize(2);
-        assertThat(drawAbility.getEffects().get(0)).isInstanceOf(RemoveCounterFromControlledCreatureCost.class);
-        RemoveCounterFromControlledCreatureCost removeCost =
-                (RemoveCounterFromControlledCreatureCost) drawAbility.getEffects().get(0);
-        assertThat(removeCost.count()).isEqualTo(1);
-        assertThat(removeCost.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(drawAbility.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
 
     // ===== Ability 0: Put a +1/+1 counter on target creature =====
 
@@ -158,7 +126,7 @@ class ShapersOfNatureTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test

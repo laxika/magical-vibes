@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,7 @@ public class GuardiansOfKoilos extends Card {
                 "Target must be another historic permanent you control"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new MayEffect(new ReturnTargetPermanentToHandEffect(),
+                        new MayEffect(ReturnToHandEffect.target(),
                                 "Return target historic permanent to its owner's hand?"));
     }
 }

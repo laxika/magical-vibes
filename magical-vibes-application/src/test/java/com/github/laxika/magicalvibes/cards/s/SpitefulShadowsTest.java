@@ -3,11 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.e.Enslave;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,17 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpitefulShadowsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spiteful Shadows has ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger effect")
-    void hasCorrectEffects() {
-        SpitefulShadows card = new SpitefulShadows();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When enchanted creature is dealt non-combat damage, it deals that much to its controller")

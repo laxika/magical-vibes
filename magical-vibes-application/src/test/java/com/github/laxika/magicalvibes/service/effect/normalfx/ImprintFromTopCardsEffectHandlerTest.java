@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,8 +15,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ImprintFromTopCardsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,8 +75,10 @@ class ImprintFromTopCardsEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, exileService, libraryRevealSupport);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, exileService, libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -116,7 +117,7 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("library is empty")));
             }
@@ -133,7 +134,7 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 verify(exileService).exileCard(gd, player1Id, singleCard);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -171,8 +172,8 @@ class ImprintFromTopCardsEffectHandlerTest {
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

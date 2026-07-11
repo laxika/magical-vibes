@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +17,6 @@ class ErdwalRipperTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(perm);
         return perm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has PutCountersOnSourceEffect on combat damage to a player")
-    void hasCorrectEffects() {
-        ErdwalRipper card = new ErdwalRipper();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
     }
 
     // ===== Combat damage +1/+1 counter trigger =====

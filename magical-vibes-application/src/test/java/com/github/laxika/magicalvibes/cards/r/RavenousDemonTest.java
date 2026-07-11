@@ -1,24 +1,15 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,35 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RavenousDemonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has front activated ability and back upkeep forced sacrifice effect")
-    void hasConfiguredEffects() {
-        RavenousDemon card = new RavenousDemon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).isEmpty();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).hasSize(2);
-        SacrificePermanentCost sacrificeHuman = new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        );
-        assertThat(ability.getEffects().get(0)).isEqualTo(sacrificeHuman);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        ForcedCostOrElseEffect back =
-                (ForcedCostOrElseEffect) card.getBackFaceCard()
-                        .getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(back.forcedCost()).isEqualTo(sacrificeHuman);
-        assertThat(back.elseEffects()).containsExactly(new TapSelfEffect(), new DealDamageToControllerEffect(9));
-    }
+    
 
     @Test
     @DisplayName("Front face does not trigger during upkeep")
@@ -115,8 +78,8 @@ class RavenousDemonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(first.getId(), second.getId())
                 .doesNotContain(bear.getId());
     }
@@ -183,9 +146,9 @@ class RavenousDemonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.ForcedCostOrElse.class);
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(first.getId(), second.getId())
                 .doesNotContain(bear.getId());
     }

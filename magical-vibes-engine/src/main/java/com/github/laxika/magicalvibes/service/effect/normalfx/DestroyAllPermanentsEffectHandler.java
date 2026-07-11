@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +36,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
 
                 gameData.forEachBattlefield((playerId, battlefield) -> {
                     for (Permanent perm : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                             toDestroy.add(perm);
                         }
                     }

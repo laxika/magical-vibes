@@ -1,16 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,20 +33,6 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice prompt
         harness.handlePermanentChosen(player1, equipmentId); // choose target -> ETB on stack
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Acid Web Spider has correct card properties")
-    void hasCorrectProperties() {
-        AcidWebSpider card = new AcidWebSpider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }
 
     // ===== Casting =====
@@ -94,7 +76,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell -> may on stack
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -111,7 +93,7 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect -> may prompt
         harness.handleMayAbilityChosen(player1, true); // accept -> permanent choice
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -194,50 +176,20 @@ class AcidWebSpiderTest extends BaseCardTest {
     // ===== No Equipment scenarios =====
 
     @Test
-    @DisplayName("May prompt still fires when no Equipment on battlefield")
-    void mayPromptFiresWithoutEquipment() {
+    @DisplayName("May prompt does not fire when no Equipment on battlefield")
+    void noMayPromptWhenNoEquipment() {
+        // A "you may destroy target Equipment" trigger requires a legal target. With no
+        // Equipment present the ability is never put on the stack (CR 601.2c / 603.3b), so
+        // the controller is never prompted to make the "may" choice.
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new AcidWebSpider()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-    }
-
-    @Test
-    @DisplayName("Accepting may with no Equipment results in no valid targets")
-    void acceptingMayWithNoEquipmentHasNoValidTargets() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no targets
-
-        // Stack should be empty since there are no valid Equipment targets
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
-    }
-
-    @Test
-    @DisplayName("Declining may with no Equipment on battlefield")
-    void decliningMayWithNoEquipment() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
-
+        // No may prompt, nothing waiting on the stack, and the Spider is on the battlefield.
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));

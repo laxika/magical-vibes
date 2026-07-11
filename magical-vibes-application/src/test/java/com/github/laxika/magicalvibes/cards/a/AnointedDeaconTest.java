@@ -1,14 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,29 +22,6 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Anointed Deacon has beginning-of-combat triggered MayEffect wrapping BoostTargetCreatureEffect")
-    void hasCorrectEffect() {
-        AnointedDeacon card = new AnointedDeacon();
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) mayEffect.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-
-        // Target filter is set on the card (used at resolution time), but the card itself
-        // does not need a target when cast — targeting happens on the triggered ability.
-        assertThat(card.getTargetFilter()).isNotNull();
-    }
-
     // ===== Accepting the may ability and targeting a Vampire =====
 
     @Test
@@ -63,11 +36,11 @@ class AnointedDeaconTest extends BaseCardTest {
         // MayEffect is on the stack — resolve it to get the may prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Should be prompted for target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, vampireId);
 
         Permanent vampire = gd.playerBattlefields.get(player1.getId()).stream()

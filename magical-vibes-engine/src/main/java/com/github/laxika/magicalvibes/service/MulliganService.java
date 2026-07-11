@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.PendingKarnRestart;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -198,10 +199,14 @@ public class MulliganService {
         // Per ruling: "After the pregame procedure is complete but before the new game's
         // first turn, Karn's ability finishes resolving and the cards left in exile are
         // put onto the battlefield."
-        if (gameData.pendingKarnRestartCards != null && !gameData.pendingKarnRestartCards.isEmpty()) {
-            UUID controllerId = gameData.karnRestartControllerId;
+        PendingKarnRestart karnRestart = gameData.peekPendingInteraction(PendingKarnRestart.class);
+        if (karnRestart != null && !karnRestart.cards().isEmpty()) {
+            UUID controllerId = karnRestart.controllerId();
             String controllerName = gameData.playerIdToName.get(controllerId);
-            for (Card card : gameData.pendingKarnRestartCards) {
+            for (Card card : karnRestart.cards()) {
+                // The card changes zones: it must leave exile as it hits the battlefield,
+                // or it would exist in both zones at once
+                gameData.removeFromExile(card.getId());
                 Permanent perm = new Permanent(card);
                 perm.setSummoningSick(false);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
@@ -221,8 +226,7 @@ public class MulliganService {
                         gameData.id, controllerName, card.getName());
             }
         }
-        gameData.pendingKarnRestartCards = null;
-        gameData.karnRestartControllerId = null;
+        gameData.clearPendingInteractions(PendingKarnRestart.class);
 
         gameData.status = GameStatus.RUNNING;
         gameData.activePlayerId = gameData.startingPlayerId;

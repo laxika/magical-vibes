@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
+import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
+import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,6 +31,9 @@ public class PhyrexianIngester extends Card {
                         new ExileTargetPermanentAndImprintEffect(),
                         "Exile target nontoken creature?"
                 ));
-        addEffect(EffectSlot.STATIC, new BoostSelfByImprintedCreaturePTEffect());
+        // Phyrexian Ingester gets +X/+Y, where X is the exiled creature card's power
+        // and Y is its toughness.
+        addEffect(EffectSlot.STATIC, new BoostSelfEffect(
+                new ImprintedCreaturePower(), new ImprintedCreatureToughness()));
     }
 }

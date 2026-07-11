@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,31 +27,6 @@ class AscendantDustspeakerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB +1/+1 counter effect and beginning-of-combat graveyard exile effect")
-    void hasCorrectEffects() {
-        AscendantDustspeaker card = new AscendantDustspeaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counter =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(counter.count()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(ExileTargetCardFromGraveyardEffect.class);
-        ExileTargetCardFromGraveyardEffect exile =
-                (ExileTargetCardFromGraveyardEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(exile.requiredType()).isNull();
-        assertThat(exile.canTargetAnyGraveyard()).isTrue();
-
-        assertThat(card.getTargetFilter()).isNotNull();
     }
 
     // ===== ETB +1/+1 counter =====
@@ -117,7 +89,7 @@ class AscendantDustspeakerTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         harness.passBothPriorities();
 

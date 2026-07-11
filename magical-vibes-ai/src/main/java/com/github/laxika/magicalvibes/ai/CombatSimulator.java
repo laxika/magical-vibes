@@ -11,13 +11,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,9 +39,11 @@ public class CombatSimulator {
     private static final int DEFENSIVE_PENALTY_LIFE_THRESHOLD = 15;
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     public CombatSimulator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
     }
@@ -1164,7 +1165,7 @@ public class CombatSimulator {
         // controller — they will be returned at end of turn regardless. Treat their combat loss
         // value as 0 so the AI doesn't incorrectly avoid attacking with them out of fear of
         // "losing" a creature that was never truly theirs to keep.
-        boolean isStolenUntilEndOfTurn = gameData.untilEndOfTurnStolenCreatures.contains(perm.getId());
+        boolean isStolenUntilEndOfTurn = gameData.isStolenUntilEndOfTurn(perm.getId());
         double score = isStolenUntilEndOfTurn ? 0
                 : boardEvaluator.creatureScore(gameData, perm, controllerId, opponentId);
 
@@ -1218,7 +1219,7 @@ public class CombatSimulator {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
                 boolean defenderMatches = defenderBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (defenderMatches) {
                     return true;
                 }

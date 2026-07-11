@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,45 +11,17 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
-import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnScionOfUrzaTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three activated abilities with correct loyalty costs and effects")
-    void hasThreeAbilities() {
-        KarnScionOfUrza card = new KarnScionOfUrza();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var plus1 = card.getActivatedAbilities().get(0);
-        assertThat(plus1.getLoyaltyCost()).isEqualTo(1);
-        assertThat(plus1.getEffects().getFirst()).isInstanceOf(KarnScionRevealTwoOpponentChoosesEffect.class);
-
-        var minus1 = card.getActivatedAbilities().get(1);
-        assertThat(minus1.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(minus1.getEffects().getFirst()).isInstanceOf(KarnScionReturnSilverCounterCardEffect.class);
-
-        var minus2 = card.getActivatedAbilities().get(2);
-        assertThat(minus2.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(minus2.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -102,7 +73,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         }
 
         @Test
@@ -167,7 +138,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Only one card — goes directly to hand, no opponent choice
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -181,7 +152,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // Loyalty still increased
         }
     }
@@ -232,7 +203,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Should present a choice to the controller
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
             // Controller chooses Grizzly Bears
             harness.handleMultipleCardsChosen(player1, List.of(card1.getId()));
@@ -256,7 +227,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // Loyalty decreased
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test

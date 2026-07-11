@@ -6,13 +6,15 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "77")
 public class BlessingOfBelzenlok extends Card {
 
     public BlessingOfBelzenlok() {
         addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(2, 1));
-        addEffect(EffectSlot.SPELL, new GrantKeywordToTargetIfSupertypeEffect(Keyword.LIFELINK, CardSupertype.LEGENDARY));
+        addEffect(EffectSlot.SPELL, GrantKeywordEffect.toTargetIf(
+                Keyword.LIFELINK, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
     }
 }

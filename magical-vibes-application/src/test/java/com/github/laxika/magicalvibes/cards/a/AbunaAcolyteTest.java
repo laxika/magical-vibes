@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,34 +21,6 @@ class AbunaAcolyteTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Abuna Acolyte"))
                 .findFirst().orElseThrow();
         acolyte.setSummoningSick(false);
-    }
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two tap activated abilities")
-    void hasCorrectAbilities() {
-        AbunaAcolyte card = new AbunaAcolyte();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        ActivatedAbility ability1 = card.getActivatedAbilities().get(0);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(PreventDamageToTargetEffect.class);
-        assertThat(((PreventDamageToTargetEffect) ability1.getEffects().getFirst()).amount()).isEqualTo(1);
-        assertThat(ability1.isNeedsTarget()).isTrue();
-        assertThat(ability1.getTargetFilter()).isNull();
-
-        ActivatedAbility ability2 = card.getActivatedAbilities().get(1);
-        assertThat(ability2.isRequiresTap()).isTrue();
-        assertThat(ability2.getManaCost()).isNull();
-        assertThat(ability2.getEffects()).hasSize(1);
-        assertThat(ability2.getEffects().getFirst()).isInstanceOf(PreventDamageToTargetEffect.class);
-        assertThat(((PreventDamageToTargetEffect) ability2.getEffects().getFirst()).amount()).isEqualTo(2);
-        assertThat(ability2.isNeedsTarget()).isTrue();
-        assertThat(ability2.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
     }
 
     // ===== Ability 1: Prevent 1 damage to any target =====

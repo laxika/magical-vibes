@@ -4,19 +4,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -29,7 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -47,17 +48,19 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class DeathTriggerCollectorServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -231,8 +234,8 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(4);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(4));
         }
 
         @Test
@@ -245,8 +248,8 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(3);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(3));
         }
 
         @Test
@@ -260,8 +263,8 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
 
         @Test
@@ -275,8 +278,8 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
     }
 
@@ -299,16 +302,16 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Targeting MayEffect goes to pendingDeathTriggerTargets (CR 603.3d)")
+        @DisplayName("Targeting MayEffect queues a DeathTriggerTarget interaction (CR 603.3d)")
         void targetingGoesToPendingTargets() {
             Card card = createCreature("Targeted May", 2, 2);
-            var may = new MayEffect(new TargetPlayerLosesLifeEffect(3), "Drain?");
+            var may = new MayEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), "Drain?");
             Permanent perm = new Permanent(card);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
             svc.handleDeathMayEffect(match(perm, PLAYER1_ID, may), may, ctx);
 
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
             assertThat(gd.stack).isEmpty();
         }
     }
@@ -345,7 +348,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
     }
 
@@ -420,7 +423,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -543,7 +546,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent auraPerm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
 
-            when(gameQueryService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
 
             assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -561,7 +564,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent auraPerm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
 
-            when(gameQueryService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
 
             assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -624,7 +627,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("DealDamage effect sets target to artifact controller")
         void dealDamageSetsTarget() {
             Card watcher = createArtifact("Damage Watcher");
-            var effect = new DealDamageToTriggeringPermanentControllerEffect(1);
+            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
 
@@ -736,7 +739,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
     }
 

@@ -12,9 +12,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -22,6 +20,7 @@ import java.util.stream.Collectors;
 public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,10 +60,12 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
         }
 
         // Multiple cards — let the controller choose
-        gameData.pendingKarnScionReturnFromExile = true;
-        Set<UUID> validIds = silverCards.stream().map(Card::getId).collect(Collectors.toSet());
-        gameData.interaction.beginLibraryRevealChoice(controllerId, new ArrayList<>(silverCards), validIds,
-                false, true, false);
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn());
+        List<UUID> validIds = silverCards.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                controllerId, new ArrayList<>(silverCards), validIds,
+                false, true, false, false, 0, null, 1,
+                "Choose a card with a silver counter to return to your hand."));
 
         gameBroadcastService.broadcastGameState(gameData);
 

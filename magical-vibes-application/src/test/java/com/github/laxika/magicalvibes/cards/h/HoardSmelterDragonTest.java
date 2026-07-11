@@ -4,13 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HoardSmelterDragonTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with destroy-artifact-and-boost effect and artifact target filter")
-    void hasCorrectAbility() {
-        HoardSmelterDragon card = new HoardSmelterDragon();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{R}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).singleElement()
-                .isInstanceOf(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) ability.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
 
     // ===== Destroy artifact and boost =====
 

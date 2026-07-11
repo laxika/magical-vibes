@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GiveEachPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,21 +10,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class IchorRatsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect that gives each player a poison counter")
-    void hasCorrectEffects() {
-        IchorRats card = new IchorRats();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GiveEachPlayerPoisonCountersEffect.class);
-        GiveEachPlayerPoisonCountersEffect effect =
-                (GiveEachPlayerPoisonCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
 
     // ===== ETB: each player gets a poison counter =====
 

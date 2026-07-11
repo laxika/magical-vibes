@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -25,7 +25,7 @@ public class OathOfTeferi extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another permanent you control"
-        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ExileTargetPermanentAndReturnAtEndStepEffect());
+        )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, FlickerEffect.exileTargetReturnAtEndStep());
 
         // You may activate the loyalty abilities of planeswalkers you control twice each turn
         // rather than only once.

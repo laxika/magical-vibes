@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,31 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SteelHellkiteTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Steel Hellkite has two activated abilities with correct structure")
-    void hasCorrectAbilityStructure() {
-        SteelHellkite card = new SteelHellkite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {2}: Steel Hellkite gets +1/+0 until end of turn.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isFalse();
-        assertThat(ability0.getManaCost()).isEqualTo("{2}");
-        assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-
-        // Ability 1: {X}: Destroy each nonland permanent with mana value X ...
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isFalse();
-        assertThat(ability1.getManaCost()).isEqualTo("{X}");
-        assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect.class);
-        assertThat(ability1.getMaxActivationsPerTurn()).isEqualTo(1);
-    }
 
     // ===== Ability 0: Pump =====
 

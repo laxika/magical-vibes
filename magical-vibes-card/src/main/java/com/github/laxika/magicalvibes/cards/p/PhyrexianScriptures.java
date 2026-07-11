@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +32,7 @@ public class PhyrexianScriptures extends Card {
     public PhyrexianScriptures() {
         // Chapter I: Put a +1/+1 counter on up to one target creature.
         // That creature becomes an artifact in addition to its other types (permanently).
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new PutPlusOnePlusOneCounterOnTargetCreatureEffect(1));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
 
         // Chapter II: Destroy all nonartifact creatures
@@ -42,6 +44,6 @@ public class PhyrexianScriptures extends Card {
         ));
 
         // Chapter III: Exile all opponents' graveyards
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileAllOpponentsGraveyardsEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));
     }
 }

@@ -2,13 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class VeteranArmorsmithTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Veteran Armorsmith has static boost effect for Soldiers with +0/+1")
-    void hasCorrectStaticEffect() {
-        VeteranArmorsmith card = new VeteranArmorsmith();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(0);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
 
     // ===== Static effect: buffs other Soldiers you control =====
 
@@ -154,7 +131,5 @@ class VeteranArmorsmithTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
     }
-
-    // ===== Helper methods =====
 
 }

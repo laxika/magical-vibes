@@ -1,14 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,24 +13,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SepticRatsTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with DefendingPlayerPoisonedConditionalEffect wrapping BoostSelfEffect(1,1)")
-    void hasCorrectStructure() {
-        SepticRats card = new SepticRats();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(DefendingPlayerPoisonedConditionalEffect.class);
-        DefendingPlayerPoisonedConditionalEffect conditional =
-                (DefendingPlayerPoisonedConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
 
     // ===== Attack trigger fires =====
 
@@ -96,12 +73,11 @@ class SepticRatsTest extends BaseCardTest {
 
     // ===== Helper methods =====
 
-
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

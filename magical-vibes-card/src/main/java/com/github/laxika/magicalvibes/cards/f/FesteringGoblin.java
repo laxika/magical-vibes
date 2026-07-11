@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "143")
+@CardRegistration(set = "9ED", collectorNumber = "130")
 public class FesteringGoblin extends Card {
 
     public FesteringGoblin() {

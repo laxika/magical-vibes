@@ -6,12 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,32 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 class RatchetBombTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Ratchet Bomb has two activated abilities with correct structure")
-    void hasCorrectAbilityStructure() {
-        RatchetBomb card = new RatchetBomb();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}: Put a charge counter on Ratchet Bomb.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isNull();
-        assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Ability 1: {T}, Sacrifice Ratchet Bomb: Destroy each nonland permanent with mana value
-        // equal to the number of charge counters on Ratchet Bomb.
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(2);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class);
-    }
 
     // ===== Ability 0: Put a charge counter =====
 

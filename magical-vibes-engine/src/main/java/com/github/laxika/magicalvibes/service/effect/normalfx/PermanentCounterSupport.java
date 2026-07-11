@@ -3,16 +3,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -34,6 +36,7 @@ import java.util.UUID;
 public class PermanentCounterSupport {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -116,7 +119,7 @@ public class PermanentCounterSupport {
     }
 
     public void resolveCounterOnOwnPermanent(GameData gameData, StackEntry entry,
-                                            PutCounterOnTargetPermanentEffect effect) {
+                                            CounterType counterType, int count, PermanentPredicate predicate) {
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
@@ -127,7 +130,7 @@ public class PermanentCounterSupport {
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(p, effect.predicate(), filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext)) {
                 eligibleIds.add(p.getId());
             }
         }
@@ -142,16 +145,14 @@ public class PermanentCounterSupport {
         if (eligibleIds.size() == 1) {
             Permanent target = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
             if (target != null && !gameQueryService.cantHaveCounters(gameData, target)) {
-                placeCounterOnPermanent(gameData, entry, target, effect.counterType(), effect.count());
+                placeCounterOnPermanent(gameData, entry, target, counterType, count);
             }
         } else {
             // Multiple eligible — controller must choose one
-            gameData.pendingOwnPermanentCounterPlacement = true;
-            gameData.pendingOwnPermanentCounterType = effect.counterType();
-            gameData.pendingOwnPermanentCounterCount = effect.count();
-            String counterName = counterTypeName(effect.counterType());
+            String counterName = counterTypeName(counterType);
             playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
-                    1, "Choose a permanent to put " + effect.count() + " " + counterName + " counter(s) on.");
+                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(counterType, count),
+                    "Choose a permanent to put " + count + " " + counterName + " counter(s) on.");
         }
     }
 
@@ -177,12 +178,15 @@ public class PermanentCounterSupport {
                 yield "-1/-1";
             }
             case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
+            case HOOFPRINT -> { target.setCounterCount(CounterType.HOOFPRINT, target.getCounterCount(CounterType.HOOFPRINT) + count); yield "hoofprint"; }
             case STUDY -> { target.setCounterCount(CounterType.STUDY, target.getCounterCount(CounterType.STUDY) + count); yield "study"; }
             case WISH -> { target.setCounterCount(CounterType.WISH, target.getCounterCount(CounterType.WISH) + count); yield "wish"; }
             case SLIME -> { target.setCounterCount(CounterType.SLIME, target.getCounterCount(CounterType.SLIME) + count); yield "slime"; }
             case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
             case EYEBALL -> { target.setCounterCount(CounterType.EYEBALL, target.getCounterCount(CounterType.EYEBALL) + count); yield "eyeball"; }
             case GROWTH -> { target.setCounterCount(CounterType.GROWTH, target.getCounterCount(CounterType.GROWTH) + count); yield "growth"; }
+            case PAGE -> { target.setCounterCount(CounterType.PAGE, target.getCounterCount(CounterType.PAGE) + count); yield "page"; }
+            case STUN -> { target.setCounterCount(CounterType.STUN, target.getCounterCount(CounterType.STUN) + count); yield "stun"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;
@@ -253,7 +257,7 @@ public class PermanentCounterSupport {
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
-    private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
+    void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {

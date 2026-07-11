@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,25 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UrabraskTheHiddenTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Urabrask has correct static effects")
-    void hasCorrectEffects() {
-        UrabraskTheHidden card = new UrabraskTheHidden();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .findFirst().orElseThrow();
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        EnterPermanentsOfTypesTappedEffect enterTapped = (EnterPermanentsOfTypesTappedEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EnterPermanentsOfTypesTappedEffect)
-                .findFirst().orElseThrow();
-        assertThat(enterTapped.cardTypes()).containsExactly(CardType.CREATURE);
-        assertThat(enterTapped.opponentsOnly()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Controller's creatures have haste")

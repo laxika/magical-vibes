@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -8,11 +9,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -22,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -30,12 +31,15 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
-import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -70,8 +74,11 @@ public abstract class AiDecisionEngine {
     protected final GameRegistry gameRegistry;
     protected final AiGameActions gameActions;
     protected final GameQueryService gameQueryService;
+    protected final PredicateEvaluationService predicateEvaluationService;
     protected final CombatAttackService combatAttackService;
     protected final GameBroadcastService gameBroadcastService;
+    protected final CastingCostService castingCostService;
+    protected final CastingPermissionService castingPermissionService;
 
     protected final AiManaManager manaManager;
     protected final AiTargetSelector targetSelector;
@@ -83,11 +90,14 @@ public abstract class AiDecisionEngine {
                             GameService gameService, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
                             GameBroadcastService gameBroadcastService,
+                            CastingCostService castingCostService,
+                            CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
@@ -95,6 +105,8 @@ public abstract class AiDecisionEngine {
                             AiGameActions gameActions, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
                             GameBroadcastService gameBroadcastService,
+                            CastingCostService castingCostService,
+                            CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
         this.gameId = gameId;
@@ -102,8 +114,11 @@ public abstract class AiDecisionEngine {
         this.gameRegistry = gameRegistry;
         this.gameActions = gameActions;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
+        this.castingCostService = castingCostService;
+        this.castingPermissionService = castingPermissionService;
 
         this.manaManager = new AiManaManager(gameQueryService);
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
@@ -136,13 +151,13 @@ public abstract class AiDecisionEngine {
             case "CHOOSE_MULTIPLE_PERMANENTS" -> choiceHandler.handleMultiPermanentChoice(gameData);
             case "CHOOSE_FROM_LIST" -> handleListChoice(gameData);
             case "MAY_ABILITY_CHOICE" -> handleMayAbilityChoice(gameData);
-            case "X_VALUE_CHOICE" -> choiceHandler.handleXValueChoice(gameData);
+            case "X_VALUE_CHOICE" -> choiceHandler.handleActiveInteraction(gameData);
             case "SCRY" -> handleScry(gameData);
-            case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleReorderCards(gameData);
+            case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleActiveInteraction(gameData);
             case "CHOOSE_CARD_FROM_LIBRARY" -> choiceHandler.handleLibrarySearch(gameData);
             case "CHOOSE_CARD_FROM_GRAVEYARD" -> choiceHandler.handleGraveyardChoice(gameData);
             case "CHOOSE_MULTIPLE_CARDS" -> choiceHandler.handleMultiCardChoice(gameData);
-            case "CHOOSE_HAND_TOP_BOTTOM" -> choiceHandler.handleHandTopBottom(gameData);
+            case "CHOOSE_HAND_TOP_BOTTOM" -> choiceHandler.handleActiveInteraction(gameData);
             case "CHOOSE_FROM_REVEALED_HAND" -> choiceHandler.handleRevealedHandChoice(gameData);
             case "COMBAT_DAMAGE_ASSIGNMENT" -> choiceHandler.handleCombatDamageAssignment(gameData);
             case "GAME_OVER" -> log.info("AI: Game {} is over", gameId);
@@ -226,7 +241,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tryPlayLand(GameData gameData) {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(aiPlayer.getId(), 0);
-        if (landsPlayed > 0) {
+        if (landsPlayed >= gameData.getMaxLandsThisTurn(aiPlayer.getId())) {
             return false;
         }
 
@@ -241,7 +256,7 @@ public abstract class AiDecisionEngine {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
                 send(() -> gameActions.handlePlayCard(selfConnection,
-                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
+                        new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
                 // Identity check: hand size alone is unreliable because landfall/ETB
@@ -317,7 +332,7 @@ public abstract class AiDecisionEngine {
      * if there is no attack tax.
      */
     protected int getMaxAffordableAttackers(GameData gameData) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
         if (taxPerCreature <= 0) {
             return Integer.MAX_VALUE;
         }
@@ -339,7 +354,7 @@ public abstract class AiDecisionEngine {
      * AIs that want to keep Jackal attacking should pair it before calling this.
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
         if (taxPerCreature <= 0 || attackerIndices.isEmpty()) {
             return dropLoneCantAttackAlone(gameData, attackerIndices);
         }
@@ -403,7 +418,7 @@ public abstract class AiDecisionEngine {
         // If the game is still awaiting blockers after the call, the declaration
         // was rejected — fall back to empty blockers so the game doesn't get stuck.
         if (!request.blockerAssignments().isEmpty()
-                && gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
+                && gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) != null) {
             log.warn("AI: Blocker declaration rejected in game {} (still awaiting blockers); falling back to no blockers.", gameId);
             sendEmptyBlockerFallback();
         }
@@ -418,26 +433,26 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns true if the card can be cast considering mana affordability (with cost
-     * modifiers), non-mana restrictions (spell limit, type restrictions, etc.),
-     * sacrifice costs, and graveyard requirements.
+     * Returns true if the card can be cast right now. Legality comes from the engine's own
+     * playability check ({@code GameBroadcastService.isCardPlayable}: timing, permissions,
+     * spell limits, affordability with every cost modifier and alternative-cost route, target
+     * availability, legendary-sorcery rule) evaluated against the AI's virtual pool, so the
+     * AI can never disagree with the server. On top of that, the AI plans ahead for cast-time
+     * additional costs the playable check defers (sacrifice and graveyard-exile costs) and
+     * skips spells whose X or modal choice would be pointless.
      */
     protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
-        if (!gameBroadcastService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
+        if (!canAffordSpell(gameData, card, virtualPool)) {
             return false;
         }
-        if (!canPaySacrificeCosts(gameData, card)) {
-            return false;
-        }
-        if (!canPayGraveyardExileCosts(gameData, card)) {
+        // Non-mana additional costs (sacrifice / graveyard-exile) — the engine's single
+        // satisfiability query, shared with the MCTS simulator so the two can never disagree.
+        if (!castingCostService.canPayAdditionalSpellCosts(gameData, aiPlayer.getId(), card)) {
             return false;
         }
         // For X spells that exile creatures from graveyard, ensure at least 1 creature exists
         ManaCost cost = new ManaCost(card.getManaCost());
         if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
-            return false;
-        }
-        if (!canAffordSpell(gameData, card, virtualPool)) {
             return false;
         }
         // For modal spells, ensure at least one mode has valid targets
@@ -448,29 +463,22 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Checks if the card's mana cost (including cost modifiers from battlefield effects)
-     * can be paid from the given mana pool.
+     * Checks if the card could be played with the given mana pool, using the engine's own
+     * playability check (all cost modifiers and alternative-cost routes included).
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool) {
         return canAffordSpell(gameData, card, virtualPool, 0);
     }
 
     /**
-     * Checks if the card's mana cost (including cost modifiers and an extra cost such as
-     * targeting tax) can be paid from the given mana pool.
+     * Checks if the card could be played with the given mana pool and an extra generic cost
+     * (such as targeting tax), using the engine's own playability check. AI policy on top of
+     * engine legality: an X spell is only worth casting if X can be at least 1.
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool, int extraCost) {
-        ManaCost cost = new ManaCost(card.getManaCost());
-        int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + extraCost;
-        if (cost.hasX()) {
-            if (!cost.canPay(virtualPool, Math.max(0, 1 + modifier))) return false;
-        } else {
-            if (!cost.canPay(virtualPool, modifier)) return false;
-        }
-        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool, modifier)) {
-            return false;
-        }
-        return true;
+        int minXPolicy = new ManaCost(card.getManaCost()).hasX() ? 1 : 0;
+        return gameBroadcastService.isCardPlayable(gameData, aiPlayer.getId(), card, virtualPool,
+                extraCost + minXPolicy);
     }
 
     /**
@@ -479,57 +487,9 @@ public abstract class AiDecisionEngine {
      * target permanents with certain subtypes.
      */
     protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return gameBroadcastService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
+        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
     }
 
-    /**
-     * Checks whether the player's battlefield can satisfy all sacrifice costs
-     * in the card's SPELL effects (e.g. SacrificeArtifactCost, SacrificeCreatureCost,
-     * SacrificePermanentCost). Returns false if any sacrifice cost cannot be paid.
-     */
-    protected boolean canPaySacrificeCosts(GameData gameData, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeArtifactCost) {
-                boolean hasArtifact = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p));
-                if (!hasArtifact) return false;
-            } else if (effect instanceof SacrificeCreatureCost) {
-                boolean hasCreature = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.isCreature(gameData, p));
-                if (!hasCreature) return false;
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                boolean hasMatch = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
-                if (!hasMatch) return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Checks whether the player's graveyard can satisfy all graveyard exile costs
-     * in the card's SPELL effects (e.g. ExileNCardsFromGraveyardCost, ExileCardFromGraveyardCost).
-     * Returns false if any graveyard exile cost cannot be paid.
-     */
-    protected boolean canPayGraveyardExileCosts(GameData gameData, Card card) {
-        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
-                long matchingCount = graveyard.stream()
-                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
-                        .count();
-                if (matchingCount < cost.count()) return false;
-            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
-                boolean hasMatch = graveyard.stream()
-                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
-                if (!hasMatch) return false;
-            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
-                if (graveyard.isEmpty()) return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Returns the maximum X value allowed by graveyard creature requirements.
@@ -595,7 +555,7 @@ public abstract class AiDecisionEngine {
                         .orElse(null);
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 return battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
                         .findFirst()
                         .map(Permanent::getId)
                         .orElse(null);
@@ -706,6 +666,22 @@ public abstract class AiDecisionEngine {
         ChooseOneEffect coe = findChooseOneEffect(card);
         if (coe == null) return null;
 
+        if (coe.choicesRequired() > 1) {
+            List<Integer> validModes = new java.util.ArrayList<>();
+            for (int i = 0; i < coe.options().size(); i++) {
+                ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
+                if (isModalModeValid(gameData, card, option)) {
+                    validModes.add(i);
+                    if (validModes.size() == coe.choicesRequired()) {
+                        int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
+                        return new ModalCastPlan(
+                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices), null);
+                    }
+                }
+            }
+            return null;
+        }
+
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
             CardEffect effect = option.effect();
@@ -747,22 +723,21 @@ public abstract class AiDecisionEngine {
     }
 
     private UUID findModalPermanentTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
-        var savedFilter = card.getCastTimeTargetFilter();
-        card.setCastTimeTargetFilter(option.targetFilter());
-        try {
-            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-            for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
-                if (playerId == null) continue;
-                for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                    if (targetSelector.isValidPermanentTarget(gameData, card, p, aiPlayer.getId())) {
-                        return p.getId();
-                    }
+        // Evaluate the mode's targeting on an unfrozen runtime copy — the real card is frozen
+        // (live cards are shared with simulation copies and must not be mutated, not even
+        // temporarily with a restore).
+        Card evalCard = card.createRuntimeCopy();
+        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+            if (playerId == null) continue;
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (targetSelector.isValidPermanentTarget(gameData, evalCard, p, aiPlayer.getId())) {
+                    return p.getId();
                 }
             }
-            return null;
-        } finally {
-            card.setCastTimeTargetFilter(savedFilter);
         }
+        return null;
     }
 
     /**
@@ -778,9 +753,50 @@ public abstract class AiDecisionEngine {
         return tapManaForSpell(gameData, card, xValue, 0);
     }
 
+    // ===== Activated-Ability Legality =====
+
+    /**
+     * Returns the activated abilities currently available on a permanent, in the engine's
+     * {@code abilityIndex} order. Delegates to the engine so the list can never drift from
+     * what {@code activateAbility} will resolve.
+     */
+    protected List<ActivatedAbility> buildEffectiveAbilityList(GameData gameData, Permanent permanent) {
+        return gameActions.getEffectiveActivatedAbilities(gameData, permanent);
+    }
+
+    /** Returns true if an activated ability is a mana ability per CR 605.1a. */
+    protected static boolean isManaAbility(ActivatedAbility ability) {
+        return AbilityActivationService.isManaAbility(ability);
+    }
+
+    /**
+     * Checks whether an activated ability could legally be activated right now, by asking the
+     * engine's own legality validator ({@code AbilityActivationService}) with mana affordability
+     * measured against {@code virtualPool}. On top of engine legality this applies AI policy:
+     * never pay life down to 0 (legal, but suicidal), and skip X-based tap costs — the AI
+     * doesn't model X, so it would only ever activate them as a pointless X=0 no-op.
+     */
+    protected boolean canActivateAbility(GameData gameData, Permanent permanent,
+                                         ActivatedAbility ability, int abilityIndex,
+                                         ManaPool virtualPool) {
+        if (!gameActions.canActivateAbility(gameData, permanent, abilityIndex, virtualPool)) {
+            return false;
+        }
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof PayLifeCost lifeCost
+                    && gameData.getLife(aiPlayer.getId()) <= lifeCost.amount()) {
+                return false;
+            }
+            if (effect instanceof TapXPermanentsCost) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
         if (card.getManaCost() == null) return false;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {

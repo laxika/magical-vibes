@@ -8,6 +8,8 @@ public interface CardEffect {
     default boolean canTargetSpell() { return false; }
     default boolean canTargetGraveyard() { return false; }
     default boolean canTargetAnyGraveyard() { return false; }
+    /** When true, graveyard targeting is restricted to the controller's graveyard only. */
+    default boolean targetsControllersGraveyardOnly() { return false; }
     default boolean canTargetExile() { return false; }
 
     /**

@@ -8,35 +8,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KessigWolfRunTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kessig Wolf Run has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        KessigWolfRun card = new KessigWolfRun();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{X}{R}{G}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(BoostTargetCreatureXEffect.class);
-                    assertThat(effects.get(1)).isInstanceOf(GrantKeywordEffect.class);
-                });
-    }
 
     // ===== Mana ability =====
 

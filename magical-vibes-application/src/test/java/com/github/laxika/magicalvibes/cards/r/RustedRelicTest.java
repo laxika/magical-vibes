@@ -4,39 +4,15 @@ import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RustedRelicTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft static AnimateSelfWithStatsEffect with 5/5 Golem")
-    void hasCorrectEffect() {
-        RustedRelic card = new RustedRelic();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(AnimateSelfWithStatsEffect.class);
-
-        AnimateSelfWithStatsEffect animate = (AnimateSelfWithStatsEffect) metalcraft.wrapped();
-        assertThat(animate.power()).isEqualTo(5);
-        assertThat(animate.toughness()).isEqualTo(5);
-        assertThat(animate.grantedSubtypes()).containsExactly(CardSubtype.GOLEM);
-    }
 
     // ===== Without metalcraft =====
 

@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.CardColor;
+
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -49,10 +52,11 @@ public class DiscardTriggerCollectorService {
         log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
-        if (!gameQueryService.isDamageFromSourcePrevented(gameData, match.permanent().getEffectiveColor())
+        CardColor sourceColor = gameQueryService.getEffectiveColor(gameData, match.permanent());
+        if (!gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                 && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, discardingPlayerId, match.permanent().getId())
                 && !gameData.permanentsPreventedFromDealingDamage.contains(match.permanent().getId())
-                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, match.permanent().getEffectiveColor())) {
+                && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, discardingPlayerId, damage);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, discardingPlayerId, effectiveDamage, cardName);
             if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, discardingPlayerId)) {
@@ -70,7 +74,7 @@ public class DiscardTriggerCollectorService {
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {
-                gameData.playersDealtDamageThisTurn.add(discardingPlayerId);
+                gameData.recordDamageToPlayer(discardingPlayerId, effectiveDamage);
             }
         }
 
@@ -82,7 +86,8 @@ public class DiscardTriggerCollectorService {
             LoseLifeEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
         String cardName = match.permanent().getCard().getName();
-        int amount = trigger.amount();
+        // The ON_OPPONENT_DISCARDS marker always carries a literal amount ("that player loses N life").
+        int amount = trigger.amount() instanceof Fixed fixed ? fixed.value() : 0;
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
 

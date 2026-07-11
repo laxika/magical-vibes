@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,21 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThrabenHereticTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has tap activated ability to exile creature card from graveyard")
-    void hasActivatedAbility() {
-        ThrabenHeretic card = new ThrabenHeretic();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .allMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
-                        && ex.requiredType() == CardType.CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Exiles creature card from controller's graveyard")

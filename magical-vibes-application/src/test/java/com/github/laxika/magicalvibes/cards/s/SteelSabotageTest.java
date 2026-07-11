@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,16 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SteelSabotageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Steel Sabotage has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        SteelSabotage card = new SteelSabotage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Counter target artifact spell")

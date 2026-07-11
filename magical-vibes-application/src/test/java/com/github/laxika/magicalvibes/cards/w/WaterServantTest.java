@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,28 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WaterServantTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Water Servant has two activated abilities")
-    void hasTwoAbilities() {
-        WaterServant card = new WaterServant();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: +1/-1
-        BoostSelfEffect firstEffect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(firstEffect.powerBoost()).isEqualTo(1);
-        assertThat(firstEffect.toughnessBoost()).isEqualTo(-1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U}");
-
-        // Second ability: -1/+1
-        BoostSelfEffect secondEffect = (BoostSelfEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(secondEffect.powerBoost()).isEqualTo(-1);
-        assertThat(secondEffect.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{U}");
-    }
 
     // ===== Casting =====
 

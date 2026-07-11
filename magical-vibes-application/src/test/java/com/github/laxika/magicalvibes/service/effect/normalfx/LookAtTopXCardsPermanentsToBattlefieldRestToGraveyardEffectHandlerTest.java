@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,8 +17,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,12 +33,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -78,8 +80,10 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -122,7 +126,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("library is empty")));
             }
 
@@ -137,7 +141,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1); // untouched
             }
 
@@ -149,7 +153,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(land);
                 gd.playerDecks.get(player1Id).add(instant);
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
@@ -157,7 +161,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 // Cards should be back on the bottom of the library
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("no eligible cards")));
@@ -174,9 +178,9 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(land);
                 gd.playerDecks.get(player1Id).add(instant);
 
-                when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(land), any(), any(), any(), any())).thenReturn(false);
-                when(gameQueryService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(land), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
@@ -184,10 +188,10 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
-                assertThat(gd.interaction.libraryRevealChoiceContext()).isNotNull();
-                assertThat(gd.interaction.libraryRevealChoiceContext().randomRemainingToBottom()).isTrue();
-                assertThat(gd.interaction.libraryRevealChoiceContext().validCardIds()).containsExactly(dino.getId());
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).randomRemainingToBottom()).isTrue();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).validCardIds()).containsExactly(dino.getId());
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 
@@ -198,7 +202,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
                 gd.playerDecks.get(player1Id).add(dino);
 
-                when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
@@ -206,8 +210,8 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
                 // Only 1 card was in library, so only 1 revealed
-                assertThat(gd.interaction.libraryRevealChoiceContext().allCards()).hasSize(1);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(1);
             }
 }

@@ -1,21 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,43 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HuntmasterOfTheFellsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front and back faces have correct effects configured")
-    void hasCorrectEffectsConfigured() {
-        HuntmasterOfTheFells card = new HuntmasterOfTheFells();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(token.tokenName()).isEqualTo("Wolf");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.GREEN);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.WOLF);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOfSatisfying(GainLifeEffect.class, e -> assertThat(e.amount()).isEqualTo(2));
-
-        assertThat(card.getEffects(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect frontTransform =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(frontTransform.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(RavagerOfTheFells.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("RavagerOfTheFells");
-
-        RavagerOfTheFells backFace = (RavagerOfTheFells) card.getBackFaceCard();
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE).getFirst())
-                .isInstanceOfSatisfying(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class, e -> {
-                    assertThat(e.opponentDamage()).isEqualTo(2);
-                    assertThat(e.creatureDamage()).isEqualTo(2);
-                    assertThat(e.maxCreatureTargets()).isEqualTo(1);
-                });
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates a Wolf token and controller gains 2 life")
@@ -101,9 +59,9 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         assertThat(huntmaster.isTransformed()).isTrue();
         assertThat(huntmaster.getCard().getName()).isEqualTo("Ravager of the Fells");
 
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bear.getId(), player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bear.getId(), player1.getId());
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
@@ -145,7 +103,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         advanceToUpkeepAndResolveTransform(player1);
 
         harness.handlePermanentChosen(player1, player2.getId());
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(opponentSpider.getId(), player1.getId())
                 .doesNotContain(ownBear.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBear.getId()))

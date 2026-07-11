@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerDiscardsEffect;
@@ -34,7 +35,8 @@ class TargetSpellControllerDiscardsEffectHandlerTest extends AbstractPlayerInter
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.discardCausedByOpponent).isTrue();
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
+                        any(DiscardFollowUp.class));
             }
 
             @Test
@@ -46,7 +48,7 @@ class TargetSpellControllerDiscardsEffectHandlerTest extends AbstractPlayerInter
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 
             @Test
@@ -58,6 +60,6 @@ class TargetSpellControllerDiscardsEffectHandlerTest extends AbstractPlayerInter
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 }

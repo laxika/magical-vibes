@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -34,7 +35,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
 
@@ -77,19 +78,19 @@ class GeistOfSaintTraftTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
         // The Angel token should be in the pending exile at end of combat set
-        assertThat(gd.pendingTokenExilesAtEndOfCombat).hasSize(1);
+        assertThat(gd.getDelayedActions(ExileTokenAtEndOfCombat.class)).hasSize(1);
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
         Permanent angel = battlefield.stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Angel"))
                 .findFirst().orElseThrow();
-        assertThat(gd.pendingTokenExilesAtEndOfCombat).contains(angel.getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndOfCombat.class)).contains(new ExileTokenAtEndOfCombat(angel.getId()));
     }
 
     @Test
@@ -102,7 +103,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player1, List.of(0));
         // Let auto-pass take care of everything through end of combat
@@ -121,7 +122,7 @@ class GeistOfSaintTraftTest extends BaseCardTest {
                 .count()).isEqualTo(1);
 
         // Pending exiles should be cleared
-        assertThat(gd.pendingTokenExilesAtEndOfCombat).isEmpty();
+        assertThat(gd.getDelayedActions(ExileTokenAtEndOfCombat.class)).isEmpty();
     }
 
     @Test

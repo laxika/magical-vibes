@@ -19,5 +19,5 @@ public record PendingCapriciousEfreetState(
         UUID controllerId,
         UUID sourcePermanentId,
         UUID ownTargetId
-) {
+) implements PendingInteraction {
 }

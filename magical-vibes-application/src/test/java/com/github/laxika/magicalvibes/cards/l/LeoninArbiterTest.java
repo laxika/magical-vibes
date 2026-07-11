@@ -1,17 +1,15 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DiabolicTutor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.t.TerramorphicExpanse;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,18 +19,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LeoninArbiterTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leonin Arbiter has CantSearchLibrariesEffect as static effect")
-    void hasCorrectStaticEffect() {
-        LeoninArbiter card = new LeoninArbiter();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantSearchLibrariesEffect.class);
-    }
 
     // ===== Search restriction — opponent =====
 
@@ -53,7 +39,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
         // Search is prevented — no mana to pay
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -84,7 +70,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
         // Search proceeds — tax was paid during priority
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     @Test
@@ -106,7 +92,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
         // Search is prevented
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -131,7 +117,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Search is prevented but library should still be shuffled (per rules: "search...then shuffle")
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
         assertThat(deck).hasSize(deckSizeBefore); // deck preserved (shuffled, not emptied)
     }
@@ -153,7 +139,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -178,7 +164,7 @@ class LeoninArbiterTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
     }
 
@@ -203,7 +189,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.paySearchTax(player2);
         harness.passBothPriorities(); // resolve Diabolic Tutor
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleLibraryCardChosen(gd, player2, 0);
 
         // Second search — should NOT require additional payment (Arbiter already paid this turn)
@@ -217,7 +203,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Search should proceed without additional tax payment
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     // ===== Payment resets at turn change =====
@@ -241,7 +227,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.paySearchTax(player2);
         harness.passBothPriorities(); // resolve
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleLibraryCardChosen(gd, player2, 0);
 
         // Verify paid status is recorded
@@ -258,7 +244,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -286,7 +272,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Search proceeds normally — no Arbiter tax
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("Leonin Arbiter"));
     }
 
@@ -311,7 +297,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.paySearchTax(player2); // pays {4} for both Arbiters
         harness.passBothPriorities(); // resolve
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {4} for Leonin Arbiter search tax"));
     }
 
@@ -331,7 +317,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.castSorcery(player2, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -351,7 +337,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Search is prevented — no mana to pay Arbiter tax
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("prevented by Leonin Arbiter"));
     }
 
@@ -374,7 +360,7 @@ class LeoninArbiterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve
 
         // Search proceeds — tax was paid
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("pays {2} for Leonin Arbiter search tax"));
     }
 

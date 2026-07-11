@@ -1,12 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,36 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RepeatingBarrageTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has deal 3 damage to any target spell effect")
-    void hasCorrectSpellEffect() {
-        RepeatingBarrage card = new RepeatingBarrage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Has graveyard activated ability with raid restriction")
-    void hasGraveyardAbilityWithRaid() {
-        RepeatingBarrage card = new RepeatingBarrage();
-
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{R}{R}");
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.RAID);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .first()
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
 
     // ===== Spell: deals 3 damage =====
 

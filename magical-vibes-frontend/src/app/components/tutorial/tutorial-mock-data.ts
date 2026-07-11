@@ -35,6 +35,9 @@ function makeCard(overrides: Partial<Card>): Card {
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
+    modalChoicesRequired: 0,
+    modalOptional: false,
+    modalOptions: null,
     ...overrides
   };
 }
@@ -64,6 +67,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     attackTargetId: null,
     markedDamage: 0,
     transformed: false,
+    prepared: false,
     ...overrides
   };
 }

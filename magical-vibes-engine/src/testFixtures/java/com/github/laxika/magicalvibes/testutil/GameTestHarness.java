@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -28,7 +30,6 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;
@@ -55,6 +56,8 @@ public class GameTestHarness {
     private static DrawService staticDrawService;
     private static PlayerInputService staticPlayerInputService;
     private static GameBroadcastService staticGameBroadcastService;
+    private static com.github.laxika.magicalvibes.service.cast.CastingCostService staticCastingCostService;
+    private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
@@ -81,6 +84,8 @@ public class GameTestHarness {
         staticDrawService = context.getBean(DrawService.class);
         staticPlayerInputService = context.getBean(PlayerInputService.class);
         staticGameBroadcastService = context.getBean(GameBroadcastService.class);
+        staticCastingCostService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class);
+        staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
@@ -109,6 +114,8 @@ public class GameTestHarness {
     private final DrawService drawService;
     private final PlayerInputService playerInputService;
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
@@ -137,6 +144,8 @@ public class GameTestHarness {
         drawService = staticDrawService;
         playerInputService = staticPlayerInputService;
         gameBroadcastService = staticGameBroadcastService;
+        castingCostService = staticCastingCostService;
+        castingPermissionService = staticCastingPermissionService;
         battlefieldEntryService = staticBattlefieldEntryService;
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
@@ -170,6 +179,10 @@ public class GameTestHarness {
 
     public void setHand(Player player, List<Card> cards) {
         gameData.playerHands.put(player.getId(), new ArrayList<>(cards));
+    }
+
+    public void setLibrary(Player player, List<Card> cards) {
+        gameData.playerDecks.put(player.getId(), new ArrayList<>(cards));
     }
 
     public void addMana(Player player, ManaColor color, int amount) {
@@ -325,6 +338,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    public void castCreatureWithEvoke(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardWithEvoke(gameData, player, cardIndex, 0, targetId, null, List.of());
+    }
+
     public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
@@ -400,6 +418,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, sacrificePermanentId);
     }
 
+    public void castSorceryWithDiscard(Player player, int cardIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, discardHandCardIndex);
+    }
+
     public void castSorceryWithSacrifice(Player player, int cardIndex, UUID targetId, UUID sacrificePermanentId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, sacrificePermanentId);
@@ -423,6 +446,43 @@ public class GameTestHarness {
     public void castInstant(Player player, int cardIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
+    }
+
+    /** Cast a modal instant, choosing the mode at {@code modeIndex} and passing multiple targets. */
+    public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, modeIndex, null, null, targetIds, List.of());
+    }
+
+    /** Cast a modal sorcery that chooses multiple modes (e.g. Austere Command). */
+    public void castSorceryWithModes(Player player, int cardIndex, int choicesRequired, int... modeIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices), null, null);
+    }
+
+    /**
+     * Cast a modal instant that chooses multiple modes, supplying an optional spell target
+     * ({@code targetId}) and/or permanent targets ({@code targetIds}) (e.g. Cryptic Command).
+     */
+    public void castModalInstantWithModes(Player player, int cardIndex, int choicesRequired,
+                                          int[] modeIndices, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                targetId, null, targetIds, List.of());
+    }
+
+    /**
+     * Cast a modal sorcery that chooses multiple modes, supplying per-mode permanent/player
+     * targets ({@code targetIds}, in chosen-mode order) (e.g. Incendiary Command).
+     */
+    public void castModalSorceryWithModes(Player player, int cardIndex, int choicesRequired,
+                                          int[] modeIndices, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                null, null, targetIds, List.of());
     }
 
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {
@@ -495,6 +555,18 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds);
     }
 
+    public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetIds, List<UUID> tapPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds,
+                null, null, tapPermanentIds);
+    }
+
+    public void castFlashbackWithTapCost(Player player, int graveyardCardIndex, List<UUID> tapPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(),
+                null, null, tapPermanentIds);
+    }
+
     public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetId) {
         castFlashback(player, graveyardCardIndex, targetId);
         passBothPriorities();
@@ -538,6 +610,11 @@ public class GameTestHarness {
     public void tapPermanent(Player player, int permanentIndex) {
         ensurePriority(player);
         gameService.tapPermanent(gameData, player, permanentIndex);
+    }
+
+    public void tapForeignLandForMana(Player player, UUID permanentId) {
+        ensurePriority(player);
+        gameService.tapForeignLandForMana(gameData, player, permanentId);
     }
 
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
@@ -699,6 +776,20 @@ public class GameTestHarness {
         gameData.interaction.clearAwaitingInput();
     }
 
+    /** Marks the attacker-declaration interaction active for the current active player (test-state shortcut). */
+    public void beginAttackerDeclarationInput() {
+        gameData.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gameData.activePlayerId));
+    }
+
+    /** Marks the blocker-declaration interaction active for the defending (non-active) player (test-state shortcut). */
+    public void beginBlockerDeclarationInput() {
+        java.util.UUID defenderId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(gameData.activePlayerId))
+                .findFirst()
+                .orElse(null);
+        gameData.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(defenderId));
+    }
+
     public void forceActivePlayer(Player player) {
         gameData.activePlayerId = player.getId();
         gameData.startingPlayerId = player.getId();
@@ -774,6 +865,10 @@ public class GameTestHarness {
         return gameRegistry;
     }
 
+    public GameSetupService getGameSetupService() {
+        return gameSetupService;
+    }
+
     public GameQueryService getGameQueryService() {
         return gameQueryService;
     }
@@ -817,6 +912,14 @@ public class GameTestHarness {
 
     public GameBroadcastService getGameBroadcastService() {
         return gameBroadcastService;
+    }
+
+    public com.github.laxika.magicalvibes.service.cast.CastingCostService getCastingCostService() {
+        return castingCostService;
+    }
+
+    public com.github.laxika.magicalvibes.service.cast.CastingPermissionService getCastingPermissionService() {
+        return castingPermissionService;
     }
 
     public BattlefieldEntryService getBattlefieldEntryService() {

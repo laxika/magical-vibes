@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,43 +14,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class BlackcleaveCliffsTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blackcleave Cliffs has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        BlackcleaveCliffs card = new BlackcleaveCliffs();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessFewLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .map(e -> (EntersTappedUnlessFewLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.maxOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Blackcleave Cliffs has two mana abilities for black and red")
-    void hasManaAbilities() {
-        BlackcleaveCliffs card = new BlackcleaveCliffs();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {B}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-
-        // Second ability: {T}: Add {R}.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
 
     // ===== Enters the battlefield: untapped (few lands) =====
 

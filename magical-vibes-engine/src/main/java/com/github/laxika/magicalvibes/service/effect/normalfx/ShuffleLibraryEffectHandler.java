@@ -25,10 +25,11 @@ public class ShuffleLibraryEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        String playerName = gameData.playerIdToName.get(controllerId);
+        // Fall back to controller when no explicit target (e.g. Ponder "You may shuffle")
+        UUID playerId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(playerId);
 
-        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+        LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
         String logEntry = playerName + " shuffles their library.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

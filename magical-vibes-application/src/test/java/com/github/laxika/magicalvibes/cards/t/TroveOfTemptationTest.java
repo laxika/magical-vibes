@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,31 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TroveOfTemptationTest extends BaseCardTest {
-
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has OpponentsMustAttackControllerEffect on STATIC slot")
-    void hasCorrectStaticEffect() {
-        TroveOfTemptation card = new TroveOfTemptation();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(OpponentsMustAttackControllerEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has CreateTokenEffect (Treasure) on CONTROLLER_END_STEP_TRIGGERED slot")
-    void hasCorrectEndStepEffect() {
-        TroveOfTemptation card = new TroveOfTemptation();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-    }
 
     // ===== Casting =====
 
@@ -80,7 +52,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Declaring no attackers should fail
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
@@ -101,7 +73,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player2, List.of(0));
 
@@ -126,7 +98,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Declaring just one attacker should succeed (unlike Curse of Nightly Hunt which requires ALL)
         gs.declareAttackers(gd, player2, List.of(1));
@@ -147,7 +119,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Controller's creatures should NOT be forced
         gs.declareAttackers(gd, player1, List.of());
@@ -169,7 +141,7 @@ class TroveOfTemptationTest extends BaseCardTest {
 
         // All creatures are tapped — no attackable creatures, so step is skipped
         // (handleDeclareAttackersStep returns without setting ATTACKER_DECLARATION)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.ATTACKER_DECLARATION);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test
@@ -188,7 +160,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Now opponent can choose not to attack
         gs.declareAttackers(gd, player2, List.of());

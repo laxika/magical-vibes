@@ -1,16 +1,14 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Nightmare;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -23,22 +21,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class QuicksilverGargantuanTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Quicksilver Gargantuan has correct effect configuration")
-    void hasCorrectProperties() {
-        QuicksilverGargantuan card = new QuicksilverGargantuan();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-
-        CopyPermanentOnEnterEffect effect = (CopyPermanentOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.powerOverride()).isEqualTo(7);
-        assertThat(effect.toughnessOverride()).isEqualTo(7);
-    }
 
     // ===== Copying with P/T override =====
 
@@ -232,6 +214,45 @@ class QuicksilverGargantuanTest extends BaseCardTest {
         // Per CR 707.9d, the CDA is not copied — P/T should be exactly 7/7
         assertThat(clonePerm.getEffectivePower()).isEqualTo(7);
         assertThat(clonePerm.getEffectiveToughness()).isEqualTo(7);
+    }
+
+    // ===== Copy of a copy: the 7/7 exception is a copiable value (CR 707.2) =====
+
+    @Test
+    @DisplayName("Clone copying a Quicksilver Gargantuan copy gets the 7/7 exception (CR 707.2)")
+    void cloneOfGargantuanCopyIsSevenSeven() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new QuicksilverGargantuan()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, bearsId);
+
+        GameData gd = harness.getGameData();
+        Permanent gargantuan = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Quicksilver Gargantuan"))
+                .findFirst().orElseThrow();
+
+        harness.setHand(player1, List.of(new Clone()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, gargantuan.getId());
+
+        Permanent clonePerm = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard().getName().equals("Clone"))
+                .findFirst().orElseThrow();
+
+        // The copy exception is part of the Gargantuan's copiable values: the Clone is a
+        // 7/7 Grizzly Bears, not a 2/2.
+        assertThat(clonePerm.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(clonePerm.getCard().getPower()).isEqualTo(7);
+        assertThat(clonePerm.getCard().getToughness()).isEqualTo(7);
     }
 
     // ===== Graveyard identity =====

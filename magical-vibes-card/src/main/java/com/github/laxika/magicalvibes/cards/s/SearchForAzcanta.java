@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.a.AzantaTheSunkenRuin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -25,8 +26,7 @@ public class SearchForAzcanta extends Card {
         // Then if you have seven or more cards in your graveyard,
         // you may transform Search for Azcanta.
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
-                new ControllerGraveyardCardThresholdConditionalEffect(7, null,
-                        new MayEffect(new TransformSelfEffect(),
+                new ConditionalEffect(new GraveyardCardThreshold(7, null), new MayEffect(new TransformSelfEffect(),
                                 "Transform Search for Azcanta?")));
     }
 

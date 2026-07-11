@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,17 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianRagerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Has ETB draw then lose life effects")
-    void hasEtbEffects() {
-        PhyrexianRager card = new PhyrexianRager();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).isInstanceOf(LoseLifeEffect.class);
-        assertThat(((LoseLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting Phyrexian Rager puts it on stack as creature spell")

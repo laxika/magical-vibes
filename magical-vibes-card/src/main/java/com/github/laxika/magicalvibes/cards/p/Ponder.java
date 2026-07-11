@@ -9,11 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "68")
+@CardRegistration(set = "LRW", collectorNumber = "79")
 public class Ponder extends Card {
 
     public Ponder() {
         addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(3));
-        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(), "You may shuffle your library."));
+        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(false), "You may shuffle your library."));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

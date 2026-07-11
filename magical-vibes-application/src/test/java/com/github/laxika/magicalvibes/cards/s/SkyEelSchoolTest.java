@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,18 +17,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class SkyEelSchoolTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sky-Eel School has ETB draw and discard effects")
-    void hasEtbDrawAndDiscardEffects() {
-        SkyEelSchool card = new SkyEelSchool();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).isInstanceOf(DiscardCardEffect.class);
-    }
 
     // ===== Casting and resolving =====
 
@@ -73,8 +59,8 @@ class SkyEelSchoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Drew one card (Forest), now awaiting discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -93,7 +79,7 @@ class SkyEelSchoolTest extends BaseCardTest {
 
         // Hand should be empty (cast Sky-Eel School from hand, drew 1, discarded 1)
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

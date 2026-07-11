@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.WarpWorldAuraChoiceRequest;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -40,6 +40,7 @@ public class WarpWorldService {
     private final CreatureControlService creatureControlService;
     private final CardViewFactory cardViewFactory;
     private final SessionManager sessionManager;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void beginNextPendingLibraryBottomReorder(GameData gameData) {
         LibraryBottomReorderRequest request = gameData.pendingLibraryBottomReorders.pollFirst();
@@ -57,13 +58,9 @@ public class WarpWorldService {
             return;
         }
 
-        gameData.interaction.beginLibraryReorder(playerId, cards, true);
-
-        List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(
-                cardViews,
-                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                playerId, cards, true, playerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
 
         String logMsg = gameData.playerIdToName.get(playerId) + " orders cards for the bottom of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
@@ -101,7 +98,9 @@ public class WarpWorldService {
                 if (hasControlEffect) {
                     Permanent target = gameQueryService.findPermanentById(gameData, placement.attachmentTargetId());
                     if (target != null) {
-                        creatureControlService.stealPermanent(gameData, controllerId, target);
+                        creatureControlService.applyControlEffect(gameData, controllerId, target,
+                                new ControlEnchantedCreatureEffect(), EffectDuration.WHILE_ATTACHED,
+                                permanent.getId(), card.getName());
                     }
                 }
             }

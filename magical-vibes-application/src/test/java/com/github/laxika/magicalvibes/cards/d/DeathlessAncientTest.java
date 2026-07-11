@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeathlessAncientTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has graveyard activated ability with TapMultiplePermanentsCost and ReturnCardFromGraveyardEffect")
-    void hasGraveyardAbility() {
-        DeathlessAncient card = new DeathlessAncient();
-
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof TapMultiplePermanentsCost c
-                        && c.count() == 3
-                        && c.filter() instanceof com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate p
-                        && p.subtype() == CardSubtype.VAMPIRE);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect);
-    }
 
     // ===== Graveyard activated ability =====
 

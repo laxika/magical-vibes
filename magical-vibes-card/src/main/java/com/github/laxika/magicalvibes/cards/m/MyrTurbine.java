@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -33,7 +37,9 @@ public class MyrTurbine extends Card {
                 true, null,
                 List.of(
                         new TapMultiplePermanentsCost(5, new PermanentHasSubtypePredicate(CardSubtype.MYR)),
-                        new SearchLibraryForCreatureWithSubtypeToBattlefieldEffect(CardSubtype.MYR)),
+                        new SearchLibraryEffect(
+                                new CardAllOfPredicate(List.of(new CardSubtypePredicate(CardSubtype.MYR), new CardTypePredicate(CardType.CREATURE))),
+                                LibrarySearchDestination.BATTLEFIELD)),
                 "{T}, Tap five untapped Myr you control: Search your library for a Myr creature card, put it onto the battlefield, then shuffle."));
     }
 }

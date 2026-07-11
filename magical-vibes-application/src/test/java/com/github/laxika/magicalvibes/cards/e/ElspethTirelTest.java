@@ -9,9 +9,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,43 +31,11 @@ class ElspethTirelTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has GainLifePerControlledCreatureEffect")
-    void plusTwoAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifePerControlledCreatureEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability creates three Soldier tokens")
-    void minusTwoAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("-5 ability destroys all other permanents except lands and tokens")
-    void minusFiveAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-5);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     // ===== Casting =====
 

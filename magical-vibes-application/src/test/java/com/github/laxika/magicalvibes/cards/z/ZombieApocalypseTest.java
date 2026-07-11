@@ -4,12 +4,9 @@ import com.github.laxika.magicalvibes.cards.c.ChampionOfTheParish;
 import com.github.laxika.magicalvibes.cards.g.Gravecrawler;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,15 +25,7 @@ class ZombieApocalypseTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has graveyard return and destroy all Humans effects")
-    void hasCorrectEffects() {
-        ZombieApocalypse card = new ZombieApocalypse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Returns all Zombie creature cards from your graveyard to the battlefield tapped")

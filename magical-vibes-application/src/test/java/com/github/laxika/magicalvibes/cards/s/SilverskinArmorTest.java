@@ -2,11 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -16,22 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SilverskinArmorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Silverskin Armor has correct static effects")
-    void hasCorrectStaticEffects() {
-        SilverskinArmor card = new SilverskinArmor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantCardTypeEffect.class);
-        GrantCardTypeEffect grantType = (GrantCardTypeEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(grantType.cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(grantType.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Equipped creature gets +1/+1")

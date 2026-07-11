@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,29 +15,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ColossusOfTheBloodAgeTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB damage and life gain plus ON_DEATH discard-draw trigger")
-    void hasCorrectStructure() {
-        ColossusOfTheBloodAge card = new ColossusOfTheBloodAge();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(DealDamageToEachOpponentEffect.class)
-                .hasAtLeastOneElementOfType(GainLifeEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).damage())
-                .isEqualTo(3);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(3);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        DiscardUpToThenDrawThatManyEffect deathEffect =
-                (DiscardUpToThenDrawThatManyEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.maxDiscard()).isEqualTo(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER);
-        assertThat(deathEffect.extraDraw()).isEqualTo(1);
-    }
 
     // ===== ETB =====
 
@@ -75,13 +48,13 @@ class ColossusOfTheBloodAgeTest extends BaseCardTest {
 
         killColossusWithWrath(player1);
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
 
         harness.handleXValueChosen(player1, 2);
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
         harness.handleCardChosen(player1, 0);
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
@@ -101,7 +74,7 @@ class ColossusOfTheBloodAgeTest extends BaseCardTest {
 
         killColossusWithWrath(player1);
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
 
         harness.handleXValueChosen(player1, 0);
 

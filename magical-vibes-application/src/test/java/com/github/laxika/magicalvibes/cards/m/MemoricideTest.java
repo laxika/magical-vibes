@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemoricideTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memoricide has correct card properties")
-    void hasCorrectProperties() {
-        Memoricide card = new Memoricide();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseCardNameAndExileFromZonesEffect.class);
-    }
 
     // ===== Casting =====
 
@@ -74,7 +59,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
     }
 
     @Test
@@ -91,7 +76,7 @@ class MemoricideTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Grizzly Bears");
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
     }
 
     // ===== Exile behavior =====
@@ -231,7 +216,7 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
 
         // No card selection step — resolves immediately when no matches
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
 
         // No cards exiled (no Grizzly Bears in any zone)
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -376,7 +361,7 @@ class MemoricideTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
         harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));

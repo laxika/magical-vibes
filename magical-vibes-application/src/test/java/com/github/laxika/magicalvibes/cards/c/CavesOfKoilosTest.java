@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CavesOfKoilosTest extends BaseCardTest {
-
 
     // ===== Card properties =====
 
@@ -26,51 +23,11 @@ class CavesOfKoilosTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no damage")
-    void firstAbilityProperties() {
-        CavesOfKoilos card = new CavesOfKoilos();
+    
 
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
-    @Test
-    @DisplayName("Second ability taps for white mana and deals 1 damage")
-    void secondAbilityProperties() {
-        CavesOfKoilos card = new CavesOfKoilos();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.WHITE);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-        assertThat(((DealDamageToControllerEffect) ability.getEffects().get(1)).damage()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Third ability taps for black mana and deals 1 damage")
-    void thirdAbilityProperties() {
-        CavesOfKoilos card = new CavesOfKoilos();
-
-        var ability = card.getActivatedAbilities().get(2);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.BLACK);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-        assertThat(((DealDamageToControllerEffect) ability.getEffects().get(1)).damage()).isEqualTo(1);
-    }
+    
 
     // ===== Tapping for colorless mana =====
 

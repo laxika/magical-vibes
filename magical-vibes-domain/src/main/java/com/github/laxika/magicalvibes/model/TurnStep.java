@@ -32,4 +32,15 @@ public enum TurnStep {
     public static TurnStep first() {
         return UNTAP;
     }
+
+    /** True for the five combat steps (used by "activate only during combat" timing restrictions). */
+    public boolean isCombatPhase() {
+        return this == BEGINNING_OF_COMBAT || this == DECLARE_ATTACKERS || this == DECLARE_BLOCKERS
+                || this == COMBAT_DAMAGE || this == END_OF_COMBAT;
+    }
+
+    /** True for steps that occur before the declare attackers step (used by "before attackers are declared" timing restrictions). */
+    public boolean isBeforeAttackersDeclared() {
+        return ordinal() < DECLARE_ATTACKERS.ordinal();
+    }
 }

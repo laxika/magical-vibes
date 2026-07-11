@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,22 +19,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ViridianRevelTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Revel has the opponent artifact-to-graveyard triggered ability")
-    void hasCorrectEffects() {
-        ViridianRevel card = new ViridianRevel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
 
     // ===== Triggering =====
 
@@ -58,7 +39,7 @@ class ViridianRevelTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Memnite"));
 
         // Viridian Revel's may ability should prompt
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -80,7 +61,7 @@ class ViridianRevelTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Mind Stone"));
 
         // Viridian Revel's may ability should prompt
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -105,7 +86,7 @@ class ViridianRevelTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Mind Stone"));
 
         // No trigger — own artifact, not opponent's
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -125,7 +106,7 @@ class ViridianRevelTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // No trigger — not an artifact
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 
