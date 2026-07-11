@@ -25,8 +25,10 @@ export class GameComponent implements OnInit, OnDestroy {
   game = signal<Game | null>(null);
   hoveredCard = signal<Card | null>(null);
   hoveredPermanent = signal<Permanent | null>(null);
-  // Anchor for the board-card modifier tooltip; set only when hovering a battlefield permanent.
+  // Anchor for the board-card modifier tooltip; set only after 3s of continuous hover
+  // over a battlefield permanent (the timer below defers it).
   modifierTooltipAnchor = signal<{ x: number; y: number; below: boolean } | null>(null);
+  private modifierTooltipTimer: ReturnType<typeof setTimeout> | null = null;
   stackTargetId = signal<string | null>(null);
   private subscriptions: Subscription[] = [];
 
@@ -101,7 +103,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.searchTaxCost.set(0);
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
-    this.modifierTooltipAnchor.set(null);
+    this.clearModifierTooltip();
     this.stackTargetId.set(null);
     this.combatShiftX.set(new Map());
     this.showShortcutsPopup.set(false);
@@ -140,6 +142,9 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+    if (this.modifierTooltipTimer != null) {
+      clearTimeout(this.modifierTooltipTimer);
+    }
     this.battlefieldAreaObserver?.disconnect();
     if (this.combatShiftFrame != null) {
       cancelAnimationFrame(this.combatShiftFrame);
@@ -1427,24 +1432,35 @@ export class GameComponent implements OnInit, OnDestroy {
   onCardHover(card: Card, permanent: Permanent | null = null, event?: MouseEvent): void {
     this.hoveredCard.set(card);
     this.hoveredPermanent.set(permanent);
+    this.clearModifierTooltip();
     if (permanent && event) {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       // Not enough room above the card (opponent's rows at the top) — flip under it.
       const below = rect.top < 240;
       const halfTooltipWidth = 120;
-      this.modifierTooltipAnchor.set({
+      const anchor = {
         x: Math.min(Math.max(rect.left + rect.width / 2, halfTooltipWidth), window.innerWidth - halfTooltipWidth),
         y: below ? rect.bottom + 6 : rect.top - 6,
         below,
-      });
-    } else {
-      this.modifierTooltipAnchor.set(null);
+      };
+      this.modifierTooltipTimer = setTimeout(() => {
+        this.modifierTooltipTimer = null;
+        this.modifierTooltipAnchor.set(anchor);
+      }, 3000);
     }
   }
 
   onCardHoverEnd(): void {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+    this.clearModifierTooltip();
+  }
+
+  private clearModifierTooltip(): void {
+    if (this.modifierTooltipTimer != null) {
+      clearTimeout(this.modifierTooltipTimer);
+      this.modifierTooltipTimer = null;
+    }
     this.modifierTooltipAnchor.set(null);
   }
 

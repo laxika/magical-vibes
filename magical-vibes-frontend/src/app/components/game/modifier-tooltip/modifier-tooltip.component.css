@@ -12,6 +12,30 @@
   transform: translate(-50%, 0);
 }
 
+/* Entrance: fade in while drifting away from the hovered card (down-to-up when the
+   tooltip sits above the card, up-to-down when flipped below it). */
+@keyframes tooltip-in-above {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tooltip-in-below {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .modifier-tooltip {
   width: 230px;
   box-sizing: border-box;
@@ -23,6 +47,11 @@
   color: var(--color-parchment);
   font-size: 11px;
   line-height: 1.35;
+  animation: tooltip-in-above 0.18s ease-out;
+}
+
+:host(.below) .modifier-tooltip {
+  animation-name: tooltip-in-below;
 }
 
 .tooltip-header {
