@@ -461,6 +461,22 @@
   z-index: 10;
 }
 
+/* The stack wrappers keep the upright 231px footprint so a tapped card
+   rotates in place, which leaves invisible wrapper area above/below the
+   sideways card. Keep the wrappers out of hit-testing so hover/click always
+   follows the visible card pixels — otherwise hovering the empty band where
+   the card would be if untapped raises the whole item via the :hover rule
+   above. A hovered card still :hovers its ancestors, so the raise keeps
+   working on real card pixels. */
+.land-stack .land-stack-item {
+  pointer-events: none;
+}
+
+.land-stack .land-stack-item .card,
+.land-stack .land-stack-item .ability-popup {
+  pointer-events: auto;
+}
+
 .game-over-overlay {
   position: fixed;
   top: 0;

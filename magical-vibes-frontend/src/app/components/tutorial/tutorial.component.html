@@ -28,12 +28,14 @@
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.originalIndex) {
                   <div class="land-stack-item">
-                    <app-card-display
-                      [card]="ip.perm.card"
-                      [permanent]="ip.perm"
-                      [class.tapped]="ip.perm.tapped"
-                      (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                      (mouseleave)="onCardHoverEnd()" />
+                    <div class="permanent-stack">
+                      <app-card-display
+                        [card]="ip.perm.card"
+                        [permanent]="ip.perm"
+                        [class.tapped]="ip.perm.tapped"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseleave)="onCardHoverEnd()" />
+                    </div>
                   </div>
                 }
               </div>
@@ -84,14 +86,16 @@
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
                 @for (ip of item.lands; track ip.originalIndex) {
                   <div class="land-stack-item">
-                    <app-card-display
-                      [card]="ip.perm.card"
-                      [permanent]="ip.perm"
-                      [class.tapped]="ip.perm.tapped"
-                      [class.tutorial-interactive-target]="isTutorialInteractiveTarget(ip.originalIndex)"
-                      (click)="onTutorialCardClick(ip.originalIndex)"
-                      (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                      (mouseleave)="onCardHoverEnd()" />
+                    <div class="permanent-stack">
+                      <app-card-display
+                        [card]="ip.perm.card"
+                        [permanent]="ip.perm"
+                        [class.tapped]="ip.perm.tapped"
+                        [class.tutorial-interactive-target]="isTutorialInteractiveTarget(ip.originalIndex)"
+                        (click)="onTutorialCardClick(ip.originalIndex)"
+                        (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
+                        (mouseleave)="onCardHoverEnd()" />
+                    </div>
                   </div>
                 }
               </div>
