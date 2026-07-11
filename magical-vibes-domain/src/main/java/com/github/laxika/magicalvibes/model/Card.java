@@ -32,6 +32,16 @@ public class Card {
         oracleRegistry.put(className, data);
     }
 
+    /**
+     * Registers oracle data only if the class has none yet. Used for back-face registrations: a
+     * back face may name a standalone card class (prepare-spell cards reuse the real spell's
+     * class), and the face-level data must not clobber the richer data registered from that
+     * card's own printing — Scryfall face nodes can lack fields such as colors.
+     */
+    public static void registerOracleIfAbsent(String className, OracleData data) {
+        oracleRegistry.putIfAbsent(className, data);
+    }
+
     public static void clearOracleRegistry() {
         oracleRegistry.clear();
     }

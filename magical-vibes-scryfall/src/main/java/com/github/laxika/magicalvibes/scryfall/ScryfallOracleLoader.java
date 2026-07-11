@@ -124,12 +124,15 @@ public class ScryfallOracleLoader {
                     OracleData oracleData = parseOracleData(cardNode);
                     Card.registerOracle(className, oracleData);
 
-                    // Register back face oracle data for double-faced cards
+                    // Register back face oracle data for double-faced cards. If-absent: the back
+                    // face may name a standalone card class (prepare spells reuse the real spell
+                    // class), whose own printing registers richer data that must win regardless
+                    // of set load order.
                     String backFaceClassName = tempCard.getBackFaceClassName();
                     if (backFaceClassName != null) {
                         OracleData backFaceData = parseBackFaceOracleData(cardNode);
                         if (backFaceData != null) {
-                            Card.registerOracle(backFaceClassName, backFaceData);
+                            Card.registerOracleIfAbsent(backFaceClassName, backFaceData);
                         }
                     }
                 }

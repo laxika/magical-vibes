@@ -104,11 +104,13 @@ public class MtgjsonOracleLoader {
 
                     Card.registerOracle(className, parseOracleData(front, false));
 
+                    // If-absent for the same reason as the Scryfall loader: a back face may name
+                    // a standalone card class whose own printing's data must win
                     String backFaceClassName = tempCard.getBackFaceClassName();
                     if (backFaceClassName != null) {
                         JsonNode back = backFaces.get(printing.collectorNumber());
                         if (back != null) {
-                            Card.registerOracle(backFaceClassName, parseOracleData(back, true));
+                            Card.registerOracleIfAbsent(backFaceClassName, parseOracleData(back, true));
                         }
                     }
                 }
