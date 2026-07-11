@@ -114,6 +114,10 @@ class CombatDamageServiceTest {
         gameData.activePlayerId = player1Id;
         gameData.playerIdToName.put(player1Id, "Player1");
         gameData.playerIdToName.put(player2Id, "Player2");
+
+        // withQueryScope is a passthrough on the mock: run the supplied queries directly
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(inv -> inv.getArgument(1, java.util.function.Supplier.class).get());
     }
 
     // ===== Stub helpers =====
@@ -379,6 +383,45 @@ class CombatDamageServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
+        }
+    }
+
+    // ===== CR 510.4 simultaneity =====
+
+    @Nested
+    @DisplayName("CR 510.4 Simultaneity")
+    class SimultaneityTest {
+
+        @BeforeEach
+        void setUpStubs() {
+            stubCombatSetup();
+            stubDamageResolution();
+            stubBlockedCombat();
+            stubInfectOnCreature();
+        }
+
+        @Test
+        @DisplayName("Multi-blocker lethal assignment uses pre-damage toughness, not mid-step infect counters")
+        void multiBlockerLethalAssignmentUsesPreDamageToughness() {
+            // Attacker A (0/4) is blocked by an infect blocker and by a 5-power blocker that
+            // also blocks attacker C (2/2). The infect blocker's -1/-1 counters land on A
+            // during the same damage step, but all combat damage is assigned and dealt
+            // simultaneously (CR 510.4): the multi-blocker must assign lethal to A based on
+            // A's pre-damage toughness (4), leaving only 1 damage for C — not 3.
+            Permanent attackerA = addAttacker("Wall", 0, 4);
+            Permanent attackerC = addAttacker("Bear", 2, 2);
+            addBlocker("Infector", 2, 2, 0, Keyword.INFECT);
+            Permanent multiBlocker = addBlocker("Giant", 5, 5, 0);
+            multiBlocker.addBlockingTarget(1);
+            multiBlocker.addBlockingTargetId(attackerC.getId());
+
+            combatDamageService.resolveCombatDamage(gameData);
+
+            assertThat(attackerA.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+            verify(permanentRemovalService).removePermanentToGraveyard(gameData, attackerA);
+            // C took only the multi-blocker's leftover damage (5 - 4 lethal to A = 1) and survives
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, attackerC);
+            assertThat(attackerC.getMarkedDamage()).isEqualTo(1);
         }
     }
 

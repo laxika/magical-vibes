@@ -660,6 +660,12 @@ fingerprint is checked once and every `computeStaticBonus` inside hits the per-`
 the scope — the memoized bonuses would go stale (same contract the nested-pass memo already
 relies on). `CombatSimulator`'s attack/block searches use this to share one pass across all
 `CreatureInfo` builds, block-legality queries, and creature scores of a decision.
+`CombatDamageService` uses it for the first-strike check, the manual-assignment pre-check, and
+— via `snapshotDamagePhase` — to capture per-combatant `CombatantStats` (P/T, combat keywords,
+protection pairs) once per damage step; the dealing loop then runs on that pre-damage snapshot
+(CR 510.4 simultaneity), while casualty determination stays on live queries so it sees infect
+counters placed during the step. `GameQueryService.getEffectiveCombatDamage` also opens a scope
+internally to share one pass across its power/toughness/battlefield-scan reads.
 
 ### Invalidation contract
 

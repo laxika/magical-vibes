@@ -967,27 +967,30 @@ public class GameQueryService {
      * </ul>
      */
     public int getEffectiveCombatDamage(GameData gameData, Permanent creature) {
-        int power = getEffectivePower(gameData, creature);
-        int toughness = getEffectiveToughness(gameData, creature);
+        // Multiple layered reads for one answer — share a single pass across them.
+        return withQueryScope(gameData, () -> {
+            int power = getEffectivePower(gameData, creature);
+            int toughness = getEffectiveToughness(gameData, creature);
 
-        // Global-scoped: every creature uses toughness (e.g. Doran, the Siege Tower)
-        if (hasGlobalToughnessAssignEffect(gameData)) {
-            return Math.max(0, toughness);
-        }
+            // Global-scoped: every creature uses toughness (e.g. Doran, the Siege Tower)
+            if (hasGlobalToughnessAssignEffect(gameData)) {
+                return Math.max(0, toughness);
+            }
 
-        // Controller-scoped: always use toughness (e.g. Belligerent Brontodon)
-        if (hasControllerToughnessAssignEffect(gameData, creature)) {
-            return Math.max(0, toughness);
-        }
+            // Controller-scoped: always use toughness (e.g. Belligerent Brontodon)
+            if (hasControllerToughnessAssignEffect(gameData, creature)) {
+                return Math.max(0, toughness);
+            }
 
-        // Equipment/aura-scoped: use toughness only when toughness > power
-        if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
-            return Math.max(0, toughness);
-        }
+            // Equipment/aura-scoped: use toughness only when toughness > power
+            if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
+                return Math.max(0, toughness);
+            }
 
-        // CR 510.1a: a creature assigns combat damage equal to its power. A creature with
-        // 0 or negative power assigns 0 combat damage.
-        return Math.max(0, power);
+            // CR 510.1a: a creature assigns combat damage equal to its power. A creature with
+            // 0 or negative power assigns 0 combat damage.
+            return Math.max(0, power);
+        });
     }
 
     /**
@@ -2607,9 +2610,11 @@ public class GameQueryService {
     public boolean isPreventedFromDealingDamage(GameData gameData, Permanent creature, boolean isCombatDamage) {
         if (!isDamagePreventable(gameData)) return false;
         if (hasAuraWithEffect(gameData, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)
-                || getEffectiveColors(gameData, creature).stream().anyMatch(color -> isDamageFromSourcePrevented(gameData, color))
                 || gameData.permanentsPreventedFromDealingDamage.contains(creature.getId())) {
             return true;
+        }
+        for (CardColor color : getEffectiveColors(gameData, creature)) {
+            if (isDamageFromSourcePrevented(gameData, color)) return true;
         }
         if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
             return true;
