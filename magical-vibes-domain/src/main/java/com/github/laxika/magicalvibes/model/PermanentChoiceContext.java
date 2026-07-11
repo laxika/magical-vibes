@@ -95,7 +95,13 @@ public sealed interface PermanentChoiceContext {
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
-    record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
+    record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                StackEntryType spellType, boolean copySpell) implements PermanentChoiceContext {
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                    StackEntryType spellType) {
+            this(cardToCast, controllerId, spellEffects, spellType, false);
+        }
+    }
 
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
 

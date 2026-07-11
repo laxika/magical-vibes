@@ -348,6 +348,80 @@ public class MayCastHandlerService {
     }
 
     /**
+     * Handles the Paradigm delayed trigger "may cast a copy from exile without paying its mana cost" choice.
+     */
+    public void handleCastFromExileWithoutPaying(GameData gameData, Player player, boolean accepted,
+                                                  PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            gameData.removeFromExile(cardToCast.getId());
+            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines paradigm copy of {}", gameData.id, playerName, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameData.findExiledCard(cardToCast.getId()) == null) {
+            String logEntry = cardToCast.getName() + " is no longer in exile.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no longer in exile for paradigm cast", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.removeFromExile(cardToCast.getId());
+
+        List<CardEffect> spellEffects = new ArrayList<>(cardToCast.getEffects(EffectSlot.SPELL));
+        StackEntryType spellType = cardToCast.hasType(CardType.INSTANT)
+                ? StackEntryType.INSTANT_SPELL : StackEntryType.SORCERY_SPELL;
+
+        if (EffectResolution.needsTarget(cardToCast)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, cardToCast, spellEffects);
+
+            if (validTargets.isEmpty()) {
+                String logEntry = cardToCast.getName() + " has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, cardToCast.getName());
+            } else {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ExileCastSpellTarget(
+                                cardToCast, player.getId(), spellEffects, spellType, true));
+                playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
+                        "Choose a target for " + cardToCast.getName() + ".");
+
+                String logEntry = playerName + " casts " + cardToCast.getName()
+                        + " without paying its mana cost — choosing target.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} casts paradigm copy {}, choosing target",
+                        gameData.id, playerName, cardToCast.getName());
+                return;
+            }
+        } else {
+            StackEntry entry = new StackEntry(
+                    spellType, cardToCast, player.getId(), cardToCast.getName(),
+                    spellEffects, 0, (UUID) null, null
+            );
+            entry.setCopy(true);
+            gameData.stack.add(entry);
+
+            gameData.recordSpellCast(player.getId(), cardToCast);
+            gameData.priorityPassedBy.clear();
+
+            String logEntry = playerName + " casts " + cardToCast.getName() + " without paying its mana cost.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} casts paradigm copy {} without paying mana",
+                    gameData.id, playerName, cardToCast.getName());
+
+            triggerCollectionService.checkSpellCastTriggers(gameData, cardToCast, player.getId(), false);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
      * Handles the "may cast from hand without paying mana cost" choice (e.g. Counterlash).
      * Each eligible card gets its own PendingMayAbility; accepting one removes the rest.
      */

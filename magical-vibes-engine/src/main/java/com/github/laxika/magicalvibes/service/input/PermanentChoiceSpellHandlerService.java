@@ -127,6 +127,9 @@ public class PermanentChoiceSpellHandlerService {
                     permanentId,
                     null
             );
+            if (ect.copySpell()) {
+                entry.setCopy(true);
+            }
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());

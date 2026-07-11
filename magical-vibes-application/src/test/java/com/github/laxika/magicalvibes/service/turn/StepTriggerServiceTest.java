@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.spell.ParadigmService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -95,6 +96,9 @@ class StepTriggerServiceTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
 
+    @Mock
+    private ParadigmService paradigmService;
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -116,7 +120,8 @@ class StepTriggerServiceTest {
                 battlefieldEntryService,
                 graveyardTargetingService,
                 triggerCollectionService,
-                triggerTargetCollector);
+                triggerTargetCollector,
+                paradigmService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

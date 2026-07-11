@@ -319,6 +319,20 @@ public class GameData {
     /** Tracks which players have cast their first spell of the game (for opening hand triggers). */
     public final Set<UUID> playersWhoCastFirstSpellInGame = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Paradigm (Secrets of Strixhaven): spell names a player has already resolved at least once this game.
+     * The delayed trigger is registered only on the first resolution per controller per spell name.
+     */
+    public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
+
+    /**
+     * Paradigm delayed triggers that fire at the beginning of each of the controller's precombat main phases
+     * after the turn the spell was first resolved.
+     */
+    public final List<ParadigmDelayedTrigger> paradigmDelayedTriggers = Collections.synchronizedList(new ArrayList<>());
+
+    public record ParadigmDelayedTrigger(UUID controllerId, Card spellTemplate, int registeredOnTurn) {}
+
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
@@ -1004,6 +1018,9 @@ public class GameData {
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
         copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
+        this.paradigmResolvedSpellNames.forEach((k, v) ->
+                copy.paradigmResolvedSpellNames.put(k, new HashSet<>(v)));
+        copy.paradigmDelayedTriggers.addAll(this.paradigmDelayedTriggers);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

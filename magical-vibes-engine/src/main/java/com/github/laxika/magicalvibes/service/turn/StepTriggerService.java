@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyard
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.spell.ParadigmService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -94,6 +95,7 @@ public class StepTriggerService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final ParadigmService paradigmService;
 
     /**
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
@@ -847,6 +849,12 @@ public class StepTriggerService {
                             gameData.playerIdToName.get(activePlayerId));
                 }
             }
+        }
+
+        if (paradigmService.fireParadigmTriggers(gameData)
+                && !gameData.pendingMayAbilities.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            playerInputService.processNextMayAbility(gameData);
         }
     }
 

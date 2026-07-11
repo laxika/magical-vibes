@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromExileWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
@@ -127,6 +128,14 @@ public class MayAbilityHandlerService {
         UUID pendingTargetId = gameData.interaction.pendingEquipmentAttachTargetId();
         if (pendingEquipId != null && pendingTargetId != null) {
             mayMiscHandlerService.handleEquipmentAttachChoice(gameData, player, accepted, pendingEquipId, pendingTargetId);
+            return;
+        }
+
+        // Cast-from-exile-without-paying — Paradigm delayed trigger copy
+        boolean isMayCastFromExile = ability.effects().stream()
+                .anyMatch(e -> e instanceof MayCastFromExileWithoutPayingManaCostEffect);
+        if (isMayCastFromExile) {
+            mayCastHandlerService.handleCastFromExileWithoutPaying(gameData, player, accepted, ability);
             return;
         }
 

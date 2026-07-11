@@ -39,7 +39,8 @@ public enum Keyword {
     EXPLORE,
     UNDYING,
     CONVERGE,
-    INCREMENT;
+    INCREMENT,
+    PARADIGM;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

@@ -49,6 +49,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.service.spell.ParadigmService;
 
 @Slf4j
 @Service
@@ -69,6 +71,7 @@ public class StackResolutionService {
     private final CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
     private final ExileService exileService;
+    private final ParadigmService paradigmService;
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
@@ -505,6 +508,7 @@ public class StackResolutionService {
             }
 
             handleSpellDisposition(gameData, entry);
+            paradigmService.handleParadigmSpellResolved(gameData, entry);
         }
 
         if (entry.getCard() != null) {
@@ -536,6 +540,10 @@ public class StackResolutionService {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
             // otherwise to graveyard).
+        } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
+            gameData.addToExile(entry.getControllerId(), entry.getCard());
+            String exileLog = entry.getCard().getName() + " is exiled (paradigm).";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());

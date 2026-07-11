@@ -195,6 +195,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterUnlessPaysEffect(int)` or `(int, boolean useX, boolean exileIfCountered)` — counter unless pays
 - `CounterlashEffect()` — counter target spell, then may cast from hand sharing a card type without paying mana cost
 - `MayCastFromHandWithoutPayingManaCostEffect()` — marker for may-cast-from-hand routing in PendingMayAbility
+- `MayCastFromExileWithoutPayingManaCostEffect()` — marker for Paradigm delayed-trigger may-cast-from-exile routing in PendingMayAbility
 - `CantBeCounteredEffect()` — can't be countered (static)
 - `CreatureSpellsCantBeCounteredEffect()` — creatures can't be countered (static)
 - `CreatureEnteringDontCauseTriggersEffect()` — Torpor Orb (static)
