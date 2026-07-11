@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.condition.Metalcraft;
-import com.github.laxika.magicalvibes.model.condition.Morbid;
-import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -35,12 +32,12 @@ import java.util.Map;
  * matches exactly one branch — a raw effect is either an unwrap type, a gate type, or neither, but
  * never both (no card nests a gate conditional inside a modal/kicked wrapper).
  *
- * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> Metalcraft / Morbid / Raid /
- * ControlsAnother gates return the <em>conditional effect unchanged</em> when met (it stays wrapped
- * and is re-evaluated at stack resolution by {@code EffectResolutionService}), whereas Kicked /
- * CastFromZone <em>unwrap</em> to their inner effect. Conditions with no ETB policy pass through
- * unchanged. Dropping ({@code null}) applies the intervening-if rule (CR 603.4): the ability never
- * goes on the stack.
+ * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> trigger-time gates
+ * ({@link Condition#isEtbTriggerGate()} — Metalcraft / Morbid / Raid / ControlsAnother) return the
+ * <em>conditional effect unchanged</em> when met (it stays wrapped and is re-evaluated at stack
+ * resolution by {@code EffectResolutionService}), whereas Kicked / CastFromZone <em>unwrap</em> to
+ * their inner effect. Conditions with no ETB policy pass through unchanged. Dropping ({@code null})
+ * applies the intervening-if rule (CR 603.4): the ability never goes on the stack.
  */
 @Component
 public class EtbEffectResolver {
@@ -89,19 +86,10 @@ public class EtbEffectResolver {
                 case CastFromZone castFromZone ->
                         conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
                                 ? conditional.wrapped() : null;
-                // Intervening-if gates (CR 603.4): keep the conditional effect when met (re-checked at
-                // stack resolution), drop it when not.
-                case Metalcraft ignored ->
-                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
-                                ? effect : null;
-                case Morbid ignored ->
-                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
-                                ? effect : null;
-                case Raid ignored ->
-                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
-                                ? effect : null;
-                case ControlsAnotherPermanent ignored ->
-                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                // Intervening-if gates (CR 603.4) — Metalcraft, Morbid, Raid, ControlsAnother: keep
+                // the conditional effect when met (re-checked at stack resolution), drop it when not.
+                case Condition gate when gate.isEtbTriggerGate() ->
+                        conditionEvaluationService.isMet(ctx.gameData(), gate, conditionContext)
                                 ? effect : null;
                 default -> effect;
             };

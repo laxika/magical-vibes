@@ -666,7 +666,56 @@ public class BattlefieldEntryService {
                     && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
             boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard;
 
-            if (!cardNeedsTarget || hasTarget) {
+            // A surviving gate-conditional ETB (Metalcraft, Morbid, Raid, … — the gate was met
+            // as the permanent entered) that targets never chose a target at cast time
+            // (CR 601.2c): it is excluded from cast-time targeting by EffectResolution, so the
+            // controller picks the target as the trigger goes on the stack (CR 603.3d), on the
+            // same deferred path token copies and reanimated permanents use. A stale targetId
+            // from the cast is deliberately ignored — the engine never asked for it.
+            boolean gateConditionalNeedsTarget = otherEffects.stream()
+                    .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
+                            && (ce.canTargetPlayer() || ce.canTargetPermanent()));
+
+            if (gateConditionalNeedsTarget
+                    || (cardNeedsTarget && !hasTarget && choosesTargetAtTriggerTime)) {
+                // CR 603.3: no target was chosen at cast time — the ETB target is gated behind
+                // an intervening-if, or the permanent wasn't cast (token copy, or returned from
+                // a graveyard via undying / reanimation). The controller must choose a target
+                // as the triggered ability is put on the stack.
+                // For non-token casts with "up to N" abilities where 0 was chosen,
+                // the ETB still triggers but has no effect — we skip queueing it.
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+
+                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
+                    // Multi-target ETB (e.g. Burning Sun's Avatar, or a single group with
+                    // "up to N" targets): choose slot-by-slot at trigger time,
+                    // accumulating into targetIds.
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                    for (int i = 0; i < extraWizardTriggers; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                    }
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
+                            gameData.id, card.getName());
+                } else {
+                    TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
+
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                    for (int i = 0; i < extraWizardTriggers; i++) {
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                    }
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
+                            gameData.id, card.getName());
+                }
+            } else if (!cardNeedsTarget || hasTarget) {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
@@ -713,44 +762,6 @@ public class BattlefieldEntryService {
                     gameData.stack.add(extraEtbEntry);
                     gameBroadcastService.logAndBroadcast(gameData, etbLog);
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
-                }
-            } else if (choosesTargetAtTriggerTime) {
-                // CR 603.3: no target was chosen at cast time because the permanent
-                // wasn't cast (token copy, or returned from a graveyard via undying /
-                // reanimation). The controller must choose a target as the triggered
-                // ability is put on the stack.
-                // For non-token casts with "up to N" abilities where 0 was chosen,
-                // the ETB still triggers but has no effect — we skip queueing it.
-                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-
-                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
-                    // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
-                    // single group with "up to N" targets): choose slot-by-slot at
-                    // trigger time, accumulating into targetIds.
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
-                    for (int i = 0; i < extraWizardTriggers; i++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
-                    }
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                    log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
-                            gameData.id, card.getName());
-                } else {
-                    TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
-
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
-                    for (int i = 0; i < extraWizardTriggers; i++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
-                    }
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                    log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
-                            gameData.id, card.getName());
                 }
             }
         }

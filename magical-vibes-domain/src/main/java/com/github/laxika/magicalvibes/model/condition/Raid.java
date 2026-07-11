@@ -12,4 +12,9 @@ public record Raid() implements Condition {
     public String conditionNotMetReason() {
         return "you didn't attack this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

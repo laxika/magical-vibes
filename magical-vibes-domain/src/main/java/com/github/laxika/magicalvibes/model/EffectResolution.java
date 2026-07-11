@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
@@ -104,6 +105,13 @@ public final class EffectResolution {
             // the spell's own targets gate casting). The trigger still resolves its own
             // targeting after entry, doing nothing when there are no legal targets.
             if (e instanceof MayEffect) continue;
+            // A gate-conditional ETB ("Metalcraft — When ~ enters, ... target player loses
+            // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
+            // depends on game state as the permanent enters, so the target can't be a
+            // cast-time requirement. The target is chosen as the trigger goes on the stack
+            // (CR 603.3d) via the ETBTokenTargetTrigger path — and never chosen at all when
+            // the gate isn't met.
+            if (e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()) continue;
             if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
             if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
         }

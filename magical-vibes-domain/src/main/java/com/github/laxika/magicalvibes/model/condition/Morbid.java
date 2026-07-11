@@ -12,4 +12,9 @@ public record Morbid() implements Condition {
     public String conditionNotMetReason() {
         return "no creature died this turn";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

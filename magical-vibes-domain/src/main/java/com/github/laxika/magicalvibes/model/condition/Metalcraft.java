@@ -12,4 +12,9 @@ public record Metalcraft() implements Condition {
     public String conditionNotMetReason() {
         return "fewer than three artifacts";
     }
+
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

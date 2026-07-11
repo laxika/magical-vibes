@@ -38,6 +38,12 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
 - `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` — controls another matching permanent
 - `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` — life >= N
+
+Metalcraft / Morbid / Raid / ControlsAnotherPermanent are ETB trigger gates
+(`Condition.isEtbTriggerGate()`): a targeted ETB wrapped in one never asks for its target at cast
+time — the target is chosen as the trigger goes on the stack (see TRIGGER_SLOT_TARGETING.md,
+"ON_ENTER_BATTLEFIELD targeted triggers"). Override `isEtbTriggerGate()` when adding a new
+intervening-if condition used to gate a targeted ETB.
 - `ConditionalEffect(new ControllerTurn(), CardEffect)` — during your turn
 - `ConditionalEffect(new NotControllerTurn(), CardEffect)` — during turns other than yours
 - `ConditionalEffect(new ControlsPermanent(filter), wrapped)` — controls matching

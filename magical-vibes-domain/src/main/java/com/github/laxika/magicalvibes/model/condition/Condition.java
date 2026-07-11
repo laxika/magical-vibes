@@ -70,4 +70,15 @@ public sealed interface Condition permits
 
     /** Human-readable reason shown when the condition is not met (e.g. "fewer than three artifacts"). */
     String conditionNotMetReason();
+
+    /**
+     * True when, used as an ETB intervening-"if" (CR 603.4), this condition is checked against
+     * game state as the trigger would go on the stack (e.g. Metalcraft, Morbid, Raid) rather
+     * than being a casting choice already known at cast time (e.g. Kicked). A gate-conditional
+     * ETB never creates a cast-time target requirement — its target is chosen only when the
+     * trigger is put on the stack (CR 603.3d), and only if the gate is met at that point.
+     */
+    default boolean isEtbTriggerGate() {
+        return false;
+    }
 }

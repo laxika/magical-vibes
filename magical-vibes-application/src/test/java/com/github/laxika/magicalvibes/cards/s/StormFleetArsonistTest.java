@@ -25,7 +25,8 @@ class StormFleetArsonistTest extends BaseCardTest {
     void etbTriggersWithRaid() {
         markAttackedThisTurn();
         castStormFleetArsonist();
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
 
         // ETB trigger should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -41,7 +42,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent's only permanent should be auto-sacrificed
@@ -58,7 +60,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent should be prompted to choose which permanent to sacrifice
@@ -86,7 +89,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         markAttackedThisTurn();
         castStormFleetArsonist();
 
-        harness.passBothPriorities(); // resolve creature spell
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -102,8 +106,9 @@ class StormFleetArsonistTest extends BaseCardTest {
         castStormFleetArsonist();
         harness.passBothPriorities(); // resolve creature spell
 
-        // No ETB trigger on the stack
+        // No ETB trigger on the stack and no target prompt (intervening-if failed, CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Creature is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -122,7 +127,8 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         markAttackedThisTurn();
         castStormFleetArsonist();
-        harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, player2.getId()); // ETB trigger on stack
 
         // Remove the raid flag before ETB resolves
         gd.playersDeclaredAttackersThisTurn.clear();
@@ -150,15 +156,20 @@ class StormFleetArsonistTest extends BaseCardTest {
     // ===== Targeting =====
 
     @Test
-    @DisplayName("Cannot cast targeting yourself")
+    @DisplayName("Trigger target prompt only offers opponents — choosing yourself is rejected")
     void cannotTargetYourself() {
-        harness.setHand(player1, List.of(new StormFleetArsonist()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        markAttackedThisTurn();
+        castStormFleetArsonist();
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, player1.getId(), null))
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(player2.getId());
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .hasMessageContaining("Invalid permanent");
     }
 
     // ===== Helpers =====
@@ -171,6 +182,6 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.setHand(player1, List.of(new StormFleetArsonist()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
+        harness.getGameService().playCard(gd, player1, 0, 0, null, null);
     }
 }

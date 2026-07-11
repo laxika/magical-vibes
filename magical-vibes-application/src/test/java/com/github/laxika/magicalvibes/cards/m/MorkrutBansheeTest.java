@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MorkrutBansheeTest extends BaseCardTest {
 
     @Test
-    @DisplayName("No ETB trigger without morbid")
+    @DisplayName("No ETB trigger and no target prompt without morbid")
     void noEffectWithoutMorbid() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -27,11 +28,12 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        // No morbid — no ETB trigger should fire
+        // No morbid — no ETB trigger fires and no target is ever chosen (CR 603.4)
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Grizzly Bears should be unaffected
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
@@ -42,7 +44,7 @@ class MorkrutBansheeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Morbid met — target creature gets -4/-4")
+    @DisplayName("Morbid met — target chosen at trigger time gets -4/-4")
     void morbidGivesMinusFourMinusFour() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -55,8 +57,9 @@ class MorkrutBansheeTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities(); // resolve creature spell (ETB trigger goes on stack)
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
         // Grizzly Bears (2/2) gets -4/-4 → lethal, should be destroyed by SBA
@@ -65,16 +68,10 @@ class MorkrutBansheeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Morbid met — -4/-4 on a bigger creature reduces stats")
+    @DisplayName("Morbid met — can target own creature at trigger time")
     void morbidReducesBigCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-
-        // Use a 4/4 creature so it survives -4/-4 (becomes 0/0... actually that's lethal too)
-        // Let's use a creature with 5+ toughness
-        // We'll put a second Morkrut Banshee on the opponent's side (4/4)
-        // Actually -4/-4 on a 4/4 gives 0/0 which is also lethal.
-        // Let's just target our own creature and verify the modifier is applied
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new MorkrutBanshee()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -83,8 +80,9 @@ class MorkrutBansheeTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities(); // resolve creature spell
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB
 
         // Grizzly Bears (2/2) with -4/-4 should be destroyed (0 or less toughness)
@@ -112,14 +110,39 @@ class MorkrutBansheeTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears1Id);
         harness.passBothPriorities(); // resolve Shock — morbid now active
 
-        // Cast Morkrut Banshee targeting the second Bears
+        // Cast Morkrut Banshee, then choose the second Bears as the trigger target
         UUID bears2Id = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, bears2Id);
-        harness.passBothPriorities(); // resolve creature spell
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, bears2Id); // ETB trigger on stack
         harness.passBothPriorities(); // resolve ETB — -4/-4 kills Bears
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Trigger target prompt only offers creatures")
+    void triggerPromptOffersOnlyCreatures() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MorkrutBanshee()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        UUID bansheeId = harness.getPermanentId(player1, "Morkrut Banshee");
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bearsId, bansheeId);
     }
 
     @Test
@@ -135,8 +158,9 @@ class MorkrutBansheeTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities(); // resolve creature spell — ETB on stack
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve creature spell — trigger-time target prompt
+        harness.handlePermanentChosen(player1, targetId); // ETB trigger on stack
 
         // Remove target before ETB resolves
         gd.playerBattlefields.get(player2.getId()).clear();

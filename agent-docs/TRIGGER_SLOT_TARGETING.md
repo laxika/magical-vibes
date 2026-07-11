@@ -137,6 +137,18 @@ ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
 `getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a cast; "up to N" cast
 spells that chose 0 targets are unaffected because they passed through cast-time selection.
 
+**Gate-conditional targeted ETBs** (`ConditionalEffect` whose condition returns
+`Condition.isEtbTriggerGate()` — Metalcraft, Morbid, Raid, ControlsAnotherPermanent; e.g. Bleak
+Coven Vampires, Morkrut Banshee, Storm Fleet Pyromancer, Dreamcaller Siren) **never** target at
+cast time: whether the ability triggers at all depends on game state as the permanent enters
+(intervening-if, CR 603.4), so `EffectResolution.computeAllowedTargets` excludes them from the
+spell's cast-time target requirement and `EtbEffectResolver` drops the trigger entirely when the
+gate isn't met. When it is met, the same `ETBTokenTargetTrigger` / `ETBTokenMultiTargetTrigger`
+deferred path prompts for the target as the trigger goes on the stack (CR 603.3d); the wrapped
+`ConditionalEffect` stays on the stack entry and the gate is re-checked at resolution. When adding
+a new intervening-if condition that gates a **targeted** ETB, override `isEtbTriggerGate()` on the
+condition — both the cast-time exclusion and the `EtbEffectResolver` gate key off it.
+
 If the card you are implementing needs one of these slots **and** a user target choice (either player
 or permanent), **that is an engine change**. The work required is:
 
