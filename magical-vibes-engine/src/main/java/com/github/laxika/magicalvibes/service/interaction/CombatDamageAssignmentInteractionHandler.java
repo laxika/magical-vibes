@@ -59,7 +59,7 @@ public class CombatDamageAssignmentInteractionHandler
         sessionManager.sendToPlayer(recipientId, new CombatDamageAssignmentNotification(
                 interaction.attackerIndex(), interaction.attackerPermanentId().toString(),
                 interaction.attackerName(), interaction.totalDamage(), targetViews,
-                interaction.isTrample(), interaction.isDeathtouch()));
+                interaction.isTrample(), interaction.isDeathtouch(), interaction.singleRecipient()));
     }
 
     @Override

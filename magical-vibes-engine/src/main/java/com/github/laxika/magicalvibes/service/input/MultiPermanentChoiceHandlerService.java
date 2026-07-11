@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -62,6 +63,7 @@ public class MultiPermanentChoiceHandlerService {
     private final DestructionSupport destructionSupport;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
+    private final LifeSupport lifeSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -123,6 +125,10 @@ public class MultiPermanentChoiceHandlerService {
             handleDestroyRestChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
             handleForcedSacrifice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ChooseCreatureRestCantBlock ctx) {
+            handleChooseCreatureRestCantBlock(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapCreaturesGainLife ctx) {
+            handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -313,6 +319,46 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleChooseCreatureRestCantBlock(GameData gameData, List<UUID> permanentIds,
+                                                   MultiPermanentChoiceContext.ChooseCreatureRestCantBlock context) {
+        UUID targetPlayerId = context.targetPlayerId();
+        UUID keptId = permanentIds.isEmpty() ? null : permanentIds.getFirst();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+        int count = 0;
+        if (battlefield != null) {
+            for (Permanent perm : battlefield) {
+                if (gameQueryService.isCreature(gameData, perm) && !perm.getId().equals(keptId)) {
+                    perm.setCantBlockThisTurn(true);
+                    count++;
+                }
+            }
+        }
+
+        if (count > 0) {
+            String playerName = gameData.playerIdToName.get(targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "Other creatures controlled by " + playerName + " can't block this turn.");
+        }
+
+        // Standard completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData,
                     gameData.pendingEffectResolutionEntry,
@@ -637,6 +683,40 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleTapCreaturesGainLife(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                            MultiPermanentChoiceContext.TapCreaturesGainLife context) {
+        List<String> tappedNames = new ArrayList<>();
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null && !perm.isTapped()) {
+                perm.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+                tappedNames.add(perm.getCard().getName());
+            }
+        }
+
+        int tappedCount = tappedNames.size();
+        if (tappedCount == 0) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + " taps no creatures.");
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, gameData.playerIdToName.get(playerId)
+                    + " taps " + tappedCount + " creature" + (tappedCount == 1 ? "" : "s")
+                    + ": " + String.join(", ", tappedNames) + ".");
+            lifeSupport.applyGainLife(gameData, playerId, context.lifePerCreature() * tappedCount);
+        }
+
+        // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
     }
 
     private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {

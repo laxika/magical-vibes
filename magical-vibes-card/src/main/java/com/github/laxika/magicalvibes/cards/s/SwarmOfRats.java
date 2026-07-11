@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "166")
+@CardRegistration(set = "P02", collectorNumber = "89")
 public class SwarmOfRats extends Card {
 
     public SwarmOfRats() {

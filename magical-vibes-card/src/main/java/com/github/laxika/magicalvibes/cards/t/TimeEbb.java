@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "9ED", collectorNumber = "107")
 @CardRegistration(set = "POR", collectorNumber = "75")
+@CardRegistration(set = "P02", collectorNumber = "57")
 public class TimeEbb extends Card {
 
     public TimeEbb() {

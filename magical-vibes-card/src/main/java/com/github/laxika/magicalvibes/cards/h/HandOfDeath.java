@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "96")
+@CardRegistration(set = "P02", collectorNumber = "74")
 public class HandOfDeath extends Card {
 
     public HandOfDeath() {

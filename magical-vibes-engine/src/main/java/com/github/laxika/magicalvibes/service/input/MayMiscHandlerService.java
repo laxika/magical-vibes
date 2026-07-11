@@ -296,6 +296,31 @@ public class MayMiscHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Eye Spy — the controller may put the looked-at top card into the target
+     * player's graveyard. The library/graveyard owner is the targeted player, not
+     * the prompted controller.
+     */
+    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, boolean accepted, UUID libraryOwnerId) {
+        List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
+        String ownerName = gameData.playerIdToName.get(libraryOwnerId);
+
+        if (accepted && deck != null && !deck.isEmpty()) {
+            Card topCard = deck.removeFirst();
+            gameData.playerGraveyards.get(libraryOwnerId).add(topCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    topCard.getName() + " is put into " + ownerName + "'s graveyard.");
+            log.info("Game {} - {} put into {}'s graveyard (Eye Spy)",
+                    gameData.id, topCard.getName(), ownerName);
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "The card is left on top of " + ownerName + "'s library.");
+            log.info("Game {} - card left on top of {}'s library (Eye Spy)", gameData.id, ownerName);
+        }
+
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleExploreMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "53")
+@CardRegistration(set = "P02", collectorNumber = "36")
 public class DJVu extends Card {
 
     public DJVu() {

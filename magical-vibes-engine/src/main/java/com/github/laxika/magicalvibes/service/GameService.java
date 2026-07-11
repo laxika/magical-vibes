@@ -400,6 +400,14 @@ public class GameService {
         }
     }
 
+    public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.tapForeignLandForMana(gameData, player, permanentId);
+        }
+    }
+
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
         activateAbility(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null);
     }

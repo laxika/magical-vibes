@@ -612,6 +612,11 @@ public class GameTestHarness {
         gameService.tapPermanent(gameData, player, permanentIndex);
     }
 
+    public void tapForeignLandForMana(Player player, UUID permanentId) {
+        ensurePriority(player);
+        gameService.tapForeignLandForMana(gameData, player, permanentId);
+    }
+
     public void sacrificePermanent(Player player, int permanentIndex, UUID targetId) {
         ensurePriority(player);
         gameService.sacrificePermanent(gameData, player, permanentIndex, targetId);

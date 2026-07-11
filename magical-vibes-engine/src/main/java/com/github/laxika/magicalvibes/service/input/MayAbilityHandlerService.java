@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
@@ -271,6 +272,16 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof SurveilEffect);
         if (isSurveil) {
             mayMiscHandlerService.handleSurveilMayGraveyardChoice(gameData, player, accepted);
+            return;
+        }
+
+        // Eye Spy — may put target player's looked-at top card into their graveyard
+        LookAtTargetPlayerTopCardMayGraveyardEffect eyeSpy = ability.effects().stream()
+                .filter(e -> e instanceof LookAtTargetPlayerTopCardMayGraveyardEffect)
+                .map(e -> (LookAtTargetPlayerTopCardMayGraveyardEffect) e)
+                .findFirst().orElse(null);
+        if (eyeSpy != null) {
+            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted, eyeSpy.libraryOwnerId());
             return;
         }
 

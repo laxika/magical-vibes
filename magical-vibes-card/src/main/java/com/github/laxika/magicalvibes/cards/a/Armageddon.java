@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "5")
+@CardRegistration(set = "P02", collectorNumber = "12")
 public class Armageddon extends Card {
 
     public Armageddon() {

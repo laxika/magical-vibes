@@ -152,6 +152,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeTargetPermanentAtEndStepEffect()` — sacrifice the target at next end step (Lowland Oaf); sacrifice, not destruction (ignores indestructible/regeneration)
 - `DestroyAllPermanentsEffect(PermanentPredicate)` or `(PermanentPredicate, boolean)` — board wipe
 - `DestroyAllPermanentsAndGainLifePerDestroyedEffect(PermanentPredicate, int)` — wipe + life
+- `DestroyCreaturesTargetPlayerControlsAndLoseLifePerDestroyedEffect(int)` — destroy creatures target player controls; controller loses N life per destroyed. Needs `target(...)` a player
 - `EachPlayerChoosesCreatureDestroyRestEffect()` — choose one, destroy rest
 - `DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect(String, List, Set)` — wipe + X/X token
 - `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect(CardPredicate, boolean may[, boolean tapped])` — destroy + controller searches to battlefield (tapped optional, e.g. Erode)
@@ -408,6 +409,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CantBeBlockedEffect()` — unblockable (static)
 - `CantBeBlockedByFewerThanNCreaturesEffect(int minBlockers)` — generalized menace: can't be blocked except by N+ creatures (static). Menace = 2; Guile = 3
 - `CantBeBlockedIfAttackingAloneEffect()` — can't be blocked while attacking alone (static)
+- `AssignCombatDamageAsThoughUnblockedEffect()` — while blocked, may assign combat damage as though unblocked (Rhox/Thorn Elemental) (static)
+- `AssignCombatDamageToDefendingCreatureWhenUnblockedEffect()` — while unblocked, may assign all combat damage to one defending creature instead of the player (Cunning Giant) (static). Prompts the attacker via the combat-damage-assignment interaction when the defender has a creature; single recipient only.
 - `CantBlockEffect()` — can't block (static)
 - `MustAttackEffect()` — must attack (static)
 - `MustAttackControllerNextTurnEffect()` — targets a player: during their next turn every creature they control attacks you (the controller) if able (Taunt). SPELL slot; `canTargetPlayer`
@@ -420,6 +423,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CanBeBlockedOnlyByFilterEffect(PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — static evasion on the source: it can be blocked only by blockers matching the predicate (Fear-like, e.g. Dread Warlock = black creatures)
 - `GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect(PermanentPredicate creatureFilter, PermanentPredicate blockerPredicate, String allowedBlockersDescription)` — SPELL one-shot: your creatures matching `creatureFilter` (null = all) can be blocked only by blockers matching `blockerPredicate` until end of turn. Dread Charge = both filters `PermanentColorInPredicate(BLACK)`. Affected creatures snapshotted at resolution; restriction stored transiently on each `Permanent`
 - `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
+- `TargetPlayerChoosesCreatureRestCantBlockEffect()` — SPELL, `canTargetPlayer`: the targeted player chooses one creature they control (kept able to block); all their OTHER creatures can't block this turn. Pair with a `PlayerPredicateTargetFilter(OPPONENT)`. 0-1 creatures ⇒ no choice, resolves harmlessly (Goblin War Cry).
 
 ## Tap / untap
 
@@ -454,6 +458,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AwardManaEffect(ManaColor, DynamicAmount)`, `(ManaColor, int)`, or `(ManaColor)` — add mana; dynamic quantity: `PermanentCount(filter, CONTROLLER)` for "for each X you control", `CountersOnSource(CHARGE)` for "per charge counter", `SourcePower()` for "equal to its power", `FixedIfControlsAllNamed(List<String> names, amount, otherwise)` for the Urza-land ("Tron") boost — `amount` if you control a permanent of every named card, else `otherwise` (e.g. Urza's Mine `AwardManaEffect(COLORLESS, new FixedIfControlsAllNamed(List.of("Urza's Power-Plant", "Urza's Tower"), 2, 1))`)
 - `AwardAnyColorManaEffect(int)` or `()` — add any color mana
 - `AwardManaOfColorsOpponentLandsCouldProduceEffect()` — add one mana of any color an opponent's land could produce (Fellwar Stone)
+- `MayTapLandsYouDontControlForSpellsUntilEndOfTurnEffect()` — SPELL slot; until EOT, controller may tap lands they don't control for spell-only mana via `GameService.tapForeignLandForMana(...)` (Piracy)
 - `DoubleManaPoolEffect()` — double mana pool
 - `AwardRestrictedManaEffect(ManaColor, int, ManaRestriction)` — restricted mana (`ManaRestriction`: `SpellTypes(Set<CardType>)`, `ArtifactSpells()`, `SubtypeSpells(CardSubtype)`, `KickedCosts()`)
 - `AwardFlashbackOnlyAnyColorManaEffect(int)` — flashback-only mana (any-color choice; separate record)

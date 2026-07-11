@@ -82,4 +82,18 @@ public sealed interface MultiPermanentChoiceContext {
     /** Tap the chosen subtype permanents to boost [source] and damage the defender (Myr Battlesphere). */
     record TapSubtypeBoost(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
+
+    /**
+     * {@code targetPlayerId} chose one creature to keep able to block; every other creature they
+     * control can't block this turn (Goblin War Cry).
+     */
+    record ChooseCreatureRestCantBlock(UUID targetPlayerId) implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Tap each chosen untapped creature the controller controls, then the controller gains
+     * {@code lifePerCreature} life per creature tapped this way (Harmony of Nature).
+     */
+    record TapCreaturesGainLife(int lifePerCreature) implements MultiPermanentChoiceContext {
+    }
 }

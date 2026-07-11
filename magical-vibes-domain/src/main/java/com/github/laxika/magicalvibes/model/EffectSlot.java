@@ -26,6 +26,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DAMAGE_TO_PLAYER,
     ON_ATTACK,
     ON_BECOMES_BLOCKED,
+    /** Triggers once per attacking creature the controller controls that ends up unblocked
+     *  ("Whenever this creature attacks and isn't blocked"). Fires during the declare-blockers
+     *  step once blocks are locked in — after the defender declares blockers, or immediately when
+     *  the defender has no possible blockers. Player-affecting effects (e.g. a discard) read the
+     *  defending player from the stack entry's (non-targeting) {@code targetId}. Checked in
+     *  {@code CombatBlockService}. Used by Abyssal Nightstalker. */
+    ON_ATTACKS_UNBLOCKED,
     DRAW_TRIGGERED,
     EACH_DRAW_TRIGGERED,
     END_STEP_TRIGGERED,

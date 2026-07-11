@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "178")
+@CardRegistration(set = "P02", collectorNumber = "135")
 public class NaturesLore extends Card {
 
     public NaturesLore() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "208")
+@CardRegistration(set = "P02", collectorNumber = "99")
 public class GoblinLore extends Card {
 
     public GoblinLore() {

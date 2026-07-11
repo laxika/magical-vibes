@@ -578,6 +578,7 @@ export interface CombatDamageAssignmentNotification {
   validTargets: CombatDamageTargetView[];
   isTrample: boolean;
   isDeathtouch: boolean;
+  singleRecipient: boolean;
 }
 
 export interface BrowseCardInfo {

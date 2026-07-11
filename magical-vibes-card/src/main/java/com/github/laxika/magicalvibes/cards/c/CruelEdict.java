@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "133")
 @CardRegistration(set = "9ED", collectorNumber = "121")
+@CardRegistration(set = "P02", collectorNumber = "67")
 public class CruelEdict extends Card {
 
     public CruelEdict() {

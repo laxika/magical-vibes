@@ -224,6 +224,82 @@ public class AbilityActivationService {
     }
 
     /**
+     * Taps a land the player does not control for mana (Piracy). Legal only while the player is marked in
+     * {@code gameData.mayTapLandsForSpellsUntilEndOfTurn}. The produced mana is routed into the player's
+     * spell-only bucket so it can be spent only to cast spells.
+     *
+     * @param gameData     the current game state
+     * @param player       the player tapping the foreign land
+     * @param permanentId  the id of the land to tap (on any battlefield)
+     * @throws IllegalStateException if the player may not tap foreign lands, the permanent is not a land
+     *                               the player fails to control, it is already tapped, or has no mana ability
+     */
+    public void tapForeignLandForMana(GameData gameData, Player player, UUID permanentId) {
+        UUID playerId = player.getId();
+        if (!gameData.mayTapLandsForSpellsUntilEndOfTurn.contains(playerId)) {
+            throw new IllegalStateException("You may not tap lands you don't control");
+        }
+
+        Permanent permanent = null;
+        UUID controllerId = null;
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            for (Permanent candidate : entry.getValue()) {
+                if (candidate.getId().equals(permanentId)) {
+                    permanent = candidate;
+                    controllerId = entry.getKey();
+                }
+            }
+        }
+        if (permanent == null) {
+            throw new IllegalStateException("Land not found");
+        }
+        if (playerId.equals(controllerId)) {
+            throw new IllegalStateException("You control that land; tap it normally");
+        }
+        if (!permanent.getCard().hasType(CardType.LAND)) {
+            throw new IllegalStateException("Permanent is not a land");
+        }
+        if (permanent.isTapped()) {
+            throw new IllegalStateException("Land is already tapped");
+        }
+        ManaColor overriddenManaColor = getOverriddenLandManaColor(gameData, permanent);
+        if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
+            throw new IllegalStateException("Land has no mana ability");
+        }
+
+        permanent.tap();
+
+        ManaPool manaPool = gameData.playerManaPools.get(playerId);
+        if (overriddenManaColor != null) {
+            manaPool.add(overriddenManaColor, 1);
+            manaPool.addSpellOnlyMana(overriddenManaColor, 1);
+        } else {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
+                if (effect instanceof AwardManaEffect awardMana) {
+                    int amount = onTapManaAmount(awardMana);
+                    manaPool.add(awardMana.color(), amount);
+                    manaPool.addSpellOnlyMana(awardMana.color(), amount);
+                }
+            }
+        }
+
+        String logEntry = player.getUsername() + " taps " + permanent.getCard().getName() + " for mana (Piracy).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} taps foreign land {} for mana", gameData.id, player.getUsername(), permanent.getCard().getName());
+
+        int stackBeforeTriggers = gameData.stack.size();
+        triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
+        if (gameData.stack.size() > stackBeforeTriggers) {
+            List<StackEntry> deferred = new ArrayList<>(
+                    gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+            gameData.pendingManaAbilityTriggers.addAll(deferred);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
      * Activates an ON_SACRIFICE ability by sacrificing the source permanent and placing the ability on the stack.
      *
      * @param gameData          the current game state
@@ -340,6 +416,19 @@ public class AbilityActivationService {
      * the player can pay the mana cost. Pays the cost and pushes the ability onto the stack.</p>
      */
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        // Spell-only mana (Piracy) can't pay ability costs — hide it for the duration of this activation.
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
+        try {
+            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex);
+        } finally {
+            if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
+                pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
+            }
+        }
+    }
+
+    private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
         // Ashes of the Abhorrent etc.: players can't activate abilities of cards in graveyards
         if (!gameQueryService.canPlayersActivateGraveyardAbilities(gameData)) {
             throw new IllegalStateException("Abilities of cards in graveyards can't be activated");
@@ -615,6 +704,25 @@ public class AbilityActivationService {
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
+                                         UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource) {
+        // Spell-only mana (e.g. tapped via Piracy) can't pay ability costs — hide it for the duration of
+        // this activation (including the affordability check) so it is neither counted nor spent, then
+        // restore it afterward. Re-entrant callbacks (discard/exile cost) call this method afresh, so each
+        // pass withdraws and restores symmetrically.
+        ManaPool pool = gameData.playerManaPools.get(player.getId());
+        Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
+        try {
+            activateAbilityInternalImpl(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone,
+                    discardCardIndex, exileGraveyardCardIndex, targetIds, damageAssignments, preResolvedSource);
+        } finally {
+            if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
+                pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
+            }
+        }
+    }
+
+    private void activateAbilityInternalImpl(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
                                          List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource) {
         int effectiveXValue = xValue != null ? xValue : 0;

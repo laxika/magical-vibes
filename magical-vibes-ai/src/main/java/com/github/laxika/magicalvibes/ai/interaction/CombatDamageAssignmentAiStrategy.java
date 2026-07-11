@@ -33,6 +33,25 @@ class CombatDamageAssignmentAiStrategy implements AiInteractionStrategy<PendingI
         var targets = interaction.validTargets();
 
         Map<String, Integer> assignments = new HashMap<>();
+
+        // Single-recipient assignment (e.g. an unblocked Cunning Giant): all damage goes to one
+        // target. Prefer a defending creature this attacker can kill outright, otherwise the player.
+        if (interaction.singleRecipient()) {
+            var killable = targets.stream()
+                    .filter(t -> !t.isPlayer())
+                    .filter(t -> t.effectiveToughness() - t.currentDamage() <= totalDamage)
+                    .findFirst();
+            var chosen = killable.orElseGet(() -> targets.stream()
+                    .filter(com.github.laxika.magicalvibes.model.CombatDamageTarget::isPlayer)
+                    .findFirst()
+                    .orElse(targets.get(0)));
+            assignments.put(chosen.id().toString(), totalDamage);
+            log.info("AI: Assigning combat damage for attacker {} in game {}: {}", atkIdx, ctx.gameId(), assignments);
+            ctx.gameActions().handleCombatDamageAssigned(ctx.selfConnection(),
+                    new CombatDamageAssignedRequest(atkIdx, assignments));
+            return;
+        }
+
         int remaining = totalDamage;
 
         for (var target : targets) {

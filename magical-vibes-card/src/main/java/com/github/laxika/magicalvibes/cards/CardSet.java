@@ -24,7 +24,8 @@ public enum CardSet {
     SET_XLN("XLN"),
     SET_DOM("DOM"),
     SET_SOS("SOS"),
-    SET_POR("POR");
+    SET_POR("POR"),
+    SET_P02("P02");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;

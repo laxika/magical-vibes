@@ -147,6 +147,7 @@ public enum CardSubtype {
     TEFERI("Teferi"),
     TREASURE("Treasure"),
     VEHICLE("Vehicle"),
+    NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson");
 
     @Getter

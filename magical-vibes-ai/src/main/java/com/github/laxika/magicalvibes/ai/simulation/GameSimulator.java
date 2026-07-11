@@ -934,7 +934,24 @@ public class GameSimulator {
 
     private Map<UUID, Integer> autoAssignCombatDamage(PendingInteraction.CombatDamageAssignment cda) {
         Map<UUID, Integer> assignments = new HashMap<>();
-        int remaining = cda.totalDamage();
+        int totalDamage = cda.totalDamage();
+
+        // Single-recipient assignment (e.g. an unblocked Cunning Giant): all damage to one target,
+        // preferring a defending creature this attacker can kill, otherwise the player.
+        if (cda.singleRecipient()) {
+            var killable = cda.validTargets().stream()
+                    .filter(t -> !t.isPlayer())
+                    .filter(t -> t.effectiveToughness() - t.currentDamage() <= totalDamage)
+                    .findFirst();
+            var chosen = killable.orElseGet(() -> cda.validTargets().stream()
+                    .filter(com.github.laxika.magicalvibes.model.CombatDamageTarget::isPlayer)
+                    .findFirst()
+                    .orElse(cda.validTargets().get(0)));
+            assignments.put(chosen.id(), totalDamage);
+            return assignments;
+        }
+
+        int remaining = totalDamage;
         for (var target : cda.validTargets()) {
             if (target.isPlayer()) continue;
             int lethal = cda.isDeathtouch()

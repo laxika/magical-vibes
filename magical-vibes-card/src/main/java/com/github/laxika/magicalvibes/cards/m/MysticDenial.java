@@ -11,6 +11,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "POR", collectorNumber = "61")
+@CardRegistration(set = "P02", collectorNumber = "41")
 public class MysticDenial extends Card {
 
     public MysticDenial() {

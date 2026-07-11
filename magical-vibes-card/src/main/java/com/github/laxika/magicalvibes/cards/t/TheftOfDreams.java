@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "72")
+@CardRegistration(set = "P02", collectorNumber = "55")
 public class TheftOfDreams extends Card {
 
     public TheftOfDreams() {

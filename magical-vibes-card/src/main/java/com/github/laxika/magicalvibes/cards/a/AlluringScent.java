@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "POR", collectorNumber = "157")
+@CardRegistration(set = "P02", collectorNumber = "121")
 public class AlluringScent extends Card {
 
     public AlluringScent() {

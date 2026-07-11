@@ -122,6 +122,7 @@ public class TurnCleanupService {
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
         for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
             gameData.graveyardPlayPermissions.remove(cardId);

@@ -134,6 +134,11 @@ public class CombatBlockService {
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
             log.info("Game {} - Defending player has no creatures that can block or no blockable attackers", gameData.id);
+            // No blocks are possible, so every attacking creature is unblocked: fire any
+            // "attacks and isn't blocked" triggers before advancing to combat damage.
+            if (collectUnblockedAttackTriggers(gameData, activeId, defenderId) > 0) {
+                return CombatResult.AUTO_PASS_ONLY;
+            }
             return CombatResult.ADVANCE_ONLY;
         }
 
@@ -405,6 +410,10 @@ public class CombatBlockService {
             combatTriggerService.checkAttachedPerBlockerTriggers(gameData, attacker, blockerAssignments, defenderBattlefield, atkIdx);
         }
 
+        // "Whenever this creature attacks and isn't blocked" triggers (active player's / AP's) for
+        // every attacker that ended up unblocked after this block declaration.
+        collectUnblockedAttackTriggers(gameData, activeId, defenderId);
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeBlockerTriggers, activeId);
 
@@ -488,6 +497,61 @@ public class CombatBlockService {
                 mustBeBlockedIndices, menaceIndices, mustBlockReqs);
     }
 
+
+    /**
+     * Collects "whenever this creature attacks and isn't blocked" ({@code ON_ATTACKS_UNBLOCKED})
+     * triggers for every attacking creature the active player controls that no creature is blocking.
+     * Each trigger is the active player's; player-affecting effects (e.g. a discard) read the
+     * defending player from the (non-targeting) {@code targetId}. Returns the number pushed.
+     */
+    private int collectUnblockedAttackTriggers(GameData gameData, UUID activeId, UUID defenderId) {
+        List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
+        if (attackerBattlefield == null) {
+            return 0;
+        }
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        int pushed = 0;
+        for (Permanent attacker : attackerBattlefield) {
+            if (!attacker.isAttacking()) {
+                continue;
+            }
+            List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
+            if (effects.isEmpty() || isBlocked(defenderBattlefield, attacker)) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    activeId,
+                    attacker.getCard().getName() + "'s unblocked-attack trigger",
+                    new ArrayList<>(effects),
+                    defenderId,
+                    attacker.getId());
+            // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+            gameBroadcastService.logAndBroadcast(gameData, attacker.getCard().getName()
+                    + "'s unblocked-attack ability triggers.");
+            log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            pushed++;
+        }
+        return pushed;
+    }
+
+    /**
+     * Returns {@code true} if any creature on the defending battlefield is blocking the given attacker.
+     */
+    private boolean isBlocked(List<Permanent> defenderBattlefield, Permanent attacker) {
+        if (defenderBattlefield == null) {
+            return false;
+        }
+        for (Permanent blocker : defenderBattlefield) {
+            if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     private boolean canBlockAttacker(GameData gameData, Permanent blocker,
                                       Permanent attacker, List<Permanent> defenderBattlefield) {

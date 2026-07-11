@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "POR", collectorNumber = "21")
+@CardRegistration(set = "P02", collectorNumber = "18")
 public class PathOfPeace extends Card {
 
     public PathOfPeace() {

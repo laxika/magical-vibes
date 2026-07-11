@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "POR", collectorNumber = "191")
+@CardRegistration(set = "P02", collectorNumber = "149")
 public class UntamedWilds extends Card {
 
     public UntamedWilds() {

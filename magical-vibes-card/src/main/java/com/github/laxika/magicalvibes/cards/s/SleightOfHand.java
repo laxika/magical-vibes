@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "99")
+@CardRegistration(set = "P02", collectorNumber = "46")
 public class SleightOfHand extends Card {
 
     public SleightOfHand() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "10")
+@CardRegistration(set = "P02", collectorNumber = "15")
 public class BreathOfLife extends Card {
 
     public BreathOfLife() {

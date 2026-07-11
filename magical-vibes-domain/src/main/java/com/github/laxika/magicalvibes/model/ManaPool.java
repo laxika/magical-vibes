@@ -12,6 +12,13 @@ public class ManaPool {
 
     private final EnumMap<ManaColor, Integer> pool = new EnumMap<>(ManaColor.class);
     private final EnumMap<ManaColor, Integer> creatureMana = new EnumMap<>(ManaColor.class);
+    /**
+     * Mana that may only be spent to cast spells (e.g. mana from lands tapped via Piracy). Tracked as a
+     * tag on a subset of the regular {@link #pool}, mirroring {@link #creatureMana}: spell casting draws
+     * from the regular pool as usual, while ability activation temporarily withdraws this mana so it can't
+     * pay ability costs.
+     */
+    private final EnumMap<ManaColor, Integer> spellOnlyMana = new EnumMap<>(ManaColor.class);
     /** Mana that doesn't drain at step/phase transitions until end of turn (e.g. Grand Warlord Radha). */
     private final EnumMap<ManaColor, Integer> persistentMana = new EnumMap<>(ManaColor.class);
     private int artifactOnlyColorless;
@@ -36,6 +43,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             creatureMana.put(color, 0);
+            spellOnlyMana.put(color, 0);
             persistentMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
@@ -48,6 +56,7 @@ public class ManaPool {
     public ManaPool(ManaPool source) {
         pool.putAll(source.pool);
         creatureMana.putAll(source.creatureMana);
+        spellOnlyMana.putAll(source.spellOnlyMana);
         persistentMana.putAll(source.persistentMana);
         flashbackOnlyMana.putAll(source.flashbackOnlyMana);
         this.artifactOnlyColorless = source.artifactOnlyColorless;
@@ -76,6 +85,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             pool.put(color, 0);
             creatureMana.put(color, 0);
+            spellOnlyMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
         }
         artifactOnlyColorless = 0;
@@ -154,6 +164,61 @@ public class ManaPool {
         int creature = creatureMana.getOrDefault(color, 0);
         if (creature > total) {
             creatureMana.put(color, total);
+        }
+        int spellOnly = spellOnlyMana.getOrDefault(color, 0);
+        if (spellOnly > total) {
+            spellOnlyMana.put(color, total);
+        }
+    }
+
+    /**
+     * Adds spell-only mana (Piracy). The caller must also add the same amount to the regular pool via
+     * {@link #add(ManaColor, int)}; this only records the spell-only tag on that subset.
+     */
+    public void addSpellOnlyMana(ManaColor color, int amount) {
+        spellOnlyMana.merge(color, amount, Integer::sum);
+    }
+
+    public int getSpellOnlyMana(ManaColor color) {
+        return spellOnlyMana.getOrDefault(color, 0);
+    }
+
+    public int getSpellOnlyManaTotal() {
+        int total = 0;
+        for (int value : spellOnlyMana.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    /**
+     * Temporarily removes all spell-only mana from the pool (both the regular-pool subset and the tag),
+     * returning the withdrawn amounts per color. Used to hide spell-only mana while paying an activated
+     * ability's cost, since that mana may only be spent to cast spells. Restore with
+     * {@link #restoreSpellOnlyMana(Map)}.
+     */
+    public Map<ManaColor, Integer> withdrawSpellOnlyMana() {
+        EnumMap<ManaColor, Integer> withdrawn = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            int amount = spellOnlyMana.getOrDefault(color, 0);
+            if (amount > 0) {
+                withdrawn.put(color, amount);
+                pool.merge(color, -amount, Integer::sum);
+                spellOnlyMana.put(color, 0);
+                int total = pool.getOrDefault(color, 0);
+                if (creatureMana.getOrDefault(color, 0) > total) {
+                    creatureMana.put(color, total);
+                }
+            }
+        }
+        return withdrawn;
+    }
+
+    /** Re-adds mana previously removed by {@link #withdrawSpellOnlyMana()}. */
+    public void restoreSpellOnlyMana(Map<ManaColor, Integer> withdrawn) {
+        for (Map.Entry<ManaColor, Integer> entry : withdrawn.entrySet()) {
+            pool.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            spellOnlyMana.merge(entry.getKey(), entry.getValue(), Integer::sum);
         }
     }
 
@@ -410,6 +475,8 @@ public class ManaPool {
             int total = pool.getOrDefault(color, 0);
             int creature = creatureMana.getOrDefault(color, 0);
             creatureMana.put(color, Math.min(creature, total));
+            int spellOnly = spellOnlyMana.getOrDefault(color, 0);
+            spellOnlyMana.put(color, Math.min(spellOnly, total));
         }
         artifactOnlyColorless = 0;
         myrOnlyColorless = 0;

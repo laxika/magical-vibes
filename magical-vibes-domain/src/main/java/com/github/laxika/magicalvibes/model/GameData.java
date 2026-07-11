@@ -270,6 +270,10 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Player IDs that may tap lands they don't control for mana until end of turn (Piracy). The
+     *  mana produced this way may only be spent to cast spells. Cleared at end of turn. */
+    public final Set<UUID> mayTapLandsForSpellsUntilEndOfTurn = ConcurrentHashMap.newKeySet();
+
     public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
 
     /** Targeted creature cards that may be cast from a graveyard this turn.

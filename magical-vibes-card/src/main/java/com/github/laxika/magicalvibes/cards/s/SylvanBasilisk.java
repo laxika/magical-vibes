@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 
 @CardRegistration(set = "10E", collectorNumber = "301")
+@CardRegistration(set = "P02", collectorNumber = "146")
 public class SylvanBasilisk extends Card {
 
     public SylvanBasilisk() {

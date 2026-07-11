@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "74")
+@CardRegistration(set = "P02", collectorNumber = "56")
 public class TidalSurge extends Card {
 
     public TidalSurge() {

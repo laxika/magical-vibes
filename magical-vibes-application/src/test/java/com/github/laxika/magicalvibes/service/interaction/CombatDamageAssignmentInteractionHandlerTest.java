@@ -65,7 +65,7 @@ class CombatDamageAssignmentInteractionHandlerTest {
                 PLAYER1_ID, 2, attackerId, "Craw Wurm", 6,
                 List.of(new CombatDamageTarget(blockerId, "Grizzly Bears", 2, 0, false),
                         new CombatDamageTarget(PLAYER2_ID, "Player2", 0, 0, true)),
-                true, false);
+                true, false, false);
     }
 
     @Test

@@ -506,7 +506,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                   String attackerName, int totalDamage,
                                   java.util.List<CombatDamageTarget> validTargets,
-                                  boolean isTrample, boolean isDeathtouch)
+                                  boolean isTrample, boolean isDeathtouch, boolean singleRecipient)
             implements PendingInteraction {
     }
 

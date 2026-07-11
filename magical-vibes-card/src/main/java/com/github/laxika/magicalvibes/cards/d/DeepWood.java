@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerFromAttackingCreaturesEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "162")
+@CardRegistration(set = "P02", collectorNumber = "126")
 public class DeepWood extends Card {
 
     public DeepWood() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "118")
+@CardRegistration(set = "P02", collectorNumber = "66")
 public class Coercion extends Card {
 
     public Coercion() {
