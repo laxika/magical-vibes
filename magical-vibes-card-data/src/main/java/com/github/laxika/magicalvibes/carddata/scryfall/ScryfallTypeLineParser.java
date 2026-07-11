@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata.scryfall;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;

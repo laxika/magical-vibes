@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata;
 
 /**
  * Which upstream service the oracle registry is loaded from on startup. Selected via the

@@ -1,5 +1,7 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata.scryfall;
 
+import com.github.laxika.magicalvibes.carddata.OracleDataProvider;
+import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

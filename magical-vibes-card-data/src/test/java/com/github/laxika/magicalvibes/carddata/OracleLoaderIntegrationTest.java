@@ -1,5 +1,7 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata;
 
+import com.github.laxika.magicalvibes.carddata.mtgjson.MtgjsonOracleLoader;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;

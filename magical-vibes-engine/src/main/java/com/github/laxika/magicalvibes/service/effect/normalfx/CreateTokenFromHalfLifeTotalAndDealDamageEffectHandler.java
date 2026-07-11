@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

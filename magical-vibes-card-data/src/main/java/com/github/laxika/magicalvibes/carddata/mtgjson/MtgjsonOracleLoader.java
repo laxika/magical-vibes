@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata.mtgjson;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
-import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader.TokenImageData;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader.TokenImageData;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallTypeLineParser;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;

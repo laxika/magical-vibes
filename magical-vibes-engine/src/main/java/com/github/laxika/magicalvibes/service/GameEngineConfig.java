@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.NetworkingConfig;
-import com.github.laxika.magicalvibes.scryfall.ScryfallConfig;
+import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -38,14 +38,14 @@ import java.util.List;
  * bindings supplied by each outer context.
  *
  * <p>Owns only the engine's own {@code service} package and composes the lower-level module
- * wiring ({@link NetworkingConfig}, {@link ScryfallConfig}) via {@code @Import}. This keeps each
+ * wiring ({@link NetworkingConfig}, {@link CardDataConfiguration}) via {@code @Import}. This keeps each
  * module responsible for its own beans instead of having downstream modules reach in with their
  * own component scans.
  */
 @Slf4j
 @Configuration
 @ComponentScan(basePackages = "com.github.laxika.magicalvibes.service")
-@Import({NetworkingConfig.class, ScryfallConfig.class})
+@Import({NetworkingConfig.class, CardDataConfiguration.class})
 public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;

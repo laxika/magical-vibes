@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.scryfall;
+package com.github.laxika.magicalvibes.carddata.scryfall;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
@@ -39,7 +39,7 @@ public class ScryfallOracleLoader {
 
     public record TokenImageData(String setCode, String collectorNumber) {}
 
-    static final Map<String, CardColor> COLOR_MAP = Map.of(
+    public static final Map<String, CardColor> COLOR_MAP = Map.of(
             "W", CardColor.WHITE,
             "U", CardColor.BLUE,
             "B", CardColor.BLACK,
@@ -47,7 +47,7 @@ public class ScryfallOracleLoader {
             "G", CardColor.GREEN
     );
 
-    static final Map<String, Keyword> KEYWORD_MAP = new HashMap<>();
+    public static final Map<String, Keyword> KEYWORD_MAP = new HashMap<>();
 
     static {
         KEYWORD_MAP.put("Flying", Keyword.FLYING);
@@ -153,13 +153,13 @@ public class ScryfallOracleLoader {
         return rarityRegistry.get(setCode + ":" + collectorNumber);
     }
 
-    /** Registration hook shared with {@link MtgjsonOracleLoader}, which populates the same registry. */
-    static void registerRarity(String setCode, String collectorNumber, String rarity) {
+    /** Registration hook shared with {@code MtgjsonOracleLoader}, which populates the same registry. */
+    public static void registerRarity(String setCode, String collectorNumber, String rarity) {
         rarityRegistry.put(setCode + ":" + collectorNumber, rarity);
     }
 
-    /** Registration hook shared with {@link MtgjsonOracleLoader}, which populates the same registry. */
-    static void registerTokenImages(String setCode, Map<String, TokenImageData> tokenMap) {
+    /** Registration hook shared with {@code MtgjsonOracleLoader}, which populates the same registry. */
+    public static void registerTokenImages(String setCode, Map<String, TokenImageData> tokenMap) {
         tokenImageRegistry.put(setCode, tokenMap);
     }
 
@@ -231,14 +231,14 @@ public class ScryfallOracleLoader {
         }
     }
 
-    static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
+    public static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
         String colorKey = color != null ? color.name() : "COLORLESS";
         String p = power != null ? String.valueOf(power) : "*";
         String t = toughness != null ? String.valueOf(toughness) : "*";
         return name + ":" + p + ":" + t + ":" + colorKey;
     }
 
-    static Integer parseIntField(JsonNode node, String field) {
+    public static Integer parseIntField(JsonNode node, String field) {
         if (!node.has(field)) return null;
         try {
             return Integer.parseInt(node.get(field).asText());
@@ -478,7 +478,7 @@ public class ScryfallOracleLoader {
     }
 
     /** Strips reminder text in parentheses; returns null when nothing remains. */
-    static String cleanCardText(String rawText) {
+    public static String cleanCardText(String rawText) {
         String cleaned = rawText
                 .replaceAll(" *\\([^)]*\\)", "")
                 .replaceAll(" +\n", "\n")

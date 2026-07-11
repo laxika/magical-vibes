@@ -17,7 +17,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
+import com.github.laxika.magicalvibes.carddata.scryfall.ScryfallOracleLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

@@ -8,7 +8,7 @@ dependencies {
 
     api(project(":magical-vibes-card"))
     api(project(":magical-vibes-networking"))
-    api(project(":magical-vibes-scryfall"))
+    api(project(":magical-vibes-card-data"))
 
     // Shared card/AI test harness, consumed by backend and ai test suites.
     testFixturesApi(project(":magical-vibes-websocket"))

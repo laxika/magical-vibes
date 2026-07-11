@@ -16,7 +16,7 @@ Gradle multi-module project: a collectible card game with WebSocket-based real-t
 ### Module Dependency Graph
 
 ```
-application → webservice → {ai, engine, websocket} → {card, networking, scryfall} → domain
+application → webservice → {ai, engine, websocket} → {card, networking, card-data} → domain
               ai → engine
               ai → websocket → networking
 application → engine, websocket, ai (config @Imports)
@@ -25,7 +25,7 @@ application → engine, websocket, ai (config @Imports)
 - **`magical-vibes-domain`** — Core domain model: `Card`, `Permanent`, `GameData`, `StackEntry`, `ManaPool`, `ManaCost`, enums (`CardType`, `CardColor`, `CardSubtype`, `Keyword`, `TurnStep`), and all `CardEffect` records (in `model/effect/`).
 - **`magical-vibes-networking`** — Wire protocol: WebSocket message records (in `message/`), view DTOs (`CardView`, `PermanentView`, `StackEntryView`), and their factory services (`CardViewFactory`, `PermanentViewFactory`, `StackEntryViewFactory`). The `SessionManager` interface and `Connection` interface live here too.
 - **`magical-vibes-card`** — Card definitions: each card is a `Card` subclass (organized in alphabetical subpackages like `cards/a/`, `cards/b/`), annotated with `@CardRegistration(set, collectorNumber)`. `CardSet` enum discovers printings at runtime via `CardScanner` (ClassGraph classpath scan). `CardPrinting` stamps `setCode`/`collectorNumber`/`flavorText` onto cards.
-- **`magical-vibes-scryfall`** — Oracle data loading: `ScryfallOracleLoader`, `MtgjsonOracleLoader`, `ScryfallDataService`, `ScryfallTypeLineParser`. Populates `Card.oracleRegistry` on startup. The `oracle.data-provider` property (SCRYFALL/MTGJSON) picks the source; with SCRYFALL, MTGJSON is the automatic fallback when Scryfall is unreachable. Both loaders fill the same registries (oracle data, set names, rarity, token images).
+- **`magical-vibes-card-data`** — Oracle data loading (`com.github.laxika.magicalvibes.carddata`): `CardDataConfiguration` plus per-provider subpackages — `carddata.scryfall` (`ScryfallOracleLoader`, `ScryfallDataService`, `ScryfallTypeLineParser`) and `carddata.mtgjson` (`MtgjsonOracleLoader`). Populates `Card.oracleRegistry` on startup. The `oracle.data-provider` property (SCRYFALL/MTGJSON) picks the source; with SCRYFALL, MTGJSON is the automatic fallback when Scryfall is unreachable. Both loaders fill the same registries (oracle data, set names, rarity, token images).
 - **`magical-vibes-engine`** — The game engine and its Spring wiring (`GameEngineConfig`, `JacksonConfig`). `GameService` (~1700 lines) is the protocol-agnostic game-action API: turn progression, combat, stack resolution, effect dispatch, plus actions like `playCard`/`activateAbility`/`declareAttackers`. `GameSetupService` seats players and runs the opening sequence (custom decks resolved via the optional `CustomDeckSource` interface). The shared card/AI test harness (`GameTestHarness`, `BaseCardTest`, …) lives in this module's `src/testFixtures`.
 - **`magical-vibes-websocket`** — WebSocket infrastructure: `WebSocketSessionManager` (implements `SessionManager`), `WebSocketHandler`, Spring config. Depends on networking for the `SessionManager` interface.
 - **`magical-vibes-ai`** — Computer opponents. `AiDecisionEngine` (+ `EasyAiDecisionEngine`/`MediumAiDecisionEngine`/`HardAiDecisionEngine`) plays by calling the engine's `GameService` via the `AiGameActions` adapter; `AiPlayerService` seats an AI via `GameSetupService`. Headless MCTS simulation lives in `ai/simulation`. Wired into the app via `AiConfig`.

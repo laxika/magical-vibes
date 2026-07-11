@@ -14,7 +14,7 @@ dependencies {
     implementation(project(":magical-vibes-card"))
     implementation(project(":magical-vibes-engine"))
     implementation(project(":magical-vibes-ai"))
-    implementation(project(":magical-vibes-scryfall"))
+    implementation(project(":magical-vibes-card-data"))
     implementation(project(":magical-vibes-websocket"))
     implementation(project(":magical-vibes-webservice"))
 
