@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DelayedPlusOnePlusOneCounterR
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToAttackingCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
@@ -128,6 +129,8 @@ public class DamagePreventionService {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof PreventAllDamageEffect)) return 0;
             if (gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllDamageToAndByEnchantedCreatureEffect.class)) return 0;
             if (isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) return 0;
+            // Dolmen Gate: "Prevent all combat damage that would be dealt to attacking creatures you control."
+            if (isCombatDamage && permanent.isAttacking() && hasAttackingCreatureCombatDamagePreventionSource(gameData, permanent)) return 0;
             if (!isCombatDamage && gameQueryService.hasAuraWithEffect(gameData, permanent, PreventAllNoncombatDamageToAttachedCreatureEffect.class)) return 0;
             // Shield of the Realm: "If a source would deal damage to equipped creature, prevent N of that damage."
             damage = applyAttachedPerSourceDamageReduction(gameData, permanent, damage);
@@ -173,6 +176,21 @@ public class DamagePreventionService {
                 .filter(p -> !p.getId().equals(creature.getId()))
                 .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
                 .anyMatch(e -> e instanceof PreventDamageToOtherCreaturesAndAddPlusCountersEffect);
+    }
+
+    /**
+     * Dolmen Gate-style protection: returns true when the given attacking creature's controller controls
+     * a permanent carrying {@link PreventCombatDamageToAttackingCreaturesYouControlEffect}. Combat damage
+     * dealt to such a creature is fully prevented by the caller.
+     */
+    private boolean hasAttackingCreatureCombatDamagePreventionSource(GameData gameData, Permanent creature) {
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .anyMatch(e -> e instanceof PreventCombatDamageToAttackingCreaturesYouControlEffect);
     }
 
     /**

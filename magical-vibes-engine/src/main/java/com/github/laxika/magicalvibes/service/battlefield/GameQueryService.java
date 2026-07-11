@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
@@ -483,6 +484,16 @@ public class GameQueryService {
      */
     public boolean canPlayersActivateGraveyardAbilities(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantActivateAbilitiesOfGraveyardCardsEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the given player may activate abilities of creatures they control as
+     * though those creatures had haste (i.e. they control a permanent with
+     * {@link ActivateCreatureAbilitiesAsThoughHasteEffect}, e.g. Thousand-Year Elixir). This only
+     * lifts the summoning sickness restriction on ability activation — it does not grant haste.
+     */
+    public boolean canActivateCreatureAbilitiesAsThoughHaste(GameData gameData, UUID playerId) {
+        return playerBattlefieldHasStaticEffect(gameData, playerId, ActivateCreatureAbilitiesAsThoughHasteEffect.class);
     }
 
     /**

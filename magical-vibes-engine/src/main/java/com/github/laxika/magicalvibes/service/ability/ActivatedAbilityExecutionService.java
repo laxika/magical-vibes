@@ -278,6 +278,7 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
+        int abilityStackIndex = gameData.stack.size();
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId, targetZone, targetIds, damageAssignments);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
@@ -287,6 +288,10 @@ public class ActivatedAbilityExecutionService {
         if (sacrificedEquipmentCard != null && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setDamageSourceCard(sacrificedEquipmentCard);
         }
+        // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
+        // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
+        StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
+        triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(gameData, playerId, abilityEntry, ability);
         // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
         gameData.stack.addAll(deferredActivationTriggers);
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)

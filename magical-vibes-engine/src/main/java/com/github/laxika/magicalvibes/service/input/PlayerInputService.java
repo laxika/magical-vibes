@@ -56,8 +56,15 @@ public class PlayerInputService {
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
                                 boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                UUID attachEquipmentCardId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
-                playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep));
+                playerId, new ArrayList<>(validIndices), prompt, enterTapped, grantHaste, sacrificeAtEndStep,
+                attachEquipmentCardId));
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {

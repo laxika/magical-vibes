@@ -13,11 +13,14 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -911,6 +914,47 @@ public class TriggerCollectionService {
                 gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
                 log.info("Game {} - {} triggers on ability activation ({})",
                         gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
+            }
+        });
+    }
+
+    /**
+     * "Whenever you activate an ability, if it isn't a mana ability, you may pay {N} to copy it"
+     * triggers (Rings of Brighthearth). Called after the non-mana ability has been put on the stack
+     * so it can be snapshotted. Fires on every permanent the activating player controls that has an
+     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect.
+     *
+     * @param abilityEntry the activated ability's stack entry (already on the stack)
+     * @param ability      the activated ability that was activated (retained for retargeting the copy)
+     */
+    public void checkControllerActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId,
+                                                               StackEntry abilityEntry, ActivatedAbility ability) {
+        if (abilityEntry == null) return;
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(activatingPlayerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
+                if (!(effect instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) continue;
+
+                StackEntry snapshot = new StackEntry(abilityEntry);
+                CopyControllerActivatedAbilityEffect copyEffect = new CopyControllerActivatedAbilityEffect(
+                        snapshot, ability, activatingPlayerId);
+                MayPayManaEffect mayCopy = new MayPayManaEffect(
+                        trigger.manaCost(),
+                        copyEffect,
+                        "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
+
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(mayCopy)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers on non-mana ability activation ({})",
+                        gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
             }
         });
     }

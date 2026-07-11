@@ -228,5 +228,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  "whenever you activate an ability of an Elemental"). Checked in
      *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
      *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
-    ON_CONTROLLER_ACTIVATES_ABILITY
+    ON_CONTROLLER_ACTIVATES_ABILITY,
+    /** Triggers whenever the controller of this permanent activates a non-mana activated ability
+     *  (CR 605.1a). Unlike {@link #ON_CONTROLLER_ACTIVATES_ABILITY} this excludes mana abilities and
+     *  fires only after the ability has been put on the stack, so the triggering ability can be
+     *  snapshotted and copied. Carries a {@link CopyControllerActivatedAbilityTriggerEffect}; the
+     *  trigger is built in {@code TriggerCollectionService.checkControllerActivatesNonManaAbilityTriggers}.
+     *  Used by Rings of Brighthearth. */
+    ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
 }

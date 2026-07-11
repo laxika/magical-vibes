@@ -8,8 +8,10 @@ package com.github.laxika.magicalvibes.model.condition;
  */
 public sealed interface Condition permits
         ActivationCount,
+        AnyLibraryAtMost,
         AnyPlayerControlsPermanent,
         AnyPlayerControlsPermanentCount,
+        AttackedWithCreaturesThisTurn,
         AttacksAlone,
         BlockedByMinCreatures,
         CardsInLibraryAtLeast,
@@ -25,6 +27,7 @@ public sealed interface Condition permits
         ControlsPermanent,
         ControlsPermanentCount,
         ControlsPermanentCountAtMost,
+        ControlledCreaturesTotalPowerAtLeast,
         CreatureDiedUnderYourControlThisTurn,
         DefendingPlayerControlsPermanent,
         DefendingPlayerPoisoned,
@@ -41,6 +44,7 @@ public sealed interface Condition permits
         MinimumAttackers,
         Morbid,
         NoOtherPermanent,
+        NoPlayerHasCardsInHand,
         NoSpellsCastLastTurn,
         NotControllerTurn,
         NotKicked,

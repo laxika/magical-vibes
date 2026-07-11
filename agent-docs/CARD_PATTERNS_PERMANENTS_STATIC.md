@@ -32,7 +32,7 @@ All paths relative to `cards/`.
 | Attack restriction (controller controls) | `d/DesperateCastaways.java` | STATIC CantAttackUnlessEffect(new ControlsPermanentCount(1, predicate), desc) — can't attack unless controller controls a matching permanent |
 | Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessEffect(new AnyPlayerControlsPermanentCount(5, predicate), desc) — can't attack unless N+ matching permanents across all battlefields |
 | Attack restriction (defender poisoned) | `c/ChainedThroatseeker.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerPoisoned(), desc) — can't attack unless defending player is poisoned |
-| Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessEffect(new OpponentDealtDamageThisTurn(), desc) — can't attack unless an opponent was dealt damage this turn |
+| Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessEffect(new OpponentDealtDamageThisTurn(1), desc) — can't attack unless an opponent was dealt damage this turn |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
 | Grant protection from colors to greatest-MV creatures | `f/FavorOfTheMighty.java` | STATIC GrantEffectEffect(ProtectionFromColorsEffect(all 5 colors), ALL_CREATURES, PermanentHasGreatestManaValueAmongAllCreaturesPredicate) — granted protection is read by GameQueryService.hasProtectionFrom via the static bonus's grantedEffects |

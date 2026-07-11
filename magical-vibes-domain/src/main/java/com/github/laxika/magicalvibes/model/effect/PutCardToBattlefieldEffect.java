@@ -20,20 +20,29 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param grantHaste              if {@code true}, the chosen card gains haste until end of turn (e.g. Incandescent Soulstoke)
  * @param sacrificeAtEndStep      if {@code true}, the chosen card is sacrificed at the beginning of the next end step
  *                                (e.g. Incandescent Soulstoke)
+ * @param attachSourceEquipment   if {@code true}, the source Equipment is attached to the chosen card after it enters
+ *                                (e.g. Deathrender's "put a creature card from your hand onto the battlefield and
+ *                                attach this Equipment to it")
  */
 public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          boolean enterTapped, boolean maxManaValueBoundedByX,
-                                         boolean grantHaste, boolean sacrificeAtEndStep) implements CardEffect {
+                                         boolean grantHaste, boolean sacrificeAtEndStep,
+                                         boolean attachSourceEquipment) implements CardEffect {
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label) {
-        this(predicate, label, false, false, false, false);
+        this(predicate, label, false, false, false, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped) {
-        this(predicate, label, enterTapped, false, false, false);
+        this(predicate, label, enterTapped, false, false, false, false);
     }
 
     public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX) {
-        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false);
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, false, false, false);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped, boolean maxManaValueBoundedByX,
+                                      boolean grantHaste, boolean sacrificeAtEndStep) {
+        this(predicate, label, enterTapped, maxManaValueBoundedByX, grantHaste, sacrificeAtEndStep, false);
     }
 }

@@ -75,6 +75,8 @@ public class GameData {
     public final Map<UUID, Integer> spellsCastLastTurn = new ConcurrentHashMap<>();
     /** Tracks which players declared at least one attacker this turn (for Angelic Arbiter etc.). */
     public final Set<UUID> playersDeclaredAttackersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Cumulative count of attacking creatures each player declared this turn (for Windbrisk Heights etc.). */
+    public final Map<UUID, Integer> creaturesAttackedCountThisTurn = new ConcurrentHashMap<>();
     /**
      * Result of each player's most recent clash, keyed by the clashing player's id. Written by the
      * clash-source effect ({@code ClashEffect}) and read within the same spell/ability resolution by
@@ -1256,6 +1258,7 @@ public class GameData {
                 copy.spellsCastThisTurn.put(k, new ArrayList<>(v)));
         copy.spellsCastLastTurn.putAll(this.spellsCastLastTurn);
         copy.playersDeclaredAttackersThisTurn.addAll(this.playersDeclaredAttackersThisTurn);
+        copy.creaturesAttackedCountThisTurn.putAll(this.creaturesAttackedCountThisTurn);
         copy.playerLifeTotals.putAll(this.playerLifeTotals);
         copy.playerPoisonCounters.putAll(this.playerPoisonCounters);
         copy.playerDamagePreventionShields.putAll(this.playerDamagePreventionShields);

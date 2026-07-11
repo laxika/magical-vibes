@@ -11,7 +11,7 @@ public class BloodcrazedGoblin extends Card {
 
     public BloodcrazedGoblin() {
         addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
-                new OpponentDealtDamageThisTurn(),
+                new OpponentDealtDamageThisTurn(1),
                 "an opponent was dealt damage this turn"
         ));
     }

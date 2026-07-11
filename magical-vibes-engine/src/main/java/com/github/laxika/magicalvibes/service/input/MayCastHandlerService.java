@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWi
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -49,6 +50,7 @@ public class MayCastHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileService exileService;
+    private final ExileFreeCastSupport exileFreeCastSupport;
 
     public void handleCastFromLibraryChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         Card cardToCast = ability.sourceCard();
@@ -460,6 +462,59 @@ public class MayCastHandlerService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Handles the "you may play the exiled card without paying its mana cost" choice for the
+     * Hideaway lands (e.g. Howltooth Hollow). The imprinted card leaves exile as it's played, so
+     * the imprint pointer is cleared. A land is put onto the battlefield and counts as the land
+     * play for the turn (per the hideaway ruling); any other card is cast from exile.
+     */
+    public void handlePlayImprintedCardChoice(GameData gameData, Player player, boolean accepted,
+                                              PendingMayAbility ability) {
+        Card cardToPlay = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " declines to play " + cardToPlay.getName() + ".");
+            log.info("Game {} - {} declines to play imprinted {}", gameData.id, playerName, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Verify the card is still in exile (nothing else has moved it out).
+        if (gameData.findExiledCard(cardToPlay.getId()) == null) {
+            gameBroadcastService.logAndBroadcast(gameData, cardToPlay.getName() + " is no longer in exile.");
+            log.info("Game {} - imprinted {} no longer in exile", gameData.id, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // The card leaves exile as it's played — clear the source's imprint pointer.
+        if (ability.sourcePermanentId() != null) {
+            Permanent source = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+            if (source != null) {
+                gameData.setImprintedCard(source.getCard(), null);
+            }
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " turns the exiled card face up: " + cardToPlay.getName() + ".");
+
+        if (cardToPlay.hasType(CardType.LAND)) {
+            gameData.removeFromExile(cardToPlay.getId());
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
+            gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " plays " + cardToPlay.getName() + " without paying its mana cost.");
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
+            log.info("Game {} - {} plays imprinted land {} from exile", gameData.id, playerName, cardToPlay.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Non-land: cast from exile without paying (handles targeting, the stack, and cast triggers).
+        exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, cardToPlay.getId());
     }
 
     /**

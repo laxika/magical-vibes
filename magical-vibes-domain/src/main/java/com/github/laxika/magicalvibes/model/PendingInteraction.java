@@ -371,17 +371,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /**
      * Put a card from hand onto the battlefield, declinable (CARD_CHOICE).
      * {@code enterTapped} makes the chosen card enter the battlefield tapped (e.g. Embrace the Paradox).
+     * {@code attachEquipmentCardId}, when non-null, is the card id of the source Equipment to attach to the
+     * chosen card once it enters (e.g. Deathrender).
      */
     record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
-                          boolean grantHaste, boolean sacrificeAtEndStep)
+                          boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
-            this(playerId, validIndices, prompt, false, false, false);
+            this(playerId, validIndices, prompt, false, false, false, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped) {
-            this(playerId, validIndices, prompt, enterTapped, false, false);
+            this(playerId, validIndices, prompt, enterTapped, false, false, null);
+        }
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null);
         }
     }
 

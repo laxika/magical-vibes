@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -158,6 +160,45 @@ public class BattlefieldEntryService {
         if (permanent.getCard().isSacrificeAtEndStep()) {
             gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
         }
+        // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
+        // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
+        applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+    }
+
+    /**
+     * Lorwyn dual-land replacement effect (e.g. Ancient Amphitheater): if the controller can't
+     * reveal a card of the required subtype, the permanent enters tapped; otherwise the controller
+     * is prompted with a "you may reveal" choice (declining taps the permanent). The prompt reuses
+     * the pending-may-ability pipeline; the answer is handled in
+     * {@code MayAbilityHandlerService.handleMayAbilityChosen}.
+     */
+    private void applyRevealSubtypeOrEntersTapped(GameData gameData, UUID controllerId, Permanent permanent) {
+        RevealSubtypeOrEntersTappedEffect effect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(e -> e instanceof RevealSubtypeOrEntersTappedEffect)
+                .map(e -> (RevealSubtypeOrEntersTappedEffect) e)
+                .findFirst().orElse(null);
+        if (effect == null) {
+            return;
+        }
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        boolean canReveal = hand != null && hand.stream()
+                .anyMatch(c -> c.getSubtypes().contains(effect.subtype()));
+        if (!canReveal) {
+            permanent.tap();
+            log.info("Game {} - {} enters tapped (no {} card to reveal)",
+                    gameData.id, permanent.getCard().getName(), effect.subtype().getDisplayName());
+            return;
+        }
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                permanent.getCard(),
+                controllerId,
+                List.of(effect),
+                permanent.getCard().getName() + " — Reveal a " + effect.subtype().getDisplayName()
+                        + " card from your hand? (If you don't, it enters tapped.)",
+                null,
+                null,
+                permanent.getId()));
+        playerInputService.processNextMayAbility(gameData);
     }
 
     /**

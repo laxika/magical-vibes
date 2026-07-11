@@ -252,6 +252,7 @@ public class CombatAttackService {
 
         // Track that this player declared attackers this turn (for Angelic Arbiter etc.)
         gameData.playersDeclaredAttackersThisTurn.add(playerId);
+        gameData.creaturesAttackedCountThisTurn.merge(playerId, attackerIndices.size(), Integer::sum);
 
         // Mark creatures as attacking and tap them (vigilance skips tapping)
         for (int idx : attackerIndices) {

@@ -61,10 +61,11 @@ public class PlayerInteractionSupport {
     
     }
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
-        applyPutCardToBattlefield(gameData, playerId, effect, 0);
+        applyPutCardToBattlefield(gameData, playerId, effect, 0, null);
     }
 
-    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue) {
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue,
+                                          UUID sourceEquipmentCardId) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
@@ -92,8 +93,9 @@ public class PlayerInteractionSupport {
 
         String tappedSuffix = effect.enterTapped() ? " tapped" : "";
         String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
+        UUID attachEquipmentCardId = effect.attachSourceEquipment() ? sourceEquipmentCardId : null;
         playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
-                effect.grantHaste(), effect.sacrificeAtEndStep());
+                effect.grantHaste(), effect.sacrificeAtEndStep(), attachEquipmentCardId);
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

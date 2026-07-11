@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPaying
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
@@ -47,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
@@ -182,6 +185,38 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // "As it enters, you may reveal a [subtype] card; if you don't, it enters tapped."
+        // (Lorwyn dual lands, e.g. Ancient Amphitheater). Declining taps the just-entered permanent.
+        RevealSubtypeOrEntersTappedEffect revealOrTapped = ability.effects().stream()
+                .filter(e -> e instanceof RevealSubtypeOrEntersTappedEffect)
+                .map(e -> (RevealSubtypeOrEntersTappedEffect) e)
+                .findFirst().orElse(null);
+        if (revealOrTapped != null) {
+            if (accepted) {
+                List<Card> hand = gameData.playerHands.get(ability.controllerId());
+                Card revealed = hand == null ? null : hand.stream()
+                        .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
+                        .findFirst().orElse(null);
+                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
+                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped.");
+                log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
+                        player.getUsername(), revealedName, ability.sourceCard().getName());
+            } else {
+                Permanent source = ability.sourcePermanentId() != null
+                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
+                if (source != null) {
+                    source.tap();
+                }
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declines — "
+                        + ability.sourceCard().getName() + " enters tapped.");
+                log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+            }
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Cast-from-hand-without-paying — e.g. Counterlash (one may ability per eligible card)
         boolean isMayCastFromHand = ability.effects().stream()
                 .anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect);
@@ -310,6 +345,14 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromGraveyardEffect != null) {
             mayCastHandlerService.handleCastFromGraveyardChoice(gameData, player, accepted, ability, castFromGraveyardEffect);
+            return;
+        }
+
+        // Play-imprinted-card-without-paying — e.g. Howltooth Hollow (Hideaway)
+        boolean isPlayImprinted = ability.effects().stream()
+                .anyMatch(e -> e instanceof PlayImprintedCardWithoutPayingManaCostEffect);
+        if (isPlayImprinted) {
+            mayCastHandlerService.handlePlayImprintedCardChoice(gameData, player, accepted, ability);
             return;
         }
 
@@ -445,6 +488,16 @@ public class MayAbilityHandlerService {
         boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
         if (isCopySpellRetarget) {
             mayCopyHandlerService.handleCopySpellRetargetChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Copy activated ability retarget — choose a new target for a copied ability (Rings of Brighthearth)
+        CopyActivatedAbilityRetargetEffect abilityRetarget = ability.effects().stream()
+                .filter(e -> e instanceof CopyActivatedAbilityRetargetEffect)
+                .map(e -> (CopyActivatedAbilityRetargetEffect) e)
+                .findFirst().orElse(null);
+        if (abilityRetarget != null) {
+            mayCopyHandlerService.handleCopyActivatedAbilityRetargetChoice(gameData, player, accepted, ability, abilityRetarget);
             return;
         }
 

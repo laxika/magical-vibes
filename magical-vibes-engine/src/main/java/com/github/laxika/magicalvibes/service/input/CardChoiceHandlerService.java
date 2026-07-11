@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -48,6 +49,7 @@ public class CardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final EquipSupport equipSupport;
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -61,6 +63,7 @@ public class CardChoiceHandlerService {
         boolean enterTapped = false;
         boolean grantHaste = false;
         boolean sacrificeAtEndStep = false;
+        UUID attachEquipmentCardId = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -69,6 +72,7 @@ public class CardChoiceHandlerService {
             enterTapped = hc.enterTapped();
             grantHaste = hc.grantHaste();
             sacrificeAtEndStep = hc.sacrificeAtEndStep();
+            attachEquipmentCardId = hc.attachEquipmentCardId();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -100,7 +104,8 @@ public class CardChoiceHandlerService {
             if (isTargeted) {
                 resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
-                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste, sacrificeAtEndStep);
+                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste,
+                        sacrificeAtEndStep, attachEquipmentCardId);
             }
         }
 
@@ -729,7 +734,8 @@ public class CardChoiceHandlerService {
     }
 
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card,
-                                             boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
+                                             boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
+                                             UUID attachEquipmentCardId) {
         Permanent permanent = new Permanent(card);
         if (enterTapped) {
             permanent.tap();
@@ -747,9 +753,29 @@ public class CardChoiceHandlerService {
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
 
+        // Deathrender: "…and attach this Equipment to it" — attach the source Equipment to the entered creature.
+        if (attachEquipmentCardId != null) {
+            attachSourceEquipmentToPermanent(gameData, attachEquipmentCardId, permanent);
+        }
+
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
         }
+    }
+
+    private void attachSourceEquipmentToPermanent(GameData gameData, UUID equipmentCardId, Permanent target) {
+        Permanent equipment = equipSupport.findEquipmentByCardId(gameData, equipmentCardId);
+        if (equipment == null) {
+            return;
+        }
+        gameData.expireFloatingEffectsForUnattachedSource(equipment.getId());
+        equipment.setAttachedTo(target.getId());
+        // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
+        equipment.setTimestamp(gameData.nextTimestamp());
+
+        String logEntry = equipment.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} attached to {}", gameData.id, equipment.getCard().getName(), target.getCard().getName());
     }
 
     private void checkPendingReturnToHandOnDiscard(GameData gameData, Card discardedCard) {

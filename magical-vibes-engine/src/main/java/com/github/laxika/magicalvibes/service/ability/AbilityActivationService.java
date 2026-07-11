@@ -154,7 +154,8 @@ public class AbilityActivationService {
         if (permanent.getCard().getEffects(EffectSlot.ON_TAP).isEmpty() && overriddenManaColor == null) {
             throw new IllegalStateException("Permanent has no tap effects");
         }
-        if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+        if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
+                && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
             throw new IllegalStateException("Creature has summoning sickness");
         }
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
@@ -1132,7 +1133,8 @@ public class AbilityActivationService {
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
-            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
+                    && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
                 throw new IllegalStateException("Creature has summoning sickness");
             }
         }

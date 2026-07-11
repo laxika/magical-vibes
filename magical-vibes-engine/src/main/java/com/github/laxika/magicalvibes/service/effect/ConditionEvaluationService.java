@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -39,6 +41,7 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
@@ -50,6 +53,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTur
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
@@ -105,6 +109,9 @@ public class ConditionEvaluationService {
             case Raid ignored ->
                     ctx.controllerId() != null
                             && gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
+            case AttackedWithCreaturesThisTurn c ->
+                    ctx.controllerId() != null
+                            && gameData.creaturesAttackedCountThisTurn.getOrDefault(ctx.controllerId(), 0) >= c.minimum();
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
             case Enchanted ignored ->
@@ -127,6 +134,8 @@ public class ConditionEvaluationService {
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) <= c.maxCount();
+            case ControlledCreaturesTotalPowerAtLeast c ->
+                    controlledCreaturesTotalPower(gameData, ctx.controllerId()) >= c.threshold();
             case NoOtherPermanent c ->
                     noOtherMatchingPermanent(gameData, ctx, c.filter());
             case ControllerLifeAtLeast c ->
@@ -139,6 +148,8 @@ public class ConditionEvaluationService {
                     countMatchingGraveyardCards(gameData, ctx, c) >= c.threshold();
             case CardsInLibraryAtLeast c ->
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
+            case AnyLibraryAtMost c ->
+                    anyLibraryAtMost(gameData, c.threshold());
             case CardsInHandAtLeast c ->
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
             case CastFromZone c ->
@@ -153,6 +164,8 @@ public class ConditionEvaluationService {
                     ctx.xValue() >= c.minimumAttackers();
             case HasAttacker c ->
                     hasMatchingAttacker(gameData, ctx, c.predicate());
+            case NoPlayerHasCardsInHand ignored ->
+                    noPlayerHasCardsInHand(gameData);
             case NoSpellsCastLastTurn ignored ->
                     noSpellsCastLastTurn(gameData);
             case TwoOrMoreSpellsCastLastTurn ignored ->
@@ -163,8 +176,8 @@ public class ConditionEvaluationService {
                     isDefendingPlayerPoisoned(gameData, ctx.controllerId());
             case OpponentPoisoned ignored ->
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
-            case OpponentDealtDamageThisTurn ignored ->
-                    wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId());
+            case OpponentDealtDamageThisTurn c ->
+                    wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case ActivationCount c ->
                     activationCountThisTurn(gameData, ctx, c.abilityIndex()) >= c.threshold();
             // Exact equality: "if this is the Nth time this ability has resolved this turn"
@@ -231,6 +244,20 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    /** Sum of the effective power of every creature the given player controls. */
+    private int controlledCreaturesTotalPower(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return 0;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+        int totalPower = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                totalPower += gameQueryService.getEffectivePower(gameData, permanent);
+            }
+        }
+        return totalPower;
     }
 
     private int countCreaturesControlled(GameData gameData, UUID playerId) {
@@ -434,6 +461,16 @@ public class ConditionEvaluationService {
                 .anyMatch(p -> matchesPermanent(gameData, p, predicate, ctx));
     }
 
+    private boolean noPlayerHasCardsInHand(GameData gameData) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand != null && !hand.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean noSpellsCastLastTurn(GameData gameData) {
         if (gameData.spellsCastLastTurn.isEmpty()) return true;
         return gameData.spellsCastLastTurn.values().stream().mapToInt(Integer::intValue).sum() == 0;
@@ -457,10 +494,12 @@ public class ConditionEvaluationService {
         return false;
     }
 
-    private boolean wasAnyOpponentDealtDamageThisTurn(GameData gameData, UUID controllerId) {
+    private boolean wasAnyOpponentDealtDamageThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {
         if (controllerId == null) return false;
         for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId) && gameData.playersDealtDamageThisTurn.contains(playerId)) {
+            if (playerId.equals(controllerId)) continue;
+            int dealt = gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0);
+            if (dealt >= Math.max(1, minimumAmount)) {
                 return true;
             }
         }
@@ -495,6 +534,10 @@ public class ConditionEvaluationService {
         if (controllerId == null) return 0;
         List<Card> deck = gameData.playerDecks.get(controllerId);
         return deck == null ? 0 : deck.size();
+    }
+
+    private boolean anyLibraryAtMost(GameData gameData, int threshold) {
+        return gameData.playerDecks.values().stream().anyMatch(deck -> deck.size() <= threshold);
     }
 
     private int countCardsInHand(GameData gameData, UUID controllerId) {
