@@ -136,7 +136,7 @@ public class MtgjsonOracleLoader {
         } else {
             LOG.info("Fetching " + setCode + " from MTGJSON...");
             json = fetchFromMtgjson(setCode);
-            Files.writeString(cacheFile, json);
+            ScryfallOracleLoader.writeCacheFile(cacheFile, json);
             LOG.info("Cached " + setCode + " to: " + cacheFile);
         }
 

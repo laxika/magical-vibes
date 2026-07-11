@@ -22,10 +22,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Oracle set data downloaded by the tests (MTGJSON, plus Scryfall for the loader
+      # integration test). Restored before and saved after the run; the key changes when
+      # the implemented sets change, and restore-keys reuses the previous cache so only
+      # missing sets are re-downloaded.
+      - name: Cache oracle set data
+        uses: actions/cache@v4
+        with:
+          path: '**/card-data-cache'
+          key: card-data-cache-${{ hashFiles('magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/CardSet.java') }}
+          restore-keys: |
+            card-data-cache-
+
       - name: Build
         run: |
           chmod +x ./gradlew
-          ./gradlew build -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
+          ./gradlew build -x test -x :magical-vibes-frontend:build -x :magical-vibes-frontend:npmInstall -x :magical-vibes-frontend:buildAngular
 
       - name: Test
-        run: ./gradlew test
+        run: ./gradlew test -Doracle.data-provider=MTGJSON

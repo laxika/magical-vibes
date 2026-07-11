@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;

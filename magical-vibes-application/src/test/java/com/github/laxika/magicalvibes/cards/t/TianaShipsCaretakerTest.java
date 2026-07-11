@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;

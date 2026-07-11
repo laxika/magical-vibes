@@ -15,8 +15,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -223,7 +225,7 @@ public class ScryfallOracleLoader {
                 Path cacheFile = cachePath.resolve(tokenSetCode + ".json");
                 if (!Files.exists(cacheFile)) {
                     try {
-                        Files.writeString(cacheFile, "[]");
+                        writeCacheFile(cacheFile, "[]");
                     } catch (IOException ignored) {}
                 }
                 LOG.warning("Could not load token set " + tokenSetCode + ": " + e.getMessage());
@@ -247,6 +249,25 @@ public class ScryfallOracleLoader {
         }
     }
 
+    /**
+     * Writes a cache file via temp file + atomic move, so concurrent loaders (parallel test JVMs
+     * sharing one cache directory) either see a complete file or no file — never a partial write.
+     * Shared with {@code MtgjsonOracleLoader}.
+     */
+    public static void writeCacheFile(Path cacheFile, String content) throws IOException {
+        Path tempFile = Files.createTempFile(cacheFile.getParent(), cacheFile.getFileName().toString(), ".tmp");
+        try {
+            Files.writeString(tempFile, content);
+            try {
+                Files.move(tempFile, cacheFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
     private static Map<String, JsonNode> loadSet(Path cachePath, String setCode) throws IOException, InterruptedException {
         Path cacheFile = cachePath.resolve(setCode.toLowerCase() + ".json");
         String json;
@@ -259,7 +280,7 @@ public class ScryfallOracleLoader {
             // Respect Scryfall rate limits: 50-100ms between requests
             Thread.sleep(100);
             json = fetchFromScryfall(setCode);
-            Files.writeString(cacheFile, json);
+            writeCacheFile(cacheFile, json);
             LOG.info("Cached " + setCode + " to: " + cacheFile);
         }
 

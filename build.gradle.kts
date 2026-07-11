@@ -40,6 +40,8 @@ subprojects {
         }
 
         configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+            // Opt-in only: run via the spotlessCheck/spotlessApply tasks; check/build don't trigger it
+            isEnforceCheck = false
             java {
                 target("src/**/*.java")
                 removeUnusedImports()
@@ -49,7 +51,8 @@ subprojects {
         tasks.withType<Test> {
             useJUnitPlatform {
                 if (System.getenv("CI") != null) {
-                    excludeTags("scryfall")
+                    // CI loads oracle data exclusively from MTGJSON; skip tests hitting the Scryfall API
+                    excludeTags("scryfall-api")
                 }
             }
             maxParallelForks = (Runtime.getRuntime().availableProcessors() * 3 / 4).coerceAtLeast(1)
@@ -58,7 +61,7 @@ subprojects {
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzSeed", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
-                    "layerBench", "disableLayerBoardCache").forEach { prop ->
+                    "layerBench", "disableLayerBoardCache", "oracle.data-provider").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {

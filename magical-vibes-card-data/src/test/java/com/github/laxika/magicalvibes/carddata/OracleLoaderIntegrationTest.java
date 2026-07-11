@@ -25,7 +25,9 @@ class OracleLoaderIntegrationTest {
 
     private static final String CACHE_DIR = "./card-data-cache";
 
+    /** Excluded on CI ("scryfall-api" tag): CI loads oracle data exclusively from MTGJSON. */
     @Test
+    @Tag("scryfall-api")
     void scryfallLoadRegistersEveryPrintingAndSurvivesBackFaceCollision() {
         Card.clearOracleRegistry();
         ScryfallOracleLoader.loadAll(CACHE_DIR);

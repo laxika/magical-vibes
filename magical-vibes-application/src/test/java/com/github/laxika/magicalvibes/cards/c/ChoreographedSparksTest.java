@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
