@@ -718,6 +718,99 @@ class GameQueryServiceTest {
         }
     }
 
+    // ===== hasKeyword (pre-computed bonus overload) =====
+
+    @Nested
+    @DisplayName("hasKeyword with pre-computed StaticBonus")
+    class HasKeywordWithBonus {
+
+        @Test
+        @DisplayName("matches the GameData overload for innate keywords (NONE bonus)")
+        void matchesForInnateKeyword() {
+            Permanent perm = addPermanent(player1Id, createMirranCrusader());
+            GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, perm);
+
+            assertThat(gqs.hasKeyword(perm, bonus, Keyword.DOUBLE_STRIKE)).isTrue();
+            assertThat(gqs.hasKeyword(perm, bonus, Keyword.FLYING)).isFalse();
+        }
+
+        @Test
+        @DisplayName("matches the GameData overload for statically granted keywords")
+        void matchesForGrantedKeyword() {
+            addLordWithHandler(player1Id, (ctx, eff, acc) -> acc.addKeyword(Keyword.FLYING));
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, perm);
+
+            assertThat(gqs.hasKeyword(perm, bonus, Keyword.FLYING)).isTrue();
+        }
+
+        @Test
+        @DisplayName("matches the GameData overload for removed keywords")
+        void matchesForRemovedKeyword() {
+            addLordWithHandler(player1Id, (ctx, eff, acc) -> acc.removeKeyword(Keyword.DOUBLE_STRIKE));
+            Permanent perm = addPermanent(player1Id, createMirranCrusader());
+            GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, perm);
+
+            assertThat(gqs.hasKeyword(perm, bonus, Keyword.DOUBLE_STRIKE)).isFalse();
+        }
+    }
+
+    // ===== withQueryScope =====
+
+    @Nested
+    @DisplayName("withQueryScope")
+    class WithQueryScope {
+
+        @Test
+        @DisplayName("queries inside the scope return the same results as outside")
+        void sameResultsInsideScope() {
+            addLordWithHandler(player1Id, (ctx, eff, acc) -> {
+                acc.addPower(2);
+                acc.addKeyword(Keyword.FLYING);
+            });
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            int powerOutside = gqs.getEffectivePower(gd, perm);
+            boolean flyingOutside = gqs.hasKeyword(gd, perm, Keyword.FLYING);
+
+            int[] powerInside = new int[1];
+            boolean[] flyingInside = new boolean[1];
+            String result = gqs.withQueryScope(gd, () -> {
+                // Repeated queries exercise the pass-level bonus memo
+                powerInside[0] = gqs.getEffectivePower(gd, perm);
+                flyingInside[0] = gqs.hasKeyword(gd, perm, Keyword.FLYING);
+                gqs.getEffectiveToughness(gd, perm);
+                return "done";
+            });
+
+            assertThat(result).isEqualTo("done");
+            assertThat(powerInside[0]).isEqualTo(powerOutside).isEqualTo(4);
+            assertThat(flyingInside[0]).isEqualTo(flyingOutside).isTrue();
+        }
+
+        @Test
+        @DisplayName("nested scopes reuse the active pass")
+        void nestedScopesReuseActivePass() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            int power = gqs.withQueryScope(gd,
+                    () -> gqs.withQueryScope(gd, () -> gqs.getEffectivePower(gd, perm)));
+
+            assertThat(power).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("queries after the scope see state changes made after it ends")
+        void queriesAfterScopeSeeFreshState() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            gqs.withQueryScope(gd, () -> gqs.getEffectivePower(gd, perm));
+            perm.setPowerModifier(3);
+
+            assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(5);
+        }
+    }
+
     // ===== cantHaveCounters =====
 
     @Nested

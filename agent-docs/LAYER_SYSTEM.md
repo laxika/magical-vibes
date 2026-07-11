@@ -653,6 +653,14 @@ fingerprint deliberately does not cover (emblems, conditional-wrapper conditions
 turn/step state, amount evaluation), so caching it would be dishonest; shrinking scope to the
 board only is the correctness-first trade.
 
+For read-only *batches* of queries there is `GameQueryService.withQueryScope(gameData, supplier)`:
+it opens one pass around the whole batch (reusing an already-active pass when nested), so the
+fingerprint is checked once and every `computeStaticBonus` inside hits the per-`Pass`
+`bonusMemo` instead of re-assembling per query. The caller must not mutate game state inside
+the scope — the memoized bonuses would go stale (same contract the nested-pass memo already
+relies on). `CombatSimulator`'s attack/block searches use this to share one pass across all
+`CreatureInfo` builds, block-legality queries, and creature scores of a decision.
+
 ### Invalidation contract
 
 There is **no mutation counter to bump** — this is a deliberate deviation from the original

@@ -96,7 +96,16 @@ public class CombatSimulator {
         if (availableAttackerIndices.isEmpty()) {
             return List.of();
         }
+        // The whole search is read-only, so every layered query inside (CreatureInfo builds,
+        // the N×M block-legality matrix, creature scores) can share one pass and its memo.
+        return gameQueryService.withQueryScope(gameData, () -> doFindBestAttackers(
+                gameData, aiPlayerId, availableAttackerIndices, mustAttackIndices, threatEstimate));
+    }
 
+    private List<Integer> doFindBestAttackers(GameData gameData, UUID aiPlayerId,
+                                              List<Integer> availableAttackerIndices,
+                                              List<Integer> mustAttackIndices,
+                                              OpponentThreatEstimator.ThreatEstimate threatEstimate) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -267,7 +276,13 @@ public class CombatSimulator {
         if (attackerIndices.isEmpty() || availableBlockerIndices.isEmpty()) {
             return List.of();
         }
+        return gameQueryService.withQueryScope(gameData, () -> doFindBestBlockers(
+                gameData, aiPlayerId, attackerIndices, availableBlockerIndices));
+    }
 
+    private List<int[]> doFindBestBlockers(GameData gameData, UUID aiPlayerId,
+                                           List<Integer> attackerIndices,
+                                           List<Integer> availableBlockerIndices) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -479,7 +494,14 @@ public class CombatSimulator {
         if (attackerIndices.isEmpty() || availableBlockerIndices.isEmpty()) {
             return List.of();
         }
+        return gameQueryService.withQueryScope(gameData, () -> doFindBestBlockersExhaustive(
+                gameData, aiPlayerId, attackerIndices, availableBlockerIndices, threatEstimate));
+    }
 
+    private List<int[]> doFindBestBlockersExhaustive(GameData gameData, UUID aiPlayerId,
+                                                     List<Integer> attackerIndices,
+                                                     List<Integer> availableBlockerIndices,
+                                                     OpponentThreatEstimator.ThreatEstimate threatEstimate) {
         UUID opponentId = getOpponentId(gameData, aiPlayerId);
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -795,13 +817,16 @@ public class CombatSimulator {
     CreatureInfo buildCreatureInfo(GameData gameData, Permanent perm, int index,
                                            UUID controllerId, UUID opponentId,
                                            List<Permanent> defenderBattlefield) {
-        int power = gameQueryService.getEffectivePower(gameData, perm);
-        int toughness = gameQueryService.getEffectiveToughness(gameData, perm);
+        // One layered-bonus computation feeds every stat and keyword read below — each
+        // gameQueryService.*(gameData, perm) query would otherwise re-run its own pass.
+        GameQueryService.StaticBonus bonus = gameQueryService.computeStaticBonus(gameData, perm);
+        int power = gameQueryService.getEffectivePower(perm, bonus);
+        int toughness = gameQueryService.getEffectiveToughness(perm, bonus);
 
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
                 || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
-                || hasLandwalkAgainstDefender(gameData, perm, defenderBattlefield);
+                || hasLandwalkAgainstDefender(perm, bonus, defenderBattlefield);
 
         // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
         // controller — they will be returned at end of turn regardless. Treat their combat loss
@@ -817,30 +842,30 @@ public class CombatSimulator {
                 perm,
                 power,
                 toughness,
-                gameQueryService.hasKeyword(gameData, perm, Keyword.FLYING),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.FIRST_STRIKE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.DOUBLE_STRIKE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.TRAMPLE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.LIFELINK),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.INDESTRUCTIBLE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.MENACE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.FEAR),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.INTIMIDATE),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.REACH),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.DEFENDER),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.FLYING),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.FIRST_STRIKE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.DOUBLE_STRIKE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.TRAMPLE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.LIFELINK),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.INDESTRUCTIBLE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.MENACE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.FEAR),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.INTIMIDATE),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.REACH),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.DEFENDER),
                 cantBeBlocked,
                 gameQueryService.isArtifact(perm),
-                gameQueryService.hasKeyword(gameData, perm, Keyword.INFECT),
+                gameQueryService.hasKeyword(perm, bonus, Keyword.INFECT),
                 perm.getCard().getColor(),
                 score
         );
     }
 
-    private boolean hasLandwalkAgainstDefender(GameData gameData, Permanent attacker,
+    private boolean hasLandwalkAgainstDefender(Permanent attacker, GameQueryService.StaticBonus bonus,
                                                 List<Permanent> defenderBattlefield) {
         if (defenderBattlefield == null) return false;
         for (var entry : Keyword.LANDWALK_MAP.entrySet()) {
-            if (gameQueryService.hasKeyword(gameData, attacker, entry.getKey())
+            if (gameQueryService.hasKeyword(attacker, bonus, entry.getKey())
                     && defenderBattlefield.stream().anyMatch(p -> p.getCard().getSubtypes().contains(entry.getValue()))) {
                 return true;
             }

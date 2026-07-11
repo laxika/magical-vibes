@@ -103,6 +103,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
@@ -719,7 +720,14 @@ public class GameQueryService {
      * answer stands.
      */
     public boolean hasKeyword(GameData gameData, Permanent permanent, Keyword keyword) {
-        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        return hasKeyword(permanent, computeStaticBonus(gameData, permanent), keyword);
+    }
+
+    /**
+     * Keyword check against a pre-computed static bonus, for callers that read many keywords
+     * off the same permanent (mirrors {@link #getEffectivePower(Permanent, StaticBonus)}).
+     */
+    public boolean hasKeyword(Permanent permanent, StaticBonus bonus, Keyword keyword) {
         if (bonus == StaticBonus.NONE) {
             return permanent.hasKeyword(keyword);
         }
@@ -1053,6 +1061,27 @@ public class GameQueryService {
      * <p>Returns {@link StaticBonus#NONE} as an early-out when no bonuses apply to a non-creature
      * permanent.
      */
+    /**
+     * Runs a batch of read-only queries under one shared layered pass: the board fingerprint
+     * is checked once and every {@link #computeStaticBonus} call inside the scope hits the
+     * pass-level bonus memo instead of re-assembling per query. Reuses an already-active pass
+     * when nested.
+     *
+     * <p>The queries must not mutate game state — the memoized bonuses would go stale. Same
+     * contract the nested-pass memo already relies on.
+     */
+    public <T> T withQueryScope(GameData gameData, Supplier<T> queries) {
+        if (layerSystemService.activePass(gameData) != null) {
+            return queries.get();
+        }
+        LayerSystemService.Pass pass = layerSystemService.beginPass(gameData);
+        try {
+            return queries.get();
+        } finally {
+            layerSystemService.endPass(pass);
+        }
+    }
+
     public StaticBonus computeStaticBonus(GameData gameData, Permanent target) {
         // One layered pass per external query: the layer-4 board state is computed once and
         // shared (via the thread-local pass) with every nested computeStaticBonus call made by
