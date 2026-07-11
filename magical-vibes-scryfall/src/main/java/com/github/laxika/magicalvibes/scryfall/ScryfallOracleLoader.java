@@ -39,7 +39,7 @@ public class ScryfallOracleLoader {
 
     public record TokenImageData(String setCode, String collectorNumber) {}
 
-    private static final Map<String, CardColor> COLOR_MAP = Map.of(
+    static final Map<String, CardColor> COLOR_MAP = Map.of(
             "W", CardColor.WHITE,
             "U", CardColor.BLUE,
             "B", CardColor.BLACK,
@@ -47,7 +47,7 @@ public class ScryfallOracleLoader {
             "G", CardColor.GREEN
     );
 
-    private static final Map<String, Keyword> KEYWORD_MAP = new HashMap<>();
+    static final Map<String, Keyword> KEYWORD_MAP = new HashMap<>();
 
     static {
         KEYWORD_MAP.put("Flying", Keyword.FLYING);
@@ -150,6 +150,16 @@ public class ScryfallOracleLoader {
         return rarityRegistry.get(setCode + ":" + collectorNumber);
     }
 
+    /** Registration hook shared with {@link MtgjsonOracleLoader}, which populates the same registry. */
+    static void registerRarity(String setCode, String collectorNumber, String rarity) {
+        rarityRegistry.put(setCode + ":" + collectorNumber, rarity);
+    }
+
+    /** Registration hook shared with {@link MtgjsonOracleLoader}, which populates the same registry. */
+    static void registerTokenImages(String setCode, Map<String, TokenImageData> tokenMap) {
+        tokenImageRegistry.put(setCode, tokenMap);
+    }
+
     /**
      * Looks up the Scryfall token image data for a token created by a card from the given set.
      * Falls back to stripping "Phyrexian " prefix if no exact match is found, since Scryfall
@@ -218,14 +228,14 @@ public class ScryfallOracleLoader {
         }
     }
 
-    private static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
+    static String buildTokenKey(String name, Integer power, Integer toughness, CardColor color) {
         String colorKey = color != null ? color.name() : "COLORLESS";
         String p = power != null ? String.valueOf(power) : "*";
         String t = toughness != null ? String.valueOf(toughness) : "*";
         return name + ":" + p + ":" + t + ":" + colorKey;
     }
 
-    private static Integer parseIntField(JsonNode node, String field) {
+    static Integer parseIntField(JsonNode node, String field) {
         if (!node.has(field)) return null;
         try {
             return Integer.parseInt(node.get(field).asText());
@@ -459,15 +469,18 @@ public class ScryfallOracleLoader {
 
     private static String parseCardText(JsonNode node) {
         if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
-            String rawText = node.get("oracle_text").asText()
-                    .replaceAll(" *\\([^)]*\\)", "")
-                    .replaceAll(" +\n", "\n")
-                    .strip();
-            if (!rawText.isEmpty()) {
-                return rawText;
-            }
+            return cleanCardText(node.get("oracle_text").asText());
         }
         return null;
+    }
+
+    /** Strips reminder text in parentheses; returns null when nothing remains. */
+    static String cleanCardText(String rawText) {
+        String cleaned = rawText
+                .replaceAll(" *\\([^)]*\\)", "")
+                .replaceAll(" +\n", "\n")
+                .strip();
+        return cleaned.isEmpty() ? null : cleaned;
     }
 
     private static Set<Keyword> parseKeywords(JsonNode card) {
