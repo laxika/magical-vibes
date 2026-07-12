@@ -122,6 +122,10 @@ public final class TextChangeTransformer {
     }
 
     private static CardEffect apply(CardEffect effect, Substitution substitution) {
+        if (effect == null) {
+            // Single-branch conditional wrappers carry a null inactive branch.
+            return null;
+        }
         return switch (effect) {
             case ProtectionFromColorsEffect protection -> {
                 Set<CardColor> colors = replaceColor(protection.colors(), substitution);

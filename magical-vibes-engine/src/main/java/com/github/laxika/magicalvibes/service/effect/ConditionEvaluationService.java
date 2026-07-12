@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
@@ -158,6 +160,8 @@ public class ConditionEvaluationService {
                     anyLibraryAtMost(gameData, c.threshold());
             case CardsInHandAtLeast c ->
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
+            case ActivePlayerHandEmpty ignored ->
+                    countCardsInHand(gameData, gameData.activePlayerId) == 0;
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
@@ -199,6 +203,9 @@ public class ConditionEvaluationService {
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
             case SpellManaSpentAtLeast c ->
                     ctx.xValue() >= c.minMana();
+            case ColorSpentToCast c ->
+                    ctx.sourceCard() != null
+                            && gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).contains(c.color());
             case ControllerTurn ignored ->
                     ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId);
             case NotControllerTurn ignored ->

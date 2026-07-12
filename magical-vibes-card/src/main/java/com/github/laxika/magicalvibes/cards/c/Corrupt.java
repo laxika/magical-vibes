@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "89")
+@CardRegistration(set = "SHM", collectorNumber = "62")
 public class Corrupt extends Card {
 
     public Corrupt() {

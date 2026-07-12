@@ -198,6 +198,33 @@ public class GraveyardTargetingService {
         }
     }
 
+    public void handlePutCreatureFromOpponentGraveyardETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                                    List<CardEffect> effects) {
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (graveyardCard.hasType(CardType.CREATURE)) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB opponent-graveyard steal has no valid targets", gameData.id, card.getName());
+        } else {
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                    "Choose target creature card from an opponent's graveyard.");
+        }
+    }
+
     public void handleGrantFlashbackETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                   List<CardEffect> effects) {
         GrantFlashbackToTargetGraveyardCardEffect flashbackEffect = effects.stream()

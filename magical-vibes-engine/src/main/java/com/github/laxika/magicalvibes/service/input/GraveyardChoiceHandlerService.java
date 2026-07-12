@@ -210,6 +210,18 @@ public class GraveyardChoiceHandlerService {
                         legendRuleService.checkLegendRule(gameData, playerId);
                     }
                 }
+                case SHUFFLE_INTO_OWNERS_LIBRARY -> {
+                    // Card already removed from the graveyard above; shuffle it into the owner's library.
+                    gameData.playerDecks.get(playerId).add(card);
+                    com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper
+                            .shuffleLibrary(gameData, playerId);
+
+                    String logEntry = player.getUsername() + " shuffles " + card.getName()
+                            + " from their graveyard into their library.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} shuffles {} from graveyard into library", gameData.id,
+                            player.getUsername(), card.getName());
+                }
                 case EXILE -> {
                     if (trackWithSourcePermanentId != null) {
                         exileService.exileCard(gameData, playerId, card, trackWithSourcePermanentId);

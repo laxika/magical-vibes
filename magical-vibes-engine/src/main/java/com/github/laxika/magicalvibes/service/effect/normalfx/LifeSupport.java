@@ -52,6 +52,8 @@ public class LifeSupport {
             gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
             return;
         }
+        // Life-gain doublers (e.g. Boon Reflection) replace the amount before it is applied.
+        amount *= gameQueryService.lifeGainMultiplier(gameData, controllerId);
         Integer currentLife = gameData.playerLifeTotals.get(controllerId);
         gameData.playerLifeTotals.put(controllerId, currentLife + amount);
         if (amount > 0) {
@@ -91,9 +93,10 @@ public class LifeSupport {
                 gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
                 return false;
             }
-            gameData.playerLifeTotals.put(playerId, newLife);
-            gameData.lifeGainedThisTurn.merge(playerId, newLife - currentLife, Integer::sum);
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerId, newLife - currentLife);
+            int gained = (newLife - currentLife) * gameQueryService.lifeGainMultiplier(gameData, playerId);
+            gameData.playerLifeTotals.put(playerId, currentLife + gained);
+            gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
+            triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
         } else {
             gameData.playerLifeTotals.put(playerId, newLife);
             triggerCollectionService.checkLifeLossTriggers(gameData, playerId, currentLife - newLife);

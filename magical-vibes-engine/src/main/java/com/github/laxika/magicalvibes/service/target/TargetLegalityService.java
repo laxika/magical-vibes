@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
@@ -154,6 +156,22 @@ public class TargetLegalityService {
                     UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
                     if (graveyardOwnerId != null && graveyardOwnerId.equals(playerId)) {
                         throw new IllegalStateException("Target must be in an opponent's graveyard");
+                    }
+                }
+                break;
+            }
+            if (effect instanceof ExileCardsFromGraveyardEffect exileEffect) {
+                // "Exile up to N target cards from graveyards" (e.g. Faerie Macabre) — any graveyard,
+                // no more than N distinct targets, each still present in a graveyard.
+                if (targetCardIds.size() > exileEffect.maxTargets()) {
+                    throw new IllegalStateException("Cannot target more than " + exileEffect.maxTargets() + " cards");
+                }
+                if (new HashSet<>(targetCardIds).size() != targetCardIds.size()) {
+                    throw new IllegalStateException("Cannot target the same card twice");
+                }
+                for (UUID cardId : targetCardIds) {
+                    if (gameQueryService.findCardInGraveyardById(gameData, cardId) == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
                     }
                 }
                 break;
@@ -326,6 +344,11 @@ public class TargetLegalityService {
                     && gameQueryService.playerHasProtectionFromColor(gameData, targetId, card.getColor())) {
                 return Optional.of(gameData.playerIdToName.get(targetId)
                         + " has protection from " + card.getColor().name().toLowerCase());
+            }
+            if (card != null
+                    && gameQueryService.playerHasProtectionFromChosenName(gameData, targetId, card.getName())) {
+                return Optional.of(gameData.playerIdToName.get(targetId)
+                        + " has protection from " + card.getName());
             }
         }
 
@@ -511,6 +534,10 @@ public class TargetLegalityService {
                     } else if (entry.getCard() != null && entry.getCard().getColor() != null
                             && gameQueryService.playerHasProtectionFromColor(gameData, entry.getTargetId(),
                                     entry.getCard().getColor())) {
+                        targetFizzled = true;
+                    } else if (entry.getCard() != null
+                            && gameQueryService.playerHasProtectionFromChosenName(gameData, entry.getTargetId(),
+                                    entry.getCard().getName())) {
                         targetFizzled = true;
                     }
                 } else if (targetPerm != null) {
@@ -909,6 +936,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryControlledByPredicate) {
             return stackEntry.getControllerId().equals(controllerId);
+        }
+        if (predicate instanceof StackEntryCastFromZonePredicate castFrom) {
+            return stackEntry.getSourceZone() == castFrom.sourceZone();
         }
         if (predicate instanceof StackEntryTargetsYourPermanentPredicate) {
             return targetsAPermanentControlledBy(gameData, stackEntry, controllerId);

@@ -66,6 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourc
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
@@ -173,9 +174,11 @@ public class AbilityActivationService {
         EnumMap<ManaColor, Integer> poolBefore = snapshotPoolColors(manaPool);
         EnumMap<ManaColor, Integer> creatureManaBefore = snapshotCreatureManaColors(manaPool);
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
+        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
+        int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
         if (overriddenManaColor != null) {
             // Land type is overridden — produce the new basic land type's mana instead of original
-            manaPool.add(overriddenManaColor, 1);
+            manaPool.add(overriddenManaColor, manaMultiplier);
         } else {
             // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
             boolean dampingReplacement = false;
@@ -188,13 +191,13 @@ public class AbilityActivationService {
                 }
                 if (totalMana >= 2) {
                     dampingReplacement = true;
-                    manaPool.add(ManaColor.COLORLESS, 1);
+                    manaPool.add(ManaColor.COLORLESS, manaMultiplier);
                 }
             }
             if (!dampingReplacement) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
-                        int amount = onTapManaAmount(awardMana);
+                        int amount = onTapManaAmount(awardMana) * manaMultiplier;
                         manaPool.add(awardMana.color(), amount);
                         if (isCreatureSource) {
                             manaPool.addCreatureMana(awardMana.color(), amount);
@@ -788,6 +791,85 @@ public class AbilityActivationService {
     }
 
     /**
+     * Activates a hand ability whose targets are cards in graveyards (e.g. Faerie Macabre:
+     * "Discard this card: Exile up to two target cards from graveyards."). Mirrors
+     * {@link #activateHandAbility} but carries a list of graveyard target card IDs instead of a
+     * single battlefield/player target.
+     *
+     * <p>Targets are chosen and validated first (CR 601.2c), so the source card being discarded as a
+     * cost is never itself a legal target; the discard cost is then paid before the ability is put on
+     * the stack.</p>
+     */
+    public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex,
+                                                        Integer abilityIndex, List<UUID> graveyardCardIds) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || handCardIndex < 0 || handCardIndex >= hand.size()) {
+            throw new IllegalStateException("Invalid hand card index");
+        }
+
+        Card card = hand.get(handCardIndex);
+        List<ActivatedAbility> abilities = card.getHandActivatedAbilities();
+        if (abilities.isEmpty()) {
+            throw new IllegalStateException("Card has no hand-activated ability");
+        }
+
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        if (idx < 0 || idx >= abilities.size()) {
+            throw new IllegalStateException("Invalid ability index");
+        }
+        ActivatedAbility ability = abilities.get(idx);
+        List<CardEffect> abilityEffects = ability.getEffects();
+
+        // Validate targeting before any cost is paid — an illegal activation rewinds cleanly (CR 601.2c)
+        targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, graveyardCardIds);
+
+        // Pay mana cost (throws before mutating the pool if it can't be afforded)
+        String abilityCost = ability.getManaCost();
+        if (abilityCost != null) {
+            payManaCost(gameData, playerId, abilityCost, 0, false, false);
+        }
+
+        // Pay the "discard this card" cost intrinsic to a hand-activated ability
+        hand.remove(handCardIndex);
+        graveyardService.addCardToGraveyard(gameData, playerId, card);
+        gameData.discardCausedByOpponent = false;
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
+
+        // Push the ability onto the stack with its graveyard targets (cost effects are not resolved)
+        List<CardEffect> snapshotEffects = new ArrayList<>();
+        for (CardEffect effect : abilityEffects) {
+            if (!(effect instanceof CostEffect)) {
+                snapshotEffects.add(effect);
+            }
+        }
+        gameData.stack.add(new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                card,
+                playerId,
+                card.getName() + "'s ability",
+                snapshotEffects,
+                0,
+                null,
+                null,
+                Map.of(),
+                Zone.GRAVEYARD,
+                graveyardCardIds,
+                List.of()
+        ));
+
+        String logEntry = player.getUsername() + " activates " + card.getName() + "'s ability from their hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} activates {}'s hand ability targeting graveyards", gameData.id, player.getUsername(), card.getName());
+
+        gameData.priorityPassedBy.clear();
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+        }
+        gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
      * Callback for when a player has chosen which card to discard as an activated ability's discard cost
      * (e.g. {@link DiscardCardTypeCost}). Resumes the pending ability activation with the chosen card.
      *
@@ -1012,7 +1094,7 @@ public class AbilityActivationService {
                 .orElse(null);
         if (discardCardTypeCost != null) {
             List<Card> hand = gameData.playerHands.get(playerId);
-            List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost);
+            List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost, effectiveXValue);
             if (discardCardIndex == null) {
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                         discardCardTypeCost.label(), validDiscardIndices);
@@ -1063,7 +1145,7 @@ public class AbilityActivationService {
         }
 
         if (discardCardTypeCost != null) {
-            payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex);
+            payDiscardCost(gameData, player, discardCardTypeCost, discardCardIndex, effectiveXValue);
         }
 
         if (exileGraveyardCost != null) {
@@ -1142,6 +1224,28 @@ public class AbilityActivationService {
             String counterLog = player.getUsername() + " removes " + required + " charge counter(s) from " + permanent.getCard().getName()
                     + " (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);
+        }
+
+        // Pay put-counter cost: put counters on the source (e.g. "Put a -1/-1 counter on this creature: ...")
+        Optional<PutCounterOnSourceCost> putCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof PutCounterOnSourceCost)
+                .map(e -> (PutCounterOnSourceCost) e)
+                .findFirst();
+        if (putCounterCost.isPresent() && !gameQueryService.cantHaveCounters(gameData, permanent)) {
+            PutCounterOnSourceCost c = putCounterCost.get();
+            boolean placed = false;
+            if (c.powerModifier() > 0) {
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + c.count());
+                placed = true;
+            } else if (!gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent)) {
+                permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + c.count());
+                placed = true;
+            }
+            if (placed) {
+                String counterLabel = String.format("%+d/%+d", c.powerModifier(), c.toughnessModifier());
+                String counterWord = c.count() == 1 ? "a " + counterLabel + " counter" : c.count() + " " + counterLabel + " counters";
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " puts " + counterWord + " on " + permanent.getCard().getName() + ".");
+            }
         }
 
         // Pay mill-controller cost
@@ -1438,6 +1542,18 @@ public class AbilityActivationService {
             }
         }
 
+        // Untap requirement ({Q}): the permanent must be tapped, and creatures obey the same
+        // summoning-sickness restriction as {T} (CR 302.6).
+        if (ability.isRequiresUntap()) {
+            if (!permanent.isTapped()) {
+                throw new IllegalStateException("Permanent is not tapped");
+            }
+            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)
+                    && !gameQueryService.canActivateCreatureAbilitiesAsThoughHaste(gameData, playerId)) {
+                throw new IllegalStateException("Creature has summoning sickness");
+            }
+        }
+
         // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
         UUID sourceId = permanent.getId();
         for (CardEffect effect : abilityEffects) {
@@ -1503,7 +1619,7 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (discardCardTypeCost != null
-                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost).isEmpty()) {
+                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).isEmpty()) {
             String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
             throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
         }
@@ -1871,13 +1987,17 @@ public class AbilityActivationService {
         return subtypes;
     }
 
-    private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost) {
+    private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost, int xValue) {
         List<Integer> validIndices = new ArrayList<>();
         if (hand == null) {
             return validIndices;
         }
         for (int i = 0; i < hand.size(); i++) {
-            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(hand.get(i), cost.predicate(), null)) {
+            Card card = hand.get(i);
+            if (cost.manaValueEqualsX() && card.getManaValue() != xValue) {
+                continue;
+            }
+            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(card, cost.predicate(), null)) {
                 validIndices.add(i);
             }
         }
@@ -1900,13 +2020,13 @@ public class AbilityActivationService {
                 "Choose a " + labelText + "card to discard as an activation cost."));
     }
 
-    private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex) {
+    private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex, int xValue) {
         if (discardCardIndex == null) {
             throw new IllegalStateException("Must choose a card to discard");
         }
 
         List<Card> hand = gameData.playerHands.get(player.getId());
-        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost);
+        List<Integer> validDiscardIndices = collectDiscardIndices(hand, cost, xValue);
         Set<Integer> validSet = new HashSet<>(validDiscardIndices);
         if (!validSet.contains(discardCardIndex)) {
             String costLabel = cost.label() != null ? cost.label() + " " : "";

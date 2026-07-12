@@ -44,6 +44,7 @@ class CounterUnlessPaysEffectHandlerTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GameQueryService gameQueryService;
     @Mock private StateTriggerService stateTriggerService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @InjectMocks
     private CounterSupport counterSupport;
     private GameData gd;
@@ -65,7 +66,7 @@ class CounterUnlessPaysEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        counterUnlessPaysHandler = new CounterUnlessPaysEffectHandler(counterSupport);
+        counterUnlessPaysHandler = new CounterUnlessPaysEffectHandler(counterSupport, amountEvaluationService);
 
     }
 

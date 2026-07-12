@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -95,6 +96,16 @@ public class DrawService {
             return;
         }
 
+        // Thought Reflection: if you would draw a card, draw two cards instead.
+        if (findDoubleDrawSourceCard(gameData, playerId) != null) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s draw is doubled — they draw two cards instead.");
+            log.info("Game {} - {}'s draw doubled (Thought Reflection)", gameData.id, playerName);
+            performDrawCard(gameData, playerId);
+            performDrawCard(gameData, playerId);
+            return;
+        }
+
         performDrawCard(gameData, playerId);
     }
 
@@ -149,6 +160,22 @@ public class DrawService {
                 if (hasEffect) {
                     return permanent.getCard();
                 }
+            }
+        }
+        return null;
+    }
+
+    private Card findDoubleDrawSourceCard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof DoubleDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent.getCard();
             }
         }
         return null;

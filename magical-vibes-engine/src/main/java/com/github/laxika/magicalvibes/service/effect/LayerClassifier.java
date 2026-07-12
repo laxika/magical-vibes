@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsInAllGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
@@ -192,6 +193,9 @@ public final class LayerClassifier {
         // "All nonland permanents are the chosen color" (Shifting Sky) replaces colors (CR 105.3).
         map.put(AllNonlandPermanentsAreChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
+        // "Becomes the color or colors of your choice" (Prismwake Merrow) — setting (CR 105.3).
+        map.put(BecomeChosenColorsUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
+                new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
 
         // Layer 6 — ability adding/removing. A changeling grant ("gains all creature types")
         // is ALSO a layer-4 contribution: the keyword defines the object's creature types

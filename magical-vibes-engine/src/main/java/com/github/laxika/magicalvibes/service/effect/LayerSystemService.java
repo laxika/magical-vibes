@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
@@ -1181,6 +1182,18 @@ public class LayerSystemService {
                     }
                 }
             }
+            case OWN_LANDS, ALL_LANDS -> {
+                for (PermanentSlot slot : slots) {
+                    if (slot.permanent() == source.permanent()) continue;
+                    boolean own = slot.controllerId().equals(source.controllerId());
+                    boolean inScope = scope == GrantScope.ALL_LANDS || own;
+                    CharacteristicState state = board.states().get(slot.permanent().getId());
+                    if (inScope && state != null && state.hasCardType(CardType.LAND)
+                            && matchesL4Filter(slot, filter, board)) {
+                        targets.add(slot);
+                    }
+                }
+            }
             case ENCHANTED_PLAYER_CREATURES -> {
                 Permanent sourcePermanent = source.permanent();
                 if (sourcePermanent.isAttached()) {
@@ -1375,6 +1388,16 @@ public class LayerSystemService {
         }
         Map<UUID, CharacteristicState> states = board.states();
         if (instance.floating() != null) {
+            // "Becomes the color or colors of your choice" (Prismwake Merrow): a floating setter
+            // carrying a full color set, applied as an override at its own timestamp.
+            if (instance.effect() instanceof BecomeChosenColorsUntilEndOfTurnEffect becomes) {
+                if (becomes.colors().isEmpty()) return;
+                for (PermanentSlot target : floatingTargets(instance, slots, slotsById, board)) {
+                    states.get(target.permanent().getId()).overrideColors(Set.copyOf(becomes.colors()));
+                    board.l56Touched().add(target.permanent().getId());
+                }
+                return;
+            }
             CardColor color = switch (instance.effect()) {
                 case GrantColorUntilEndOfTurnEffect becomes -> becomes.color();
                 case GrantColorEffect grant -> grant.color();

@@ -52,6 +52,16 @@ public record DealDividedDamageEffect(
                 new Fixed(totalDamage), null, DivisionMode.CHOSEN, null, 0, true, false, false);
     }
 
+    /**
+     * Dynamic total divided as you choose among any number of targets (creatures and/or players),
+     * where the total is computed from game state at cast time (Jaws of Stone — "X is the number of
+     * Mountains you control as you cast this spell").
+     */
+    public static DealDividedDamageEffect chosenAmongAnyTargets(DynamicAmount totalDamage) {
+        return new DealDividedDamageEffect(
+                totalDamage, null, DivisionMode.CHOSEN, null, 0, true, false, false);
+    }
+
     /** Fixed total divided as you choose among up to {@code maxTargets} target creatures. */
     public static DealDividedDamageEffect chosenAmongTargetCreatures(int totalDamage) {
         return new DealDividedDamageEffect(

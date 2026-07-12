@@ -71,10 +71,22 @@ public class EffectResolutionService {
             CardEffect effect = effects.get(i);
             CardEffect effectToResolve = effect;
 
+            // Resolution-time conditions that depend on the target (e.g. TargetPermanentMatches)
+            // must see this effect's group target, not the raw entry.targetId — for a multi-target
+            // spell the target lives in the flat targetIds list and is only remapped below. Build
+            // the condition context against the group's chosen target up front.
+            ConditionContext conditionContext = ConditionContext.forStackEntry(entry);
+            if (entry.getCard().getEffectTargetIndex(effect) >= 0) {
+                List<UUID> conditionTargets = entry.targetsForEffect(effect);
+                if (!conditionTargets.isEmpty()) {
+                    conditionContext = conditionContext.withTargetId(conditionTargets.getFirst());
+                }
+            }
+
             // Conditional wrapper: re-check condition at resolution time (intervening-if)
             if (effect instanceof ConditionalEffect conditional) {
                 if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forStackEntry(entry))) {
+                        conditionContext)) {
                     String logEntry = entry.getCard().getName() + "'s " + conditional.conditionName()
                             + " ability does nothing (" + conditional.conditionNotMetReason() + ").";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -85,7 +97,7 @@ public class EffectResolutionService {
                 effectToResolve = conditional.wrapped();
             } else if (effect instanceof ConditionalReplacementEffect replacement) {
                 effectToResolve = conditionEvaluationService.isMet(gameData, replacement.condition(),
-                        ConditionContext.forStackEntry(entry))
+                        conditionContext)
                         ? replacement.upgradedEffect()
                         : replacement.baseEffect();
             }

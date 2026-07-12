@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,7 @@ public class UntapStepService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final TapUntapSupport tapUntapSupport;
 
     /**
      * Performs the untap step for the active player.
@@ -76,7 +78,40 @@ public class UntapStepService {
      * @param restrictPredicate only permanents matching this untap; {@code null} = untap all
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate) {
+        untapPermanents(gameData, activePlayerId, restrictPredicate, false);
+    }
+
+    /**
+     * Performs the untap step, optionally skipping the untapping entirely (Savor the Moment's "skip the
+     * untap step of that turn"). When {@code skipUntapStep} is true, none of the active player's
+     * permanents untap and no Seedborn-Muse-style cross-player untap or may-not-untap choices occur,
+     * but summoning sickness and loyalty-activation flags are still cleared so the player can still
+     * attack with and use creatures they already controlled.
+     *
+     * @param skipUntapStep {@code true} to keep every permanent tapped through this untap step
+     */
+    public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
+                                boolean skipUntapStep) {
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
+
+        if (skipUntapStep) {
+            List<Permanent> ownBattlefield = gameData.playerBattlefields.get(activePlayerId);
+            if (ownBattlefield != null) {
+                ownBattlefield.forEach(p -> {
+                    // Permanents stay tapped, but a queued "skip next untap" is still consumed (this
+                    // untap step would have been its chance to untap) and summoning sickness clears.
+                    if (p.getSkipUntapCount() > 0) {
+                        p.setSkipUntapCount(p.getSkipUntapCount() - 1);
+                    }
+                    p.setSummoningSick(false);
+                    p.setLoyaltyActivationsThisTurn(0);
+                });
+            }
+            String skipLog = activePlayerName + " skips their untap step.";
+            gameBroadcastService.logAndBroadcast(gameData, skipLog);
+            log.info("Game {} - {} skips their untap step", gameData.id, activePlayerName);
+            return;
+        }
 
         // Clean up stale untap-prevention locks on ALL battlefields before untapping.
         // A lock is stale if the source permanent is no longer on the battlefield or is no longer tapped.
@@ -126,7 +161,7 @@ public class UntapStepService {
                     mayNotUntapPermanents.add(p);
                 } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
                         && !hasMatchingDoesntUntap) {
-                    p.untap();
+                    tapUntapSupport.untapPermanent(gameData, p);
                 }
                 p.setSummoningSick(false);
                 p.setLoyaltyActivationsThisTurn(0);
@@ -160,7 +195,7 @@ public class UntapStepService {
             for (Permanent p : playerBattlefield) {
                 if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.filter() != null
                         && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
-                    p.untap();
+                    tapUntapSupport.untapPermanent(gameData, p);
                 }
             }
 

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "M10", collectorNumber = "3")
 @CardRegistration(set = "M11", collectorNumber = "5")
+@CardRegistration(set = "SHM", collectorNumber = "2")
 public class ArmoredAscension extends Card {
 
     public ArmoredAscension() {

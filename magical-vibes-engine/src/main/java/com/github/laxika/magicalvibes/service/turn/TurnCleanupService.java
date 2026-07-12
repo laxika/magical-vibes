@@ -78,6 +78,7 @@ public class TurnCleanupService {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
+                    || !p.getRemovedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
                     || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
@@ -129,6 +130,7 @@ public class TurnCleanupService {
         }
         gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
+        gameData.conspiredSpellIds.clear();
 
         // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
         // but guard against any leaked batch depth across turns).

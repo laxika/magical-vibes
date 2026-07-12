@@ -258,6 +258,35 @@ public class TriggerCollectionService {
             }
         }
 
+        // Conspire (CR 702.78): "When you [tap the two creatures], copy it and you may choose a new
+        // target for the copy." The spell was flagged in gameData.conspiredSpellIds when its conspire
+        // cost was paid during casting. One copy per conspired spell.
+        if (gameData.conspiredSpellIds.remove(spellCard.getId())) {
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry != null) {
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CopyControllerCastSpellEffect copyEffect =
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        "Copy " + spellCard.getName() + " (Conspire)",
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                String logMsg = spellCard.getName() + " is copied (Conspire).";
+                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                log.info("Game {} - {} conspire copy trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            }
+        }
+
         // ON_SELF_CAST — "When you cast this spell, copy it if <condition>" (SOS Infusion copy cycle).
         // Scanned against the just-cast card itself (it's a spell on the stack, not a permanent).
         for (CardEffect effect : spellCard.getEffects(EffectSlot.ON_SELF_CAST)) {
@@ -969,6 +998,40 @@ public class TriggerCollectionService {
         });
     }
 
+    // ── Becomes-untapped triggers ──────────────────────────────────────
+
+    /**
+     * "Whenever this permanent becomes untapped" triggers (e.g. Hollowsage). Called from the untap
+     * call sites after a permanent transitions from tapped to untapped. Fires only on the permanent
+     * that became untapped, queueing a non-targeting triggered ability whose {@code sourcePermanentId}
+     * is that permanent; any player targeting for a wrapped {@code MayEffect} happens at resolution.
+     */
+    public void checkBecomesUntappedTriggers(GameData gameData, Permanent untappedPermanent) {
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf != null && bf.contains(untappedPermanent)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) return;
+
+        for (CardEffect effect : untappedPermanent.getCard().getEffects(EffectSlot.ON_SELF_BECOMES_UNTAPPED)) {
+            gameData.enqueueTrigger(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    untappedPermanent.getCard(),
+                    controllerId,
+                    untappedPermanent.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    untappedPermanent.getId()
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, untappedPermanent.getCard().getName() + "'s ability triggers.");
+            log.info("Game {} - {} triggers on becoming untapped", gameData.id, untappedPermanent.getCard().getName());
+        }
+    }
+
     // ── Ability-activation triggers ────────────────────────────────────
 
     /**
@@ -1052,6 +1115,10 @@ public class TriggerCollectionService {
 
     public void checkLifeLossTriggers(GameData gameData, UUID losingPlayerId, int lifeLostAmount) {
         if (lifeLostAmount <= 0) return;
+
+        // Accumulate life lost this turn (damage funnels through here too — "damage causes loss of
+        // life"). Read by Wound Reflection at end of turn.
+        gameData.lifeLostThisTurn.merge(losingPlayerId, lifeLostAmount, Integer::sum);
 
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.LifeLoss(losingPlayerId, lifeLostAmount);
@@ -1540,7 +1607,8 @@ public class TriggerCollectionService {
         }
     }
 
-    public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
+    public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
+        Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
 
         gameData.forEachPermanent((playerId, perm) -> {
@@ -1548,7 +1616,11 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                // Death conditionals may reference the dying creature's on-battlefield state (e.g.
+                // Blowfly Infestation's "if it had a -1/-1 counter on it") — evaluate against the
+                // dying permanent, not just its card.
+                CardEffect resolvedEffect = unwrapCreatureDeathConditional(
+                        effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
                 registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_DIES, resolvedEffect, ctx);
@@ -1980,6 +2052,47 @@ public class TriggerCollectionService {
                         + enteringCreature.getName() + " entered from a graveyard).");
                 log.info("Game {} - {} triggers ({} entered from graveyard)",
                         gameData.id, perm.getCard().getName(), enteringCreature.getName());
+            }
+        });
+    }
+
+    /**
+     * "Whenever this creature or another permanent enters from a graveyard"
+     * (ON_PERMANENT_ENTERS_FROM_GRAVEYARD). Unlike {@link #checkEntersFromGraveyardTriggers}, fires for
+     * ANY permanent (not just creatures) entering from ANY graveyard, and queues a non-targeting stack
+     * entry for each source's controller rather than a target choice. Used by River Kelpie.
+     */
+    public void checkPermanentEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringPermanentCard) {
+        Permanent enteringPermanent = null;
+        List<Permanent> controllerBf = gameData.playerBattlefields.get(enteringControllerId);
+        if (controllerBf != null) {
+            for (Permanent p : controllerBf) {
+                if (p.getCard() == enteringPermanentCard) {
+                    enteringPermanent = p;
+                    break;
+                }
+            }
+        }
+        if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
+            return;
+        }
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PERMANENT_ENTERS_FROM_GRAVEYARD);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect))
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers ("
+                        + enteringPermanentCard.getName() + " entered from a graveyard).");
+                log.info("Game {} - {} triggers ({} entered from graveyard)",
+                        gameData.id, perm.getCard().getName(), enteringPermanentCard.getName());
             }
         });
     }

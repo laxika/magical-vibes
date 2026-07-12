@@ -54,11 +54,13 @@ import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosenNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivateCreatureAbilitiesAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
@@ -77,10 +79,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -456,6 +460,42 @@ public class GameQueryService {
     }
 
     /**
+     * Returns the multiplier applied to life the given player gains, per any
+     * {@link DoubleLifeGainEffect} static effects they control (e.g. Boon Reflection). Each such
+     * effect doubles the life gained, and multiple stack multiplicatively (2^count), matching the
+     * Rhox Faithmender / Alhammarret's Archive ruling. Returns 1 when the player controls none.
+     */
+    public int lifeGainMultiplier(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return 1;
+        int doublers = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DoubleLifeGainEffect) doublers++;
+            }
+        }
+        return 1 << doublers;
+    }
+
+    /**
+     * Returns the multiplier applied to mana the given player produces by tapping a permanent for
+     * mana, per any {@link ManaReflectionEffect} static effects they control (Mana Reflection). Each
+     * such effect doubles the mana produced, and multiple stack multiplicatively (2^count). Returns
+     * 1 when the player controls none.
+     */
+    public int manaProductionMultiplier(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return 1;
+        int reflections = 0;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ManaReflectionEffect) reflections++;
+            }
+        }
+        return 1 << reflections;
+    }
+
+    /**
      * Returns {@code true} if players are allowed to cast spells from the given zone.
      * Returns {@code false} when a {@link PlayersCantCastSpellsFromZonesEffect} whose
      * {@code zones} contains {@code zone} is on any battlefield (e.g. Ashes of the Abhorrent
@@ -748,6 +788,25 @@ public class GameQueryService {
     public boolean isArtifact(GameData gameData, Permanent permanent) {
         return isArtifact(permanent)
                 || computeStaticBonus(gameData, permanent).grantedCardTypes().contains(CardType.ARTIFACT);
+    }
+
+    /**
+     * Returns {@code true} if the permanent is an enchantment, either by its natural card type,
+     * a transient granted card type (until end of turn), or a persistent granted card type (permanent).
+     */
+    public boolean isEnchantment(Permanent permanent) {
+        return hasCardType(permanent, CardType.ENCHANTMENT)
+                || permanent.getGrantedCardTypes().contains(CardType.ENCHANTMENT)
+                || permanent.getPersistentGrantedCardTypes().contains(CardType.ENCHANTMENT);
+    }
+
+    /**
+     * Returns {@code true} if the permanent is an enchantment, checking natural card type,
+     * temporary granted card types, and static card type grants (e.g. from Enchanted Evening).
+     */
+    public boolean isEnchantment(GameData gameData, Permanent permanent) {
+        return isEnchantment(permanent)
+                || computeStaticBonus(gameData, permanent).grantedCardTypes().contains(CardType.ENCHANTMENT);
     }
 
     // --- Keyword & effect checking ---
@@ -1472,6 +1531,7 @@ public class GameQueryService {
                 && accumulator.getProtectionColors().isEmpty()
                 && accumulator.getGrantedColors().isEmpty()
                 && accumulator.getGrantedSubtypes().isEmpty()
+                && accumulator.getGrantedCardTypes().isEmpty()
                 && accumulator.getGrantedSupertypes().isEmpty()) {
             return StaticBonus.NONE;
         }
@@ -1802,6 +1862,20 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the target permanent has protection from mana value N or greater
+     * and the source's mana value meets that threshold (e.g. Mistmeadow Skulk).
+     */
+    public boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ProtectionFromManaValueEffect protection
+                    && sourceCard.getManaValue() >= protection.minManaValue()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the target permanent has protection from the source permanent,
      * checking color-based, card-type-based, subtype-based, and non-subtype-creature protection.
      */
@@ -1823,7 +1897,8 @@ public class GameQueryService {
         }
         return hasProtectionFromSourceCardTypes(gameData, target, source)
                 || hasProtectionFromSourceSubtypes(gameData, target, source)
-                || hasProtectionFromNonSubtypeCreatures(gameData, target, source);
+                || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
+                || hasProtectionFromSourceManaValue(target, source.getCard());
     }
 
     /**
@@ -1835,7 +1910,8 @@ public class GameQueryService {
         return hasProtectionFrom(gameData, target, sourceCard.getColor())
                 || hasProtectionFromSourceCardTypes(target, sourceCard)
                 || hasProtectionFromSourceSubtypes(target, sourceCard)
-                || hasProtectionFromNonSubtypeCreatures(target, sourceCard);
+                || hasProtectionFromNonSubtypeCreatures(target, sourceCard)
+                || hasProtectionFromSourceManaValue(target, sourceCard);
     }
 
     /**
@@ -1852,6 +1928,24 @@ public class GameQueryService {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
         return source != null && hasKeyword(gameData, source, keyword);
+    }
+
+    /**
+     * Returns {@code true} if the permanent's damage to creatures is dealt as -1/-1 counters:
+     * either infect (CR 702.90) or wither (CR 702.80). The two behave identically against
+     * creatures; they differ only against players (infect gives poison, wither is normal damage).
+     */
+    public boolean dealsCounterDamageToCreatures(GameData gameData, Permanent permanent) {
+        return hasKeyword(gameData, permanent, Keyword.INFECT) || hasKeyword(gameData, permanent, Keyword.WITHER);
+    }
+
+    /**
+     * Stack-entry variant of {@link #dealsCounterDamageToCreatures}: whether the damage source
+     * (explicit permanent or the entry's source permanent) deals creature damage as -1/-1 counters.
+     */
+    public boolean sourceDealsCounterDamageToCreatures(GameData gameData, StackEntry entry, Permanent explicitSource) {
+        return sourceHasKeyword(gameData, entry, explicitSource, Keyword.INFECT)
+                || sourceHasKeyword(gameData, entry, explicitSource, Keyword.WITHER);
     }
 
     /**
@@ -2042,6 +2136,30 @@ public class GameQueryService {
         }
         Set<CardColor> colors = gameData.playerProtectionFromColorsUntilEndOfTurn.get(playerId);
         return colors != null && colors.contains(color);
+    }
+
+    /**
+     * Returns {@code true} if the player controls a permanent with a
+     * {@link PlayerHasProtectionFromChosenNameEffect} static effect whose chosen card name equals
+     * the given name (Runed Halo). Such a player can't be targeted, dealt damage, or enchanted by
+     * anything with that name.
+     */
+    public boolean playerHasProtectionFromChosenName(GameData gameData, UUID playerId, String cardName) {
+        if (cardName == null) {
+            return false;
+        }
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) {
+            return false;
+        }
+        for (Permanent perm : bf) {
+            if (cardName.equals(perm.getChosenName())
+                    && perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                            .anyMatch(PlayerHasProtectionFromChosenNameEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

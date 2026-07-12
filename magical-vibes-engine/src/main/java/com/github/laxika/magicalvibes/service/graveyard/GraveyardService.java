@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
@@ -226,22 +227,34 @@ public class GraveyardService {
         if (perm.isCantRegenerateThisTurn()) {
             return false;
         }
+        // Always-on intrinsic regeneration ("If this creature would be destroyed, regenerate it")
+        // — regenerates every time without consuming a shield.
+        boolean intrinsicRegen = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(RegeneratesIfWouldBeDestroyedEffect.class::isInstance);
+        if (intrinsicRegen) {
+            performRegeneration(gameData, perm);
+            return true;
+        }
         if (perm.getRegenerationShield() > 0) {
             perm.setRegenerationShield(perm.getRegenerationShield() - 1);
-            perm.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
-            perm.setAttacking(false);
-            perm.setBlocking(false);
-            perm.getBlockingTargets().clear();
-            // CR 701.15a — regeneration removes all damage marked on the permanent
-            perm.setMarkedDamage(0);
-
-            String logEntry = perm.getCard().getName() + " regenerates.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
+            performRegeneration(gameData, perm);
             return true;
         }
         return false;
+    }
+
+    private void performRegeneration(GameData gameData, Permanent perm) {
+        perm.tap();
+        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+        perm.setAttacking(false);
+        perm.setBlocking(false);
+        perm.getBlockingTargets().clear();
+        // CR 701.15a — regeneration removes all damage marked on the permanent
+        perm.setMarkedDamage(0);
+
+        String logEntry = perm.getCard().getName() + " regenerates.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} regenerates", gameData.id, perm.getCard().getName());
     }
 
 
@@ -303,13 +316,20 @@ public class GraveyardService {
     private void updateThisTurnBattlefieldToGraveyardTracking(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
                 .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
-        if (sourceZone == Zone.BATTLEFIELD
-                && !card.isToken()
-                && card.hasType(CardType.CREATURE)) {
-            tracked.add(card.getId());
-            triggerDamagedCreatureDiesAbilities(gameData, card);
+        // Tracks all non-token cards (any type) put into the graveyard from the battlefield this turn.
+        Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(ownerId, ignored -> ConcurrentHashMap.newKeySet());
+        if (sourceZone == Zone.BATTLEFIELD && !card.isToken()) {
+            allTracked.add(card.getId());
+            if (card.hasType(CardType.CREATURE)) {
+                tracked.add(card.getId());
+                triggerDamagedCreatureDiesAbilities(gameData, card);
+            } else {
+                tracked.remove(card.getId());
+            }
         } else {
             tracked.remove(card.getId());
+            allTracked.remove(card.getId());
         }
     }
 
@@ -437,6 +457,10 @@ public class GraveyardService {
         Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
         if (tracked != null) {
             tracked.clear();
+        }
+        Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+        if (allTracked != null) {
+            allTracked.clear();
         }
         notifyCardsLeftGraveyard(gameData, ownerId);
     }

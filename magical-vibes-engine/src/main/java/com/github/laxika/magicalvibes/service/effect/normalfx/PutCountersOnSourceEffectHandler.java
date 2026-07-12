@@ -19,6 +19,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -51,5 +52,9 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         String logEntry = source.getCard().getName() + " gets " + e.amount() + " " + counterLabel + " counter(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), e.amount(), counterLabel);
+
+        if (e.powerModifier() <= 0) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, e.amount());
+        }
     }
 }

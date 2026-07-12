@@ -27,6 +27,7 @@ public enum Keyword {
     PLAINSWALK,
     HEXPROOF,
     INFECT,
+    WITHER,
     INTIMIDATE,
     METALCRAFT,
     BATTLE_CRY,
@@ -39,10 +40,12 @@ public enum Keyword {
     CREW,
     EXPLORE,
     UNDYING,
+    PERSIST,
     CONVERGE,
     INCREMENT,
     PARADIGM,
-    HORSEMANSHIP;
+    HORSEMANSHIP,
+    CONSPIRE;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

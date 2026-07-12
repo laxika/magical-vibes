@@ -115,6 +115,11 @@ land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`
 graveyard owner controls whenever a non-token land card enters their graveyard from any zone — checked in
 `GraveyardService.addCardToGraveyard`, the single zone→graveyard choke point), `ON_ENCHANTED_PERMANENT_TAPPED`,
 `ON_ALLY_PERMANENT_BECOMES_TAPPED`,
+`ON_SELF_BECOMES_UNTAPPED` (Hollowsage; fires when the permanent transitions tapped→untapped, from
+the untap step or any untap effect, via `TriggerCollectionService.checkBecomesUntappedTriggers` — driven
+from `UntapStepService` and `TapUntapSupport.untapPermanent`. Non-targeting: a "you may have target player
+…" is expressed as a `MayEffect`-wrapped targeting effect whose "may" and target are resolved on the stack
+via the pending-may-ability flow, not a target-choice pipeline),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,
@@ -126,6 +131,10 @@ graveyard owner controls whenever a non-token land card enters their graveyard f
 `ON_OPPONENT_CREATURE_DEALT_DAMAGE`, `GRAVEYARD_ON_CONTROLLER_CASTS_SPELL`,
 `ON_CONTROLLER_LOSES_LIFE`,
 `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT`,
+`ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE` (Flourishing Defenses; global watcher — fires on
+every permanent with this slot, under that permanent's controller, once per individual -1/-1 counter put
+on any creature from any source, via `PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers`;
+non-targeting — a "you may create …" is a `MayEffect` resolved on the stack),
 `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`, `GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER`,
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,

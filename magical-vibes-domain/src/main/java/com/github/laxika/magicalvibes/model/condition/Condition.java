@@ -7,6 +7,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * compile error rather than a silent runtime fallback.
  */
 public sealed interface Condition permits
+        ActivePlayerHandEmpty,
         ActivationCount,
         AnyLibraryAtMost,
         AnyPlayerControlsPermanent,
@@ -20,6 +21,7 @@ public sealed interface Condition permits
         CastForProwlCost,
         CastFromZone,
         CastNotFromHand,
+        ColorSpentToCast,
         ControllerCastAnotherSpellThisTurn,
         ControllerHasMoreLifeThanAnOpponent,
         ControllerLifeAtLeast,

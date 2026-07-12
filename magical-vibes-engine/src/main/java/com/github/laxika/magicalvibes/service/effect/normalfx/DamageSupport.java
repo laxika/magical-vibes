@@ -46,6 +46,7 @@ public class DamageSupport {
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
     private final PermanentControlSupport permanentControlSupport;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     /**
      * Applies damage to a creature, handling prevention shield, recording, logging,
@@ -121,15 +122,17 @@ public class DamageSupport {
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
 
-        boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.INFECT);
+        // Infect and wither both deal creature damage as -1/-1 counters (CR 702.90 / 702.80).
+        boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource);
 
-        if (sourceHasInfect) {
+        if (dealsCounterDamage) {
             if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
                 gameBroadcastService.logAndBroadcast(gameData,
                         sourceName + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");
                 log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, damage, target.getCard().getName());
+                permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, damage);
             }
             // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
             return gameQueryService.getEffectiveToughness(gameData, target) <= 0;
@@ -385,6 +388,12 @@ public class DamageSupport {
         // Protection from color (e.g. Faith's Shield) prevents all damage from sources of that color.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.playerHasProtectionFromColor(gameData, playerId, source.getColor())) {
+            gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            return;
+        }
+        // Protection from card name (Runed Halo) prevents all damage from sources with that name.
+        if (gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.playerHasProtectionFromChosenName(gameData, playerId, cardName)) {
             gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             return;
         }

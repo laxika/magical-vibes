@@ -71,7 +71,9 @@ class BattlefieldEntryServiceTest {
                 graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(conditionEvaluationService),
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService),
-                conditionEvaluationService, predicateEvaluationService);
+                conditionEvaluationService, predicateEvaluationService,
+                new com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport(
+                        gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

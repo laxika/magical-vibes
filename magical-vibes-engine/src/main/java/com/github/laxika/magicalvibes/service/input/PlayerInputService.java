@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -156,6 +157,34 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose a color (target becomes chosen color)", gameData.id, playerName);
+    }
+
+    /**
+     * Prismwake Merrow: prompt {@code playerId} to pick a color for {@code targetId}. Colors are
+     * picked one at a time — already-chosen colors are dropped from the options, and "DONE" is
+     * offered once at least one color has been chosen. The choice handler accumulates the picks and
+     * re-invokes this until the player is done (see {@code ChoiceHandlerService}).
+     */
+    public void beginBecomeChosenColorsChoice(GameData gameData, UUID playerId, UUID targetId,
+                                              String sourceCardName, List<CardColor> chosen) {
+        ChoiceContext.BecomeChosenColorsChoice ctx =
+                new ChoiceContext.BecomeChosenColorsChoice(targetId, sourceCardName, new ArrayList<>(chosen));
+
+        List<String> options = new ArrayList<>();
+        for (CardColor color : List.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN)) {
+            if (!chosen.contains(color)) {
+                options.add(color.name());
+            }
+        }
+        if (!chosen.isEmpty()) {
+            options.add("DONE");
+        }
+        String prompt = chosen.isEmpty() ? "Choose a color." : "Choose another color, or DONE.";
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, ctx, options, prompt));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a color", gameData.id, playerName);
     }
 
     public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId) {

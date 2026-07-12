@@ -552,6 +552,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;
@@ -617,6 +622,11 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
+            return;
+        }
+
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;
@@ -658,6 +668,11 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
             return;
         }
 
@@ -727,6 +742,92 @@ public class PermanentChoiceTriggerHandlerService {
     void continueAfterCapriciousEfreet(GameData gameData) {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePucasMischiefOwnTarget(GameData gameData, UUID permanentId,
+                                             PermanentChoiceContext.PucasMischiefOwnTarget pmot) {
+        // Step 1 complete: nonland permanent you control chosen. Collect opponent nonland permanents
+        // with mana value <= the chosen permanent's for step 2.
+        Permanent ownTarget = gameQueryService.findPermanentById(gameData, permanentId);
+        int ownManaValue = ownTarget != null ? ownTarget.getCard().getManaValue() : 0;
+
+        List<UUID> validOpponentTargets = new ArrayList<>();
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(pmot.controllerId())) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (!p.getCard().hasType(CardType.LAND) && p.getCard().getManaValue() <= ownManaValue) {
+                    validOpponentTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validOpponentTargets.isEmpty()) {
+            // No legal opponent permanent — the trigger does nothing (should not happen after
+            // the step-1 pre-filter, but guarded for safety).
+            log.info("Game {} - {} has no legal opponent target", gameData.id, pmot.sourceCard().getName());
+            continueAfterPucasMischief(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.PucasMischiefOpponentTarget(
+                pmot.sourceCard(), pmot.controllerId(), pmot.effects(), pmot.sourcePermanentId(), permanentId));
+        playerInputService.beginPermanentChoice(gameData, pmot.controllerId(), validOpponentTargets,
+                pmot.sourceCard().getName()
+                        + " — Choose a nonland permanent an opponent controls with equal or lesser mana value.");
+
+        log.info("Game {} - {} upkeep trigger awaiting opponent target selection",
+                gameData.id, pmot.sourceCard().getName());
+    }
+
+    public void handlePucasMischiefOpponentTarget(GameData gameData, UUID permanentId,
+                                                  PermanentChoiceContext.PucasMischiefOpponentTarget pmot) {
+        // Step 2 complete: build the stack entry with both targets. The MayEffect wrapper carried in
+        // effects() prompts the "you may" at resolution (CR 603.5), then the exchange resolves.
+        List<UUID> targetIds = new ArrayList<>(List.of(pmot.ownTargetId(), permanentId));
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                pmot.sourceCard(),
+                pmot.controllerId(),
+                pmot.sourceCard().getName() + "'s upkeep ability",
+                new ArrayList<>(pmot.effects()),
+                pmot.sourcePermanentId(),
+                targetIds);
+        gameData.stack.add(entry);
+
+        Permanent ownTarget = gameQueryService.findPermanentById(gameData, pmot.ownTargetId());
+        Permanent opponentTarget = gameQueryService.findPermanentById(gameData, permanentId);
+        String ownName = ownTarget != null ? ownTarget.getCard().getName() : pmot.ownTargetId().toString();
+        String oppName = opponentTarget != null ? opponentTarget.getCard().getName() : permanentId.toString();
+        String logEntry = pmot.sourceCard().getName() + "'s ability targets " + ownName + " and " + oppName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger targets {} and {}",
+                gameData.id, pmot.sourceCard().getName(), ownName, oppName);
+
+        continueAfterPucasMischief(gameData);
+    }
+
+    void continueAfterPucasMischief(GameData gameData) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
             return;
         }
 
@@ -1083,6 +1184,11 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
             return;
         }
 

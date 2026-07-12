@@ -177,14 +177,19 @@ public class GraveyardReturnSupport {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
-        if (effect.thisTurnOnly() || effect.fromAnywhereThisTurn()) {
-            Set<UUID> trackedIds = effect.fromAnywhereThisTurn()
-                    ? gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.getOrDefault(controllerId, Set.of())
-                    : gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+        if (effect.thisTurnOnly() || effect.fromBattlefieldThisTurn() || effect.fromAnywhereThisTurn()) {
+            Set<UUID> trackedIds;
+            if (effect.fromAnywhereThisTurn()) {
+                trackedIds = gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.getOrDefault(controllerId, Set.of());
+            } else if (effect.fromBattlefieldThisTurn()) {
+                trackedIds = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+            } else {
+                trackedIds = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.getOrDefault(controllerId, Set.of());
+            }
             String sourceLabel = effect.fromAnywhereThisTurn() ? "from anywhere" : "from the battlefield";
 
             if (graveyard == null || graveyard.isEmpty() || trackedIds.isEmpty()) {
-                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard " + sourceLabel + " this turn.";
+                String logEntry = entry.getDescription() + " - no cards were put into your graveyard " + sourceLabel + " this turn.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 return;
             }
@@ -199,7 +204,7 @@ public class GraveyardReturnSupport {
             }
 
             if (toReturn.isEmpty()) {
-                String logEntry = entry.getDescription() + " - no creature cards were put into your graveyard " + sourceLabel + " this turn.";
+                String logEntry = entry.getDescription() + " - no cards were put into your graveyard " + sourceLabel + " this turn.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 return;
             }
@@ -222,7 +227,7 @@ public class GraveyardReturnSupport {
             String logEntry = playerName + " returns " + String.join(", ", returnedNames)
                     + " from graveyard to hand.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} returns {} creature card(s) from graveyard to hand",
+            log.info("Game {} - {} returns {} card(s) from graveyard to hand",
                     gameData.id, playerName, returnedNames.size());
             return;
         }
@@ -681,7 +686,11 @@ public class GraveyardReturnSupport {
     public record StolenCreatureResult(Permanent permanent, Card card, UUID originalOwnerId) {}
 
     public StolenCreatureResult stealFromOpponentGraveyard(GameData gameData, StackEntry entry, UUID controllerId) {
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        // SPELL-slot casts (Gruesome Encore) carry the target on targetId; ETB triggers
+        // (Puppeteer Clique) choose it via a multi-graveyard choice, landing it on targetCardIds.
+        UUID targetId = entry.getTargetId() != null ? entry.getTargetId()
+                : (entry.getTargetCardIds().isEmpty() ? null : entry.getTargetCardIds().getFirst());
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
             return null;

@@ -44,9 +44,14 @@ import lombok.Builder;
  *                             happens at resolution time
  * @param returnAll            {@code true} to return all matching cards without player choice;
  *                             {@code false} to let the controller pick one
- * @param thisTurnOnly         {@code true} to restrict returned cards to those put into the graveyard
- *                             from the battlefield this turn (e.g. Faith's Reward, No Rest for the Wicked);
- *                             only meaningful when {@link #returnAll} is {@code true}
+ * @param thisTurnOnly         {@code true} to restrict returned cards to <b>creature</b> cards put into the
+ *                             graveyard from the battlefield this turn (e.g. Faith's Reward, No Rest for the
+ *                             Wicked); uses the {@code creatureCardsPutIntoGraveyardFromBattlefieldThisTurn}
+ *                             tracking; only meaningful when {@link #returnAll} is {@code true}
+ * @param fromBattlefieldThisTurn {@code true} to restrict returned cards to <b>all</b> cards (any type) put
+ *                             into the graveyard from the battlefield this turn (e.g. Twilight Shepherd);
+ *                             uses the {@code cardsPutIntoGraveyardFromBattlefieldThisTurn} tracking; only
+ *                             meaningful when {@link #returnAll} is {@code true}
  * @param fromAnywhereThisTurn {@code true} to restrict returned cards to those put into the graveyard
  *                             from any zone this turn (e.g. Garna, the Bloodflame); uses the
  *                             {@code cardsPutIntoGraveyardFromAnywhereThisTurn} tracking in GameData;
@@ -110,6 +115,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean targetGraveyard,
         boolean returnAll,
         boolean thisTurnOnly,
+        boolean fromBattlefieldThisTurn,
         boolean fromAnywhereThisTurn,
         PermanentPredicate attachmentTarget,
         boolean gainLifeEqualToManaValue,

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
@@ -202,6 +204,18 @@ public class StepTriggerService {
                 continue;
             }
 
+            // Puca's Mischief: two interdependent nonland-permanent targets chosen at trigger time
+            // (one you control, one an opponent controls with equal or lesser mana value). The
+            // MayEffect wrapper is carried through so the "you may" is honoured at resolution.
+            boolean isExchangeControl = upkeepEffects.stream().anyMatch(e ->
+                    e instanceof ExchangeControlOfTargetPermanentsEffect
+                            || (e instanceof MayEffect m && m.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect));
+            if (isExchangeControl) {
+                gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
+                        perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
+                continue;
+            }
+
             for (CardEffect effect : upkeepEffects) {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
@@ -324,6 +338,27 @@ public class StepTriggerService {
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: hand >= {})",
                                 gameData.id, perm.getCard().getName(), handCheck.threshold());
+                    }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ActivePlayerHandEmpty handEmptyCheck) {
+                    // Intervening-if: only trigger if the active player (controller, on their own
+                    // upkeep) has no cards in hand (Hollowborn Barghest)
+                    if (conditionEvaluationService.isMet(gameData, handEmptyCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: active player has no cards in hand)",
+                                gameData.id, perm.getCard().getName());
                     }
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof CardsInLibraryAtLeast libraryCheck) {
@@ -505,6 +540,14 @@ public class StepTriggerService {
                             continue; // Condition not met, don't trigger
                         }
                     }
+                    // Intervening-if: only trigger if the active opponent has no cards in hand
+                    // (Hollowborn Barghest's "if that player has no cards in hand")
+                    if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof ActivePlayerHandEmpty handEmptyCheck
+                            && !conditionEvaluationService.isMet(gameData, handEmptyCheck,
+                                    ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
 
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -644,6 +687,11 @@ public class StepTriggerService {
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            processNextPucasMischiefTarget(gameData);
             return;
         }
 
@@ -892,7 +940,7 @@ public class StepTriggerService {
      */
     public void processNextCapriciousEfreetTarget(GameData gameData) {
         if (!gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
-            processNextUpkeepPermanentTarget(gameData);
+            processNextPucasMischiefTarget(gameData);
             return;
         }
 
@@ -922,6 +970,62 @@ public class StepTriggerService {
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep trigger awaiting own target selection", gameData.id, trigger.sourceCard().getName());
+    }
+
+    /**
+     * Processes the next pending Puca's Mischief upkeep trigger target selection.
+     * Step 1: controller chooses one nonland permanent they control that has at least one legal
+     * opponent pairing (an opponent nonland permanent with equal or lesser mana value).
+     */
+    public void processNextPucasMischiefTarget(GameData gameData) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            processNextUpkeepPermanentTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.PucasMischiefOwnTarget trigger =
+                gameData.pollPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class);
+
+        // A nonland permanent you control is a legal first target only if some opponent nonland
+        // permanent has mana value <= its own — i.e. own MV >= the smallest opponent MV.
+        int minOpponentManaValue = Integer.MAX_VALUE;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(trigger.controllerId())) continue;
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (!p.getCard().hasType(CardType.LAND)) {
+                    minOpponentManaValue = Math.min(minOpponentManaValue, p.getCard().getManaValue());
+                }
+            }
+        }
+
+        List<UUID> validOwnTargets = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (!p.getCard().hasType(CardType.LAND) && p.getCard().getManaValue() >= minOpponentManaValue) {
+                    validOwnTargets.add(p.getId());
+                }
+            }
+        }
+
+        if (validOwnTargets.isEmpty()) {
+            // No legal pair of targets — the trigger does nothing.
+            log.info("Game {} - {} upkeep trigger skipped (no legal target pair)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextPucasMischiefTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
+                trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
+
+        String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} upkeep trigger awaiting own target selection (Puca's Mischief)",
+                gameData.id, trigger.sourceCard().getName());
     }
 
     private void handleOpeningHandTriggers(GameData gameData) {

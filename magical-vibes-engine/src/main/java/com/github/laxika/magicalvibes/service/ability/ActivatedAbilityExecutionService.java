@@ -185,6 +185,9 @@ public class ActivatedAbilityExecutionService {
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
             deferredTapTriggers = new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size()));
             gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
+        } else if (ability.isRequiresUntap()) {
+            // {Q} untap symbol: paying the cost untaps the source permanent.
+            permanent.untap();
         }
 
         // "Remove all {type} counters from this permanent" is an additional cost — snapshot the
@@ -372,6 +375,9 @@ public class ActivatedAbilityExecutionService {
     private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
 
+        // Mana Reflection: tapping a permanent for mana produces twice as much of that mana (2^count).
+        int manaMultiplier = gameQueryService.manaProductionMultiplier(gameData, playerId);
+
         // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.
         boolean dampingReplacement = false;
         if (permanent.getCard().hasType(CardType.LAND) && isDampingManaReplacementActive(gameData)) {
@@ -391,7 +397,7 @@ public class ActivatedAbilityExecutionService {
             }
             if (effect instanceof AwardManaEffect award) {
                 int amount = amountEvaluationService.evaluate(gameData, award.amount(),
-                        AmountContext.forManaAbility(permanent, playerId));
+                        AmountContext.forManaAbility(permanent, playerId)) * manaMultiplier;
                 if (amount > 0) {
                     ManaPool pool = gameData.playerManaPools.get(playerId);
                     pool.add(award.color(), amount);
@@ -417,7 +423,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
                 CardSubtype chosenSubtype = permanent.getChosenSubtype();
                 if (chosenSubtype != null) {
-                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, false, 1, chosenSubtype);
+                    ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, false, manaMultiplier, chosenSubtype);
                     List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
@@ -425,14 +431,14 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
                 ChoiceContext.ManaColorChoice choiceContext =
-                        ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, soa.amount(), soa.subtype());
+                        ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, soa.amount() * manaMultiplier, soa.subtype());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} spells/abilities)",
                         gameData.id, player.getUsername(), soa.subtype());
             } else if (effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect aacse) {
-                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount());
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
@@ -440,19 +446,19 @@ public class ActivatedAbilityExecutionService {
                 gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
                 log.info("Game {} - Awaiting {} to choose a mana color (with spell copy trigger)", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount());
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyOneColorInstantSorceryOnlyManaEffect aisom) {
-                ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, aisom.amount());
+                ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, aisom.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add (instant and sorcery spells only)."));
                 log.info("Game {} - Awaiting {} to choose an instant/sorcery-only mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
-                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, fba.amount(), null, true);
+                ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, fba.amount() * manaMultiplier, null, true);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add (flashback only)."));

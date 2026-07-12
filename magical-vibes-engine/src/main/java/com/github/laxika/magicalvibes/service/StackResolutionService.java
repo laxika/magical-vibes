@@ -518,6 +518,7 @@ public class StackResolutionService {
 
         if (entry.getCard() != null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
+            gameData.clearSpellCastColorsSpent(entry.getCard().getId());
         }
     }
 

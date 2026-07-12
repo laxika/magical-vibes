@@ -417,6 +417,7 @@ void deathTriggerAfterWrathTargetsPlayer() {
 | `castInstant` | `(Player, int, UUID targetId)` | Cast targeted instant |
 | `castInstant` | `(Player, int, List<UUID> targetIds)` | Cast multi-target instant |
 | `castInstantWithConvoke` | `(Player, int, List<UUID>, List<UUID>)` | Cast instant with convoke creatures |
+| `castWithConspire` | `(Player, int, UUID targetId, List<UUID> conspireCreatureIds)` | Cast a spell paying its conspire cost (taps two color-sharing creatures; queues a "copy it" trigger) |
 | `castAndResolveInstant` | `(Player, int)` / `(..., UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
 | `castAndResolveSorcery` | `(Player, int, int)` / `(..., UUID)` / `(..., int, UUID)` / `(..., List<UUID>)` | Cast + auto `passBothPriorities()` |
 | `playGraveyardLand` | `(Player, int)` | Play a land from graveyard (Crucible of Worlds) |

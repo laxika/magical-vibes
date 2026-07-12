@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -232,6 +234,33 @@ public class EnterTriggerCollectorService {
                 enteringPermanentId, match.permanent().getId());
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may attach equipment)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * "Whenever a creature an opponent controls enters, you may attach this Aura to that creature"
+     * (Prison Term). Resolves the entering permanent (under an opponent's control) and queues a
+     * "you may attach" whose {@code targetId} is that creature and {@code sourcePermanentId} is this
+     * Aura, so the Aura's controller chooses whether to move it.
+     */
+    @CollectsTrigger(value = AttachSourceAuraToEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleOpponentCreatureAttachAura(TriggerMatchContext match,
+            AttachSourceAuraToEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to attach to.
+            return true;
+        }
+        var may = new MayEffect(new AttachSourceAuraToTargetCreatureEffect(),
+                "Attach " + sourceCard.getName() + " to " + pe.enteringCard().getName() + "?");
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                enteringPermanentId, match.permanent().getId());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (may attach aura)",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }

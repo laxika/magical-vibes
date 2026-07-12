@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -78,10 +79,11 @@ public class BattlefieldEntryService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
-    // @Lazy on triggerCollectionService breaks the constructor cycle:
-    // BattlefieldEntryService → TriggerCollectionService → PlayerInputService/queue services →
-    // (effect handlers) → BattlefieldEntryService.
+    // @Lazy on triggerCollectionService and permanentCounterSupport breaks the constructor cycle:
+    // BattlefieldEntryService → TriggerCollectionService/PermanentCounterSupport →
+    // PlayerInputService/queue services → (effect handlers) → BattlefieldEntryService.
     public BattlefieldEntryService(GameQueryService gameQueryService,
                                    GameBroadcastService gameBroadcastService,
                                    PlayerInputService playerInputService,
@@ -92,7 +94,8 @@ public class BattlefieldEntryService {
                                    EtbEffectResolver etbEffectResolver,
                                    AmountEvaluationService amountEvaluationService,
                                    ConditionEvaluationService conditionEvaluationService,
-                                   PredicateEvaluationService predicateEvaluationService) {
+                                   PredicateEvaluationService predicateEvaluationService,
+                                   @Lazy com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
@@ -104,6 +107,7 @@ public class BattlefieldEntryService {
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.predicateEvaluationService = predicateEvaluationService;
+        this.permanentCounterSupport = permanentCounterSupport;
     }
 
 
@@ -156,6 +160,10 @@ public class BattlefieldEntryService {
         // CR 613.7b: a permanent receives its timestamp as it enters the battlefield.
         permanent.setTimestamp(gameData.nextTimestamp());
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        // "Whenever a -1/-1 counter is put on a creature" (Flourishing Defenses) also sees a creature
+        // that enters with -1/-1 counters (e.g. Leech Bonder, or persist) — CR ruling.
+        permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(
+                gameData, permanent, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
@@ -618,6 +626,7 @@ public class BattlefieldEntryService {
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkPermanentEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
@@ -686,11 +695,15 @@ public class BattlefieldEntryService {
         // Separate graveyard exile-and-may-play effects (need single-target selection at trigger time)
         List<CardEffect> graveyardMayPlayEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect).toList();
+        // Separate opponent-graveyard steal effects (need single-target selection at trigger time)
+        List<CardEffect> graveyardStealEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect).toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
                 .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
+                .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
                 .filter(e -> !e.canTargetSpell()).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -839,6 +852,13 @@ public class BattlefieldEntryService {
         for (CardEffect effect : graveyardMayPlayEffects) {
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handleGraveyardMayPlayETBTargeting(gameData, controllerId, card, List.of(effect));
+            }
+        }
+
+        // Handle opponent-graveyard steal effects: target creature card in an opponent's graveyard
+        for (CardEffect effect : graveyardStealEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handlePutCreatureFromOpponentGraveyardETBTargeting(gameData, controllerId, card, List.of(effect));
             }
         }
 

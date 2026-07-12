@@ -419,5 +419,43 @@ class ManaCostTest {
             cost.pay(pool, 0);
             assertThat(pool.getTotal()).isZero();
         }
+
+        @Test
+        @DisplayName("Context-aware canPay enforces a color hybrid pip (e.g. an activated ability cost)")
+        void contextAwareCanPayEnforcesHybrid() {
+            // The context overload (used by ability activation) must not treat {U/B} as free.
+            ManaCost cost = new ManaCost("{U/B}");
+
+            ManaPool empty = new ManaPool();
+            assertThat(cost.canPay(empty, 0, false, false, false, false, false, null, null)).isFalse();
+
+            ManaPool blue = new ManaPool();
+            blue.add(ManaColor.BLUE, 1);
+            assertThat(cost.canPay(blue, 0, false, false, false, false, false, null, null)).isTrue();
+
+            ManaPool black = new ManaPool();
+            black.add(ManaColor.BLACK, 1);
+            assertThat(cost.canPay(black, 0, false, false, false, false, false, null, null)).isTrue();
+
+            ManaPool offColor = new ManaPool();
+            offColor.add(ManaColor.RED, 1);
+            assertThat(cost.canPay(offColor, 0, false, false, false, false, false, null, null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Context-aware canPay makes a hybrid pip compete with generic for the same mana")
+        void contextAwareHybridReservesGeneric() {
+            // {1}{U/B}: one blue can only cover one of the two pips, so a single blue is not enough.
+            ManaCost cost = new ManaCost("{1}{U/B}");
+
+            ManaPool one = new ManaPool();
+            one.add(ManaColor.BLUE, 1);
+            assertThat(cost.canPay(one, 0, false, false, false, false, false, null, null)).isFalse();
+
+            ManaPool two = new ManaPool();
+            two.add(ManaColor.BLUE, 1);
+            two.add(ManaColor.COLORLESS, 1);
+            assertThat(cost.canPay(two, 0, false, false, false, false, false, null, null)).isTrue();
+        }
     }
 }

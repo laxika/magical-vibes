@@ -31,6 +31,10 @@ public class EnchantedPermanentConditionalEffectHandler implements StaticEffectH
         CardEffect activeEffect = support.matchesStaticFilter(context.target(), conditional.filter())
                 ? conditional.ifMatch()
                 : conditional.ifNotMatch();
+        if (activeEffect == null) {
+            // Single-branch conditional (null ifMatch/ifNotMatch): the inactive branch does nothing.
+            return;
+        }
         StaticEffectHandler handler = staticEffectHandlerRegistry.getHandler(activeEffect);
         if (handler != null) {
             handler.apply(context, activeEffect, accumulator);

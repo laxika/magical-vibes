@@ -18,6 +18,7 @@ public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBe
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final TapUntapSupport tapUntapSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +40,7 @@ public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        equippedCreature.untap();
+        tapUntapSupport.untapPermanent(gameData, equippedCreature);
 
         String logEntry = sourceName + " untaps " + equippedCreature.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

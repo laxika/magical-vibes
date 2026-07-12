@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -344,7 +346,8 @@ public class CombatBlockService {
                                 || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
                                 || e instanceof DealDamageToTargetCreatureEffect
                                 || e instanceof DestroyCombatOpponentAtEndOfCombatEffect
-                                || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect);
+                                || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect
+                                || (e instanceof GrantKeywordEffect gk && gk.scope() == GrantScope.TARGET));
                 StackEntry blockTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         blocker.getCard(),

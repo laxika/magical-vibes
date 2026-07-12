@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,10 +38,16 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId());
+        // OWN_CREATURES means "other creatures you control" — the source is excluded.
+        // ALL_OWN_CREATURES includes the source.
+        boolean excludeSource = e.scope() == GrantScope.OWN_CREATURES;
         int count = 0;
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (!gameQueryService.isCreature(gameData, permanent)) {
+                    continue;
+                }
+                if (excludeSource && permanent.getId().equals(entry.getSourcePermanentId())) {
                     continue;
                 }
                 if (e.filter() != null

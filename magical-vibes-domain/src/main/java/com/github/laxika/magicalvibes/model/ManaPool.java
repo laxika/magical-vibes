@@ -596,4 +596,32 @@ public class ManaPool {
         }
         return colorsSpent.size();
     }
+
+    /**
+     * Returns the set of colors of mana spent between two snapshots, including convoke
+     * contributions. Colorless is never included. Used by "if {C} was spent to cast this
+     * spell" effects (e.g. Repel Intruders).
+     */
+    public static EnumSet<ManaColor> coloredManaColorsSpent(EnumMap<ManaColor, Integer> before,
+                                                            EnumMap<ManaColor, Integer> after,
+                                                            Collection<ManaColor> convokeContributions) {
+        EnumSet<ManaColor> colorsSpent = EnumSet.noneOf(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS) {
+                continue;
+            }
+            int spent = before.getOrDefault(color, 0) - after.getOrDefault(color, 0);
+            if (spent > 0) {
+                colorsSpent.add(color);
+            }
+        }
+        if (convokeContributions != null) {
+            for (ManaColor color : convokeContributions) {
+                if (color != null && color != ManaColor.COLORLESS) {
+                    colorsSpent.add(color);
+                }
+            }
+        }
+        return colorsSpent;
+    }
 }

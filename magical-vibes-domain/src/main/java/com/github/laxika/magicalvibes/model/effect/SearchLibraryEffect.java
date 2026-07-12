@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * (for {@code HAND}/{@code TOP_OF_LIBRARY} destinations) and the search may fail to find. The prompt
  * and log text are derived from the filter (via {@code CardPredicateUtils.describeFilter}).
  *
- * <p>{@code manaValueBound} adds an X-relative mana-value constraint (see {@link XManaValueBound});
+ * <p>{@code manaValueBound} adds a dynamic mana-value constraint (see {@link ManaValueBound});
  * {@code null} means none. {@code castFromGraveyardCount} overrides {@code count} when the producing
  * spell was cast from a graveyard (flashback) — see Increasing Ambition (1 normally, 2 from a
  * graveyard).
@@ -26,7 +26,7 @@ public record SearchLibraryEffect(
         DynamicAmount count,
         CardPredicate filter,
         LibrarySearchDestination destination,
-        XManaValueBound manaValueBound,
+        ManaValueBound manaValueBound,
         int castFromGraveyardCount
 ) implements CardEffect {
 
@@ -58,8 +58,8 @@ public record SearchLibraryEffect(
         this(new Fixed(count), filter, LibrarySearchDestination.HAND, null, castFromGraveyardCount);
     }
 
-    /** Single card matching {@code filter} to the given destination with an X-relative mana-value bound. */
-    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, XManaValueBound manaValueBound) {
+    /** Single card matching {@code filter} to the given destination with a dynamic mana-value bound. */
+    public SearchLibraryEffect(CardPredicate filter, LibrarySearchDestination destination, ManaValueBound manaValueBound) {
         this(new Fixed(1), filter, destination, manaValueBound, 1);
     }
 }

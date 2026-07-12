@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -82,6 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
@@ -313,8 +315,14 @@ public class PredicateEvaluationService {
                         || permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
                         || permanent.getTransientSubtypes().contains(CardSubtype.SAGA);
             }
-            case PermanentIsEnchantmentPredicate ignored ->
-                    permanent.getCard().hasType(CardType.ENCHANTMENT);
+            case PermanentIsEnchantedPredicate ignored ->
+                    gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentIsEnchantmentPredicate ignored -> {
+                if (gameData == null) {
+                    yield gameQueryService.isEnchantment(permanent);
+                }
+                yield gameQueryService.isEnchantment(gameData, permanent);
+            }
             case PermanentIsPlaneswalkerPredicate ignored ->
                     permanent.getCard().hasType(CardType.PLANESWALKER);
             case PermanentIsTappedPredicate ignored ->
@@ -658,6 +666,8 @@ public class PredicateEvaluationService {
             }
             case StackEntryNotPredicate not ->
                     !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
+            case StackEntryCastFromZonePredicate castFrom ->
+                    entry.getSourceZone() == castFrom.sourceZone();
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;

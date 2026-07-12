@@ -32,7 +32,8 @@ public class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler implements No
         LookAtTopCardsOfTargetLibraryMayExileOneEffect e = (LookAtTopCardsOfTargetLibraryMayExileOneEffect) effect;
 
         UUID controllerId = entry.getControllerId();
-        UUID targetPlayerId = entry.getTargetId();
+        // No target (e.g. Puresight Merrow's untap ability) means the controller looks at their own library.
+        UUID targetPlayerId = entry.getTargetId() != null ? entry.getTargetId() : controllerId;
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         String controllerName = gameData.playerIdToName.get(controllerId);
         String targetName = gameData.playerIdToName.get(targetPlayerId);

@@ -7,6 +7,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | Field | Type | Description |
 |-------|------|-------------|
 | `requiresTap` | `boolean` | `true` if the ability has {T} in its cost (tap as cost) |
+| `requiresUntap` | `boolean` | `true` if the ability has {Q} in its cost (untap as cost); set via `.withRequiresUntap()`, never combined with `requiresTap` |
 | `manaCost` | `String` | Mana cost string like `"{2}{B}"`, or `null` for no mana cost |
 | `effects` | `List<CardEffect>` | Effects to resolve (costs first, then actual effects) |
 | `description` | `String` | Rules text shown to the player (e.g. `"{T}: Draw a card."`) |
@@ -258,6 +259,22 @@ Cards: `OonasProwler`
 
 ---
 
+### 8b. Untap-symbol cost `{Q}` (`.withRequiresUntap()`)
+
+```java
+new ActivatedAbility(false, "{1}{W}{W}", effects, description).withRequiresUntap()
+```
+
+**Use when:** the ability's cost includes the untap symbol `{Q}` (e.g. Order of Whiteclay).
+Pass `requiresTap = false` (never combine `{T}` and `{Q}`) and chain `.withRequiresUntap()`.
+The source must be **tapped** to activate; paying the cost **untaps** it. Creatures obey the
+same summoning-sickness restriction as `{T}` (CR 302.6). No enchanted-permanent-tap triggers
+fire (untapping, not tapping).
+
+Cards: `OrderOfWhiteclay`
+
+---
+
 ### 9. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
@@ -357,6 +374,29 @@ addHandActivatedAbility(new ActivatedAbility(false, "{X}{W}{W}",
 
 Cards: `BurrentonBombardier`
 
+#### Hand ability targeting graveyard cards (Faerie Macabre)
+
+A "Discard this card: ..." hand ability whose effect targets cards in graveyards (not a battlefield
+permanent) uses the same `addHandActivatedAbility` registration with **no `TargetFilter`** — the
+graveyard targets are supplied at activation time as a list of card IDs.
+
+```java
+// Discard this card: Exile up to two target cards from graveyards. (Faerie Macabre)
+addHandActivatedAbility(new ActivatedAbility(false, null,
+    List.of(new ExileCardsFromGraveyardEffect(2, 0)),
+    "Discard this card: Exile up to two target cards from graveyards."));
+```
+
+- Activated via `AbilityActivationService.activateHandAbilityWithGraveyardTargets()` (validates the
+  graveyard targets via `TargetLegalityService.validateMultiTargetGraveyardAbility`, discards the
+  source card, then pushes the ability with `Zone.GRAVEYARD` + `targetCardIds`). The
+  `ExileCardsFromGraveyardEffect` handler exiles the chosen cards; because targets are locked before
+  the discard, the source card itself is never a legal target.
+- Frontend sends `ACTIVATE_HAND_ABILITY` with `handCardIndex`, `abilityIndex`, `graveyardCardIds`.
+- Harness: `harness.activateHandAbilityWithGraveyardTargets(player, handCardIndex, graveyardCardIds)`
+
+Cards: `FaerieMacabre`
+
 ---
 
 ## Mana ability riders ("Add {X}. When you do, ...")
@@ -379,11 +419,12 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
-| `DiscardCardTypeCost` | `(CardPredicate, String label)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any |
+| `DiscardCardTypeCost` | `(CardPredicate, String label)` or `(CardPredicate, String label, boolean manaValueEqualsX)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any. `manaValueEqualsX=true` → "Discard a card with mana value X" (restricts valid discards to MV == chosen X; pair with an `{X}` cost). Knollspine Invocation |
 | `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Slate of Ancestry |
 | `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `TapTwoCreaturesSharingTypeCost` | `()` | "Tap two untapped creatures you control that share a creature type: ..." (Weight of Conscience). The two tapped creatures must share a creature type with each other (Changeling-aware, mutual constraint) — not expressible with `TapMultiplePermanentsCost`'s per-permanent filter. |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
+| `PutCounterOnSourceCost` | `()` = -1/-1 ×1, or `(powerMod, toughnessMod, count)` | "Put a -1/-1 counter on this creature: ..." — puts counters on the source as a cost (paid immediately on activation). Respects `cantHaveCounters`/`cantHaveMinusOneMinusOneCounters`. Barrenton Medic |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java
@@ -496,12 +537,13 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` | A creature enters battlefield under your control |
 | `ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD` | An artifact enters battlefield under your control (not this permanent) |
 | `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` | A nontoken artifact enters battlefield under your control (not this permanent). Used with MayPayManaEffect for Mirrorworks' copy trigger. Entering permanent ID is passed via PendingMayAbility.targetCardId |
-| `ON_ANY_CREATURE_DIES` | Any creature (including tokens) on any battlefield dies. Fires for all permanents on all battlefields. Supports targeted effects via DeathTriggerTarget (e.g. Falkenrath Noble) |
+| `ON_ANY_CREATURE_DIES` | Any creature (including tokens) on any battlefield dies. Fires for all permanents on all battlefields. Supports targeted effects via DeathTriggerTarget (e.g. Falkenrath Noble). Unwraps `TriggeringPermanentConditionalEffect` against the dying permanent — the predicate sees the dying creature's on-battlefield state incl. counters at death (e.g. Blowfly Infestation's "if it had a -1/-1 counter on it") |
 | `ON_ANY_NONTOKEN_CREATURE_DIES` | Any nontoken creature on any battlefield dies (not just controller's). Used with MayEffect for Mimic Vat's imprint trigger |
 | `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any artifact (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. |
 | `ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD` | An artifact is put into an opponent's graveyard from the battlefield. Only fires when the graveyard owner is an opponent of this permanent's controller. Supports MayEffect wrapping. |
 | `ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Any land (any player's) is put into a graveyard from the battlefield. Fires for destroy, sacrifice, etc. Used by Dingus Egg with `DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)` — target pre-set to the land's controller at trigger time. |
 | `ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD` | Any other creature enters battlefield |
+| `ON_PERMANENT_ENTERS_FROM_GRAVEYARD` | Any permanent (not just creatures) enters from ANY graveyard, checked via `enteredFromGraveyardOwnerId`. Queues a non-targeting stack entry for the source's controller (`TriggerCollectionService.checkPermanentEntersFromGraveyardTriggers`). Used by River Kelpie. Contrast `ON_CREATURE_ENTERS_FROM_GRAVEYARD` (Flayer of the Hatebound): creatures-only, controller's graveyard only, any-target pipeline |
 | `ON_ALLY_CREATURE_DIES` | A creature you control dies. Supports `TriggeringCardConditionalEffect` wrapping to filter by dying creature predicates (e.g. Slimefoot only triggers for Saprolings, Requiem Angel for non-Spirits) |
 | `ON_ALLY_NONTOKEN_CREATURE_DIES` | A nontoken creature you control dies. Only fires for nontoken creatures (tokens are excluded). Used by Gutter Grime |
 | `ON_DAMAGED_CREATURE_DIES` | A creature damaged by this permanent dies |

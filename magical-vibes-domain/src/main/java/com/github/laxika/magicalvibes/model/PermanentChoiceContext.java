@@ -17,6 +17,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Glamer Spinners: move every Aura in {@code auraPermanentIds} onto the chosen permanent. */
+    record AttachAllAurasToAnotherPermanent(List<UUID> auraPermanentIds) implements PermanentChoiceContext {}
+
     /** Stonehewer Giant: attach the just-placed Equipment {@code equipmentPermanentId} to the chosen creature. */
     record AttachEquipmentToCreature(UUID equipmentPermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
@@ -147,6 +150,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record UpkeepCopyTriggerTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record CapriciousEfreetOwnTarget(Card sourceCard, UUID controllerId, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Puca's Mischief step 1: choose the nonland permanent you control. {@code effects} carries the
+     *  wrapping {@link com.github.laxika.magicalvibes.model.effect.MayEffect} so it reaches the stack. */
+    record PucasMischiefOwnTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Puca's Mischief step 2: choose the opponent's nonland permanent (mana value &le; {@code ownTargetId}'s). */
+    record PucasMischiefOpponentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId, UUID ownTargetId) implements PermanentChoiceContext {}
 
     record EndStepTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 

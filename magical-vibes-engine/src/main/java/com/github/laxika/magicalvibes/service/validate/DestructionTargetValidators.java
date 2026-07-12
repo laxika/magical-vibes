@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
@@ -43,6 +44,13 @@ public class DestructionTargetValidators {
         if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
             throw new IllegalStateException("Target must be a creature blocking this creature");
         }
+    }
+
+    @ValidatesTarget(DestroyAttachmentsOnTargetCreatureEffect.class)
+    public void validateDestroyAttachmentsOnTargetCreature(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+        tvs.checkProtection(ctx, target);
     }
 
     @ValidatesTarget(DestroyTargetPermanentEffect.class)

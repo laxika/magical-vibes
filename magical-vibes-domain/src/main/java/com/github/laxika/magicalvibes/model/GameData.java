@@ -68,6 +68,11 @@ public class GameData {
      * Populated during spell payment and consumed when the spell resolves.
      */
     public final Map<UUID, Integer> spellCastConvergeValue = new ConcurrentHashMap<>();
+    /**
+     * Transient set of mana colors spent to cast a spell, keyed by spell card instance id.
+     * Populated during spell payment and consumed when the spell resolves (e.g. Repel Intruders).
+     */
+    public final Map<UUID, java.util.EnumSet<ManaColor>> spellCastColorsSpent = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
@@ -121,6 +126,8 @@ public class GameData {
     public int manaAbilityResolutionDepth;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
+    /** Tracks all non-token card IDs (any type) put into each player's graveyard from the battlefield this turn (e.g. Twilight Shepherd). */
+    public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
     public final Map<UUID, Set<UUID>> cardsPutIntoGraveyardFromAnywhereThisTurn = new ConcurrentHashMap<>();
     /** Counts all creature deaths (including tokens) from battlefield this turn, per controller. */
@@ -180,6 +187,8 @@ public class GameData {
     public boolean rerunCurrentEffectAfterInteraction;
     /** Progress state for Flux's "each player discards any number, then draws that many" flow. */
     public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
+    /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
+    public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
@@ -218,6 +227,12 @@ public class GameData {
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
+    /**
+     * Parallel to {@link #extraTurns}: whether the correspondingly-positioned extra turn skips its
+     * untap step (e.g. Savor the Moment). Maintained in lockstep — every push/poll of {@link #extraTurns}
+     * in engine code pushes/polls this deque at the same end.
+     */
+    public final Deque<Boolean> extraTurnSkipsUntap = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
@@ -299,6 +314,11 @@ public class GameData {
      *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
     public final Set<UUID> playersWithSpellCopyUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    /** Card IDs of spells cast with their conspire cost paid (CR 702.78). Consumed by
+     *  {@code TriggerCollectionService} when the spell-cast triggers are collected, queuing a
+     *  single "copy it, you may choose a new target" trigger above the spell. */
+    public final Set<UUID> conspiredSpellIds = ConcurrentHashMap.newKeySet();
+
     /** Pending one-shot spell copy triggers from mana abilities (e.g. Primal Wellspring).
      *  Each value tracks how many copies are pending for that player.
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
@@ -366,6 +386,12 @@ public class GameData {
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
      *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
     public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks how much life each player has lost so far this turn (damage causes loss of life, so this
+     *  accumulates both direct life loss and damage). Recorded from the shared life-loss trigger hook.
+     *  Used by Wound Reflection ("each opponent loses life equal to the life they lost this turn").
+     *  Cleared at the start of each turn. */
+    public final Map<UUID, Integer> lifeLostThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
@@ -957,6 +983,18 @@ public class GameData {
         spellCastConvergeValue.remove(spellCardId);
     }
 
+    public void setSpellCastColorsSpent(UUID spellCardId, java.util.EnumSet<ManaColor> colorsSpent) {
+        spellCastColorsSpent.put(spellCardId, colorsSpent);
+    }
+
+    public java.util.Set<ManaColor> getSpellCastColorsSpent(UUID spellCardId) {
+        return spellCastColorsSpent.getOrDefault(spellCardId, java.util.EnumSet.noneOf(ManaColor.class));
+    }
+
+    public void clearSpellCastColorsSpent(UUID spellCardId) {
+        spellCastColorsSpent.remove(spellCardId);
+    }
+
     /**
      * Returns the number of spells the given player has cast this turn.
      */
@@ -1235,6 +1273,12 @@ public class GameData {
         copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
         copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;
         copy.eachPlayerRummage.remaining.addAll(this.eachPlayerRummage.remaining);
+        copy.eachPlayerPayLife.active = this.eachPlayerPayLife.active;
+        copy.eachPlayerPayLife.order.addAll(this.eachPlayerPayLife.order);
+        copy.eachPlayerPayLife.index = this.eachPlayerPayLife.index;
+        copy.eachPlayerPayLife.consecutivePasses = this.eachPlayerPayLife.consecutivePasses;
+        copy.eachPlayerPayLife.lifePaid.putAll(this.eachPlayerPayLife.lifePaid);
+        copy.eachPlayerPayLife.currentPlayerId = this.eachPlayerPayLife.currentPlayerId;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
@@ -1338,6 +1382,8 @@ public class GameData {
         // --- Map<UUID, Set<UUID>> ---
         this.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) ->
                 copy.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
+        this.cardsPutIntoGraveyardFromBattlefieldThisTurn.forEach((k, v) ->
+                copy.cardsPutIntoGraveyardFromBattlefieldThisTurn.put(k, new HashSet<>(v)));
         this.cardsPutIntoGraveyardFromAnywhereThisTurn.forEach((k, v) ->
                 copy.cardsPutIntoGraveyardFromAnywhereThisTurn.put(k, new HashSet<>(v)));
         copy.creatureDeathCountThisTurn.putAll(this.creatureDeathCountThisTurn);
@@ -1397,6 +1443,7 @@ public class GameData {
         // --- Deques ---
         copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
+        copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
 
@@ -1431,6 +1478,7 @@ public class GameData {
 
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
         copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);
+        copy.conspiredSpellIds.addAll(this.conspiredSpellIds);
 
         // --- Pending one-shot spell copy triggers (Primal Wellspring) ---
         copy.pendingNextInstantSorceryCopyCount.putAll(this.pendingNextInstantSorceryCopyCount);

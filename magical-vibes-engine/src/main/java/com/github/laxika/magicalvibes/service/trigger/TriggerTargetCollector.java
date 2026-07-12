@@ -83,7 +83,7 @@ public class TriggerTargetCollector {
                           boolean useEffectTargetPredicate) {
 
         public static final Options DEATH = new Options(true, true, false, false);
-        public static final Options ATTACK = new Options(false, true, false, false);
+        public static final Options ATTACK = new Options(false, true, false, true);
         public static final Options END_STEP = new Options(false, false, true, true);
     }
 

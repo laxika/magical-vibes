@@ -8,4 +8,9 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
     public RemoveKeywordEffect(Keyword keyword, GrantScope scope) {
         this(keyword, scope, null);
     }
+
+    @Override
+    public boolean canTargetPermanent() {
+        return scope == GrantScope.TARGET;
+    }
 }

@@ -52,6 +52,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
+        List<Permanent> minusOneTargets = new ArrayList<>();
         for (Permanent p : new ArrayList<>(battlefield)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
@@ -62,6 +63,8 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && amount > 0) {
                 plusOneTargets.add(p);
+            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && amount > 0) {
+                minusOneTargets.add(p);
             }
         }
 
@@ -76,6 +79,9 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         // Deferred past the loop since firing pushes triggered abilities onto the stack.
         for (Permanent p : plusOneTargets) {
             permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+        }
+        for (Permanent p : minusOneTargets) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, p, amount);
         }
     }
 }

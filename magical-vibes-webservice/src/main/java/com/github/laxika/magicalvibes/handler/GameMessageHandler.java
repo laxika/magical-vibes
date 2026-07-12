@@ -513,7 +513,12 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateHandAbility(gameData, player, request.handCardIndex(), request.abilityIndex(), request.targetId(), request.xValue());
+            if (request.graveyardCardIds() != null && !request.graveyardCardIds().isEmpty()) {
+                gameService.activateHandAbilityWithGraveyardTargets(gameData, player, request.handCardIndex(),
+                        request.abilityIndex(), request.graveyardCardIds());
+            } else {
+                gameService.activateHandAbility(gameData, player, request.handCardIndex(), request.abilityIndex(), request.targetId(), request.xValue());
+            }
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

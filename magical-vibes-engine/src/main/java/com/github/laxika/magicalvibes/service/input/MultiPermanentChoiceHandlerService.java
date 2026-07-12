@@ -604,6 +604,7 @@ public class MultiPermanentChoiceHandlerService {
                         if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
                             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
+                            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, 1);
                         }
                         if (perm.getCounterCount(CounterType.LOYALTY) > 0) {
                             perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + 1);
@@ -846,6 +847,11 @@ public class MultiPermanentChoiceHandlerService {
         // Continue processing: more Efreet triggers → may abilities → priority
         if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
+            return;
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
+            turnProgressionService.processNextPucasMischiefTarget(gameData);
             return;
         }
 

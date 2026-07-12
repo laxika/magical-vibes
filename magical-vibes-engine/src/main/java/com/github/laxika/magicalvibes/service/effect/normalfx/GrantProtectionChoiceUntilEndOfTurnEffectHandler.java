@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
@@ -30,6 +32,13 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
             return;
         }
 
-        playerInputService.beginProtectionColorChoice(gameData, entry.getControllerId(), target.getId(), e.includeArtifacts());
+        UUID choosingPlayerId = e.targetControllerChooses()
+                ? gameQueryService.findPermanentController(gameData, target.getId())
+                : entry.getControllerId();
+        if (choosingPlayerId == null) {
+            choosingPlayerId = entry.getControllerId();
+        }
+
+        playerInputService.beginProtectionColorChoice(gameData, choosingPlayerId, target.getId(), e.includeArtifacts());
     }
 }

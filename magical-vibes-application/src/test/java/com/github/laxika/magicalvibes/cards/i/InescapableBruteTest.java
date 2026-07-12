@@ -1,0 +1,83 @@
+package com.github.laxika.magicalvibes.cards.i;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+class InescapableBruteTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("At least one creature must block Inescapable Brute if able")
+    void mustBeBlockedByAtLeastOne() {
+        Permanent brute = attackingCreature(new InescapableBrute());
+        gd.playerBattlefields.get(player1.getId()).add(brute);
+
+        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked if able");
+    }
+
+    @Test
+    @DisplayName("Blocking with one creature satisfies the requirement")
+    void oneBlockerSuffices() {
+        Permanent brute = attackingCreature(new InescapableBrute());
+        gd.playerBattlefields.get(player1.getId()).add(brute);
+
+        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures are not forced to block Inescapable Brute")
+    void tappedCreaturesNotForcedToBlock() {
+        Permanent brute = attackingCreature(new InescapableBrute());
+        gd.playerBattlefields.get(player1.getId()).add(brute);
+
+        Permanent tapped = readyCreature(new GrizzlyBears());
+        tapped.tap();
+        gd.playerBattlefields.get(player2.getId()).add(tapped);
+
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    private Permanent attackingCreature(Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        permanent.setAttacking(true);
+        return permanent;
+    }
+
+    private Permanent readyCreature(Card card) {
+        Permanent permanent = new Permanent(card);
+        permanent.setSummoningSick(false);
+        return permanent;
+    }
+
+    private void prepareDeclareBlockers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+    }
+}

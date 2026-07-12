@@ -29,6 +29,8 @@ public class ActivatedAbility {
     private int minCardsInHandToActivate;
     /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
     private boolean activatableByAnyPlayer;
+    /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
+    private boolean requiresUntap;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -126,7 +128,18 @@ public class ActivatedAbility {
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
+        copy.requiresUntap = this.requiresUntap;
         return copy;
+    }
+
+    /**
+     * Fluent setter marking this ability's cost as including the untap symbol {@code {Q}}: the
+     * source permanent must be tapped to activate, and paying the cost untaps it (e.g. Order of
+     * Whiteclay). Returns this ability for chaining in card constructors.
+     */
+    public ActivatedAbility withRequiresUntap() {
+        this.requiresUntap = true;
+        return this;
     }
 
     /**

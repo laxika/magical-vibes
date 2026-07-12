@@ -24,6 +24,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final TapUntapSupport tapUntapSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,7 +53,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        target.untap();
+        tapUntapSupport.untapPermanent(gameData, target);
 
         String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -71,7 +72,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            target.untap();
+            tapUntapSupport.untapPermanent(gameData, target);
 
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -86,7 +87,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        self.untap();
+        tapUntapSupport.untapPermanent(gameData, self);
 
         String logEntry = entry.getCard().getName() + " untaps.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -105,7 +106,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
             if (!p.isTapped()) continue;
 
-            p.untap();
+            tapUntapSupport.untapPermanent(gameData, p);
             count++;
         }
 
@@ -132,7 +133,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
             if (!p.isTapped()) continue;
 
-            p.untap();
+            tapUntapSupport.untapPermanent(gameData, p);
             count++;
         }
 
@@ -160,7 +161,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
                     && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
             if (!p.isTapped()) continue;
 
-            p.untap();
+            tapUntapSupport.untapPermanent(gameData, p);
             count++;
         }
 
@@ -197,7 +198,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             if (!permanent.isAttackedThisTurn()) return;
             if (!permanent.isTapped()) return;
 
-            permanent.untap();
+            tapUntapSupport.untapPermanent(gameData, permanent);
             count[0]++;
         });
 

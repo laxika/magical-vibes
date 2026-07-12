@@ -25,6 +25,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentIsArtifactPredicate` | `()` | artifacts |
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
+| `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
@@ -101,6 +102,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
+| `StackEntryCastFromZonePredicate` | `(Zone)` | spells cast from the given zone (via the entry's `sourceZone`); e.g. `Zone.GRAVEYARD` for "casts a spell from a graveyard" (River Kelpie), distinguishing graveyard casts from exile casts |
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`PredicateEvaluationService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntrySharesChosenNameWithSourcePredicate` | `()` | spells whose card name equals the chosen name recorded on the source permanent (via a "choose a card name" ETB — `ChooseCardNameOnEnterEffect`). "counter target spell with the chosen name" — Declaration of Naught. Source-dependent: matches nothing unless the source permanent is passed to `TargetLegalityService.matchesStackEntryPredicate(..., source)`; the ability-activation path supplies it automatically |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |

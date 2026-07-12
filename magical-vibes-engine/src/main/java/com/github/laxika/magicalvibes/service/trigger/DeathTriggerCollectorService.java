@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachDyingSourc
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
@@ -157,6 +158,31 @@ public class DeathTriggerCollectorService {
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(resolved))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = DrawCardForEachDyingSourceCounterEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleDrawCardForEachDyingSourceCounter(TriggerMatchContext match,
+            DrawCardForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Snapshot the counter count at death — the permanent is already off the battlefield by the
+        // time this resolves, so resolve into a plain draw for that fixed amount.
+        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        if (counters < 1) {
+            return false;
+        }
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DrawCardEffect(counters)))
         ));
         return true;
     }

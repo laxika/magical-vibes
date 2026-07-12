@@ -27,6 +27,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsAttackingSourceControllerPredicate,
         PermanentIsBlockingPredicate,
         PermanentIsCreaturePredicate,
+        PermanentIsEnchantedPredicate,
         PermanentIsEnchantmentPredicate,
         PermanentIsHistoricPredicate,
         PermanentIsLandPredicate,

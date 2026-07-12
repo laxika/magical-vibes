@@ -74,6 +74,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}, driven by the same
      *  tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED}. */
     ON_ALLY_PERMANENT_BECOMES_TAPPED,
+    /** Triggers whenever this permanent becomes untapped (transitions from tapped to untapped),
+     *  from any source — the untap step, or an untap effect. Fires only on the permanent that
+     *  became untapped. Driven from the untap call sites via
+     *  {@code TriggerCollectionService.checkBecomesUntappedTriggers}
+     *  ({@code UntapStepService} and {@code TapUntapSupport.untapPermanent}). The trigger is queued
+     *  as a non-targeting triggered ability whose {@code sourcePermanentId} is the untapped
+     *  permanent; targeted "may" effects (e.g. Hollowsage's "you may have target player discard a
+     *  card") pick their target at resolution via the {@code MayEffect} pending-may-ability flow. */
+    ON_SELF_BECOMES_UNTAPPED,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
@@ -102,6 +111,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  permanent. Routed into the any-target pipeline ({@code EntersFromGraveyardTriggerTarget} interactions).
      *  Used by Flayer of the Hatebound. */
     ON_CREATURE_ENTERS_FROM_GRAVEYARD,
+    /** "Whenever this creature or another permanent enters from a graveyard" — fires for ANY permanent
+     *  (not just creatures) entering the battlefield from ANY graveyard, checked via the
+     *  {@code enteredFromGraveyardOwnerId} flag. Queues the resolved effects as a non-targeting stack
+     *  entry for the source's controller. Used by River Kelpie. */
+    ON_PERMANENT_ENTERS_FROM_GRAVEYARD,
     ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
@@ -187,6 +201,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Global watcher: triggers whenever a -1/-1 counter is put on a creature (any creature, on any
+     *  battlefield, from any source — counter placement, infect/wither damage, proliferate, or a
+     *  creature entering with -1/-1 counters incl. persist). Fired from
+     *  {@code PermanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers}. Per the
+     *  Gatherer ruling the ability triggers once for each individual -1/-1 counter, so the firing
+     *  pushes a separate trigger per counter. Used by Flourishing Defenses. */
+    ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE,
     /** Triggers whenever one or more cards leave the controller's graveyard.
      *  Fires once per leave event (batched when multiple cards leave together).
      *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */

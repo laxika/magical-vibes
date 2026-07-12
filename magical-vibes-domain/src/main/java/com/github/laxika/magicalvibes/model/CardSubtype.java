@@ -149,7 +149,8 @@ public enum CardSubtype {
     TREASURE("Treasure"),
     VEHICLE("Vehicle"),
     NIGHTSTALKER("Nightstalker"),
-    LESSON("Lesson");
+    LESSON("Lesson"),
+    SCARECROW("Scarecrow");
 
     @Getter
     private final String displayName;

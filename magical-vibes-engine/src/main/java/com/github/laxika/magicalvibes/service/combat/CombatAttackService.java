@@ -34,6 +34,8 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
@@ -285,8 +287,19 @@ public class CombatAttackService {
         // Check for "when this creature attacks" triggers
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
-                List<CardEffect> allEffects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK));
+            List<CardEffect> nativeAttackEffects = attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
+            List<CardEffect> temporaryAttackEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
+            if (!nativeAttackEffects.isEmpty() || !temporaryAttackEffects.isEmpty()) {
+                List<CardEffect> allEffects = new ArrayList<>(nativeAttackEffects);
+                // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
+                // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
+                for (CardEffect temp : temporaryAttackEffects) {
+                    if (temp instanceof MustBlockSourceEffect) {
+                        allEffects.add(new MustBlockSourceEffect(attacker.getId()));
+                    } else {
+                        allEffects.add(temp);
+                    }
+                }
 
                 // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
                 allEffects.removeIf(e -> e instanceof ConditionalEffect ce
@@ -554,7 +567,17 @@ public class CombatAttackService {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                List<CardEffect> attackedTriggerEffects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU);
+                List<CardEffect> attackedTriggerEffects = new ArrayList<>();
+                for (CardEffect attackedEffect : perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU)) {
+                    // Some triggers only fire for attackers matching a condition (e.g. Raking Canopy:
+                    // "a creature with flying"). The condition is checked here at declaration time.
+                    if (attackedEffect instanceof DealDamageToTriggeringAttackerEffect damageEffect
+                            && !predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, attacker, damageEffect.attackerCondition())) {
+                        continue;
+                    }
+                    attackedTriggerEffects.add(attackedEffect);
+                }
                 if (attackedTriggerEffects.isEmpty()) continue;
 
                 StackEntry attackedTrigger = new StackEntry(

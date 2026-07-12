@@ -164,4 +164,16 @@ public sealed interface ChoiceContext {
      * creature, or land; only permanents of the chosen type untap this step.
      */
     record StorageMatrixUntapChoice(UUID playerId) implements ChoiceContext {}
+
+    /**
+     * Prismwake Merrow: the controller chooses one or more colors for {@code targetId}, which then
+     * becomes those colors until end of turn. Colors are picked one at a time (with a "DONE" option
+     * once at least one is chosen); {@code chosen} accumulates the picks so far.
+     *
+     * @param targetId       the permanent that becomes the chosen colors
+     * @param sourceCardName name of the card whose ability created the effect (for display)
+     * @param chosen         the colors picked so far
+     */
+    record BecomeChosenColorsChoice(UUID targetId, String sourceCardName,
+                                    List<CardColor> chosen) implements ChoiceContext {}
 }

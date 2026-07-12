@@ -58,15 +58,36 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
 
         switch (e.recipient()) {
-            case CONTROLLER, TARGET_PLAYER -> resolveSinglePlayer(gameData, entry, e, amount);
+            case CONTROLLER, TARGET_PLAYER, TARGET_PERMANENT_CONTROLLER ->
+                    resolveSinglePlayer(gameData, entry, e, amount);
             case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
         }
     }
 
     private void resolveSinglePlayer(GameData gameData, StackEntry entry, DiscardEffect e, int amount) {
-        boolean targeted = e.recipient() == DiscardRecipient.TARGET_PLAYER;
-        UUID playerId = targeted ? entry.getTargetId() : entry.getControllerId();
-        gameData.discardCausedByOpponent = targeted;
+        UUID playerId;
+        boolean opponentCaused;
+        switch (e.recipient()) {
+            case TARGET_PLAYER -> {
+                playerId = entry.getTargetId();
+                opponentCaused = true;
+            }
+            case TARGET_PERMANENT_CONTROLLER -> {
+                // targetId is the targeted permanent; the discarder is its controller. Resolve before
+                // any accompanying destroy effect runs so the permanent is still on the battlefield.
+                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                if (target == null) {
+                    return;
+                }
+                playerId = gameQueryService.findPermanentController(gameData, target.getId());
+                opponentCaused = true;
+            }
+            default -> {
+                playerId = entry.getControllerId();
+                opponentCaused = false;
+            }
+        }
+        gameData.discardCausedByOpponent = opponentCaused;
 
         if (amount <= 0) {
             String playerName = gameData.playerIdToName.get(playerId);

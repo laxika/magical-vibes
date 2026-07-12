@@ -202,6 +202,11 @@ public class PermanentCounterSupport {
         if (counterType == CounterType.LORE && card.isSaga()) {
             triggerSagaChapter(gameData, entry, target);
         }
+
+        // Flourishing Defenses etc.: "whenever a -1/-1 counter is put on a creature."
+        if (counterType == CounterType.MINUS_ONE_MINUS_ONE) {
+            fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, count);
+        }
     }
 
     public String counterTypeName(CounterType counterType) {
@@ -255,6 +260,42 @@ public class PermanentCounterSupport {
         String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+    }
+
+    /**
+     * Fires the "whenever a -1/-1 counter is put on a creature" global watcher (Flourishing Defenses)
+     * once for each of the {@code count} -1/-1 counters just placed on {@code creature}. Every
+     * permanent on any battlefield carrying
+     * {@link EffectSlot#ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE} triggers under its own
+     * controller. Per the Gatherer ruling the ability triggers once for each individual counter, so a
+     * separate trigger is pushed per counter. No-op unless {@code creature} is actually a creature.
+     */
+    public void fireMinusOneMinusOneCounterPutOnCreatureTriggers(GameData gameData, Permanent creature, int count) {
+        if (count <= 0 || creature == null || !gameQueryService.isCreature(gameData, creature)) {
+            return;
+        }
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent source : new ArrayList<>(battlefield)) {
+                List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
+                if (effects.isEmpty()) {
+                    continue;
+                }
+                Card card = source.getCard();
+                for (int i = 0; i < count; i++) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s triggered ability",
+                            new ArrayList<>(effects),
+                            null,
+                            source.getId()
+                    ));
+                    gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s triggered ability triggers.");
+                }
+                log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
+            }
+        });
     }
 
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {

@@ -350,6 +350,28 @@ public class ManaCost {
         return best;
     }
 
+    /**
+     * Assigns hybrid symbols against a per-color availability map (already reduced by fixed colored
+     * costs) for the total-based context {@code canPay} overloads. {@code out[0]} accumulates the
+     * generic mana owed by monocolored hybrids paid via their generic alternative, {@code out[1]}
+     * the number of hybrids paid with colored mana (each reserves one mana from the generic budget).
+     * Returns false if a color hybrid cannot be satisfied by any of its colors.
+     */
+    private boolean assignHybridsCounting(Map<ManaColor, Integer> available, int[] out) {
+        for (HybridSymbol hybrid : hybridsMostConstrainedFirst(available)) {
+            ManaColor chosen = pickRichestColor(hybrid.colors(), available);
+            if (chosen != null) {
+                available.put(chosen, available.get(chosen) - 1);
+                out[1]++;
+            } else if (hybrid.genericAlternative() >= 0) {
+                out[0] += hybrid.genericAlternative();
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext) {
         return canPay(pool, xValue, artifactContext, false);
     }
@@ -422,7 +444,29 @@ public class ManaCost {
             remaining += extraGreen - kickedOnlyGreenUsedForColored;
         }
 
-        return remaining >= genericCost + xValue * effectiveXMultiplier();
+        int hybridGeneric = 0;
+        if (!hybridCosts.isEmpty()) {
+            Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
+            for (ManaColor color : ManaColor.values()) {
+                int amount = pool.get(color);
+                if (instantSorceryOnlyColorlessContext) {
+                    amount += pool.getInstantSorceryOnlyColored(color);
+                }
+                if (color == ManaColor.RED) {
+                    amount += extraRed;
+                } else if (color == ManaColor.GREEN) {
+                    amount += extraGreen;
+                }
+                available.put(color, amount - coloredCosts.getOrDefault(color, 0));
+            }
+            int[] hybridOut = {0, 0};
+            if (!assignHybridsCounting(available, hybridOut)) {
+                return false;
+            }
+            hybridGeneric = hybridOut[0] + hybridOut[1];
+        }
+
+        return remaining >= genericCost + hybridGeneric + xValue * effectiveXMultiplier();
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
@@ -488,7 +532,31 @@ public class ManaCost {
         totalUsable += pool.getSubtypeCreatureManaTotal(creatureCtx);
         totalUsable += pool.getSubtypeSpellOrAbilityManaTotal(soaCtx);
 
-        return totalUsable - totalColored >= genericCost + xValue * effectiveXMultiplier();
+        int hybridGeneric = 0;
+        if (!hybridCosts.isEmpty()) {
+            Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
+            for (ManaColor color : ManaColor.values()) {
+                int amount = pool.get(color);
+                amount += pool.getSubtypeCreatureManaForColor(creatureCtx, color);
+                amount += pool.getSubtypeSpellOrAbilityManaForColor(soaCtx, color);
+                if (instantSorceryOnlyColorlessContext) {
+                    amount += pool.getInstantSorceryOnlyColored(color);
+                }
+                if (color == ManaColor.RED) {
+                    amount += extraRed;
+                } else if (color == ManaColor.GREEN) {
+                    amount += extraGreen;
+                }
+                available.put(color, amount - coloredCosts.getOrDefault(color, 0));
+            }
+            int[] hybridOut = {0, 0};
+            if (!assignHybridsCounting(available, hybridOut)) {
+                return false;
+            }
+            hybridGeneric = hybridOut[0] + hybridOut[1];
+        }
+
+        return totalUsable - totalColored >= genericCost + hybridGeneric + xValue * effectiveXMultiplier();
     }
 
     /**

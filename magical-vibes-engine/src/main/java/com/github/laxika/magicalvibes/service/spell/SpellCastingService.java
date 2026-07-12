@@ -99,6 +99,7 @@ public class SpellCastingService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
+    private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     // --- Helper records ---
 
@@ -404,7 +405,7 @@ public class SpellCastingService {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
                     convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
-                    discardHandCardIndex, false);
+                    discardHandCardIndex, false, List.of());
         } catch (IllegalArgumentException | IllegalStateException e) {
             // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
             // some validations run (e.g. target-based cost reduction) — if the failed cast left the
@@ -430,7 +431,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, true);
+                    null, null, false, null, true, List.of());
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -452,7 +453,31 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, true);
+                    null, null, false, null, true, List.of());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            if (attempted != null && !hand.contains(attempted)
+                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
+                hand.add(Math.min(cardIndex, hand.size()), attempted);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Casts a card and pays its conspire cost (CR 702.78): as the spell is cast, two untapped
+     * creatures the caster controls that each share a color with the spell are tapped. Paying the
+     * cost queues a "when you do, copy it and you may choose a new target for the copy" trigger.
+     * Unlike evoke/prowl, conspire is an <em>additional</em> cost — the spell's normal mana cost is
+     * still paid.
+     */
+    public void playCardWithConspire(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                     Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> conspireCreatureIds) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        try {
+            playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
+                    null, null, false, null, false, conspireCreatureIds != null ? conspireCreatureIds : List.of());
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -465,10 +490,12 @@ public class SpellCastingService {
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
-                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, boolean forceAlternateCost) {
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, boolean forceAlternateCost,
+                  List<UUID> conspireCreatureIds) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
+        if (conspireCreatureIds == null) conspireCreatureIds = List.of();
         if (alternateCostSacrificePermanentIds == null) alternateCostSacrificePermanentIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
             throw new IllegalStateException("Game is not running");
@@ -870,6 +897,56 @@ public class SpellCastingService {
             convokeContributions = contributions;
         }
 
+        // Validate and apply conspire (CR 702.78): tap two untapped creatures you control that each
+        // share a color with this spell. Conspire is an additional cost, so the normal mana cost is
+        // still paid below. Paying it flags the spell (gameData.conspiredSpellIds) so that a single
+        // "copy it, you may choose a new target for the copy" trigger is queued above the spell when
+        // spell-cast triggers are collected in finishSpellCast().
+        if (!conspireCreatureIds.isEmpty() && card.getKeywords().contains(Keyword.CONSPIRE)) {
+            if (conspireCreatureIds.size() != 2 || conspireCreatureIds.get(0).equals(conspireCreatureIds.get(1))) {
+                throw new IllegalStateException("Conspire requires two different untapped creatures you control");
+            }
+            List<CardColor> spellColors = card.getColors();
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            List<Permanent> conspireCreatures = new ArrayList<>();
+            for (UUID creatureId : conspireCreatureIds) {
+                Permanent creature = battlefield.stream()
+                        .filter(p -> p.getId().equals(creatureId))
+                        .findFirst()
+                        .orElse(null);
+                if (creature == null) {
+                    throw new IllegalStateException("Conspire creature not found on your battlefield");
+                }
+                if (!gameQueryService.isCreature(gameData, creature)) {
+                    throw new IllegalStateException(creature.getCard().getName() + " is not a creature");
+                }
+                if (creature.isTapped()) {
+                    throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+                }
+                if (spellColors != null && !spellColors.isEmpty()) {
+                    Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
+                    if (spellColors.stream().noneMatch(creatureColors::contains)) {
+                        throw new IllegalStateException(creature.getCard().getName()
+                                + " does not share a color with " + card.getName());
+                    }
+                }
+                conspireCreatures.add(creature);
+            }
+            // Tap after validation for atomic failure; defer any tap triggers (see convoke above).
+            int stackBeforeTriggers = gameData.stack.size();
+            for (Permanent creature : conspireCreatures) {
+                creature.tap();
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
+            }
+            if (gameData.stack.size() > stackBeforeTriggers) {
+                List<StackEntry> deferred = new ArrayList<>(
+                        gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+                gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+                gameData.pendingManaAbilityTriggers.addAll(deferred);
+            }
+            gameData.conspiredSpellIds.add(card.getId());
+        }
+
         // Validate graveyard targets for spells that target creature cards in graveyard
         boolean needsGraveyardCreatureTargeting = card.getEffects(EffectSlot.SPELL).stream()
                 .anyMatch(e -> e instanceof ExileCreaturesFromGraveyardAndCreateTokensEffect);
@@ -973,6 +1050,10 @@ public class SpellCastingService {
             int targetSubtypeCostReduction = castingCostService.computeTargetBasedCostReduction(gameData, playerId, card, costReductionTargetIds);
             boolean needsConvergeValue = EffectResolution.hasConvergeEffect(card)
                     && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
+            boolean needsColorsSpent = EffectResolution.hasColorSpentCondition(card);
+            java.util.EnumMap<ManaColor, Integer> colorsSpentSnapshot = needsColorsSpent
+                    ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                    : null;
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
                     : null;
@@ -1009,6 +1090,11 @@ public class SpellCastingService {
                         convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
                 gameData.setSpellCastConvergeValue(card.getId(), converge);
                 resolvedXValue = converge;
+            }
+            if (colorsSpentSnapshot != null) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                gameData.setSpellCastColorsSpent(card.getId(), ManaPool.coloredManaColorsSpent(
+                        colorsSpentSnapshot, pool.getColoredManaTotals(), convokeContributions));
             }
             if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
                 resolvedXValue = gameData.getSpellCastManaSpent(card.getId());
@@ -1193,6 +1279,26 @@ public class SpellCastingService {
                             if (card.getTargetFilter() != null) {
                                 predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
                             }
+                        }
+                        if (assignment.getValue() <= 0) {
+                            throw new IllegalStateException("Each damage assignment must be positive");
+                        }
+                    }
+                } else if (dividedEffect != null && dividedEffect.targetRestriction() == null
+                        && dividedEffect.canTargetPlayers()) {
+                    // Dynamic total divided as you choose among any number of targets, creatures
+                    // and/or players (e.g. Jaws of Stone — X = Mountains you control at cast time).
+                    int expectedTotal = amountEvaluationService.evaluate(gameData,
+                            dividedEffect.totalDamage(),
+                            com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+                    if (totalDamage != expectedTotal) {
+                        throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
+                    }
+                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                        UUID assignedTargetId = assignment.getKey();
+                        if (!gameData.playerIds.contains(assignedTargetId)
+                                && gameQueryService.findPermanentById(gameData, assignedTargetId) == null) {
+                            throw new IllegalStateException("Invalid target");
                         }
                         if (assignment.getValue() <= 0) {
                             throw new IllegalStateException("Each damage assignment must be positive");

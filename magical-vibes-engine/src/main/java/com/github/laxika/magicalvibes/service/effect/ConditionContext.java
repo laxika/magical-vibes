@@ -74,6 +74,12 @@ public record ConditionContext(
                 kicked, prowl, sourceZone, newXValue, targetId, triggeringCard, staticEvaluation);
     }
 
+    /** Returns a copy with the given target id (e.g. a multi-target group's chosen target). */
+    public ConditionContext withTargetId(UUID newTargetId) {
+        return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
+                kicked, prowl, sourceZone, xValue, newTargetId, triggeringCard, staticEvaluation);
+    }
+
     /** Returns a copy with the given triggering (entering) card. */
     public ConditionContext withTriggeringCard(Card card) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,

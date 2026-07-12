@@ -32,4 +32,19 @@ public class TapUntapSupport {
         }
         return false;
     }
+
+    /**
+     * Untaps the permanent and fires "becomes untapped" triggers if it was tapped before.
+     *
+     * @return true if the permanent was newly untapped (was tapped before)
+     */
+    public boolean untapPermanent(GameData gameData, Permanent permanent) {
+        boolean wasTapped = permanent.isTapped();
+        permanent.untap();
+        if (wasTapped) {
+            triggerCollectionService.checkBecomesUntappedTriggers(gameData, permanent);
+            return true;
+        }
+        return false;
+    }
 }

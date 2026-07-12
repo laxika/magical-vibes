@@ -35,6 +35,7 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
 
         if (target.isTapped()) {
             target.untap();
+            triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());

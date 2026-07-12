@@ -525,6 +525,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, convokeCreatureIds);
     }
 
+    public void castWithConspire(Player player, int cardIndex, UUID targetId, List<UUID> conspireCreatureIds) {
+        ensurePriority(player);
+        gameService.playCardWithConspire(gameData, player, cardIndex, 0, targetId, null, List.of(), conspireCreatureIds);
+    }
+
     public void castFromLibraryTop(Player player) {
         ensurePriority(player);
         gameService.playCardFromLibraryTop(gameData, player, null, null);
@@ -685,6 +690,11 @@ public class GameTestHarness {
     public void activateHandAbility(Player player, int handCardIndex, UUID targetId, int xValue) {
         ensurePriority(player);
         gameService.activateHandAbility(gameData, player, handCardIndex, 0, targetId, xValue);
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(Player player, int handCardIndex, List<UUID> graveyardCardIds) {
+        ensurePriority(player);
+        gameService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, 0, graveyardCardIds);
     }
 
     public void handlePermanentChosen(Player player, UUID permanentId) {

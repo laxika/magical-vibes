@@ -241,6 +241,17 @@ public final class EffectResolution {
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
     }
 
+    /**
+     * Returns true if the card has any spell effect gated on which mana color was spent to cast
+     * it ({@link com.github.laxika.magicalvibes.model.condition.ColorSpentToCast}). Signals that
+     * spell payment must snapshot the colors of mana spent (e.g. Repel Intruders).
+     */
+    public static boolean hasColorSpentCondition(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e instanceof ConditionalEffect c
+                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.ColorSpentToCast);
+    }
+
     public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {
         return effects.stream().anyMatch(e ->
                 e instanceof DealDamageToTargetCreatureEffect d && d.damage() instanceof ManaSpentToCast);

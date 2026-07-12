@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -125,6 +127,9 @@ public class StaticEffectSupport {
     private boolean matchesStaticFilter(StaticEffectContext context, PermanentPredicate filter) {
         if (filter instanceof PermanentHasGreatestManaValueAmongAllCreaturesPredicate) {
             return gameQueryService.hasGreatestManaValueAmongAllCreatures(context.gameData(), context.target());
+        }
+        if (filter instanceof PermanentIsEnchantedPredicate) {
+            return gameQueryService.isEnchanted(context.gameData(), context.target());
         }
         return matchesStaticFilter(context.target(), filter);
     }
@@ -321,6 +326,8 @@ public class StaticEffectSupport {
             return gameQueryService.isArtifact(target);
         if (filter instanceof PermanentIsLandPredicate)
             return target.getCard().hasType(CardType.LAND);
+        if (filter instanceof PermanentIsEnchantmentPredicate)
+            return target.getCard().hasType(CardType.ENCHANTMENT);
         if (filter instanceof PermanentIsPlaneswalkerPredicate)
             return target.getCard().hasType(CardType.PLANESWALKER);
         if (filter instanceof PermanentIsTokenPredicate)

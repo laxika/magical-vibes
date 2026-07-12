@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "15")
+@CardRegistration(set = "SHM", collectorNumber = "6")
 public class GoldenglowMoth extends Card {
 
     public GoldenglowMoth() {

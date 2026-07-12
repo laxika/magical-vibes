@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,7 +35,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
-        int payAmount = e.useXValue() ? entry.getXValue() : e.amount();
+        int payAmount;
+        if (e.dynamicAmount() != null) {
+            payAmount = amountEvaluationService.evaluate(gameData, e.dynamicAmount(),
+                    AmountContext.forStackEntry(entry, null));
+        } else {
+            payAmount = e.useXValue() ? entry.getXValue() : e.amount();
+        }
         UUID targetControllerId = targetEntry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(targetControllerId);
         ManaCost cost = new ManaCost("{" + payAmount + "}");

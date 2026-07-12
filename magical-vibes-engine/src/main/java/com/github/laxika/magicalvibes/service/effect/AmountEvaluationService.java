@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
@@ -70,6 +71,8 @@ public class AmountEvaluationService {
         return switch (amount) {
             case Fixed f ->
                     f.value();
+            case FixedIfControlMoreCreaturesThanEachOtherPlayer a ->
+                    controlsMoreCreaturesThanEachOtherPlayer(gameData, ctx) ? a.amount() : a.otherwise();
             case FixedIfControlledCreaturesTotalToughnessAtLeast a ->
                     totalToughnessOfControlledCreatures(gameData, ctx) >= a.minTotalToughness() ? a.amount() : 0;
             case FixedIfControlsAllNamed a ->
@@ -270,6 +273,29 @@ public class AmountEvaluationService {
             if (!found) return false;
         }
         return true;
+    }
+
+    private boolean controlsMoreCreaturesThanEachOtherPlayer(GameData gameData, AmountContext ctx) {
+        int controllerCreatures = countCreaturesControlledBy(gameData, ctx.controllerId());
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(ctx.controllerId())) continue;
+            if (countCreaturesControlledBy(gameData, playerId) >= controllerCreatures) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private int countCreaturesControlledBy(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private int totalToughnessOfControlledCreatures(GameData gameData, AmountContext ctx) {

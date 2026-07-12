@@ -49,6 +49,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachEquipmentToCreature(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
+        } else if (context instanceof PermanentChoiceContext.AttachAllAurasToAnotherPermanent attachAll) {
+            battlefieldHandler.handleAttachAllAurasToAnotherPermanent(gameData, permanentId, attachAll);
         } else if (context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach) {
             battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
@@ -139,6 +141,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepCopyTrigger(gameData, permanentId, uct);
         } else if (context instanceof PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {
             triggerHandler.handleCapriciousEfreetOwnTarget(gameData, permanentId, ceo);
+        } else if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget pmot) {
+            triggerHandler.handlePucasMischiefOwnTarget(gameData, permanentId, pmot);
+        } else if (context instanceof PermanentChoiceContext.PucasMischiefOpponentTarget pmot) {
+            triggerHandler.handlePucasMischiefOpponentTarget(gameData, permanentId, pmot);
         } else if (context instanceof PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
         } else if (context instanceof PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {

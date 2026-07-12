@@ -64,6 +64,10 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
 
+        if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, self, 1);
+        }
+
         // Check threshold and transform if met
         int currentCount = switch (e.counterType()) {
             case CHARGE -> self.getCounterCount(CounterType.CHARGE);

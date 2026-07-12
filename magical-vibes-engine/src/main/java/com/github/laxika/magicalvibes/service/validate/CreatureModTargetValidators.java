@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BuffTargetCreatureIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -113,6 +114,11 @@ public class CreatureModTargetValidators {
 
     @ValidatesTarget(GrantColorUntilEndOfTurnEffect.class)
     public void validateGrantColorUntilEndOfTurn(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(BecomeChosenColorsUntilEndOfTurnEffect.class)
+    public void validateBecomeChosenColorsUntilEndOfTurn(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 

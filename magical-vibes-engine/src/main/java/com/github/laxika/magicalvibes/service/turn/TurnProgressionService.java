@@ -158,8 +158,10 @@ public class TurnProgressionService {
         gameData.mindControllerPlayerId = null;
 
         UUID nextActive;
+        boolean skipUntapStep = false;
         if (!gameData.extraTurns.isEmpty()) {
             nextActive = gameData.extraTurns.pollFirst();
+            skipUntapStep = Boolean.TRUE.equals(gameData.extraTurnSkipsUntap.pollFirst());
         } else {
             List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
             UUID currentActive = gameData.activePlayerId;
@@ -205,10 +207,12 @@ public class TurnProgressionService {
         gameData.activatedAbilityUsesThisTurn.clear();
         gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
+        gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
+        gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.clearDelayedActions(DelayedCombatDamageReflection.class);
@@ -251,15 +255,21 @@ public class TurnProgressionService {
             }
         }
 
-        // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
-        // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
-        if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
-            playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
-            gameBroadcastService.broadcastGameState(gameData);
-            return;
-        }
+        if (skipUntapStep) {
+            // Savor the Moment: this extra turn skips its untap step (nothing untaps, no Storage
+            // Matrix choice), but summoning sickness still clears.
+            untapStepService.untapPermanents(gameData, nextActive, null, true);
+        } else {
+            // Storage Matrix: pause the untap step so the active player chooses artifact/creature/land
+            // before untapping. The choice handler resumes via resumeStorageMatrixUntap.
+            if (untapStepService.storageMatrixRestrictionApplies(gameData, nextActive)) {
+                playerInputService.beginStorageMatrixUntapChoice(gameData, nextActive);
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
 
-        untapStepService.untapPermanents(gameData, nextActive);
+            untapStepService.untapPermanents(gameData, nextActive);
+        }
 
         // Process pending may-not-untap choices before continuing turn
         if (!gameData.pendingMayAbilities.isEmpty()) {
@@ -366,6 +376,10 @@ public class TurnProgressionService {
 
     public void processNextCapriciousEfreetTarget(GameData gameData) {
         stepTriggerService.processNextCapriciousEfreetTarget(gameData);
+    }
+
+    public void processNextPucasMischiefTarget(GameData gameData) {
+        stepTriggerService.processNextPucasMischiefTarget(gameData);
     }
 
     public void processNextEndStepTriggerTarget(GameData gameData) {

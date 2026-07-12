@@ -153,6 +153,32 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleAttachAllAurasToAnotherPermanent(GameData gameData, UUID permanentId,
+                                                       PermanentChoiceContext.AttachAllAurasToAnotherPermanent ctx) {
+        Permanent newTarget = gameQueryService.findPermanentById(gameData, permanentId);
+        if (newTarget == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        for (UUID auraId : ctx.auraPermanentIds()) {
+            Permanent aura = gameQueryService.findPermanentById(gameData, auraId);
+            if (aura == null) {
+                continue;
+            }
+            gameData.expireFloatingEffectsForUnattachedSource(aura.getId());
+            aura.setAttachedTo(permanentId);
+            // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
+            aura.setTimestamp(gameData.nextTimestamp());
+            gameBroadcastService.logAndBroadcast(gameData,
+                    aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".");
+        }
+
+        // A moved control Aura (e.g. Control Magic) grants control of its new host to the Aura's controller.
+        creatureControlService.recomputeControl(gameData, newTarget);
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleReattachSourceAuraAfterSacrifice(GameData gameData, UUID permanentId,
                                                        PermanentChoiceContext.ReattachSourceAuraAfterSacrifice ctx) {
         Permanent aura = gameQueryService.findPermanentById(gameData, ctx.auraPermanentId());

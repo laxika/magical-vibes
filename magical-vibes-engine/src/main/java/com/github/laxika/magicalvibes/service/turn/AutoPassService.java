@@ -345,6 +345,9 @@ public class AutoPassService {
                 // Skip if ability requires tap and permanent is tapped
                 if (ability.isRequiresTap() && perm.isTapped()) continue;
 
+                // Skip if ability requires untap ({Q}) and permanent is untapped
+                if (ability.isRequiresUntap() && !perm.isTapped()) continue;
+
                 return true;
             }
         }

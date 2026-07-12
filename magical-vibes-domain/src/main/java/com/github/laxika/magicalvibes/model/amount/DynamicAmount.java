@@ -25,6 +25,7 @@ public sealed interface DynamicAmount permits
         Divided,
         EventValue,
         Fixed,
+        FixedIfControlMoreCreaturesThanEachOtherPlayer,
         FixedIfControlledCreaturesTotalToughnessAtLeast,
         FixedIfControlsAllNamed,
         GreatestPowerAmongControlled,

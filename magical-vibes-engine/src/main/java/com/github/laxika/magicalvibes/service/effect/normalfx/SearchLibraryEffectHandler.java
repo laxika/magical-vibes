@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.XManaValueBound;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -62,14 +62,17 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
+        AmountContext amountContext = AmountContext.forStackEntry(entry, resolveSource(gameData, entry));
+
         int count = entry.isCastWithFlashback()
                 ? effect.castFromGraveyardCount()
-                : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(),
-                        AmountContext.forStackEntry(entry, resolveSource(gameData, entry))));
+                : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(), amountContext));
 
         CardPredicate filter = effect.filter();
-        XManaValueBound bound = effect.manaValueBound();
+        ManaValueBound bound = effect.manaValueBound();
         boolean restricted = filter != null || bound != null;
+        Integer boundValue = bound == null ? null
+                : amountEvaluationService.evaluate(gameData, bound.amount(), amountContext) + bound.offset();
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -82,10 +85,10 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
 
         Predicate<Card> deckFilter = card ->
                 (filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
-                        && matchesBound(card, bound, entry);
+                        && matchesBound(card, boundValue, bound);
         List<Card> matchingCards = deck.stream().filter(deckFilter).toList();
 
-        String baseDesc = describe(filter, bound, entry);
+        String baseDesc = describe(filter, boundValue, bound);
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
@@ -123,19 +126,17 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         return source != null ? source : entry.getSourcePermanentSnapshot();
     }
 
-    private boolean matchesBound(Card card, XManaValueBound bound, StackEntry entry) {
-        if (bound == null) return true;
-        int boundValue = entry.getXValue() + bound.offset();
+    private boolean matchesBound(Card card, Integer boundValue, ManaValueBound bound) {
+        if (boundValue == null) return true;
         return bound.exact()
                 ? card.getManaValue() == boundValue
                 : card.getManaValue() <= boundValue;
     }
 
     /** Human description of the search target, e.g. "creature card with mana value 3 or less". */
-    private String describe(CardPredicate filter, XManaValueBound bound, StackEntry entry) {
+    private String describe(CardPredicate filter, Integer boundValue, ManaValueBound bound) {
         String desc = CardPredicateUtils.describeFilter(filter);
-        if (bound != null) {
-            int boundValue = entry.getXValue() + bound.offset();
+        if (boundValue != null) {
             desc += bound.exact()
                     ? " with mana value " + boundValue
                     : " with mana value " + boundValue + " or less";

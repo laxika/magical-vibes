@@ -380,6 +380,16 @@ public class GameService {
         }
     }
 
+    public void playCardWithConspire(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                     Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> conspireCreatureIds) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCardWithConspire(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of(), conspireCreatureIds != null ? conspireCreatureIds : List.of());
+        }
+    }
+
     public void playCardFromExile(GameData gameData, Player player, UUID exileCardId, Integer xValue, UUID targetId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
@@ -478,6 +488,14 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             abilityActivationService.activateHandAbility(gameData, player, handCardIndex, abilityIndex, targetId, xValue);
+        }
+    }
+
+    public void activateHandAbilityWithGraveyardTargets(GameData gameData, Player player, int handCardIndex, Integer abilityIndex, List<UUID> graveyardCardIds) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            abilityActivationService.activateHandAbilityWithGraveyardTargets(gameData, player, handCardIndex, abilityIndex, graveyardCardIds);
         }
     }
 

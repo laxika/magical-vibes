@@ -23,6 +23,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final TapUntapSupport tapUntapSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,7 +45,7 @@ public class UntapUpToControlledPermanentsEffectHandler implements NormalEffectH
             if (e.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) continue;
 
-            p.untap();
+            tapUntapSupport.untapPermanent(gameData, p);
             count++;
             remaining--;
         }

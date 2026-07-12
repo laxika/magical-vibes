@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCrea
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -915,6 +916,7 @@ public class CombatDamageService {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
                 } else if (effect instanceof PutCountersOnSourceEffect
+                        || effect instanceof RemoveAllCountersFromSelfEffect
                         || effect instanceof ExploreEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), null, creature.getId());
@@ -1613,7 +1615,8 @@ public class CombatDamageService {
 
         boolean atkHasInfect = atkStats.infect();
         if (redirectTarget != null) {
-            if (atkHasInfect) {
+            // The guard is a creature, so wither also routes here (damage becomes -1/-1 counters).
+            if (gameQueryService.dealsCounterDamageToCreatures(gameData, atk)) {
                 state.infectDamageRedirectedToGuard += damage;
             } else {
                 state.damageRedirectedToGuard += damage;
@@ -1629,6 +1632,8 @@ public class CombatDamageService {
             if (damage > 0
                     && !(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.playerHasProtectionFromColor(gameData, defenderId, attackerColor))
+                    && !(gameQueryService.isDamagePreventable(gameData)
+                            && gameQueryService.playerHasProtectionFromChosenName(gameData, defenderId, atk.getCard().getName()))
                     && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, defenderId, attackerColor)) {
                 UUID attackerControllerId = gameQueryService.findPermanentController(gameData, atk.getId());
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
@@ -1704,7 +1709,7 @@ public class CombatDamageService {
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
-        if (sourceStats.infect()) {
+        if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {

@@ -67,6 +67,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;
         List<Permanent> plusOneTargets = new ArrayList<>();
+        List<Permanent> minusOneTargets = new ArrayList<>();
         for (Permanent p : candidates) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
@@ -77,6 +78,8 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
             count++;
             if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && amount > 0) {
                 plusOneTargets.add(p);
+            } else if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE && amount > 0) {
+                minusOneTargets.add(p);
             }
         }
 
@@ -89,6 +92,9 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
 
         for (Permanent p : plusOneTargets) {
             permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+        }
+        for (Permanent p : minusOneTargets) {
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, p, amount);
         }
     }
 }

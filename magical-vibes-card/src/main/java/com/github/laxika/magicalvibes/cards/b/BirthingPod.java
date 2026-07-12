@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.XManaValueBound;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class BirthingPod extends Card {
                 List.of(
                         new SacrificeCreatureCost(true),
                         new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
-                                LibrarySearchDestination.BATTLEFIELD, new XManaValueBound(true, 1))
+                                LibrarySearchDestination.BATTLEFIELD, new ManaValueBound(true, 1))
                 ),
                 "{1}{G/P}, {T}, Sacrifice a creature: Search your library for a creature card with mana value equal to 1 plus the sacrificed creature's mana value, put that card onto the battlefield, then shuffle.",
                 null,

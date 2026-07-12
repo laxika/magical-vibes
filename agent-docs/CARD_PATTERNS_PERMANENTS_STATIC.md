@@ -15,6 +15,7 @@ All paths relative to `cards/`.
 | Color boost/debuff | `a/AscendantEvincar.java` | STATIC StaticBoostEffect with PermanentColorInPredicate / PermanentNotPredicate filter |
 | Own boost + opponent debuff | `e/EleshNornGrandCenobite.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES) + StaticBoostEffect(-2, -2, OPPONENT_CREATURES) |
 | Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordEffect with PermanentColorInPredicate filter, OWN_CREATURES scope |
+| Color keyword lord (source qualifies) | `c/CorrosiveMentor.java` | STATIC GrantKeywordEffect(WITHER, ALL_OWN_CREATURES, PermanentColorInPredicate(BLACK)) — "Black creatures you control have wither"; ALL_OWN_CREATURES because the source is itself black and must pass the same filter |
 | Keyword lord + spell trigger | `h/HandOfThePraetors.java` | STATIC StaticBoostEffect with PermanentHasKeywordPredicate(INFECT) filter, OWN_CREATURES scope + ON_CONTROLLER_CASTS_SPELL GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, CardAllOfPredicate(CREATURE, INFECT)) |
 | Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, true), 2), same) — +2/+2 for each Aura and Equipment attached. Equipment-only: AttachmentsOnSource(false, true) (Goblin Gaveleer) |
 | Tribal combat trigger (subtype counter lord) | `r/RakishHeir.java` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER AllyCombatDamageTriggerEffect(PermanentHasSubtypePredicate(VAMPIRE), PutCountersOnSourceEffect(1,1,1), bindSourceToDealer=true) — when a Vampire you control deals combat damage to a player, put +1/+1 counter on it |
@@ -40,6 +41,7 @@ All paths relative to `cards/`.
 | Global attack lock (power vs. hand size) | `e/EnsnaringBridge.java` | STATIC CreaturesWithPowerGreaterThanAmountCantAttackEffect(new CardsInHand(CountScope.CONTROLLER)) — any creature with power greater than the source controller's hand size can't attack |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
+| Protection from mana value N or greater | `m/MistmeadowSkulk.java` | STATIC ProtectionFromManaValueEffect(N) |
 | Grant protection from colors to greatest-MV creatures | `f/FavorOfTheMighty.java` | STATIC GrantEffectEffect(ProtectionFromColorsEffect(all 5 colors), ALL_CREATURES, PermanentHasGreatestManaValueAmongAllCreaturesPredicate) — granted protection is read by GameQueryService.hasProtectionFrom via the static bonus's grantedEffects |
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
 | Prevent X damage per source to you, X = subtype count | `b/BattletideAlchemist.java` | STATIC PreventDamageToControllerPerClericEffect — "you may prevent X of that damage, X = Clerics you control", per source, combat + noncombat; hooked in DamageSupport (noncombat) + CombatDamageService.accumulatePlayerDamage (combat) |
@@ -49,6 +51,7 @@ All paths relative to `cards/`.
 | Damage can't reduce life below 1 (if control creature) | `w/Worship.java` | STATIC DamageCantReduceLifeBelowOneEffect |
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
+| Shroud to other enchantments + your enchanted creatures | `g/GreaterAuramancy.java` | STATIC GrantKeywordEffect(SHROUD, OWN_PERMANENTS, PermanentIsEnchantmentPredicate) + GrantKeywordEffect(SHROUD, OWN_CREATURES, PermanentIsEnchantedPredicate) — "other enchantments you control" via OWN_PERMANENTS (source excluded from static computation), "enchanted creatures you control" via new PermanentIsEnchantedPredicate (has an Aura attached) |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
 | Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) |
 | Limit spells (all players) | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
@@ -79,6 +82,7 @@ All paths relative to `cards/`.
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |
 | Double damage to enchanted player (Curse) | `c/CurseOfBloodletting.java` | STATIC DoubleDamageToEnchantedPlayerEffect — enchant player curse; doubles all damage dealt to the enchanted player (spell/ability via DamageResolutionService.dealDamageToPlayer, combat via CombatDamageService.applyPlayerDamage), using GameQueryService.getEnchantedPlayerDamageMultiplier. Stacks multiplicatively with Furnace of Rath |
+| Double mana produced (tap for mana) | `m/ManaReflection.java` | STATIC ManaReflectionEffect — tapping any permanent for mana produces twice as much of that mana (2^count, controller-scoped) via GameQueryService.manaProductionMultiplier |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
@@ -109,10 +113,12 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
 | Predicate-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedPermanentConditionalEffect(PermanentHasSubtypePredicate(HUMAN), StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE), EnchantedCreatureCantAttackOrBlockEffect()) — composes existing effects, +2/+2 if Human, can't attack/block otherwise |
+| Color-conditional aura (independent bonuses) | `s/SteelOfTheGodhead.java` | STATIC StaticBoostEffect(1, 1, Set.of(LIFELINK), ENCHANTED_CREATURE, PermanentColorInPredicate(WHITE)) + StaticBoostEffect(1, 1, ENCHANTED_CREATURE, PermanentColorInPredicate(BLUE)) + EnchantedPermanentConditionalEffect(PermanentColorInPredicate(BLUE), CantBeBlockedEffect(), null) — gate boosts/keywords by the enchanted creature's color via StaticBoostEffect's `filter` (ENCHANTED_CREATURE scope honors it); for a non-boost effect use a single-branch EnchantedPermanentConditionalEffect with a null inactive branch |
 | Lockdown (can't attack) + self-bounce | `f/ForcedWorship.java` | STATIC EnchantedCreatureCantAttackEffect + activated ReturnToHandEffect.self() |
 | Full lockdown (can't attack/block/activate) | `a/Arrest.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect |
 | P/T override + ability strip aura | `d/DeepFreeze.java` | STATIC SetBasePowerToughnessEffect(0, 4, ENCHANTED_CREATURE) + GrantKeywordEffect(DEFENDER, ENCHANTED_CREATURE) + LosesAllAbilitiesEffect(ENCHANTED_CREATURE) + GrantColorEffect(BLUE, ENCHANTED_CREATURE) + GrantSubtypeEffect(WALL, ENCHANTED_CREATURE) — sets base P/T, grants defender, strips all original abilities, adds color and type |
 | Lockdown + self-destruct on target | `i/IceCage.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect + ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY DestroySourcePermanentEffect |
+| Lockdown + jump-to-entering-opponent-creature | `p/PrisonTerm.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect + ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD AttachSourceAuraToEnteringCreatureEffect — "you may attach this Aura to that creature" moves the Aura onto each opponent creature that enters |
 | Doesn't untap | `d/Dehydration.java` | STATIC EnchantedCreatureDoesntUntapEffect |
 | Static boost | `h/HolyStrength.java` | STATIC StaticBoostEffect(X, Y, GrantScope.ENCHANTED_CREATURE) |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
