@@ -96,14 +96,15 @@ public class MCTSEngine {
 
     /**
      * Worker count for parallel time-budgeted searches when the {@code ai.mcts.parallelism}
-     * property asks for auto-sizing. Each MCTS iteration works on its own determinized
-     * {@code GameData} copy, so workers only meet at the shared tree (guarded by
-     * {@link #treeLock}); iteration cost is milliseconds while tree operations are
-     * microseconds, so contention is negligible and throughput scales near-linearly.
-     * Capped at 4 so a busy server with several concurrent AI games stays responsive.
+     * property asks for auto-sizing: half the available cores. Each MCTS iteration works on
+     * its own determinized {@code GameData} copy, so workers only meet at the shared tree
+     * (guarded by {@link #treeLock}); iteration cost is milliseconds while tree operations
+     * are microseconds, so contention is negligible and throughput scales near-linearly.
+     * The other half of the cores is left for the live game, other AI games, and the web
+     * layer; set {@code ai.mcts.parallelism} explicitly to override.
      */
     public static int autoParallelism() {
-        return Math.max(1, Math.min(4, Runtime.getRuntime().availableProcessors() / 2));
+        return Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
     }
 
     /**
@@ -163,6 +164,7 @@ public class MCTSEngine {
         this.rng = new Random();
         this.timeBudgetEnabled = true;
         this.maxBudget = 0; // 0 = no cap, use caller's budget
+        SimulationLogSuppressor.install();
     }
 
     /**
@@ -178,6 +180,7 @@ public class MCTSEngine {
         this.rng = new Random(seed);
         this.timeBudgetEnabled = false;
         this.maxBudget = maxBudget;
+        SimulationLogSuppressor.install();
     }
 
     /**
@@ -189,6 +192,17 @@ public class MCTSEngine {
      * @return The best action to take
      */
     public SimulationAction search(GameData rootState, UUID aiPlayerId, int budget) {
+        // Flag this thread as simulating so SimulationLogSuppressor mutes engine
+        // logging for every rollout action (parallel workers flag themselves).
+        SimulationLogSuppressor.enterSimulation();
+        try {
+            return doSearch(rootState, aiPlayerId, budget);
+        } finally {
+            SimulationLogSuppressor.exitSimulation();
+        }
+    }
+
+    private SimulationAction doSearch(GameData rootState, UUID aiPlayerId, int budget) {
         lastSearchIterations = 0;
         lastSearchFailures = 0;
         lastSearchElapsedMs = 0;
@@ -295,21 +309,26 @@ public class MCTSEngine {
             workers.add(SEARCH_POOL.submit(() -> {
                 // Pooled threads may carry a stale interrupt flag from a cancelled search
                 Thread.interrupted();
-                while (!decided.get()
-                        && System.currentTimeMillis() <= deadline
-                        && started.incrementAndGet() <= effectiveBudget) {
-                    try {
-                        runIteration(rootState, aiPlayerId, root, deadline, workerRng);
-                    } catch (Exception e) {
-                        failures.incrementAndGet();
-                        log.trace("MCTS simulation failed: {}", e.getMessage());
-                    }
-                    int done = completed.incrementAndGet();
-                    synchronized (treeLock) {
-                        if (isDecided(root, done, searchStart, deadline, effectiveBudget)) {
-                            decided.set(true);
+                SimulationLogSuppressor.enterSimulation();
+                try {
+                    while (!decided.get()
+                            && System.currentTimeMillis() <= deadline
+                            && started.incrementAndGet() <= effectiveBudget) {
+                        try {
+                            runIteration(rootState, aiPlayerId, root, deadline, workerRng);
+                        } catch (Exception e) {
+                            failures.incrementAndGet();
+                            log.trace("MCTS simulation failed: {}", e.getMessage());
+                        }
+                        int done = completed.incrementAndGet();
+                        synchronized (treeLock) {
+                            if (isDecided(root, done, searchStart, deadline, effectiveBudget)) {
+                                decided.set(true);
+                            }
                         }
                     }
+                } finally {
+                    SimulationLogSuppressor.exitSimulation();
                 }
             }));
         }

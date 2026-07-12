@@ -1,6 +1,8 @@
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-jackson")
+    // Compiled against directly by SimulationLogSuppressor (TurboFilter)
+    implementation("ch.qos.logback:logback-classic")
 
     implementation(project(":magical-vibes-engine"))
     implementation(project(":magical-vibes-websocket"))
