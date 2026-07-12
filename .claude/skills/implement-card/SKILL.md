@@ -9,10 +9,7 @@ Input is a **set code + one or more collector numbers** from that set (e.g. `DKA
 
 **Multiple collector numbers:** implement each card independently, one at a time — run Steps 2–7 fully for one collector number before moving to the next. This keeps each card's context small and lets a failing card not block the others. Report a short per-card summary (implemented / reprint / tests pass-fail) at the end.
 
-Follow the project's hard rules from `CLAUDE.md`:
-- Stay on the `main` branch. **Do not commit** until the user explicitly asks.
-- **Rules accuracy is the top priority.** If anything about the card's behavior is ambiguous, search the web for the official ruling — never ship rules-incorrect behavior.
-- **Reuse over creation.** Prefer combining existing effects, or adding predicates/parameters to existing effects, over writing a new effect class. Only create a new effect when no combination of existing ones works.
+The hard rules in `CLAUDE.md` (main branch, no commits, rules accuracy, reuse over creation) apply throughout.
 
 ## Step 1 — Gather context
 
@@ -50,9 +47,7 @@ Detailed references — grep these when the three above aren't enough:
 - `agent-docs/EFFECTS_INDEX.md` — full per-effect descriptions and usage notes.
 - `agent-docs/CARD_IMPLEMENTATION_PLAYBOOK.md` — canonical patterns, targeting checklist, anti-patterns, new-effect/predicate checklists.
 
-Reuse rules (from `CLAUDE.md`):
-- Recreate effects by combining existing ones where possible (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`).
-- Prefer parameterizing an existing effect with a predicate over a new class (e.g. `DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`).
+Apply the reuse-over-creation rule from `CLAUDE.md` when choosing effects.
 
 ## Step 4 — Write the card class
 
@@ -62,7 +57,7 @@ The constructor contains **only engine logic** — `addEffect()`, `addActivatedA
 
 ## Step 5 — Only if a new effect is genuinely needed
 
-After confirming no existing effect/combination works:
+After confirming no existing effect/combination works — read `agent-docs/ARCHITECTURE.md` first (engine invariants: card freezing, layer system, thread safety, Jackson 3 imports):
 1. Add a record implementing `CardEffect` in `magical-vibes-domain/.../model/effect/`.
 2. Add resolution logic in `GameService.resolveStackEntry()` (instanceof dispatch).
 3. If Scryfall returns a new subtype/keyword, add it to `CardSubtype` / `Keyword`.
@@ -75,17 +70,17 @@ After confirming no existing effect/combination works:
 Skip tests only when the script says **basic land** or **vanilla**. Otherwise add
 `magical-vibes-application/src/test/java/.../cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
-- Test **engine logic only** by observing **behavior through the engine**: effects, abilities, targeting, interactions. **Never** assert Scryfall metadata (name/type/mana/color/P-T/subtypes/keywords), and **never** write white-box "wiring" tests (e.g. `hasCorrectProperties`) that inspect `card.getEffects(...)`, `EffectSlot`, `EffectResolution.needsTarget`, or effect fields by reflection — resolve the card and assert the outcome instead.
+- Follow the Testing rules in `CLAUDE.md`: behavior through the engine only — never Scryfall-metadata asserts, never white-box wiring tests.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
 - Typical cases: each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
 - Model new tests on a recent sibling test such as `cards/t/TragicSlipTest.java`.
 
 ## Step 7 — Run the focused test
 
-Run the single test class the script printed — **never the full suite** (it takes 20+ min):
+Run the quiet wrapper the script printed — **never the full suite** (it takes 20+ min) and never the raw `./gradlew` command (its output is noise):
 
 ```
-./gradlew :magical-vibes-application:test --tests "com.github.laxika.magicalvibes.cards.{letter}.{ClassName}Test" -x :magical-vibes-frontend:buildAngular
+bash -c 'powershell.exe -NoProfile -File scripts/run-card-test.ps1 {ClassName}Test'
 ```
 
-If frontend assets are stale and the build fails on that, drop the `-x` flag. Report pass/fail honestly with the output. Do not commit unless the user asks.
+Allow a generous timeout (up to 10 min on a cold build). It prints `PASS …` on success, or each failed test with its assertion message and project stack frames on failure; stale-frontend build failures are retried automatically. Read the full log (`magical-vibes-application/build/card-test.log`) only if the excerpt isn't enough. Report pass/fail honestly. Do not commit unless the user asks.

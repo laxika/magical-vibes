@@ -311,9 +311,8 @@ function Invoke-CardContext {
     Write-Host "Test: magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
 
     Write-Section "Suggested Test Command"
-    $testClass = "com.github.laxika.magicalvibes.cards.$packageLetter.${ClassName}Test"
-    Write-Host "./gradlew :magical-vibes-application:test --tests `"$testClass`" -x :magical-vibes-frontend:buildAngular"
-    Write-Host "(fallback if frontend assets are stale: drop the -x flag)"
+    Write-Host "powershell.exe -NoProfile -File scripts/run-card-test.ps1 ${ClassName}Test"
+    Write-Host "(quiet wrapper: prints PASS or failure excerpts only; retries stale-frontend builds automatically; full log at magical-vibes-application/build/card-test.log)"
 }
 
 $collectorNumbers = @($CollectorNumber | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
