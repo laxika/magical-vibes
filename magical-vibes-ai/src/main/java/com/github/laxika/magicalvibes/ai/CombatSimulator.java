@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderContro
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
@@ -287,6 +288,7 @@ public class CombatSimulator {
         List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int aiLife = gameData.getLife(aiPlayerId);
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, aiBattlefield);
 
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
@@ -337,7 +339,7 @@ public class CombatSimulator {
             List<CreatureInfo> candidates = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
-                if (!canBlock(gameData, blocker, attacker)) continue;
+                if (!canBlock(blockContext, blocker, attacker)) continue;
                 candidates.add(blocker);
             }
             if (candidates.isEmpty()) continue;
@@ -402,7 +404,7 @@ public class CombatSimulator {
                     final int currentExcess = trampleExcess;
                     CreatureInfo bestAdditional = blockerInfos.stream()
                             .filter(b -> !blockerUsed[b.index])
-                            .filter(b -> canBlock(gameData, b, attacker))
+                            .filter(b -> canBlock(blockContext, b, attacker))
                             .max(Comparator.comparingInt((CreatureInfo b) -> Math.min(currentExcess, b.toughness))
                                     .thenComparingDouble(b -> -b.creatureScore))
                             .orElse(null);
@@ -507,6 +509,7 @@ public class CombatSimulator {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int aiLife = gameData.getLife(aiPlayerId);
         int aiPoison = gameData.playerPoisonCounters.getOrDefault(aiPlayerId, 0);
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, aiBattlefield);
 
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
@@ -544,7 +547,7 @@ public class CombatSimulator {
             List<CreatureInfo> candidates = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
-                if (!canBlock(gameData, blocker, lureAttacker)) continue;
+                if (!canBlock(blockContext, blocker, lureAttacker)) continue;
                 candidates.add(blocker);
             }
             if (lureAttacker.menace && candidates.size() < 2) continue;
@@ -566,7 +569,7 @@ public class CombatSimulator {
             List<CreatureInfo> scored = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
-                if (!canBlock(gameData, blocker, mustBlockAttacker)) continue;
+                if (!canBlock(blockContext, blocker, mustBlockAttacker)) continue;
                 scored.add(blocker);
             }
             if (scored.size() < needed) continue;
@@ -586,7 +589,7 @@ public class CombatSimulator {
             List<Integer> targets = new ArrayList<>();
             for (int ai = 0; ai < attackerInfos.size(); ai++) {
                 CreatureInfo attacker = attackerInfos.get(ai);
-                if (!attacker.cantBeBlocked && canBlock(gameData, blocker, attacker)) {
+                if (!attacker.cantBeBlocked && canBlock(blockContext, blocker, attacker)) {
                     targets.add(ai);
                 }
             }
@@ -756,10 +759,9 @@ public class CombatSimulator {
                 blockers, opponentLife);
     }
 
-    private boolean canBlock(GameData gameData, CreatureInfo blocker, CreatureInfo attacker) {
+    private boolean canBlock(BlockLegalityContext blockContext, CreatureInfo blocker, CreatureInfo attacker) {
         if (attacker.cantBeBlocked) return false;
-        List<Permanent> defenderBattlefield = findBattlefieldFor(gameData, blocker.perm);
-        return gameQueryService.canBlockAttacker(gameData, blocker.perm, attacker.perm, defenderBattlefield);
+        return gameQueryService.canBlockAttacker(blockContext, blocker.perm, attacker.perm);
     }
 
     private List<Permanent> findBattlefieldFor(GameData gameData, Permanent perm) {
@@ -780,11 +782,15 @@ public class CombatSimulator {
      */
     private List<CombatMath.Attacker> buildAttackers(GameData gameData, List<CreatureInfo> attackers,
                                                      List<CreatureInfo> blockers, boolean trackVigilance) {
+        // All blockers belong to the single defending player, so one legality context (bound
+        // to that player's battlefield) covers every pair.
+        BlockLegalityContext blockContext = blockers.isEmpty() ? null
+                : gameQueryService.createBlockLegalityContext(gameData, findBattlefieldFor(gameData, blockers.getFirst().perm));
         List<CombatMath.Attacker> result = new ArrayList<>(attackers.size());
         for (CreatureInfo info : attackers) {
             boolean[] canBeBlockedBy = new boolean[blockers.size()];
             for (int j = 0; j < blockers.size(); j++) {
-                canBeBlockedBy[j] = canBlock(gameData, blockers.get(j), info);
+                canBeBlockedBy[j] = canBlock(blockContext, blockers.get(j), info);
             }
             boolean vigilance = trackVigilance
                     && gameQueryService.hasKeyword(gameData, info.perm, Keyword.VIGILANCE);

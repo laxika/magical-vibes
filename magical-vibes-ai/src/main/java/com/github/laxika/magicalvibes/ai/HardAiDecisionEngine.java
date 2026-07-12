@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -772,6 +773,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Get the full defender battlefield (needed for landwalk checks in canBlockAttacker)
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
 
         // Separate attackers into guaranteed damage vs blockable
         int guaranteedDamage = 0;
@@ -781,7 +783,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             // Count how many blockers can legally block this attacker
             int legalBlockerCount = 0;
             for (Permanent blocker : blockers) {
-                if (gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     legalBlockerCount++;
                 }
             }
@@ -803,7 +805,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> relevantBlockers = new ArrayList<>();
         for (Permanent blocker : blockers) {
             for (Permanent attacker : blockableAttackers) {
-                if (gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     relevantBlockers.add(blocker);
                     break;
                 }

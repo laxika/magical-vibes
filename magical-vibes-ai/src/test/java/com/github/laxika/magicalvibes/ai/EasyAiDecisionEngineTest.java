@@ -1140,7 +1140,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
         when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
-        when(gameQueryService.canBlockAttacker(eq(gd), eq(blocker), any(), any())).thenReturn(true);
+        when(gameQueryService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 
@@ -1188,7 +1188,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
         when(gameQueryService.canBlock(gd, blocker)).thenReturn(true);
-        when(gameQueryService.canBlockAttacker(eq(gd), eq(blocker), any(), any())).thenReturn(true);
+        when(gameQueryService.canBlockAttacker(any(), eq(blocker), any())).thenReturn(true);
         when(gameQueryService.getEffectivePower(gd, blocker)).thenReturn(5);
         when(gameQueryService.getEffectiveToughness(gd, blocker)).thenReturn(5);
 

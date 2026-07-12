@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -91,6 +92,17 @@ public class CombatBlockService {
                                                               List<Integer> attackerIndices,
                                                               UUID defenderId,
                                                               UUID attackerId) {
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(
+                gameData, gameData.playerBattlefields.get(defenderId));
+        return computeLegalBlockPairs(gameData, blockContext, blockerIndices, attackerIndices, defenderId, attackerId);
+    }
+
+    private Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
+                                                               BlockLegalityContext blockContext,
+                                                               List<Integer> blockerIndices,
+                                                               List<Integer> attackerIndices,
+                                                               UUID defenderId,
+                                                               UUID attackerId) {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         Map<Integer, List<Integer>> pairs = new LinkedHashMap<>();
@@ -99,7 +111,7 @@ public class CombatBlockService {
             List<Integer> legalAttackers = new ArrayList<>();
             for (int attackerIdx : attackerIndices) {
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
-                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     legalAttackers.add(attackerIdx);
                 }
             }
@@ -176,6 +188,10 @@ public class CombatBlockService {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
 
+        // One shared legality context for the whole validation pass (no game-state mutation
+        // happens until every check below has passed).
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
+
         // Validate assignments
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
@@ -201,7 +217,7 @@ public class CombatBlockService {
 
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            gameQueryService.getBlockingIllegalityReason(gameData, blocker, attacker, defenderBattlefield)
+            gameQueryService.getBlockingIllegalityReason(blockContext, blocker, attacker)
                     .ifPresent(reason -> { throw new IllegalStateException(reason); });
 
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
@@ -249,11 +265,11 @@ public class CombatBlockService {
         // there must be at least 2 total blockers
         validateCantBlockAlone(defenderBattlefield, blockerAssignments);
 
-        validateMaximumBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+        validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
-        validatePerCreatureMustBlockRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+        validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
-        validateMustBeBlockedIfAbleRequirements(gameData, attackerBattlefield, defenderBattlefield, blockable,
+        validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
         gameData.interaction.clearAwaitingInput();
@@ -491,7 +507,8 @@ public class CombatBlockService {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
 
-        Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockable, attackerIndices, defenderId, activeId);
+        BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
+        Map<Integer, List<Integer>> legalPairs = computeLegalBlockPairs(gameData, blockContext, blockable, attackerIndices, defenderId, activeId);
 
         // Compute "must be blocked if able" attacker indices
         List<Integer> mustBeBlockedIndices = new ArrayList<>();
@@ -525,7 +542,7 @@ public class CombatBlockService {
                 for (int atkIdx : attackerIndices) {
                     Permanent attacker = attackerBattlefield.get(atkIdx);
                     if (attacker.getId().equals(mustBlockId)
-                            && canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                            && gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                         requiredAttackerIndices.add(atkIdx);
                     }
                 }
@@ -697,11 +714,6 @@ public class CombatBlockService {
         }
     }
 
-    private boolean canBlockAttacker(GameData gameData, Permanent blocker,
-                                      Permanent attacker, List<Permanent> defenderBattlefield) {
-        return gameQueryService.canBlockAttacker(gameData, blocker, attacker, defenderBattlefield);
-    }
-
     private int getMaxBlocksForCreature(GameData gameData, Permanent creature, List<Permanent> battlefield) {
         // Check for "can block any number of creatures" on the creature itself
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
@@ -754,6 +766,7 @@ public class CombatBlockService {
     }
 
     private void validateMaximumBlockRequirements(GameData gameData,
+                                                   BlockLegalityContext blockContext,
                                                    List<Permanent> attackerBattlefield,
                                                    List<Permanent> defenderBattlefield,
                                                    List<Integer> blockable,
@@ -786,7 +799,7 @@ public class CombatBlockService {
             int possibleLureBlocks = 0;
             for (int attackerIdx : lureAttackerIndices) {
                 Permanent attacker = attackerBattlefield.get(attackerIdx);
-                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     possibleLureBlocks++;
                 }
             }
@@ -799,6 +812,7 @@ public class CombatBlockService {
     }
 
     private void validatePerCreatureMustBlockRequirements(GameData gameData,
+                                                           BlockLegalityContext blockContext,
                                                            List<Permanent> attackerBattlefield,
                                                            List<Permanent> defenderBattlefield,
                                                            List<Integer> blockable,
@@ -814,7 +828,7 @@ public class CombatBlockService {
                 for (int i = 0; i < attackerBattlefield.size(); i++) {
                     Permanent attacker = attackerBattlefield.get(i);
                     if (attacker.isAttacking() && attacker.getId().equals(mustBlockId)
-                            && canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                            && gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                         requiredAttackerIndices.add(i);
                     }
                 }
@@ -839,6 +853,7 @@ public class CombatBlockService {
     }
 
     private void validateMustBeBlockedIfAbleRequirements(GameData gameData,
+                                                          BlockLegalityContext blockContext,
                                                           List<Permanent> attackerBattlefield,
                                                           List<Permanent> defenderBattlefield,
                                                           List<Integer> blockable,
@@ -878,7 +893,7 @@ public class CombatBlockService {
             for (int blockerIdx : blockable) {
                 if (assignedBlockerIndices.contains(blockerIdx)) continue;
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
-                if (canBlockAttacker(gameData, blocker, attacker, defenderBattlefield)) {
+                if (gameQueryService.canBlockAttacker(blockContext, blocker, attacker)) {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " must be blocked if able");
                 }
