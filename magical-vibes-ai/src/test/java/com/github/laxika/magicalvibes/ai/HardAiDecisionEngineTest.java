@@ -940,6 +940,14 @@ class HardAiDecisionEngineTest {
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
+        // This test guards the deterministic board-wipe evaluation (SpellEvaluator), not the
+        // search: wiping a single bear is a thin cast-vs-pass margin for MCTS, whose search
+        // varies run-to-run with map ordering of the game's random UUIDs — so force the
+        // evaluator fallback instead.
+        MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
+        ai.setMctsEngine(failingMcts);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
