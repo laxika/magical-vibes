@@ -994,6 +994,13 @@ public class GameSimulator {
             return creatureTarget;
         }
 
+        // "Any target" spells (creature/planeswalker/player): with no creature to hit, aim at the
+        // opponent's face. Falling through to the permanent fallback would pick illegal targets
+        // like lands (a null target filter passes everything).
+        if (allowedTargets.contains(TargetType.PLAYER)) {
+            return opponentId;
+        }
+
         // Fall back to any permanent that passes the target filter (e.g., artifacts/enchantments for Naturalize)
         return oppBattlefield.stream()
                 .filter(p -> passesTargetFilter(gd, card, p, playerId))

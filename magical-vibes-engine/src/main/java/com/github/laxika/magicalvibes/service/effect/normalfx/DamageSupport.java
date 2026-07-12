@@ -616,6 +616,14 @@ public class DamageSupport {
 
             if (!targetIsPlayer && targetPermanent == null) continue;
 
+            // Divided damage only ever targets creatures, planeswalkers, or players — a permanent
+            // that is none of those (e.g. a land) is an illegal target and isn't affected.
+            if (!targetIsPlayer
+                    && !gameQueryService.isCreature(gameData, targetPermanent)
+                    && !targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                continue;
+            }
+
             if (targetIsPlayer) {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {

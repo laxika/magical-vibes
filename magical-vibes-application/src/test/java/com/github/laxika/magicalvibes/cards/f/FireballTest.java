@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -259,6 +262,93 @@ class FireballTest extends BaseCardTest {
 
         // Bears was removed — skipped. Player 2 still takes floor(4/2)=2 damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    // ===== Illegal targets — "any target" means creature, planeswalker, or player =====
+
+    @Test
+    @DisplayName("Single-targetId cast at a land is rejected")
+    void singleTargetIdCastAtLandIsRejected() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 2); // {1}{R}
+
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1, plainsId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, or player");
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Fireball"));
+    }
+
+    @Test
+    @DisplayName("Multi-target cast including a land is rejected")
+    void multiTargetCastIncludingLandIsRejected() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 7); // {4}{R} + {1} for the extra target
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 4, List.of(bearsId, plainsId)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+    }
+
+    @Test
+    @DisplayName("Single-targetId cast at a creature still works")
+    void singleTargetIdCastAtCreatureWorks() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 5); // {4}{R}
+
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, 4, bearsId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Single-targetId cast at a player still works")
+    void singleTargetIdCastAtPlayerWorks() {
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 4); // {3}{R}
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("A land target that slips onto the stack is not damaged or destroyed at resolution")
+    void resolutionSkipsLandTarget() {
+        harness.addToBattlefield(player2, new Plains());
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+
+        // Forge a stack entry targeting the land directly, bypassing cast-time validation,
+        // to prove the resolution-side guard holds on its own.
+        Card fireball = new Fireball();
+        gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, fireball, player1.getId(),
+                fireball.getName(), fireball.getEffects(EffectSlot.SPELL), 5, List.of(plainsId)));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Plains"));
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     // ===== Mixed targets (creatures + players) =====

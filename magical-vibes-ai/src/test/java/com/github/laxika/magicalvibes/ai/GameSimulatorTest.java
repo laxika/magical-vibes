@@ -173,6 +173,53 @@ class GameSimulatorTest {
         assertThat(score).isLessThan(0.5);
     }
 
+    // ===== "Any target" damage spells never aim at lands =====
+
+    @Test
+    @DisplayName("Fireball targets the opponent, not their lands, when they control no creatures")
+    void fireballTargetsOpponentWhenNoCreatures() {
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.Fireball()));
+        harness.addMana(player1, ManaColor.RED, 2); // {X}{R}, X=1
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.p.Plains());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        List<SimulationAction.PlayCard> casts = actions.stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .toList();
+        assertThat(casts).isNotEmpty();
+        assertThat(casts).allSatisfy(pc -> assertThat(pc.targetId()).isEqualTo(player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Fireball prefers an opponent creature over the opponent's face")
+    void fireballPrefersOpponentCreature() {
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.Fireball()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.p.Plains());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        List<SimulationAction.PlayCard> casts = actions.stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .toList();
+        assertThat(casts).isNotEmpty();
+        assertThat(casts).allSatisfy(pc -> assertThat(pc.targetId()).isEqualTo(bears.getId()));
+    }
+
     // ===== Aura targeting =====
 
     private void setUpMainPhase(Player activePlayer) {

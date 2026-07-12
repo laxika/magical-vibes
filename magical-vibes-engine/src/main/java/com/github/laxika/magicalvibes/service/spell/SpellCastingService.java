@@ -1139,6 +1139,10 @@ public class SpellCastingService {
                         if (perm == null) {
                             throw new IllegalStateException("Invalid target");
                         }
+                        if (!gameQueryService.isCreature(gameData, perm)
+                                && !perm.getCard().hasType(CardType.PLANESWALKER)) {
+                            throw new IllegalStateException("Target must be a creature, planeswalker, or player");
+                        }
                     }
                     if (assignment.getValue() <= 0) {
                         throw new IllegalStateException("Each damage assignment must be positive");

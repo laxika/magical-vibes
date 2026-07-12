@@ -150,6 +150,27 @@ class FightWithFireTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void kickedDamageAssignmentsRejectLandTargets() {
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FightWithFire()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        addToBattlefield(player2, new GrizzlyBears());
+        Permanent plains = addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.p.Plains());
+
+        assertThatThrownBy(() ->
+                harness.castKickedSorcery(player1, 0, Map.of(
+                        plains.getId(), 4,
+                        player2.getId(), 6
+                ))
+        ).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, or player");
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(plains.getId()));
+    }
+
     private Permanent addToBattlefield(Player player, Card card) {
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(player.getId()).add(perm);

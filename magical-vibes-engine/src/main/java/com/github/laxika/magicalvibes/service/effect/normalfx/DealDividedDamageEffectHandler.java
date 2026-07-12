@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -100,6 +101,15 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
             Permanent targetPermanent = targetIsPlayer ? null : gameQueryService.findPermanentById(gameData, targetId);
 
             if (!targetIsPlayer && targetPermanent == null) continue;
+
+            // Divided damage only ever targets creatures, planeswalkers, or players. A permanent
+            // that is none of those at resolution (e.g. an animated land that reverted) is an
+            // illegal target and isn't affected (CR 608.2b) — never burn lands.
+            if (!targetIsPlayer
+                    && !gameQueryService.isCreature(gameData, targetPermanent)
+                    && !targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                continue;
+            }
 
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);

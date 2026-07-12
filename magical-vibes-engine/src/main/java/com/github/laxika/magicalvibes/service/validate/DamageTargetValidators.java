@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPla
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -107,6 +108,32 @@ public class DamageTargetValidators {
     public void validateDealDamageToAnyTargetEqualToSubtypeCountAndGainLife(TargetValidationContext ctx) {
         tvs.requireTarget(ctx);
         if (ctx.gameData().playerIds.contains(ctx.targetId())) {
+            return;
+        }
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
+                || target.getCard().hasType(CardType.PLANESWALKER);
+        if (!validPermanentType) {
+            throw new IllegalStateException("Target must be a creature, planeswalker, or player");
+        }
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(DealDividedDamageEffect.class)
+    public void validateDealDividedDamage(TargetValidationContext ctx, DealDividedDamageEffect effect) {
+        if (effect.etbAssignments()) {
+            // Targets come from GameData.pendingETBDamageAssignments, outside the targeting pipeline.
+            return;
+        }
+        if (ctx.targetId() == null) {
+            // CHOSEN-mode casts/activations carry their targets in the damage-assignments map
+            // (validated by SpellCastingService/the ability pipeline), not in targetId.
+            return;
+        }
+        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
+            if (!effect.canTargetPlayers()) {
+                throw new IllegalStateException("This spell cannot target players");
+            }
             return;
         }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
