@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "185")
+@CardRegistration(set = "8ED", collectorNumber = "283")
 public class ThornElemental extends Card {
 
     public ThornElemental() {

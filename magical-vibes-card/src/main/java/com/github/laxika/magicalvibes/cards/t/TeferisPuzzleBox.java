@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "312")
+@CardRegistration(set = "8ED", collectorNumber = "316")
 public class TeferisPuzzleBox extends Card {
 
     public TeferisPuzzleBox() {

@@ -61,6 +61,16 @@ public sealed interface ChoiceContext {
     record ProtectionColorChoice(UUID targetId, boolean includeArtifacts) implements ChoiceContext {}
 
     /**
+     * The controller chooses a color at resolution; the target permanent then becomes that color
+     * until end of turn (CR 105.3 / layer 5). Used by Distorting Lens.
+     *
+     * @param targetId       the permanent that becomes the chosen color
+     * @param controllerId   controller of the ability that created the effect
+     * @param sourceCardName name of the card whose ability created the effect
+     */
+    record ColorSetChoice(UUID targetId, UUID controllerId, String sourceCardName) implements ChoiceContext {}
+
+    /**
      * A single color choice that grants the chosen controller and each permanent they control
      * protection from the chosen color until end of turn (e.g. Faith's Shield fateful hour).
      */
@@ -119,6 +129,13 @@ public sealed interface ChoiceContext {
      * milled card matches the chosen name, the controller gains life equal to its mana value.
      */
     record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * Vexing Arcanix: the target player names a card, then reveals the top card of their library.
+     * If it matches the named card it goes to their hand; otherwise it goes to their graveyard and
+     * the source ({@code sourcePermanentId}) deals 2 damage to them.
+     */
+    record VexingArcanixNameChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

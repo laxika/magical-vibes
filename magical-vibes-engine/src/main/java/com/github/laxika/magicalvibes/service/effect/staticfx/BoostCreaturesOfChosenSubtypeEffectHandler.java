@@ -28,7 +28,7 @@ public class BoostCreaturesOfChosenSubtypeEffectHandler implements StaticEffectH
         var boost = (BoostCreaturesOfChosenSubtypeEffect) effect;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
-        if (!context.targetOnSameBattlefield()) return;
+        if (!boost.allControllers() && !context.targetOnSameBattlefield()) return;
         Permanent target = context.target();
         if (!gameQueryService.isCreature(context.gameData(), target)) return;
         if (support.matchesStaticFilter(target, new PermanentHasSubtypePredicate(chosenSubtype))) {

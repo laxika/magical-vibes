@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "PTK", collectorNumber = "67")
+@CardRegistration(set = "8ED", collectorNumber = "118")
 public class AmbitionsCost extends Card {
 
     public AmbitionsCost() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "329")
+@CardRegistration(set = "8ED", collectorNumber = "330")
 public class UrzasTower extends Card {
 
     public UrzasTower() {

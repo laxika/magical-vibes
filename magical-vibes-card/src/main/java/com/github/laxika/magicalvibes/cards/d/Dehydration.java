@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "78")
 @CardRegistration(set = "9ED", collectorNumber = "73")
+@CardRegistration(set = "8ED", collectorNumber = "75")
 public class Dehydration extends Card {
 
     public Dehydration() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "123")
+@CardRegistration(set = "8ED", collectorNumber = "125")
 public class DeathPitsOfRath extends Card {
 
     public DeathPitsOfRath() {

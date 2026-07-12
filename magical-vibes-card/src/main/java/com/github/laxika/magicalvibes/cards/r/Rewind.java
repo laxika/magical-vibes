@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanents
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "94")
+@CardRegistration(set = "8ED", collectorNumber = "96")
 public class Rewind extends Card {
 
     public Rewind() {

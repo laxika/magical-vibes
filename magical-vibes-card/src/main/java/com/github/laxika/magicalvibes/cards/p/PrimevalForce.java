@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "182")
+@CardRegistration(set = "8ED", collectorNumber = "273")
 public class PrimevalForce extends Card {
 
     public PrimevalForce() {

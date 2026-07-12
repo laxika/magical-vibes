@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
@@ -548,6 +549,9 @@ public class BattlefieldEntryService {
 
         List<CardEffect> triggeredEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .filter(e -> !(e instanceof ChooseColorEffect))
+                // "As enters, choose a creature type" is a replacement-style choice made during entry
+                // (handled via beginSubtypeChoice), not a triggered ability queued onto the stack.
+                .filter(e -> !(e instanceof ChooseSubtypeOnEnterEffect))
                 .filter(e -> !(e instanceof ReplacementEffect))
                 // Conditional as-enters replacements ("if kicked, enters with N counters") are
                 // handled during entry, not by the triggered-ability pipeline.

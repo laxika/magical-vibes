@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "104")
+@CardRegistration(set = "8ED", collectorNumber = "98")
 @CardRegistration(set = "M10", collectorNumber = "69")
 public class SageOwl extends Card {
 

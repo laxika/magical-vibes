@@ -41,6 +41,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case OTHER_CONTROLLED_CREATURES -> resolveOtherControlledCreatures(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ATTACKED_CREATURES -> resolveAttackedCreatures(gameData, entry);
+            case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported untap scope: " + e.scope());
         }
     }
@@ -166,6 +167,27 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} untaps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
+    }
+
+    private void resolveAllCreatures(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                .withSourceControllerId(entry.getControllerId());
+
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!gameQueryService.isCreature(gameData, p)) return;
+            if (e.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
+            if (!p.isTapped()) return;
+
+            p.untap();
+            count[0]++;
+        });
+
+        String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} untaps {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     private void resolveAttackedCreatures(GameData gameData, StackEntry entry) {

@@ -9,6 +9,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "111")
+@CardRegistration(set = "8ED", collectorNumber = "102")
 public class SpiketailHatchling extends Card {
 
     public SpiketailHatchling() {

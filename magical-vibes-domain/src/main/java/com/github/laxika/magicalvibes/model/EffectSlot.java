@@ -61,6 +61,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  via {@code TriggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers}. Used by
      *  Countryside Crusher. */
     ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers whenever a land (any player's) is put into a graveyard from the battlefield. Fires
+     *  for destroy, sacrifice, etc. Checked in {@code PermanentRemovalService} via
+     *  {@code TriggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers}. Used by
+     *  Dingus Egg (pair with {@code DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)}). */
+    ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
@@ -112,6 +117,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  zone→graveyard transitions. Fires as a triggered ability (the card enters the graveyard
      *  first). Used by Purity ("shuffle it into its owner's library"). */
     ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
+    /** Triggers when this card is put into a graveyard specifically from the battlefield (i.e. "dies"
+     *  for a permanent). Checked in {@code GraveyardService.addCardToGraveyard} only when the source
+     *  zone is {@code Zone.BATTLEFIELD}. Fires as a triggered ability (the card enters the graveyard
+     *  first). Used by Spreading Algae ("return it to its owner's hand"). */
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
@@ -279,5 +289,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code sourcePermanentId} on the stack entry so self-scoped effects like {@code BoostSelfEffect}
      *  apply to "it" (the blocked creature). Wrap the effect in {@code TriggeringCardConditionalEffect}
      *  to filter by the blocked creature. Checked in {@code CombatBlockService}. Used by Unstoppable Ash. */
-    ON_ALLY_CREATURE_BECOMES_BLOCKED
+    ON_ALLY_CREATURE_BECOMES_BLOCKED,
+    /** Triggers whenever a permanent is returned to a player's hand (bounced from the battlefield),
+     *  regardless of who controls this permanent or owns the returned one. Fires on every permanent
+     *  with this slot across all battlefields, once per returned permanent. The player the permanent
+     *  returned to (its owner) is set as the non-targeting {@code targetId} on the stack entry, so a
+     *  player-directed effect (e.g. {@code DiscardEffect(1, TARGET_PLAYER)}) acts on "that player".
+     *  Checked in {@code TriggerCollectionService.checkPermanentReturnedToHandTriggers}, driven from
+     *  the single {@code PermanentRemovalService.removePermanentToHand} choke point. Used by Warped Devotion. */
+    ON_ANY_PERMANENT_RETURNED_TO_HAND
 }

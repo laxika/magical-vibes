@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "7")
+@CardRegistration(set = "8ED", collectorNumber = "8")
 public class BlindingAngel extends Card {
 
     public BlindingAngel() {

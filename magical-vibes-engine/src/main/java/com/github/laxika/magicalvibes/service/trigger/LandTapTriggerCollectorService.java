@@ -7,15 +7,18 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,7 @@ public class LandTapTriggerCollectorService {
     private final GameBroadcastService gameBroadcastService;
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final LifeSupport lifeSupport;
 
     @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
@@ -74,6 +78,26 @@ public class LandTapTriggerCollectorService {
             }
         }
 
+        return true;
+    }
+
+    @CollectsTrigger(value = GainLifeWhenOpponentTapsLandOfSubtypeEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleGainLifeWhenOpponentTapsSubtypeLand(TriggerMatchContext match,
+            GainLifeWhenOpponentTapsLandOfSubtypeEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+        // Only opponents' land taps
+        if (match.controllerId().equals(lt.tappingPlayerId())) return false;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+
+        lifeSupport.applyGainLife(match.gameData(), match.controllerId(), trigger.lifeAmount());
+
+        String logEntry = match.permanent().getCard().getName() + " triggers — "
+                + match.gameData().playerIdToName.get(match.controllerId())
+                + " gains " + trigger.lifeAmount() + " life.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
         return true;
     }
 
@@ -151,6 +175,26 @@ public class LandTapTriggerCollectorService {
         String logEntry = match.permanent().getCard().getName() + " triggers — "
                 + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                 + " adds 1 additional " + producedColor.name().toLowerCase() + " mana.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        return true;
+    }
+
+    @CollectsTrigger(value = AddManaWhenLandOfSubtypeTappedForManaEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddManaWhenSubtypeLandTapped(TriggerMatchContext match,
+            AddManaWhenLandOfSubtypeTappedForManaEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        if (!tappedLand.getCard().getSubtypes().contains(trigger.subtype())) return false;
+
+        // "Its controller adds an additional {G}" — the tapping player is the land's controller.
+        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        pool.add(trigger.color());
+
+        String logEntry = match.permanent().getCard().getName() + " triggers — "
+                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana.";
         gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
         return true;
     }

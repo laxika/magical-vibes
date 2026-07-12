@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "295")
+@CardRegistration(set = "8ED", collectorNumber = "298")
 public class DisruptingScepter extends Card {
 
     public DisruptingScepter() {

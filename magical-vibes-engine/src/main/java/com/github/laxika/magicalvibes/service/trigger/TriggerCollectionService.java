@@ -390,6 +390,45 @@ public class TriggerCollectionService {
         }
     }
 
+    // ── Permanent-returned-to-hand triggers ────────────────────────────
+
+    /**
+     * Handles {@link EffectSlot#ON_ANY_PERMANENT_RETURNED_TO_HAND} — "Whenever a permanent is returned
+     * to a player's hand, ...". Scans every battlefield for permanents with this slot and queues one
+     * triggered ability per matching permanent, with {@code returnedToPlayerId} (the owner the permanent
+     * was returned to) set as the non-targeting {@code targetId} so player-directed effects act on
+     * "that player". Used by Warped Devotion.
+     */
+    public void checkPermanentReturnedToHandTriggers(GameData gameData, UUID returnedToPlayerId) {
+        if (returnedToPlayerId == null) return;
+
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield == null) continue;
+
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_PERMANENT_RETURNED_TO_HAND);
+                if (effects.isEmpty()) continue;
+
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(effects),
+                        returnedToPlayerId,
+                        perm.getId());
+                // "That player" is the owner the permanent returned to — determined by the event, not chosen.
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} permanent-returned-to-hand trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        }
+    }
+
     // ── Ally-permanent-sacrificed triggers ──────────────────────────────
 
     public void checkAllyPermanentSacrificedTriggers(GameData gameData, UUID sacrificingPlayerId, Card sacrificedCard) {
@@ -1459,6 +1498,13 @@ public class TriggerCollectionService {
                 dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD, ctx);
             }
         });
+    }
+
+    public void checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId, UUID landControllerId) {
+        var ctx = new TriggerContext.AnyLandGraveyard(graveyardOwnerId, landControllerId);
+
+        gameData.forEachPermanent((playerId, perm) ->
+                dispatchSlot(gameData, perm, playerId, EffectSlot.ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx));
     }
 
     /**

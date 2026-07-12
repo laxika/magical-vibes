@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "LRW", collectorNumber = "211")
+@CardRegistration(set = "8ED", collectorNumber = "248")
 public class FertileGround extends Card {
 
     public FertileGround() {

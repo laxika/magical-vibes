@@ -147,6 +147,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
     }
 
+    public void beginColorSetChoice(GameData gameData, UUID controllerId, UUID targetId, String sourceCardName) {
+        ChoiceContext.ColorSetChoice ctx = new ChoiceContext.ColorSetChoice(targetId, controllerId, sourceCardName);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (target becomes chosen color)", gameData.id, playerName);
+    }
+
     public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId) {
         ChoiceContext.MassProtectionColorChoice ctx = new ChoiceContext.MassProtectionColorChoice(controllerId);
 

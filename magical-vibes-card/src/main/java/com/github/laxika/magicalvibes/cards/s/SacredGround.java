@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "37")
+@CardRegistration(set = "8ED", collectorNumber = "39")
 public class SacredGround extends Card {
 
     public SacredGround() {

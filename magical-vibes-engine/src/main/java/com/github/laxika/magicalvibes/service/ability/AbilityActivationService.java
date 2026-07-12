@@ -1057,8 +1057,8 @@ public class AbilityActivationService {
 
         // Pay life cost
         if (payLifeCost.isPresent()) {
-            int amount = payLifeCost.get().amount();
             int currentLife = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            int amount = payLifeCost.get().effectiveAmount(currentLife);
             gameData.playerLifeTotals.put(playerId, currentLife - amount);
         }
 
@@ -1454,8 +1454,9 @@ public class AbilityActivationService {
                 .findFirst();
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            if (life < payLifeCost.get().amount()) {
-                throw new IllegalStateException("Not enough life to pay (need " + payLifeCost.get().amount() + ", have " + life + ")");
+            int needed = payLifeCost.get().effectiveAmount(life);
+            if (life < needed) {
+                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
         }
 

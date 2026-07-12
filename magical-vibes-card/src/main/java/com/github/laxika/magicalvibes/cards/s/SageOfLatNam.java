@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import java.util.List;
 
 @CardRegistration(set = "DOM", collectorNumber = "64")
+@CardRegistration(set = "8ED", collectorNumber = "97")
 public class SageOfLatNam extends Card {
 
     public SageOfLatNam() {

@@ -170,6 +170,7 @@ public class PermanentRemovalService {
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.addCardToHand(ownerId, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
+        triggerCollectionService.checkPermanentReturnedToHandTriggers(gameData, ownerId);
         return true;
     }
 
@@ -503,6 +504,7 @@ public class PermanentRemovalService {
             if (target.getCard().hasType(CardType.LAND)) {
                 triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
                         gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
+                triggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
             }
             triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId, target.getCard().getId());
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)

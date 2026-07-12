@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "171")
+@CardRegistration(set = "8ED", collectorNumber = "174")
 public class Zombify extends Card {
 
     public Zombify() {

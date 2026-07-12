@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "8ED", collectorNumber = "274")
 @CardRegistration(set = "10E", collectorNumber = "288")
 @CardRegistration(set = "9ED", collectorNumber = "263")
 @CardRegistration(set = "M10", collectorNumber = "201")

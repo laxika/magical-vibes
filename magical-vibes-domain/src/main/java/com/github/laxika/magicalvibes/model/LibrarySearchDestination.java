@@ -12,5 +12,7 @@ public enum LibrarySearchDestination {
     BATTLEFIELD_ATTACHED_TO_PLAYER,
     BATTLEFIELD_ATTACHED_TO_CREATURE,
     SPHINX_AMBASSADOR,
-    CAST_WITHOUT_PAYING
+    CAST_WITHOUT_PAYING,
+    /** Put the chosen card onto the battlefield under the searching player's control (Bribery). */
+    BATTLEFIELD_UNDER_SEARCHER
 }

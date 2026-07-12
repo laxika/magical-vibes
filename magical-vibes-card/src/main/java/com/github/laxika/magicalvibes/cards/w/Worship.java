@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "55")
+@CardRegistration(set = "8ED", collectorNumber = "57")
 public class Worship extends Card {
 
     public Worship() {

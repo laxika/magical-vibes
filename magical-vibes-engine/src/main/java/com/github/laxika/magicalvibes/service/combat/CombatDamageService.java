@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -216,6 +217,7 @@ public class CombatDamageService {
         // Process lifelink before removing dead creatures
         processLifelink(gameData, state.combatDamageDealt);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
+        processGainLifeEqualToControlledCreatureCombatDamage(gameData, state.combatDamageDealt);
 
         // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
@@ -778,6 +780,28 @@ public class CombatDamageService {
         }
     }
 
+
+    private void processGainLifeEqualToControlledCreatureCombatDamage(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
+        for (var entry : combatDamageDealt.entrySet()) {
+            Permanent creature = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+            UUID controllerId = CombatHelper.findControllerOf(gameData, creature);
+            if (controllerId == null) continue;
+            // "Whenever a creature you control deals combat damage, you gain that much life."
+            // Fires once per matching enchantment the creature's controller controls (Noble Purpose).
+            gameData.forEachPermanent((ownerId, perm) -> {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof GainLifeEqualToControlledCreatureCombatDamageEffect) {
+                        UUID enchantmentControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
+                        if (controllerId.equals(enchantmentControllerId)) {
+                            lifeSupport.applyGainLife(gameData, controllerId, damageDealt, perm.getCard().getName());
+                        }
+                    }
+                }
+            });
+        }
+    }
 
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
         for (var entry : combatDamageDealtToPlayer.entrySet()) {
@@ -1620,6 +1644,14 @@ public class CombatDamageService {
                     damage -= battletidePrevented;
                     gameBroadcastService.logAndBroadcast(gameData,
                             battletidePrevented + " of " + atk.getCard().getName() + "'s combat damage to "
+                                    + gameData.playerIdToName.get(defenderId) + " is prevented.");
+                }
+                // Urza's Armor: the defending player prevents a fixed amount of this attacker's damage.
+                int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, defenderId, damage);
+                if (fixedPrevented > 0) {
+                    damage -= fixedPrevented;
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            fixedPrevented + " of " + atk.getCard().getName() + "'s combat damage to "
                                     + gameData.playerIdToName.get(defenderId) + " is prevented.");
                 }
                 if (atkHasInfect) {

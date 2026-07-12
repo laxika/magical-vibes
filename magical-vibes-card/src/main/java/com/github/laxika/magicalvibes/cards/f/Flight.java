@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "79")
+@CardRegistration(set = "8ED", collectorNumber = "80")
 public class Flight extends Card {
 
     public Flight() {

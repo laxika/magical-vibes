@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "241")
+@CardRegistration(set = "8ED", collectorNumber = "246")
 public class EmperorCrocodile extends Card {
 
     public EmperorCrocodile() {

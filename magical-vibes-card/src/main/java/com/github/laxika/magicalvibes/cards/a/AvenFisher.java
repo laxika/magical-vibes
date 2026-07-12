@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "68")
 @CardRegistration(set = "9ED", collectorNumber = "61")
+@CardRegistration(set = "8ED", collectorNumber = "61")
 public class AvenFisher extends Card {
 
     public AvenFisher() {

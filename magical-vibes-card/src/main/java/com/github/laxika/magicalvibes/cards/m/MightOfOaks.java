@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "277")
 @CardRegistration(set = "M10", collectorNumber = "192")
 @CardRegistration(set = "9ED", collectorNumber = "255")
+@CardRegistration(set = "8ED", collectorNumber = "265")
 public class MightOfOaks extends Card {
 
     public MightOfOaks() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostExceptOnControllersTurnEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "293")
+@CardRegistration(set = "8ED", collectorNumber = "296")
 public class DefenseGrid extends Card {
 
     public DefenseGrid() {

@@ -1167,20 +1167,32 @@ public class SpellCastingService {
                 int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
 
                 if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
-                    // Fixed-damage divided damage spell (e.g. Ignite Disorder)
+                    // Fixed-damage divided damage spell (e.g. Ignite Disorder, Pyrotechnics)
                     if (totalDamage != fixedTotal.value()) {
                         throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                     }
-                    if (damageAssignments.size() > card.getMaxTargets()) {
+                    boolean canTargetPlayers = dividedEffect.canTargetPlayers();
+                    // Unbounded (maxTargets 0) among any number of targets: each target needs at
+                    // least 1 damage, so the total damage is the effective cap (Pyrotechnics).
+                    int maxTargets = dividedEffect.maxTargets() > 0 ? dividedEffect.maxTargets()
+                            : (card.getMaxTargets() > 0 ? card.getMaxTargets() : fixedTotal.value());
+                    if (damageAssignments.size() > maxTargets) {
                         throw new IllegalStateException("Too many targets");
                     }
                     for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                        if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                            throw new IllegalStateException("All targets must be creatures");
-                        }
-                        if (card.getTargetFilter() != null) {
-                            predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                        boolean isPlayer = gameData.playerIds.contains(assignment.getKey());
+                        if (isPlayer) {
+                            if (!canTargetPlayers) {
+                                throw new IllegalStateException("All targets must be creatures");
+                            }
+                        } else {
+                            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                            if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                                throw new IllegalStateException("All targets must be creatures");
+                            }
+                            if (card.getTargetFilter() != null) {
+                                predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                            }
                         }
                         if (assignment.getValue() <= 0) {
                             throw new IllegalStateException("Each damage assignment must be positive");

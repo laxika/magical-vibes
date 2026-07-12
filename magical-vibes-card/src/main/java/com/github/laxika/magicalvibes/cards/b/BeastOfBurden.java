@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "288")
+@CardRegistration(set = "8ED", collectorNumber = "292")
 public class BeastOfBurden extends Card {
 
     public BeastOfBurden() {

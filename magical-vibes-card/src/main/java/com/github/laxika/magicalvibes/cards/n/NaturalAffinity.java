@@ -16,6 +16,7 @@ import java.util.Set;
  * All lands become 2/2 creatures until end of turn. They're still lands.
  */
 @CardRegistration(set = "9ED", collectorNumber = "256")
+@CardRegistration(set = "8ED", collectorNumber = "269")
 public class NaturalAffinity extends Card {
 
     public NaturalAffinity() {

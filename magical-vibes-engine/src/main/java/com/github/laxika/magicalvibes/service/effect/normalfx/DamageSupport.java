@@ -414,6 +414,14 @@ public class DamageSupport {
                         battletidePrevented + " of " + cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
             }
 
+            // Urza's Armor: the controller prevents a fixed amount of this source's damage.
+            int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(gameData, playerId, effectiveDamage);
+            if (fixedPrevented > 0) {
+                effectiveDamage -= fixedPrevented;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        fixedPrevented + " of " + cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            }
+
             // Purity: prevent all remaining noncombat damage to the controller and gain that much life
             int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);
             if (purityPrevented > 0) {

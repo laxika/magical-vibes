@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
@@ -57,6 +59,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -116,6 +119,10 @@ public class ChoiceHandlerService {
             handleMassProtectionColorChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ColorSetChoice ctx) {
+            handleColorSetChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.DiscardChosenColorChoice ctx) {
             handleDiscardChosenColorChoice(gameData, colorName, ctx);
             return;
@@ -158,6 +165,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.NameCardMillGainLifeChoice ctx) {
             handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.VexingArcanixNameChoice ctx) {
+            handleVexingArcanixNameChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -544,6 +555,38 @@ public class ChoiceHandlerService {
         resumeAndAutoPass(gameData);
     }
 
+    private void handleColorSetChoice(GameData gameData, String chosenValue, ChoiceContext.ColorSetChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
+        if (target != null) {
+            CardColor color = CardColor.valueOf(chosenValue);
+
+            // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
+            // color-setting effect. We reuse GrantColorUntilEndOfTurnEffect (the L5 setter the
+            // layered pass already understands) as the wrapped effect, and dual-write the legacy
+            // transient-color fields for direct Permanent.getEffectiveColor callers, exactly as
+            // GrantColorUntilEndOfTurnEffectHandler does.
+            target.getTransientColors().clear();
+            target.getTransientColors().add(color);
+            target.setColorOverridden(true);
+            gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                    UUID.randomUUID(), ctx.sourceCardName(), null, ctx.controllerId(),
+                    new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
+                    target.getId(), null, null,
+                    com.github.laxika.magicalvibes.model.effect.EffectDuration.UNTIL_END_OF_TURN, 0));
+
+            String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+            String logEntry = target.getCard().getName() + " becomes " + colorName + " until end of turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
     private void handleDiscardChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.DiscardChosenColorChoice ctx) {
         CardColor color = CardColor.valueOf(chosenValue);
@@ -623,6 +666,11 @@ public class ChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+
+            // The subtype choice deferred the permanent's ETB triggers (they were skipped while input
+            // was pending). Now that the type is chosen, process them — e.g. Brass Herald's "reveal the
+            // top four cards" trigger, which reads the chosen type from the permanent.
+            battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), null, true);
         }
 
         gameData.priorityPassedBy.clear();
@@ -890,6 +938,65 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         resumeAndAutoPass(gameData);
+    }
+
+    private void handleVexingArcanixNameChoice(GameData gameData, Player player, String cardName,
+                                               ChoiceContext.VexingArcanixNameChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
+        gameBroadcastService.logAndBroadcast(gameData, choiceLog);
+        log.info("Game {} - {} chooses card name \"{}\" (Vexing Arcanix)",
+                gameData.id, player.getUsername(), cardName);
+
+        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
+        if (deck == null || deck.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s library is empty.");
+            gameData.priorityPassedBy.clear();
+            gameBroadcastService.broadcastGameState(gameData);
+            resumeAndAutoPass(gameData);
+            return;
+        }
+
+        Card topCard = deck.getFirst();
+        gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals " + topCard.getName() + ".");
+
+        if (topCard.getName().equals(cardName)) {
+            deck.removeFirst();
+            gameData.addCardToHand(targetPlayerId, topCard);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    targetName + " puts " + topCard.getName() + " into their hand.");
+            log.info("Game {} - {} named correctly, {} goes to hand", gameData.id, targetName, topCard.getName());
+        } else {
+            graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    targetName + " puts " + topCard.getName() + " into their graveyard.");
+            dealVexingArcanixDamage(gameData, ctx, targetPlayerId);
+            log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    private void dealVexingArcanixDamage(GameData gameData, ChoiceContext.VexingArcanixNameChoice ctx, UUID targetPlayerId) {
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source == null) return;
+
+        StackEntry damageEntry = new StackEntry(
+                StackEntryType.ACTIVATED_ABILITY,
+                source.getCard(),
+                ctx.controllerId(),
+                source.getCard().getName() + "'s ability",
+                List.of(),
+                targetPlayerId,
+                ctx.sourcePermanentId());
+
+        damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, 2);
     }
 
     private List<String> collectAllCardNamesInGame(GameData gameData) {

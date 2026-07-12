@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "103")
+@CardRegistration(set = "8ED", collectorNumber = "191")
 public class GoblinRaider extends Card {
 
     public GoblinRaider() {

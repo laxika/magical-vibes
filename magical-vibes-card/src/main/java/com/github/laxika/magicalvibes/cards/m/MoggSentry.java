@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "204")
+@CardRegistration(set = "8ED", collectorNumber = "203")
 public class MoggSentry extends Card {
 
     public MoggSentry() {

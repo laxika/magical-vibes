@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 @CardRegistration(set = "10E", collectorNumber = "343")
 @CardRegistration(set = "M10", collectorNumber = "220")
 @CardRegistration(set = "9ED", collectorNumber = "309")
+@CardRegistration(set = "8ED", collectorNumber = "314")
 public class Spellbook extends Card {
 
     public Spellbook() {

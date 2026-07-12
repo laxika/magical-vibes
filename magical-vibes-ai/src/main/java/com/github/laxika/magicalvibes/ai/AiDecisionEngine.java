@@ -784,7 +784,7 @@ public abstract class AiDecisionEngine {
         }
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof PayLifeCost lifeCost
-                    && gameData.getLife(aiPlayer.getId()) <= lifeCost.amount()) {
+                    && gameData.getLife(aiPlayer.getId()) <= lifeCost.effectiveAmount(gameData.getLife(aiPlayer.getId()))) {
                 return false;
             }
             if (effect instanceof TapXPermanentsCost) {

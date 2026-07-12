@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "169")
 @CardRegistration(set = "9ED", collectorNumber = "155")
+@CardRegistration(set = "8ED", collectorNumber = "155")
 public class PlagueWind extends Card {
 
     public PlagueWind() {

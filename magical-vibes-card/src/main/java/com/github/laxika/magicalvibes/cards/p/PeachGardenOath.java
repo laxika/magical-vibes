@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PTK", collectorNumber = "15")
+@CardRegistration(set = "8ED", collectorNumber = "34")
 public class PeachGardenOath extends Card {
 
     public PeachGardenOath() {

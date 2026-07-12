@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "252")
+@CardRegistration(set = "8ED", collectorNumber = "261")
 public class LlanowarBehemoth extends Card {
 
     public LlanowarBehemoth() {

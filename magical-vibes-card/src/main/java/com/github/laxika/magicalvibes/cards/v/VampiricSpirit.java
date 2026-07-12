@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 
 @CardRegistration(set = "P02", collectorNumber = "90")
+@CardRegistration(set = "8ED", collectorNumber = "170")
 public class VampiricSpirit extends Card {
 
     public VampiricSpirit() {

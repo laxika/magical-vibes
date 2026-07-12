@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEf
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
@@ -59,6 +60,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZone
 import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
@@ -570,7 +572,30 @@ public class GameQueryService {
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
+        if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
+    }
+
+    /**
+     * Returns {@code true} if an aura attached to the given permanent carries an
+     * {@link EnchantedPermanentBecomesCreatureEffect} (e.g. Living Terrain), which continuously
+     * makes the enchanted permanent a creature.
+     */
+    public boolean hasAuraBecomeCreatureEffect(GameData gameData, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent source : battlefield) {
+                if (source.isAttached() && permanent.getId().equals(source.getAttachedTo())) {
+                    for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                        if (effect instanceof EnchantedPermanentBecomesCreatureEffect) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -686,6 +711,20 @@ public class GameQueryService {
                 if (conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(creature, controllerId))) {
                     return true;
+                }
+            }
+        }
+        // Global grants: any permanent (any controller) whose STATIC effects let matching
+        // creatures attack despite defender (e.g. Rolling Stones for Wall creatures).
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent grantor : bf) {
+                for (CardEffect effect : grantor.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof MatchingCreaturesCanAttackAsThoughNoDefenderEffect grant
+                            && predicateEvaluationService.matchesPermanentPredicate(gameData, creature, grant.matcher())) {
+                        return true;
+                    }
                 }
             }
         }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "291")
+@CardRegistration(set = "8ED", collectorNumber = "277")
 public class Rhox extends Card {
 
     public Rhox() {

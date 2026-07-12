@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOne
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
@@ -496,6 +497,28 @@ public class DamagePreventionService {
 
         long clerics = gameQueryService.countControlledSubtypePermanents(gameData, playerId, CardSubtype.CLERIC);
         return (int) Math.min(damage, clerics * shields);
+    }
+
+    /**
+     * Urza's Armor-style prevention: "If a source would deal damage to you, prevent N of that damage."
+     * Modeled on the controller of the permanent. Prevents up to the summed {@code amount} of every such
+     * permanent they control from each source that would deal damage to them (combat and noncombat).
+     * Returns the amount prevented (the caller subtracts it); 0 when damage can't be prevented or no such
+     * permanent is present.
+     */
+    public int applyControllerFixedPerSourceDamagePrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        int reduction = battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(e -> e instanceof PreventFixedDamagePerSourceToControllerEffect)
+                .mapToInt(e -> ((PreventFixedDamagePerSourceToControllerEffect) e).amount())
+                .sum();
+        return Math.min(damage, reduction);
     }
 
     /**

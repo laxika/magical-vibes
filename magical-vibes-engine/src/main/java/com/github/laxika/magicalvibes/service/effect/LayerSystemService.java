@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -1019,6 +1020,19 @@ public class LayerSystemService {
                         setCreatureType(state, chosen);
                     }
                     record(board, instance, target, new L4Contribution(chosen, true, true, null, null));
+                }
+            }
+            case EnchantedPermanentBecomesCreatureEffect becomes -> {
+                // NOT managed: the colour and base P/T are contributed by the effect's static
+                // handler in the accumulator pass, so its handler must keep running during
+                // assembly. Here we only add the creature type + subtypes to the state so the
+                // enchanted permanent reads as a creature for other layer-4+ effects (lords).
+                for (PermanentSlot target : scopeTargets(instance, GrantScope.ENCHANTED_PERMANENT, null, slots, slotsById, board)) {
+                    CharacteristicState state = states.get(target.permanent().getId());
+                    state.addCardType(CardType.CREATURE);
+                    for (CardSubtype subtype : becomes.subtypes()) {
+                        state.addSubtype(subtype);
+                    }
                 }
             }
             case NonbasicLandsBecomeTypeEffect becomes -> {

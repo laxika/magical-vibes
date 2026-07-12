@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,8 +26,20 @@ public class PreventAllDamageToTargetCreatureEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        // Multi-target: shield each valid creature in this effect's target group (e.g. Redeem's
+        // "up to two target creatures"). Falls back to the single target for one-target spells/abilities.
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
+                shieldTarget(gameData, targetId);
+            }
+            return;
+        }
 
+        shieldTarget(gameData, entry.getTargetId());
+    }
+
+    private void shieldTarget(GameData gameData, UUID targetId) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;

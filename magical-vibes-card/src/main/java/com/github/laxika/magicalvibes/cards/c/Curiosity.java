@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "ISD", collectorNumber = "49")
+@CardRegistration(set = "8ED", collectorNumber = "72")
 public class Curiosity extends Card {
 
     public Curiosity() {

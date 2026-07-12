@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "180")
+@CardRegistration(set = "8ED", collectorNumber = "185")
 public class Enrage extends Card {
 
     public Enrage() {

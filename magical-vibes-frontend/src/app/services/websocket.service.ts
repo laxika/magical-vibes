@@ -50,6 +50,7 @@ export enum MessageType {
   CHOOSE_CARD_FROM_LIBRARY = 'CHOOSE_CARD_FROM_LIBRARY',
   LIBRARY_CARD_CHOSEN = 'LIBRARY_CARD_CHOSEN',
   REVEAL_HAND = 'REVEAL_HAND',
+  REVEAL_LIBRARY_TOP = 'REVEAL_LIBRARY_TOP',
   CHOOSE_FROM_REVEALED_HAND = 'CHOOSE_FROM_REVEALED_HAND',
   CHOOSE_CARD_FROM_GRAVEYARD = 'CHOOSE_CARD_FROM_GRAVEYARD',
   GRAVEYARD_CARD_CHOSEN = 'GRAVEYARD_CARD_CHOSEN',
@@ -480,6 +481,12 @@ export interface ChooseCardFromLibraryNotification {
 }
 
 export interface RevealHandNotification {
+  type: MessageType;
+  cards: Card[];
+  playerName: string;
+}
+
+export interface RevealLibraryTopNotification {
   type: MessageType;
   cards: Card[];
   playerName: string;

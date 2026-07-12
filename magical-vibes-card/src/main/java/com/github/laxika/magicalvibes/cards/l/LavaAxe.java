@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "200")
 @CardRegistration(set = "POR", collectorNumber = "137")
 @CardRegistration(set = "P02", collectorNumber = "107")
+@CardRegistration(set = "8ED", collectorNumber = "197")
 public class LavaAxe extends Card {
 
     public LavaAxe() {

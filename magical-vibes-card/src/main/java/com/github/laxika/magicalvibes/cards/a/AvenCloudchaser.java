@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "7")
 @CardRegistration(set = "9ED", collectorNumber = "3")
+@CardRegistration(set = "8ED", collectorNumber = "5")
 public class AvenCloudchaser extends Card {
 
     public AvenCloudchaser() {

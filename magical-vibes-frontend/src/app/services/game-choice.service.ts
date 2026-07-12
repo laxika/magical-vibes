@@ -4,7 +4,7 @@ import {
   ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification,
   ChoosePermanentNotification, ChooseMultiplePermanentsNotification,
   ChooseMultipleCardsNotification, ScryNotification, ReorderLibraryCardsNotification,
-  ChooseCardFromLibraryNotification, RevealHandNotification,
+  ChooseCardFromLibraryNotification, RevealHandNotification, RevealLibraryTopNotification,
   ChooseFromRevealedHandNotification, ChooseCardFromGraveyardNotification,
   ChooseHandTopBottomNotification, CombatDamageAssignmentNotification,
   ValidTargetsResponse, XValueChoiceNotification
@@ -76,6 +76,10 @@ export class GameChoiceService {
     this.revealingHand = false;
     this.revealedHandCards = [];
     this.revealedHandPlayerName = '';
+    // Reveal library top
+    this.revealingLibraryTop = false;
+    this.revealedLibraryTopCards = [];
+    this.revealedLibraryTopPlayerName = '';
     // Choose from revealed hand
     this.choosingFromRevealedHand = false;
     this.revealedHandChoosableIndices = new Set();
@@ -139,6 +143,11 @@ export class GameChoiceService {
   revealingHand = false;
   revealedHandCards: Card[] = [];
   revealedHandPlayerName = '';
+
+  // --- Reveal library top state (Orcish Spy) ---
+  revealingLibraryTop = false;
+  revealedLibraryTopCards: Card[] = [];
+  revealedLibraryTopPlayerName = '';
 
   // --- Choose from revealed hand state ---
   choosingFromRevealedHand = false;
@@ -208,6 +217,12 @@ export class GameChoiceService {
     this.revealingHand = true;
     this.revealedHandCards = msg.cards;
     this.revealedHandPlayerName = msg.playerName;
+  }
+
+  handleRevealLibraryTop(msg: RevealLibraryTopNotification): void {
+    this.revealingLibraryTop = true;
+    this.revealedLibraryTopCards = msg.cards;
+    this.revealedLibraryTopPlayerName = msg.playerName;
   }
 
   handleChooseFromRevealedHand(msg: ChooseFromRevealedHandNotification): void {
@@ -444,6 +459,12 @@ export class GameChoiceService {
     this.revealingHand = false;
     this.revealedHandCards = [];
     this.revealedHandPlayerName = '';
+  }
+
+  closeRevealLibraryTop(): void {
+    this.revealingLibraryTop = false;
+    this.revealedLibraryTopCards = [];
+    this.revealedLibraryTopPlayerName = '';
   }
 
   chooseFromRevealedHand(index: number): void {

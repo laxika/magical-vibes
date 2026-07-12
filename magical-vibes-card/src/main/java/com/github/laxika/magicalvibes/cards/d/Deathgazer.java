@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "9ED", collectorNumber = "124")
+@CardRegistration(set = "8ED", collectorNumber = "126")
 public class Deathgazer extends Card {
 
     public Deathgazer() {

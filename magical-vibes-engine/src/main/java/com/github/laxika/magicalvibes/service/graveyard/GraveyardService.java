@@ -169,6 +169,9 @@ public class GraveyardService {
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
         collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
+        if (sourceZone == Zone.BATTLEFIELD) {
+            collectPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, card);
+        }
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
@@ -193,6 +196,28 @@ public class GraveyardService {
             ));
             gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
             log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
+        }
+    }
+
+    /**
+     * Fires "when this card is put into a graveyard from the battlefield" triggered abilities
+     * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, e.g. Spreading Algae). Only called when
+     * the source zone is the battlefield. The card has already entered the graveyard; the trigger goes
+     * on the stack under its owner's control.
+     */
+    private void collectPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID ownerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    ownerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    (UUID) null
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
+            log.info("Game {} - {} triggers (put into graveyard from battlefield)", gameData.id, card.getName());
         }
     }
 

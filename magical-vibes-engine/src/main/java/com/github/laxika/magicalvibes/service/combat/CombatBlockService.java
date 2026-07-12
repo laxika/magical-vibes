@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordE
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -265,6 +267,9 @@ public class CombatBlockService {
         // there must be at least 2 total blockers
         validateCantBlockAlone(defenderBattlefield, blockerAssignments);
 
+        // Okk: "can't block unless a creature with greater power also blocks"
+        validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
+
         validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
         validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
@@ -314,6 +319,23 @@ public class CombatBlockService {
                     }
                 }
                 if (blockEffects.isEmpty()) continue;
+
+                // Targeted block triggers (e.g. Elite Javelineer's "deals 1 damage to target
+                // attacking creature") let the controller choose any legal target rather than
+                // referencing the blocked attacker. A card-level target filter is the discriminator;
+                // route these through the shared attack-trigger targeting pipeline, which honours the
+                // card's PermanentPredicateTargetFilter and drains via the pending-interaction queue.
+                boolean targetsChosenPermanent = blocker.getCard().getTargetFilter() != null
+                        && blockEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+                if (targetsChosenPermanent) {
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));
+                    String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} block trigger queued for target selection", gameData.id,
+                            blocker.getCard().getName());
+                    continue;
+                }
 
                 // Set target: attacker ID for effects that need it, otherwise blocker's own ID
                 boolean needsAttackerTarget = blockEffects.stream()
@@ -920,6 +942,36 @@ public class CombatBlockService {
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+    }
+
+    /**
+     * Okk (CR 509.1a): a creature with "can't block unless a creature with greater power also
+     * blocks" may only be declared as a blocker if another declared blocker has strictly greater
+     * power. The comparison is checked only at declaration time.
+     */
+    private void validateGreaterPowerAlsoBlocks(GameData gameData, List<Permanent> defenderBattlefield,
+                                                List<BlockerAssignment> blockerAssignments) {
+        Set<Integer> uniqueBlockerIndices = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            uniqueBlockerIndices.add(assignment.blockerIndex());
+        }
+        for (int idx : uniqueBlockerIndices) {
+            Permanent restricted = defenderBattlefield.get(idx);
+            boolean hasRestriction = restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
+            if (!hasRestriction) {
+                continue;
+            }
+            int power = gameQueryService.getEffectivePower(gameData, restricted);
+            boolean greaterPowerAlsoBlocks = uniqueBlockerIndices.stream()
+                    .filter(other -> other != idx)
+                    .map(defenderBattlefield::get)
+                    .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
+            if (!greaterPowerAlsoBlocks) {
+                throw new IllegalStateException(restricted.getCard().getName()
+                        + " can't block unless a creature with greater power also blocks");
+            }
+        }
     }
 
     /**

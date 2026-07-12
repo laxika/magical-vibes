@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "2")
 @CardRegistration(set = "9ED", collectorNumber = "1")
+@CardRegistration(set = "8ED", collectorNumber = "1")
 @CardRegistration(set = "P02", collectorNumber = "8")
 public class AngelOfMercy extends Card {
 

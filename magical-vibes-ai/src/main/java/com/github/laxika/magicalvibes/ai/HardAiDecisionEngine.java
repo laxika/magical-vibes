@@ -1984,7 +1984,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                         .toList();
                 cost += boardEval.bestSacrificeCost(gameData, creatures, aiPlayer.getId(), opponentId);
             } else if (effect instanceof PayLifeCost lifeCost) {
-                cost += lifeCost.amount() * 1.5;
+                cost += lifeCost.effectiveAmount(gameData.getLife(aiPlayer.getId())) * 1.5;
             } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
                 cost += counterCost.count();
             }

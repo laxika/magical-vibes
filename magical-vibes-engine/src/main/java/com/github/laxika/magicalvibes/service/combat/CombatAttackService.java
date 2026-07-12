@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -27,11 +29,13 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -68,6 +72,7 @@ public class CombatAttackService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
@@ -167,6 +172,9 @@ public class CombatAttackService {
         // CR 508.1b: validate "can't attack alone" — if any declared attacker has this restriction,
         // there must be at least 2 total attackers
         validateCantAttackAlone(battlefield, attackerIndices);
+
+        // Okk: "can't attack unless a creature with greater power also attacks"
+        validateGreaterPowerAlsoAttacks(gameData, battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
@@ -674,6 +682,12 @@ public class CombatAttackService {
                     if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
                     }
+                } else if (effect instanceof CreaturesWithPowerGreaterThanAmountCantAttackEffect restriction) {
+                    int threshold = amountEvaluationService.evaluate(gameData, restriction.amount(),
+                            AmountContext.forStaticEffect(permanent, playerId));
+                    if (gameQueryService.getEffectivePower(gameData, creature) > threshold) {
+                        restricted[0] = true;
+                    }
                 }
             }
         });
@@ -852,6 +866,35 @@ public class CombatAttackService {
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+    }
+
+    /**
+     * Okk (CR 508.1a): a creature with "can't attack unless a creature with greater power also
+     * attacks" may only be declared as an attacker if another declared attacker has strictly
+     * greater power. The comparison is checked only at declaration time.
+     */
+    private void validateGreaterPowerAlsoAttacks(GameData gameData, List<Permanent> battlefield,
+                                                 List<Integer> attackerIndices) {
+        for (int idx : attackerIndices) {
+            Permanent restricted = battlefield.get(idx);
+            if (!hasGreaterPowerRestriction(restricted)) {
+                continue;
+            }
+            int power = gameQueryService.getEffectivePower(gameData, restricted);
+            boolean greaterPowerAlsoAttacks = attackerIndices.stream()
+                    .filter(other -> other != idx)
+                    .map(battlefield::get)
+                    .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
+            if (!greaterPowerAlsoAttacks) {
+                throw new IllegalStateException(restricted.getCard().getName()
+                        + " can't attack unless a creature with greater power also attacks");
+            }
+        }
+    }
+
+    private boolean hasGreaterPowerRestriction(Permanent creature) {
+        return creature.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
     }
 
     private void payGenericMana(ManaPool pool, int amount) {

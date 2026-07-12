@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "12")
+@CardRegistration(set = "8ED", collectorNumber = "15")
 public class CrossbowInfantry extends Card {
 
     public CrossbowInfantry() {

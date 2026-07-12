@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "55")
+@CardRegistration(set = "8ED", collectorNumber = "55")
 @CardRegistration(set = "9ED", collectorNumber = "51")
 @CardRegistration(set = "POR", collectorNumber = "35")
 public class VenerableMonk extends Card {

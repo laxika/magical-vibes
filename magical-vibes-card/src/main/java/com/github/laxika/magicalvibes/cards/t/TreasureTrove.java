@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "110")
+@CardRegistration(set = "8ED", collectorNumber = "110")
 public class TreasureTrove extends Card {
 
     public TreasureTrove() {

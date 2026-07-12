@@ -135,6 +135,12 @@ public sealed interface TriggerContext {
                              UUID artifactControllerId) implements TriggerContext {}
 
     /**
+     * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
+     */
+    record AnyLandGraveyard(UUID graveyardOwnerId,
+                            UUID landControllerId) implements TriggerContext {}
+
+    /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
      *
      * @param landCard          the land card that was put into the graveyard from the battlefield

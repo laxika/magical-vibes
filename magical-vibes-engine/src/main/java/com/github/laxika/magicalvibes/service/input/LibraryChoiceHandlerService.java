@@ -297,6 +297,40 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Chosen card not found in library");
         }
 
+        if (destination == LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER) {
+            // Bribery: the chosen card is put onto the battlefield under the SEARCHER's control
+            // (not the searched library's owner), then that player shuffles.
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, chosenCard, Zone.LIBRARY)) {
+                deck.add(chosenCard);
+                gameBroadcastService.logAndBroadcast(gameData, chosenCard.getName()
+                        + " can't enter the battlefield from a library; it stays in the library.");
+            } else {
+                Permanent perm = new Permanent(chosenCard);
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, perm);
+                if (chosenCard.hasType(CardType.CREATURE)) {
+                    battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
+                }
+                if (!gameData.interaction.isAwaitingInput()) {
+                    legendRuleService.checkLegendRule(gameData, playerId);
+                }
+                gameBroadcastService.logAndBroadcast(gameData,
+                        chosenCard.getName() + " enters the battlefield under " + player.getUsername() + "'s control.");
+            }
+
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                if (targetPlayerId != null) {
+                    String targetName = gameData.playerIdToName.get(targetPlayerId);
+                    gameBroadcastService.logAndBroadcast(gameData, targetName + "'s library is shuffled.");
+                }
+            }
+            log.info("Game {} - {} puts {} onto the battlefield under their control from a library search",
+                    gameData.id, player.getUsername(), chosenCard.getName());
+            stateBasedActionService.performStateBasedActions(gameData);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.CAST_WITHOUT_PAYING) {
             // The chosen card leaves the searched library; the owner then shuffles (the chosen card
             // is already removed so it is not shuffled back). The card is cast under the searcher's
@@ -582,6 +616,7 @@ public class LibraryChoiceHandlerService {
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
                 case CAST_WITHOUT_PAYING -> throw new IllegalStateException("CAST_WITHOUT_PAYING should be handled earlier");
+                case BATTLEFIELD_UNDER_SEARCHER -> throw new IllegalStateException("BATTLEFIELD_UNDER_SEARCHER should be handled earlier");
             };
             String logEntry;
             if (targetPlayerId != null) {

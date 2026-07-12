@@ -748,6 +748,26 @@
     </div>
   }
 
+  @if (choice.revealingLibraryTop) {
+    <div class="reveal-hand-overlay">
+      <div class="reveal-hand-card">
+        <h2>Top of {{ choice.revealedLibraryTopPlayerName }}'s Library</h2>
+        @if (choice.revealedLibraryTopCards.length === 0) {
+          <p class="reveal-hand-empty">Library is empty.</p>
+        } @else {
+          <div class="reveal-hand-cards">
+            @for (card of choice.revealedLibraryTopCards; track $index) {
+              <app-card-display [card]="card"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+        }
+        <button class="btn-keep" (click)="choice.closeRevealLibraryTop()">Close</button>
+      </div>
+    </div>
+  }
+
   @if (game()?.status === GameStatus.WAITING) {
     <div class="players-area">
       <div class="game-title">{{ game()?.gameName }}</div>

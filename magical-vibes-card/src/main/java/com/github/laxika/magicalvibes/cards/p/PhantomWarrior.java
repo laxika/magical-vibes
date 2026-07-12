@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "96")
+@CardRegistration(set = "8ED", collectorNumber = "93")
 @CardRegistration(set = "9ED", collectorNumber = "88")
 @CardRegistration(set = "M10", collectorNumber = "66")
 @CardRegistration(set = "POR", collectorNumber = "65")

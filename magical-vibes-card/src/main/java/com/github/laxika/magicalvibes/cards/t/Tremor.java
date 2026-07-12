@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "P02", collectorNumber = "118")
+@CardRegistration(set = "8ED", collectorNumber = "228")
 public class Tremor extends Card {
 
     public Tremor() {
