@@ -110,6 +110,9 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubCreatureDamageCore(Permanent target, int toughness) {
+        // Divided damage skips permanents that are no longer creatures/planeswalkers at
+        // resolution (CR 608.2b), so the guard must see the target as a creature.
+        lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
         when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
