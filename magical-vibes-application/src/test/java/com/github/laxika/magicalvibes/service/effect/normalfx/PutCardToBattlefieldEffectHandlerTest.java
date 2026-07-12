@@ -30,7 +30,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean());
             }
 
             @Test
@@ -48,7 +48,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true));
+                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), eq(false), eq(true), eq(true), isNull(), eq(false));
             }
 
             @Test
@@ -65,7 +65,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no creature cards in hand")));
             }
@@ -80,7 +80,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no creature cards in hand")));
             }

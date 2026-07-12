@@ -62,6 +62,10 @@ class CardEffectTargetingConsistencyTest {
             // Pre-resolved: the losing player's UUID is stored in the record constructor
             // (used by emblem/delayed effects that already know the player).
             "TargetPlayerLosesGameEffect",
+            // Pre-resolved: the draw-step player's UUID is baked into the stack entry when the
+            // EACH_DRAW_TRIGGERED trigger is pushed in StepTriggerService (Maralen of the Mornsong);
+            // it never enters the shared target-collection pipeline.
+            "TargetPlayerLosesLifeAndSearchesLibraryToHandEffect",
             // Piggyback: rides on a counterspell's existing target (e.g. Frightful Delusion,
             // Psychic Barrier).
             "TargetSpellControllerDiscardsEffect",

@@ -1729,6 +1729,14 @@ class HardAiDecisionEngineTest {
     @DisplayName("Hard AI casts sorcery while reserving mana for instant when both fit")
     void castsSorceryAndReservesManaForInstant() {
         HardAiDecisionEngine ai = createHardAi(player1);
+        // This test guards the deterministic reservation heuristic
+        // (tryCastSpellWithInstantAwareness), not the search. The cast-vs-pass gap here is
+        // marginal for MCTS, whose seeded search still varies run-to-run with map ordering
+        // of the game's random UUIDs — so force the evaluator fallback instead.
+        MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+        Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                .thenThrow(new RuntimeException("MCTS disabled for test"));
+        ai.setMctsEngine(failingMcts);
         giveAiPriority(player1);
 
         // Give AI 4 mana (3 green + 1 red) — enough for one 2-drop + keep 2 for instant

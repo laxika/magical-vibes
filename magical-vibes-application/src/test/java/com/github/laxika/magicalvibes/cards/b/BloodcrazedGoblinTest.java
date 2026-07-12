@@ -29,7 +29,7 @@ class BloodcrazedGoblinTest extends BaseCardTest {
     void canAttackWhenOpponentDealtDamage() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new BloodcrazedGoblin());
-        gd.playersDealtDamageThisTurn.add(player2.getId());
+        gd.recordDamageToPlayer(player2.getId(), 1);
 
         declareAttackers(player1, List.of(0));
 
@@ -41,7 +41,7 @@ class BloodcrazedGoblinTest extends BaseCardTest {
     @DisplayName("Cannot attack when only the controller has been dealt damage")
     void cannotAttackWhenOnlyControllerDealtDamage() {
         addCreatureReady(player1, new BloodcrazedGoblin());
-        gd.playersDealtDamageThisTurn.add(player1.getId());
+        gd.recordDamageToPlayer(player1.getId(), 1);
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
@@ -51,10 +51,11 @@ class BloodcrazedGoblinTest extends BaseCardTest {
     @DisplayName("Restriction is cleared at the start of a new turn")
     void restrictionClearedOnNewTurn() {
         addCreatureReady(player1, new BloodcrazedGoblin());
-        gd.playersDealtDamageThisTurn.add(player2.getId());
+        gd.recordDamageToPlayer(player2.getId(), 1);
 
-        // Simulate new turn clearing the tracker
+        // Simulate new turn clearing the trackers (as TurnProgressionService does)
         gd.playersDealtDamageThisTurn.clear();
+        gd.damageDealtToPlayersThisTurn.clear();
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);

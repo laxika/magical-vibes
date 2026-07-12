@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,8 +27,8 @@ class HellriderTest extends BaseCardTest {
     @DisplayName("Triggers once for each creature you control that attacks")
     void triggersForEachAttackingCreature() {
         harness.setLife(player2, 20);
-        addReady(player1, new Hellrider());
-        addReady(player1, new GrizzlyBears());
+        Permanent hellrider = addReady(player1, new Hellrider());
+        Permanent bears = addReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1), null);
 
@@ -36,9 +37,13 @@ class HellriderTest extends BaseCardTest {
             assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(entry.getCard().getName()).isEqualTo("Hellrider");
             assertThat(entry.getSourcePermanentId()).isEqualTo(gd.playerBattlefields.get(player1.getId()).getFirst().getId());
-            assertThat(entry.getTargetId()).isNull();
+            // The triggering attacker is recorded as a non-targeting reference
+            assertThat(entry.isNonTargeting()).isTrue();
             assertThat(entry.getAttackedTargetId()).isEqualTo(player2.getId());
         });
+        // One trigger per attacking creature, each referencing its own attacker
+        assertThat(gd.stack).extracting(StackEntry::getTargetId)
+                .containsExactlyInAnyOrder(hellrider.getId(), bears.getId());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -63,13 +68,15 @@ class HellriderTest extends BaseCardTest {
     @DisplayName("Damages the planeswalker an attacking creature is attacking")
     void damagesAttackedPlaneswalker() {
         addReady(player1, new Hellrider());
-        addReady(player1, new GrizzlyBears());
+        Permanent bears = addReady(player1, new GrizzlyBears());
         Permanent planeswalker = addPlaneswalker(player2, 4);
 
         declareAttackers(player1, List.of(1), Map.of(1, planeswalker.getId()));
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        // The triggering attacker rides along as a non-targeting reference
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         assertThat(gd.stack.getFirst().getAttackedTargetId()).isEqualTo(planeswalker.getId());
 
         harness.passBothPriorities();
