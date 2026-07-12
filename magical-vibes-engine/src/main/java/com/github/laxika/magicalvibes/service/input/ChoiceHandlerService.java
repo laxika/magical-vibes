@@ -175,8 +175,8 @@ public class ChoiceHandlerService {
             handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.VexingArcanixNameChoice ctx) {
-            handleVexingArcanixNameChoice(gameData, player, colorName, ctx);
+        if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
+            handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
             return;
         }
         CardColor color = CardColor.valueOf(colorName);
@@ -1008,8 +1008,8 @@ public class ChoiceHandlerService {
         resumeAndAutoPass(gameData);
     }
 
-    private void handleVexingArcanixNameChoice(GameData gameData, Player player, String cardName,
-                                               ChoiceContext.VexingArcanixNameChoice ctx) {
+    private void handleTargetPlayerNameCardRevealTopChoice(GameData gameData, Player player, String cardName,
+                                                           ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
         gameData.interaction.clearAwaitingInput();
 
         UUID targetPlayerId = ctx.targetPlayerId();
@@ -1017,7 +1017,7 @@ public class ChoiceHandlerService {
 
         String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
         gameBroadcastService.logAndBroadcast(gameData, choiceLog);
-        log.info("Game {} - {} chooses card name \"{}\" (Vexing Arcanix)",
+        log.info("Game {} - {} chooses card name \"{}\" (name-card-reveal-top)",
                 gameData.id, player.getUsername(), cardName);
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -1042,7 +1042,7 @@ public class ChoiceHandlerService {
             graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
             gameBroadcastService.logAndBroadcast(gameData,
                     targetName + " puts " + topCard.getName() + " into their graveyard.");
-            dealVexingArcanixDamage(gameData, ctx, targetPlayerId);
+            dealRevealMissDamage(gameData, ctx, targetPlayerId);
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
         }
 
@@ -1051,7 +1051,10 @@ public class ChoiceHandlerService {
         resumeAndAutoPass(gameData);
     }
 
-    private void dealVexingArcanixDamage(GameData gameData, ChoiceContext.VexingArcanixNameChoice ctx, UUID targetPlayerId) {
+    private void dealRevealMissDamage(GameData gameData, ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx,
+                                      UUID targetPlayerId) {
+        if (ctx.damageOnMiss() <= 0) return;
+
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
         if (source == null) return;
 
@@ -1064,7 +1067,7 @@ public class ChoiceHandlerService {
                 targetPlayerId,
                 ctx.sourcePermanentId());
 
-        damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, 2);
+        damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, ctx.damageOnMiss());
     }
 
     private List<String> collectAllCardNamesInGame(GameData gameData) {

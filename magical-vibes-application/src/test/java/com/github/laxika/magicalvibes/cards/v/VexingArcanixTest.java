@@ -28,7 +28,7 @@ class VexingArcanixTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(interaction.playerId()).isEqualTo(player2.getId());
-        assertThat(interaction.context()).isInstanceOf(ChoiceContext.VexingArcanixNameChoice.class);
+        assertThat(interaction.context()).isInstanceOf(ChoiceContext.TargetPlayerNameCardRevealTopChoice.class);
     }
 
     @Test

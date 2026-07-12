@@ -23,7 +23,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
-        PendingInteraction.MirrorOfFateChoice, PendingInteraction.ThievesAuctionChoice,
+        PendingInteraction.MirrorOfFateChoice, PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -105,16 +105,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * Thieves' Auction: the shared auction over the cards this spell exiled. {@code choosingPlayerId}
+     * A shared auction over exiled cards (e.g. Thieves' Auction). {@code choosingPlayerId}
      * is the player currently picking one card from {@code pool} to put onto the battlefield tapped
      * under their control; {@code playerOrder} is the fixed turn-order rotation (controller first) used
      * to advance to the next chooser. {@code placed} accumulates each (controller, card) picked so far so
      * their enter-the-battlefield abilities can be processed once the pool empties. Each answered pick
      * begins a fresh record with the reduced pool, next chooser, and grown {@code placed}.
      */
-    record ThievesAuctionChoice(UUID choosingPlayerId, java.util.List<Card> pool,
-                                java.util.List<UUID> playerOrder,
-                                java.util.List<ThievesAuctionPlacement> placed, String prompt)
+    record PermanentAuctionChoice(UUID choosingPlayerId, java.util.List<Card> pool,
+                                  java.util.List<UUID> playerOrder,
+                                  java.util.List<PermanentAuctionPlacement> placed, String prompt)
             implements PendingInteraction {
 
         /** The selectable card IDs, in current pool order. */
@@ -123,8 +123,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** One card picked during a Thieves' Auction, held for deferred enter-the-battlefield processing. */
-    record ThievesAuctionPlacement(UUID controllerId, Card card) {
+    /** One card picked during a permanent auction, held for deferred enter-the-battlefield processing. */
+    record PermanentAuctionPlacement(UUID controllerId, Card card) {
     }
 
     /**

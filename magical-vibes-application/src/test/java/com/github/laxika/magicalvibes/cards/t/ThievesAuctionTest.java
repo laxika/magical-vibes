@@ -36,8 +36,8 @@ class ThievesAuctionTest extends BaseCardTest {
                 .orElseThrow();
     }
 
-    private PendingInteraction.ThievesAuctionChoice activeAuction() {
-        return gd.interaction.activeInteraction(PendingInteraction.ThievesAuctionChoice.class);
+    private PendingInteraction.PermanentAuctionChoice activeAuction() {
+        return gd.interaction.activeInteraction(PendingInteraction.PermanentAuctionChoice.class);
     }
 
     @Test
@@ -49,7 +49,7 @@ class ThievesAuctionTest extends BaseCardTest {
 
         cast(player1);
 
-        PendingInteraction.ThievesAuctionChoice auction = activeAuction();
+        PendingInteraction.PermanentAuctionChoice auction = activeAuction();
         assertThat(auction).isNotNull();
         assertThat(auction.choosingPlayerId()).isEqualTo(player1.getId());
         assertThat(auction.pool()).extracting(Card::getName)
@@ -142,7 +142,7 @@ class ThievesAuctionTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(UUID.randomUUID()));
 
-        PendingInteraction.ThievesAuctionChoice auction = activeAuction();
+        PendingInteraction.PermanentAuctionChoice auction = activeAuction();
         assertThat(auction).isNotNull();
         assertThat(auction.choosingPlayerId()).isEqualTo(player1.getId());
         assertThat(auction.pool()).hasSize(2);

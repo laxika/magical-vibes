@@ -7,5 +7,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>
  * Used by Thieves' Auction. Requires repeated player interaction (a shared auction pool).
  */
-public record ThievesAuctionEffect() implements CardEffect {
+public record PermanentAuctionEffect() implements CardEffect {
 }

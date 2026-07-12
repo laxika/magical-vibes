@@ -69,7 +69,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
-                || context instanceof ChoiceContext.VexingArcanixNameChoice) {
+                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice) {
             // For the reveal-top-card game: guess the top card of our library
             List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
             String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();

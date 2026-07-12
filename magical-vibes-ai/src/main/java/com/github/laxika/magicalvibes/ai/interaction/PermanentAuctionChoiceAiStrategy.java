@@ -9,18 +9,19 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Answers a Thieves' Auction pick: the AI grabs the highest-mana-value card remaining in the pool.
+ * Answers a permanent-auction pick (e.g. Thieves' Auction): the AI grabs the highest-mana-value
+ * card remaining in the pool.
  */
 @Slf4j
-class ThievesAuctionChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.ThievesAuctionChoice> {
+class PermanentAuctionChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.PermanentAuctionChoice> {
 
     @Override
-    public Class<PendingInteraction.ThievesAuctionChoice> handledType() {
-        return PendingInteraction.ThievesAuctionChoice.class;
+    public Class<PendingInteraction.PermanentAuctionChoice> handledType() {
+        return PendingInteraction.PermanentAuctionChoice.class;
     }
 
     @Override
-    public void answer(PendingInteraction.ThievesAuctionChoice interaction, AiInteractionContext ctx) throws Exception {
+    public void answer(PendingInteraction.PermanentAuctionChoice interaction, AiInteractionContext ctx) throws Exception {
         if (!ctx.aiPlayerId().equals(interaction.choosingPlayerId())) {
             return;
         }
@@ -32,7 +33,7 @@ class ThievesAuctionChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             return;
         }
 
-        log.info("AI: Picking {} in Thieves' Auction in game {}", pick.getName(), ctx.gameId());
+        log.info("AI: Picking {} in permanent auction in game {}", pick.getName(), ctx.gameId());
         ctx.gameActions().handleMultipleCardsChosen(ctx.selfConnection(),
                 new MultipleCardsChosenRequest(List.of(pick.getId())));
     }

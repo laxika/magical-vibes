@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ThievesAuctionEffect;
-import com.github.laxika.magicalvibes.service.ThievesAuctionService;
+import com.github.laxika.magicalvibes.model.effect.PermanentAuctionEffect;
+import com.github.laxika.magicalvibes.service.PermanentAuctionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -12,17 +12,17 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ThievesAuctionEffectHandler implements NormalEffectHandlerBean {
+public class PermanentAuctionEffectHandler implements NormalEffectHandlerBean {
 
-    private final ThievesAuctionService thievesAuctionService;
+    private final PermanentAuctionService permanentAuctionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return ThievesAuctionEffect.class;
+        return PermanentAuctionEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        thievesAuctionService.beginAuction(gameData, entry.getControllerId(), entry.getCard().getName());
+        permanentAuctionService.beginAuction(gameData, entry.getControllerId(), entry.getCard().getName());
     }
 }

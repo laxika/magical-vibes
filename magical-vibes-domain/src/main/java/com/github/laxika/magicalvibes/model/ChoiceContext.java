@@ -131,11 +131,13 @@ public sealed interface ChoiceContext {
     record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
-     * Vexing Arcanix: the target player names a card, then reveals the top card of their library.
-     * If it matches the named card it goes to their hand; otherwise it goes to their graveyard and
-     * the source ({@code sourcePermanentId}) deals 2 damage to them.
+     * The target player names a card, then reveals the top card of their library. If it matches
+     * the named card it goes to their hand; otherwise it goes to their graveyard and the source
+     * ({@code sourcePermanentId}) deals {@code damageOnMiss} damage to them ({@code 0} for no
+     * damage). Used by Vexing Arcanix.
      */
-    record VexingArcanixNameChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId) implements ChoiceContext {}
+    record TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId, UUID sourcePermanentId,
+                                               int damageOnMiss) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

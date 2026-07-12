@@ -18,16 +18,16 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Runs the Thieves' Auction resolution: exile every nontoken permanent into a shared pool, then
- * (starting with the controller, in turn order and wrapping) have each player choose one exiled
- * card and put it onto the battlefield tapped under their control, repeating until the pool empties.
- * The auction state travels on the {@link PendingInteraction.ThievesAuctionChoice} record; each
- * answered pick begins a fresh record for the next chooser.
+ * Runs a permanent auction (e.g. Thieves' Auction): exile every nontoken permanent into a shared
+ * pool, then (starting with the controller, in turn order and wrapping) have each player choose one
+ * exiled card and put it onto the battlefield tapped under their control, repeating until the pool
+ * empties. The auction state travels on the {@link PendingInteraction.PermanentAuctionChoice}
+ * record; each answered pick begins a fresh record for the next chooser.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ThievesAuctionService {
+public class PermanentAuctionService {
 
     private static final String PROMPT =
             "Choose one of the auctioned cards to put onto the battlefield tapped under your control.";
@@ -77,8 +77,8 @@ public class ThievesAuctionService {
 
     /** Applies one player's auction pick and advances the auction (or finishes it). */
     public void applyPick(GameData gameData, Player player, List<UUID> cardIds) {
-        PendingInteraction.ThievesAuctionChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.ThievesAuctionChoice.class);
+        PendingInteraction.PermanentAuctionChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentAuctionChoice.class);
         if (choice == null || !player.getId().equals(choice.choosingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -90,8 +90,8 @@ public class ThievesAuctionService {
                     .findFirst().orElse(null);
         if (chosenId == null) {
             // Mandatory pick — an empty/invalid selection re-prompts the same player.
-            log.warn("Game {} - {} sent an invalid Thieves' Auction pick, re-prompting", gameData.id, player.getUsername());
-            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ThievesAuctionChoice(
+            log.warn("Game {} - {} sent an invalid auction pick, re-prompting", gameData.id, player.getUsername());
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentAuctionChoice(
                     choice.choosingPlayerId(), pool, choice.playerOrder(), choice.placed(), PROMPT));
             return;
         }
@@ -108,8 +108,8 @@ public class ThievesAuctionService {
         gameBroadcastService.logAndBroadcast(gameData,
                 player.getUsername() + " puts " + chosen.getName() + " onto the battlefield tapped.");
 
-        List<PendingInteraction.ThievesAuctionPlacement> placed = new ArrayList<>(choice.placed());
-        placed.add(new PendingInteraction.ThievesAuctionPlacement(chooserId, chosen));
+        List<PendingInteraction.PermanentAuctionPlacement> placed = new ArrayList<>(choice.placed());
+        placed.add(new PendingInteraction.PermanentAuctionPlacement(chooserId, chosen));
 
         gameData.interaction.clearAwaitingInput();
 
@@ -126,16 +126,16 @@ public class ThievesAuctionService {
     }
 
     private void beginPick(GameData gameData, UUID chooserId, List<Card> pool, List<UUID> playerOrder,
-                           List<PendingInteraction.ThievesAuctionPlacement> placed) {
+                           List<PendingInteraction.PermanentAuctionPlacement> placed) {
         gameBroadcastService.broadcastGameState(gameData);
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.ThievesAuctionChoice(chooserId, pool, playerOrder, placed, PROMPT));
+                new PendingInteraction.PermanentAuctionChoice(chooserId, pool, playerOrder, placed, PROMPT));
     }
 
-    private void finishAuction(GameData gameData, List<PendingInteraction.ThievesAuctionPlacement> placed) {
+    private void finishAuction(GameData gameData, List<PendingInteraction.PermanentAuctionPlacement> placed) {
         // Enter-the-battlefield abilities fire after every card has been chosen (all entered as part
         // of this resolution). Stop early if an ETB begins its own interaction.
-        for (PendingInteraction.ThievesAuctionPlacement placement : placed) {
+        for (PendingInteraction.PermanentAuctionPlacement placement : placed) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, placement.controllerId(), placement.card(), null, false);
             if (gameData.interaction.isAwaitingInput()) {

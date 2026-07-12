@@ -359,7 +359,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PlayAdditionalLandsEffect(int count)` — grant controller `count` extra land plays this turn (Summer Bloom)
 - `MillHalfLibraryEffect()` — mill half (target player)
 - `NameCardMillTargetGainLifeEffect()` — controller names a card, target player mills 1; if the milled card matches the name, controller gains life = its mana value (Lammastide Weave; targets a player)
-- `VexingArcanixEffect()` — target player names a card, then reveals their top library card; match → their hand, mismatch → their graveyard + source deals 2 damage to them (Vexing Arcanix; targets a player)
+- `TargetPlayerNameCardRevealTopEffect(damageOnMiss)` — target player names a card, then reveals their top library card; match → their hand, mismatch → their graveyard + source deals `damageOnMiss` damage to them (`0` = no damage) (Vexing Arcanix with `2`; targets a player)
 
 ## Exile
 
@@ -368,7 +368,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE)` — exile target player's whole graveyard (also: `OWN`, `TARGET_CARDS_ANY_GRAVEYARD` [+`CardTypePredicate`], `TARGET_CARDS_OPPONENT_GRAVEYARD`, `ALL_PLAYERS`, `ALL_OPPONENTS`)
 - `ExileAllCreaturesEffect()` — exile all creatures
 - `ExileAllPermanentsEffect(PermanentPredicate)` — exile matching permanents
-- `ThievesAuctionEffect()` — SPELL: exile all nontoken permanents, then players take turns (controller first) claiming one exiled card each onto the battlefield tapped until the pool empties (Thieves' Auction)
+- `PermanentAuctionEffect()` — SPELL: exile all nontoken permanents, then players take turns (controller first) claiming one exiled card each onto the battlefield tapped until the pool empties (Thieves' Auction)
 - `ExileTargetPermanentAndTrackWithSourceEffect()` — exile + track exiled card with source permanent (cards "exiled with" it)
 - `ExileTopCardsToSourceEffect(int)` / `EachPlayerExilesTopCardsToSourceEffect(int)` / `ExileTopCardsOfOpponentLibraryToSourceEffect(int)` — exile top N of a library face down, tracked with source (controller / each player / target opponent — the last is Grimoire Thief, two-player resolves against the single opponent)
 - `ReturnAllCardsExiledWithSourceEffect()` — ON_DEATH trigger: return all cards exiled with the source to the battlefield under owners' control (Helvault)
