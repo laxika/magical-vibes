@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "301")
 @CardRegistration(set = "7ED", collectorNumber = "297")
+@CardRegistration(set = "6ED", collectorNumber = "285")
 public class FlyingCarpet extends Card {
 
     public FlyingCarpet() {

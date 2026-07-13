@@ -40,17 +40,17 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
         gameBroadcastService.logAndBroadcast(gameData, flipLog);
 
-        if (!wonFlip) {
+        CardEffect branch = wonFlip ? e.wrapped() : e.lost();
+        if (branch == null) {
             return;
         }
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(e.wrapped());
+        EffectHandler handler = effectHandlerRegistry.getHandler(branch);
         if (handler != null) {
-            handler.resolve(gameData, entry, e.wrapped());
+            handler.resolve(gameData, entry, branch);
         } else {
-            log.warn("No handler for wrapped effect in FlipCoinWinEffect: {}",
-                    e.wrapped().getClass().getSimpleName());
+            log.warn("No handler for branch effect in FlipCoinWinEffect: {}",
+                    branch.getClass().getSimpleName());
         }
-    
     }
 }

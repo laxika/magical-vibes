@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
  * Cheerful Osteomancer (SOS 76) loads (see {@code CheerfulOsteomancerRaiseDead#getBackFaceClassName}). A copy of
  * this spell is created in exile while Cheerful Osteomancer is prepared and may be cast from there.
  */
+@CardRegistration(set = "6ED", collectorNumber = "152")
 @CardRegistration(set = "7ED", collectorNumber = "157")
 @CardRegistration(set = "8ED", collectorNumber = "157")
 @CardRegistration(set = "9ED", collectorNumber = "156")

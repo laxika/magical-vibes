@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "4")
 @CardRegistration(set = "7ED", collectorNumber = "2")
 @CardRegistration(set = "8ED", collectorNumber = "3")
+@CardRegistration(set = "6ED", collectorNumber = "3")
 public class ArdentMilitia extends Card {
 }

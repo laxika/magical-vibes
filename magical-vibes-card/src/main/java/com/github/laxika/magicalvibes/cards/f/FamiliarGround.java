@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "243")
+@CardRegistration(set = "6ED", collectorNumber = "228")
 public class FamiliarGround extends Card {
 
     public FamiliarGround() {

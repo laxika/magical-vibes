@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "320")
+@CardRegistration(set = "6ED", collectorNumber = "314")
 public class StormCauldron extends Card {
 
     public StormCauldron() {

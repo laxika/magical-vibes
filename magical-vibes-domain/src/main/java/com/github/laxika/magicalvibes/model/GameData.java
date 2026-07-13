@@ -161,6 +161,8 @@ public class GameData {
     public UUID combatDamageRedirectTarget;
     public final Map<UUID, Map<CardColor, Integer>> playerColorDamagePreventionCount = new ConcurrentHashMap<>();
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
+    /** Tariff: players (APNAP order) still to be processed after the one currently being resolved. */
+    public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
@@ -191,6 +193,8 @@ public class GameData {
     public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
     public final EachPlayerPayLifeState eachPlayerPayLife = new EachPlayerPayLifeState();
+    /** Progress state for Illicit Auction's "each player may bid life for control" auction. */
+    public final IllicitAuctionState illicitAuction = new IllicitAuctionState();
     /**
      * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
      * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
@@ -258,6 +262,8 @@ public class GameData {
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
+    public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
     public boolean damageCantBePreventedThisTurn = false;
     /** Damage redirect shields (e.g. Vengeful Archon): prevention shields that redirect prevented damage to a target player. */
@@ -1297,6 +1303,12 @@ public class GameData {
         copy.eachPlayerPayLife.consecutivePasses = this.eachPlayerPayLife.consecutivePasses;
         copy.eachPlayerPayLife.lifePaid.putAll(this.eachPlayerPayLife.lifePaid);
         copy.eachPlayerPayLife.currentPlayerId = this.eachPlayerPayLife.currentPlayerId;
+        copy.illicitAuction.active = this.illicitAuction.active;
+        copy.illicitAuction.order.addAll(this.illicitAuction.order);
+        copy.illicitAuction.index = this.illicitAuction.index;
+        copy.illicitAuction.highBid = this.illicitAuction.highBid;
+        copy.illicitAuction.highBidderId = this.illicitAuction.highBidderId;
+        copy.illicitAuction.currentBidderId = this.illicitAuction.currentBidderId;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;
         copy.discardCausedByOpponent = this.discardCausedByOpponent;
@@ -1321,6 +1333,7 @@ public class GameData {
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
+        copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
@@ -1416,6 +1429,7 @@ public class GameData {
 
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
+        copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
 
         // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
         //     per-mechanic fields it replaced were copied) ---

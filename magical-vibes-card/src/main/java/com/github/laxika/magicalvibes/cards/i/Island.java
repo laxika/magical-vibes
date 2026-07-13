@@ -66,6 +66,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "333")
 @CardRegistration(set = "7ED", collectorNumber = "334")
 @CardRegistration(set = "7ED", collectorNumber = "335")
+@CardRegistration(set = "6ED", collectorNumber = "335")
+@CardRegistration(set = "6ED", collectorNumber = "336")
+@CardRegistration(set = "6ED", collectorNumber = "337")
+@CardRegistration(set = "6ED", collectorNumber = "338")
 public class Island extends Card {
 
     public Island() {

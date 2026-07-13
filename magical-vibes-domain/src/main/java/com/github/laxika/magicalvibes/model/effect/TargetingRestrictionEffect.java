@@ -13,6 +13,7 @@ import java.util.Set;
  *   <li>{@link #opponentAbilities()} — opponents' abilities can't target (Shanna, Sisay's Legacy).</li>
  *   <li>{@link #hexproof()} — opponents' spells and abilities can't target (granted by Asceticism).</li>
  *   <li>{@link #fromNonColorSources(CardColor)} — only sources of the given color may target (Gaea's Revenge).</li>
+ *   <li>{@link #spells()} — no spell may target, abilities still can (Dense Foliage).</li>
  *   <li>{@link #fromSpellColors(Set)} — spells of the given colors can't target (Karplusan Strider).</li>
  *   <li>{@link #hexproofFromColors(Set)} — opponents' spells/abilities of the given colors can't target
  *       (Knight of Grace/Malice — hexproof from color, CR 702.11).</li>
@@ -47,6 +48,12 @@ public record TargetingRestrictionEffect(
         return new TargetingRestrictionEffect(
                 TargetingSourceKind.SPELLS_AND_ABILITIES, false, Set.of(allowedColor),
                 TargetColorMode.ALLOWED_COLORS_ONLY);
+    }
+
+    /** Can't be the target of spells (any color, any controller); abilities still can. Dense Foliage. */
+    public static TargetingRestrictionEffect spells() {
+        return new TargetingRestrictionEffect(
+                TargetingSourceKind.SPELLS, false, Set.of(), TargetColorMode.ANY);
     }
 
     /** Can't be the target of spells of the given colors. Karplusan Strider. */

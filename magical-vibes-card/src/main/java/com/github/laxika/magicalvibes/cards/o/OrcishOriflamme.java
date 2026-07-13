@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "206")
+@CardRegistration(set = "6ED", collectorNumber = "197")
 public class OrcishOriflamme extends Card {
 
     public OrcishOriflamme() {

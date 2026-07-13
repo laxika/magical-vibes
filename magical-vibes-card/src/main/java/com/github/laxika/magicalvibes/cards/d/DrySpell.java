@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "90")
+@CardRegistration(set = "6ED", collectorNumber = "124")
 public class DrySpell extends Card {
 
     public DrySpell() {

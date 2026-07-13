@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "180")
 @CardRegistration(set = "7ED", collectorNumber = "177")
+@CardRegistration(set = "6ED", collectorNumber = "169")
 public class Boil extends Card {
 
     public Boil() {

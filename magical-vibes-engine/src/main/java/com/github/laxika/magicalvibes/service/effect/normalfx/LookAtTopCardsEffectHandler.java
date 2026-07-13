@@ -70,9 +70,44 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (e.restDestination() == LookDestination.GRAVEYARD) {
             resolveRestToGraveyard(gameData, entry, e, lookCount, chooseCount);
+        } else if (e.restDestination() == LookDestination.EXILE) {
+            resolveRestToExile(gameData, entry, lookCount, chooseCount);
         } else {
             resolveRestToBottom(gameData, entry, lookCount, chooseCount);
         }
+    }
+
+    // ===== exile the rest (Browse) =====
+
+    private void resolveRestToExile(GameData gameData, StackEntry entry, int lookCount, int chooseCount) {
+        LibraryRevealSupport.TopCardsResult result =
+                libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, lookCount, true);
+        if (result == null) return;
+
+        UUID controllerId = result.controllerId();
+        List<Card> topCards = result.topCards();
+        String playerName = result.playerName();
+
+        // Not enough cards to choose from: they simply go to hand, nothing exiled.
+        if (topCards.size() <= chooseCount) {
+            for (Card card : topCards) {
+                gameData.addCardToHand(controllerId, card);
+            }
+            if (!topCards.isEmpty()) {
+                String names = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " puts " + names + " into their hand.");
+            }
+            return;
+        }
+
+        String handWord = chooseCount == 1 ? "one" : String.valueOf(chooseCount);
+        List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, topCards, cardIds,
+                false, true, false, false, true, 0, null, chooseCount,
+                "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
+                        + " into your hand and exile the rest."));
     }
 
     // ===== rest on the bottom of the library (Stress Dream / Shrine / Jar of Eyeballs) =====
@@ -103,7 +138,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, topCards, cardIds,
-                false, true, true, false, 0, null, chooseCount,
+                false, true, true, false, false, 0, null, chooseCount,
                 "Look at the top " + topCards.size() + " cards of your library. Put " + handWord
                         + " into your hand and the rest on the bottom of your library."));
     }
@@ -172,7 +207,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         String actionVerb = e.reveal() ? "Reveal" : "Look at";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, topCards, cardIds, true, true, false, false, 0, null, toHandCount,
+                controllerId, topCards, cardIds, true, true, false, false, false, 0, null, toHandCount,
                 actionVerb + " the top " + count + " cards of your library. Put " + handWord
                         + " into your hand. The rest are put into your graveyard."));
 
@@ -201,7 +236,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         String handWord = toHandCount == 1 ? "one" : String.valueOf(toHandCount);
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, topCards, cardIds, true, true, false, false, 0, null, toHandCount,
+                controllerId, topCards, cardIds, true, true, false, false, false, 0, null, toHandCount,
                 "Look at the top " + count + " cards of your library. Put " + handWord
                         + " into your hand. The rest are put into your graveyard."));
 

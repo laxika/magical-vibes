@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "8ED", collectorNumber = "117")
 @CardRegistration(set = "7ED", collectorNumber = "116")
+@CardRegistration(set = "6ED", collectorNumber = "110")
 public class AbyssalSpecter extends Card {
 
     public AbyssalSpecter() {

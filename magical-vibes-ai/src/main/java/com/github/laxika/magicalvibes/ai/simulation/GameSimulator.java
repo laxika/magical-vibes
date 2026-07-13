@@ -727,6 +727,12 @@ public class GameSimulator {
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
+            case PendingInteraction.DoomsdayChoice dc -> {
+                List<UUID> chosen = dc.validCardIds().stream().limit(dc.maxCount()).toList();
+                gameService.handleMultipleCardsChosen(gd, player, chosen);
+            }
+            case PendingInteraction.SearchLibraryToTopChoice slttc ->
+                    gameService.handleMultipleCardsChosen(gd, player, slttc.validCardIds());
             case PendingInteraction.CombatDamageAssignment cda -> {
                 Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
                 gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
@@ -760,6 +766,7 @@ public class GameSimulator {
                     gameService.handleCardChosen(gd, player, rcdc.validIndices().iterator().next());
                 }
             }
+            case PendingInteraction.IllicitAuctionBidChoice ignored -> gameService.handleXValueChosen(gd, player, 0);
             case PendingInteraction.HandTopBottomChoice ignored -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
             case PendingInteraction.LibraryRevealChoice lrc -> {
                 if (lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
@@ -807,12 +814,15 @@ public class GameSimulator {
         if (active != null) {
             return switch (active) {
                 case PendingInteraction.XValueChoice xvc -> xvc.playerId();
+                case PendingInteraction.IllicitAuctionBidChoice iabc -> iabc.playerId();
                 case PendingInteraction.Scry s -> s.playerId();
                 case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
                 case PendingInteraction.LibraryReorder lr -> lr.playerId();
                 case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
                 case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
                 case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
+                case PendingInteraction.DoomsdayChoice dc -> dc.playerId();
+                case PendingInteraction.SearchLibraryToTopChoice slttc -> slttc.playerId();
                 case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
                 case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();

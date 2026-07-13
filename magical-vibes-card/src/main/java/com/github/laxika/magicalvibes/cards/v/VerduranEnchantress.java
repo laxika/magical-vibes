@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "279")
+@CardRegistration(set = "6ED", collectorNumber = "264")
 @CardRegistration(set = "8ED", collectorNumber = "285")
 @CardRegistration(set = "7ED", collectorNumber = "280")
 public class VerduranEnchantress extends Card {

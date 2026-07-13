@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *   <li>{@link #chooseNToHandRestToGraveyard(int, int, CardPredicate, boolean)} — up to N to hand,
  *       rest into the graveyard, optionally filtered / revealed (Forbidden Alchemy, Dark Bargain,
  *       Tower Geist, Tracker's Instincts).</li>
+ *   <li>{@link #chooseOneToHandRestToExile(DynamicAmount)} — one to hand, exile the rest (Browse).</li>
  * </ul>
  *
  * <p>The chosen cards always go to the hand; a {@code chosenDestination} field is intentionally not
@@ -42,6 +43,12 @@ public record LookAtTopCardsEffect(
     public static LookAtTopCardsEffect chooseOneToHandRestOnBottom(DynamicAmount lookCount) {
         return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
                 LookDestination.BOTTOM_OF_LIBRARY, false);
+    }
+
+    /** One card to hand, exile the rest (Browse). */
+    public static LookAtTopCardsEffect chooseOneToHandRestToExile(DynamicAmount lookCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
+                LookDestination.EXILE, false);
     }
 
     /** Up to {@code chooseCount} cards to hand, the rest into the graveyard. */

@@ -152,7 +152,7 @@ public class StaticEffectSupport {
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null && permanent.getCard().hasType(CardType.LAND)
-                && hasAnimateLandEffect(gameData)) return true;
+                && matchesAnimateLand(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
     }
@@ -423,13 +423,17 @@ public class StaticEffectSupport {
         return false;
     }
 
-    public boolean hasAnimateLandEffect(GameData gameData) {
+    public boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent source : bf) {
                 for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (e instanceof AllLandsAreCreaturesEffect) return true;
+                    if (e instanceof AllLandsAreCreaturesEffect animateLands
+                            && (animateLands.requiredSubtype() == null
+                                    || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))) {
+                        return true;
+                    }
                 }
             }
         }

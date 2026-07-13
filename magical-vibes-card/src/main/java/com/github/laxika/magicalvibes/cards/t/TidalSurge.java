@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "POR", collectorNumber = "74")
 @CardRegistration(set = "P02", collectorNumber = "56")
+@CardRegistration(set = "6ED", collectorNumber = "102")
 public class TidalSurge extends Card {
 
     public TidalSurge() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "259")
+@CardRegistration(set = "6ED", collectorNumber = "242")
 public class NaturesResurgence extends Card {
 
     public NaturesResurgence() {

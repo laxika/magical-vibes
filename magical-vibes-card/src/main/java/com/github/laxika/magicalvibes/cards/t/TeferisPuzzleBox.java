@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 
+@CardRegistration(set = "6ED", collectorNumber = "315")
 @CardRegistration(set = "9ED", collectorNumber = "312")
 @CardRegistration(set = "8ED", collectorNumber = "316")
 @CardRegistration(set = "7ED", collectorNumber = "321")

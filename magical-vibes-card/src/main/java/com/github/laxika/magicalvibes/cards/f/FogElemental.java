@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "85")
+@CardRegistration(set = "6ED", collectorNumber = "69")
 public class FogElemental extends Card {
 
     public FogElemental() {

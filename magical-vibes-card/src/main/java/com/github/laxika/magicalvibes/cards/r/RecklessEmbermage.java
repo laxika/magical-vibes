@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "212")
+@CardRegistration(set = "6ED", collectorNumber = "201")
 public class RecklessEmbermage extends Card {
 
     public RecklessEmbermage() {

@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "14")
 @CardRegistration(set = "7ED", collectorNumber = "10")
+@CardRegistration(set = "6ED", collectorNumber = "12")
 public class CircleOfProtectionWhite extends Card {
 
     public CircleOfProtectionWhite() {

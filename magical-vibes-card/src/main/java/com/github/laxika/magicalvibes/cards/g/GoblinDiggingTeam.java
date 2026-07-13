@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "186")
+@CardRegistration(set = "6ED", collectorNumber = "182")
 public class GoblinDiggingTeam extends Card {
 
     public GoblinDiggingTeam() {

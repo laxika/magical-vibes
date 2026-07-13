@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
@@ -27,29 +30,75 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageTo
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class DrawService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
+    // @Lazy to break the constructor cycle DrawService → InteractionHandlerRegistry →
+    // (graveyard/card choice handlers) → DrawService.
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+
+    public DrawService(GameQueryService gameQueryService,
+                       GameBroadcastService gameBroadcastService,
+                       GameOutcomeService gameOutcomeService,
+                       TriggeredAbilityQueueService triggeredAbilityQueueService,
+                       @Lazy InteractionHandlerRegistry interactionHandlerRegistry) {
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.gameOutcomeService = gameOutcomeService;
+        this.triggeredAbilityQueueService = triggeredAbilityQueueService;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+    }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         if (isDrawPrevented(gameData)) {
             String playerName = gameData.playerIdToName.get(playerId);
             gameBroadcastService.logAndBroadcast(gameData, playerName + " can't draw a card.");
             log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
+            return;
+        }
+
+        // Forbidden Crypt — "If you would draw a card, return a card from your graveyard to your
+        // hand instead. If you can't, you lose the game." Mandatory replacement for the drawer.
+        if (findReturnFromGraveyardInsteadOfDrawSourceCard(gameData, playerId) != null) {
+            // A prior forced return from the same multi-card draw is still awaiting a choice; don't
+            // stack another interaction over it (it would overwrite the active one).
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null || graveyard.isEmpty()) {
+                // Can't return a card — the player loses the game (CR 104.3a, replacement wording).
+                if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                    UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
+                    String lossLog = gameData.playerIdToName.get(playerId)
+                            + " can't return a card from their graveyard and loses the game.";
+                    gameBroadcastService.logAndBroadcast(gameData, lossLog);
+                    log.info("Game {} - {} loses (Forbidden Crypt: empty graveyard on draw)",
+                            gameData.id, gameData.playerIdToName.get(playerId));
+                    gameOutcomeService.declareWinner(gameData, winnerId);
+                }
+                return;
+            }
+            List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                    .builder(playerId, validIndices, GraveyardChoiceDestination.HAND,
+                            "Return a card from your graveyard to your hand.")
+                    .build());
             return;
         }
 
@@ -178,6 +227,22 @@ public class DrawService {
         for (Permanent permanent : battlefield) {
             boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(effect -> effect instanceof DoubleDrawReplacementEffect);
+            if (hasEffect) {
+                return permanent.getCard();
+            }
+        }
+        return null;
+    }
+
+    private Card findReturnFromGraveyardInsteadOfDrawSourceCard(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return null;
+        }
+
+        for (Permanent permanent : battlefield) {
+            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(effect -> effect instanceof ReturnFromGraveyardInsteadOfDrawEffect);
             if (hasEffect) {
                 return permanent.getCard();
             }

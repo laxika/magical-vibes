@@ -6,8 +6,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.PayManaCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,6 +24,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -49,6 +56,7 @@ public class CardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final EquipSupport equipSupport;
     private final ExileService exileService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -65,6 +73,7 @@ public class CardChoiceHandlerService {
         boolean sacrificeAtEndStep = false;
         boolean enterAttacking = false;
         UUID attachEquipmentCardId = null;
+        Integer sacrificeUnlessPayGenericReduction = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -75,6 +84,7 @@ public class CardChoiceHandlerService {
             sacrificeAtEndStep = hc.sacrificeAtEndStep();
             attachEquipmentCardId = hc.attachEquipmentCardId();
             enterAttacking = hc.enterAttacking();
+            sacrificeUnlessPayGenericReduction = hc.sacrificeUnlessPayGenericReduction();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -107,8 +117,13 @@ public class CardChoiceHandlerService {
                 resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
                 resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste,
-                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking);
+                        sacrificeAtEndStep, attachEquipmentCardId, enterAttacking, sacrificeUnlessPayGenericReduction);
             }
+        }
+
+        // A pay-or-sacrifice may ability may now be awaiting the player's decision (e.g. Flash).
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
         }
 
         turnProgressionService.resolveAutoPass(gameData);
@@ -216,6 +231,22 @@ public class CardChoiceHandlerService {
                             break;
                         }
                     }
+                }
+            }
+
+            // Return cards from graveyard to hand after "discard X cards, then return a card for
+            // each discarded" completes (Recall). One sequential pick per discarded card; the
+            // graveyard holds at least that many (the cards just discarded), so the choice always
+            // begins. Once the queue empties, GraveyardChoiceHandlerService resumes the remaining
+            // effects (e.g. the trailing ExileSpellEffect).
+            if (followUp.graveyardReturnCount() > 0) {
+                for (int i = 0; i < followUp.graveyardReturnCount(); i++) {
+                    gameData.pendingGraveyardReturnQueue.add(new PendingGraveyardReturnChoice(
+                            playerId, 1, null, GraveyardChoiceDestination.HAND, false));
+                }
+                graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
                 }
             }
 
@@ -789,7 +820,8 @@ public class CardChoiceHandlerService {
 
     private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card,
                                              boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep,
-                                             UUID attachEquipmentCardId, boolean enterAttacking) {
+                                             UUID attachEquipmentCardId, boolean enterAttacking,
+                                             Integer sacrificeUnlessPayGenericReduction) {
         Permanent permanent = new Permanent(card);
         if (enterTapped) {
             permanent.tap();
@@ -822,6 +854,46 @@ public class CardChoiceHandlerService {
         if (sacrificeAtEndStep) {
             gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
         }
+
+        // Flash: "sacrifice it unless you pay its mana cost reduced by {N}." Prompt a pay-or-sacrifice
+        // may ability against the just-entered creature — accepting charges the reduced cost, declining
+        // (or being unable to pay) sacrifices it via the ForcedCostOrElse SacrificeSelf penalty.
+        if (sacrificeUnlessPayGenericReduction != null) {
+            String reducedCost = reduceGenericCost(card.getManaCost(), sacrificeUnlessPayGenericReduction);
+            ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
+                    new PayManaCost(reducedCost), List.of(new SacrificeSelfEffect()), true);
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    card, playerId, List.of(payOrSacrifice),
+                    card.getName() + " - Pay " + reducedCost + " or sacrifice it?",
+                    null, reducedCost, permanent.getId()));
+            playerInputService.processNextMayAbility(gameData);
+        }
+    }
+
+    /**
+     * Returns a mana cost string with its generic portion reduced by {@code reduction} (floored at 0);
+     * colored, hybrid, and other symbols are preserved. Yields {@code "{0}"} when nothing else remains.
+     */
+    private static String reduceGenericCost(String manaCost, int reduction) {
+        String cost = manaCost == null ? "" : manaCost;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^}]+)}").matcher(cost);
+        int generic = 0;
+        StringBuilder others = new StringBuilder();
+        while (matcher.find()) {
+            String symbol = matcher.group(1);
+            try {
+                generic += Integer.parseInt(symbol);
+            } catch (NumberFormatException notGeneric) {
+                others.append('{').append(symbol).append('}');
+            }
+        }
+        int newGeneric = Math.max(0, generic - reduction);
+        StringBuilder result = new StringBuilder();
+        if (newGeneric > 0 || others.length() == 0) {
+            result.append('{').append(newGeneric).append('}');
+        }
+        result.append(others);
+        return result.toString();
     }
 
     private void attachSourceEquipmentToPermanent(GameData gameData, UUID equipmentCardId, Permanent target) {

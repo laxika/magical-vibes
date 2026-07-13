@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "142")
+@CardRegistration(set = "6ED", collectorNumber = "138")
 public class HowlFromBeyond extends Card {
 
     public HowlFromBeyond() {

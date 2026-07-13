@@ -52,11 +52,13 @@ public class CounterUnlessPaysEffectHandler implements NormalEffectHandlerBean {
             } else {
                 counterSupport.counterSpell(gameData, entry, targetEntry);
             }
+            // Not paid (couldn't afford): resolve any rider against the spell's controller (Power Sink).
+            counterSupport.resolveNotPaidRider(gameData, entry.getCard(), targetControllerId, e.onNotPaidEffects());
         } else {
             String prompt = "Pay {" + payAmount + "} to prevent " + targetEntry.getCard().getName() + " from being countered?";
             gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                     entry.getCard(), targetControllerId,
-                    List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered())),
+                    List.of(new CounterUnlessPaysEffect(payAmount, false, e.exileIfCountered(), e.onNotPaidEffects())),
                     prompt, targetCardId
             ));
         }

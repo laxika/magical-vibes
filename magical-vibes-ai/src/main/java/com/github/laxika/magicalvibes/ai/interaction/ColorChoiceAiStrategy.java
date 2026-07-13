@@ -85,6 +85,13 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.PrimalClayFormChoice) {
+            String chosenForm = "THREE_THREE";
+            log.info("AI: Choosing Primal Clay shape {} in game {}", chosenForm, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenForm));
+            return;
+        }
+
         if (context instanceof ChoiceContext.BasicLandTypeChoice) {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);

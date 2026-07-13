@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
+@CardRegistration(set = "6ED", collectorNumber = "199")
 @CardRegistration(set = "7ED", collectorNumber = "210")
 @CardRegistration(set = "8ED", collectorNumber = "211")
 public class Pyrotechnics extends Card {

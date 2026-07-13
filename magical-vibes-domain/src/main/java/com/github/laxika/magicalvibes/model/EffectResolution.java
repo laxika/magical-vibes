@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
@@ -164,14 +165,19 @@ public final class EffectResolution {
      * Returns true if the given effects require damage distribution (divided damage spells).
      */
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream().anyMatch(EffectResolution::isChosenDivision);
+        return effects.stream().anyMatch(EffectResolution::needsAmountDistribution);
     }
 
     /**
-     * Divided damage whose per-target amounts are announced by the controller (CR 601.2b) and
-     * carried on {@code StackEntry.damageAssignments} — i.e. CHOSEN mode that reads the standard
-     * targeting buffer (not the ETB {@code pendingETBDamageAssignments} path).
+     * An effect whose per-target integer amounts are announced by the controller (CR 601.2b) and
+     * carried on {@code StackEntry.damageAssignments}: divided damage (CHOSEN mode reading the
+     * standard targeting buffer, not the ETB {@code pendingETBDamageAssignments} path) or divided
+     * prevention (Remedy).
      */
+    private static boolean needsAmountDistribution(CardEffect e) {
+        return isChosenDivision(e) || e instanceof PreventDividedDamageEffect;
+    }
+
     private static boolean isChosenDivision(CardEffect e) {
         return e instanceof DealDividedDamageEffect d
                 && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments();

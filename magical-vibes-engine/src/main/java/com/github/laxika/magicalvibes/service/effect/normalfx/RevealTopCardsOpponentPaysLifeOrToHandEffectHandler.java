@@ -71,7 +71,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.beginWithoutPrompt(gameData, new PendingInteraction.LibraryRevealChoice(
                 opponentId, new ArrayList<>(topCards), cardIds,
-                false, true, false, false, e.lifeCost(), controllerId, topCards.size(),
+                false, true, false, false, false, e.lifeCost(), controllerId, topCards.size(),
                 "Choose cards to deny (you pay " + e.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
         gameBroadcastService.broadcastGameState(gameData);

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "66")
+@CardRegistration(set = "6ED", collectorNumber = "89")
 public class Prosperity extends Card {
 
     public Prosperity() {

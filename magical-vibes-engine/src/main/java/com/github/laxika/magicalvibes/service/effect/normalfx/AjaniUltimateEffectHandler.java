@@ -78,7 +78,7 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         // Set up player choice for selecting cards to put onto battlefield
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, revealedCards, cardIds, false, false, false, false, 0, null,
+                controllerId, revealedCards, cardIds, false, false, false, false, false, 0, null,
                 eligibleCards.size(),
                 "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."));
 

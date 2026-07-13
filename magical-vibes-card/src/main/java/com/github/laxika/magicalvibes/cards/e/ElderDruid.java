@@ -14,6 +14,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "238")
+@CardRegistration(set = "6ED", collectorNumber = "223")
 public class ElderDruid extends Card {
 
     public ElderDruid() {

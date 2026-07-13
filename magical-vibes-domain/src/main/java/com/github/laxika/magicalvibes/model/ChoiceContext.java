@@ -88,6 +88,9 @@ public sealed interface ChoiceContext {
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
 
+    /** Choosing one of Primal Clay's three shapes "as this creature enters". */
+    record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
+
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
 
     /**

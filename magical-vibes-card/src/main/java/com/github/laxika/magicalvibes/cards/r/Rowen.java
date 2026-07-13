@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
 
 @CardRegistration(set = "7ED", collectorNumber = "266")
+@CardRegistration(set = "6ED", collectorNumber = "250")
 public class Rowen extends Card {
 
     public Rowen() {

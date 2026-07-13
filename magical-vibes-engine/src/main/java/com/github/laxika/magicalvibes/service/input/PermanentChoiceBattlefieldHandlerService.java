@@ -79,6 +79,8 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final LibrarySearchSupport librarySearchSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.JuxtaposeSupport juxtaposeSupport;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -549,16 +551,26 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
+        int redirectAmount = redirectSource.nextEventOnly()
+                ? CreatureDamageRedirectShield.NEXT_EVENT
+                : CreatureDamageRedirectShield.UNLIMITED;
         gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
                 redirectSource.protectedCreatureId(), permanentId,
-                CreatureDamageRedirectShield.UNLIMITED, redirectSource.redirectTargetId()));
+                redirectAmount, redirectSource.redirectTargetId()));
 
         Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
-        Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
         String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
-        String redirectName = redirectPerm != null ? redirectPerm.getCard().getName() : "another creature";
-        String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + protectedName
-                + " this turn is dealt to " + redirectName + " instead.";
+        // The redirect target may be a player (Jade Monolith) or a permanent (Oracle's Attendants).
+        String redirectName = gameData.playerIdToName.get(redirectSource.redirectTargetId());
+        if (redirectName == null) {
+            Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
+            redirectName = redirectPerm != null ? redirectPerm.getCard().getName() : "another creature";
+        }
+        String whichDamage = redirectSource.nextEventOnly()
+                ? "The next time " + chosenPermanent.getCard().getName() + " would deal damage to " + protectedName
+                        + " this turn, that damage"
+                : "All damage " + chosenPermanent.getCard().getName() + " would deal to " + protectedName + " this turn";
+        String logEntry = whichDamage + " is dealt to " + redirectName + " instead.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
                 gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
@@ -623,22 +635,23 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    public void handlePreventNextDamageFromSourceAndGainLifeChoice(GameData gameData, UUID permanentId,
-                                                                   PermanentChoiceContext.PreventNextDamageFromSourceAndGainLifeChoice ctx) {
+    public void handlePreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
+                                                        PermanentChoiceContext.PreventNextDamageFromSourceChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (chosenPermanent == null) {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
         UUID controllerId = ctx.controllerId();
-        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId, true));
+        boolean gainLife = ctx.gainLife();
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId, gainLife));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenPermanent.getCard().getName();
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
-                + " this turn, it is prevented and " + playerName + " gains that much life.";
+                + " this turn, it is prevented" + (gainLife ? " and " + playerName + " gains that much life." : ".");
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} chose {} as Reverse Damage prevention source", gameData.id, playerName, sourceName);
+        log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
@@ -825,6 +838,16 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleTariffTieBreak(GameData gameData, UUID permanentId,
+                                     PermanentChoiceContext.TariffTieBreak context) {
+        tariffSupport.handleTieBreakChosen(gameData, permanentId, context);
+    }
+
+    public void handleJuxtaposeTieBreak(GameData gameData, UUID permanentId,
+                                        PermanentChoiceContext.JuxtaposeTieBreak context) {
+        juxtaposeSupport.handleTieBreakChosen(gameData, permanentId, context);
     }
 
     public void handleChooseCreatureAsEnter(GameData gameData, UUID chosenCreatureId,

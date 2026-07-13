@@ -462,6 +462,7 @@ public class LayerSystemService {
         h = mix(h, p.getPermanentBaseToughnessOverrideTimestamp());
 
         h = hashEnums(h, p.getGrantedKeywords());
+        h = hashEnums(h, p.getPersistentGrantedKeywords());
         h = hashEnums(h, p.getRemovedKeywords());
         h = hashEnums(h, p.getUntilNextTurnKeywords());
         h = hashEnums(h, p.getTransientColors());
@@ -1065,15 +1066,18 @@ public class LayerSystemService {
                     }
                 }
             }
-            case AllLandsAreCreaturesEffect ignored -> {
+            case AllLandsAreCreaturesEffect animateLands -> {
                 // NOT managed: the handler runs during assembly to fill the fixed base P/T and
                 // creature-ness. Here the layered pass only adds the creature card type so later
-                // layers' type/subtype filters see every land as a creature (Nature's Revolt).
+                // layers' type/subtype filters see the land as a creature (Nature's Revolt = all
+                // lands; Living Lands = only lands with the required land subtype).
                 for (PermanentSlot target : slots) {
                     if (isSource(instance, target)) continue;
                     Permanent permanent = target.permanent();
                     CharacteristicState state = states.get(permanent.getId());
                     if (state.hasCardType(CardType.LAND) && !state.hasCardType(CardType.CREATURE)
+                            && (animateLands.requiredSubtype() == null
+                                    || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                     }
@@ -1344,6 +1348,7 @@ public class LayerSystemService {
             state.loseAllAbilities(0);
         } else {
             state.addKeywords(permanent.getGrantedKeywords());
+            state.addKeywords(permanent.getPersistentGrantedKeywords());
             state.addKeywords(permanent.getUntilNextTurnKeywords());
             permanent.getRemovedKeywords().forEach(state::removeKeyword);
         }

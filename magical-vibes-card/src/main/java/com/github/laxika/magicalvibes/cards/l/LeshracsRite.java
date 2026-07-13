@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "144")
+@CardRegistration(set = "6ED", collectorNumber = "141")
 public class LeshracsRite extends Card {
 
     public LeshracsRite() {

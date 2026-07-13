@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "9ED", collectorNumber = "234")
 @CardRegistration(set = "8ED", collectorNumber = "240")
 @CardRegistration(set = "7ED", collectorNumber = "236")
+@CardRegistration(set = "6ED", collectorNumber = "220")
 public class CreepingMold extends Card {
 
     public CreepingMold() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
@@ -36,6 +37,12 @@ public class PermanentControlTargetValidators {
     @ValidatesTarget(GainControlOfTargetEffect.class)
     public void validateGainControlOfTarget(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(IllicitAuctionEffect.class)
+    public void validateIllicitAuction(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
     }
 
     @ValidatesTarget(AttachTargetToSourcePermanentEffect.class)

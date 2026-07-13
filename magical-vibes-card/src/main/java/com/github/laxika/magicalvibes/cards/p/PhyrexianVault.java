@@ -11,6 +11,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "337")
+@CardRegistration(set = "6ED", collectorNumber = "307")
 public class PhyrexianVault extends Card {
 
     public PhyrexianVault() {

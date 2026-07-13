@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "323")
+@CardRegistration(set = "6ED", collectorNumber = "286")
 public class FountainOfYouth extends Card {
 
     public FountainOfYouth() {

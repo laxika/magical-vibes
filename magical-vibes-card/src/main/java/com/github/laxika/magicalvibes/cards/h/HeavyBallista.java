@@ -18,6 +18,7 @@ import java.util.List;
  * {T}: This creature deals 2 damage to target attacking or blocking creature.
  */
 @CardRegistration(set = "7ED", collectorNumber = "19")
+@CardRegistration(set = "6ED", collectorNumber = "23")
 public class HeavyBallista extends Card {
 
     public HeavyBallista() {

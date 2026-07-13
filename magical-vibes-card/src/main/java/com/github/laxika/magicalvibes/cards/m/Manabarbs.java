@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "6ED", collectorNumber = "194")
 @CardRegistration(set = "10E", collectorNumber = "218")
 @CardRegistration(set = "M10", collectorNumber = "149")
 public class Manabarbs extends Card {

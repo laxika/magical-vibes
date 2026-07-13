@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -447,6 +448,16 @@ public class StackResolutionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
+        }
+
+        // Check if artifact creature has "as this creature enters, it becomes your choice of ..."
+        // shape choice (Primal Clay)
+        boolean needsPrimalClayFormChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChoosePrimalClayFormOnEnterEffect);
+        if (needsPrimalClayFormChoice) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginPrimalClayFormChoice(gameData, controllerId, justEntered.getId());
         }
 
         // Process ETB effects for all artifacts (creature and non-creature)

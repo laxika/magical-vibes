@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -613,7 +614,7 @@ public class GameQueryService {
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
-        if (hasCardType(permanent, CardType.LAND) && hasAnimateLandEffect(gameData)) return true;
+        if (hasCardType(permanent, CardType.LAND) && matchesAnimateLand(gameData, permanent)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
     }
@@ -755,6 +756,10 @@ public class GameQueryService {
                     return true;
                 }
             }
+        }
+        // An Aura attached to this creature that grants the permission (e.g. Animate Wall).
+        if (hasAuraWithEffect(gameData, creature, CanAttackAsThoughNoDefenderEffect.class)) {
+            return true;
         }
         // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
         // stored as floating effects affecting this creature.
@@ -1602,6 +1607,7 @@ public class GameQueryService {
             if (!target.isLosesAllAbilitiesUntilEndOfTurn()) {
                 mergedKeywords.addAll(target.getCard().getKeywords());
                 mergedKeywords.addAll(target.getGrantedKeywords());
+                mergedKeywords.addAll(target.getPersistentGrantedKeywords());
                 mergedKeywords.addAll(target.getUntilNextTurnKeywords());
                 mergedKeywords.removeAll(target.getRemovedKeywords());
                 if (target.isLosesAllCreatureTypesUntilEndOfTurn()) {
@@ -2004,6 +2010,31 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the target permanent can't be the target of any spell (regardless of
+     * color or controller) — Dense Foliage's "Creatures can't be the targets of spells". Abilities are
+     * unaffected. Scans both the permanent's own STATIC effects and effects granted to it.
+     */
+    public boolean cantBeTargetedByAnySpell(GameData gameData, Permanent target) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (isAnySpellRestriction(effect)) {
+                return true;
+            }
+        }
+        for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
+            if (isAnySpellRestriction(effect)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isAnySpellRestriction(CardEffect effect) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.kind() == TargetingSourceKind.SPELLS
+                && r.mode() == TargetColorMode.ANY;
+    }
+
+    /**
      * Matches the "can't be the target of spells of [color]" restriction (Karplusan Strider) — spells
      * only, no controller gating — for the given spell color.
      */
@@ -2243,11 +2274,17 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if any permanent on the battlefield has an
-     * {@link AllLandsAreCreaturesEffect}, which turns every land into a creature (Nature's Revolt).
+     * Returns {@code true} if the given land is animated into a creature by an
+     * {@link AllLandsAreCreaturesEffect} on any battlefield. An effect with no required subtype
+     * animates every land (Nature's Revolt); an effect with a required land subtype (Living Lands:
+     * Forest) animates only lands carrying that subtype.
      */
-    public boolean hasAnimateLandEffect(GameData gameData) {
-        return anyBattlefieldHasStaticEffect(gameData, AllLandsAreCreaturesEffect.class);
+    public boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
+        return gameData.anyPermanentMatches(source ->
+                source.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof AllLandsAreCreaturesEffect animateLands
+                                && (animateLands.requiredSubtype() == null
+                                        || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))));
     }
 
     /**
@@ -2360,7 +2397,26 @@ public class GameQueryService {
                 && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
                         && !isEquipped(gameData, creature))
-                && !isCantBlockUnlessConditionUnmet(gameData, creature);
+                && !isCantBlockUnlessConditionUnmet(gameData, creature)
+                && !isCantBlockDueToGlobalRestriction(gameData, creature);
+    }
+
+    /**
+     * Returns {@code true} if a permanent on any battlefield carries a
+     * {@link MatchingCreaturesCantAttackOrBlockEffect} whose predicate matches this creature,
+     * so the creature can't be declared as a blocker (e.g. Light of Day, "Black creatures can't
+     * attack or block"). The attack side is enforced in {@code CombatAttackService}.
+     */
+    private boolean isCantBlockDueToGlobalRestriction(GameData gameData, Permanent creature) {
+        return gameData.anyPermanentMatches(source -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MatchingCreaturesCantAttackOrBlockEffect restriction
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.matcher())) {
+                    return true;
+                }
+            }
+            return false;
+        });
     }
 
     /**
@@ -2902,6 +2958,9 @@ public class GameQueryService {
             if (isDamageFromSourcePrevented(gameData, color)) return true;
         }
         if (isCombatDamage && hasAuraWithEffect(gameData, creature, PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)) {
+            return true;
+        }
+        if (isCombatDamage && gameData.creaturesPreventedFromDealingCombatDamage.contains(creature.getId())) {
             return true;
         }
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null

@@ -87,6 +87,11 @@ public class Permanent {
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
+    /** Keywords granted permanently by a one-shot effect that locks in a characteristic for the
+     *  life of the permanent (e.g. Primal Clay "becomes ... with flying/defender"). Unlike
+     *  {@link #grantedKeywords} these survive {@link #resetModifiers()} — the layered pass seeds
+     *  them just like {@link #grantedSubtypes}/{@link #grantedColors} do for durable type/color grants. */
+    private final Set<Keyword> persistentGrantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Set<Keyword> removedKeywords = new HashSet<>();
@@ -311,6 +316,7 @@ public class Permanent {
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.grantedKeywords.addAll(source.grantedKeywords);
+        this.persistentGrantedKeywords.addAll(source.persistentGrantedKeywords);
         this.removedKeywords.addAll(source.removedKeywords);
         this.transientColors.addAll(source.transientColors);
         this.colorOverridden = source.colorOverridden;
@@ -582,6 +588,7 @@ public class Permanent {
         if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword)
+                || persistentGrantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword);
     }
 

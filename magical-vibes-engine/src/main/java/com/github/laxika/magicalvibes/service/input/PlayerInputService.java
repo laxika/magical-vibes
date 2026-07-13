@@ -75,6 +75,13 @@ public class PlayerInputService {
                 attachEquipmentCardId, enterAttacking));
     }
 
+    /** Flash-style: choose a creature to put onto the battlefield, then pay its cost reduced by N or sacrifice it. */
+    public void beginCardChoiceSacrificeUnlessPayReduced(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                         String prompt, int genericReduction) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, Integer.valueOf(genericReduction)));
+    }
+
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
                 playerId, new ArrayList<>(validIndices), targetId, prompt));
@@ -246,6 +253,20 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
+    }
+
+    public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ChoiceContext.PrimalClayFormChoice choiceContext = new ChoiceContext.PrimalClayFormChoice(permanentId);
+
+        List<String> options = Arrays.stream(com.github.laxika.magicalvibes.model.PrimalClayForm.values())
+                .map(Enum::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a shape: 3/3, 2/2 with flying, or 1/6 Wall with defender."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a Primal Clay shape", gameData.id, playerName);
     }
 
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {

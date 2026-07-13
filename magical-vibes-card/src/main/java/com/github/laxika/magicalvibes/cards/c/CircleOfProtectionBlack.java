@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenCo
 
 import java.util.List;
 
+@CardRegistration(set = "6ED", collectorNumber = "8")
 @CardRegistration(set = "7ED", collectorNumber = "6")
 @CardRegistration(set = "8ED", collectorNumber = "10")
 @CardRegistration(set = "9ED", collectorNumber = "10")

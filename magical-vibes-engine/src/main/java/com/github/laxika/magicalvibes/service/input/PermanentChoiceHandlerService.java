@@ -101,8 +101,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handlePreventDamageToTargetFromSourceChoice(gameData, permanentId, preventTargetSource);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice preventNextColored) {
             battlefieldHandler.handlePreventNextDamageFromColoredSourceChoice(gameData, permanentId, preventNextColored);
-        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceAndGainLifeChoice preventNextGainLife) {
-            battlefieldHandler.handlePreventNextDamageFromSourceAndGainLifeChoice(gameData, permanentId, preventNextGainLife);
+        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceChoice preventNextSource) {
+            battlefieldHandler.handlePreventNextDamageFromSourceChoice(gameData, permanentId, preventNextSource);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
             battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
@@ -169,6 +169,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleTransformCreatureTarget(gameData, permanentId, tct);
         } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
+        } else if (context instanceof PermanentChoiceContext.TariffTieBreak tariffTieBreak) {
+            battlefieldHandler.handleTariffTieBreak(gameData, permanentId, tariffTieBreak);
+        } else if (context instanceof PermanentChoiceContext.JuxtaposeTieBreak juxtaposeTieBreak) {
+            battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
         } else if (gameData.interaction.pendingAuraCard() != null) {

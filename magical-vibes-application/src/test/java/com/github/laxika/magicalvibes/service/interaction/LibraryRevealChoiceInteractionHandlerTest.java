@@ -73,7 +73,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
         registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(eligible, ineligible), List.of(eligible.getId()),
-                true, false, false, false, 0, null, 1,
+                true, false, false, false, false, 0, null, 1,
                 "Choose any number of permanent cards with mana value 3 or less to put onto the battlefield."));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
@@ -93,7 +93,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
 
         registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
-                false, true, false, false, 0, null, 1, null));
+                false, true, false, false, false, 0, null, 1, null));
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
         verifyNoInteractions(sessionManager);
@@ -108,7 +108,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
         Card card = createCard("Grizzly Bears");
         registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
-                false, true, false, false, 0, null, 1, "Choose."));
+                false, true, false, false, false, 0, null, 1, "Choose."));
         Player player = new Player(PLAYER1_ID, "Player1");
 
         boolean handled = registry.dispatchAnswer(gd, player,
@@ -124,7 +124,7 @@ class LibraryRevealChoiceInteractionHandlerTest {
         Card card = createCard("Grizzly Bears");
         registry.begin(gd, new PendingInteraction.LibraryRevealChoice(
                 PLAYER1_ID, List.of(card), List.of(card.getId()),
-                false, true, false, false, 0, null, 1, "Choose."));
+                false, true, false, false, false, 0, null, 1, "Choose."));
         org.mockito.Mockito.clearInvocations(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();

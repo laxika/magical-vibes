@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -51,11 +52,33 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
         log.info("Game {} - {} looks at top of {}'s library: {} ({})",
                 gameData.id, controllerName, targetName, topCard.getName(), sourceName);
 
+        LookAtTargetPlayerTopCardMayGraveyardEffect typed = (LookAtTargetPlayerTopCardMayGraveyardEffect) effect;
+
+        // Wand of Denial only lets you bin the card if it's a nonland card.
+        if (typed.nonlandOnly() && topCard.hasType(CardType.LAND)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "The top card is a land; it stays on top (" + sourceName + ").");
+            return;
+        }
+
+        // "you may pay N life" — only offer the choice if the controller can pay.
+        if (typed.lifeCost() > 0 && gameData.getLife(controllerId) < typed.lifeCost()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " can't pay " + typed.lifeCost() + " life (" + sourceName + ").");
+            return;
+        }
+
+        String prompt = typed.lifeCost() > 0
+                ? sourceName + " — Pay " + typed.lifeCost() + " life to put " + topCard.getName()
+                        + " into " + targetName + "'s graveyard?"
+                : sourceName + " — Put " + topCard.getName() + " into " + targetName + "'s graveyard?";
+
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),
                 controllerId,
-                List.of(new LookAtTargetPlayerTopCardMayGraveyardEffect(targetPlayerId)),
-                sourceName + " — Put " + topCard.getName() + " into " + targetName + "'s graveyard?",
+                List.of(new LookAtTargetPlayerTopCardMayGraveyardEffect(
+                        targetPlayerId, typed.nonlandOnly(), typed.lifeCost())),
+                prompt,
                 null,
                 null,
                 entry.getSourcePermanentId()

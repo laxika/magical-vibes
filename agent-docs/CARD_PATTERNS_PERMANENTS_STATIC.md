@@ -39,6 +39,7 @@ All paths relative to `cards/`.
 | Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessEffect(new OpponentDealtDamageThisTurn(1), desc) — can't attack unless an opponent was dealt damage this turn |
 | Attack/block restriction (greater-power ally) | `o/Okk.java` | STATIC CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect() — can't attack/block unless another declared attacker/blocker has strictly greater power (combat-set-dependent, validated at declaration time) |
 | Global attack lock (power vs. hand size) | `e/EnsnaringBridge.java` | STATIC CreaturesWithPowerGreaterThanAmountCantAttackEffect(new CardsInHand(CountScope.CONTROLLER)) — any creature with power greater than the source controller's hand size can't attack |
+| Own-team attack lock (subtype exemption) | `e/EvilEyeOfOrmsByGore.java` | STATIC ControlledCreaturesCantAttackUnlessPredicateEffect(PermanentHasSubtypePredicate(EYE)) — non-Eye creatures you control can't attack; + CanBeBlockedOnlyByFilterEffect(PermanentHasSubtypePredicate(WALL), "Walls") for "can't be blocked except by Walls" |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
 | Protection from mana value N or greater | `m/MistmeadowSkulk.java` | STATIC ProtectionFromManaValueEffect(N) |
@@ -51,6 +52,7 @@ All paths relative to `cards/`.
 | Damage can't reduce life below 1 (if control creature) | `w/Worship.java` | STATIC DamageCantReduceLifeBelowOneEffect |
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
+| All creatures untargetable by spells | `d/DenseFoliage.java` | STATIC GrantEffectEffect(TargetingRestrictionEffect.spells(), ALL_CREATURES) — "Creatures can't be the targets of spells"; abilities can still target. Checked by `GameQueryService.cantBeTargetedByAnySpell` in the spell-target paths only |
 | Shroud to other enchantments + your enchanted creatures | `g/GreaterAuramancy.java` | STATIC GrantKeywordEffect(SHROUD, OWN_PERMANENTS, PermanentIsEnchantmentPredicate) + GrantKeywordEffect(SHROUD, OWN_CREATURES, PermanentIsEnchantedPredicate) — "other enchantments you control" via OWN_PERMANENTS (source excluded from static computation), "enchanted creatures you control" via new PermanentIsEnchantedPredicate (has an Aura attached) |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
 | Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) |
@@ -85,6 +87,7 @@ All paths relative to `cards/`.
 | Double mana produced (tap for mana) | `m/ManaReflection.java` | STATIC ManaReflectionEffect — tapping any permanent for mana produces twice as much of that mana (2^count, controller-scoped) via GameQueryService.manaProductionMultiplier |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
+| Return-from-GY-instead-of-draw + self-exile GY | `f/ForbiddenCrypt.java` | STATIC ReturnFromGraveyardInsteadOfDrawEffect + STATIC ExileOwnCardsInsteadOfGraveyardEffect — draws are replaced by returning a GY card to hand (lose if GY empty); your cards are exiled instead of hitting your GY |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
 | Grant flash to all spells + leyline | `l/LeylineOfAnticipation.java` | ON_OPENING_HAND_REVEAL MayEffect(LeylineStartOnBattlefieldEffect) + STATIC GrantFlashToCardTypeEffect(null) — may start on battlefield from opening hand, grants flash to all spells |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |

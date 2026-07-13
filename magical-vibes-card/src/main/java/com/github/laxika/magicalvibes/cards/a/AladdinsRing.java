@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "286")
+@CardRegistration(set = "6ED", collectorNumber = "271")
 @CardRegistration(set = "8ED", collectorNumber = "291")
 @CardRegistration(set = "7ED", collectorNumber = "286")
 public class AladdinsRing extends Card {

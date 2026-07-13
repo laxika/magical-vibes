@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "58")
 @CardRegistration(set = "9ED", collectorNumber = "53")
+@CardRegistration(set = "6ED", collectorNumber = "53")
 public class WarriorsHonor extends Card {
 
     public WarriorsHonor() {

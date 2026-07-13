@@ -26,6 +26,7 @@ public sealed interface DelayedAction permits
         ExileTokenAtEndStep,
         SacrificeAtEndStep,
         DestroyAtEndStep,
+        ReturnToHandAtEndStep,
         LoseGameAtEndStep,
         DelayedPlusOneCounters,
         DelayedUntapPermanents,
@@ -35,5 +36,7 @@ public sealed interface DelayedAction permits
         DelayedCombatDamageLoot,
         DelayedCombatDamageReflection,
         AddManaAtNextMainPhase,
+        DrawCardsAtNextUpkeep,
+        ExileToOwnerGraveyardAtNextUpkeep,
         PendingExileReturn {
 }

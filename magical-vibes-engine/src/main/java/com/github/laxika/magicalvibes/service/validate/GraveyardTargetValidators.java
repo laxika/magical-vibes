@@ -305,7 +305,8 @@ public class GraveyardTargetValidators {
     }
 
     @ValidatesTarget(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)
-    public void validatePutCardFromOpponentGraveyard(TargetValidationContext ctx) {
+    public void validatePutCardFromOpponentGraveyard(TargetValidationContext ctx,
+                                                     PutCardFromOpponentGraveyardOntoBattlefieldEffect effect) {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
@@ -316,10 +317,12 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (!graveyardCard.hasType(CardType.ARTIFACT) && !graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be an artifact or creature card");
+        if (effect.filter() != null
+                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String label = CardPredicateUtils.describeFilter(effect.filter());
+            throw new IllegalStateException("Target must be a " + label);
         }
-        if (graveyardCard.getManaValue() != ctx.xValue()) {
+        if (effect.requireManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());

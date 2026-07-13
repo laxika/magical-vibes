@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -417,9 +418,18 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        if (destination == LibrarySearchDestination.EXILE_PLAYABLE) {
+        if (destination == LibrarySearchDestination.EXILE_PLAYABLE
+                || destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
             exileService.exileCard(gameData, playerId, chosenCard);
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
+            if (destination == LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP) {
+                // Grinning Totem: permission lasts only until the searcher's next upkeep; an unplayed
+                // card is put into its (real) owner's graveyard then. The card is exiled under the
+                // searcher's zone, but its owner for graveyard purposes is the searched library's owner.
+                Card sourceCard = (sourceCards != null && !sourceCards.isEmpty()) ? sourceCards.getFirst() : null;
+                gameData.queueDelayedAction(new ExileToOwnerGraveyardAtNextUpkeep(
+                        playerId, chosenCard.getId(), deckOwnerId, sourceCard));
+            }
             if (shuffleAfterSelection) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
@@ -611,7 +621,7 @@ public class LibraryChoiceHandlerService {
                 case BATTLEFIELD_ATTACHED_TO_CREATURE -> throw new IllegalStateException("BATTLEFIELD_ATTACHED_TO_CREATURE should be handled earlier");
                 case HAND -> "into their hand";
                 case EXILE_IMPRINT -> "into exile (imprint)";
-                case EXILE, EXILE_PLAYABLE -> "into exile";
+                case EXILE, EXILE_PLAYABLE, EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP -> "into exile";
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
@@ -893,7 +903,8 @@ public class LibraryChoiceHandlerService {
 
         if (libraryRevealChoice.selectedToHand()) {
             resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
-                    libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard());
+                    libraryRevealChoice.reorderRemainingToBottom(), libraryRevealChoice.remainingToGraveyard(),
+                    libraryRevealChoice.remainingToExile());
             return;
         }
 
@@ -972,15 +983,36 @@ public class LibraryChoiceHandlerService {
                                               List<Card> selectedCards, List<Card> remainingCards,
                                               boolean reorderRemainingToBottom) {
         resolveRevealChoiceToHand(gameData, controllerId, playerName, selectedCards, remainingCards,
-                reorderRemainingToBottom, false);
+                reorderRemainingToBottom, false, false);
     }
 
     private void resolveRevealChoiceToHand(GameData gameData, UUID controllerId, String playerName,
                                               List<Card> selectedCards, List<Card> remainingCards,
-                                              boolean reorderRemainingToBottom, boolean remainingToGraveyard) {
+                                              boolean reorderRemainingToBottom, boolean remainingToGraveyard,
+                                              boolean remainingToExile) {
         // Put selected cards into hand
         for (Card card : selectedCards) {
             gameData.addCardToHand(controllerId, card);
+        }
+
+        // Rest exiled (Browse): one card to hand, the others exiled face up.
+        if (remainingToExile) {
+            if (!selectedCards.isEmpty()) {
+                String handNames = selectedCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " puts " + handNames + " into their hand.");
+            }
+            for (Card card : remainingCards) {
+                exileService.exileCard(gameData, controllerId, card);
+            }
+            if (!remainingCards.isEmpty()) {
+                String exileNames = remainingCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " exiles " + exileNames + ".");
+            }
+            log.info("Game {} - {} puts {} card(s) to hand, {} exiled", gameData.id, playerName, selectedCards.size(), remainingCards.size());
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
         }
 
         // Log the result

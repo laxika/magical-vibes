@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "7ED", collectorNumber = "5")
+@CardRegistration(set = "6ED", collectorNumber = "6")
 public class Castle extends Card {
 
     public Castle() {
