@@ -128,6 +128,10 @@ class ActivatedAbilityExecutionServiceTest {
         // Dynamic amounts (e.g. SourcePower) are stubbed explicitly per test.
         lenient().when(amountEvaluationService.evaluate(any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(1) instanceof Fixed f ? f.value() : 0);
+
+        // No Mana Reflection in these tests — every mana production is 1x.
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+                .thenReturn(1);
     }
 
     // =========================================================================

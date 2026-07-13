@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlD
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -44,6 +47,11 @@ class UntapStepServiceTest {
 
     @Mock
     private GameBroadcastService gameBroadcastService;
+
+    // Real support so untapPermanent actually untaps; its trigger service is an inert mock.
+    @Spy
+    private TapUntapSupport tapUntapSupport =
+            new TapUntapSupport(org.mockito.Mockito.mock(TriggerCollectionService.class));
 
     @InjectMocks
     private UntapStepService sut;

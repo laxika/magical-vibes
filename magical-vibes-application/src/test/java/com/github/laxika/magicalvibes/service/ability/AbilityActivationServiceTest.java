@@ -55,6 +55,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -110,6 +111,10 @@ class AbilityActivationServiceTest {
         gameData.playerIdToName.put(player2Id, "Player2");
         gameData.activePlayerId = player1Id;
         gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+        // No Mana Reflection in these tests — every mana production is 1x.
+        lenient().when(gameQueryService.manaProductionMultiplier(eq(gameData), any(UUID.class)))
+                .thenReturn(1);
     }
 
     // =========================================================================

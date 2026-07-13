@@ -130,12 +130,12 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubNoKeywordsOnSource(StackEntry entry) {
-        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.INFECT))).thenReturn(false);
+        // The infect/wither decision goes through sourceDealsCounterDamageToCreatures now,
+        // whose mock default (false) is the wanted answer — only deathtouch needs a stub.
         when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
     protected void stubNoKeywordsOnSourceWithDamageSource(StackEntry entry, Permanent damageSource) {
-        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.INFECT))).thenReturn(false);
         when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
