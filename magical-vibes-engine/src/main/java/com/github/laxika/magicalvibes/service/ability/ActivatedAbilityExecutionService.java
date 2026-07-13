@@ -21,9 +21,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorcer
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsLandsCouldProduceEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -412,6 +414,17 @@ public class ActivatedAbilityExecutionService {
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     }
                 }
+            } else if (effect instanceof AwardManaToChosenPlayerEffect chosen) {
+                // "Choose a player. That player adds mana." Not targeting (CR 605.1a); the recipient
+                // is picked via an inline player choice and the mana is routed into their pool.
+                List<UUID> validPlayerIds = new ArrayList<>(gameData.orderedPlayerIds);
+                PermanentChoiceContext.ManaAbilityAddToChosenPlayer context =
+                        new PermanentChoiceContext.ManaAbilityAddToChosenPlayer(
+                                chosen.color(), chosen.amount() * manaMultiplier, isCreatureSource,
+                                permanent.getCard().getName());
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
+                        playerId, List.of(), validPlayerIds, context, "Choose a player to add mana."));
+                log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
                 for (ManaColor color : ManaColor.values()) {
@@ -451,6 +464,25 @@ public class ActivatedAbilityExecutionService {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
+            } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
+                int picks = ofColors.amount() * manaMultiplier;
+                if (ofColors.colors().size() == 1) {
+                    ManaColor manaColor = ofColors.colors().get(0);
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    pool.add(manaColor, picks);
+                    if (isCreatureSource) {
+                        pool.addCreatureMana(manaColor, picks);
+                    }
+                } else {
+                    // Each of the `picks` mana is chosen individually from the fixed color list; the
+                    // color-choice handler re-prompts per pick (filter lands: "{R}{R}, {R}{G}, or {G}{G}").
+                    ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice
+                            .fixedColorCombination(playerId, isCreatureSource, picks, ofColors.colors());
+                    List<String> colors = ofColors.colors().stream().map(Enum::name).toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+                    log.info("Game {} - Awaiting {} to choose a mana color from a fixed set", gameData.id, player.getUsername());
+                }
             } else if (effect instanceof AwardAnyOneColorInstantSorceryOnlyManaEffect aisom) {
                 ChoiceContext.ManaColorChoice choiceContext = ChoiceContext.ManaColorChoice.instantSorceryOnly(playerId, aisom.amount() * manaMultiplier);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
@@ -647,8 +679,12 @@ public class ActivatedAbilityExecutionService {
             if (effect instanceof AwardManaEffect award) {
                 total += amountEvaluationService.evaluate(gameData, award.amount(),
                         AmountContext.forManaAbility(permanent, playerId));
+            } else if (effect instanceof AwardManaToChosenPlayerEffect chosen) {
+                total += chosen.amount();
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 total += aace.amount();
+            } else if (effect instanceof AwardManaOfColorsEffect ofColors) {
+                total += ofColors.amount();
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 total += arm.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {

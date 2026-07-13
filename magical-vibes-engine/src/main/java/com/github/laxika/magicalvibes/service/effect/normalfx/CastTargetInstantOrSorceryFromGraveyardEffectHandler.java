@@ -34,12 +34,15 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
         UUID controllerId = entry.getControllerId();
 
         // Get the targeted card ID from targetCardIds (set at ETB trigger time)
-        if (entry.getTargetCardIds().isEmpty()) {
+        // Target card ID comes from targetCardIds (set at ETB trigger time) or, when cast as a
+        // spell (e.g. Memory Plunder), from the single spell target.
+        UUID targetCardId = !entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetCardIds().getFirst()
+                : entry.getTargetId();
+        if (targetCardId == null) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
             return;
         }
-
-        UUID targetCardId = entry.getTargetCardIds().getFirst();
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");

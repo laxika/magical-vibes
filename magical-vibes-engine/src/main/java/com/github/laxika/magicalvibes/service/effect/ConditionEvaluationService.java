@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatu
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
@@ -188,6 +189,8 @@ public class ConditionEvaluationService {
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case OpponentLostLifeThisTurn c ->
+                    didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case ActivationCount c ->
                     activationCountThisTurn(gameData, ctx, c.abilityIndex()) >= c.threshold();
             // Exact equality: "if this is the Nth time this ability has resolved this turn"
@@ -529,6 +532,18 @@ public class ConditionEvaluationService {
             if (playerId.equals(controllerId)) continue;
             int dealt = gameData.damageDealtToPlayersThisTurn.getOrDefault(playerId, 0);
             if (dealt >= Math.max(1, minimumAmount)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean didAnyOpponentLoseLifeThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {
+        if (controllerId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            int lost = gameData.lifeLostThisTurn.getOrDefault(playerId, 0);
+            if (lost >= Math.max(1, minimumAmount)) {
                 return true;
             }
         }

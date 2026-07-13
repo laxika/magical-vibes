@@ -79,6 +79,27 @@ public class ManaCost {
     }
 
     /**
+     * X-cost-only colorless mana (Rosheen Meanderer) available to pay this cost. It is usable only
+     * when the cost contains an {X} symbol, and only for generic portions (it is colorless).
+     */
+    private int xCostOnlyAvailable(ManaPool pool) {
+        return hasX() ? pool.getXCostOnlyColorless() : 0;
+    }
+
+    /**
+     * Spends x-cost-only colorless mana toward the given generic amount (only if this cost contains
+     * {X}), returning the generic still owed afterwards.
+     */
+    private int spendXCostOnlyForGeneric(ManaPool pool, int remainingGeneric) {
+        if (hasX() && remainingGeneric > 0) {
+            int fromRestricted = Math.min(remainingGeneric, pool.getXCostOnlyColorless());
+            pool.removeXCostOnlyColorless(fromRestricted);
+            remainingGeneric -= fromRestricted;
+        }
+        return remainingGeneric;
+    }
+
+    /**
      * Number of {X} symbols in the cost. For {X}{X}{X}{W} this is 3, meaning the chosen X value
      * is multiplied by 3 to determine the actual generic mana that must be paid.
      */
@@ -230,7 +251,7 @@ public class ManaCost {
         if (!assignHybrids(available, extraGeneric)) {
             return false;
         }
-        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool) + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
 
@@ -266,7 +287,7 @@ public class ManaCost {
         if (!assignHybrids(available, extraGeneric)) {
             return false;
         }
-        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool) + xCostOnlyAvailable(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
     }
 
@@ -443,6 +464,7 @@ public class ManaCost {
             int kickedOnlyGreenUsedForColored = Math.max(0, greenNeeded - regularGreen);
             remaining += extraGreen - kickedOnlyGreenUsedForColored;
         }
+        remaining += xCostOnlyAvailable(pool);
 
         int hybridGeneric = 0;
         if (!hybridCosts.isEmpty()) {
@@ -531,6 +553,7 @@ public class ManaCost {
         }
         totalUsable += pool.getSubtypeCreatureManaTotal(creatureCtx);
         totalUsable += pool.getSubtypeSpellOrAbilityManaTotal(soaCtx);
+        totalUsable += xCostOnlyAvailable(pool);
 
         int hybridGeneric = 0;
         if (!hybridCosts.isEmpty()) {
@@ -656,7 +679,7 @@ public class ManaCost {
             }
         }
 
-        int remaining = pool.getTotal();
+        int remaining = pool.getTotal() + pool.getXCostOnlyColorless();
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }
@@ -709,7 +732,9 @@ public class ManaCost {
         // remove the colors the assignment consumed from the pool.
         int extraHybridGeneric = payHybrids(pool);
 
-        payGenericPreferColorless(pool, genericCost + extraHybridGeneric + xValue * effectiveXMultiplier());
+        int remainingGeneric = genericCost + extraHybridGeneric + xValue * effectiveXMultiplier();
+        remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
+        payGenericPreferColorless(pool, remainingGeneric);
     }
 
     /**
@@ -823,6 +848,8 @@ public class ManaCost {
             pool.removeKickedOnlyGreen(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
+
+        remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
 
         payGenericPreferColorless(pool, remainingGeneric);
     }
@@ -949,6 +976,8 @@ public class ManaCost {
             pool.removeKickedOnlyGreen(fromRestricted);
             remainingGeneric -= fromRestricted;
         }
+
+        remainingGeneric = spendXCostOnlyForGeneric(pool, remainingGeneric);
 
         payGenericPreferColorless(pool, remainingGeneric);
     }

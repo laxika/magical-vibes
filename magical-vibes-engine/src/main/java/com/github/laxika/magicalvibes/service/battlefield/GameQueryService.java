@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
@@ -50,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCount
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.AllDamageDealtWithWitherEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
@@ -88,6 +90,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
@@ -846,10 +849,7 @@ public class GameQueryService {
             return bonus.grantedColors();
         }
         Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
-        CardColor natural = permanent.getEffectiveColor();
-        if (natural != null) {
-            colors.add(natural);
-        }
+        colors.addAll(permanent.getEffectiveColors());
         colors.addAll(permanent.getGrantedColors());
         colors.addAll(bonus.grantedColors());
         return colors;
@@ -1936,7 +1936,17 @@ public class GameQueryService {
      * creatures; they differ only against players (infect gives poison, wither is normal damage).
      */
     public boolean dealsCounterDamageToCreatures(GameData gameData, Permanent permanent) {
-        return hasKeyword(gameData, permanent, Keyword.INFECT) || hasKeyword(gameData, permanent, Keyword.WITHER);
+        return allDamageDealtWithWither(gameData)
+                || hasKeyword(gameData, permanent, Keyword.INFECT)
+                || hasKeyword(gameData, permanent, Keyword.WITHER);
+    }
+
+    /**
+     * Returns {@code true} when an {@link AllDamageDealtWithWitherEffect} is on any battlefield
+     * (e.g. Everlasting Torment), making every damage source deal creature damage as -1/-1 counters.
+     */
+    private boolean allDamageDealtWithWither(GameData gameData) {
+        return anyBattlefieldHasStaticEffect(gameData, AllDamageDealtWithWitherEffect.class);
     }
 
     /**
@@ -1944,7 +1954,8 @@ public class GameQueryService {
      * (explicit permanent or the entry's source permanent) deals creature damage as -1/-1 counters.
      */
     public boolean sourceDealsCounterDamageToCreatures(GameData gameData, StackEntry entry, Permanent explicitSource) {
-        return sourceHasKeyword(gameData, entry, explicitSource, Keyword.INFECT)
+        return allDamageDealtWithWither(gameData)
+                || sourceHasKeyword(gameData, entry, explicitSource, Keyword.INFECT)
                 || sourceHasKeyword(gameData, entry, explicitSource, Keyword.WITHER);
     }
 
@@ -2173,11 +2184,15 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the given card cannot be countered, either because it has
-     * its own "can't be countered" ability ({@link CantBeCounteredEffect}), or because
+     * its own "can't be countered" ability ({@link CantBeCounteredEffect}), because it was
+     * individually made uncounterable while on the stack (e.g. Vexing Shusher), or because
      * a {@link CreatureSpellsCantBeCounteredEffect} on the battlefield protects creature spells.
      */
     public boolean isUncounterable(GameData gameData, Card card) {
         if (card.getEffects(EffectSlot.STATIC).stream().anyMatch(e -> e instanceof CantBeCounteredEffect)) {
+            return true;
+        }
+        if (gameData.spellsMadeUncounterable.contains(card.getId())) {
             return true;
         }
         if (!hasCardType(card, CardType.CREATURE)) {
@@ -2340,7 +2355,34 @@ public class GameQueryService {
                 && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
                         && !isEquipped(gameData, creature))
-                && !isCantBlockUnlessConditionUnmet(gameData, creature);
+                && !isCantBlockUnlessConditionUnmet(gameData, creature)
+                && !hasGlobalCantAttackOrBlockRestriction(gameData, creature);
+    }
+
+    /**
+     * Returns {@code true} if a board-wide {@link MatchingCreaturesCantAttackOrBlockEffect}
+     * (e.g. Kulrath Knight) applies to the given creature, evaluating each restriction's
+     * predicate relative to the source permanent's controller. The attack side is enforced in
+     * {@code CombatAttackService}.
+     */
+    private boolean hasGlobalCantAttackOrBlockRestriction(GameData gameData, Permanent creature) {
+        boolean[] restricted = {false};
+        gameData.forEachPermanent((playerId, source) -> {
+            if (restricted[0]) {
+                return;
+            }
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof MatchingCreaturesCantAttackOrBlockEffect restriction) {
+                    FilterContext context = FilterContext.of(gameData)
+                            .withSourceControllerId(playerId)
+                            .withSourceCardId(source.getOriginalCard().getId());
+                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.affectedPredicate(), context)) {
+                        restricted[0] = true;
+                    }
+                }
+            }
+        });
+        return restricted[0];
     }
 
     /**
@@ -2576,7 +2618,8 @@ public class GameQueryService {
                 isArtifact(blocker),
                 getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,
-                cantBlockStatic || hasAuraWithEffect(gameData, blocker, CantBlockEffect.class));
+                cantBlockStatic || hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)
+                        || hasGlobalCantAttackOrBlockRestriction(gameData, blocker));
     }
 
     /** Rebuilds the exact pre-context user-facing message for a failed block-legality check. */
@@ -2902,6 +2945,25 @@ public class GameQueryService {
     /**
      * Counts the number of permanents with the given subtype controlled by the specified player.
      */
+    /**
+     * Counts the permanents controlled by {@code controllerId} that match {@code predicate}.
+     * Used by ability activation restrictions such as Leechridden Swamp's "Activate only if you
+     * control two or more black permanents".
+     */
+    public int countControlledPermanentsMatching(GameData gameData, UUID controllerId, PermanentPredicate predicate) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     public int countControlledSubtypePermanents(GameData gameData, UUID controllerId, CardSubtype subtype) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) {

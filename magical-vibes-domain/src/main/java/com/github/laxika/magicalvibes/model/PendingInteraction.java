@@ -23,7 +23,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
-        PendingInteraction.MirrorOfFateChoice, PendingInteraction.PermanentAuctionChoice,
+        PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
+        PendingInteraction.PermanentAuctionChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -102,6 +103,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MirrorOfFateChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+    }
+
+    /**
+     * Worldpurge: {@code playerId} chooses up to {@code keepCount} cards from their hand to keep;
+     * the rest are shuffled into their library. {@code validCardIds} are that player's hand card
+     * ids at begin time (card views re-derived from the hand at prompt time). {@code remainingPlayerIds}
+     * are the players still to choose after this one (APNAP order); when this player answers, the next
+     * remaining player with a non-empty hand is prompted. {@code cardName} is the source spell's name
+     * (for logging).
+     */
+    record KeepCardsInHandChoice(UUID playerId, java.util.List<UUID> validCardIds, int keepCount,
+                                 java.util.List<UUID> remainingPlayerIds, String cardName)
+            implements PendingInteraction {
+
+        /** The maximum number of cards this player may keep (bounded by their hand size). */
+        public int maxCount() {
+            return Math.min(keepCount, validCardIds.size());
+        }
     }
 
     /**

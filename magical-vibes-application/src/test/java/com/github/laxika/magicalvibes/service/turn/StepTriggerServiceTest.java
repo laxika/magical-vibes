@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -982,6 +983,35 @@ class StepTriggerServiceTest {
 
             // MayEffect goes through queueMayAbility which adds to stack
             assertThat(gd.stack).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED ConditionalEffect wrapping MayEffect triggers when an opponent lost enough life")
+        void endStepConditionalMayTriggersWhenOpponentLostLife() {
+            Card card = createCardWithName("River Cutthroat");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+                    new OpponentLostLifeThisTurn(3), new MayEffect(new GainLifeEffect(1), "Draw?")));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.lifeLostThisTurn.put(player2Id, 3);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getDescription()).contains("River Cutthroat");
+        }
+
+        @Test
+        @DisplayName("END_STEP_TRIGGERED ConditionalEffect wrapping MayEffect skips when no opponent lost enough life")
+        void endStepConditionalMaySkipsWhenThresholdNotMet() {
+            Card card = createCardWithName("River Cutthroat");
+            card.addEffect(EffectSlot.END_STEP_TRIGGERED, new ConditionalEffect(
+                    new OpponentLostLifeThisTurn(3), new MayEffect(new GainLifeEffect(1), "Draw?")));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+            gd.lifeLostThisTurn.put(player2Id, 2);
+
+            sut.handleEndStepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test

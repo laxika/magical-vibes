@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import lombok.Getter;
@@ -31,6 +32,12 @@ public class ActivatedAbility {
     private boolean activatableByAnyPlayer;
     /** When true, the ability's cost includes the untap symbol {@code {Q}}: the permanent must be tapped and is untapped to pay (e.g. Order of Whiteclay). Set via {@link #withRequiresUntap()}. */
     private boolean requiresUntap;
+    /** Predicate a controlled permanent must match to count toward {@link #requiredControlledPermanentCount} (e.g. Leechridden Swamp's "two or more black permanents"). Null = no such restriction. Set via {@link #withRequiredControlledPermanents}. */
+    private PermanentPredicate requiredControlledPermanentPredicate;
+    /** Minimum number of controlled permanents matching {@link #requiredControlledPermanentPredicate} required to activate. */
+    private int requiredControlledPermanentCount;
+    /** Human-readable description of the predicate-count restriction, used in the activation error message. */
+    private String requiredControlledPermanentDescription;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -129,7 +136,22 @@ public class ActivatedAbility {
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
         copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         copy.requiresUntap = this.requiresUntap;
+        copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
+        copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
+        copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
         return copy;
+    }
+
+    /**
+     * Fluent setter for a "Activate only if you control N or more [matching] permanents" restriction
+     * (e.g. Leechridden Swamp's "two or more black permanents"). {@code description} is the plural
+     * noun phrase used in the activation error message. Returns this ability for chaining.
+     */
+    public ActivatedAbility withRequiredControlledPermanents(PermanentPredicate predicate, int count, String description) {
+        this.requiredControlledPermanentPredicate = predicate;
+        this.requiredControlledPermanentCount = count;
+        this.requiredControlledPermanentDescription = description;
+        return this;
     }
 
     /**

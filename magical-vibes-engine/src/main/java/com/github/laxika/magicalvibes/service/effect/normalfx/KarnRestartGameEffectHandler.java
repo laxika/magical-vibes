@@ -163,6 +163,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
@@ -232,6 +233,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
             gameData.landsPlayedThisTurn.put(playerId, 0);
             gameData.additionalLandsThisTurn.put(playerId, 0);
             gameData.cardsDrawnThisTurn.put(playerId, 0);
+            gameData.cardsDiscardedThisTurn.put(playerId, 0);
             gameData.playerDamagePreventionShields.put(playerId, 0);
             gameData.permanentsEnteredBattlefieldThisTurn.put(playerId, Collections.synchronizedList(new ArrayList<>()));
             gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.put(playerId, ConcurrentHashMap.newKeySet());

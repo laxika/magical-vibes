@@ -2846,7 +2846,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice
-                || colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
+                || colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice
+                || colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice) {
             String bestLandType = findMostNeededBasicLandType(gameData);
             log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
             final String landType = bestLandType;

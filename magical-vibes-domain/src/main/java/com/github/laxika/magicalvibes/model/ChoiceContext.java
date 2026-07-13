@@ -13,7 +13,13 @@ public sealed interface ChoiceContext {
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
 
     record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
-                           boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) implements ChoiceContext {
+                           boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype,
+                           List<ManaColor> fixedColorOptions) implements ChoiceContext {
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
+                               boolean flashbackOnly, boolean instantSorceryOnly, boolean spellOrAbilitySubtype) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, instantSorceryOnly, spellOrAbilitySubtype, null);
+        }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
             this(playerId, fromCreature, 1, null, false, false, false);
@@ -47,6 +53,15 @@ public sealed interface ChoiceContext {
          */
         public static ManaColorChoice subtypeSpellOrAbility(UUID playerId, int amount, CardSubtype subtype) {
             return new ManaColorChoice(playerId, false, amount, subtype, false, false, true);
+        }
+
+        /**
+         * "Add N mana, each chosen individually from a fixed list of colors" (filter lands such as
+         * Fire-Lit Thicket's "Add {R}{R}, {R}{G}, or {G}{G}"). Each mana's color is picked separately
+         * from {@code colors}, re-prompting until all {@code amount} have been chosen.
+         */
+        public static ManaColorChoice fixedColorCombination(UUID playerId, boolean fromCreature, int amount, List<ManaColor> colors) {
+            return new ManaColorChoice(playerId, fromCreature, amount, null, false, false, false, colors);
         }
     }
 
@@ -107,6 +122,16 @@ public sealed interface ChoiceContext {
     }
 
     /**
+     * The controller has chosen a basic land type; each land they control becomes that type
+     * until end of turn, replacing its other land types/mana ability per rule 305.7
+     * (Elsewhere Flask).
+     *
+     * @param controllerId the player whose lands become the chosen type
+     */
+    record OwnLandsBecomeBasicTypeChoice(UUID controllerId) implements ChoiceContext {
+    }
+
+    /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.
      * Players name in APNAP order. After all have named, top cards are revealed and
      * moved to hand (match) or bottom of library (no match).
@@ -160,6 +185,21 @@ public sealed interface ChoiceContext {
      * and discards every card of that color (Persecute).
      */
     record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
+
+    /**
+     * The controller chooses a color at resolution; {@code targetPlayerId} then exiles the top
+     * {@code count} cards of their library and, for each exiled card of the chosen color, the
+     * controller creates a token from {@code tokenTemplate} (Oona, Queen of the Fae).
+     *
+     * @param controllerId   controller that chooses the color and creates the tokens
+     * @param targetPlayerId the target opponent who exiles cards
+     * @param count          number of top cards to exile
+     * @param tokenTemplate  one token created per exiled card of the chosen color
+     * @param sourceSetCode  set code of the source card (token art/set)
+     */
+    record ExileTopCardsChosenColorTokensChoice(UUID controllerId, UUID targetPlayerId, int count,
+                                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                                String sourceSetCode) implements ChoiceContext {}
 
     /**
      * Storage Matrix: during {@code playerId}'s untap step the active player chooses artifact,

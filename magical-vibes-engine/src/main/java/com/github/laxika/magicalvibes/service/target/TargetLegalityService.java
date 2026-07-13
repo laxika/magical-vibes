@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -413,6 +414,9 @@ public class TargetLegalityService {
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, UUID targetId) {
         List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.SPELL).stream()
                 .filter(CardEffect::canTargetGraveyard)
+                // Unwrap conditional reanimation (e.g. Torrent of Souls' "if {B} was spent") so the
+                // inner effect's card-type filter is enforced when the graveyard target is chosen.
+                .map(e -> e instanceof ConditionalEffect conditional ? conditional.wrapped() : e)
                 .toList();
         targetValidationService.validateEffectTargets(graveyardEffects,
                 new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD, card));

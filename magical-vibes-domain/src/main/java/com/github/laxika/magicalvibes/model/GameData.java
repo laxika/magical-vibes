@@ -289,6 +289,10 @@ public class GameData {
     /** Per-player: creatures controlled by this player can't be the targets of spells of these colors this turn. Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerCreaturesCantBeTargetedByColorsThisTurn = new ConcurrentHashMap<>();
 
+    /** Card IDs of individual spells on the stack that have been made uncounterable (e.g. Vexing Shusher's
+     *  "Target spell can't be countered"). Only relevant while the spell is on the stack. */
+    public final Set<UUID> spellsMadeUncounterable = ConcurrentHashMap.newKeySet();
+
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
@@ -382,6 +386,10 @@ public class GameData {
 
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
+     *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
+    public final Map<UUID, Integer> cardsDiscardedThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
      *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
@@ -1337,6 +1345,7 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
+        copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
@@ -1470,6 +1479,7 @@ public class GameData {
                 copy.playerSpellsCantBeCounteredByColorsThisTurn.put(k, new HashSet<>(v)));
         this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
+        copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
 

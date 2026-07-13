@@ -94,7 +94,12 @@ public class CharacteristicState {
         for (CardSubtype granted : permanent.getGrantedSubtypes()) {
             addSubtype(granted);
         }
-        if (card.getColor() != null) {
+        // Seed every intrinsic color: a multicolored card ({W/U} hybrid) is all of its colors,
+        // not just the first. Legacy animation/awakening/override colors replace this baseline in
+        // LayerSystemService.seedLegacyColorAndAbilityState.
+        if (card.getColors() != null && !card.getColors().isEmpty()) {
+            this.colors.addAll(card.getColors());
+        } else if (card.getColor() != null) {
             this.colors.add(card.getColor());
         }
         this.colors.addAll(permanent.getGrantedColors());

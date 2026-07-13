@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
@@ -709,6 +711,13 @@ public class CombatAttackService {
                     int threshold = amountEvaluationService.evaluate(gameData, restriction.amount(),
                             AmountContext.forStaticEffect(permanent, playerId));
                     if (gameQueryService.getEffectivePower(gameData, creature) > threshold) {
+                        restricted[0] = true;
+                    }
+                } else if (effect instanceof MatchingCreaturesCantAttackOrBlockEffect restriction) {
+                    FilterContext context = FilterContext.of(gameData)
+                            .withSourceControllerId(playerId)
+                            .withSourceCardId(permanent.getOriginalCard().getId());
+                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.affectedPredicate(), context)) {
                         restricted[0] = true;
                     }
                 }

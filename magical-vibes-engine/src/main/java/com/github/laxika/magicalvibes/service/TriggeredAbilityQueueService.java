@@ -214,6 +214,43 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextEntersTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            PermanentChoiceContext.EntersTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+
+            TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                    gameData,
+                    pending.effects(),
+                    pending.sourceCard().getTargetFilter(),
+                    pending.controllerId(),
+                    pending.sourceCard(),
+                    TriggerTargetCollector.Options.ATTACK);
+
+            if (result.validTargets().isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+                String logEntry = pending.sourceCard().getName() + "'s enter trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} enter trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
+                    : result.canTargetPlayers()
+                            ? (result.opponentOnly() ? "target opponent" : "target player")
+                            : "target permanent";
+            gameData.pollPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), result.validTargets(),
+                    pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+
+            String logEntry = pending.sourceCard().getName() + "'s enter trigger - choose " + targetDescription + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} enter trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextDiscardSelfTrigger(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             PermanentChoiceContext.DiscardTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class);

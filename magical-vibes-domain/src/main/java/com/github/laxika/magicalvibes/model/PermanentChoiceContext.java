@@ -104,6 +104,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** Targeted "whenever a permanent enters" trigger (e.g. Reaper King — "Whenever another Scarecrow
+     *  you control enters, destroy target permanent."). The controller chooses the target when the
+     *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow. */
+    record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, boolean playerTargetOnly, TargetFilter targetFilter, int spellManaSpentX) implements PermanentChoiceContext {
 
         /** Convenience constructor for any-target (permanents + players). */
@@ -281,5 +286,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record TransformCreatureTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID opponentId, List<UUID> creatureIds,
                                    int maxCreatureTargets) implements PermanentChoiceContext {}
+
+    /** Valleymaker's mana ability ("Choose a player. That player adds {G}{G}{G}."). The activating
+     *  player picks the recipient; {@code amount} mana of {@code color} is added to that player's pool
+     *  (tracking creature mana when {@code creatureSource}). Begun inline during mana-ability resolution. */
+    record ManaAbilityAddToChosenPlayer(ManaColor color, int amount, boolean creatureSource,
+                                        String sourceCardName) implements PermanentChoiceContext {}
 
 }

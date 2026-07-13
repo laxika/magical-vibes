@@ -45,6 +45,7 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 | Spell-target (`SpellTargetTriggerAnyTarget`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
 | Life-gain (`LifeGainTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
 | Enters-from-graveyard (`EntersFromGraveyardTriggerTarget`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
+| Enters (`EntersTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ✅ |
 | Explore (`ExploreTriggerTarget`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
 | Emblem (`EmblemTriggerTarget`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
 | Saga chapter (`SagaChapterTarget`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
@@ -87,6 +88,7 @@ combat damage step is processed.
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
+| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when `effect.canTargetPermanent()`, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — any permanent, honours the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |

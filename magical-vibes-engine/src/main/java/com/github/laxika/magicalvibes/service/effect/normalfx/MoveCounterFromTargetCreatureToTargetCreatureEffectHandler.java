@@ -49,6 +49,30 @@ public class MoveCounterFromTargetCreatureToTargetCreatureEffectHandler implemen
             return;
         }
 
+        boolean moveAll = ((MoveCounterFromTargetCreatureToTargetCreatureEffect) effect).moveAll();
+
+        if (moveAll) {
+            // "Move all counters" — move every counter of every kind.
+            List<CounterType> kinds = source.getCounters().entrySet().stream()
+                    .filter(e -> e.getValue() > 0)
+                    .map(Map.Entry::getKey)
+                    .toList();
+            if (kinds.isEmpty()) {
+                gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName() + " has no counters to move.");
+                return;
+            }
+            for (CounterType kind : kinds) {
+                int count = source.getCounterCount(kind);
+                source.setCounterCount(kind, 0);
+                destination.setCounterCount(kind, destination.getCounterCount(kind) + count);
+            }
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "All counters are moved from " + source.getCard().getName() + " onto " + destination.getCard().getName() + ".");
+            log.info("Game {} - {} moves all counters from {} to {}", gameData.id, entry.getCard().getName(),
+                    source.getCard().getName(), destination.getCard().getName());
+            return;
+        }
+
         // "A counter" — move the first kind of counter present on the source creature.
         CounterType toMove = source.getCounters().entrySet().stream()
                 .filter(e -> e.getValue() > 0)

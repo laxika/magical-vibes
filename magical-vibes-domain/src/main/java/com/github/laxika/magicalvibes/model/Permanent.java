@@ -576,6 +576,32 @@ public class Permanent {
         return card.getColor();
     }
 
+    /**
+     * The permanent's full intrinsic color set, respecting the same legacy overrides as
+     * {@link #getEffectiveColor()} but preserving every color of a multicolored card (a
+     * {@code {W/U}} hybrid is both white and blue). Prefer this over {@link #getEffectiveColor()}
+     * for color-matters checks (lords, protection, damage prevention). Does not include
+     * static-effect grants — {@link com.github.laxika.magicalvibes.service.battlefield.GameQueryService#getEffectiveColors}
+     * layers those on top.
+     */
+    public List<CardColor> getEffectiveColors() {
+        if (colorOverridden && !transientColors.isEmpty()) {
+            return List.copyOf(transientColors);
+        }
+        if ((animatedUntilEndOfTurn || animatedUntilEndOfCombat) && animatedColor != null) {
+            return List.of(animatedColor);
+        }
+        if (getCounterCount(CounterType.AWAKENING) > 0) {
+            return List.of(CardColor.GREEN);
+        }
+        List<CardColor> intrinsic = card.getColors();
+        if (intrinsic != null && !intrinsic.isEmpty()) {
+            return intrinsic;
+        }
+        CardColor single = card.getColor();
+        return single != null ? List.of(single) : List.of();
+    }
+
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn) return false;
         // Changeling grants all creature types; losing all creature types nullifies that grant.

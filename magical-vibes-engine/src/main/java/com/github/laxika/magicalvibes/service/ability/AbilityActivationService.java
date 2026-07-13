@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCrea
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -1258,6 +1260,16 @@ public class AbilityActivationService {
             payDiscardHandCost(gameData, player);
         }
 
+        // Pay reveal-two-color-sharing-cards cost: reveal a qualifying pair (cards stay in hand)
+        if (abilityEffects.stream().anyMatch(e -> e instanceof RevealTwoCardsSharingColorCost)) {
+            List<Card> pair = colorSharingPair(gameData.playerHands.get(playerId));
+            if (pair != null) {
+                String revealLog = player.getUsername() + " reveals " + pair.get(0).getName()
+                        + " and " + pair.get(1).getName() + " as a cost.";
+                gameBroadcastService.logAndBroadcast(gameData, revealLog);
+            }
+        }
+
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             // Capture sacrificed creature's tracked values before auto-pay (e.g. Birthing Pod, Fling)
             if (handler.costEffect() instanceof SacrificeCreatureCost sacCost
@@ -1624,6 +1636,12 @@ public class AbilityActivationService {
             throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
         }
 
+        // Reveal-two-color-sharing-cards cost needs a qualifying pair in hand
+        if (abilityEffects.stream().anyMatch(e -> e instanceof RevealTwoCardsSharingColorCost)
+                && colorSharingPair(gameData.playerHands.get(playerId)) == null) {
+            throw new IllegalStateException("Must reveal two cards that share a color to activate ability");
+        }
+
         // Remove-counter cost availability
         Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveCounterFromSourceCost)
@@ -1841,6 +1859,15 @@ public class AbilityActivationService {
             }
         }
 
+        // Predicate-count restriction (e.g. Leechridden Swamp's "Activate only if you control two or more black permanents")
+        if (ability.getRequiredControlledPermanentPredicate() != null) {
+            int count = gameQueryService.countControlledPermanentsMatching(gameData, playerId, ability.getRequiredControlledPermanentPredicate());
+            if (count < ability.getRequiredControlledPermanentCount()) {
+                throw new IllegalStateException("Activate only if you control " + ability.getRequiredControlledPermanentCount()
+                        + " or more " + ability.getRequiredControlledPermanentDescription());
+            }
+        }
+
         // Hand-size restriction (e.g. Resonating Lute's "Activate only if you have seven or more cards in your hand")
         if (ability.getMinCardsInHandToActivate() > 0) {
             List<Card> hand = gameData.playerHands.get(playerId);
@@ -1985,6 +2012,29 @@ public class AbilityActivationService {
         subtypes.addAll(permanent.getTransientSubtypes());
         subtypes.addAll(permanent.getGrantedSubtypes());
         return subtypes;
+    }
+
+    /**
+     * Finds two cards in {@code hand} that share a color with each other (for
+     * {@link RevealTwoCardsSharingColorCost}). Colorless cards share no color and never qualify.
+     * Returns the qualifying pair, or {@code null} if none exists.
+     */
+    private List<Card> colorSharingPair(List<Card> hand) {
+        if (hand == null) {
+            return null;
+        }
+        for (int i = 0; i < hand.size(); i++) {
+            List<CardColor> colorsA = hand.get(i).getColors();
+            if (colorsA.isEmpty()) {
+                continue;
+            }
+            for (int j = i + 1; j < hand.size(); j++) {
+                if (hand.get(j).getColors().stream().anyMatch(colorsA::contains)) {
+                    return List.of(hand.get(i), hand.get(j));
+                }
+            }
+        }
+        return null;
     }
 
     private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost, int xValue) {

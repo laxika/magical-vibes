@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -712,6 +713,36 @@ class DeathTriggerCollectorServiceTest {
             svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
 
             assertThat(gd.stack).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("BecomeCopyOfDyingCreature queues a pay-mana may ability with the dying card baked in")
+        void becomeCopyQueuesMayPayAbility() {
+            Card puca = createCreature("Cemetery Puca", 1, 2);
+            Card dying = createCreature("Dead Creature", 2, 2);
+            var copyEffect = new BecomeCopyOfDyingCreatureEffect();
+            var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
+            Permanent perm = new Permanent(puca);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID);
+
+            assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isTrue();
+            assertThat(gd.pendingMayAbilities).hasSize(1);
+            assertThat(gd.pendingMayAbilities.get(0).manaCost()).isEqualTo("{1}");
+            var baked = (BecomeCopyOfDyingCreatureEffect) gd.pendingMayAbilities.get(0).effects().get(0);
+            assertThat(baked.dyingCardId()).isEqualTo(dying.getId());
+        }
+
+        @Test
+        @DisplayName("BecomeCopyOfDyingCreature does not fire when the dying card is null")
+        void becomeCopyNoFireWithoutDyingCard() {
+            Card puca = createCreature("Cemetery Puca", 1, 2);
+            var copyEffect = new BecomeCopyOfDyingCreatureEffect();
+            var rawMayPay = new MayPayManaEffect("{1}", copyEffect, "Pay {1}?");
+            Permanent perm = new Permanent(puca);
+            var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID);
+
+            assertThat(svc.handleAnyCreatureDeathBecomeCopy(match(perm, PLAYER1_ID, rawMayPay), copyEffect, ctx)).isFalse();
+            assertThat(gd.pendingMayAbilities).isEmpty();
         }
 
         @Test

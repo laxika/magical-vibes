@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -183,6 +185,25 @@ public class DeathTriggerCollectorService {
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DrawCardEffect(counters)))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCounterOnTargetForEachDyingSourceCounterEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handlePutCounterOnTargetForEachDyingSourceCounter(TriggerMatchContext match,
+            PutCounterOnTargetForEachDyingSourceCounterEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Snapshot the counter count at death — the permanent is off the battlefield by the time this
+        // resolves, so bake the fixed amount into the effect carried to target selection.
+        int counters = dyingPermanent.getCounterCount(effect.counterType());
+        match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                sd.dyingCard(), sd.controllerId(),
+                new ArrayList<>(List.of(
+                        new PutCounterOnTargetForEachDyingSourceCounterEffect(effect.counterType(), counters)))
         ));
         return true;
     }
@@ -631,6 +652,31 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(),
                 new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = BecomeCopyOfDyingCreatureEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathBecomeCopy(TriggerMatchContext match,
+            BecomeCopyOfDyingCreatureEffect effect, TriggerContext ctx) {
+        // Cemetery Puca: "you may pay {1}. If you do, this creature becomes a copy of that creature,
+        // except it has this ability." Bake the dying creature's card id so resolution copies its
+        // last-known information, and gate the copy behind the mana payment.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        if (cd.dyingCard() == null) {
+            return false;
+        }
+        MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
+        var copyEffect = new BecomeCopyOfDyingCreatureEffect(cd.dyingCard().getId());
+        match.gameData().pendingMayAbilities.add(new PendingMayAbility(
+                match.permanent().getCard(),
+                match.controllerId(),
+                List.of(copyEffect),
+                match.permanent().getCard().getName() + " — Pay " + rawMayPay.manaCost()
+                        + " to become a copy of " + cd.dyingCard().getName() + "?",
+                null,
+                rawMayPay.manaCost()
+        ));
         logAnyCreatureDeath(match);
         return true;
     }

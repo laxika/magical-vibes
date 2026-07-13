@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
@@ -59,6 +60,15 @@ public class EnterTriggerCollectorService {
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        // A permanent-targeting effect (e.g. Reaper King's "destroy target permanent") can't be pushed
+        // straight onto the stack with a pre-set target — queue a pending choice so the controller picks it.
+        if (effect.canTargetPermanent()) {
+            Card sourceCard = match.permanent().getCard();
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId()));
+            logTriggered(match);
+            return true;
+        }
         enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         logTriggered(match);
         return true;

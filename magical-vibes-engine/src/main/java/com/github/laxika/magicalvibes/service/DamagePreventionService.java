@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreatures
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
@@ -46,10 +47,33 @@ public class DamagePreventionService {
 
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
+    private final DrawService drawService;
 
-    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
+    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport, DrawService drawService) {
         this.gameQueryService = gameQueryService;
         this.lifeSupport = lifeSupport;
+        this.drawService = drawService;
+    }
+
+    /**
+     * Swans of Bryn Argoll: "If a source would deal damage to this creature, prevent that damage.
+     * The source's controller draws cards equal to the damage prevented this way." Returns {@code true}
+     * when the damage is fully prevented (the caller must then deal no damage to {@code target}).
+     * When {@code sourceControllerId} is non-null, that player draws one card per point of prevented
+     * damage. Prevention (and therefore the draw) only applies while damage is currently preventable.
+     */
+    public boolean applySwansSourceControllerDraw(GameData gameData, Permanent target, int damage, UUID sourceControllerId) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return false;
+        if (damage <= 0) return false;
+        boolean hasEffect = target.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PreventDamageToSelfAndSourceControllerDrawsEffect);
+        if (!hasEffect) return false;
+        if (sourceControllerId != null) {
+            for (int i = 0; i < damage; i++) {
+                drawService.resolveDrawCard(gameData, sourceControllerId);
+            }
+        }
+        return true;
     }
 
     int applyGlobalPreventionShield(GameData gameData, int damage) {

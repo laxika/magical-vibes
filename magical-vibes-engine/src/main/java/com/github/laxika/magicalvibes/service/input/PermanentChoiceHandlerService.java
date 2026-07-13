@@ -125,6 +125,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleHandCastSpellTarget(gameData, permanentId, hct);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
+        } else if (context instanceof PermanentChoiceContext.EntersTriggerTarget ett) {
+            triggerHandler.handleEntersTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
             triggerHandler.handleEmblemTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger umpt) {
@@ -171,6 +173,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
+        } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
+            battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (gameData.interaction.pendingAuraCard() != null) {
             battlefieldHandler.handlePendingAuraPlacement(gameData, playerId, permanentId);
         } else {

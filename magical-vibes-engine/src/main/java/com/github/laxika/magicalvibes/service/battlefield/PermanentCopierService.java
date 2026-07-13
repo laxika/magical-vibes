@@ -20,7 +20,16 @@ public class PermanentCopierService {
 
     public void applyCloneCopy(Permanent clonePerm, Permanent targetPerm, Integer powerOverride,
                                 Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
-        Card target = targetPerm.getCard();
+        applyCloneCopy(clonePerm, targetPerm.getCard(), powerOverride, toughnessOverride, additionalTypesOverride);
+    }
+
+    /**
+     * Copies directly from a {@link Card} rather than a live {@link Permanent}, so a copy can be built
+     * from last-known information (e.g. a creature that died — Cemetery Puca) without wrapping the
+     * source card in a Permanent (which would freeze it).
+     */
+    public void applyCloneCopy(Permanent clonePerm, Card target, Integer powerOverride,
+                                Integer toughnessOverride, Set<CardType> additionalTypesOverride) {
         Card copy = new Card();
         copy.setName(target.getName());
         copy.setType(target.getType());

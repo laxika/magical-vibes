@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -57,6 +58,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -65,6 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantConspireToSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -160,6 +164,64 @@ public class SpellCastingService {
     }
 
     /**
+     * Whether a permanent the casting player controls grants conspire (CR 702.78) to {@code card} via a
+     * {@link GrantConspireToSpellsEffect} static ability (e.g. Wort, the Raidmother). Lets the conspire
+     * cost be paid on spells that lack the innate {@code CONSPIRE} keyword.
+     */
+    private boolean hasConspireGrantForCard(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GrantConspireToSpellsEffect grant
+                        && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private PutCounterOnControlledCreatureCost extractAndRemovePutCounterOnControlledCreatureCost(List<CardEffect> effects) {
+        PutCounterOnControlledCreatureCost cost = (PutCounterOnControlledCreatureCost) effects.stream()
+                .filter(PutCounterOnControlledCreatureCost.class::isInstance)
+                .findFirst().orElse(null);
+        if (cost != null) effects.removeIf(PutCounterOnControlledCreatureCost.class::isInstance);
+        return cost;
+    }
+
+    /**
+     * Pays a spell's "as an additional cost to cast this spell, put a -1/-1 counter on a creature you
+     * control" cost (e.g. Scarscale Ritual). The creature is supplied via {@code sacrificePermanentId}.
+     * The counter is placed directly; the creature dies later via state-based actions if its toughness
+     * reaches 0.
+     */
+    private void payPutCounterOnControlledCreatureCost(GameData gameData, Player player, Card card,
+                                                       PutCounterOnControlledCreatureCost cost, UUID creatureId) {
+        if (cost == null) return;
+        if (creatureId == null) {
+            throw new IllegalStateException("Must put a counter on a creature you control to cast " + card.getName());
+        }
+        Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+        if (creature == null) {
+            throw new IllegalStateException("Counter target not found on battlefield");
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, creatureId);
+        if (!player.getId().equals(controllerId)) {
+            throw new IllegalStateException("Can only put a counter on a creature you control");
+        }
+        if (!gameQueryService.isCreature(gameData, creature)) {
+            throw new IllegalStateException("Counter target must be a creature");
+        }
+        CounterType type = cost.counterType();
+        creature.setCounterCount(type, creature.getCounterCount(type) + cost.count());
+        String counterName = type == CounterType.MINUS_ONE_MINUS_ONE ? "-1/-1" : type.name().toLowerCase();
+        String counterText = cost.count() == 1 ? "a " + counterName + " counter" : cost.count() + " " + counterName + " counters";
+        gameBroadcastService.logAndBroadcast(gameData,
+                player.getUsername() + " puts " + counterText + " on " + creature.getCard().getName() + " for " + card.getName() + ".");
+    }
+
+    /**
      * Pays a spell's "as an additional cost to cast this spell, return a creature you control to its
      * owner's hand" cost (e.g. Familiar's Ruse). The creature is supplied via {@code sacrificePermanentId}.
      */
@@ -234,6 +296,14 @@ public class SpellCastingService {
     private static boolean isModalSpell(Card card) {
         return card.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance)
                 || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
+    }
+
+    /**
+     * Unwraps a {@link ConditionalEffect} so graveyard-targeting detection can see the inner effect
+     * (e.g. a "if {B} was spent" reanimate on Torrent of Souls). Non-conditional effects pass through.
+     */
+    private static CardEffect unwrapConditional(CardEffect effect) {
+        return effect instanceof ConditionalEffect conditional ? conditional.wrapped() : effect;
     }
 
     /**
@@ -580,6 +650,7 @@ public class SpellCastingService {
         ExileNCardsFromGraveyardCost exileNCardsGraveyardCost = extractAndRemoveExileNCardsFromGraveyardCost(filteredSpellEffects);
         DiscardCardTypeCost discardCost = extractAndRemoveDiscardCost(filteredSpellEffects);
         boolean usesReturnCreatureCost = extractAndRemoveReturnCreatureToHandCost(filteredSpellEffects);
+        PutCounterOnControlledCreatureCost putCounterCost = extractAndRemovePutCounterOnControlledCreatureCost(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -747,6 +818,7 @@ public class SpellCastingService {
         List<CardEffect> graveyardTargetingSource = wasModal ? filteredSpellEffects : card.getEffects(EffectSlot.SPELL);
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
+                .map(SpellCastingService::unwrapConditional)
                 .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
                 .findFirst().orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
@@ -902,7 +974,8 @@ public class SpellCastingService {
         // still paid below. Paying it flags the spell (gameData.conspiredSpellIds) so that a single
         // "copy it, you may choose a new target for the copy" trigger is queued above the spell when
         // spell-cast triggers are collected in finishSpellCast().
-        if (!conspireCreatureIds.isEmpty() && card.getKeywords().contains(Keyword.CONSPIRE)) {
+        if (!conspireCreatureIds.isEmpty()
+                && (card.getKeywords().contains(Keyword.CONSPIRE) || hasConspireGrantForCard(gameData, playerId, card))) {
             if (conspireCreatureIds.size() != 2 || conspireCreatureIds.get(0).equals(conspireCreatureIds.get(1))) {
                 throw new IllegalStateException("Conspire requires two different untapped creatures you control");
             }
@@ -1076,6 +1149,7 @@ public class SpellCastingService {
             if (usesReturnCreatureCost) {
                 payReturnCreatureToHandCost(gameData, player, card, sacrificePermanentId);
             }
+            payPutCounterOnControlledCreatureCost(gameData, player, card, putCounterCost, sacrificePermanentId);
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
             resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, exileXCardsGraveyardCost, exileGraveyardCardIndices, resolvedXValue);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
@@ -2010,12 +2084,14 @@ public class SpellCastingService {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
             extractAndRemoveReturnCreatureToHandCost(effectsToResolve);
+            extractAndRemovePutCounterOnControlledCreatureCost(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();
         }
 
         ReturnCardFromGraveyardEffect graveyardReturnEffect = effectsToResolve.stream()
+                .map(SpellCastingService::unwrapConditional)
                 .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
                 .map(e -> (ReturnCardFromGraveyardEffect) e)
                 .findFirst()
@@ -2181,6 +2257,7 @@ public class SpellCastingService {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
             extractAndRemoveReturnCreatureToHandCost(effectsToResolve);
+            extractAndRemovePutCounterOnControlledCreatureCost(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();

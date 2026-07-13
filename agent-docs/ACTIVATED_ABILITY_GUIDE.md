@@ -234,6 +234,27 @@ Cards: `BloodlineKeeper`
 
 ---
 
+### 8a. Ability with predicate-count restriction (`.withRequiredControlledPermanents`)
+
+```java
+new ActivatedAbility(requiresTap, manaCost, effects, description)
+    .withRequiredControlledPermanents(PermanentPredicate predicate, int count, String description)
+```
+
+**Use when:** Ability text says "Activate only if you control N or more [permanents matching a predicate]" where the filter is a **color/type/etc.** rather than a creature subtype (use section 8 for subtypes). `description` is the plural noun phrase spliced into the error message ("Activate only if you control N or more <description>"). Validated in `AbilityActivationService` via `gameQueryService.countControlledPermanentsMatching`.
+
+```java
+// {B}, {T}: Each opponent loses 1 life. Activate only if you control two or more black permanents.
+new ActivatedAbility(true, "{B}",
+    List.of(new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT)),
+    "{B}, {T}: Each opponent loses 1 life. Activate only if you control two or more black permanents.")
+    .withRequiredControlledPermanents(new PermanentColorInPredicate(Set.of(CardColor.BLACK)), 2, "black permanents")
+```
+
+Cards: `LeechriddenSwamp`
+
+---
+
 ### 8b. Ability any player may activate
 
 ```java
@@ -423,6 +444,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Slate of Ancestry |
 | `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `TapTwoCreaturesSharingTypeCost` | `()` | "Tap two untapped creatures you control that share a creature type: ..." (Weight of Conscience). The two tapped creatures must share a creature type with each other (Changeling-aware, mutual constraint) — not expressible with `TapMultiplePermanentsCost`'s per-permanent filter. |
+| `RevealTwoCardsSharingColorCost` | `()` | "Reveal two cards from your hand that share a color: ..." (Illuminated Folio). Revealed cards stay in hand; the cost only gates the ability, so payment auto-reveals any qualifying pair (a valid pair must exist to activate; colorless cards never qualify). |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 | `PutCounterOnSourceCost` | `()` = -1/-1 ×1, or `(powerMod, toughnessMod, count)` | "Put a -1/-1 counter on this creature: ..." — puts counters on the source as a cost (paid immediately on activation). Respects `cantHaveCounters`/`cantHaveMinusOneMinusOneCounters`. Barrenton Medic |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |

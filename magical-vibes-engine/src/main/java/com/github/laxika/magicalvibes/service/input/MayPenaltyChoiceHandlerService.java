@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -61,6 +62,7 @@ public class MayPenaltyChoiceHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -381,6 +383,32 @@ public class MayPenaltyChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
             }
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDiscardHandUnlessPaysLifeChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DiscardHandUnlessPaysLifeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DiscardHandUnlessPaysLifeEffect)
+                .map(e -> (DiscardHandUnlessPaysLifeEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID targetPlayerId = ability.controllerId();
+        UUID casterId = ability.targetCardId();
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)
+                && gameData.getLife(targetPlayerId) >= effect.lifeCost();
+
+        if (accepted && canPay) {
+            int currentLife = gameData.getLife(targetPlayerId);
+            gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeCost());
+            String logEntry = player.getUsername() + " pays " + effect.lifeCost() + " life. (" + ability.sourceCard().getName() + ")";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+        } else {
+            // Declined (or can no longer pay) — discard the whole hand.
+            discardHandUnlessPaysLifeEffectHandler.discardTargetHand(gameData, casterId, targetPlayerId, ability.sourceCard());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

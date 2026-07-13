@@ -99,6 +99,13 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice) {
+            String chosenType = "ISLAND";
+            log.info("AI: Choosing basic land type for own lands {} in game {}", chosenType, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenType));
+            return;
+        }
+
         if (context instanceof ChoiceContext.SphinxAmbassadorNameChoice) {
             // AI names the best creature card from its own library to try to guess what was picked
             List<Card> ownDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());

@@ -287,32 +287,48 @@ public class TriggerCollectionService {
             }
         }
 
-        // ON_SELF_CAST — "When you cast this spell, copy it if <condition>" (SOS Infusion copy cycle).
-        // Scanned against the just-cast card itself (it's a spell on the stack, not a permanent).
+        // ON_SELF_CAST — "When you cast this spell, ..." triggers scanned against the just-cast card
+        // itself (it's a spell on the stack, not a permanent). CopyThisSpellIfConditionEffect (SOS
+        // Infusion copy cycle) needs a snapshot of the spell entry; any other effect (e.g. Demigod of
+        // Revenge's graveyard return) is queued as a plain triggered ability under the caster.
+        List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
         for (CardEffect effect : spellCard.getEffects(EffectSlot.ON_SELF_CAST)) {
-            if (!(effect instanceof CopyThisSpellIfConditionEffect trigger)) continue;
-
-            StackEntry spellEntry = null;
-            for (StackEntry se : gameData.stack) {
-                if (se.getCard().getId().equals(spellCard.getId())) {
-                    spellEntry = se;
-                    break;
+            if (effect instanceof CopyThisSpellIfConditionEffect trigger) {
+                StackEntry spellEntry = null;
+                for (StackEntry se : gameData.stack) {
+                    if (se.getCard().getId().equals(spellCard.getId())) {
+                        spellEntry = se;
+                        break;
+                    }
                 }
-            }
-            if (spellEntry == null) continue;
+                if (spellEntry == null) continue;
 
-            // Always triggers; the "if <condition>" is an effect clause re-checked at resolution.
-            StackEntry snapshot = new StackEntry(spellEntry);
-            CardEffect copyEffect = new ConditionalEffect(trigger.condition(),
-                    new CopyControllerCastSpellEffect(snapshot, castingPlayerId));
+                // Always triggers; the "if <condition>" is an effect clause re-checked at resolution.
+                StackEntry snapshot = new StackEntry(spellEntry);
+                CardEffect copyEffect = new ConditionalEffect(trigger.condition(),
+                        new CopyControllerCastSpellEffect(snapshot, castingPlayerId));
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        spellCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(copyEffect))
+                ));
+                log.info("Game {} - {} self-cast copy trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
+            } else {
+                selfCastTriggeredEffects.add(effect);
+            }
+        }
+        if (!selfCastTriggeredEffects.isEmpty()) {
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     spellCard,
                     castingPlayerId,
                     spellCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(copyEffect))
+                    new ArrayList<>(selfCastTriggeredEffects)
             ));
-            log.info("Game {} - {} self-cast copy trigger queued for {}",
+            log.info("Game {} - {} self-cast trigger queued for {}",
                     gameData.id, spellCard.getName(), castingPlayerId);
         }
 
@@ -322,6 +338,10 @@ public class TriggerCollectionService {
     // ── Discard triggers ───────────────────────────────────────────────
 
     public void checkDiscardTriggers(GameData gameData, UUID discardingPlayerId, Card discardedCard) {
+        // Central discard hook: every discard path routes through here, so count discards per player
+        // for this turn (Dream Salvage's "cards target opponent discarded this turn").
+        gameData.cardsDiscardedThisTurn.merge(discardingPlayerId, 1, Integer::sum);
+
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.Discard(discardingPlayerId, discardedCard);
 
@@ -1224,6 +1244,10 @@ public class TriggerCollectionService {
 
     public void processNextAttackTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
+    }
+
+    public void processNextEntersTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextEntersTriggerTarget(gameData);
     }
 
     public void processNextSelfLeavesTriggerTarget(GameData gameData) {

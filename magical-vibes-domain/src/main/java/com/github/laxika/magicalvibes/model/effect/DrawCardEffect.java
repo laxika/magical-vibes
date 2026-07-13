@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -15,5 +16,12 @@ public record DrawCardEffect(DynamicAmount amount) implements CardEffect {
 
     public DrawCardEffect(int amount) {
         this(new Fixed(amount));
+    }
+
+    @Override
+    public boolean canTargetPlayer() {
+        // Only target-relative amounts require a player target on the stack entry (e.g. Dream
+        // Salvage draws equal to the number of cards target opponent discarded this turn).
+        return amount instanceof CardsDiscardedByTargetPlayerThisTurn;
     }
 }

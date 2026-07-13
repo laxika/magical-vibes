@@ -57,6 +57,7 @@ public sealed interface Condition permits
         OpponentControlsMoreLands,
         OpponentControlsPermanent,
         OpponentDealtDamageThisTurn,
+        OpponentLostLifeThisTurn,
         OpponentPoisoned,
         PermanentEnteredThisTurn,
         Raid,

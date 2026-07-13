@@ -26,6 +26,8 @@ public class ManaPool {
     private int restrictedRed;
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
+    /** Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). */
+    private int xCostOnlyColorless;
     /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
     private final EnumMap<ManaColor, Integer> instantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with flashback from a graveyard (e.g. Altar of the Lost). */
@@ -64,6 +66,7 @@ public class ManaPool {
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
+        this.xCostOnlyColorless = source.xCostOnlyColorless;
         instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
@@ -93,6 +96,7 @@ public class ManaPool {
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
+        xCostOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             instantSorceryOnlyColored.put(color, 0);
         }
@@ -143,6 +147,7 @@ public class ManaPool {
         total += restrictedRed;
         total += kickedOnlyGreen;
         total += instantSorceryOnlyColorless;
+        total += xCostOnlyColorless;
         total += getFlashbackOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
             for (int value : colorMap.values()) {
@@ -328,6 +333,18 @@ public class ManaPool {
         instantSorceryOnlyColorless = Math.max(0, instantSorceryOnlyColorless - amount);
     }
 
+    public int getXCostOnlyColorless() {
+        return xCostOnlyColorless;
+    }
+
+    public void addXCostOnlyColorless(int amount) {
+        xCostOnlyColorless += amount;
+    }
+
+    public void removeXCostOnlyColorless(int amount) {
+        xCostOnlyColorless = Math.max(0, xCostOnlyColorless - amount);
+    }
+
     public int getInstantSorceryOnlyColored(ManaColor color) {
         return instantSorceryOnlyColored.getOrDefault(color, 0);
     }
@@ -492,6 +509,7 @@ public class ManaPool {
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
+        xCostOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             flashbackOnlyMana.put(color, 0);
             instantSorceryOnlyColored.put(color, 0);
@@ -519,7 +537,7 @@ public class ManaPool {
         for (ManaColor color : ManaColor.values()) {
             int amount = pool.getOrDefault(color, 0);
             if (color == ManaColor.COLORLESS) {
-                amount += artifactOnlyColorless + myrOnlyColorless + instantSorceryOnlyColorless;
+                amount += artifactOnlyColorless + myrOnlyColorless + instantSorceryOnlyColorless + xCostOnlyColorless;
             }
             if (color == ManaColor.RED) {
                 amount += restrictedRed;

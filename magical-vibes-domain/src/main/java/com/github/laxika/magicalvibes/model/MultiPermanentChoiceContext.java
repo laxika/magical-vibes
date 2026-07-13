@@ -17,6 +17,10 @@ public sealed interface MultiPermanentChoiceContext {
     record ExileDamagedPlayerControls() implements MultiPermanentChoiceContext {
     }
 
+    /** Destroy a permanent the damaged player controls (mandatory combat damage trigger, e.g. Deus of Calamity). */
+    record DestroyDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
     /** "You may sacrifice [source]. If you do, destroy target creature that player controls." */
     record SacrificeSelfToDestroy(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }

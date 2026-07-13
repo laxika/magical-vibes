@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
@@ -473,6 +475,13 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Discard-hand-unless-pays-life — handled via the may ability system (e.g. Tyrannize)
+        boolean isDiscardHandUnlessPaysLife = ability.effects().stream().anyMatch(e -> e instanceof DiscardHandUnlessPaysLifeEffect);
+        if (isDiscardHandUnlessPaysLife) {
+            mayPenaltyChoiceHandlerService.handleDiscardHandUnlessPaysLifeChoice(gameData, player, accepted, ability);
+            return;
+        }
+
         // Opponent may return exiled card to hand, or controller draws N (e.g. Distant Memories)
         OpponentMayReturnExiledCardOrDrawEffect opponentExileChoice = ability.effects().stream()
                 .filter(e -> e instanceof OpponentMayReturnExiledCardOrDrawEffect)
@@ -732,7 +741,8 @@ public class MayAbilityHandlerService {
                             || e instanceof BoostSelfEffect
                             || e instanceof ImprintDyingCreatureEffect
                             || e instanceof ExileFromHandToImprintEffect
-                            || e instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect);
+                            || e instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect
+                            || e instanceof BecomeCopyOfDyingCreatureEffect);
             if (needsSelfTarget) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
                 if (battlefield != null) {

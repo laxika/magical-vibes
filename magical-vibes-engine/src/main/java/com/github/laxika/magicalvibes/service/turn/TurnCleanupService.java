@@ -87,6 +87,7 @@ public class TurnCleanupService {
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
                     || !p.getTemporaryTriggeredEffects().isEmpty()
                     || p.isLosesAllAbilitiesUntilEndOfTurn()
+                    || p.isColorOverridden() || !p.getTransientColors().isEmpty()
                     || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
                     || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()) {
                 p.resetModifiers();

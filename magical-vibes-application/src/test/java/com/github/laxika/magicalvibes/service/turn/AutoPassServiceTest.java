@@ -285,6 +285,23 @@ class AutoPassServiceTest {
         }
 
         @Test
+        @DisplayName("Processes pending enter trigger targets before loop")
+        void processesEntersTriggerTargets() {
+            gd.queueInteraction(
+                    new PermanentChoiceContext.EntersTriggerTarget(
+                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), UUID.randomUUID()));
+            org.mockito.Mockito.doAnswer(inv -> {
+                gd.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
+                gd.status = GameStatus.FINISHED;
+                return null;
+            }).when(triggerCollectionService).processNextEntersTriggerTarget(gd);
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(triggerCollectionService).processNextEntersTriggerTarget(gd);
+        }
+
+        @Test
         @DisplayName("Processes pending death trigger targets before loop")
         void processesDeathTriggerTargets() {
             gd.queueInteraction(

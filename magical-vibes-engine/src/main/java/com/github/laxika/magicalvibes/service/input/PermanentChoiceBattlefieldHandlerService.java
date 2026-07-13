@@ -80,6 +80,30 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandler sacrificeCreatureCreateTokensIfSubtypeHandler;
 
+    /**
+     * Valleymaker's mana ability: the activating player has chosen {@code chosenPlayerId} as the
+     * recipient; add the produced mana to that player's pool. The activating player retains priority
+     * (mana abilities don't change priority), so we simply resume the auto-pass loop afterward.
+     */
+    public void handleManaAbilityAddToChosenPlayer(GameData gameData, UUID chosenPlayerId,
+                                                   PermanentChoiceContext.ManaAbilityAddToChosenPlayer context) {
+        com.github.laxika.magicalvibes.model.ManaPool pool = gameData.playerManaPools.get(chosenPlayerId);
+        if (pool != null && context.amount() > 0) {
+            pool.add(context.color(), context.amount());
+            if (context.creatureSource()) {
+                pool.addCreatureMana(context.color(), context.amount());
+            }
+        }
+        String playerName = gameData.playerIdToName.get(chosenPlayerId);
+        gameBroadcastService.logAndBroadcast(gameData, playerName + " adds " + context.amount() + " "
+                + context.color().getCode() + " from " + context.sourceCardName() + ".");
+
+        gameData.priorityPassedBy.clear();
+        stateBasedActionService.performStateBasedActions(gameData);
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
         if (targetPerm == null) {

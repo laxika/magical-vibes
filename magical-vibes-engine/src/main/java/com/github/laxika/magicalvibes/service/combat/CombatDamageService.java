@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
@@ -44,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffe
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -53,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
@@ -908,6 +911,38 @@ public class CombatDamageService {
                     continue;
                 }
 
+                if (effect instanceof DestroyPermanentDamagedPlayerControlsEffect destroyEffect) {
+                    if (damageDealt < destroyEffect.minimumDamage()) {
+                        gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                + "'s ability does not trigger — less than " + destroyEffect.minimumDamage()
+                                + " damage dealt.");
+                        continue;
+                    }
+                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                    boolean hasValidTargets = false;
+                    if (defenderBf != null) {
+                        for (Permanent p : defenderBf) {
+                            if (destroyEffect.predicate() == null
+                                    || predicateEvaluationService.matchesPermanentPredicate(gameData, p, destroyEffect.predicate())) {
+                                hasValidTargets = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasValidTargets) {
+                        gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
+                                + " has no valid targets.");
+                        continue;
+                    }
+                    StackEntry destroySe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
+                            creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
+                    destroySe.setNonTargeting(true);
+                    gameData.stack.add(destroySe);
+                    gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger goes on the stack.");
+                    continue;
+                }
+
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
                 if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect
@@ -928,6 +963,7 @@ public class CombatDamageService {
                         || effect instanceof SphinxAmbassadorEffect
                         || (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER)
                         || effect instanceof TargetPlayerExilesFromHandEffect
+                        || effect instanceof ChooseCardsFromTargetHandEffect
                         || effect instanceof SkipNextCombatPhaseEffect
                         || (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER)) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
@@ -959,9 +995,28 @@ public class CombatDamageService {
     private void checkAttachedCombatDamageToPlayerTriggers(GameData gameData, Permanent creature, UUID attackerId, UUID defenderId) {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
+                List<CardEffect> rawEffects = new ArrayList<>();
+                rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
+                rawEffects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+
+                // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
+                // dealt the damage, so a granted trigger gated on the creature's characteristics
+                // (e.g. Helm of the Ghastlord's colour-conditional draw/discard) only fires on the
+                // matching branch. Null branches contribute nothing.
                 List<CardEffect> effects = new ArrayList<>();
-                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
-                effects.addAll(perm.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
+                for (CardEffect effect : rawEffects) {
+                    if (effect instanceof EnchantedPermanentConditionalEffect cond) {
+                        CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
+                                ? cond.ifMatch()
+                                : cond.ifNotMatch();
+                        if (active != null) {
+                            effects.add(active);
+                        }
+                    } else {
+                        effects.add(effect);
+                    }
+                }
+
                 if (!effects.isEmpty()) {
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -1709,6 +1764,13 @@ public class CombatDamageService {
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
         // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
         damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
+        // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
+        UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "Combat damage to " + target.getCard().getName() + " is prevented.");
+            return;
+        }
         if (gameQueryService.dealsCounterDamageToCreatures(gameData, source)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)

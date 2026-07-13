@@ -87,6 +87,15 @@ public class DamageSupport {
             // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
             rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
         }
+        // Swans of Bryn Argoll: prevent all damage to this creature; the source's controller draws that many cards.
+        UUID swansSourceControllerId = damageSource != null
+                ? gameQueryService.findPermanentController(gameData, damageSource.getId())
+                : entry.getControllerId();
+        if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, rawDamage, swansSourceControllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    "Damage to " + target.getCard().getName() + " is prevented.");
+            return false;
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {

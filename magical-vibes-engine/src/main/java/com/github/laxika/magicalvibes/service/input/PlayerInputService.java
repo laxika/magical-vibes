@@ -133,6 +133,19 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (discard all cards of that color)", gameData.id, playerName);
     }
 
+    public void beginExileTopCardsChosenColorTokensChoice(GameData gameData, UUID controllerId, UUID targetPlayerId,
+            int count, com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate, String sourceSetCode) {
+        ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx =
+                new ChoiceContext.ExileTopCardsChosenColorTokensChoice(controllerId, targetPlayerId, count, tokenTemplate, sourceSetCode);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (Oona-style exile/token)", gameData.id, playerName);
+    }
+
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
         ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
 
@@ -283,6 +296,17 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a basic land type to add", gameData.id, playerName);
+    }
+
+    public void beginOwnLandsBecomeBasicTypeChoice(GameData gameData, UUID playerId) {
+        ChoiceContext.OwnLandsBecomeBasicTypeChoice choiceContext = new ChoiceContext.OwnLandsBecomeBasicTypeChoice(playerId);
+
+        List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, basicLandTypes, "Choose a basic land type."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a basic land type for their lands", gameData.id, playerName);
     }
 
     public void beginStorageMatrixUntapChoice(GameData gameData, UUID playerId) {

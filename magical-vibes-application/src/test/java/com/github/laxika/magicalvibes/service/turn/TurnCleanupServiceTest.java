@@ -488,6 +488,22 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears transient color override on permanents whose only modifier is that override")
+        void clearsTransientColorOverride() {
+            Card card = createCardWithName("Scrapbasket");
+            Permanent perm = new Permanent(card);
+            perm.getTransientColors().addAll(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK,
+                    CardColor.RED, CardColor.GREEN));
+            perm.setColorOverridden(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getTransientColors()).isEmpty();
+            assertThat(perm.isColorOverridden()).isFalse();
+        }
+
+        @Test
         @DisplayName("Does not affect permanents without modifiers")
         void doesNotAffectUnmodifiedPermanents() {
             Card card = createCardWithName("Grizzly Bears");

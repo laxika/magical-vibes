@@ -57,6 +57,7 @@ public class ChoiceHandlerService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
     private final LegendRuleService legendRuleService;
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
@@ -64,6 +65,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
@@ -131,6 +133,10 @@ public class ChoiceHandlerService {
             handleDiscardChosenColorChoice(gameData, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx) {
+            handleExileTopCardsChosenColorTokensChoice(gameData, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
@@ -149,6 +155,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice ctx) {
             handleAddBasicLandTypeChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
+            handleOwnLandsBecomeBasicTypeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.PermanentTypeChoice ctx) {
@@ -197,6 +207,10 @@ public class ChoiceHandlerService {
                 battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), perm.getCard(), etbTargetId, false);
             }
         }
+
+        // CR 603.8 — the chosen color can immediately satisfy a state-triggered ability
+        // condition (e.g. Lurebound Scarecrow controlling no permanents of the chosen color).
+        stateBasedActionService.performStateBasedActions(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
@@ -249,6 +263,28 @@ public class ChoiceHandlerService {
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
+        } else if (ctx.fixedColorOptions() != null) {
+            // Filter lands ("Add {R}{R}, {R}{G}, or {G}{G}") — each mana is chosen individually from
+            // the fixed color list; add one and re-prompt until all picks have been made.
+            manaPool.add(manaColor, 1);
+            if (ctx.fromCreature()) {
+                manaPool.addCreatureMana(manaColor, 1);
+            }
+
+            String logEntry = player.getUsername() + " adds one " + colorName.toLowerCase() + " mana.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} adds one {} mana (fixed color combination)", gameData.id, player.getUsername(), colorName.toLowerCase());
+
+            int remaining = amount - 1;
+            if (remaining > 0) {
+                ChoiceContext.ManaColorChoice nextCtx = ChoiceContext.ManaColorChoice.fixedColorCombination(
+                        ctx.playerId(), ctx.fromCreature(), remaining, ctx.fixedColorOptions());
+                List<String> colors = ctx.fixedColorOptions().stream().map(Enum::name).toList();
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        ctx.playerId(), null, null, nextCtx, colors, "Choose a color of mana to add."));
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
         } else if (ctx.instantSorceryOnly()) {
@@ -260,7 +296,7 @@ public class ChoiceHandlerService {
             }
         }
 
-        if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype()) {
+        if (!ctx.flashbackOnly() && !ctx.spellOrAbilitySubtype() && ctx.fixedColorOptions() == null) {
             String manaWord = amount == 1 ? "one" : String.valueOf(amount);
             String logEntry = player.getUsername() + " adds " + manaWord + " " + colorName.toLowerCase() + " mana.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -274,7 +310,9 @@ public class ChoiceHandlerService {
             return;
         }
         gameBroadcastService.broadcastGameState(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
+        // Resume any remaining effects of the spell/ability that paused for this mana-color choice
+        // (e.g. Manamorphose: "Add two mana in any combination of colors. Draw a card.").
+        resumeAndAutoPass(gameData);
     }
 
     private void handleAttackManaSplitChosen(GameData gameData, Player player, String colorName, ChoiceContext.AttackManaSplitChoice ctx) {
@@ -647,6 +685,53 @@ public class ChoiceHandlerService {
     }
 
     /**
+     * Oona, Queen of the Fae: the controller chose a color; the target opponent exiles the top
+     * {@code count} cards of their library and the controller creates one token per exiled card of
+     * the chosen color. A card is "of the chosen color" per its printed colors, with lands excluded
+     * (an oracle-loaded land derives its colors from color identity, so a colorless Island would
+     * otherwise wrongly count as blue — mirrors Persecute's handling).
+     */
+    private void handleExileTopCardsChosenColorTokensChoice(GameData gameData, String chosenValue,
+            ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx) {
+        CardColor color = CardColor.valueOf(chosenValue);
+
+        gameData.interaction.clearAwaitingInput();
+
+        UUID controllerId = ctx.controllerId();
+        UUID targetPlayerId = ctx.targetPlayerId();
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String colorLabel = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+
+        List<Card> library = gameData.playerDecks.get(targetPlayerId);
+        int toExile = library == null ? 0 : Math.min(ctx.count(), library.size());
+        int matches = 0;
+        for (int i = 0; i < toExile; i++) {
+            Card card = library.removeFirst();
+            gameData.addToExile(targetPlayerId, card);
+            if (!card.hasType(CardType.LAND) && card.getColors().contains(color)) {
+                matches++;
+            }
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData, controllerName + " chooses " + colorLabel.toLowerCase()
+                + ". " + targetName + " exiles the top " + toExile + " card" + (toExile != 1 ? "s" : "")
+                + " of their library.");
+        log.info("Game {} - Oona: {} exiles {} card(s); {} of chosen colour {}",
+                gameData.id, targetName, toExile, matches, colorLabel.toLowerCase());
+
+        if (matches > 0) {
+            permanentControlSupport.applyCreateToken(gameData, controllerId, ctx.tokenTemplate(), matches, ctx.sourceSetCode());
+            gameBroadcastService.logAndBroadcast(gameData, controllerName + " creates " + matches
+                    + " Faerie Rogue token" + (matches != 1 ? "s" : "") + ".");
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    /**
      * Prismwake Merrow: accumulate the controller's color picks. Each color adds to the running set
      * and re-prompts (with a "DONE" option); "DONE", a repeated color, or all five colors finalizes
      * the choice — the target then becomes those colors until end of turn.
@@ -814,6 +899,32 @@ public class ChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
         }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleOwnLandsBecomeBasicTypeChoice(GameData gameData, Player player, String subtypeName, ChoiceContext.OwnLandsBecomeBasicTypeChoice ctx) {
+        CardSubtype subtype = CardSubtype.valueOf(subtypeName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.getCard().hasType(CardType.LAND)) {
+                    GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
+                            permanent, subtype, EffectDuration.UNTIL_END_OF_TURN, true);
+                }
+            }
+        }
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String logEntry = "Each land " + playerName + " controls becomes a "
+                + subtype.getDisplayName() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - Each land {} controls becomes a {} until end of turn", gameData.id, playerName, subtype);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);

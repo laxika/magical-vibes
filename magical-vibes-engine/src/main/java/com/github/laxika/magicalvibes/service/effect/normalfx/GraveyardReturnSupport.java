@@ -136,6 +136,7 @@ public class GraveyardReturnSupport {
         // graveyard owner before removal.
         UUID destinationPlayerId = controllerId;
         if (effect.destination() == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY
+                || effect.destination() == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY
                 || effect.destination() == GraveyardChoiceDestination.HAND) {
             UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
             if (ownerId != null) {
@@ -523,6 +524,10 @@ public class GraveyardReturnSupport {
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addFirst(card);
             String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else if (destination == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
+            gameData.playerDecks.get(playerId).addLast(card);
+            String logEntry = playerName + " puts " + card.getName() + " on the bottom of their library from a graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);

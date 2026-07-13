@@ -83,6 +83,23 @@ public sealed interface ManaRestriction {
         }
     }
 
+    /**
+     * Colorless mana spendable only on costs that contain {X} (Rosheen Meanderer). Applies to any
+     * spell or ability whose mana cost includes an {X} symbol; the mana can pay any generic portion
+     * of such a cost. Stored in the x-cost-only colorless bucket.
+     */
+    record XCosts() implements ManaRestriction {
+        @Override
+        public void applyTo(ManaPool pool, ManaColor color, int amount) {
+            pool.addXCostOnlyColorless(amount);
+        }
+
+        @Override
+        public String description() {
+            return "costs that contain {X} only";
+        }
+    }
+
     /** Mana spendable only to cast kicked spells (Elfhame Druid). Stored in the kicked-only bucket. */
     record KickedCosts() implements ManaRestriction {
         @Override

@@ -484,6 +484,41 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleEntersTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EntersTriggerTarget ett) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        boolean isPlayerTarget = target == null && gameData.playerIdToName.containsKey(permanentId);
+        if (target != null || isPlayerTarget) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ett.sourceCard(),
+                    ett.controllerId(),
+                    ett.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(ett.effects()),
+                    null,
+                    ett.sourcePermanentId()
+            );
+            entry.setTargetId(permanentId);
+            gameData.stack.add(entry);
+
+            String targetName = getTargetDisplayName(gameData, permanentId);
+            String logEntry = ett.sourceCard().getName() + "'s ability targets " + targetName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} enter trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
+        } else {
+            String logEntry = ett.sourceCard().getName() + "'s ability has no valid target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} enter trigger target no longer exists", gameData.id, ett.sourceCard().getName());
+        }
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleEmblemTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EmblemTriggerTarget ett) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         if (target != null) {

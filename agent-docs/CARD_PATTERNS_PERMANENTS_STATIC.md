@@ -87,6 +87,7 @@ All paths relative to `cards/`.
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
 | Grant flash to all spells + leyline | `l/LeylineOfAnticipation.java` | ON_OPENING_HAND_REVEAL MayEffect(LeylineStartOnBattlefieldEffect) + STATIC GrantFlashToCardTypeEffect(null) — may start on battlefield from opening hand, grants flash to all spells |
+| Grant conspire to your spells + ETB tokens | `w/WortTheRaidmother.java` | ON_ENTER_BATTLEFIELD CreateTokenEffect(2 Goblin Warrior) + STATIC GrantConspireToSpellsEffect(CardAllOfPredicate(type instant/sorcery, color red/green)) — red or green instant/sorcery spells you cast have conspire |
 | Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
 | Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect) + ConditionalEffect(new Metalcraft(), StaticBoostEffect) |
 | Metalcraft boost only | `c/CarapaceForger.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect(2, 2, SELF)) |

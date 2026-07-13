@@ -1732,6 +1732,30 @@ public class StepTriggerService {
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} end-step morbid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.wrapped() instanceof MayEffect) {
+                        // Intervening-if "you may" (CR 603.4), e.g. Sygg, River Cutthroat: only
+                        // trigger if the condition holds at the beginning of the end step. The
+                        // ConditionalEffect wrapper is pushed intact so resolution re-checks the
+                        // condition (CR 603.4) and then prompts the optional "you may".
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
+                            log.info("Game {} - {} end-step trigger skipped ({})",
+                                    gameData.id, perm.getCard().getName(), conditional.conditionNotMetReason());
+                            continue;
+                        }
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s end step ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                        String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} end-step conditional-may trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,

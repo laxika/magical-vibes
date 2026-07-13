@@ -104,6 +104,8 @@ public class MultiPermanentChoiceHandlerService {
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
         if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
+            handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
@@ -208,6 +210,19 @@ public class MultiPermanentChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} exiled by combat damage trigger", gameData.id, target.getCard().getName());
 
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleDestroyDamagedPlayerControlsPermanent(GameData gameData, List<UUID> permanentIds,
+                                                             MultiPermanentChoiceContext.DestroyDamagedPlayerControls context) {
+        if (!permanentIds.isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                destructionSupport.tryDestroyAndLog(gameData, target, context.sourceName());
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -116,6 +117,9 @@ public class AmountEvaluationService {
             case DamageDealtToTargetPlayerThisTurn ignored ->
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
+            case CardsDiscardedByTargetPlayerThisTurn ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.cardsDiscardedThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
             case DamageDealtToOpponentsThisTurn ignored ->
                     damageDealtToOpponentsThisTurn(gameData, ctx);
             case ImprintedCreaturePower ignored ->

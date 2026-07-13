@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -336,6 +337,8 @@ public class PredicateEvaluationService {
                             && sourceControllerId.equals(permanent.getAttackTarget());
             case PermanentIsBlockingPredicate ignored ->
                     permanent.isBlocking();
+            case PermanentIsBlockedPredicate ignored ->
+                    gameData != null && permanent.isAttacking() && isBlocked(gameData, permanent);
             case PermanentPowerAtMostPredicate powerAtMostPredicate -> {
                 if (gameData == null) {
                     yield permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
@@ -411,8 +414,7 @@ public class PredicateEvaluationService {
                 if (permanent.isColorOverridden()) {
                     yield permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains);
                 }
-                CardColor effectiveColor = permanent.getEffectiveColor();
-                yield (effectiveColor != null && colorInPredicate.colors().contains(effectiveColor))
+                yield permanent.getEffectiveColors().stream().anyMatch(colorInPredicate.colors()::contains)
                         || permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains)
                         || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
             }
@@ -591,6 +593,18 @@ public class PredicateEvaluationService {
             }
             default -> matchesPermanentPredicate(permanent, predicate, filterContext);
         };
+    }
+
+    /** An attacking creature is blocked if any permanent references its id as a blocking target. */
+    private boolean isBlocked(GameData gameData, Permanent attacker) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent blocker : battlefield) {
+                if (blocker.isBlocking() && blocker.getBlockingTargetIds().contains(attacker.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private Permanent findPermanentByOriginalCardId(GameData gameData, UUID cardId) {

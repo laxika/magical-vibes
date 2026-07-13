@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
@@ -409,6 +410,9 @@ public class CastingCostService {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
                 case ReturnCreatureToHandCost ignored -> {
+                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+                }
+                case PutCounterOnControlledCreatureCost ignored -> {
                     if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
                 }
                 case SacrificeArtifactCost ignored -> {

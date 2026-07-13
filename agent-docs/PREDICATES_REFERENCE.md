@@ -30,7 +30,8 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
 | `PermanentIsAttackingSourceControllerPredicate` | `()` | creatures attacking you (the source controller) — attack target must be the source controller, not a planeswalker/other player; needs a `FilterContext` with source controller (Blessed Reversal) |
-| `PermanentIsBlockingPredicate` | `()` | blocking creatures |
+| `PermanentIsBlockingPredicate` | `()` | blocking creatures (the blockers themselves) |
+| `PermanentIsBlockedPredicate` | `()` | blocked creatures — attacking creatures that at least one creature is blocking. Distinct from `PermanentIsBlockingPredicate`. Pair with `BoostAllCreaturesEffect(.., filter)` / `GrantKeywordEffect(kw, ALL_CREATURES, filter)` for "each blocked creature ..." (Tattermunge Witch) |
 | `PermanentIsTokenPredicate` | `()` | token permanents |
 | `PermanentIsHistoricPredicate` | `()` | historic permanents (artifacts, legendaries, Sagas) |
 | `PermanentTruePredicate` | `()` | always matches (no restriction) |

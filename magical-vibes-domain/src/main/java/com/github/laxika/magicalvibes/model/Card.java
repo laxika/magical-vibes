@@ -93,6 +93,11 @@ public class Card {
      */
     private boolean sacrificeAtEndStep;
     private boolean requiresCreatureMana;
+    /**
+     * When true, this Aura enchants a player even though it isn't a Curse (e.g. Wheel of Sun and
+     * Moon). Curses are recognized automatically; non-Curse "Enchant player" auras must set this.
+     */
+    private boolean enchantPlayer;
     private int additionalCostPerExtraTarget;
     /**
      * When true, the same permanent may be chosen for different target groups (CR 114.6c).
@@ -193,6 +198,7 @@ public class Card {
         this.cantBeCopied = source.cantBeCopied;
         this.sacrificeAtEndStep = source.sacrificeAtEndStep;
         this.requiresCreatureMana = source.requiresCreatureMana;
+        this.enchantPlayer = source.enchantPlayer;
         this.additionalCostPerExtraTarget = source.additionalCostPerExtraTarget;
         this.allowSharedTargets = source.allowSharedTargets;
         this.multiTargetConstraint = source.multiTargetConstraint;
@@ -263,6 +269,7 @@ public class Card {
     public void setCantBeCopied(boolean cantBeCopied) { assertMutable(); this.cantBeCopied = cantBeCopied; }
     public void setSacrificeAtEndStep(boolean sacrificeAtEndStep) { assertMutable(); this.sacrificeAtEndStep = sacrificeAtEndStep; }
     public void setRequiresCreatureMana(boolean requiresCreatureMana) { assertMutable(); this.requiresCreatureMana = requiresCreatureMana; }
+    public void setEnchantPlayer(boolean enchantPlayer) { assertMutable(); this.enchantPlayer = enchantPlayer; }
     public void setAdditionalCostPerExtraTarget(int additionalCostPerExtraTarget) { assertMutable(); this.additionalCostPerExtraTarget = additionalCostPerExtraTarget; }
     public void setAllowSharedTargets(boolean allowSharedTargets) { assertMutable(); this.allowSharedTargets = allowSharedTargets; }
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
@@ -561,7 +568,7 @@ public class Card {
     }
 
     public boolean isEnchantPlayer() {
-        return isAura() && subtypes.contains(CardSubtype.CURSE);
+        return isAura() && (subtypes.contains(CardSubtype.CURSE) || enchantPlayer);
     }
 
 }

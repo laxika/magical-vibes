@@ -2570,4 +2570,28 @@ class GameQueryServiceTest {
             assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, null)).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("getEffectiveColors")
+    class GetEffectiveColors {
+
+        @Test
+        @DisplayName("Returns every intrinsic color of a multicolored permanent")
+        void returnsAllIntrinsicColorsForMulticolor() {
+            Card card = createCreature("Thistledown Liege", 1, 3, CardColor.WHITE);
+            card.setColors(List.of(CardColor.WHITE, CardColor.BLUE));
+            Permanent perm = addPermanent(player1Id, card);
+
+            assertThat(gqs.getEffectiveColors(gd, perm))
+                    .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLUE);
+        }
+
+        @Test
+        @DisplayName("Falls back to the single color when the intrinsic list is empty")
+        void fallsBackToSingleColor() {
+            Permanent perm = addPermanent(player1Id, createCreature("Grizzly Bears", 2, 2, CardColor.GREEN));
+
+            assertThat(gqs.getEffectiveColors(gd, perm)).containsExactly(CardColor.GREEN);
+        }
+    }
 }

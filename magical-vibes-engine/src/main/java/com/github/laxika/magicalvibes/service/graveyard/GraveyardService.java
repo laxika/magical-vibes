@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGr
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
@@ -141,6 +142,18 @@ public class GraveyardService {
             String shuffleLog = card.getName() + " is revealed and shuffled into its owner's library instead.";
             gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             log.info("Game {} - {} replacement effect: shuffled into library instead of graveyard", gameData.id, card.getName());
+            updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
+            return false;
+        }
+
+        // Wheel of Sun and Moon — if the graveyard's owner is enchanted by a player aura with this
+        // replacement, cards headed to their graveyard from anywhere are revealed and put on the
+        // bottom of their library instead. Tokens are not cards, so they still hit the graveyard.
+        if (!card.isToken() && enchantedPlayerHasBottomOfLibraryReplacement(gameData, ownerId)) {
+            gameData.playerDecks.get(ownerId).add(card);
+            String bottomLog = card.getName() + " is revealed and put on the bottom of its owner's library instead.";
+            gameBroadcastService.logAndBroadcast(gameData, bottomLog);
+            log.info("Game {} - {} replacement effect: put on bottom of library instead of graveyard", gameData.id, card.getName());
             updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, null);
             return false;
         }
@@ -288,6 +301,21 @@ public class GraveyardService {
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
+    }
+
+    private boolean enchantedPlayerHasBottomOfLibraryReplacement(GameData gameData, UUID ownerId) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent p : bf) {
+                if (p.isAttached() && ownerId.equals(p.getAttachedTo())
+                        && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect.class::isInstance)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean opponentHasExileReplacementEffect(GameData gameData, UUID ownerId) {

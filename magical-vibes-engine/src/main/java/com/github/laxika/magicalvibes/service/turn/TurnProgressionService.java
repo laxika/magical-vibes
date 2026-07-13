@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEn
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -51,11 +52,13 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(ExileTokenAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
+            combatService.processEndOfCombatSourceCounters(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
             return;
@@ -211,6 +214,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
+        gameData.cardsDiscardedThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
         gameData.lifeLostThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();

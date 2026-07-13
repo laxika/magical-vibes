@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldElseGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -48,7 +50,12 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
                         + " from the top of their library (" + sourceName + ").");
 
         if (topCard.hasType(CardType.CREATURE)) {
+            RevealTopCardCreatureToBattlefieldElseGraveyardEffect fx =
+                    (RevealTopCardCreatureToBattlefieldElseGraveyardEffect) effect;
             Permanent perm = new Permanent(topCard);
+            if (fx.grantHaste()) {
+                perm.getGrantedKeywords().add(Keyword.HASTE);
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
             gameBroadcastService.logAndBroadcast(gameData, topCard.getName()
@@ -56,6 +63,10 @@ public class RevealTopCardCreatureToBattlefieldElseGraveyardEffectHandler implem
 
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, controllerId, topCard, null, false);
+
+            if (fx.sacrificeAtEndStep()) {
+                gameData.queueDelayedAction(new SacrificeAtEndStep(perm.getId()));
+            }
 
             log.info("Game {} - {} puts {} onto the battlefield ({})",
                     gameData.id, playerName, topCard.getName(), sourceName);

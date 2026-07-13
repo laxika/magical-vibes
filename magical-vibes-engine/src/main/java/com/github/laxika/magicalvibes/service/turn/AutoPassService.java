@@ -98,6 +98,11 @@ public class AutoPassService {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
         }
 
+        // Process any pending targeted enter triggers (e.g. Reaper King's "destroy target permanent")
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
+            triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        }
+
         // Process any pending targeted death triggers before auto-passing
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);

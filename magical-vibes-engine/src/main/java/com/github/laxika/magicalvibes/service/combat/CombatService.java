@@ -3,10 +3,12 @@ import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEn
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +17,9 @@ import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessag
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,6 +51,8 @@ public class CombatService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GameQueryService gameQueryService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
 
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
@@ -231,6 +237,34 @@ public class CombatService {
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Puts -1/-1 counters on all permanents scheduled for end-of-combat counter placement (e.g. by
+     * Wicker Warcrawler's "whenever this creature attacks or blocks, put a -1/-1 counter on it at
+     * end of combat"). Respects {@code cantHaveCounters}/{@code cantHaveMinusOneMinusOneCounters}
+     * and fires "whenever a -1/-1 counter is put on a creature" triggers.
+     */
+    public void processEndOfCombatSourceCounters(GameData gameData) {
+        List<PutMinusOneCounterAtEndOfCombat> toCounter =
+                gameData.drainDelayedActions(PutMinusOneCounterAtEndOfCombat.class);
+        for (PutMinusOneCounterAtEndOfCombat action : toCounter) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (perm == null || action.amount() <= 0) {
+                continue;
+            }
+            if (gameQueryService.cantHaveCounters(gameData, perm)
+                    || gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
+                continue;
+            }
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
+                    perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + action.amount());
+            String logEntry = perm.getCard().getName() + " gets " + action.amount() + " -1/-1 counter(s).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
+                    gameData.id, perm.getCard().getName(), action.amount());
+            permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, action.amount());
+        }
     }
 
     /**

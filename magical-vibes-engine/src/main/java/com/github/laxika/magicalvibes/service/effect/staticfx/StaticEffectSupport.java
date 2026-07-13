@@ -267,8 +267,7 @@ public class StaticEffectSupport {
             if (target.isColorOverridden()) {
                 return target.getTransientColors().stream().anyMatch(p.colors()::contains);
             }
-            CardColor effectiveColor = target.getEffectiveColor();
-            return (effectiveColor != null && p.colors().contains(effectiveColor))
+            return target.getEffectiveColors().stream().anyMatch(p.colors()::contains)
                     || target.getTransientColors().stream().anyMatch(p.colors()::contains);
         }
         if (filter instanceof PermanentHasSubtypePredicate p) {
