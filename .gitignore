@@ -17,4 +17,5 @@ magical-vibes.db
 magical-vibes.db-journal
 
 # Card data cache
+scryfall-cache/
 card-data-cache/
