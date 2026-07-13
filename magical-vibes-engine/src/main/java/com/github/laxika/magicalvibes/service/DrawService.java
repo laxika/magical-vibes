@@ -17,8 +17,12 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
@@ -246,6 +250,50 @@ public class DrawService {
         checkControllerDrawTriggers(gameData, playerId);
         checkOpponentDrawTriggers(gameData, playerId);
         checkBoobyTraps(gameData, playerId, drawn);
+        checkRevealFirstDrawTriggers(gameData, playerId, drawn);
+    }
+
+    /**
+     * Rowen: the controller reveals the first card they draw each turn; whenever that card is a basic
+     * land, a "draw a card" triggered ability is put onto the stack. Only the turn's first draw is
+     * revealed — {@code cardsDrawnThisTurn} has already been incremented for this draw, so first draw
+     * means a count of exactly 1. The extra draw is therefore never revealed itself.
+     */
+    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
+            return;
+        }
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            boolean reveals = perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof RevealFirstDrawDrawOnBasicLandEffect);
+            if (!reveals) continue;
+
+            String drawerName = gameData.playerIdToName.get(drawingPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + ".");
+
+            boolean basicLand = drawn.hasType(CardType.LAND)
+                    && drawn.getSupertypes().contains(CardSupertype.BASIC);
+            if (basicLand) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        drawingPlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(new DrawCardEffect(1))),
+                        drawingPlayerId,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData,
+                        perm.getCard().getName() + " triggers — draw a card.");
+                log.info("Game {} - {} triggers on {} revealing a basic land",
+                        gameData.id, perm.getCard().getName(), drawerName);
+            }
+        }
     }
 
     /**

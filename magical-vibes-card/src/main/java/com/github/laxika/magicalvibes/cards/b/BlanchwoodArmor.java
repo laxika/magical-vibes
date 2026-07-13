@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "10E", collectorNumber = "253")
 @CardRegistration(set = "9ED", collectorNumber = "232")
 @CardRegistration(set = "8ED", collectorNumber = "234")
+@CardRegistration(set = "7ED", collectorNumber = "232")
 public class BlanchwoodArmor extends Card {
 
     public BlanchwoodArmor() {

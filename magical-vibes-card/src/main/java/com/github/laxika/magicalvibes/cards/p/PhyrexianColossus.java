@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "309")
+@CardRegistration(set = "7ED", collectorNumber = "311")
 public class PhyrexianColossus extends Card {
 
     public PhyrexianColossus() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "196")
+@CardRegistration(set = "7ED", collectorNumber = "198")
 public class Inferno extends Card {
 
     public Inferno() {

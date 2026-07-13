@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 
 @CardRegistration(set = "POR", collectorNumber = "40")
+@CardRegistration(set = "7ED", collectorNumber = "59")
 public class AncestralMemories extends Card {
 
     public AncestralMemories() {

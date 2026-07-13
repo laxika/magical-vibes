@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "117")
 @CardRegistration(set = "POR", collectorNumber = "83")
 @CardRegistration(set = "8ED", collectorNumber = "120")
+@CardRegistration(set = "7ED", collectorNumber = "123")
 public class BogWraith extends Card {
 }

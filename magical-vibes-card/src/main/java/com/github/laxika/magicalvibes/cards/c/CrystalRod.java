@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "295")
+@CardRegistration(set = "7ED", collectorNumber = "291")
 public class CrystalRod extends Card {
 
     public CrystalRod() {

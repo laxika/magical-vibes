@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEnteringPowerPutOneOnTopRestOnBottomEffect;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -167,6 +169,57 @@ public class EnterTriggerCollectorService {
                 cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + ".");
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
+        return true;
+    }
+
+    /**
+     * "Whenever a creature enters, its controller sacrifices a [permanent] of their choice" (Tainted
+     * Aether). The authored effect already carries {@code SacrificeRecipient.TARGET_PLAYER}; here we
+     * queue it with the entering creature's controller as the sacrificing player, mirroring the
+     * damage-to-entering-controller handler above.
+     */
+    @CollectsTrigger(value = SacrificePermanentsEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureSacrifice(TriggerMatchContext match,
+            SacrificePermanentsEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        enqueue(match, effect, pe.enteringControllerId(), pe.perEffectTriggerCount());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (controller sacrifices)",
+                match.gameData().id, match.permanent().getCard().getName(), pe.enteringCard().getName());
+        return true;
+    }
+
+    /**
+     * "Whenever a creature enters, this enchantment deals N damage to it" (Aether Flash). The entering
+     * creature is the (non-chosen) recipient, so we resolve its permanent id now and queue a normal
+     * {@link DealDamageToTargetCreatureEffect} with that id baked in as the target — the source being
+     * this permanent, so prevention/protection/damage-triggers all key off it.
+     */
+    @CollectsTrigger(value = DealDamageToTargetCreatureEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreatureDealDamageToEntering(TriggerMatchContext match,
+            DealDamageToTargetCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to damage.
+            return true;
+        }
+        Card sourceCard = match.permanent().getCard();
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    enteringPermanentId,
+                    match.permanent().getId()));
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (deal damage to entering creature)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 

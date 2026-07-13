@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "M10", collectorNumber = "60")
 @CardRegistration(set = "9ED", collectorNumber = "83")
+@CardRegistration(set = "7ED", collectorNumber = "82")
 public class Levitation extends Card {
 
     public Levitation() {

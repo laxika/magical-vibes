@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "22")
+@CardRegistration(set = "7ED", collectorNumber = "18")
 public class HealingSalve extends Card {
 
     public HealingSalve() {

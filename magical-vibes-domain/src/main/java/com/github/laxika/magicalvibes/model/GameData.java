@@ -20,6 +20,8 @@ import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1002,9 +1004,25 @@ public class GameData {
         return spellsCastThisTurn.getOrDefault(playerId, List.of()).size();
     }
 
-    /** Total lands the given player may play this turn: the normal one plus any additional grants. */
+    /**
+     * Total lands the given player may play this turn: the normal one, plus any additional grants
+     * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
+     * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player).
+     */
     public int getMaxLandsThisTurn(UUID playerId) {
-        return 1 + additionalLandsThisTurn.getOrDefault(playerId, 0);
+        int extraFromStatics = 0;
+        for (UUID pid : orderedPlayerIds) {
+            List<Permanent> battlefield = playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof EachPlayerPlaysAdditionalLandEffect) {
+                        extraFromStatics++;
+                    }
+                }
+            }
+        }
+        return 1 + additionalLandsThisTurn.getOrDefault(playerId, 0) + extraFromStatics;
     }
 
     /**

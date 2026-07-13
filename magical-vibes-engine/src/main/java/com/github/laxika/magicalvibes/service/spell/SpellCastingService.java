@@ -845,7 +845,7 @@ public class SpellCastingService {
 
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
-            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
+            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
         }
 
         // Validate permanent targets for spells that also target a spell on the stack (e.g. Lost in the Mist)
@@ -1886,7 +1886,7 @@ public class SpellCastingService {
         if (!targetIds.isEmpty()) {
             // Multi-target flashback spell
             if (card.getMaxTargets() > 0) {
-                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
             }
             stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),

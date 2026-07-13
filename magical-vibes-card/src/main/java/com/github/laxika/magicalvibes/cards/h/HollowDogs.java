@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "139")
+@CardRegistration(set = "7ED", collectorNumber = "141")
 public class HollowDogs extends Card {
 
     public HollowDogs() {

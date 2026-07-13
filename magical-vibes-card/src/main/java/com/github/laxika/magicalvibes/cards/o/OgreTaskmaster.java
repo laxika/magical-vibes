@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
+@CardRegistration(set = "7ED", collectorNumber = "203")
 @CardRegistration(set = "8ED", collectorNumber = "205")
 @CardRegistration(set = "9ED", collectorNumber = "205")
 @CardRegistration(set = "P02", collectorNumber = "112")

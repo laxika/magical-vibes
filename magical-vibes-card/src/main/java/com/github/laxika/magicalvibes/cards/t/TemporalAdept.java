@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "7ED", collectorNumber = "103")
 @CardRegistration(set = "8ED", collectorNumber = "106")
 @CardRegistration(set = "9ED", collectorNumber = "102")
 public class TemporalAdept extends Card {

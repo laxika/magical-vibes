@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -143,6 +144,26 @@ public class TargetLegalityService {
             throw new IllegalStateException("Must select graveyard targets");
         }
         for (CardEffect effect : effects) {
+            if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
+                for (UUID cardId : targetCardIds) {
+                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                    if (card == null) {
+                        throw new IllegalStateException("Target card not found in any graveyard");
+                    }
+                    if (returnEffect.filter() != null
+                            && !predicateEvaluationService.matchesCardPredicate(card, returnEffect.filter(), null)) {
+                        throw new IllegalStateException("Target card must be a "
+                                + CardPredicateUtils.describeFilter(returnEffect.filter()));
+                    }
+                    if (returnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+                        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                        if (graveyardOwnerId != null && !graveyardOwnerId.equals(playerId)) {
+                            throw new IllegalStateException("Target must be in your graveyard");
+                        }
+                    }
+                }
+                break;
+            }
             if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
                     && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
                 if (targetCardIds.size() != graveyardEffect.count()) {
@@ -419,7 +440,11 @@ public class TargetLegalityService {
     }
 
     public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
-        validateMultiTargetCount(targetIds, card.getMinTargets(), card.getMaxTargets(),
+        validateMultiSpellTargets(gameData, card, targetIds, controllerId, 0);
+    }
+
+    public void validateMultiSpellTargets(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId, int xValue) {
+        validateMultiTargetCount(targetIds, card.getEffectiveMinTargets(xValue), card.getEffectiveMaxTargets(xValue),
                 card.getSpellTargets(), card.isAllowSharedTargets());
 
         List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();

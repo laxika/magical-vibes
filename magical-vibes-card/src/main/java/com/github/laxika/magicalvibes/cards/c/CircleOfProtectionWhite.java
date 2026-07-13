@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenCo
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "14")
+@CardRegistration(set = "7ED", collectorNumber = "10")
 public class CircleOfProtectionWhite extends Card {
 
     public CircleOfProtectionWhite() {

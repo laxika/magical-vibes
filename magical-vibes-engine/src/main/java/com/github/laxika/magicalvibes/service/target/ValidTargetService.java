@@ -147,7 +147,14 @@ public class ValidTargetService {
             prompt = "Select targets for " + card.getName();
         }
 
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, card.getMinTargets(), card.getMaxTargets(), prompt);
+        int responseMinTargets = card.getMinTargets();
+        int responseMaxTargets = card.getMaxTargets();
+        if (card.hasXScaledTargets()) {
+            int effectiveX = xValue != null ? xValue : 0;
+            responseMinTargets = card.getEffectiveMinTargets(effectiveX);
+            responseMaxTargets = card.getEffectiveMaxTargets(effectiveX);
+        }
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */

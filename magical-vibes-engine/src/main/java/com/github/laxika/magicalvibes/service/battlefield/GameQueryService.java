@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingP
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
+import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
@@ -612,6 +613,7 @@ public class GameQueryService {
         if (permanent.isPermanentlyAnimated()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
+        if (hasCardType(permanent, CardType.LAND) && hasAnimateLandEffect(gameData)) return true;
         if (hasAuraBecomeCreatureEffect(gameData, permanent)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
     }
@@ -750,6 +752,16 @@ public class GameQueryService {
                     && conditional.wrapped() instanceof CanAttackAsThoughNoDefenderEffect) {
                 if (conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(creature, controllerId))) {
+                    return true;
+                }
+            }
+        }
+        // Until-end-of-turn grants from a resolved activated ability (e.g. Wall of Wonder),
+        // stored as floating effects affecting this creature.
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect floating : gameData.floatingEffects) {
+                if (floating.effect() instanceof CanAttackAsThoughNoDefenderEffect
+                        && creature.getId().equals(floating.affectedPermanentId())) {
                     return true;
                 }
             }
@@ -2228,6 +2240,14 @@ public class GameQueryService {
      */
     public boolean hasAnimateArtifactEffect(GameData gameData) {
         return anyBattlefieldHasStaticEffect(gameData, AnimateNoncreatureArtifactsEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if any permanent on the battlefield has an
+     * {@link AllLandsAreCreaturesEffect}, which turns every land into a creature (Nature's Revolt).
+     */
+    public boolean hasAnimateLandEffect(GameData gameData) {
+        return anyBattlefieldHasStaticEffect(gameData, AllLandsAreCreaturesEffect.class);
     }
 
     /**

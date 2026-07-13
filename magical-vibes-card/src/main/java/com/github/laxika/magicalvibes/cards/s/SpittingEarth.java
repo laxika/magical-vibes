@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "238")
+@CardRegistration(set = "7ED", collectorNumber = "220")
 @CardRegistration(set = "POR", collectorNumber = "150")
 @CardRegistration(set = "P02", collectorNumber = "116")
 public class SpittingEarth extends Card {

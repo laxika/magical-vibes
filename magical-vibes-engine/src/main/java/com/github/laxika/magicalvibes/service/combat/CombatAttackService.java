@@ -598,6 +598,37 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever a creature attacks" triggers (ON_ANY_CREATURE_ATTACKS). These fire once
+        // per attacking creature, on every permanent with this slot across all battlefields, regardless
+        // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The
+        // attacking creature is stored as a non-targeting targetId so the effect can act on "it".
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
+                UUID permController = bf.getKey();
+                for (Permanent perm : new ArrayList<>(bf.getValue())) {
+                    List<CardEffect> anyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS);
+                    if (anyAttackEffects.isEmpty()) continue;
+
+                    StackEntry anyAttackTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            permController,
+                            perm.getCard().getName() + "'s trigger",
+                            new ArrayList<>(anyAttackEffects),
+                            attacker.getId(),
+                            perm.getId()
+                    );
+                    anyAttackTrigger.setNonTargeting(true);
+                    gameData.stack.add(anyAttackTrigger);
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
+                            gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+                }
+            }
+        }
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 

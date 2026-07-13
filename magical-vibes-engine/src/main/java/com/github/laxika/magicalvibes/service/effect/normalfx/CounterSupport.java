@@ -93,6 +93,25 @@ public class CounterSupport {
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
+    public void counterSpellAndPutOnTopOfLibrary(GameData gameData, StackEntry source, StackEntry target) {
+        gameData.stack.remove(target);
+
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
+
+        if (!target.isCopy()) {
+            // Guile replaces the whole "counter" event: exile and offer a free play.
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
+            gameData.playerDecks.get(target.getControllerId()).add(0, target.getCard());
+        }
+
+        String logMsg = target.getCard().getName() + " is countered and put on top of its owner's library.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
+                source.getCard().getName(), target.getCard().getName());
+    }
+
     public void counterSpellAndExile(GameData gameData, StackEntry source, StackEntry target) {
         gameData.stack.remove(target);
 

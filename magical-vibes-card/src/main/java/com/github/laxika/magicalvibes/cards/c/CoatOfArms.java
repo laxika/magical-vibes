@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "207")
 @CardRegistration(set = "9ED", collectorNumber = "291")
 @CardRegistration(set = "8ED", collectorNumber = "294")
+@CardRegistration(set = "7ED", collectorNumber = "290")
 public class CoatOfArms extends Card {
 
     public CoatOfArms() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "142")
 @CardRegistration(set = "9ED", collectorNumber = "129")
 @CardRegistration(set = "8ED", collectorNumber = "134")
+@CardRegistration(set = "7ED", collectorNumber = "135")
 public class Fear extends Card {
 
     public Fear() {

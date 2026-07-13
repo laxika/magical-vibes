@@ -296,6 +296,15 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
     }
 
+    public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds) {
+        beginMultiPermanentChoice(gameData, playerId, candidateIds, 2,
+                new MultiPermanentChoiceContext.StaticOrbUntap(playerId),
+                "Choose up to two permanents to untap (Static Orb).");
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose up to two permanents to untap (Static Orb)", gameData.id, playerName);
+    }
+
     private static List<Integer> allHandIndices(List<Card> hand) {
         return IntStream.range(0, hand.size()).boxed().toList();
     }

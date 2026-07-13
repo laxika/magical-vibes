@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "133")
 @CardRegistration(set = "8ED", collectorNumber = "135")
+@CardRegistration(set = "7ED", collectorNumber = "138")
 public class GiantCockroach extends Card {
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "235")
+@CardRegistration(set = "7ED", collectorNumber = "237")
 public class EarlyHarvest extends Card {
 
     public EarlyHarvest() {

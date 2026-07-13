@@ -35,10 +35,15 @@ public class EachPlayerDrawsCardEffectHandler implements NormalEffectHandlerBean
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
-                AmountContext.forStackEntry(entry, source));
+        AmountContext base = AmountContext.forStackEntry(entry, source);
 
         for (UUID playerId : gameData.orderedPlayerIds) {
+            // Evaluate the amount relative to each drawing player so player-relative amounts
+            // (e.g. Nature's Resurgence: "a card for each creature card in their graveyard")
+            // count that player's own objects. Player-invariant amounts (fixed, X) are unaffected.
+            AmountContext playerContext = new AmountContext(playerId, source, base.targetPermanentId(),
+                    base.xValue(), base.eventValue(), false);
+            int amount = amountEvaluationService.evaluate(gameData, e.amount(), playerContext);
             playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
         }
     }

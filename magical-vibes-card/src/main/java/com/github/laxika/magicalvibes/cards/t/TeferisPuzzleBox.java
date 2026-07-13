@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDr
 
 @CardRegistration(set = "9ED", collectorNumber = "312")
 @CardRegistration(set = "8ED", collectorNumber = "316")
+@CardRegistration(set = "7ED", collectorNumber = "321")
 public class TeferisPuzzleBox extends Card {
 
     public TeferisPuzzleBox() {

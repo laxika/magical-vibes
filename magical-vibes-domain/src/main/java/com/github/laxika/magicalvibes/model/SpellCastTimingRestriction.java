@@ -10,5 +10,10 @@ public enum SpellCastTimingRestriction {
      * "Cast this spell only during the declare attackers step and only if you've been attacked
      * this step." Defiant Stand.
      */
-    DECLARE_ATTACKERS_IF_ATTACKED
+    DECLARE_ATTACKERS_IF_ATTACKED,
+
+    /**
+     * "Cast this spell only during your end step." Necrologia.
+     */
+    YOUR_END_STEP
 }

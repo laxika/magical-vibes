@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "7")
+@CardRegistration(set = "7ED", collectorNumber = "3")
 @CardRegistration(set = "8ED", collectorNumber = "7")
 public class BlessedReversal extends Card {
 

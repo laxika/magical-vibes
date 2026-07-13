@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
+import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1061,6 +1062,20 @@ public class LayerSystemService {
                             && !isOneShotAnimated(permanent)) {
                         state.addCardType(CardType.CREATURE);
                         board.marchAnimatedIds().add(permanent.getId());
+                    }
+                }
+            }
+            case AllLandsAreCreaturesEffect ignored -> {
+                // NOT managed: the handler runs during assembly to fill the fixed base P/T and
+                // creature-ness. Here the layered pass only adds the creature card type so later
+                // layers' type/subtype filters see every land as a creature (Nature's Revolt).
+                for (PermanentSlot target : slots) {
+                    if (isSource(instance, target)) continue;
+                    Permanent permanent = target.permanent();
+                    CharacteristicState state = states.get(permanent.getId());
+                    if (state.hasCardType(CardType.LAND) && !state.hasCardType(CardType.CREATURE)
+                            && !isOneShotAnimated(permanent)) {
+                        state.addCardType(CardType.CREATURE);
                     }
                 }
             }

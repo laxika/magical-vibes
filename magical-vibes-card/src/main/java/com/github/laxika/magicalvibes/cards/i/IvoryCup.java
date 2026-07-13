@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "305")
+@CardRegistration(set = "7ED", collectorNumber = "302")
 public class IvoryCup extends Card {
 
     public IvoryCup() {

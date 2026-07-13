@@ -65,6 +65,7 @@ public class MultiPermanentChoiceHandlerService {
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport librarySearchSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
@@ -134,6 +135,10 @@ public class MultiPermanentChoiceHandlerService {
             handleTapCreaturesGainLife(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped) {
             handleSacrificeLandsSearchLandsToBattlefieldTapped(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificePermanentsDrawPerSacrificed) {
+            handleSacrificePermanentsDrawPerSacrificed(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.StaticOrbUntap ctx) {
+            handleStaticOrbUntap(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
@@ -386,6 +391,43 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         // Resume resolving remaining effects on the same spell/ability
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleSacrificePermanentsDrawPerSacrificed(GameData gameData, UUID playerId,
+                                                            List<UUID> permanentIds) {
+        int sacrificed = 0;
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                destructionSupport.sacrificeAndLog(gameData, perm, playerId);
+                sacrificed++;
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+
+        if (sacrificed > 0) {
+            playerInteractionSupport.applyDrawCards(gameData, playerId, sacrificed);
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    gameData.playerIdToName.get(playerId) + " sacrifices no permanents.");
+        }
+
+        // Standard completion: SBA → may abilities → resume effects
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData,
                     gameData.pendingEffectResolutionEntry,
@@ -814,6 +856,30 @@ public class MultiPermanentChoiceHandlerService {
 
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleStaticOrbUntap(GameData gameData, List<UUID> permanentIds,
+                                      MultiPermanentChoiceContext.StaticOrbUntap context) {
+        UUID activePlayerId = context.activePlayerId();
+
+        List<String> untappedNames = new ArrayList<>();
+        for (UUID permId : permanentIds) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+            if (perm != null) {
+                untappedNames.add(perm.getCard().getName());
+            }
+        }
+        String playerName = gameData.playerIdToName.get(activePlayerId);
+        if (untappedNames.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " untaps no permanents (Static Orb).");
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " untaps "
+                    + String.join(", ", untappedNames) + " (Static Orb).");
+        }
+
+        // Resume the untap step: only the chosen permanents untap; the rest of the untap-step
+        // bookkeeping and turn advance proceed as normal.
+        turnProgressionService.resumeStaticOrbUntap(gameData, activePlayerId, new HashSet<>(permanentIds));
     }
 
     private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {

@@ -268,6 +268,15 @@ public class TurnProgressionService {
                 return;
             }
 
+            // Static Orb: pause the untap step so the active player chooses up to two permanents to
+            // untap. The choice handler resumes via resumeStaticOrbUntap.
+            if (untapStepService.staticOrbRestrictionApplies(gameData, nextActive)) {
+                playerInputService.beginStaticOrbUntapChoice(gameData, nextActive,
+                        untapStepService.staticOrbUntapCandidates(gameData, nextActive));
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+
             untapStepService.untapPermanents(gameData, nextActive);
         }
 
@@ -288,6 +297,23 @@ public class TurnProgressionService {
     public void resumeStorageMatrixUntap(GameData gameData, UUID activePlayerId,
                                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate restrictPredicate) {
         untapStepService.untapPermanents(gameData, activePlayerId, restrictPredicate);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        completeTurnAdvance(gameData);
+    }
+
+    /**
+     * Resumes the paused untap step after the active player picks up to two permanents to untap
+     * under a Static Orb restriction. Only the chosen permanents untap; the remaining untap-step
+     * bookkeeping and turn advance then proceed exactly as {@link #advanceTurn} would have.
+     */
+    public void resumeStaticOrbUntap(GameData gameData, UUID activePlayerId,
+                                     java.util.Set<UUID> chosenUntapIds) {
+        untapStepService.untapChosenPermanents(gameData, activePlayerId, chosenUntapIds);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

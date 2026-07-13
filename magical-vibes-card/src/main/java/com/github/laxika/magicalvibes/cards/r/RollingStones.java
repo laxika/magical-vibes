@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsT
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "38")
+@CardRegistration(set = "7ED", collectorNumber = "35")
 public class RollingStones extends Card {
 
     public RollingStones() {

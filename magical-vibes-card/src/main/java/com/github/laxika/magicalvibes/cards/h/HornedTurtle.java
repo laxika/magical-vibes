@@ -7,5 +7,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "9ED", collectorNumber = "81")
 @CardRegistration(set = "POR", collectorNumber = "57")
 @CardRegistration(set = "8ED", collectorNumber = "83")
+@CardRegistration(set = "7ED", collectorNumber = "80")
 public class HornedTurtle extends Card {
 }

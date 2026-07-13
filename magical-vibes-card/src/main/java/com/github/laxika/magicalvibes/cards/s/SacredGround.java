@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGrave
 
 @CardRegistration(set = "9ED", collectorNumber = "37")
 @CardRegistration(set = "8ED", collectorNumber = "39")
+@CardRegistration(set = "7ED", collectorNumber = "36")
 public class SacredGround extends Card {
 
     public SacredGround() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "251")
+@CardRegistration(set = "7ED", collectorNumber = "246")
 public class FyndhornElder extends Card {
 
     public FyndhornElder() {

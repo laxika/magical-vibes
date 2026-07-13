@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "297")
+@CardRegistration(set = "7ED", collectorNumber = "292")
 public class DingusEgg extends Card {
 
     public DingusEgg() {

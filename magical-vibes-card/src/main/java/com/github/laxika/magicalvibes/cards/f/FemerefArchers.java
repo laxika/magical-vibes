@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "264")
+@CardRegistration(set = "7ED", collectorNumber = "244")
 public class FemerefArchers extends Card {
 
     public FemerefArchers() {

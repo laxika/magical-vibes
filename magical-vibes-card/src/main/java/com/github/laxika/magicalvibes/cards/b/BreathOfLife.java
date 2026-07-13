@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "POR", collectorNumber = "10")
 @CardRegistration(set = "P02", collectorNumber = "15")
+@CardRegistration(set = "7ED", collectorNumber = "4")
 public class BreathOfLife extends Card {
 
     public BreathOfLife() {

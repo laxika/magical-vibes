@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 @CardRegistration(set = "10E", collectorNumber = "180")
 @CardRegistration(set = "9ED", collectorNumber = "165")
 @CardRegistration(set = "8ED", collectorNumber = "166")
+@CardRegistration(set = "7ED", collectorNumber = "164")
 public class SpinelessThug extends Card {
 
     public SpinelessThug() {

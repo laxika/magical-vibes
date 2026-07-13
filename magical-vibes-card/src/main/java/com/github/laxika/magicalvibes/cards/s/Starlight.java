@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "POR", collectorNumber = "29")
+@CardRegistration(set = "7ED", collectorNumber = "49")
 public class Starlight extends Card {
 
     public Starlight() {

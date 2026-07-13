@@ -25,13 +25,25 @@ public class SpellTarget {
     private final int minTargets;
     private final int maxTargets;
     private final int index;
+    /**
+     * When true the number of targets scales with the spell's X: the effective max
+     * is {@code min(xValue, maxTargets)} and the effective min is {@code min(xValue, minTargets)}.
+     * Used by "Destroy X target nonblack creatures"-style spells (Dregs of Sorrow), where
+     * {@code maxTargets} acts only as a sanity cap.
+     */
+    private final boolean xScaled;
 
     SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index) {
+        this(card, filter, minTargets, maxTargets, index, false);
+    }
+
+    SpellTarget(Card card, TargetFilter filter, int minTargets, int maxTargets, int index, boolean xScaled) {
         this.card = card;
         this.filter = filter;
         this.minTargets = minTargets;
         this.maxTargets = maxTargets;
         this.index = index;
+        this.xScaled = xScaled;
     }
 
     /**

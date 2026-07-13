@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "174")
 @CardRegistration(set = "8ED", collectorNumber = "176")
+@CardRegistration(set = "7ED", collectorNumber = "173")
 public class BalduvianBarbarians extends Card {
 }

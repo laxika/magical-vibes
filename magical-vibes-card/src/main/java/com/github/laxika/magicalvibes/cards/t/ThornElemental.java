@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 
 @CardRegistration(set = "DOM", collectorNumber = "185")
 @CardRegistration(set = "8ED", collectorNumber = "283")
+@CardRegistration(set = "7ED", collectorNumber = "273")
 public class ThornElemental extends Card {
 
     public ThornElemental() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "7ED", collectorNumber = "74")
 @CardRegistration(set = "8ED", collectorNumber = "79")
 @CardRegistration(set = "9ED", collectorNumber = "78")
 public class FleetingImage extends Card {

@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DOM", collectorNumber = "120")
+@CardRegistration(set = "7ED", collectorNumber = "183")
 public class FireElemental extends Card {
 }

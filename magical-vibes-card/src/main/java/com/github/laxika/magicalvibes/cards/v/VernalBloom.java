@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "286")
+@CardRegistration(set = "7ED", collectorNumber = "281")
 public class VernalBloom extends Card {
 
     public VernalBloom() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "206")
+@CardRegistration(set = "7ED", collectorNumber = "204")
 public class Okk extends Card {
 
     public Okk() {

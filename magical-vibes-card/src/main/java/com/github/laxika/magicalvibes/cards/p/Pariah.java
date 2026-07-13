@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "33")
+@CardRegistration(set = "7ED", collectorNumber = "30")
 public class Pariah extends Card {
 
     public Pariah() {
