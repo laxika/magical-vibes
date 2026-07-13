@@ -2824,9 +2824,13 @@ class HardAiDecisionEngineTest {
         }
 
         @Test
-        @DisplayName("Attacks with a negative-power creature when a pump spell in hand makes it lethal")
+        @DisplayName("Attacks with a negative-power creature and pumps it for the kill")
         void attacksWithNegativePowerCreatureWhenPumpIsLethal() {
             HardAiDecisionEngine ai = createHardAi(player1);
+            // Mark player1 as AI-controlled so auto-pass halts on its priority windows
+            // (production does this when an AI joins) — otherwise the engine fast-forwards
+            // through combat and the AI never gets to cast the pump spell.
+            gd.aiPlayerIds.add(player1.getId());
 
             harness.forceActivePlayer(player1);
             harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -2855,6 +2859,26 @@ class HardAiDecisionEngineTest {
                     .withFailMessage("AI did not attack with the -1/2 creature even though "
                             + "Giant Growth in hand makes the attack lethal (2 power vs 2 life)")
                     .isTrue();
+
+            // Drive the rest of combat: the AI acts on its priority windows, the human
+            // opponent just passes. The AI should cast Giant Growth during the declare
+            // blockers step and the pumped 2/5 should deal exactly lethal damage.
+            for (int i = 0; i < 30 && gd.status != GameStatus.FINISHED; i++) {
+                UUID priorityHolder = harness.getGameQueryService().getPriorityPlayerId(gd);
+                if (player1.getId().equals(priorityHolder)) {
+                    ai.handleMessage("GAME_STATE", "");
+                } else if (player2.getId().equals(priorityHolder)) {
+                    harness.passPriority(player2);
+                } else {
+                    break;
+                }
+            }
+
+            assertThat(gd.playerHands.get(player1.getId()))
+                    .withFailMessage("AI never cast Giant Growth during combat")
+                    .isEmpty();
+            assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThanOrEqualTo(0);
+            assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
         }
     }
 

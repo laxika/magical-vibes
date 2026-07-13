@@ -164,9 +164,13 @@ public class CombatBlockService {
                     }
                 }
             }
-            int pushed = collectUnblockedAttackTriggers(gameData, activeId, defenderId)
-                    + checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
-            return pushed > 0 ? CombatResult.AUTO_PASS_ONLY : CombatResult.ADVANCE_ONLY;
+            collectUnblockedAttackTriggers(gameData, activeId, defenderId);
+            checkUnblockedAttackerTriggers(gameData, activeId, unblockedAttackers);
+            // CR 509.4: players still get priority during the declare blockers step even
+            // when zero blocks were declared (e.g. the attacker may pump an unblocked
+            // creature). AUTO_PASS_ONLY runs that priority round; when nobody can act,
+            // auto-pass advances to combat damage exactly as the old direct advance did.
+            return CombatResult.AUTO_PASS_ONLY;
         }
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.BlockerDeclaration(defenderId));
