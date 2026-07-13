@@ -23,6 +23,16 @@ final class CombatMath {
     }
 
     /**
+     * Combat damage a creature assigns: its power, floored at 0 — a creature with 0 or
+     * negative power deals no combat damage (CR 510.1a). Raw {@code power()} stays in use
+     * for pump arithmetic (a trick adds to real power, which may be negative) and for
+     * power-vs-toughness kill checks, where a negative value behaves identically.
+     */
+    static int damage(CreatureInfo c) {
+        return Math.max(0, c.power());
+    }
+
+    /**
      * An attacking creature plus its precomputed block compatibility: {@code canBeBlockedBy[j]}
      * is true when blocker {@code j} of the accompanying blocker list can legally block this
      * creature. Block legality ({@code GameQueryService.canBlockAttacker}) is an expensive
@@ -84,7 +94,7 @@ final class CombatMath {
                         for (int b = a + 1; b < availableIdx.size(); b++) {
                             CreatureInfo ba = blockers.get(availableIdx.get(a));
                             CreatureInfo bb = blockers.get(availableIdx.get(b));
-                            boolean kills = ba.power() + bb.power() >= info.toughness();
+                            boolean kills = damage(ba) + damage(bb) >= info.toughness();
                             double value = kills ? info.creatureScore() - ba.creatureScore() - bb.creatureScore() : -100;
                             if (value > bestValue) {
                                 bestValue = value;
@@ -138,12 +148,12 @@ final class CombatMath {
             if (assignedBlockers.isEmpty()) {
                 // Unblocked: damage goes to opponent
                 if (attacker.infect()) {
-                    opponentPoisonGained += attacker.power();
+                    opponentPoisonGained += damage(attacker);
                 } else {
-                    opponentLifeLost += attacker.power();
+                    opponentLifeLost += damage(attacker);
                 }
                 if (attacker.lifelink()) {
-                    aiLifeGained += attacker.power();
+                    aiLifeGained += damage(attacker);
                 }
             } else {
                 // Blocked combat
@@ -154,7 +164,7 @@ final class CombatMath {
 
                 if (attacker.firstStrike() || attacker.doubleStrike()) {
                     // Attacker deals first strike damage
-                    int fsRemaining = attacker.power();
+                    int fsRemaining = damage(attacker);
                     for (CreatureInfo blocker : assignedBlockers) {
                         if (!blocker.indestructible()) {
                             int lethal = blocker.toughness();
@@ -178,15 +188,15 @@ final class CombatMath {
                         }
                     }
                     if (attacker.lifelink()) {
-                        aiLifeGained += attacker.power();
+                        aiLifeGained += damage(attacker);
                     }
-                    attackerDamageDealt += attacker.power();
+                    attackerDamageDealt += damage(attacker);
                 }
 
                 // Check which blockers have first strike
                 for (CreatureInfo blocker : assignedBlockers) {
                     if (blocker.firstStrike() || blocker.doubleStrike()) {
-                        blockerDamageDealt += blocker.power();
+                        blockerDamageDealt += damage(blocker);
                     }
                 }
 
@@ -199,7 +209,7 @@ final class CombatMath {
 
                 // Regular damage phase (only if not already dealt via first strike)
                 if (!attackerDead && !(attacker.firstStrike() && !attacker.doubleStrike())) {
-                    int regularRemaining = attacker.power();
+                    int regularRemaining = damage(attacker);
                     for (CreatureInfo blocker : assignedBlockers) {
                         if (!blocker.indestructible()) {
                             int dmg = Math.min(regularRemaining, blocker.toughness());
@@ -222,7 +232,7 @@ final class CombatMath {
                         }
                     }
                     if (attacker.lifelink() && attackerDamageDealt == 0) {
-                        aiLifeGained += attacker.power();
+                        aiLifeGained += damage(attacker);
                     }
                 }
 
@@ -231,7 +241,7 @@ final class CombatMath {
                     int totalRegularBlockerDmg = 0;
                     for (CreatureInfo blocker : assignedBlockers) {
                         if (!blocker.firstStrike() || blocker.doubleStrike()) {
-                            totalRegularBlockerDmg += blocker.power();
+                            totalRegularBlockerDmg += damage(blocker);
                         }
                     }
                     if (totalRegularBlockerDmg + blockerDamageDealt >= attacker.toughness()
@@ -270,9 +280,9 @@ final class CombatMath {
 
             if (blockers.isEmpty()) {
                 if (attacker.infect()) {
-                    defenderPoisonGained += attacker.power();
+                    defenderPoisonGained += damage(attacker);
                 } else {
-                    defenderLifeLost += attacker.power();
+                    defenderLifeLost += damage(attacker);
                 }
                 continue;
             }
@@ -287,7 +297,7 @@ final class CombatMath {
 
             // === First strike phase ===
             if (attackerDealtFirstStrike) {
-                int remaining = attacker.power();
+                int remaining = damage(attacker);
                 for (CreatureInfo blocker : orderedBlockers) {
                     if (remaining <= 0) break;
                     if (!blocker.indestructible()) {
@@ -312,9 +322,9 @@ final class CombatMath {
             // Blockers with first strike deal damage to attacker
             for (CreatureInfo blocker : orderedBlockers) {
                 if (blocker.firstStrike() || blocker.doubleStrike()) {
-                    attackerDamageReceived += blocker.power();
+                    attackerDamageReceived += damage(blocker);
                     if (blocker.lifelink()) {
-                        defenderLifeGained += blocker.power();
+                        defenderLifeGained += damage(blocker);
                     }
                 }
             }
@@ -326,7 +336,7 @@ final class CombatMath {
 
             // === Regular damage phase ===
             if (!attackerDead && !(attacker.firstStrike() && !attacker.doubleStrike())) {
-                int remaining = attacker.power();
+                int remaining = damage(attacker);
                 for (CreatureInfo blocker : orderedBlockers) {
                     if (remaining <= 0) break;
                     if (!blocker.indestructible()) {
@@ -354,9 +364,9 @@ final class CombatMath {
                 int totalRegularBlockerDmg = 0;
                 for (CreatureInfo blocker : orderedBlockers) {
                     if (!blocker.firstStrike() || blocker.doubleStrike()) {
-                        totalRegularBlockerDmg += blocker.power();
+                        totalRegularBlockerDmg += damage(blocker);
                         if (blocker.lifelink() && !(blocker.firstStrike() || blocker.doubleStrike())) {
-                            defenderLifeGained += blocker.power();
+                            defenderLifeGained += damage(blocker);
                         }
                     }
                 }
@@ -374,7 +384,7 @@ final class CombatMath {
         if (aiLife > 0) {
             double totalPotentialDamage = 0;
             for (CreatureInfo attacker : attackerInfos) {
-                totalPotentialDamage += attacker.power();
+                totalPotentialDamage += damage(attacker);
             }
             double lethalRatio = totalPotentialDamage / aiLife;
             if (lethalRatio >= 0.5) {
@@ -411,11 +421,11 @@ final class CombatMath {
 
         if (!attackerKillsBlocker) {
             // Neither dies — still prevents damage
-            return attacker.power() * 0.5;
+            return damage(attacker) * 0.5;
         }
 
         // Blocker dies, attacker lives — bad unless chump blocking
-        return -blocker.creatureScore() + attacker.power() * 0.5;
+        return -blocker.creatureScore() + damage(attacker) * 0.5;
     }
 
     /**
@@ -438,7 +448,7 @@ final class CombatMath {
 
         // Attacker survives with trample: value is based on how much trample damage is prevented.
         // The blocker's toughness is how much of the attacker's power it absorbs.
-        int tramplePrevented = Math.min(attacker.power(), blocker.toughness());
+        int tramplePrevented = Math.min(damage(attacker), blocker.toughness());
         double cost = attackerKillsBlocker ? blocker.creatureScore() : 0;
         return tramplePrevented * 0.8 - cost;
     }
@@ -458,7 +468,7 @@ final class CombatMath {
         }
         if (!blockerKillsAttacker && !attackerKillsBlocker) {
             // Neither dies — prevents damage
-            return attacker.power() * 0.3;
+            return damage(attacker) * 0.3;
         }
         // Blocker dies, attacker survives — only block if cheap blocker vs expensive attacker
         return -blocker.creatureScore() * 0.5;
@@ -472,7 +482,7 @@ final class CombatMath {
             for (int b = a + 1; b < available.size(); b++) {
                 CreatureInfo ba = available.get(a);
                 CreatureInfo bb = available.get(b);
-                boolean kills = ba.power() + bb.power() >= attacker.toughness();
+                boolean kills = damage(ba) + damage(bb) >= attacker.toughness();
                 boolean oneSurvives = attacker.power() < ba.toughness() || attacker.power() < bb.toughness();
 
                 double value;
@@ -517,7 +527,7 @@ final class CombatMath {
         // Total raw incoming damage if we don't block at all (used for lethal-chump check)
         int rawIncoming = 0;
         for (Attacker a : attackers) {
-            rawIncoming += a.info().power();
+            rawIncoming += damage(a.info());
         }
 
         // Process attackers biggest-first so the AI uses blockers on the largest threats
@@ -536,7 +546,7 @@ final class CombatMath {
 
         for (Attacker attacker : sorted) {
             CreatureInfo info = attacker.info();
-            int unblockedPower = info.power();
+            int unblockedPower = damage(info);
 
             if (!attacker.blockable()) {
                 damageTaken += unblockedPower;
@@ -572,7 +582,7 @@ final class CombatMath {
                 }
 
                 if (info.trample()) {
-                    int trampleDmg = Math.max(0, info.power() - b.toughness());
+                    int trampleDmg = Math.max(0, damage(info) - b.toughness());
                     damageTaken += trampleDmg;
                     remainingIncoming -= (unblockedPower - trampleDmg);
                 } else {

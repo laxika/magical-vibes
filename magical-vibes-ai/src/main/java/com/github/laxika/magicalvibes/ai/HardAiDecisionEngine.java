@@ -2046,10 +2046,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
 
+        // "All-in" means every creature whose attack accomplishes something — a creature
+        // with power <= 0 assigns no combat damage (CR 510.1a) and just dies to a free block.
+        List<Integer> allInIndices = combatSimulator.filterZeroPowerAttackers(
+                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
+
         // Alpha strike + burn lethal: if attacking with everything and then burning
         // the opponent's face with remaining mana would kill them, go all-in.
-        if (isAlphaStrikePlusBurnLethal(gameData, availableIndices)) {
-            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+        if (isAlphaStrikePlusBurnLethal(gameData, allInIndices)) {
+            List<Integer> attackerIndices = new ArrayList<>(allInIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
@@ -2068,7 +2073,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (raceState.aiWinningRace() && !raceState.aiLosingRace()) {
             log.info("AI (Hard): Winning the race (AI clock={}, opp clock={}), attacking aggressively in game {}",
                     raceState.aiClock(), raceState.opponentClock(), gameId);
-            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+            List<Integer> attackerIndices = new ArrayList<>(allInIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);

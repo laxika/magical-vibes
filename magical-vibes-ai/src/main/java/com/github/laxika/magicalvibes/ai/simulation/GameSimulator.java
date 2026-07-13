@@ -159,14 +159,18 @@ public class GameSimulator {
             case PendingInteraction.AttackerDeclaration ignored -> {
                 List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
                 List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
+                // "All-in" excludes creatures that assign no combat damage (power <= 0, CR 510.1a)
+                List<Integer> allInIndices = combatSimulator.filterZeroPowerAttackers(
+                        gd, playerId, availableIndices, mustAttackIndices);
                 // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
                 List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices, mustAttackIndices);
                 boolean forcedToAttack = combatAttackService.isOpponentForcedToAttack(gd, playerId);
                 if (mustAttackIndices.isEmpty() && !forcedToAttack) {
                     actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack
                 } else if (mustAttackIndices.isEmpty() && forcedToAttack) {
-                    // Forced to attack with at least one — offer the first available
-                    actions.add(new SimulationAction.DeclareAttackers(List.of(availableIndices.getFirst())));
+                    // Forced to attack with at least one — offer the first worth sending
+                    List<Integer> forcedPool = allInIndices.isEmpty() ? availableIndices : allInIndices;
+                    actions.add(new SimulationAction.DeclareAttackers(List.of(forcedPool.getFirst())));
                 } else {
                     // Must-attack creatures must always be included
                     actions.add(new SimulationAction.DeclareAttackers(mustAttackIndices));
@@ -175,9 +179,9 @@ public class GameSimulator {
                     actions.add(new SimulationAction.DeclareAttackers(bestAttackers));
                 }
                 // Also try all-in attack if different from best
-                if (!availableIndices.isEmpty() && !availableIndices.equals(bestAttackers)
-                        && !availableIndices.equals(mustAttackIndices)) {
-                    actions.add(new SimulationAction.DeclareAttackers(availableIndices));
+                if (!allInIndices.isEmpty() && !allInIndices.equals(bestAttackers)
+                        && !allInIndices.equals(mustAttackIndices)) {
+                    actions.add(new SimulationAction.DeclareAttackers(allInIndices));
                 }
                 // Also try holding back the biggest creature as a defender: the best
                 // set minus its highest-power member (must-attackers stay included).

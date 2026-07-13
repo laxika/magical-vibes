@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -542,6 +544,43 @@ class GameSimulatorTest {
 
             // Should have at least: no-block, best-block, and single-block options
             assertThat(actions.size()).isGreaterThanOrEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("Attacker candidate enumeration")
+    class AttackerCandidateEnumeration {
+
+        @Test
+        @DisplayName("No attack candidate includes a negative-power creature")
+        void attackerCandidatesExcludeNegativePowerCreature() {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.beginAttackerDeclarationInput();
+
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+            // -1/2 creature: assigns no combat damage (CR 510.1a), so neither the
+            // best-attack nor the all-in candidate may send it.
+            Permanent weakBears = new Permanent(new GrizzlyBears());
+            TestCards.mutableCard(weakBears).setPower(-1);
+            weakBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+            List<SimulationAction.DeclareAttackers> declares =
+                    simulator.getLegalActions(gd, player1.getId()).stream()
+                            .filter(SimulationAction.DeclareAttackers.class::isInstance)
+                            .map(SimulationAction.DeclareAttackers.class::cast)
+                            .toList();
+
+            assertThat(declares).isNotEmpty();
+            // Index 1 is the negative-power creature — no candidate may include it
+            assertThat(declares).allSatisfy(
+                    da -> assertThat(da.attackerIndices()).doesNotContain(1));
+            // The flyer is still offered as an attacker in at least one candidate
+            assertThat(declares).anyMatch(da -> da.attackerIndices().contains(0));
         }
     }
 

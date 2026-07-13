@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.e.Eviscerate;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GoblinChieftain;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -2786,6 +2787,74 @@ class HardAiDecisionEngineTest {
             // When winning the race, AI should attack with all available creatures
             assertThat(aiCreature.isAttacking()).isTrue();
             assertThat(aiBears.isAttacking()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Hard AI holds back a negative-power creature when attacking aggressively")
+        void aggressiveAttackExcludesNegativePowerCreature() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            harness.beginAttackerDeclarationInput();
+
+            // AI has 4/4 Air Elemental — 5-turn clock vs opponent's 20 life
+            Permanent aiCreature = new Permanent(new AirElemental());
+            aiCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiCreature);
+
+            // Plus a -1/2 creature: it assigns no combat damage (CR 510.1a) and
+            // must not be swept into the "attack with everything" race path.
+            Permanent weakBears = new Permanent(new GrizzlyBears());
+            TestCards.mutableCard(weakBears).setPower(-1);
+            weakBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+            // Opponent has a small 1/1 — AI is comfortably winning the race
+            Permanent oppCreature = new Permanent(new ElvishVisionary());
+            oppCreature.setSummoningSick(false);
+            gd.playerBattlefields.get(player2.getId()).add(oppCreature);
+
+            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+            assertThat(aiCreature.isAttacking()).isTrue();
+            assertThat(weakBears.isAttacking()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Attacks with a negative-power creature when a pump spell in hand makes it lethal")
+        void attacksWithNegativePowerCreatureWhenPumpIsLethal() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            harness.beginAttackerDeclarationInput();
+
+            // Opponent at 2 life with no blockers
+            gd.playerLifeTotals.put(player2.getId(), 2);
+
+            // AI's only creature is a -1/2 — it assigns no combat damage on its own
+            Permanent weakBears = new Permanent(new GrizzlyBears());
+            TestCards.mutableCard(weakBears).setPower(-1);
+            weakBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+            // One untapped Forest + Giant Growth in hand: attacking and pumping makes
+            // the creature a 2/5, which is exactly lethal against 2 life.
+            givePlayerForests(player1, 1);
+            harness.setHand(player1, List.of(new GiantGrowth()));
+
+            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+            // The pump line is lethal — the AI should send the -1/2 in.
+            assertThat(weakBears.isAttacking())
+                    .withFailMessage("AI did not attack with the -1/2 creature even though "
+                            + "Giant Growth in hand makes the attack lethal (2 power vs 2 life)")
+                    .isTrue();
         }
     }
 
