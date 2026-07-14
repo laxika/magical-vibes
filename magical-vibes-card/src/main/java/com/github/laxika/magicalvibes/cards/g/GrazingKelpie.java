@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
@@ -19,6 +20,7 @@ public class GrazingKelpie extends Card {
                 "{G/U}",
                 List.of(new SacrificeSelfCost(), ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY)
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
                         .build()),
                 "{G/U}, Sacrifice Grazing Kelpie: Put target card from a graveyard on the bottom of its owner's library."

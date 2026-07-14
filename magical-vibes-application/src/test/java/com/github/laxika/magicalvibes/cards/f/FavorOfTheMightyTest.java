@@ -87,6 +87,9 @@ class FavorOfTheMightyTest extends BaseCardTest {
         addFavor();
         addCreature(createCreature("Twin A", 5, 5, CardColor.GREEN, "{5}"));
         Permanent twinB = addCreature(createCreature("Twin B", 5, 5, CardColor.GREEN, "{5}"));
+        // A lesser-mana-value creature is an unprotected legal target, so Red Bolt is castable
+        // (CR 601.2c); targeting a tied-greatest twin is then rejected for protection.
+        addCreature(createCreature("Runt", 1, 1, CardColor.GREEN, "{1}"));
 
         harness.setHand(player1, List.of(createRedBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
