@@ -162,9 +162,9 @@ public class GameTestHarness {
         sessionManager.registerPlayer(conn1, player1.getId(), player1.getUsername());
         sessionManager.registerPlayer(conn2, player2.getId(), player2.getUsername());
 
-        gameSetupService.createGame("Test Game", player1, "cho-mannos-resolve");
+        gameSetupService.createGame("Test Game", player1, "10e-white-theme-deck");
         GameData gd = gameRegistry.getGameForPlayer(player1.getId());
-        gameSetupService.joinGame(gd, player2, "cho-mannos-resolve");
+        gameSetupService.joinGame(gd, player2, "10e-white-theme-deck");
 
         this.gameData = gameRegistry.getGameForPlayer(player1.getId());
 

@@ -37,8 +37,8 @@ class GameSetupServiceAllRandomTest {
 
     @Test
     void allRandomGameDealsGeneratedDecksAndIgnoresDeckChoices() {
-        GameData gd = gameSetupService.createGame("All Random", creator, "cho-mannos-resolve", true);
-        gameSetupService.joinGame(gd, joiner, "kamahls-temper");
+        GameData gd = gameSetupService.createGame("All Random", creator, "10e-white-theme-deck", true);
+        gameSetupService.joinGame(gd, joiner, "10e-red-theme-deck");
 
         assertThat(gd.allRandom).isTrue();
         assertThat(gd.status).isEqualTo(GameStatus.MULLIGAN);
@@ -73,15 +73,15 @@ class GameSetupServiceAllRandomTest {
 
     @Test
     void standardGameStillResolvesPrebuiltDecks() {
-        GameData gd = gameSetupService.createGame("Normal", creator, "cho-mannos-resolve", false);
-        gameSetupService.joinGame(gd, joiner, "kamahls-temper");
+        GameData gd = gameSetupService.createGame("Normal", creator, "10e-white-theme-deck", false);
+        gameSetupService.joinGame(gd, joiner, "10e-red-theme-deck");
 
         assertThat(gd.allRandom).isFalse();
         assertThat(gd.playerDeckChoices)
-                .containsEntry(creator.getId(), "cho-mannos-resolve")
-                .containsEntry(joiner.getId(), "kamahls-temper");
+                .containsEntry(creator.getId(), "10e-white-theme-deck")
+                .containsEntry(joiner.getId(), "10e-red-theme-deck");
         assertThat(gd.gameLog)
-                .contains("Carol is playing with Cho-Manno's Resolve (Tenth Edition Theme Deck).");
+                .contains("Carol is playing with 10E White Theme Deck.");
 
         gameRegistry.remove(gd.id);
     }

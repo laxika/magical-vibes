@@ -47,7 +47,7 @@ public class LoginService {
             // Build available decks list (custom decks first, then prebuilt)
             List<DeckInfo> customDecks = deckService.getCustomDecksForUser(user.getId());
             List<DeckInfo> prebuiltDecks = Arrays.stream(PrebuiltDeck.values())
-                    .map(d -> new DeckInfo(d.getId(), d.getName()))
+                    .map(d -> new DeckInfo(d.getId(), d.getDisplayName()))
                     .toList();
             List<DeckInfo> decks = new ArrayList<>();
             decks.addAll(customDecks);

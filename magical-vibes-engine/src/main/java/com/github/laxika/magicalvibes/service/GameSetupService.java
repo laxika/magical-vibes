@@ -152,7 +152,7 @@ public class GameSetupService {
             } else if (isCustomDeck(deckIdForLog)) {
                 deckName = "a custom deck";
             } else {
-                deckName = PrebuiltDeck.findById(deckIdForLog).getName();
+                deckName = PrebuiltDeck.findById(deckIdForLog).getDisplayName();
             }
             String playerName = gameData.playerIdToName.get(playerId);
             gameData.gameLog.add(playerName + " is playing with " + deckName + ".");

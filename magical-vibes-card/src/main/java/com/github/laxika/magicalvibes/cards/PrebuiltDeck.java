@@ -5,11 +5,12 @@ import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Getter
 public enum PrebuiltDeck {
 
-    CHO_MANNOS_RESOLVE("cho-mannos-resolve", "Cho-Manno's Resolve (Tenth Edition Theme Deck)", List.of(
+    _10E_WHITE_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_10E, "364", 17),  // Plains
             new DeckEntry(CardSet.SET_10E, "16", 1),    // Ghost Warden
             new DeckEntry(CardSet.SET_10E, "62", 2),    // Youthful Knight
@@ -29,7 +30,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_10E, "326", 1)    // Icy Manipulator
     )),
 
-    ARCANISS_GUILE("arcaniss-guile", "Arcanis's Guile (Tenth Edition Theme Deck)", List.of(
+    _10E_BLUE_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_10E, "368", 17),  // Island
             new DeckEntry(CardSet.SET_10E, "104", 2),   // Sage Owl
             new DeckEntry(CardSet.SET_10E, "74", 2),    // Cloud Elemental
@@ -50,7 +51,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_10E, "341", 1)    // Rod of Ruin
     )),
 
-    KAMAHLS_TEMPER("kamahls-temper", "Kamahl's Temper (Tenth Edition Theme Deck)", List.of(
+    _10E_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_10E, "376", 17),  // Mountain
             new DeckEntry(CardSet.SET_10E, "224", 1),   // Raging Goblin
             new DeckEntry(CardSet.SET_10E, "246", 1),   // Viashino Sandscout
@@ -71,7 +72,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_10E, "337", 1)    // Phyrexian Vault
     )),
 
-    DEADSPREAD("deadspread", "Deadspread (Scars of Mirrodin Intro Pack)", List.of(
+    SOM_BLUE_BLACK_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_SOM, "234", 13),  // Island
             new DeckEntry(CardSet.SET_SOM, "238", 13),  // Swamp
             new DeckEntry(CardSet.SET_SOM, "57", 1),    // Carnifex Demon
@@ -99,7 +100,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_SOM, "50", 1)     // Twisted Image
     )),
 
-    METALCRAFT("metalcraft", "Metalcraft (Scars of Mirrodin Intro Pack)", List.of(
+    SOM_BLUE_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_SOM, "234", 12),  // Island
             new DeckEntry(CardSet.SET_SOM, "242", 12),  // Mountain
             new DeckEntry(CardSet.SET_SOM, "28", 1),    // Argent Sphinx
@@ -125,7 +126,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_SOM, "91", 3)     // Galvanic Blast
     )),
 
-    MYR_OF_MIRRODIN("myr-of-mirrodin", "Myr of Mirrodin (Scars of Mirrodin Intro Pack)", List.of(
+    SOM_WHITE_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_SOM, "230", 24),  // Plains
             new DeckEntry(CardSet.SET_SOM, "3", 1),     // Auriok Edgewright
             new DeckEntry(CardSet.SET_SOM, "151", 2),   // Darksteel Myr
@@ -148,7 +149,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_SOM, "18", 3)     // Revoke Existence
     )),
 
-    PHYREXIAN_POISON("phyrexian-poison", "Phyrexian Poison (Scars of Mirrodin Intro Pack)", List.of(
+    SOM_BLACK_GREEN_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_SOM, "246", 13),  // Forest
             new DeckEntry(CardSet.SET_SOM, "238", 13),  // Swamp
             new DeckEntry(CardSet.SET_SOM, "54", 1),    // Blackcleave Goblin
@@ -173,7 +174,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_M11, "114", 1)            // Rise from the Grave
     )),
 
-    RELIC_BREAKER("relic-breaker", "Relic Breaker (Scars of Mirrodin Intro Pack)", List.of(
+    SOM_RED_GREEN_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_SOM, "246", 12),  // Forest
             new DeckEntry(CardSet.SET_SOM, "242", 12),  // Mountain
             new DeckEntry(CardSet.SET_SOM, "108", 1),   // Acid Web Spider
@@ -201,7 +202,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_SOM, "106", 1)    // Turn to Slag
     )),
 
-    EVINCARS_TYRANNY("evincars-tyranny", "Evincar's Tyranny (Tenth Edition Theme Deck)", List.of(
+    _10E_BLACK_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_10E, "372", 17),  // Swamp
             new DeckEntry(CardSet.SET_10E, "186", 2),   // Vampire Bats
             new DeckEntry(CardSet.SET_10E, "139", 1),   // Drudge Skeletons
@@ -225,7 +226,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_10E, "320", 1)    // Demon's Horn
     )),
 
-    BATTLE_CRIES("battle-cries", "Battle Cries (Mirrodin Besieged Intro Pack)", List.of(
+    MBS_WHITE_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_MBS, "146", 16),  // Plains
             new DeckEntry(CardSet.SET_MBS, "152", 8),   // Mountain
             new DeckEntry(CardSet.SET_MBS, "1", 2),     // Accorder Paladin
@@ -253,7 +254,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_MBS, "60", 1)     // Concussive Bolt
     )),
 
-    MIRROMANCY("mirromancy", "Mirromancy (Mirrodin Besieged Intro Pack)", List.of(
+    MBS_BLUE_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_MBS, "148", 11),  // Island
             new DeckEntry(CardSet.SET_MBS, "152", 13),  // Mountain
             new DeckEntry(CardSet.SET_MBS, "58", 2),    // Blisterstick Shaman
@@ -282,7 +283,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.SET_M11, "73", 1)          // Sleep (not yet implemented)
     )),
 
-    PATH_OF_BLIGHT("path-of-blight", "Path of Blight (Mirrodin Besieged Intro Pack)", List.of(
+    MBS_WHITE_GREEN_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_MBS, "154", 14),  // Forest
             new DeckEntry(CardSet.SET_MBS, "146", 11),  // Plains
             new DeckEntry(CardSet.SET_SOM, "112", 2),   // Blight Mamba
@@ -309,7 +310,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.SET_M11, "182", 2)         // Hunters' Feast (not yet implemented)
     )),
 
-    DOOM_INEVITABLE("doom-inevitable", "Doom Inevitable (Mirrodin Besieged Intro Pack)", List.of(
+    MBS_BLUE_BLACK_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_MBS, "148", 13),  // Island
             new DeckEntry(CardSet.SET_MBS, "150", 12),  // Swamp
             new DeckEntry(CardSet.SET_M11, "44", 1),            // Armored Cancrix
@@ -339,7 +340,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_MBS, "38", 2)     // Vivisection
     )),
 
-    INFECT_AND_DEFILE("infect-and-defile", "Infect and Defile (Mirrodin Besieged Event Deck)", List.of(
+    MBS_BLUE_BLACK_EVENT_DECK(List.of(
             // new DeckEntry(CardSet.SET_M11, "224", 2),              // Drowned Catacomb (not yet implemented)
             new DeckEntry(CardSet.SET_MBS, "148", 10),         // Island
             // new DeckEntry(CardSet.ZENDIKAR, "215", 4),                // Jwar Isle Refuge (set not available)
@@ -367,7 +368,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.WORLDWAKE, "68", 2)                 // Smother (set not available)
     )),
 
-    INTO_THE_BREACH("into-the-breach", "Into the Breach (Mirrodin Besieged Event Deck)", List.of(
+    MBS_RED_EVENT_DECK(List.of(
             new DeckEntry(CardSet.SET_MBS, "144", 1),    // Contested War Zone
             new DeckEntry(CardSet.SET_MBS, "152", 21),   // Mountain
             // new DeckEntry(CardSet.ZENDIKAR, "125", 2),           // Goblin Bushwhacker (not yet implemented)
@@ -393,7 +394,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.ZENDIKAR, "153", 2)            // Unstable Footing (not yet implemented)
     )),
 
-    ARTFUL_DESTRUCTION("artful-destruction", "Artful Destruction (New Phyrexia Intro Pack)", List.of(
+    NPH_WHITE_GREEN_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "174", 12),         // Forest
             new DeckEntry(CardSet.SET_NPH, "166", 12),         // Plains
             new DeckEntry(CardSet.SET_NPH, "4", 1),            // Blade Splicer
@@ -421,7 +422,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.SET_M11, "168", 2)           // Cultivate (not yet implemented)
     )),
 
-    DEVOURING_SKIES("devouring-skies", "Devouring Skies (New Phyrexia Intro Pack)", List.of(
+    NPH_BLUE_BLACK_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "168", 13),         // Island
             new DeckEntry(CardSet.SET_NPH, "170", 11),         // Swamp
             new DeckEntry(CardSet.SET_M11, "45", 2),             // Augury Owl
@@ -448,7 +449,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_NPH, "48", 2)            // Vapor Snag
     )),
 
-    LIFE_FOR_DEATH("life-for-death", "Life for Death (New Phyrexia Intro Pack)", List.of(
+    NPH_WHITE_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "172", 11),           // Mountain
             new DeckEntry(CardSet.SET_NPH, "166", 13),           // Plains
             new DeckEntry(CardSet.SET_NPH, "131", 2),            // Blinding Souleater
@@ -477,7 +478,7 @@ public enum PrebuiltDeck {
             // new DeckEntry(CardSet.SET_M11, "32", 1)             // Solemn Offering (not yet implemented)
     )),
 
-    FEAST_OF_FLESH("feast-of-flesh", "Feast of Flesh (New Phyrexia Intro Pack)", List.of(
+    NPH_BLACK_RED_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "172", 11),            // Mountain
             new DeckEntry(CardSet.SET_NPH, "170", 13),            // Swamp
             new DeckEntry(CardSet.SET_SOM, "56", 2),         // Blistergrub
@@ -506,7 +507,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_NPH, "102", 1)              // Whipflare
     )),
 
-    RAVAGING_SWARM("ravaging-swarm", "Ravaging Swarm (New Phyrexia Intro Pack)", List.of(
+    NPH_BLUE_GREEN_THEME_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "174", 12),              // Forest
             new DeckEntry(CardSet.SET_NPH, "168", 12),              // Island
             new DeckEntry(CardSet.SET_SOM, "112", 1),          // Blight Mamba
@@ -535,7 +536,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_SOM, "45", 1)            // Steady Progress
     )),
 
-    ROT_FROM_WITHIN("rot-from-within", "Rot from Within (New Phyrexia Event Deck)", List.of(
+    NPH_GREEN_EVENT_DECK(List.of(
             new DeckEntry(CardSet.SET_NPH, "174", 22),            // Forest
             new DeckEntry(CardSet.SET_MBS, "145", 1),        // Inkmoth Nexus
             new DeckEntry(CardSet.SET_SOM, "112", 1),        // Blight Mamba
@@ -562,7 +563,7 @@ public enum PrebuiltDeck {
             new DeckEntry(CardSet.SET_MBS, "94", 1)          // Viridian Corrupter
     )),
 
-    WAR_OF_ATTRITION("war-of-attrition", "War of Attrition (New Phyrexia Event Deck)", List.of(
+    NPH_WHITE_EVENT_DECK(List.of(
             // new DeckEntry(CardSet.WORLDWAKE, "161", 2),                 // Dread Statuary (set not available)
             new DeckEntry(CardSet.SET_NPH, "166", 21),              // Plains
             new DeckEntry(CardSet.SET_M11, "13", 4),                  // Elite Vanguard
@@ -594,17 +595,22 @@ public enum PrebuiltDeck {
     public record DeckEntry(CardSet cardSet, String collectorNumber, int count) {}
 
     private final String id;
-    private final String name;
+    private final String displayName;
     private final List<DeckEntry> entries;
     private final List<DeckEntry> sideboard;
 
-    PrebuiltDeck(String id, String name, List<DeckEntry> entries) {
-        this(id, name, entries, List.of());
+    PrebuiltDeck(List<DeckEntry> entries) {
+        this(entries, List.of());
     }
 
-    PrebuiltDeck(String id, String name, List<DeckEntry> entries, List<DeckEntry> sideboard) {
-        this.id = id;
-        this.name = name;
+    PrebuiltDeck(List<DeckEntry> entries, List<DeckEntry> sideboard) {
+        String[] tokens = name().replaceFirst("^_", "").split("_");
+        this.id = String.join("-", tokens).toLowerCase(Locale.ROOT);
+        StringBuilder display = new StringBuilder(tokens[0]);
+        for (int i = 1; i < tokens.length; i++) {
+            display.append(' ').append(tokens[i].charAt(0)).append(tokens[i].substring(1).toLowerCase(Locale.ROOT));
+        }
+        this.displayName = display.toString();
         this.entries = entries;
         this.sideboard = sideboard;
     }
