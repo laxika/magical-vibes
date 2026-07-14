@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.BoardWipeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
@@ -256,8 +255,7 @@ public class SpellEvaluator {
     }
 
     private boolean isBoardWipeEffect(CardEffect effect) {
-        if (effect instanceof MassDamageEffect || effect instanceof DestroyAllPermanentsEffect
-                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING)) {
+        if (effect instanceof BoardWipeEffect wipe && wipe.sweepsBoard()) {
             return true;
         }
         if (effect instanceof ChooseOneEffect coe) {
@@ -611,17 +609,18 @@ public class SpellEvaluator {
 
         // Check spell-level sacrifice costs
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeCreatureCost) {
+            if (effect instanceof CostEffect cost && cost.sacrificesChosenCreature()) {
                 hasSacCost = true;
                 break;
             }
         }
 
-        // Check activated abilities for sacrifice costs
+        // Check activated abilities for sacrifice costs (a chosen creature, or the source itself)
         if (!hasSacCost) {
             for (ActivatedAbility ability : card.getActivatedAbilities()) {
                 for (CardEffect effect : ability.getEffects()) {
-                    if (effect instanceof SacrificeCreatureCost || effect instanceof SacrificeSelfCost) {
+                    if (effect instanceof CostEffect cost
+                            && (cost.sacrificesChosenCreature() || cost.consumesSourcePermanent())) {
                         hasSacCost = true;
                         break;
                     }
@@ -779,7 +778,7 @@ public class SpellEvaluator {
     private boolean hasSacrificeAbility(Card card) {
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof SacrificeCreatureCost) {
+                if (effect instanceof CostEffect cost && cost.sacrificesChosenCreature()) {
                     return true;
                 }
             }
@@ -1004,14 +1003,16 @@ public class SpellEvaluator {
             if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
             for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
-                if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardManaEffect me) {
-                    // ON_TAP mana (basic lands, mana dorks) is always a flat quantity.
-                    int amt = me.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed f ? f.value() : 0;
-                    virtualPool.add(me.color(), amt);
-                } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
-                    virtualPool.add(ManaColor.COLORLESS);
-                } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                    virtualPool.add(ManaColor.COLORLESS);
+                if (manaEffect instanceof ManaProducingEffect mp && mp.modeledByManaEstimator()) {
+                    ManaColor color = mp.estimatedManaColor();
+                    if (color != null) {
+                        // Fixed single-color producer (basic land, mana dork) — a flat quantity.
+                        int amt = mp.estimatedManaAmount() instanceof Fixed f ? f.value() : 0;
+                        virtualPool.add(color, amt);
+                    } else {
+                        // Any-color / spend-restricted any-color producer → one flexible mana toward X.
+                        virtualPool.add(ManaColor.COLORLESS);
+                    }
                 }
             }
         }

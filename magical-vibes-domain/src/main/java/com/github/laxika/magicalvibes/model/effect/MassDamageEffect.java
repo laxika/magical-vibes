@@ -10,11 +10,17 @@ public record MassDamageEffect(
         boolean damagesPlayers,
         boolean damagesPlaneswalkers,
         PermanentPredicate filter
-) implements CardEffect {
+) implements BoardWipeEffect {
 
     /** Fixed damage to all creatures only (e.g. Pyroclasm) */
     public MassDamageEffect(int damage) {
         this(new Fixed(damage), false, false, null);
+    }
+
+    /** Mass damage always sweeps the board. */
+    @Override
+    public boolean sweepsBoard() {
+        return true;
     }
 
     /** Fixed damage to all creatures + players */

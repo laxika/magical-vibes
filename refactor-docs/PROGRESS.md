@@ -2117,3 +2117,75 @@ Card tests (one per migrated cost shape): `AshnodsAltarTest` (SacrificeCreatureC
 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
 
+## Step 18 — Collapse AI survivor families where a clean fact exists  (2026-07-15)
+
+Phase-2 continuation of the phase-1 (steps 5–7) AI survivor cleanup. Revisited the four AI consumers the
+prompt named and collapsed each survivor family that answers a *uniform* question, reusing the existing
+step-5/6/7/17 facets where possible and adding one narrow new interface. Families that need bespoke
+per-member handling were LEFT with a documented reason so no future session re-litigates them. Strictly
+behaviour-preserving: every migration reproduces the prior score / target choice by construction (interface
+facts substituted for concrete `instanceof`, scoring untouched). Domain diff is additive.
+
+### Per-family decision table
+
+| Consumer | Family / site | Members | Decision | Reason |
+|----------|---------------|---------|----------|--------|
+| SpellEvaluator | board-wipe RECOGNITION (`isBoardWipeEffect`) | `MassDamageEffect`, `DestroyAllPermanentsEffect`, `ReturnToHandEffect` (ALL_MATCHING) | **MIGRATE** → new `BoardWipeEffect.sweepsBoard()` | 3 types answer one boolean "am I a board wipe"; a scope-aware facet (ReturnToHand only sweeps at ALL_MATCHING) reproduces the exact recognized set. |
+| SpellEvaluator | board-wipe SCORING (`evaluateSingleEffect`) | same 3 | **LEAVE** | each sweep is valued by different math (mass-damage vs predicate destroy-all vs opp−ai bounce); no uniform scoring fact. Stays concrete (the 3 residual violations). |
+| SpellEvaluator | X-estimator virtual pool (`estimateMaxX`) | `AwardManaEffect`, `AwardAnyColorManaEffect`, `AwardAnyColorChosenSubtypeCreatureManaEffect` | **MIGRATE** → reuse step-7 `ManaProducingEffect` facets | `modeledByManaEstimator()` matches exactly the 3 modelled producers; `estimatedManaColor()!=null` → colored add, else one COLORLESS — byte-for-byte identical (this site adds 1 wildcard, unaffected by `estimatedWildcardMana`). |
+| SpellEvaluator | sacrifice-cost detection (`sacrificeWithTokensBonus`, `hasSacrificeAbility`) | `SacrificeCreatureCost`, `SacrificeSelfCost` | **MIGRATE** → reuse step-17 `CostEffect.sacrificesChosenCreature()` / `consumesSourcePermanent()` | facets true only for exactly those records; identical detection. |
+| SpellEvaluator | recipient-sign, divided, no-amount-X | `DealDamageToPlayersEffect`, `LoseLifeEffect`, `DealDividedDamageEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect` | **LEAVE** | phase-1 survivors: recipient enum decides sign; single-type split-total behind a narrow gate; amount-less X couples damage+lifegain. Each a single record type (no 2+ family). |
+| SpellEvaluator | bespoke ability + narrow scoring | `BoostSelfEffect`, `ScryEffect`, `PutCounterOnEach…`, `PutCounterOnTarget…`, `TapPermanentsEffect`, `CounterSpellEffect`, `DiscardEffect` | **LEAVE** | each single-type bespoke scoring; unchanged from phase 1. |
+| BoardEvaluator | anthem/lord (`lordBonus`) | `StaticBoostEffect`, `GrantKeywordEffect` | **MIGRATE** → `StaticCreatureBoostEffect` + `KeywordGrantingEffect` | same shape SpellEvaluator's anthem already uses; needed `filter()` widened onto `KeywordGrantingEffect`. |
+| BoardEvaluator | activated-ability threat (`activatedAbilityThreat`) | `DealDamageToAnyTargetEffect`+`DealDamageToTargetCreatureEffect`, `DestroyTargetPermanentEffect`+`ExileTargetPermanentEffect`, `DrawCardEffect` | **MIGRATE** → `DamageDealingEffect` (`canDamageCreatures`), `RemovalEffect` (`removalKind` EXILE/DESTROY), `CardDrawingEffect` | interface implementor sets match the old concrete sets exactly; 2 damage branches collapse to 1; removal split preserves 9 (exile) / 8 (destroy), bounce still scores 0. |
+| BoardEvaluator | slith growth (`growthThreatBonus`) | `PutCountersOnSourceEffect` | **LEAVE** | single-type self-counter growth; no family, no interface. Sole residual BoardEvaluator violation. |
+| AiDecisionEngine | sacrifice-target pick (`selectSacrificeTarget`) | `SacrificeCreatureCost`, `SacrificeArtifactCost`, `SacrificePermanentCost` | **MIGRATE** → step-17 `CostEffect.sacrificesChosenCreature()` + `consumedPermanentFilter()` | "which permanent do I sacrifice" — 3 types; the weakest-creature strategy is preserved via `sacrificesChosenCreature()`, artifact/filtered via `matchesPermanentPredicate(consumedPermanentFilter())` (byte-for-byte to `isArtifact` per step 17). |
+| AiDecisionEngine | typed graveyard-cost finders | `ExileXCardsFromGraveyardCost`, `ExileNCardsFromGraveyardCost` | **LEAVE** | `find…Cost` RETURNS the concrete record for multi-step payment planning; not a can-pay/description question, and two different single-type finders (no family). |
+| AiDecisionEngine | can-activate cost checks (`canActivateAbility`) | `PayLifeCost`, `TapXPermanentsCost` | **LEAVE** | two different single-type-per-question checks (life-would-kill-me vs skip-X-tap); not a 2+-same-question family. `PayLifeCost` via `lifePaid()` risks the neutral-default `life<=0` firing for every cost at 0 life — not worth the edge-case exposure for one type. |
+| AiTargetSelector | graveyard-targeting eight | `ReturnCardFromGraveyardEffect`, `PutCreatureFromOpponentGraveyard…WithExile`, `CastTargetInstantOrSorceryFromGraveyard`, `ExileGraveyardCardsEffect`, `GrantFlashbackToTargetGraveyardCard`, `ExileTargetCardFromGraveyard…Imprint`, `PutCardFromOpponentGraveyard…`, `ExileTargetGraveyardCardAndSameNameFromZones` | **LEAVE** (fewer than six fit) | the proposed "card predicate + whose graveyard + how many" fact fits **at most one** from existing components (`ExileTargetCardFromGraveyard…Imprint` has a `filter()`): `ReturnCardFromGraveyardEffect` uses a runtime `maxAffordableX` MV filter + `source()`-based scope (not a static predicate); `PutCreature…`/`Cast…`/`PutCard…`/`ExileTargetGraveyardCardAndSameName…` have NO predicate component (the type filter is hard-coded in the selector, mirroring `GraveyardTargetValidators`); `Grant­Flashback` exposes `cardTypes()` not a predicate; `ExileGraveyardCardsEffect`'s filter is conditional on an internal scope enum. Forcing a `graveyardTargetFilter()` facet would duplicate the validators onto 8 records = a leaky abstraction — exactly what phase 1 warned against. |
+| AiTargetSelector | divided-damage assignment builder | `DealDividedDamageEffect` (creatures-only + any-target gates) | **LEAVE** | single record type behind two field-condition gates; no 2+ family. Phase-1 survivor. |
+
+### New / extended interfaces
+
+- **New `BoardWipeEffect extends CardEffect`** — one method `boolean sweepsBoard()`. Recognition-only fact
+  (the scoring stays per-type in the AI). Implemented by `MassDamageEffect`→true, `DestroyAllPermanentsEffect`→true,
+  `ReturnToHandEffect`→`scope == BounceScope.ALL_MATCHING`. A plain marker was rejected because ReturnToHand
+  is a board sweep only in its ALL_MATCHING scope; the scope-aware facet is the minimal clean fact.
+- **Widened `KeywordGrantingEffect`** with `PermanentPredicate filter()` — satisfied by `GrantKeywordEffect`'s
+  existing `filter` record component (sole implementor; purely additive). BoardEvaluator's `lordBonus` reads it
+  to count buffed creatures; SpellEvaluator's anthem (which ignores the filter) is unaffected.
+- **Reused** without change: `ManaProducingEffect` (step 7 estimator facets), `CostEffect` (step 17 valuation
+  facets), `DamageDealingEffect` / `RemovalEffect` / `CardDrawingEffect` / `StaticCreatureBoostEffect` (steps 5–7).
+
+### Per-file violation drop (ratchet baseline)
+
+| File | Before | After | Δ |
+|------|-------:|------:|--:|
+| `ai/SpellEvaluator.java` | 26 | 16 | -10 |
+| `ai/BoardEvaluator.java` | 8 | 1 | -7 |
+| `ai/AiDecisionEngine.java` | 7 | 4 | -3 |
+| `ai/AiTargetSelector.java` | 10 | 10 | 0 (whole family left) |
+
+Program total (ratchet sum): **484 → 464 (-20)**. `git diff` of `effect-dispatch-baseline.txt` touches exactly
+those three dropped lines (no rises); `EFFECT_COUPLING_MATRIX.md` regenerated in lockstep via
+`python scripts/effect-coupling-audit.py`.
+
+### Tests run (all green)
+
+- AI behaviour spec (the step's required pair): `SpellEvaluatorTest`, `GameSimulatorTest`.
+- Owner tests for the other two migrated consumers: `BoardEvaluatorTest`, `AiDecisionEngineTest`; plus
+  `AiTargetSelectorTest` (unchanged, confirms the left graveyard family still behaves).
+- `EffectDispatchRatchetTest` — green after baseline regen.
+- Full compile of `:magical-vibes-ai:compileJava :magical-vibes-ai:compileTestJava` (domain + engine + ai).
+
+### Files changed
+
+- **New:** `model/effect/BoardWipeEffect.java`.
+- **Records/interfaces (additive):** `MassDamageEffect`, `DestroyAllPermanentsEffect`, `ReturnToHandEffect`
+  (implement `BoardWipeEffect`); `KeywordGrantingEffect` (widened with `filter()`).
+- **AI:** `SpellEvaluator.java`, `BoardEvaluator.java`, `AiDecisionEngine.java` (migrated + imports pruned).
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (`BoardWipeEffect` + `KeywordGrantingEffect.filter()` cataloged).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+

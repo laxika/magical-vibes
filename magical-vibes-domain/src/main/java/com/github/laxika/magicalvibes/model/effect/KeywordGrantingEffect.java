@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Set;
 
@@ -19,4 +20,11 @@ public interface KeywordGrantingEffect extends CardEffect {
 
     /** The scope of permanents that receive the keyword(s). */
     GrantScope scope();
+
+    /**
+     * An optional predicate narrowing which permanents within {@link #scope()} receive the
+     * keyword(s) (e.g. "other Goblins you control"), or {@code null} when every permanent in scope
+     * is affected. Mirrors {@link StaticCreatureBoostEffect#filter()}.
+     */
+    PermanentPredicate filter();
 }

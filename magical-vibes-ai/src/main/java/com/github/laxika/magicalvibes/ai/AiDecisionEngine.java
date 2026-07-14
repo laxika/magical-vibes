@@ -24,9 +24,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
@@ -540,22 +539,23 @@ public abstract class AiDecisionEngine {
     protected UUID selectSacrificeTarget(GameData gameData, Card card) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeCreatureCost) {
+            if (!(effect instanceof CostEffect cost)) {
+                continue;
+            }
+            // "Sacrifice a creature" — pick the weakest (lowest effective power + toughness).
+            if (cost.sacrificesChosenCreature()) {
                 return battlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .min(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)
                                 + gameQueryService.getEffectiveToughness(gameData, p)))
                         .map(Permanent::getId)
                         .orElse(null);
-            } else if (effect instanceof SacrificeArtifactCost) {
+            }
+            // Artifact / filtered-permanent sacrifice — pick the first matching permanent.
+            PermanentPredicate filter = cost.consumedPermanentFilter();
+            if (filter != null) {
                 return battlefield.stream()
-                        .filter(p -> gameQueryService.isArtifact(gameData, p))
-                        .findFirst()
-                        .map(Permanent::getId)
-                        .orElse(null);
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                return battlefield.stream()
-                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
                         .findFirst()
                         .map(Permanent::getId)
                         .orElse(null);

@@ -8,20 +8,19 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalKind;
+import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -236,7 +235,7 @@ public class BoardEvaluator {
         List<Permanent> controllerBattlefield = gameData.playerBattlefields.getOrDefault(controllerId, List.of());
 
         for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof StaticBoostEffect boost) {
+            if (effect instanceof StaticCreatureBoostEffect boost) {
                 GrantScope scope = boost.scope();
                 if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
                         && scope != GrantScope.ALL_CREATURES) {
@@ -249,7 +248,7 @@ public class BoardEvaluator {
                     perCreatureValue += boost.grantedKeywords().size() * 3.0;
                 }
                 bonus += buffedCount * perCreatureValue;
-            } else if (effect instanceof GrantKeywordEffect grant) {
+            } else if (effect instanceof KeywordGrantingEffect grant) {
                 GrantScope scope = grant.scope();
                 if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
                         && scope != GrantScope.ALL_CREATURES) {
@@ -287,18 +286,15 @@ public class BoardEvaluator {
         for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof CostEffect) continue;
-                if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-                    bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
+                if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
+                    bonus += amountEvaluationService.evaluate(gameData, dmg.damageAmount(),
                             new AmountContext(controllerId, perm, null, 0, 0, false)) * 2.0;
-                } else if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-                    bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
-                            new AmountContext(controllerId, perm, null, 0, 0, false)) * 2.0;
-                } else if (effect instanceof DestroyTargetPermanentEffect) {
-                    bonus += 8.0;
-                } else if (effect instanceof ExileTargetPermanentEffect) {
+                } else if (effect instanceof RemovalEffect rem && rem.removalKind() == RemovalKind.EXILE) {
                     bonus += 9.0;
-                } else if (effect instanceof DrawCardEffect draw) {
-                    int drawAmount = amountEvaluationService.evaluate(gameData, draw.amount(),
+                } else if (effect instanceof RemovalEffect rem && rem.removalKind() == RemovalKind.DESTROY) {
+                    bonus += 8.0;
+                } else if (effect instanceof CardDrawingEffect draw) {
+                    int drawAmount = amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                             new AmountContext(controllerId, perm, null, 0, 0, false));
                     bonus += drawAmount * 4.0;
                 }

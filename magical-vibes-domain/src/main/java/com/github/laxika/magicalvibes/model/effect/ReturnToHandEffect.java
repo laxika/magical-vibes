@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
  * </ul>
  */
-public final class ReturnToHandEffect implements RemovalEffect {
+public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
@@ -92,5 +92,11 @@ public final class ReturnToHandEffect implements RemovalEffect {
         // Only a single-target bounce is targeted removal; the mass/self scopes are board
         // sweeps or self-return, not single-target removal.
         return scope == BounceScope.TARGET ? RemovalKind.BOUNCE : null;
+    }
+
+    @Override
+    public boolean sweepsBoard() {
+        // Only the all-matching scope is a board sweep; the targeted / self scopes are not.
+        return scope == BounceScope.ALL_MATCHING;
     }
 }

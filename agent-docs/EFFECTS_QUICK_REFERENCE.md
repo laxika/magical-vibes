@@ -56,6 +56,10 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
   (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when not single-target removal (e.g. mass bounce).
   Impl `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`,
   `ReturnTargetPermanentToHandWithManaValueConditionalEffect`, `ReturnToHandEffect` (TARGET scope)
+- `BoardWipeEffect` — recognition-only fact for board sweeps; `sweepsBoard()` (true when the config is
+  a mass sweep). Lets the AI's phase/pressure multipliers detect a wipe without naming the type; the
+  per-type wipe SCORING stays concrete (each sweep is valued differently). Impl `MassDamageEffect`
+  (always), `DestroyAllPermanentsEffect` (always), `ReturnToHandEffect` (only `BounceScope.ALL_MATCHING`)
 - `CardDrawingEffect` — `drawnCardAmount()` (`DynamicAmount`). Impl `DrawCardEffect`
 - `LifeGainEffect` — `lifeGainAmount()` (`DynamicAmount`). Impl `GainLifeEffect`
 - `TokenCreatingEffect` — `tokenAmount()`, `tokenType()`, `tokenPower()`, `tokenToughness()`.
@@ -64,7 +68,8 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
   Impl `BoostTargetCreatureEffect`
 - `StaticCreatureBoostEffect` — continuous anthem/aura boost; `powerBoost()`, `toughnessBoost()`
   (int), `grantedKeywords()`, `scope()`, `filter()`. Impl `StaticBoostEffect`
-- `KeywordGrantingEffect` — `keywords()`, `scope()`. Impl `GrantKeywordEffect`
+- `KeywordGrantingEffect` — `keywords()`, `scope()`, `filter()` (predicate narrowing the scope, or
+  `null`). Impl `GrantKeywordEffect`
 - `ControlStealingEffect` — `controlDuration()`. Impl `GainControlOfTargetEffect`
 - `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,
   `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`
