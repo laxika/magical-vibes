@@ -30,9 +30,9 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
@@ -40,9 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackController
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
@@ -719,8 +717,8 @@ public class CombatAttackService {
             Condition condition = null;
             if (effect instanceof CantAttackUnlessEffect restriction) {
                 condition = restriction.condition();
-            } else if (effect instanceof CantAttackOrBlockUnlessEffect restriction) {
-                condition = restriction.condition();
+            } else if (effect instanceof AttackOrBlockRestrictionEffect restriction) {
+                condition = restriction.cantAttackOrBlockUnless();
             }
             if (condition != null) {
                 if (ctx == null) {
@@ -770,11 +768,12 @@ public class CombatAttackService {
                     if (gameQueryService.getEffectivePower(gameData, creature) > threshold) {
                         restricted[0] = true;
                     }
-                } else if (effect instanceof MatchingCreaturesCantAttackOrBlockEffect restriction) {
+                } else if (effect instanceof AttackOrBlockRestrictionEffect restriction
+                        && restriction.globallyCantAttackOrBlock() != null) {
                     FilterContext context = FilterContext.of(gameData)
                             .withSourceControllerId(playerId)
                             .withSourceCardId(permanent.getOriginalCard().getId());
-                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.affectedPredicate(), context)) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.globallyCantAttackOrBlock(), context)) {
                         restricted[0] = true;
                     }
                 } else if (effect instanceof ControlledCreaturesCantAttackUnlessPredicateEffect restriction) {

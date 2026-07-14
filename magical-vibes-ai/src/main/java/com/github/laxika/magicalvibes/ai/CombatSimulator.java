@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -945,9 +946,13 @@ public class CombatSimulator {
                                                            List<Permanent> defenderBattlefield) {
         if (defenderBattlefield == null) return false;
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
+            if (effect instanceof BlockabilityRestrictionEffect restriction) {
+                PermanentPredicate defenderPredicate = restriction.unblockableIfDefenderControls();
+                if (defenderPredicate == null) {
+                    continue;
+                }
                 boolean defenderMatches = defenderBattlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, defenderPredicate));
                 if (defenderMatches) {
                     return true;
                 }

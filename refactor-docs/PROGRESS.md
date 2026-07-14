@@ -1329,3 +1329,96 @@ the last three `GameQueryService` pinned sites can move too.
 
 **For the user:** run the full test suite and commit. Behaviour-preserving query refactor — no
 game-rules change.
+
+## Step 11 — Re-point combat services to the block/attack-restriction capability interfaces  (2026-07-14)
+
+Follow-on to step 10: the four block/attack-restriction interfaces were created and `GameQueryService`
+migrated last step; this step re-points the two combat consumers that still `instanceof`-ed the concrete
+records — `CombatAttackService` (attack side) and the shared `CombatHelper` — plus the AI mirror in
+`CombatSimulator`. No interface was extended: every fact these sites read was already exposed by step 10's
+records.
+
+### Sites migrated (4 concrete `instanceof` → interface)
+
+| File | Method | Was `instanceof` | Now |
+|------|--------|------------------|-----|
+| `service/combat/CombatAttackService.java` | `isCantAttackUnlessConditionUnmet` | `CantAttackOrBlockUnlessEffect` | `AttackOrBlockRestrictionEffect` + `cantAttackOrBlockUnless()` (flows into the existing `condition != null` guard) |
+| `service/combat/CombatAttackService.java` | `isCantAttackDueToGlobalRestriction` | `MatchingCreaturesCantAttackOrBlockEffect` | `AttackOrBlockRestrictionEffect` + `globallyCantAttackOrBlock() != null` guard, then reads the same predicate |
+| `service/combat/CombatHelper.java` | `isCantBeBlockedDueToDefenderCondition` | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `BlockabilityRestrictionEffect` + `unblockableIfDefenderControls()` (null-facet `continue`) |
+| `ai/CombatSimulator.java` | `isCantBeBlockedDueToDefenderCondition` (AI mirror) | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | same as CombatHelper |
+
+Behaviour-preservation notes:
+- **Umbrella-with-defaults, guard on the facet.** Where a site sits in an `else if` chain against other
+  concrete records (`isCantAttackDueToGlobalRestriction`), the interface match is `&&`-guarded on the
+  facet being non-`null` so it fires only for the record that carries it (currently
+  `MatchingCreaturesCantAttackOrBlockEffect`); the other `AttackOrBlockRestrictionEffect` record
+  (`CantAttackOrBlockUnlessEffect`) returns `null` there and falls through exactly as before. Verified none
+  of the sibling chain records (`CreaturesCantAttackUnlessPredicateEffect`,
+  `CreaturesWithPowerGreaterThanAmountCantAttackEffect`, `ControlledCreaturesCantAttackUnlessPredicateEffect`,
+  `CantAttackUnlessEffect`) implement the interface, so the chain semantics are unchanged.
+- **`isCantAttackUnlessConditionUnmet`** needs no explicit guard: reading `cantAttackOrBlockUnless()`
+  yields `null` for a `MatchingCreatures…` record, and the pre-existing `if (condition != null)` check
+  already skips `null` — so the umbrella match is neutral.
+- **Predicate hoisted, not re-derived per element.** The CombatHelper / CombatSimulator loops now read the
+  facet into a local `PermanentPredicate` once and capture that in the `anyMatch` lambda, instead of the
+  old per-element `restriction.defenderPermanentPredicate()` call. Strictly fewer accessor calls; no new
+  allocations, no stream pipeline added. Performance invariant (these run in MCTS rollouts) respected —
+  plain dispatch swap only.
+
+### Sites intentionally left concrete
+
+- **`CombatBlockService`** carries **zero** of the 13 records as `instanceof`: its block-legality checks
+  (`canBlock`, `canBlockAttacker`, `hasCantBeBlocked`, `getBlockingIllegalityReason`,
+  `createBlockLegalityContext`) all delegate to `GameQueryService`, which step 10 already migrated. Nothing
+  to change; baseline count unchanged at 18 (its 18 `instanceof` are of other, out-of-family record types).
+- **Three `GameQueryService` sites remain concrete** — the same pinned trio documented in step 10, blocked by
+  `BlockLegalityContext`'s `List<ConcreteRecord>` fields (out of this step's scope):
+  `createBlockLegalityContext` → `MatchingCreaturesCantBlockMatchingCreaturesEffect` (2503),
+  `buildBlockerFacts` → `CanBlockOnlyIfAttackerMatchesPredicateEffect` (2691),
+  `getAuraGrantedBlockingRestrictions` → `CanBeBlockedOnlyByFilterEffect` (2741). Widening those typed
+  collections to the interfaces is a separate refactor.
+- **`.class::isInstance` presence checks left concrete** (not counted by the ratchet, need a concrete
+  `Class<?>`): CombatHelper's `isCantBeBlockedDueToHistoricCast` / `isCantBeBlockedDueToAttackingAlone` and
+  CombatSimulator's `isCantBeBlockedDueToHistoricCast` still name
+  `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect` / `CantBeBlockedIfAttackingAloneEffect`. Those
+  imports were kept.
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/combat/CombatAttackService.java` | 15 | 13 | -2 |
+| `service/combat/CombatHelper.java` | 1 | 0 (line removed) | -1 |
+| `ai/CombatSimulator.java` | 1 | 0 (line removed) | -1 |
+
+Program total (ratchet-verified, regenerated via `python scripts/effect-coupling-audit.py`): **563 → 559**
+(-4). `python` (3.14.6) is on PATH this session, so `effect-dispatch-baseline.txt` and
+`EFFECT_COUPLING_MATRIX.md` were both regenerated for real; the regenerated baseline is byte-identical to the
+hand-edit the ratchet's three "Good news" drops asked for.
+
+### Tests run (all green)
+
+- Card tests: `BlindSpotGiantTest` (5, CantAttackOrBlockUnless — attack side migrated), `KulrathKnightTest`
+  (5) + `LightOfDayTest` (5, MatchingCreaturesCantAttackOrBlock — attack side migrated), `ScrapdiverSerpentTest`
+  (3, CantBeBlockedIfDefenderControls — CombatHelper + CombatSimulator path), `AesthirGliderTest` (2,
+  CantBlock — GameQueryService block-side regression check).
+- `SevenLayerTest` — CR 613 layer spec, all pass. No expectation weakened.
+- `GameSimulatorTest` (`:magical-vibes-ai:test`) — AI/MCTS rollout regression, BUILD SUCCESSFUL. Combat runs
+  inside rollouts, so this guards the performance-sensitive path.
+- `EffectDispatchRatchetTest` — green after the baseline regen (three drops locked in).
+
+### Files changed
+
+- `magical-vibes-engine/.../service/combat/CombatAttackService.java` (2 sites + imports: added
+  `AttackOrBlockRestrictionEffect`, dropped now-unused `CantAttackOrBlockUnlessEffect` and the duplicated
+  `MatchingCreaturesCantAttackOrBlockEffect` imports).
+- `magical-vibes-engine/.../service/combat/CombatHelper.java` (1 site + imports: added
+  `BlockabilityRestrictionEffect` and `PermanentPredicate`, dropped
+  `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`).
+- `magical-vibes-ai/.../ai/CombatSimulator.java` (1 site + imports: same swap as CombatHelper).
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- No `agent-docs/` change: no interface extended (all facts already exposed by step 10).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving dispatch swap — no game-rules
+change. The three pinned `GameQueryService` block sites plus the `BlockLegalityContext` typed-collection
+widening remain for a future step.
