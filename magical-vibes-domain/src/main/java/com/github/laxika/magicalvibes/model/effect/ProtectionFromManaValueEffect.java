@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import java.util.OptionalInt;
+
 /**
  * Grants protection from all sources whose mana value is at least {@code minManaValue}
  * (e.g. Mistmeadow Skulk: "protection from mana value 3 or greater"). Static, permanent.
@@ -7,5 +9,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param minManaValue the inclusive lower bound of protected mana values
  */
-public record ProtectionFromManaValueEffect(int minManaValue) implements CardEffect {
+public record ProtectionFromManaValueEffect(int minManaValue) implements ProtectionGrantingEffect {
+
+    @Override
+    public OptionalInt protectionFromManaValueAtLeast() {
+        return OptionalInt.of(minManaValue);
+    }
 }

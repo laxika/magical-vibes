@@ -51,6 +51,14 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 - `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,
   `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`
 - `RegenerationEffect` — marker for regeneration. Impl `RegenerateEffect`
+- `ProtectionGrantingEffect` — static "protection from …" facts read by the engine query layer
+  (`GameQueryService`), not the AI: `protectionFromColors()` + `protectionScope()`
+  (`GrantScope` null = self / `EQUIPPED_CREATURE`), `protectionFromCardTypes()`,
+  `protectionFromSubtypes()`, `protectionFromManaValueAtLeast()` (`OptionalInt`). A record fills only
+  its facet and inherits the empty/self defaults. Impl `ProtectionFromColorsEffect`,
+  `ProtectionFromCardTypesEffect`, `ProtectionFromSubtypesEffect`, `ProtectionFromManaValueEffect`.
+  NOT for runtime-only protection: chosen-color (`ProtectionFromChosenColorEffect`, a
+  `ChooseColorEffect`) or "protection from non-[subtype] creatures" (tracked on the `Permanent`)
 
 ## Wrapper / modifier effects
 

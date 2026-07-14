@@ -14,12 +14,23 @@ import java.util.Set;
  *               {@code GameQueryService.hasProtectionFrom()} to decide whether the raw effect
  *               applies to the card that carries it.
  */
-public record ProtectionFromColorsEffect(Set<CardColor> colors, GrantScope scope) implements CardEffect {
+public record ProtectionFromColorsEffect(Set<CardColor> colors, GrantScope scope)
+        implements ProtectionGrantingEffect {
 
     /**
      * Convenience constructor for creatures that themselves have protection (scope = null / self).
      */
     public ProtectionFromColorsEffect(Set<CardColor> colors) {
         this(colors, null);
+    }
+
+    @Override
+    public Set<CardColor> protectionFromColors() {
+        return colors;
+    }
+
+    @Override
+    public GrantScope protectionScope() {
+        return scope;
     }
 }

@@ -28,6 +28,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `ControlStealingEffect` | `CardEffect` | `controlDuration()`. Impl `GainControlOfTargetEffect`. |
 | `CounterSpellingEffect` | `CardEffect` | Marker: "counter target spell". Impl `CounterSpellEffect`, `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`. |
 | `RegenerationEffect` | `CardEffect` | Marker: regeneration. Impl `RegenerateEffect`. |
+| `ProtectionGrantingEffect` | `CardEffect` | Descriptive capability for static "protection from …", read by the engine query layer (`GameQueryService`) not the AI: `protectionFromColors()` + `protectionScope()` (`GrantScope` null=self / `EQUIPPED_CREATURE`), `protectionFromCardTypes()`, `protectionFromSubtypes()`, `protectionFromManaValueAtLeast()` (`OptionalInt`); a record fills only its facet, inheriting empty/self defaults. Implemented by `ProtectionFromColorsEffect`, `ProtectionFromCardTypesEffect`, `ProtectionFromSubtypesEffect`, `ProtectionFromManaValueEffect`. Not for runtime-only protection (chosen-color `ProtectionFromChosenColorEffect`, or "protection from non-[subtype] creatures" tracked on the `Permanent`). |
 
 The descriptive interfaces above (all but `CostEffect`) let the AI read a FACT about an effect
 instead of `instanceof`-ing the concrete type; implement the matching one when adding an effect to

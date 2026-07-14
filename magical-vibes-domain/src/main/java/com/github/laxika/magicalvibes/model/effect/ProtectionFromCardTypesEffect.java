@@ -4,5 +4,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 
 import java.util.Set;
 
-public record ProtectionFromCardTypesEffect(Set<CardType> cardTypes) implements CardEffect {
+public record ProtectionFromCardTypesEffect(Set<CardType> cardTypes) implements ProtectionGrantingEffect {
+
+    @Override
+    public Set<CardType> protectionFromCardTypes() {
+        return cardTypes;
+    }
 }

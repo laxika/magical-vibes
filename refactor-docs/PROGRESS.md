@@ -1057,3 +1057,110 @@ card-implementing agent exactly what to do instead of adding an `instanceof`:
 
 **For the user:** run the full test suite and commit the program's changes (this session touched only
 the ratchet test message, `agent-docs/`, and the `implement-card` skill; nothing under `src/main`).
+
+## Step 9 — Engine protection family → `ProtectionGrantingEffect`  (2026-07-14)
+
+First **phase-2** step: this program's phases 1 (steps 1–8) migrated AI-visible effect knowledge;
+phase 2 starts migrating ENGINE query dispatch behind capability interfaces. Step 9 collapses the
+static-protection family — the exact "static/continuous-effect query dispatch" future-work item #2
+called out in Step 8 (`GameQueryService` was the #2 top offender at 55).
+
+### What was migrated
+
+The four printed, statically-known protection records now implement one capability interface, and the
+`GameQueryService` protection queries read facts off that interface instead of `instanceof`-ing each
+concrete record:
+
+- `ProtectionFromColorsEffect` → `protectionFromColors()` + `protectionScope()`
+- `ProtectionFromCardTypesEffect` → `protectionFromCardTypes()`
+- `ProtectionFromSubtypesEffect` → `protectionFromSubtypes()`
+- `ProtectionFromManaValueEffect` → `protectionFromManaValueAtLeast()` (`OptionalInt`)
+
+### Interface design — `ProtectionGrantingEffect` (domain `model/effect/`)
+
+One umbrella interface with five default methods (empty-set / `null` / `OptionalInt.empty()`), each a
+pure read of an existing record component; every record overrides only the facet it carries and
+inherits the rest. Rationale:
+
+- **Why one interface, not four markers.** The seven consuming sites in `GameQueryService` are four
+  independent query methods (colour / card-type / subtype / mana-value protection). A single
+  `instanceof ProtectionGrantingEffect protection` + facet read replaces every concrete `instanceof`,
+  and a facet that doesn't apply to a given record returns its empty default, so mixing record types
+  in the same STATIC-effect loop is behaviour-neutral (e.g. a card-type protection effect seen by the
+  colour loop returns an empty `protectionFromColors()` → no match, exactly as before).
+- **Why `protectionScope()` is on the shared interface.** The self-vs-equipped-creature `GrantScope`
+  is only carried by `ProtectionFromColorsEffect`, but the "own printed protection stands" branch of
+  `hasProtectionFrom` filters on `scope() == null`. Exposing `protectionScope()` (default `null` =
+  self) lets that site keep its exact filter without downcasting; the non-colour records are always
+  self-scoped, so the `null` default is not just harmless but semantically correct.
+- **What deliberately does NOT implement it.** Runtime-only protection whose protected set is not a
+  pure function of a record's components: chosen-colour (`ProtectionFromChosenColorEffect`, resolved
+  via `ChooseColorEffect` + `Permanent.getChosenColor()`), and "protection from non-[subtype]
+  creatures" (tracked on the `Permanent`, not on any effect record). Those query paths in
+  `GameQueryService` were left untouched — they never `instanceof`-ed a protection record.
+
+### Sites migrated
+
+All in `GameQueryService` (`service/battlefield`), 7 concrete `instanceof` → interface:
+
+| Method | Was | Now |
+|--------|-----|-----|
+| `hasProtectionFrom` (own printed, `bonus == NONE`) | `ProtectionFromColorsEffect` + `scope()==null` + `colors()` | `ProtectionGrantingEffect` + `protectionScope()==null` + `protectionFromColors()` |
+| `hasProtectionFrom` (granted-effects loop) | `ProtectionFromColorsEffect` + `colors()` | `ProtectionGrantingEffect` + `protectionFromColors()` |
+| `hasProtectionFromSourceCardTypes` (×2 overloads) | `ProtectionFromCardTypesEffect` + `cardTypes()` | `ProtectionGrantingEffect` + `protectionFromCardTypes()` |
+| `hasProtectionFromSourceSubtypes` (×2 overloads) | `ProtectionFromSubtypesEffect` + `subtypes()` | `ProtectionGrantingEffect` + `protectionFromSubtypes()` |
+| `hasProtectionFromSourceManaValue` | `ProtectionFromManaValueEffect` + `minManaValue()` | `ProtectionGrantingEffect` + `protectionFromManaValueAtLeast().isPresent()/getAsInt()` |
+
+The mana-value site gained an `isPresent()` guard (the interface returns `OptionalInt.empty()` for
+non-mana-value protection that the interface match now also admits) — behaviour-identical: empty →
+skip. The four now-unused record imports were dropped and one `{@link}` in a javadoc retargeted to
+the interface; `GrantScope` import stays (used by unrelated animation/boost queries).
+
+### Sites intentionally left
+
+- `service/effect/staticfx/StaticEffectSupport.java` (1) and `service/effect/LayerSystemService.java`
+  (2) `instanceof ProtectionFromColorsEffect` — **exempt registry zone** (`service/effect/**`), not
+  counted by the ratchet and out of scope by the program's rules. Untouched.
+- The chosen-colour / non-subtype-creature protection query paths (see interface design above) — not
+  record-`instanceof` sites, no capability fact to expose.
+
+### Per-file violation drop
+
+| File | Before | After | Δ |
+|------|-------:|------:|--:|
+| `service/battlefield/GameQueryService.java` | 55 | 48 | −7 |
+
+Program total (ratchet-verified): **585 → 578** (−7, all in `GameQueryService`). `GameQueryService`
+falls from the #2 top offender toward the pack; the remaining 48 are combat/animation/double-damage
+and other continuous-effect query dispatch for a later phase-2 step.
+
+### Tests run (all green)
+
+- Card tests (2–3 per record + the equipped-creature scope path): `SwordOfWarAndPeaceTest` (18),
+  `WhiteKnightTest` (11), `PaladinEnVecTest` (16), `TelJiladFallenTest` (6, card-type protection),
+  `BaneslayerAngelTest` (6), `GraveBrambleTest` (4, subtype protection), `MistmeadowSkulkTest` (3,
+  mana-value protection).
+- `SevenLayerTest` — CR 613 layer spec, all pass (protection queries feed layer 6). No expectation
+  weakened.
+- `EffectDispatchRatchetTest` — green after the baseline drop was locked in.
+
+### Baseline / matrix regeneration — NOTE: Python IS available this session
+
+Contrary to the standing "Python unavailable" caveat from steps 1–8, **`python` (3.14.6) is on PATH
+this session**, so `scripts/effect-coupling-audit.py` was run for real:
+`effect-dispatch-baseline.txt` and the human report `EFFECT_COUPLING_MATRIX.md` are BOTH refreshed
+(total 578). The regenerated baseline is byte-identical to the hand-edit the ratchet asked for (only
+`GameQueryService=55` → `=48`), independently confirming the count. **`EFFECT_COUPLING_MATRIX.md` is
+no longer stale.**
+
+### Files changed
+
+- `magical-vibes-domain/.../model/effect/ProtectionGrantingEffect.java` (new)
+- `ProtectionFromColorsEffect`, `ProtectionFromCardTypesEffect`, `ProtectionFromSubtypesEffect`,
+  `ProtectionFromManaValueEffect` (implement the interface)
+- `magical-vibes-engine/.../service/battlefield/GameQueryService.java` (7 sites + imports/javadoc)
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated)
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entries)
+
+**For the user:** run the full test suite and commit. This step touched `src/main` (domain + engine)
+for the first time in the program — a behaviour-preserving query refactor, no game-rules change.

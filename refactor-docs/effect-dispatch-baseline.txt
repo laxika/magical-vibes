@@ -22,7 +22,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/abilit
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/BattlefieldEntryService.java=29
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CloneService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/CreatureControlService.java=2
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GameQueryService.java=55
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GameQueryService.java=48
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/GraveyardTargetingService.java=3
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/battlefield/PermanentRemovalService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/cast/CastingCostService.java=8

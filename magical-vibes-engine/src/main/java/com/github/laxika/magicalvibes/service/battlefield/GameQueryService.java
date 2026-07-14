@@ -85,10 +85,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1708,7 +1705,7 @@ public class GameQueryService {
 
     /**
      * Returns {@code true} if the target permanent has protection from the given color.
-     * Checks the permanent's own {@link ProtectionFromColorsEffect}, static bonuses from
+     * Checks the permanent's own {@link ProtectionGrantingEffect}, static bonuses from
      * other permanents, and the permanent's chosen color (e.g. from a "choose a color" effect).
      */
     public boolean hasProtectionFrom(GameData gameData, Permanent target, CardColor sourceColor) {
@@ -1717,9 +1714,9 @@ public class GameQueryService {
         if (bonus == StaticBonus.NONE) {
             // No continuous effect touched the permanent: its own printed protection stands.
             for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof ProtectionFromColorsEffect protection
-                        && protection.scope() == null
-                        && protection.colors().contains(sourceColor)) {
+                if (effect instanceof ProtectionGrantingEffect protection
+                        && protection.protectionScope() == null
+                        && protection.protectionFromColors().contains(sourceColor)) {
                     return true;
                 }
             }
@@ -1732,8 +1729,8 @@ public class GameQueryService {
         // Protection granted by another permanent's static effect (e.g. Favor of the Mighty
         // via GrantEffectEffect(ProtectionFromColorsEffect, ...)).
         for (CardEffect effect : bonus.grantedEffects()) {
-            if (effect instanceof ProtectionFromColorsEffect protection
-                    && protection.colors().contains(sourceColor)) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionFromColors().contains(sourceColor)) {
                 return true;
             }
         }
@@ -1777,8 +1774,8 @@ public class GameQueryService {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromCardTypesEffect protection) {
-                protectedTypes.addAll(protection.cardTypes());
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
         if (protectedTypes.isEmpty()) return false;
@@ -1800,8 +1797,8 @@ public class GameQueryService {
         Set<CardType> protectedTypes = EnumSet.noneOf(CardType.class);
         protectedTypes.addAll(target.getProtectionFromCardTypes());
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromCardTypesEffect protection) {
-                protectedTypes.addAll(protection.cardTypes());
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                protectedTypes.addAll(protection.protectionFromCardTypes());
             }
         }
         if (protectedTypes.isEmpty()) return false;
@@ -1820,8 +1817,8 @@ public class GameQueryService {
     public boolean hasProtectionFromSourceSubtypes(GameData gameData, Permanent target, Permanent source) {
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromSubtypesEffect protection) {
-                protectedSubtypes.addAll(protection.subtypes());
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                protectedSubtypes.addAll(protection.protectionFromSubtypes());
             }
         }
         if (protectedSubtypes.isEmpty()) return false;
@@ -1848,8 +1845,8 @@ public class GameQueryService {
     public boolean hasProtectionFromSourceSubtypes(Permanent target, Card sourceCard) {
         Set<CardSubtype> protectedSubtypes = EnumSet.noneOf(CardSubtype.class);
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromSubtypesEffect protection) {
-                protectedSubtypes.addAll(protection.subtypes());
+            if (effect instanceof ProtectionGrantingEffect protection) {
+                protectedSubtypes.addAll(protection.protectionFromSubtypes());
             }
         }
         if (protectedSubtypes.isEmpty()) return false;
@@ -1904,8 +1901,9 @@ public class GameQueryService {
      */
     public boolean hasProtectionFromSourceManaValue(Permanent target, Card sourceCard) {
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof ProtectionFromManaValueEffect protection
-                    && sourceCard.getManaValue() >= protection.minManaValue()) {
+            if (effect instanceof ProtectionGrantingEffect protection
+                    && protection.protectionFromManaValueAtLeast().isPresent()
+                    && sourceCard.getManaValue() >= protection.protectionFromManaValueAtLeast().getAsInt()) {
                 return true;
             }
         }
