@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "9ED", collectorNumber = "42")
 @CardRegistration(set = "8ED", collectorNumber = "44")
+@CardRegistration(set = "7ED", collectorNumber = "40")
 @CardRegistration(set = "POR", collectorNumber = "26")
 public class SeasonedMarshal extends Card {
 

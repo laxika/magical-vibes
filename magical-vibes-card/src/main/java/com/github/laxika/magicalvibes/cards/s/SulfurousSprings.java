@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "325")
+@CardRegistration(set = "7ED", collectorNumber = "345")
+@CardRegistration(set = "6ED", collectorNumber = "328")
 public class SulfurousSprings extends Card {
 
     public SulfurousSprings() {

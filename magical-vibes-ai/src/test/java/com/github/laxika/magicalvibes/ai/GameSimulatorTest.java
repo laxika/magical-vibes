@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.ArmoredAscension;
 import com.github.laxika.magicalvibes.cards.b.BerserkersOfBloodRidge;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -196,12 +199,13 @@ class GameSimulatorTest {
     }
 
     @Test
-    @DisplayName("Fireball prefers an opponent creature over the opponent's face")
+    @DisplayName("Fireball ranks the opponent's creature first and never aims at lands")
     void fireballPrefersOpponentCreature() {
         harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.Fireball()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.p.Plains());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2,
+                new com.github.laxika.magicalvibes.cards.p.Plains());
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         gd.stack.clear();
@@ -217,7 +221,58 @@ class GameSimulatorTest {
                 .map(SimulationAction.PlayCard.class::cast)
                 .toList();
         assertThat(casts).isNotEmpty();
-        assertThat(casts).allSatisfy(pc -> assertThat(pc.targetId()).isEqualTo(bears.getId()));
+        // The creature is the best-ranked candidate; the face may be offered too, lands never
+        assertThat(casts.getFirst().targetId()).isEqualTo(bears.getId());
+        assertThat(casts).noneMatch(pc -> plains.getId().equals(pc.targetId()));
+    }
+
+    // ===== Multi-target candidate enumeration =====
+
+    @Test
+    @DisplayName("Any-target damage spell enumerates multiple candidates: top creatures and the opponent's face")
+    void anyTargetSpellEnumeratesMultipleTargetCandidates() {
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.Fireball()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()); // 2/2
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());   // 4/4
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        List<SimulationAction.PlayCard> casts = actions.stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .filter(pc -> pc.handIndex() == 0)
+                .toList();
+        List<UUID> targetIds = casts.stream().map(SimulationAction.PlayCard::targetId).toList();
+
+        // One action per candidate target, all distinct, capped at MAX_TARGET_CANDIDATES (3)
+        assertThat(casts).hasSizeGreaterThan(1);
+        assertThat(casts).hasSizeLessThanOrEqualTo(3);
+        assertThat(targetIds).doesNotHaveDuplicates();
+        // Both creatures and the opponent's face are offered
+        assertThat(targetIds).containsExactlyInAnyOrder(angel.getId(), bears.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("Untargeted spell still enumerates exactly one PlayCard action")
+    void untargetedSpellEnumeratesSingleAction() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        gd.stack.clear();
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        List<SimulationAction.PlayCard> casts = actions.stream()
+                .filter(SimulationAction.PlayCard.class::isInstance)
+                .map(SimulationAction.PlayCard.class::cast)
+                .toList();
+        assertThat(casts).hasSize(1);
+        assertThat(casts.getFirst().targetId()).isNull();
     }
 
     // ===== Aura targeting =====
@@ -292,6 +347,13 @@ class GameSimulatorTest {
     }
 
     // ===== Blocker declaration actions =====
+
+    private static String canonicalAssignments(SimulationAction.DeclareBlockers db) {
+        return db.blockerAssignments().stream()
+                .map(pair -> pair[0] + "->" + pair[1])
+                .sorted()
+                .collect(java.util.stream.Collectors.joining(","));
+    }
 
     private void setUpBlockerDeclaration(Player defender, Player attacker) {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -429,6 +491,37 @@ class GameSimulatorTest {
         }
 
         @Test
+        @DisplayName("Double-block on the biggest attacker is offered when two blockers together kill it")
+        void doubleBlockOfferedWhenPairKillsBiggestAttacker() {
+            // Two 2/2 blockers — combined power 4 kills the 4/4 attacker
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            gd.playerBattlefields.get(player1.getId()).forEach(p -> p.setSummoningSick(false));
+
+            Permanent bigAttacker = harness.addToBattlefieldAndReturn(player2, new BerserkersOfBloodRidge()); // 4/4
+            bigAttacker.setSummoningSick(false);
+            bigAttacker.setAttacking(true);
+
+            setUpBlockerDeclaration(player1, player2);
+
+            List<SimulationAction.DeclareBlockers> blockOptions =
+                    simulator.getLegalActions(gd, player1.getId()).stream()
+                            .filter(SimulationAction.DeclareBlockers.class::isInstance)
+                            .map(SimulationAction.DeclareBlockers.class::cast)
+                            .toList();
+
+            // A double-block ganging both blockers onto the attacker (index 0) is offered
+            assertThat(blockOptions).anyMatch(db -> db.blockerAssignments().size() == 2
+                    && db.blockerAssignments().stream().allMatch(pair -> pair[1] == 0));
+
+            // No two offered options have identical assignments (content-based dedupe)
+            List<String> canonical = blockOptions.stream()
+                    .map(GameSimulatorTest::canonicalAssignments)
+                    .toList();
+            assertThat(canonical).doesNotHaveDuplicates();
+        }
+
+        @Test
         @DisplayName("Blocker actions have at least 3 options with multiple blockers and attackers")
         void blockerActionsHaveMultipleOptionsWithMultipleCreatures() {
             // Two blockers
@@ -451,6 +544,43 @@ class GameSimulatorTest {
 
             // Should have at least: no-block, best-block, and single-block options
             assertThat(actions.size()).isGreaterThanOrEqualTo(3);
+        }
+    }
+
+    @Nested
+    @DisplayName("Attacker candidate enumeration")
+    class AttackerCandidateEnumeration {
+
+        @Test
+        @DisplayName("No attack candidate includes a negative-power creature")
+        void attackerCandidatesExcludeNegativePowerCreature() {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.beginAttackerDeclarationInput();
+
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+            // -1/2 creature: assigns no combat damage (CR 510.1a), so neither the
+            // best-attack nor the all-in candidate may send it.
+            Permanent weakBears = new Permanent(new GrizzlyBears());
+            TestCards.mutableCard(weakBears).setPower(-1);
+            weakBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+            List<SimulationAction.DeclareAttackers> declares =
+                    simulator.getLegalActions(gd, player1.getId()).stream()
+                            .filter(SimulationAction.DeclareAttackers.class::isInstance)
+                            .map(SimulationAction.DeclareAttackers.class::cast)
+                            .toList();
+
+            assertThat(declares).isNotEmpty();
+            // Index 1 is the negative-power creature — no candidate may include it
+            assertThat(declares).allSatisfy(
+                    da -> assertThat(da.attackerIndices()).doesNotContain(1));
+            // The flyer is still offered as an attacker in at least one candidate
+            assertThat(declares).anyMatch(da -> da.attackerIndices().contains(0));
         }
     }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -78,7 +80,7 @@ public class UntapStepService {
      * @param restrictPredicate only permanents matching this untap; {@code null} = untap all
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate) {
-        untapPermanents(gameData, activePlayerId, restrictPredicate, false);
+        untapPermanents(gameData, activePlayerId, restrictPredicate, false, null);
     }
 
     /**
@@ -92,6 +94,21 @@ public class UntapStepService {
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                 boolean skipUntapStep) {
+        untapPermanents(gameData, activePlayerId, restrictPredicate, skipUntapStep, null);
+    }
+
+    /**
+     * Performs the untap step, restricting the active player's untaps to the explicitly chosen
+     * {@code chosenUntapIds} (Static Orb: the player picked up to two permanents to untap). Any of
+     * the active player's permanents not in the set stays tapped this step; all other untap-step
+     * bookkeeping (summoning sickness, skip counters, Seedborn Muse) proceeds normally.
+     */
+    public void untapChosenPermanents(GameData gameData, UUID activePlayerId, Set<UUID> chosenUntapIds) {
+        untapPermanents(gameData, activePlayerId, null, false, chosenUntapIds);
+    }
+
+    private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
+                                 boolean skipUntapStep, Set<UUID> chosenUntapIds) {
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
 
         if (skipUntapStep) {
@@ -150,12 +167,14 @@ public class UntapStepService {
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
+                // Static Orb: only the permanents the active player chose untap this step.
+                boolean blockedByStaticOrb = chosenUntapIds != null && !chosenUntapIds.contains(p.getId());
 
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
-                } else if (blockedByStorageMatrix) {
-                    // Storage Matrix: not the chosen permanent type — stays tapped this step
+                } else if (blockedByStorageMatrix || blockedByStaticOrb) {
+                    // Storage Matrix / Static Orb: not selected to untap — stays tapped this step
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
@@ -227,6 +246,56 @@ public class UntapStepService {
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         return battlefield != null && battlefield.stream().anyMatch(Permanent::isTapped);
+    }
+
+    /**
+     * Returns {@code true} if a Static Orb untap restriction is in force for the given active
+     * player: some untapped permanent (any controller) carries a {@link StaticOrbEffect} and the
+     * active player has more than two permanents that would otherwise untap this step. With two or
+     * fewer such permanents the "no more than two" cap can never bite, so the choice is skipped and
+     * everything untaps normally.
+     */
+    public boolean staticOrbRestrictionApplies(GameData gameData, UUID activePlayerId) {
+        boolean untappedOrbPresent = gameData.anyPermanentMatches(p -> !p.isTapped()
+                && p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof StaticOrbEffect));
+        if (!untappedOrbPresent) {
+            return false;
+        }
+        return staticOrbUntapCandidates(gameData, activePlayerId).size() > 2;
+    }
+
+    /**
+     * Returns the ids of the active player's permanents that would untap during a normal untap step
+     * — the pool the player picks up to two from when a Static Orb restriction applies. Permanents
+     * that would not untap anyway (self/attached "doesn't untap", untap locks, a pending skip, a
+     * global "doesn't untap" lock, or a "may not untap" choice) are excluded, since they never count
+     * against the two-permanent cap.
+     */
+    public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) {
+            return List.of();
+        }
+        List<UUID> candidates = new ArrayList<>();
+        for (Permanent p : battlefield) {
+            if (!p.isTapped() || p.getSkipUntapCount() > 0) {
+                continue;
+            }
+            boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
+            boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof DoesntUntapEffect d && d.scope() == TapUntapScope.SELF);
+            boolean hasMayNotUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
+            boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
+                    || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
+            boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
+            if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasMayNotUntap
+                    && !hasUntapLock && !hasMatchingDoesntUntap) {
+                candidates.add(p.getId());
+            }
+        }
+        return candidates;
     }
 
     /**

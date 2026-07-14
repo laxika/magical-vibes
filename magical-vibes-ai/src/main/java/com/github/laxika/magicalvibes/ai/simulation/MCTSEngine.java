@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -85,6 +87,22 @@ public class MCTSEngine {
     private static final int EARLY_STOP_TIME_SAFETY_FACTOR = 2;
 
     /**
+     * Cap on distinct exception keys tracked per search. Failure causes on a broken
+     * board state are typically one or two repeating exceptions; the cap only guards
+     * against unbounded growth when messages embed varying identifiers.
+     */
+    private static final int MAX_FAILURE_CAUSE_KEYS = 10;
+
+    /**
+     * Minimum failed iterations before the "search is mostly failing" WARN can fire.
+     * Below this the failure majority carries no signal (e.g. 1 failure vs 0 completions
+     * on an early-stopped warm tree).
+     */
+    private static final int FAILURE_WARN_MIN_FAILURES = 10;
+
+    private static final int FAILURE_WARN_TOP_CAUSES = 3;
+
+    /**
      * Directly constructed engines default to a single-threaded search. The production
      * app opts into parallelism through {@code AiPlayerService} (see
      * {@link #autoParallelism()} and the {@code ai.mcts.parallelism} property) — but the
@@ -158,6 +176,13 @@ public class MCTSEngine {
     private long lastSearchElapsedMs;
     private boolean lastSearchEarlyStopped;
 
+    /**
+     * Failed-iteration causes for the most recent search, keyed by exception class +
+     * message, capped at {@link #MAX_FAILURE_CAUSE_KEYS} distinct keys. Concurrent
+     * because parallel workers record failures directly.
+     */
+    private final Map<String, Integer> lastSearchFailureCauses = new ConcurrentHashMap<>();
+
     public MCTSEngine(GameSimulator simulator) {
         this.simulator = simulator;
         this.determinizer = new Determinizer();
@@ -207,6 +232,7 @@ public class MCTSEngine {
         lastSearchFailures = 0;
         lastSearchElapsedMs = 0;
         lastSearchEarlyStopped = false;
+        lastSearchFailureCauses.clear();
         List<SimulationAction> rootActions = simulator.getLegalActions(rootState, aiPlayerId);
         if (rootActions.isEmpty()) {
             return new SimulationAction.PassPriority();
@@ -242,6 +268,7 @@ public class MCTSEngine {
             searchSequential(rootState, aiPlayerId, root, searchStart, deadline, effectiveBudget);
         }
         lastSearchElapsedMs = System.currentTimeMillis() - searchStart;
+        logSearchOutcome();
 
         // Return the most visited child's action
         MCTSNode bestChild = root.mostVisitedChild();
@@ -279,6 +306,7 @@ public class MCTSEngine {
                 runIteration(rootState, aiPlayerId, root, deadline, rng);
             } catch (Exception e) {
                 lastSearchFailures++;
+                recordFailureCause(e);
                 log.trace("MCTS simulation {} failed: {}", i, e.getMessage());
             }
 
@@ -318,6 +346,7 @@ public class MCTSEngine {
                             runIteration(rootState, aiPlayerId, root, deadline, workerRng);
                         } catch (Exception e) {
                             failures.incrementAndGet();
+                            recordFailureCause(e);
                             log.trace("MCTS simulation failed: {}", e.getMessage());
                         }
                         int done = completed.incrementAndGet();
@@ -424,6 +453,39 @@ public class MCTSEngine {
                     node.untriedActions.add(0, reserved);
                 }
             }
+        }
+    }
+
+    /**
+     * Records the cause of a failed iteration for the end-of-search summary. Keyed by
+     * exception class + message so repeated failures collapse into one counted entry;
+     * new distinct keys beyond {@link #MAX_FAILURE_CAUSE_KEYS} are dropped.
+     */
+    private void recordFailureCause(Exception e) {
+        String key = e.getClass().getSimpleName() + ": " + e.getMessage();
+        if (lastSearchFailureCauses.containsKey(key) || lastSearchFailureCauses.size() < MAX_FAILURE_CAUSE_KEYS) {
+            lastSearchFailureCauses.merge(key, 1, Integer::sum);
+        }
+    }
+
+    /**
+     * One-line search summary at DEBUG, escalated to WARN when the majority of a
+     * non-trivial number of iterations failed — the signal that the search burned its
+     * budget without learning (e.g. {@code applyAction} throwing on this board state),
+     * which the per-iteration TRACE logging keeps invisible in normal logs.
+     */
+    private void logSearchOutcome() {
+        int completed = lastSearchIterations - lastSearchFailures;
+        log.debug("MCTS: search done - completed={}, failed={}, elapsedMs={}, earlyStopped={}, cacheHits={}, cacheMisses={}",
+                completed, lastSearchFailures, lastSearchElapsedMs, lastSearchEarlyStopped, cacheHits, cacheMisses);
+        if (lastSearchFailures >= FAILURE_WARN_MIN_FAILURES && lastSearchFailures > completed) {
+            List<String> topCauses = lastSearchFailureCauses.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .limit(FAILURE_WARN_TOP_CAUSES)
+                    .map(entry -> entry.getKey() + " x" + entry.getValue())
+                    .toList();
+            log.warn("MCTS: search mostly failing - {} of {} iterations threw (completed={}); top causes: {}",
+                    lastSearchFailures, lastSearchIterations, completed, topCauses);
         }
     }
 
@@ -653,6 +715,14 @@ public class MCTSEngine {
     /** Iterations of the most recent {@link #search} call that ended in a swallowed exception. */
     public int getLastSearchFailures() {
         return lastSearchFailures;
+    }
+
+    /**
+     * Failed-iteration causes of the most recent {@link #search} call, keyed by
+     * exception class + message (at most {@link #MAX_FAILURE_CAUSE_KEYS} distinct keys).
+     */
+    public Map<String, Integer> getLastSearchFailureCauses() {
+        return Map.copyOf(lastSearchFailureCauses);
     }
 
     /** Wall-clock milliseconds the most recent {@link #search} call spent iterating. */

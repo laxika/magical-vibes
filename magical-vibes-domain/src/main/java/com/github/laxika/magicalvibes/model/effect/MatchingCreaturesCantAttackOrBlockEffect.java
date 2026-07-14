@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code sourceCardId}), so source-relative predicates such as
  * {@link com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate}
  * resolve "you"/"your opponents" from the source's perspective.
- * Example: Kulrath Knight — "Creatures your opponents control with counters on them can't attack
- * or block." ({@code affectedPredicate = not-controlled-by-you AND has counters}).
+ * Examples: Kulrath Knight — "Creatures your opponents control with counters on them can't attack
+ * or block." ({@code affectedPredicate = not-controlled-by-you AND has counters}); Light of Day —
+ * "Black creatures can't attack or block." ({@code affectedPredicate = black-creature}).
  *
  * <p>The attack side is enforced in {@code CombatAttackService.isCantAttackDueToGlobalRestriction};
  * the block side in {@code GameQueryService} (block-legality).

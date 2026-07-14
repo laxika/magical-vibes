@@ -13,6 +13,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "8ED", collectorNumber = "111")
+@CardRegistration(set = "7ED", collectorNumber = "107")
 public class Twiddle extends Card {
 
     public Twiddle() {

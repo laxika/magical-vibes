@@ -419,7 +419,13 @@ public class DamagePreventionService {
             // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
             if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
 
-            if (shield.isUnlimited()) {
+            if (shield.isNextEvent()) {
+                // Next-event (Jade Monolith): redirect all of this one damage event, then consume the shield.
+                it.remove();
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPermanentId, sourcePermanentId, remaining, shield.redirectTargetId()));
+                remaining = 0;
+            } else if (shield.isUnlimited()) {
                 // Unlimited (Oracle's Attendants): redirect all remaining damage; the shield persists.
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
                         protectedPermanentId, sourcePermanentId, remaining, shield.redirectTargetId()));

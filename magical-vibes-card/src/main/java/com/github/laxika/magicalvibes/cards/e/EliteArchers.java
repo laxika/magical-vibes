@@ -18,6 +18,7 @@ import java.util.List;
  * {T}: This creature deals 3 damage to target attacking or blocking creature.
  */
 @CardRegistration(set = "8ED", collectorNumber = "18")
+@CardRegistration(set = "7ED", collectorNumber = "15")
 public class EliteArchers extends Card {
 
     public EliteArchers() {

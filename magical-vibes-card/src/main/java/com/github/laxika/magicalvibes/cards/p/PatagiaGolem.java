@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "308")
+@CardRegistration(set = "7ED", collectorNumber = "310")
+@CardRegistration(set = "6ED", collectorNumber = "305")
 public class PatagiaGolem extends Card {
 
     public PatagiaGolem() {

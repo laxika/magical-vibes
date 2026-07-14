@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -33,10 +35,12 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -300,6 +304,27 @@ public class CombatAttackService {
                         allEffects.add(new MustBlockSourceEffect(attacker.getId()));
                     } else {
                         allEffects.add(temp);
+                    }
+                }
+
+                // "Whenever this creature attacks, defending player may draw a card" (Sibilant Spirit).
+                // Route the optional draw to the defending player (or the controller of the attacked
+                // planeswalker), not the attacking creature's controller.
+                List<CardEffect> defendingPlayerDraws = allEffects.stream()
+                        .filter(e -> e instanceof DefendingPlayerMayDrawCardEffect).toList();
+                if (!defendingPlayerDraws.isEmpty()) {
+                    allEffects.removeAll(defendingPlayerDraws);
+                    UUID attackedTargetId = attacker.getAttackTarget();
+                    UUID defendingPlayerId = attackedTargetId == null ? null
+                            : gameData.playerIds.contains(attackedTargetId)
+                                    ? attackedTargetId
+                                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                    if (defendingPlayerId != null) {
+                        for (CardEffect ignored : defendingPlayerDraws) {
+                            gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
+                                    new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                        }
+                        gameData.gameLog.add(attacker.getCard().getName() + "'s ability triggers.");
                     }
                 }
 
@@ -600,6 +625,37 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever a creature attacks" triggers (ON_ANY_CREATURE_ATTACKS). These fire once
+        // per attacking creature, on every permanent with this slot across all battlefields, regardless
+        // of who controls the attacker or whom it attacks (e.g. Caltrops pings every attacker). The
+        // attacking creature is stored as a non-targeting targetId so the effect can act on "it".
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
+                UUID permController = bf.getKey();
+                for (Permanent perm : new ArrayList<>(bf.getValue())) {
+                    List<CardEffect> anyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_ATTACKS);
+                    if (anyAttackEffects.isEmpty()) continue;
+
+                    StackEntry anyAttackTrigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            permController,
+                            perm.getCard().getName() + "'s trigger",
+                            new ArrayList<>(anyAttackEffects),
+                            attacker.getId(),
+                            perm.getId()
+                    );
+                    anyAttackTrigger.setNonTargeting(true);
+                    gameData.stack.add(anyAttackTrigger);
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameData.gameLog.add(triggerLog);
+                    log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
+                            gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+                }
+            }
+        }
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 
@@ -701,6 +757,7 @@ public class CombatAttackService {
 
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {
         boolean[] restricted = {false};
+        UUID creatureController = CombatHelper.findControllerOf(gameData, creature);
         gameData.forEachPermanent((playerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
@@ -718,6 +775,11 @@ public class CombatAttackService {
                             .withSourceControllerId(playerId)
                             .withSourceCardId(permanent.getOriginalCard().getId());
                     if (predicateEvaluationService.matchesPermanentPredicate(creature, restriction.affectedPredicate(), context)) {
+                        restricted[0] = true;
+                    }
+                } else if (effect instanceof ControlledCreaturesCantAttackUnlessPredicateEffect restriction) {
+                    if (playerId.equals(creatureController)
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
                     }
                 }

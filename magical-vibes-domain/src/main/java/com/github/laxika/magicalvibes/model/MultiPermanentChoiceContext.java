@@ -122,4 +122,19 @@ public sealed interface MultiPermanentChoiceContext {
      */
     record SacrificeLandsSearchLandsToBattlefieldTapped() implements MultiPermanentChoiceContext {
     }
+
+    /**
+     * Sacrifice the chosen permanents, then the controller draws a card for each one actually
+     * sacrificed (Reprocess). The draw count equals the number of permanents sacrificed.
+     */
+    record SacrificePermanentsDrawPerSacrificed() implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Static Orb: the active player chose up to two of the permanents that would otherwise untap;
+     * only those untap this step. The untap-step bookkeeping and turn advance then resume exactly
+     * as they would have without the restriction.
+     */
+    record StaticOrbUntap(UUID activePlayerId) implements MultiPermanentChoiceContext {
+    }
 }

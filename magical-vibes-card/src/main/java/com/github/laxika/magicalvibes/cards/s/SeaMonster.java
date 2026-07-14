@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "10E", collectorNumber = "106")
 @CardRegistration(set = "9ED", collectorNumber = "96")
 @CardRegistration(set = "8ED", collectorNumber = "99")
+@CardRegistration(set = "7ED", collectorNumber = "97")
+@CardRegistration(set = "6ED", collectorNumber = "96")
 public class SeaMonster extends Card {
 
     public SeaMonster() {

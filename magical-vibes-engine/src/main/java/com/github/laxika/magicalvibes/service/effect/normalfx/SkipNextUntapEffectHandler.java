@@ -35,10 +35,24 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         var e = (SkipNextUntapEffect) effect;
         switch (e.scope()) {
             case TARGET -> resolveTarget(gameData, entry);
+            case SELF -> resolveSelf(gameData, entry);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
             case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
             default -> throw new IllegalStateException("Unsupported skip-next-untap scope: " + e.scope());
         }
+    }
+
+    private void resolveSelf(GameData gameData, StackEntry entry) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+
+        source.setSkipUntapCount(source.getSkipUntapCount() + 1);
+
+        String logEntry = source.getCard().getName() + " won't untap during its controller's next untap step.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
     }
 
     private void resolveTarget(GameData gameData, StackEntry entry) {

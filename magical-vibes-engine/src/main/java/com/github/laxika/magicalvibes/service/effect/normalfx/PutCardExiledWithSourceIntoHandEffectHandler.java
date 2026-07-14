@@ -70,7 +70,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
-                false, true, false, false, 0, null, 1,
+                false, true, false, false, false, 0, null, 1,
                 "Choose a card exiled with " + sourceName + " to put into your hand."));
         gameBroadcastService.broadcastGameState(gameData);
 

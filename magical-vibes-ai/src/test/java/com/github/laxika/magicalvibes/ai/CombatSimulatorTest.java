@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GaeasProtector;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Hellrider;
+import com.github.laxika.magicalvibes.cards.h.HollowDogs;
 import com.github.laxika.magicalvibes.cards.o.OgreResister;
 import com.github.laxika.magicalvibes.cards.p.PhantomWarrior;
 import com.github.laxika.magicalvibes.cards.p.PrizedUnicorn;
@@ -2001,5 +2003,109 @@ class CombatSimulatorTest {
 
         long menaceBlockerCount = blockers.stream().filter(b -> b[1] == 0).count();
         assertThat(menaceBlockerCount).isNotEqualTo(1);
+    }
+
+    // ===== Zero/negative-power attackers (CR 510.1a: they assign no combat damage) =====
+
+    @Test
+    @DisplayName("Zero-power filter: drops a negative-power creature from an all-in attack")
+    void filterZeroPowerAttackersDropsNegativePower() {
+        Permanent flyer = new Permanent(new AirElemental());
+        flyer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+        Permanent weakBears = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(weakBears).setPower(-1);
+        weakBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+        List<Integer> filtered = simulator.filterZeroPowerAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Zero-power filter: keeps a negative-power creature that must attack")
+    void filterZeroPowerAttackersKeepsMustAttack() {
+        Permanent weakBerserkers = new Permanent(new BerserkersOfBloodRidge());
+        TestCards.mutableCard(weakBerserkers).setPower(0);
+        weakBerserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(weakBerserkers);
+
+        List<Integer> filtered = simulator.filterZeroPowerAttackers(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Zero-power filter: keeps a negative-power creature with its own attack trigger")
+    void filterZeroPowerAttackersKeepsAttackTrigger() {
+        // Hollow Dogs gets +2/+0 when it attacks — attacking with it at -1 power
+        // is genuinely useful, so the filter must not drop it.
+        Permanent dogs = new Permanent(new HollowDogs());
+        TestCards.mutableCard(dogs).setPower(-1);
+        dogs.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(dogs);
+
+        List<Integer> filtered = simulator.filterZeroPowerAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Zero-power filter: keeps everything when a per-attacker ally trigger is on the battlefield")
+    void filterZeroPowerAttackersKeepsAllWithPerAttackerAllyTrigger() {
+        // Hellrider fires for each attacking creature — every extra attacker adds value.
+        Permanent hellrider = new Permanent(new Hellrider());
+        hellrider.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(hellrider);
+
+        Permanent weakBears = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(weakBears).setPower(-1);
+        weakBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+        List<Integer> filtered = simulator.filterZeroPowerAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of());
+
+        assertThat(filtered).containsExactly(0, 1);
+    }
+
+    @Test
+    @DisplayName("Negative-power creature is not worth attacking with even when unblocked")
+    void findBestAttackersSkipsNegativePowerCreature() {
+        Permanent weakBears = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(weakBears).setPower(-1);
+        weakBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+        List<Integer> attackers = simulator.findBestAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        // Unblocked it still assigns 0 damage (CR 510.1a) — nothing to gain by attacking.
+        assertThat(attackers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Combat math: unblocked negative-power attacker deals no damage")
+    void simulateCombatNegativePowerUnblockedDealsNoDamage() {
+        Permanent weakBears = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(weakBears).setPower(-1);
+        weakBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(weakBears);
+
+        CombatSimulator.CreatureInfo attackerInfo = simulator.buildCreatureInfo(
+                gd, weakBears, 0, player1.getId(), player2.getId());
+
+        CombatSimulator.CombatOutcome outcome = simulator.simulateCombat(
+                gd, List.of(attackerInfo), List.of(), 20);
+
+        // A creature with negative power assigns 0 combat damage — it must not
+        // be modeled as "healing" the opponent (or dealing damage) in the math.
+        assertThat(outcome.opponentLifeChange()).isEqualTo(0);
+        assertThat(outcome.opponentPoisonChange()).isEqualTo(0);
     }
 }

@@ -7,6 +7,7 @@ public enum GrantScope {
     ENCHANTED_PERMANENT,
     EQUIPPED_CREATURE,
     OWN_TAPPED_CREATURES,
+    OWN_UNTAPPED_CREATURES,
     /**
      * All creatures you control <em>except</em> the source permanent itself.
      * Use this for "other creatures you control" effects, or pair with {@link #SELF}

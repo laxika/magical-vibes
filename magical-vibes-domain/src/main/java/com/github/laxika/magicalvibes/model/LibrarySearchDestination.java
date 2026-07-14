@@ -10,6 +10,9 @@ public enum LibrarySearchDestination {
      * {@code sourcePermanentId} and re-filters the library on each repeated pick. */
     EXILE_WITH_SOURCE,
     EXILE_PLAYABLE,
+    /** Like {@link #EXILE_PLAYABLE}, but the play permission lasts only until the searcher's next
+     *  upkeep; if the card is still exiled then, it is put into its owner's graveyard (Grinning Totem). */
+    EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP,
     TOP_OF_LIBRARY,
     GRAVEYARD,
     BATTLEFIELD_ATTACHED_TO_PLAYER,

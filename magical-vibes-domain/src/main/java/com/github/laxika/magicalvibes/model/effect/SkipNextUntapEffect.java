@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * "skip next untap", modelled by incrementing {@code Permanent.skipUntapCount}, which the untap step
  * reads and decrements). The {@link TapUntapScope} selects which permanent(s) are affected; the
  * optional {@link PermanentPredicate} narrows the scanned scopes ({@link TapUntapScope#ALL_CREATURES},
- * {@link TapUntapScope#TARGET_PLAYERS_PERMANENTS}).
+ * {@link TapUntapScope#TARGET_PLAYERS_PERMANENTS}). The {@link TapUntapScope#SELF} scope keeps the
+ * source permanent itself tapped through its next untap step (e.g. an attack trigger on Lead Golem).
  *
  * <p>Replaces the former {@code SkipNextUntapOnTargetEffect}, {@code SkipNextUntapAllAttackingCreaturesEffect}
  * and {@code SkipNextUntapPermanentsOfTargetPlayerEffect}.

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "8ED", collectorNumber = "173")
+@CardRegistration(set = "7ED", collectorNumber = "170")
 public class WesternPaladin extends Card {
 
     public WesternPaladin() {

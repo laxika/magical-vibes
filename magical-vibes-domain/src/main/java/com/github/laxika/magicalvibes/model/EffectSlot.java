@@ -66,6 +66,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkAnyLandPutIntoGraveyardFromBattlefieldTriggers}. Used by
      *  Dingus Egg (pair with {@code DealDamageToPlayersEffect(2, TRIGGERING_PERMANENT_CONTROLLER)}). */
     ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a black card is put into an opponent's graveyard from anywhere
+     *  (battlefield, hand, library, stack, exile). Fires on permanents controlled by an opponent
+     *  of the graveyard owner. Checked in {@code GraveyardService.addCardToGraveyard} (the single
+     *  zone→graveyard choke point) via
+     *  {@code TriggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers}.
+     *  Used by Compost. */
+    ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
@@ -92,6 +99,14 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
      *  ({@code BoostSelfEffect(1, 1)}). */
     ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
+    /** Triggers whenever a permanent an <em>opponent</em> of the controller controls becomes tapped.
+     *  Fires on every permanent with this slot controlled by a player other than the tapped
+     *  permanent's controller. Wrap the effect in {@code TriggeringPermanentConditionalEffect} to
+     *  filter by the tapped permanent (e.g. Thoughtleech — "whenever an Island an opponent controls
+     *  becomes tapped"). Checked in {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers},
+     *  driven by the same tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED} — so it fires
+     *  on any tap (for mana or forced, e.g. Icy Manipulator), not just taps for mana. */
+    ON_OPPONENT_PERMANENT_BECOMES_TAPPED,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
@@ -265,6 +280,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entry so the resolved effect can act on it. Checked in
      *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
     ON_CREATURE_ATTACKS_YOU,
+    /** Triggers once per attacking creature whenever a creature attacks, regardless of who controls
+     *  the attacker or whom it attacks. Fires on every permanent with this slot across all
+     *  battlefields (e.g. Caltrops pings every attacker). The attacking creature's permanent ID is
+     *  set as the (non-targeting) targetId on the stack entry so the resolved effect can act on it.
+     *  Checked in {@code CombatAttackService.declareAttackers}. Used by Caltrops. */
+    ON_ANY_CREATURE_ATTACKS,
     /** Triggers when this instant/sorcery spell is cast (a "when you cast this spell" ability on the
      *  spell itself). Scanned against the just-cast card in
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle

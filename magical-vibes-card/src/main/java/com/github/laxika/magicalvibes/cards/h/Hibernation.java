@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "8ED", collectorNumber = "82")
+@CardRegistration(set = "7ED", collectorNumber = "79")
 public class Hibernation extends Card {
 
     public Hibernation() {

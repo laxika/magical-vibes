@@ -38,7 +38,7 @@ public class RedirectTargetCreatureDamageFromChosenSourceToSelfEffectHandler imp
         }
 
         gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.RedirectCreatureDamageSourceChoice(controllerId, protectedCreatureId, redirectTargetId));
+                new PermanentChoiceContext.RedirectCreatureDamageSourceChoice(controllerId, protectedCreatureId, redirectTargetId, false));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 "Choose a source. All damage it would deal to the target creature this turn is redirected instead.");
     }

@@ -103,6 +103,61 @@ public class CombatSimulator {
                 gameData, aiPlayerId, availableAttackerIndices, mustAttackIndices, threatEstimate));
     }
 
+    /**
+     * Drops creatures that assign no combat damage (power 0 or less, CR 510.1a) from an
+     * all-in attacker list — they deal nothing to the opponent and risk dying to a free
+     * block. A non-positive-power creature is still kept when attacking has value anyway:
+     * it is must-attack, it has its own attack trigger (native, temporarily granted, or on
+     * an attached aura), or the controller has a per-attacker "whenever a creature you
+     * control attacks" trigger (battlefield or graveyard) that each extra attacker fires.
+     */
+    public List<Integer> filterZeroPowerAttackers(GameData gameData, UUID playerId,
+                                                  List<Integer> availableIndices,
+                                                  List<Integer> mustAttackIndices) {
+        if (availableIndices.isEmpty()) return availableIndices;
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        if (hasPerAttackerAllyTrigger(gameData, playerId, battlefield)) {
+            return availableIndices;
+        }
+        List<Integer> filtered = new ArrayList<>(availableIndices.size());
+        for (int idx : availableIndices) {
+            Permanent perm = battlefield.get(idx);
+            if (mustAttackIndices.contains(idx)
+                    || gameQueryService.getEffectivePower(gameData, perm) > 0
+                    || hasOwnAttackTrigger(gameData, perm)) {
+                filtered.add(idx);
+            }
+        }
+        return filtered;
+    }
+
+    private boolean hasPerAttackerAllyTrigger(GameData gameData, UUID playerId, List<Permanent> battlefield) {
+        for (Permanent perm : battlefield) {
+            if (!perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).isEmpty()) return true;
+        }
+        for (var card : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
+            if (!card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).isEmpty()) return true;
+        }
+        return false;
+    }
+
+    private boolean hasOwnAttackTrigger(GameData gameData, Permanent perm) {
+        if (!perm.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()
+                || !perm.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED).isEmpty()
+                || !perm.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK).isEmpty()) {
+            return true;
+        }
+        // Aura-granted attack triggers (e.g. an aura with an ON_ATTACK registration)
+        boolean[] found = {false};
+        gameData.forEachPermanent((ownerId, p) -> {
+            if (p.isAttached() && p.getAttachedTo().equals(perm.getId())
+                    && !p.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
+                found[0] = true;
+            }
+        });
+        return found[0];
+    }
+
     private List<Integer> doFindBestAttackers(GameData gameData, UUID aiPlayerId,
                                               List<Integer> availableAttackerIndices,
                                               List<Integer> mustAttackIndices,
@@ -219,9 +274,9 @@ public class CombatSimulator {
             for (CombatMath.Attacker attacker : subset) {
                 if (attacker.blockable()) continue;
                 if (attacker.info().infect()) {
-                    unblockablePoisonDamage += attacker.info().power();
+                    unblockablePoisonDamage += CombatMath.damage(attacker.info());
                 } else {
-                    unblockableLifeDamage += attacker.info().power();
+                    unblockableLifeDamage += CombatMath.damage(attacker.info());
                 }
             }
             if (unblockableLifeDamage >= opponentLife
@@ -328,7 +383,7 @@ public class CombatSimulator {
 
         int totalIncoming = 0;
         for (CreatureInfo attacker : attackerInfos) {
-            totalIncoming += attacker.power;
+            totalIncoming += CombatMath.damage(attacker);
         }
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
         List<int[]> assignments = new ArrayList<>();
@@ -390,16 +445,16 @@ public class CombatSimulator {
             // is stopped; for a single trample blocker, excess still lands. 2+ blockers
             // stop all damage (defender assigns damage; even chump pairs absorb it).
             if (attacker.trample && chosen.size() == 1) {
-                int stopped = Math.min(attacker.power, chosen.get(0).toughness);
+                int stopped = Math.min(CombatMath.damage(attacker), chosen.get(0).toughness);
                 totalIncoming -= stopped;
             } else {
-                totalIncoming -= attacker.power;
+                totalIncoming -= CombatMath.damage(attacker);
             }
 
             // Trample soakers: if a single blocker isn't enough and damage is still lethal,
             // pile on more blockers to shrink the trample excess.
             if (attacker.trample && chosen.size() == 1 && totalIncoming >= aiLife) {
-                int trampleExcess = Math.max(0, attacker.power - chosen.get(0).toughness);
+                int trampleExcess = Math.max(0, CombatMath.damage(attacker) - chosen.get(0).toughness);
                 while (trampleExcess > 0 && totalIncoming >= aiLife) {
                     final int currentExcess = trampleExcess;
                     CreatureInfo bestAdditional = blockerInfos.stream()

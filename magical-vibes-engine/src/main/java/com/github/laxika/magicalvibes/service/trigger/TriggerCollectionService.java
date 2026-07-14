@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -425,11 +427,15 @@ public class TriggerCollectionService {
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.LandTap(tappingPlayerId, tappedLandId);
 
-        gameData.forEachPermanent((playerId, perm) -> {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
-                var match = new TriggerMatchContext(gameData, perm, playerId, effect);
-                if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
-                    anyTriggered[0] = true;
+        // Snapshot each battlefield: a land-tap trigger may return the tapped land to hand
+        // (Storm Cauldron), mutating the list we would otherwise be iterating.
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)) {
+                    var match = new TriggerMatchContext(gameData, perm, playerId, effect);
+                    if (registry.dispatch(match, EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx)) {
+                        anyTriggered[0] = true;
+                    }
                 }
             }
         });
@@ -902,29 +908,53 @@ public class TriggerCollectionService {
             if (!watcherControllerId.equals(damageSourceControllerId)) return;
 
             for (CardEffect effect : watcher.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE)) {
-                if (!(effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect)) continue;
-                if (reflect.sourceFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, reflect.sourceFilter())) {
-                    continue;
+                if (effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect) {
+                    if (reflect.sourceFilter() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, reflect.sourceFilter())) {
+                        continue;
+                    }
+
+                    // The damage-source creature deals that much damage to the damaged creature's controller.
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            damageSource.getCard(),
+                            damageSourceControllerId,
+                            damageSource.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER))),
+                            damagedCreatureControllerId,
+                            damageSource.getId()
+                    );
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+
+                    gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
+                    log.info("Game {} - {} reflects {} damage from {} to {}", gameData.id,
+                            watcher.getCard().getName(), damage, damageSource.getCard().getName(),
+                            gameData.playerIdToName.get(damagedCreatureControllerId));
+                } else if (effect instanceof DamageDamagedCreatureControllerAndSelfEffect punisher) {
+                    // "this creature" — fire only when the watcher itself dealt the damage.
+                    if (!watcher.getId().equals(damageSource.getId())) continue;
+
+                    // This creature deals N damage to that creature's controller and M damage to you.
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            damageSource.getCard(),
+                            damageSourceControllerId,
+                            damageSource.getCard().getName() + "'s ability",
+                            new ArrayList<>(List.of(
+                                    new DealDamageToPlayersEffect(punisher.amountToDamagedCreatureController(), DamageRecipient.TARGET_PLAYER),
+                                    new DealDamageToPlayersEffect(punisher.amountToSelf(), DamageRecipient.CONTROLLER))),
+                            damagedCreatureControllerId,
+                            damageSource.getId()
+                    );
+                    trigger.setNonTargeting(true);
+                    gameData.stack.add(trigger);
+
+                    gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
+                    log.info("Game {} - {} deals {} to {} and {} to its controller", gameData.id,
+                            watcher.getCard().getName(), punisher.amountToDamagedCreatureController(),
+                            gameData.playerIdToName.get(damagedCreatureControllerId), punisher.amountToSelf());
                 }
-
-                // The damage-source creature deals that much damage to the damaged creature's controller.
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        damageSource.getCard(),
-                        damageSourceControllerId,
-                        damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER))),
-                        damagedCreatureControllerId,
-                        damageSource.getId()
-                );
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-
-                gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
-                log.info("Game {} - {} reflects {} damage from {} to {}", gameData.id,
-                        watcher.getCard().getName(), damage, damageSource.getCard().getName(),
-                        gameData.playerIdToName.get(damagedCreatureControllerId));
             }
         });
     }
@@ -1013,6 +1043,35 @@ public class TriggerCollectionService {
                 ));
                 gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
                 log.info("Game {} - {} triggers on ally permanent tap ({})",
+                        gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
+            }
+        });
+
+        // "Whenever a permanent an opponent controls becomes tapped" triggers (e.g. Thoughtleech).
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (ownerId.equals(controllerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers on opponent permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
             }
         });
@@ -1659,6 +1718,22 @@ public class TriggerCollectionService {
         for (Permanent perm : List.copyOf(battlefield)) {
             dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
         }
+    }
+
+    /**
+     * Fires ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE triggers (Compost). The card has
+     * already entered the graveyard; fires on permanents controlled by an opponent of the graveyard
+     * owner when the card is black.
+     */
+    public void checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(GameData gameData, UUID graveyardOwnerId, Card card) {
+        if (card.getColors() == null || !card.getColors().contains(CardColor.BLACK)) return;
+
+        var ctx = new TriggerContext.BlackCardOpponentGraveyard(graveyardOwnerId, card);
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (playerId.equals(graveyardOwnerId)) return;
+            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
+        });
     }
 
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {

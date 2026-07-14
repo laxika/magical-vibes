@@ -141,6 +141,12 @@ public sealed interface TriggerContext {
                             UUID landControllerId) implements TriggerContext {}
 
     /**
+     * Context for ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE triggers (Compost).
+     */
+    record BlackCardOpponentGraveyard(UUID graveyardOwnerId,
+                                      Card card) implements TriggerContext {}
+
+    /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
      *
      * @param landCard          the land card that was put into the graveyard from the battlefield

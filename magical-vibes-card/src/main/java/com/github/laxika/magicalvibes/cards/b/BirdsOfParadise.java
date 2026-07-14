@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "6ED", collectorNumber = "217")
+@CardRegistration(set = "7ED", collectorNumber = "231")
 @CardRegistration(set = "8ED", collectorNumber = "233")
 @CardRegistration(set = "10E", collectorNumber = "252")
 @CardRegistration(set = "M10", collectorNumber = "168")

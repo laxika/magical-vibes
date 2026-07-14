@@ -54,6 +54,7 @@ public enum CardSubtype {
     SKELETON("Skeleton"),
     ELEPHANT("Elephant"),
     ELEMENTAL("Elemental"),
+    EYE("Eye"),
     FAERIE("Faerie"),
     FISH("Fish"),
     FUNGUS("Fungus"),
@@ -151,7 +152,9 @@ public enum CardSubtype {
     VEHICLE("Vehicle"),
     NIGHTSTALKER("Nightstalker"),
     LESSON("Lesson"),
-    SCARECROW("Scarecrow");
+    CITIZEN("Citizen"),
+    SCARECROW("Scarecrow"),
+    SERF("Serf");
 
     @Getter
     private final String displayName;

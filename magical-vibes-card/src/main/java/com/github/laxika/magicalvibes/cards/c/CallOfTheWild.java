@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "235")
+@CardRegistration(set = "6ED", collectorNumber = "218")
 public class CallOfTheWild extends Card {
 
     public CallOfTheWild() {

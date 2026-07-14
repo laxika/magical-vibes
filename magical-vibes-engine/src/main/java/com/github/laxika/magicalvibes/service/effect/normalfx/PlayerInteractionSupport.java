@@ -178,6 +178,50 @@ public class PlayerInteractionSupport {
         }
     
     }
+    /**
+     * Rag Man: target player reveals their hand, then discards a card of {@code cardType} at random.
+     * The whole hand is revealed to the controller; a matching card is picked uniformly at random and
+     * discarded. If the hand holds no matching card, nothing is discarded.
+     */
+    public void resolveRevealHandAndRandomDiscardOfType(GameData gameData, UUID playerId,
+            String sourceName, CardType cardType) {
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " reveals their hand. It is empty.");
+            return;
+        }
+
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        gameBroadcastService.logAndBroadcast(gameData, playerName + " reveals their hand: " + cardNames + ".");
+
+        List<Integer> matchingIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).hasType(cardType)) {
+                matchingIndices.add(i);
+            }
+        }
+
+        if (matchingIndices.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard.");
+            return;
+        }
+
+        int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
+        Card discarded = hand.remove(chosen);
+        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+        gameBroadcastService.logAndBroadcast(gameData, playerName + " discards " + discarded.getName() + " at random.");
+        log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+        }
+    }
+
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              boolean discardMode, boolean exileMode, UUID sourcePermanentId) {

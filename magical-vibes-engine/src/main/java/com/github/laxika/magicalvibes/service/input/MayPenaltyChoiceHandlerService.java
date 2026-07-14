@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
@@ -26,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOr
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -63,6 +65,7 @@ public class MayPenaltyChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
+    private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -73,6 +76,7 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst().orElseThrow();
         int amount = effect.amount();
         boolean exileIfCountered = effect.exileIfCountered();
+        List<CardEffect> onNotPaidEffects = effect.onNotPaidEffects();
         UUID targetCardId = ability.targetCardId();
 
         StackEntry targetEntry = null;
@@ -112,16 +116,18 @@ public class MayPenaltyChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
-                counterSpell(gameData, player, targetEntry, amount, exileIfCountered);
+                counterSpell(gameData, player, ability.sourceCard(), targetEntry, amount, exileIfCountered, onNotPaidEffects);
             }
         } else {
-            counterSpell(gameData, player, targetEntry, amount, exileIfCountered);
+            counterSpell(gameData, player, ability.sourceCard(), targetEntry, amount, exileIfCountered, onNotPaidEffects);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void counterSpell(GameData gameData, Player player, StackEntry targetEntry, int amount, boolean exileIfCountered) {
+    private void counterSpell(GameData gameData, Player player, Card sourceCard, StackEntry targetEntry,
+                              int amount, boolean exileIfCountered, List<CardEffect> onNotPaidEffects) {
+        UUID counteredControllerId = targetEntry.getControllerId();
         gameData.stack.remove(targetEntry);
 
         // CR 603.8 — clean up state-trigger tracking when countered
@@ -130,9 +136,9 @@ public class MayPenaltyChoiceHandlerService {
         // Copies cease to exist per rule 707.10a
         if (!targetEntry.isCopy()) {
             if (exileIfCountered) {
-                exileService.exileCard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+                exileService.exileCard(gameData, counteredControllerId, targetEntry.getCard());
             } else {
-                graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+                graveyardService.addCardToGraveyard(gameData, counteredControllerId, targetEntry.getCard());
             }
         }
 
@@ -140,6 +146,9 @@ public class MayPenaltyChoiceHandlerService {
         String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + suffix;
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
+
+        // Not paid: resolve any rider against the countered spell's controller (Power Sink).
+        counterSupport.resolveNotPaidRider(gameData, sourceCard, counteredControllerId, onNotPaidEffects);
     }
 
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -460,6 +469,47 @@ public class MayPenaltyChoiceHandlerService {
             String logEntry = opponentName + " declines. " + controllerName + " draws " + drawCount + " cards.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines exile return, {} draws {}", gameData.id, opponentName, controllerName, drawCount);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Library of Lat-Nam: the opponent ({@code player}) chose a mode for the spell's controller.
+     * Accept schedules "the controller draws three cards at the beginning of the next turn's upkeep";
+     * decline puts an unrestricted library search (to hand, then shuffle) onto the stack for the
+     * controller. The opponent is the decision maker, so the controller is the other player.
+     */
+    public void handleLibraryOfLatNamChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID opponentId = ability.controllerId(); // opponent is the decision maker
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(opponentId)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) {
+            throw new IllegalStateException("Cannot find Library of Lat-Nam controller");
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        if (accepted) {
+            gameData.queueDelayedAction(
+                    new com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep(controllerId, 3, ability.sourceCard()));
+            gameBroadcastService.logAndBroadcast(gameData, opponentName + " chooses: " + controllerName
+                    + " draws three cards at the beginning of the next turn's upkeep.");
+            log.info("Game {} - {} chooses draw-three for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData, opponentName + " chooses: " + controllerName
+                    + " searches their library for a card.");
+            log.info("Game {} - {} chooses library search for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
+            StackEntry searchEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+                    controllerId, ability.sourceCard().getName(),
+                    new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect())), 0);
+            gameData.stack.add(searchEntry);
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

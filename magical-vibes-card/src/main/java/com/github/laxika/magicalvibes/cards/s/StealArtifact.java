@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "8ED", collectorNumber = "103")
+@CardRegistration(set = "7ED", collectorNumber = "99")
 public class StealArtifact extends Card {
 
     public StealArtifact() {

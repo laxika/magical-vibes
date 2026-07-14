@@ -11,11 +11,13 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.RegeneratesIfWouldBeDestroyedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileWithEggCountersInsteadOfDyingEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -135,6 +137,17 @@ public class GraveyardService {
             return false;
         }
 
+        // "If [this creature] would die, put it on top of its owner's library instead" (Gravebane Zombie)
+        // "Die" = move from battlefield to graveyard, so only applies when sourceZone is BATTLEFIELD.
+        if (sourceZone == Zone.BATTLEFIELD && hasPutOnTopOfLibraryInsteadOfDyingEffect(card)) {
+            List<Card> deck = gameData.playerDecks.get(ownerId);
+            deck.add(0, card);
+            String topLog = card.getName() + " is put on top of its owner's library instead of dying.";
+            gameBroadcastService.logAndBroadcast(gameData, topLog);
+            log.info("Game {} - {} replacement effect: put on top of library instead of dying", gameData.id, card.getName());
+            return false;
+        }
+
         if (hasShuffleIntoLibraryReplacementEffect(card)) {
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
@@ -179,6 +192,16 @@ public class GraveyardService {
             return false;
         }
 
+        // Forbidden Crypt — if the graveyard's owner controls a permanent with
+        // ExileOwnCardsInsteadOfGraveyardEffect, exile the card instead
+        if (ownerHasExileOwnGraveyardReplacementEffect(gameData, ownerId)) {
+            exileService.exileCard(gameData, ownerId, card);
+            String exileLog = card.getName() + " is exiled instead of being put into a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            log.info("Game {} - {} replacement effect: exiled instead of graveyard (own)", gameData.id, card.getName());
+            return false;
+        }
+
         gameData.playerGraveyards.get(ownerId).add(card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
@@ -189,6 +212,7 @@ public class GraveyardService {
         if (!card.isToken() && card.hasType(CardType.LAND)) {
             triggerCollectionService.checkLandPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         }
+        triggerCollectionService.checkBlackCardPutIntoOpponentGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
     }
 
@@ -298,6 +322,11 @@ public class GraveyardService {
                 .orElseThrow();
     }
 
+    private boolean hasPutOnTopOfLibraryInsteadOfDyingEffect(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof PutOnTopOfLibraryInsteadOfDyingEffect);
+    }
+
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
@@ -328,6 +357,20 @@ public class GraveyardService {
                         .anyMatch(ExileOpponentCardsInsteadOfGraveyardEffect.class::isInstance)) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    private boolean ownerHasExileOwnGraveyardReplacementEffect(GameData gameData, UUID ownerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+        if (bf == null) {
+            return false;
+        }
+        for (Permanent p : bf) {
+            if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(ExileOwnCardsInsteadOfGraveyardEffect.class::isInstance)) {
+                return true;
             }
         }
         return false;

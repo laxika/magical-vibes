@@ -84,6 +84,10 @@ not through the handler registry.
   `IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype)`; returns `+amount` unless the
   caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
   "reveal a creature-type card or pay {N}" cycle, e.g. Goldmeadow Stalwart).
+- `cast/costmod/IncreaseOwnCastCostEffectHandler.java` — battlefield handler for
+  `IncreaseOwnCastCostEffect(CardPredicate, int)`; returns `+amount` only when the source is
+  controlled by the caster and the spell matches the predicate (self-scoped colour/type tax, e.g.
+  Derelor: black spells you cast cost {B} more, modeled as +1 generic).
 - `cast/costmod/IncreaseSpellCostExceptOnControllersTurnEffectHandler.java` — battlefield handler for
   `IncreaseSpellCostExceptOnControllersTurnEffect(int amount)`; returns `+amount` for every spell unless
   it is being cast during its controller's own turn (`castingPlayerId == activePlayerId`). Defense Grid.

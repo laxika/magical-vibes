@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -85,7 +86,7 @@ public class StaticEffectSupport {
 
     /**
      * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
+     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_UNTAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
      */
     public boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
@@ -104,6 +105,11 @@ public class StaticEffectSupport {
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
+        }
+        if (scope == GrantScope.OWN_UNTAPPED_CREATURES) {
+            if (!context.targetOnSameBattlefield() || context.target().isTapped()) return false;
+            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
+            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts);
         }
         if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                 || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES) {
@@ -145,6 +151,8 @@ public class StaticEffectSupport {
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
+        if (gameData != null && permanent.getCard().hasType(CardType.LAND)
+                && matchesAnimateLand(gameData, permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
     }
@@ -408,6 +416,23 @@ public class StaticEffectSupport {
             for (Permanent source : bf) {
                 for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
                     if (e instanceof AnimateNoncreatureArtifactsEffect) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean matchesAnimateLand(GameData gameData, Permanent permanent) {
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) continue;
+            for (Permanent source : bf) {
+                for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (e instanceof AllLandsAreCreaturesEffect animateLands
+                            && (animateLands.requiredSubtype() == null
+                                    || permanent.getCard().getSubtypes().contains(animateLands.requiredSubtype()))) {
+                        return true;
+                    }
                 }
             }
         }

@@ -25,7 +25,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
+        PendingInteraction.DoomsdayChoice,
+        PendingInteraction.SearchLibraryToTopChoice,
         PendingInteraction.PermanentAuctionChoice,
+        PendingInteraction.IllicitAuctionBidChoice,
         PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -34,6 +37,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
+        PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
+        PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
@@ -125,6 +130,37 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * Doomsday: choose up to five cards from the combined library+graveyard {@code pool} (held
+     * out of both zones) to put on top of the library in any order; the unchosen cards are
+     * exiled. IDs and card views are derived from {@code pool} at prompt time. The half-life
+     * loss is applied by the effect handler before this choice begins.
+     */
+    record DoomsdayChoice(UUID playerId, java.util.List<Card> pool, int maxCount)
+            implements PendingInteraction {
+
+        /** The selectable card IDs, in begin-time pool order. */
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+    }
+
+    /**
+     * Goblin Recruiter: choose any number of the matching {@code pool} cards (held out of the
+     * library) to put on top of the library. The unchosen matching cards are returned to the
+     * library, the library is shuffled, and the chosen cards are placed on top in any order.
+     * {@code subtypeLabel} is the display name of the searched-for subtype (for prompt/log text).
+     * IDs and card views are derived from {@code pool} at prompt time.
+     */
+    record SearchLibraryToTopChoice(UUID playerId, java.util.List<Card> pool, String subtypeLabel)
+            implements PendingInteraction {
+
+        /** The selectable card IDs, in begin-time pool order. */
+        public java.util.List<UUID> validCardIds() {
+            return pool.stream().map(Card::getId).toList();
+        }
+    }
+
+    /**
      * A shared auction over exiled cards (e.g. Thieves' Auction). {@code choosingPlayerId}
      * is the player currently picking one card from {@code pool} to put onto the battlefield tapped
      * under their control; {@code playerOrder} is the fixed turn-order rotation (controller first) used
@@ -145,6 +181,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** One card picked during a permanent auction, held for deferred enter-the-battlefield processing. */
     record PermanentAuctionPlacement(UUID controllerId, Card card) {
+    }
+
+    /**
+     * One bid in Illicit Auction's life-bid auction: {@code playerId} is the player being prompted to
+     * top the {@code highBid} for control of the target creature. A bid greater than {@code highBid}
+     * (up to {@code maxBid}) tops it; any value {@code <= highBid} is a pass. The bid is a life loss,
+     * so {@code maxBid} is a generous cap that lets a player bid more life than they have. The numeric
+     * prompt reuses the X-value-choice wire message ({@code prompt}/{@code cardName}); the answer
+     * ({@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic {@code NumberChosen})
+     * re-runs the auction handler, which advances to the next bidder or finishes.
+     */
+    record IllicitAuctionBidChoice(UUID playerId, int highBid, int maxBid, String cardName, String prompt)
+            implements PendingInteraction {
     }
 
     /**
@@ -442,25 +491,38 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                           boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
-                          boolean enterAttacking)
+                          boolean enterAttacking, Integer sacrificeUnlessPayGenericReduction)
             implements PendingInteraction, HandChoice {
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
-            this(playerId, validIndices, prompt, false, false, false, null, false);
+            this(playerId, validIndices, prompt, false, false, false, null, false, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped) {
-            this(playerId, validIndices, prompt, enterTapped, false, false, null, false);
+            this(playerId, validIndices, prompt, enterTapped, false, false, null, false, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep) {
-            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null, false);
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, null, false, null);
         }
 
         public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
                               boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId) {
-            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, false);
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId, false, null);
+        }
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped,
+                              boolean grantHaste, boolean sacrificeAtEndStep, UUID attachEquipmentCardId,
+                              boolean enterAttacking) {
+            this(playerId, validIndices, prompt, enterTapped, grantHaste, sacrificeAtEndStep, attachEquipmentCardId,
+                    enterAttacking, null);
+        }
+
+        /** "You may put a creature onto the battlefield; then sacrifice it unless you pay its cost reduced by N" (Flash). */
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
+                              Integer sacrificeUnlessPayGenericReduction) {
+            this(playerId, validIndices, prompt, false, false, false, null, false, sacrificeUnlessPayGenericReduction);
         }
     }
 
@@ -477,6 +539,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                       UUID targetId, String prompt) {
             this(playerId, validIndices, targetId, prompt, null);
         }
+    }
+
+    /**
+     * Choose up to {@code maxCount} cards from your own hand to put on the top or bottom of your
+     * library. {@code validCardIds}/{@code cards} are the current hand snapshot; the top/bottom
+     * destination is picked in the follow-up {@link PutCardsFromHandOnLibraryDestinationChoice}.
+     * Dream Cache (after drawing three, choose two).
+     */
+    record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
+                                               java.util.List<Card> cards, int maxCount)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Choose whether the previously-chosen hand cards go on top or the bottom of your library
+     * (Dream Cache follow-up to {@link PutCardsFromHandOnLibraryCardChoice}). All chosen cards
+     * go to the same destination.
+     */
+    record PutCardsFromHandOnLibraryDestinationChoice(UUID playerId, java.util.List<UUID> chosenCardIds)
+            implements PendingInteraction {
     }
 
     /**
@@ -531,7 +613,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
                                java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
                                boolean selectedToHand, boolean reorderRemainingToBottom,
-                               boolean randomRemainingToBottom, int lifeCostPerSelection,
+                               boolean randomRemainingToBottom, boolean remainingToExile,
+                               int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt)
             implements PendingInteraction {
     }

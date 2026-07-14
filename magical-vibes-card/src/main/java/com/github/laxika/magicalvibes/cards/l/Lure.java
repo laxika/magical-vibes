@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 
 @CardRegistration(set = "10E", collectorNumber = "276")
 @CardRegistration(set = "8ED", collectorNumber = "263")
+@CardRegistration(set = "7ED", collectorNumber = "255")
+@CardRegistration(set = "6ED", collectorNumber = "240")
 public class Lure extends Card {
 
     public Lure() {

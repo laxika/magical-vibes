@@ -75,6 +75,13 @@ public class PlayerInputService {
                 attachEquipmentCardId, enterAttacking));
     }
 
+    /** Flash-style: choose a creature to put onto the battlefield, then pay its cost reduced by N or sacrifice it. */
+    public void beginCardChoiceSacrificeUnlessPayReduced(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                         String prompt, int genericReduction) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt, Integer.valueOf(genericReduction)));
+    }
+
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
         beginTargetedCardChoice(gameData, playerId, validIndices, prompt, targetId, null);
     }
@@ -270,6 +277,20 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
     }
 
+    public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ChoiceContext.PrimalClayFormChoice choiceContext = new ChoiceContext.PrimalClayFormChoice(permanentId);
+
+        List<String> options = Arrays.stream(com.github.laxika.magicalvibes.model.PrimalClayForm.values())
+                .map(Enum::name)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a shape: 3/3, 2/2 with flying, or 1/6 Wall with defender."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a Primal Clay shape", gameData.id, playerName);
+    }
+
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
         ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
 
@@ -327,6 +348,15 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
+    }
+
+    public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds) {
+        beginMultiPermanentChoice(gameData, playerId, candidateIds, 2,
+                new MultiPermanentChoiceContext.StaticOrbUntap(playerId),
+                "Choose up to two permanents to untap (Static Orb).");
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose up to two permanents to untap (Static Orb)", gameData.id, playerName);
     }
 
     private static List<Integer> allHandIndices(List<Card> hand) {

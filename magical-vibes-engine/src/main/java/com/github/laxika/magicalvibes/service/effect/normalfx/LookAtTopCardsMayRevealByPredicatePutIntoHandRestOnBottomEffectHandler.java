@@ -58,7 +58,7 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
                     ? "You may reveal any number of " + description + "s and put them into your hand."
                     : "You may reveal up to " + max + " " + description + "s and put them into your hand.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                    controllerId, topCards, cardIds, false, true, true, false, 0, null,
+                    controllerId, topCards, cardIds, false, true, true, false, false, 0, null,
                     max, revealPrompt));
             return;
         }

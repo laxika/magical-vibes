@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "85")
+@CardRegistration(set = "7ED", collectorNumber = "81")
+@CardRegistration(set = "6ED", collectorNumber = "76")
 public class Inspiration extends Card {
 
     public Inspiration() {

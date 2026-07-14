@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "10E", collectorNumber = "126")
+@CardRegistration(set = "7ED", collectorNumber = "117")
+@CardRegistration(set = "6ED", collectorNumber = "111")
 public class AgonizingMemories extends Card {
 
     public AgonizingMemories() {

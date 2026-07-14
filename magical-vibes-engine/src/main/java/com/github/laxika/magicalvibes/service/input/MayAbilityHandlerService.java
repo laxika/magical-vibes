@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
@@ -56,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEf
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
@@ -111,6 +113,7 @@ public class MayAbilityHandlerService {
     // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
     private final ParadigmService paradigmService;
     private final ValidTargetService validTargetService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -129,7 +132,8 @@ public class MayAbilityHandlerService {
                                     ExileFreeCastSupport exileFreeCastSupport,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                                     @Lazy ParadigmService paradigmService,
-                                    ValidTargetService validTargetService) {
+                                    ValidTargetService validTargetService,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
@@ -148,6 +152,7 @@ public class MayAbilityHandlerService {
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.paradigmService = paradigmService;
         this.validTargetService = validTargetService;
+        this.tariffSupport = tariffSupport;
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -284,7 +289,8 @@ public class MayAbilityHandlerService {
                 .map(e -> (LookAtTargetPlayerTopCardMayGraveyardEffect) e)
                 .findFirst().orElse(null);
         if (eyeSpy != null) {
-            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted, eyeSpy.libraryOwnerId());
+            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted,
+                    eyeSpy.libraryOwnerId(), player.getId(), eyeSpy.lifeCost());
             return;
         }
 
@@ -482,6 +488,14 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // Tariff: pay this creature's mana cost or sacrifice it — handled via the may ability system
+        boolean isTariffPayOrSacrifice = ability.effects().stream()
+                .anyMatch(e -> e instanceof EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect);
+        if (isTariffPayOrSacrifice) {
+            tariffSupport.handlePayOrSacrificeChoice(gameData, player, accepted, ability);
+            return;
+        }
+
         // Opponent may return exiled card to hand, or controller draws N (e.g. Distant Memories)
         OpponentMayReturnExiledCardOrDrawEffect opponentExileChoice = ability.effects().stream()
                 .filter(e -> e instanceof OpponentMayReturnExiledCardOrDrawEffect)
@@ -489,6 +503,13 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (opponentExileChoice != null) {
             mayPenaltyChoiceHandlerService.handleOpponentExileChoice(gameData, player, accepted, ability, opponentExileChoice);
+            return;
+        }
+
+        // Opponent chooses one of two modes for the controller (e.g. Library of Lat-Nam)
+        boolean isLibraryOfLatNamChoice = ability.effects().stream().anyMatch(e -> e instanceof LibraryOfLatNamEffect);
+        if (isLibraryOfLatNamChoice) {
+            mayPenaltyChoiceHandlerService.handleLibraryOfLatNamChoice(gameData, player, accepted, ability);
             return;
         }
 

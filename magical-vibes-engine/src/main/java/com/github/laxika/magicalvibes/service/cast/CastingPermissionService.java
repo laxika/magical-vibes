@@ -300,6 +300,9 @@ public class CastingPermissionService {
             case DECLARE_ATTACKERS_IF_ATTACKED ->
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                             && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
+            case YOUR_END_STEP ->
+                    gameData.currentStep == TurnStep.END_STEP
+                            && playerId.equals(gameData.activePlayerId);
         };
     }
 

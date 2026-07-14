@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
@@ -142,6 +143,8 @@ public class ConditionEvaluationService {
                     anyPlayerControlsMatchingPermanent(gameData, ctx, c.filter());
             case AnyPlayerControlsPermanentCount c ->
                     countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter()) >= c.minCount();
+            case AnyPlayerControlsPermanentCountAtMost c ->
+                    countMatchingPermanentsOnBattlefield(gameData, ctx, c.filter()) <= c.maxCount();
             case ControlsPermanentCount c ->
                     countControlledMatchingPermanents(gameData, ctx, c.filter()) >= c.minCount();
             case ControlsPermanentCountAtMost c ->

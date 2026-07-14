@@ -71,7 +71,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         List<UUID> validIds = List.of(card1.getId(), card2.getId());
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
                 opponentId, new ArrayList<>(revealedCards), validIds,
-                false, true, false, false, 0, null, 1,
+                false, true, false, false, false, 0, null, 1,
                 "Choose a card to put into " + controllerName + "'s hand. The other will be exiled with a silver counter."));
 
         gameBroadcastService.broadcastGameState(gameData);

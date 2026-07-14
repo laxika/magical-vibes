@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "206")
+@CardRegistration(set = "7ED", collectorNumber = "187")
+@CardRegistration(set = "6ED", collectorNumber = "183")
 public class GoblinEliteInfantry extends Card {
 
     public GoblinEliteInfantry() {

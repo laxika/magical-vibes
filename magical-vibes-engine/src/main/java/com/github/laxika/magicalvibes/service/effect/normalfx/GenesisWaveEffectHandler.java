@@ -75,7 +75,7 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
 
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, revealedCards, cardIds, true, false, false, false, 0, null,
+                controllerId, revealedCards, cardIds, true, false, false, false, false, 0, null,
                 eligibleCards.size(),
                 "Choose any number of permanent cards with mana value " + xValue + " or less to put onto the battlefield."));
 

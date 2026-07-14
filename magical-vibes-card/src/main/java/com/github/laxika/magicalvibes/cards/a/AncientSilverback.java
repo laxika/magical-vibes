@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "230")
+@CardRegistration(set = "7ED", collectorNumber = "230")
 public class AncientSilverback extends Card {
 
     public AncientSilverback() {

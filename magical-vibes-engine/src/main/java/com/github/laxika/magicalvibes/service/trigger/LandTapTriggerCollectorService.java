@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -195,6 +196,22 @@ public class LandTapTriggerCollectorService {
         String logEntry = match.permanent().getCard().getName() + " triggers — "
                 + match.gameData().playerIdToName.get(lt.tappingPlayerId())
                 + " adds 1 additional " + trigger.color().name().toLowerCase() + " mana.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnTappedLandToHandEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleReturnTappedLandToHand(TriggerMatchContext match,
+            ReturnTappedLandToHandEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        // Null when another Storm Cauldron's trigger already returned this land to hand.
+        if (tappedLand == null) return false;
+        if (!permanentRemovalService.removePermanentToHand(match.gameData(), tappedLand)) return false;
+
+        String logEntry = match.permanent().getCard().getName() + " triggers — "
+                + tappedLand.getCard().getName() + " is returned to its owner's hand.";
         gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
         return true;
     }

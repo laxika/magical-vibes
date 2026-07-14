@@ -148,7 +148,14 @@ public class ValidTargetService {
             prompt = "Select targets for " + card.getName();
         }
 
-        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, card.getMinTargets(), card.getMaxTargets(), prompt);
+        int responseMinTargets = card.getMinTargets();
+        int responseMaxTargets = card.getMaxTargets();
+        if (card.hasXScaledTargets()) {
+            int effectiveX = xValue != null ? xValue : 0;
+            responseMinTargets = card.getEffectiveMinTargets(effectiveX);
+            responseMaxTargets = card.getEffectiveMaxTargets(effectiveX);
+        }
+        return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, responseMinTargets, responseMaxTargets, prompt);
     }
 
     /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
@@ -316,6 +323,11 @@ public class ValidTargetService {
             return false;
         }
 
+        // Can't be targeted by any spell (e.g. Dense Foliage)
+        if (gameQueryService.cantBeTargetedByAnySpell(gameData, perm)) {
+            return false;
+        }
+
         // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) {
             return false;
@@ -389,6 +401,7 @@ public class ValidTargetService {
         if (isBlockedByHexproofOrGrantedEffect(gameData, perm, castingPlayerId)) return false;
         if (isBlockedByHexproofFromColor(gameData, perm, sourceColor, castingPlayerId)) return false;
         if (gameQueryService.cantBeTargetedBySpellColor(gameData, perm, sourceColor)) return false;
+        if (gameQueryService.cantBeTargetedByAnySpell(gameData, perm)) return false;
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) return false;
         return true;
     }
@@ -678,8 +691,8 @@ public class ValidTargetService {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect e && e.filter() != null) {
             return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
-        } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
-            return c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE);
+        } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect e) {
+            return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
             return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }

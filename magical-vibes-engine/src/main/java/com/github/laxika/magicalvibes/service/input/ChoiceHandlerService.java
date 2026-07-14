@@ -149,6 +149,10 @@ public class ChoiceHandlerService {
             handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
+            handlePrimalClayFormChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
             handleBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
@@ -878,6 +882,41 @@ public class ChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + parityName.toLowerCase() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {
+        com.github.laxika.magicalvibes.model.PrimalClayForm form =
+                com.github.laxika.magicalvibes.model.PrimalClayForm.valueOf(formName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            // "As this creature enters, it becomes ..." — lock in the chosen shape's base P/T,
+            // keyword, and extra creature type for the life of the permanent (CR 614.1c).
+            perm.setBasePowerOverriddenPermanently(true);
+            perm.setPermanentBasePowerOverride(form.power());
+            perm.setPermanentBasePowerOverrideTimestamp(gameData.nextTimestamp());
+            perm.setBaseToughnessOverriddenPermanently(true);
+            perm.setPermanentBaseToughnessOverride(form.toughness());
+            perm.setPermanentBaseToughnessOverrideTimestamp(gameData.nextTimestamp());
+            if (form.keyword() != null) {
+                perm.getPersistentGrantedKeywords().add(form.keyword());
+            }
+            if (form.subtype() != null) {
+                perm.getGrantedSubtypes().add(form.subtype());
+            }
+
+            String logEntry = player.getUsername() + " chooses a " + form.power() + "/" + form.toughness()
+                    + (form.keyword() != null ? " " + form.keyword().name().toLowerCase() : "")
+                    + " shape for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses shape {} for {}", gameData.id, player.getUsername(), form, perm.getCard().getName());
         }
 
         gameData.priorityPassedBy.clear();

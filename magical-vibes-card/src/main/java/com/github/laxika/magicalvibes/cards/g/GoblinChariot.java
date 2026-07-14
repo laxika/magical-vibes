@@ -5,5 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "191")
 @CardRegistration(set = "8ED", collectorNumber = "188")
+@CardRegistration(set = "7ED", collectorNumber = "185")
 public class GoblinChariot extends Card {
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
@@ -56,6 +57,16 @@ public class GraveyardTargetValidators {
         if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
+        }
+        // "from your graveyard" enforcement for the activated-ability path. Spells are validated in
+        // SpellCastingService (which has the caster's playerId); there the source card is on the stack,
+        // so findSourcePermanentController returns null and this check is safely skipped.
+        if (effect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+            UUID controllerId = tvs.findSourcePermanentController(ctx);
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            if (controllerId != null && graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
         }
         if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
@@ -313,7 +324,8 @@ public class GraveyardTargetValidators {
     }
 
     @ValidatesTarget(PutCardFromOpponentGraveyardOntoBattlefieldEffect.class)
-    public void validatePutCardFromOpponentGraveyard(TargetValidationContext ctx) {
+    public void validatePutCardFromOpponentGraveyard(TargetValidationContext ctx,
+                                                     PutCardFromOpponentGraveyardOntoBattlefieldEffect effect) {
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
@@ -324,10 +336,12 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (!graveyardCard.hasType(CardType.ARTIFACT) && !graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be an artifact or creature card");
+        if (effect.filter() != null
+                && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            String label = CardPredicateUtils.describeFilter(effect.filter());
+            throw new IllegalStateException("Target must be a " + label);
         }
-        if (graveyardCard.getManaValue() != ctx.xValue()) {
+        if (effect.requireManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());

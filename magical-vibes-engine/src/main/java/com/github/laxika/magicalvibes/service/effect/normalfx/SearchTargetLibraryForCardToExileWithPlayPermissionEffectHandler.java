@@ -30,10 +30,12 @@ public class SearchTargetLibraryForCardToExileWithPlayPermissionEffectHandler im
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        doResolve(gameData, entry);
+        boolean expiresAtNextUpkeep =
+                effect instanceof SearchTargetLibraryForCardToExileWithPlayPermissionEffect e && e.expiresAtNextUpkeep();
+        doResolve(gameData, entry, expiresAtNextUpkeep);
     }
 
-    private void doResolve(GameData gameData, StackEntry entry) {
+    private void doResolve(GameData gameData, StackEntry entry, boolean expiresAtNextUpkeep) {
         UUID controllerId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
 
@@ -51,10 +53,15 @@ public class SearchTargetLibraryForCardToExileWithPlayPermissionEffectHandler im
 
         List<Card> allCards = new ArrayList<>(deck);
 
+        LibrarySearchDestination destination = expiresAtNextUpkeep
+                ? LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_NEXT_UPKEEP
+                : LibrarySearchDestination.EXILE_PLAYABLE;
+
         String prompt = "Search " + targetName + "'s library for a card to exile face down.";
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)
                 .targetPlayerId(targetPlayerId)
-                .destination(LibrarySearchDestination.EXILE_PLAYABLE)
+                .destination(destination)
+                .sourceCards(List.of(entry.getCard()))
                 .build(), prompt, false, controllerName + " searches " + targetName + "'s library.");
 
         log.info("Game {} - {} searching {}'s library for Praetor's Grasp ({} cards in library)",

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "304")
+@CardRegistration(set = "7ED", collectorNumber = "301")
+@CardRegistration(set = "6ED", collectorNumber = "291")
 public class IronStar extends Card {
 
     public IronStar() {

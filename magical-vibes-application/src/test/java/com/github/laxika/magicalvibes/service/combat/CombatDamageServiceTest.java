@@ -241,6 +241,13 @@ class CombatDamageServiceTest {
 
     /** Stubs for infect damage to creatures (-1/-1 counters). */
     private void stubInfectOnCreature() {
+        // Mirrors the production query: infect and wither both deal counter damage.
+        when(gameQueryService.dealsCounterDamageToCreatures(eq(gameData), any(Permanent.class)))
+                .thenAnswer(inv -> {
+                    Permanent perm = inv.getArgument(1);
+                    return perm.getCard().getKeywords().contains(Keyword.INFECT)
+                            || perm.getCard().getKeywords().contains(Keyword.WITHER);
+                });
         when(gameQueryService.cantHaveCounters(eq(gameData), any(Permanent.class))).thenReturn(false);
         when(gameQueryService.cantHaveMinusOneMinusOneCounters(eq(gameData), any(Permanent.class)))
                 .thenReturn(false);

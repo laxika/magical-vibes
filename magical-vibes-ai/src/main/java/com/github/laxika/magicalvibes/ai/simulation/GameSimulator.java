@@ -83,6 +83,15 @@ public class GameSimulator {
     private final Map<GameData, Integer> opponentRolloutCasts =
             Collections.synchronizedMap(new WeakHashMap<>());
 
+    /**
+     * Cap on enumerated targets per spell and on double-block pair options. MCTS
+     * runs on a time budget, so excessive root branching dilutes visits per action;
+     * these caps keep the added choices (top creatures + face, cheapest sufficient
+     * double-blocks) without flooding the tree.
+     */
+    private static final int MAX_TARGET_CANDIDATES = 3;
+    private static final int MAX_DOUBLE_BLOCK_PAIRS = 3;
+
     private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -150,14 +159,18 @@ public class GameSimulator {
             case PendingInteraction.AttackerDeclaration ignored -> {
                 List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
                 List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
+                // "All-in" excludes creatures that assign no combat damage (power <= 0, CR 510.1a)
+                List<Integer> allInIndices = combatSimulator.filterZeroPowerAttackers(
+                        gd, playerId, availableIndices, mustAttackIndices);
                 // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
                 List<Integer> bestAttackers = combatSimulator.findBestAttackers(gd, playerId, availableIndices, mustAttackIndices);
                 boolean forcedToAttack = combatAttackService.isOpponentForcedToAttack(gd, playerId);
                 if (mustAttackIndices.isEmpty() && !forcedToAttack) {
                     actions.add(new SimulationAction.DeclareAttackers(List.of())); // no attack
                 } else if (mustAttackIndices.isEmpty() && forcedToAttack) {
-                    // Forced to attack with at least one — offer the first available
-                    actions.add(new SimulationAction.DeclareAttackers(List.of(availableIndices.getFirst())));
+                    // Forced to attack with at least one — offer the first worth sending
+                    List<Integer> forcedPool = allInIndices.isEmpty() ? availableIndices : allInIndices;
+                    actions.add(new SimulationAction.DeclareAttackers(List.of(forcedPool.getFirst())));
                 } else {
                     // Must-attack creatures must always be included
                     actions.add(new SimulationAction.DeclareAttackers(mustAttackIndices));
@@ -166,9 +179,34 @@ public class GameSimulator {
                     actions.add(new SimulationAction.DeclareAttackers(bestAttackers));
                 }
                 // Also try all-in attack if different from best
-                if (!availableIndices.isEmpty() && !availableIndices.equals(bestAttackers)
-                        && !availableIndices.equals(mustAttackIndices)) {
-                    actions.add(new SimulationAction.DeclareAttackers(availableIndices));
+                if (!allInIndices.isEmpty() && !allInIndices.equals(bestAttackers)
+                        && !allInIndices.equals(mustAttackIndices)) {
+                    actions.add(new SimulationAction.DeclareAttackers(allInIndices));
+                }
+                // Also try holding back the biggest creature as a defender: the best
+                // set minus its highest-power member (must-attackers stay included).
+                if (bestAttackers.size() >= 2) {
+                    List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
+                    int holdBackIdx = -1;
+                    int holdBackPower = -1;
+                    for (int idx : bestAttackers) {
+                        if (mustAttackIndices.contains(idx)) continue;
+                        int power = gameQueryService.getEffectivePower(gd, battlefield.get(idx));
+                        if (power > holdBackPower) {
+                            holdBackPower = power;
+                            holdBackIdx = idx;
+                        }
+                    }
+                    if (holdBackIdx >= 0) {
+                        List<Integer> holdBack = new ArrayList<>(bestAttackers);
+                        holdBack.remove(Integer.valueOf(holdBackIdx));
+                        boolean duplicate = actions.stream()
+                                .anyMatch(a -> a instanceof SimulationAction.DeclareAttackers da
+                                        && da.attackerIndices().equals(holdBack));
+                        if (!duplicate) {
+                            actions.add(new SimulationAction.DeclareAttackers(holdBack));
+                        }
+                    }
                 }
             }
             case PendingInteraction.BlockerDeclaration ignored -> {
@@ -202,14 +240,47 @@ public class GameSimulator {
                     }
                 }
                 if (biggestAttackerIdx >= 0) {
-                    // For each available blocker, offer "block only the biggest attacker"
+                    List<Integer> availableBlockers = new ArrayList<>();
                     for (int bi = 0; bi < aiBf.size(); bi++) {
-                        if (!gameQueryService.canBlock(gd, aiBf.get(bi))) continue;
+                        if (gameQueryService.canBlock(gd, aiBf.get(bi))) availableBlockers.add(bi);
+                    }
+
+                    // For each available blocker, offer "block only the biggest attacker"
+                    for (int bi : availableBlockers) {
                         List<int[]> singleBlock = List.of(new int[]{bi, biggestAttackerIdx});
                         // Avoid duplicating an already-added option
-                        if (!singleBlock.equals(bestBlockers)) {
+                        if (!sameAssignments(singleBlock, bestBlockers)) {
                             actions.add(new SimulationAction.DeclareBlockers(singleBlock));
                         }
+                    }
+
+                    // 4) Double-blocks ganging up on the biggest attacker — the greedy
+                    //    assignment never proposes them, and against menace they are the
+                    //    only legal way to block it at all. Prefer the cheapest pair
+                    //    whose combined power still kills it.
+                    int attackerToughness = gameQueryService.getEffectiveToughness(gd, oppBf.get(biggestAttackerIdx));
+                    List<int[]> killingPairs = new ArrayList<>(); // {blocker1, blocker2, combinedPower}
+                    for (int i = 0; i < availableBlockers.size(); i++) {
+                        for (int j = i + 1; j < availableBlockers.size(); j++) {
+                            int b1 = availableBlockers.get(i);
+                            int b2 = availableBlockers.get(j);
+                            int combined = gameQueryService.getEffectivePower(gd, aiBf.get(b1))
+                                    + gameQueryService.getEffectivePower(gd, aiBf.get(b2));
+                            if (combined >= attackerToughness) {
+                                killingPairs.add(new int[]{b1, b2, combined});
+                            }
+                        }
+                    }
+                    killingPairs.sort(Comparator.comparingInt(pair -> pair[2]));
+                    int doubleBlocksAdded = 0;
+                    for (int[] pair : killingPairs) {
+                        if (doubleBlocksAdded >= MAX_DOUBLE_BLOCK_PAIRS) break;
+                        List<int[]> doubleBlock = List.of(
+                                new int[]{pair[0], biggestAttackerIdx},
+                                new int[]{pair[1], biggestAttackerIdx});
+                        if (sameAssignments(doubleBlock, bestBlockers)) continue;
+                        actions.add(new SimulationAction.DeclareBlockers(doubleBlock));
+                        doubleBlocksAdded++;
                     }
                 }
             }
@@ -406,8 +477,9 @@ public class GameSimulator {
     }
 
     /**
-     * Enumerates the sorcery-speed spells the MCTS player could cast right now,
-     * with the best target and X value pre-selected.
+     * Enumerates the sorcery-speed spells the MCTS player could cast right now —
+     * one action per candidate target (capped at {@link #MAX_TARGET_CANDIDATES}),
+     * with the X value computed per target.
      */
     private List<SimulationAction.PlayCard> enumerateCastableSpells(GameData gd, UUID playerId) {
         List<SimulationAction.PlayCard> castable = new ArrayList<>();
@@ -438,18 +510,29 @@ public class GameSimulator {
             if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
                 continue;
             }
-            // For targeted spells, try to find a target (policy: which target to try)
-            UUID targetId = null;
+            // For targeted spells, enumerate candidate targets (policy: which targets
+            // to offer) — one PlayCard per candidate so MCTS can compare targets
+            // instead of trusting a fixed heuristic pick.
             if (EffectResolution.needsTarget(card) || card.isAura()) {
-                targetId = findBestTarget(gd, card, playerId);
-                if (targetId == null) continue; // no valid target
+                List<UUID> candidates = findCandidateTargets(gd, card, playerId, MAX_TARGET_CANDIDATES);
+                if (candidates.isEmpty()) continue; // no valid target
+                for (UUID targetId : candidates) {
+                    int xValue = 0;
+                    if (hasX) {
+                        // X depends on the target (lethal X vs a creature, max X to the face)
+                        xValue = calculateSmartX(gd, card, targetId, virtualPool);
+                        if (xValue <= 0) continue;
+                    }
+                    castable.add(new SimulationAction.PlayCard(i, targetId, xValue));
+                }
+                continue;
             }
             int xValue = 0;
             if (hasX) {
-                xValue = calculateSmartX(gd, card, targetId, virtualPool);
+                xValue = calculateSmartX(gd, card, null, virtualPool);
                 if (xValue <= 0) continue;
             }
-            castable.add(new SimulationAction.PlayCard(i, targetId, xValue));
+            castable.add(new SimulationAction.PlayCard(i, null, xValue));
         }
         return castable;
     }
@@ -644,6 +727,12 @@ public class GameSimulator {
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
+            case PendingInteraction.DoomsdayChoice dc -> {
+                List<UUID> chosen = dc.validCardIds().stream().limit(dc.maxCount()).toList();
+                gameService.handleMultipleCardsChosen(gd, player, chosen);
+            }
+            case PendingInteraction.SearchLibraryToTopChoice slttc ->
+                    gameService.handleMultipleCardsChosen(gd, player, slttc.validCardIds());
             case PendingInteraction.CombatDamageAssignment cda -> {
                 Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
                 gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
@@ -677,6 +766,7 @@ public class GameSimulator {
                     gameService.handleCardChosen(gd, player, rcdc.validIndices().iterator().next());
                 }
             }
+            case PendingInteraction.IllicitAuctionBidChoice ignored -> gameService.handleXValueChosen(gd, player, 0);
             case PendingInteraction.HandTopBottomChoice ignored -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
             case PendingInteraction.LibraryRevealChoice lrc -> {
                 if (lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
@@ -724,12 +814,15 @@ public class GameSimulator {
         if (active != null) {
             return switch (active) {
                 case PendingInteraction.XValueChoice xvc -> xvc.playerId();
+                case PendingInteraction.IllicitAuctionBidChoice iabc -> iabc.playerId();
                 case PendingInteraction.Scry s -> s.playerId();
                 case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
                 case PendingInteraction.LibraryReorder lr -> lr.playerId();
                 case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
                 case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
                 case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
+                case PendingInteraction.DoomsdayChoice dc -> dc.playerId();
+                case PendingInteraction.SearchLibraryToTopChoice slttc -> slttc.playerId();
                 case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
                 case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
@@ -762,6 +855,28 @@ public class GameSimulator {
             }
         }
         return null;
+    }
+
+    /**
+     * Content-based equality for blocker assignment lists. {@code List.equals} on
+     * {@code List<int[]>} compares the arrays by identity and never matches, so both
+     * sides are compared in the canonical sorted (blockerIdx, attackerIdx) order that
+     * {@code MCTSEngine.canonicalString} uses for {@code DeclareBlockers}.
+     */
+    private static boolean sameAssignments(List<int[]> a, List<int[]> b) {
+        if (a.size() != b.size()) return false;
+        Comparator<int[]> order = Comparator.<int[]>comparingInt(pair -> pair[0])
+                .thenComparingInt(pair -> pair[1]);
+        List<int[]> sortedA = new ArrayList<>(a);
+        List<int[]> sortedB = new ArrayList<>(b);
+        sortedA.sort(order);
+        sortedB.sort(order);
+        for (int i = 0; i < sortedA.size(); i++) {
+            if (sortedA.get(i)[0] != sortedB.get(i)[0] || sortedA.get(i)[1] != sortedB.get(i)[1]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private List<int[]> findBestBlockerAssignments(GameData gd, UUID playerId) {
@@ -946,17 +1061,28 @@ public class GameSimulator {
     }
 
     private UUID findBestTarget(GameData gd, Card card, UUID playerId) {
+        return findCandidateTargets(gd, card, playerId, 1).stream().findFirst().orElse(null);
+    }
+
+    /**
+     * Ranked, distinct target candidates for a spell or aura, best first, capped at
+     * {@code maxCandidates}. Player-only and graveyard targeting stay single-candidate
+     * to limit root branching; creature targeting offers the top two plus (for
+     * "any target" spells) the opponent's face.
+     */
+    private List<UUID> findCandidateTargets(GameData gd, Card card, UUID playerId, int maxCandidates) {
         UUID opponentId = getOpponentId(gd, playerId);
 
         // Handle player-only targeting (e.g. Haunting Echoes, Mind Rot)
         Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
         if (allowedTargets.contains(TargetType.PLAYER) && !allowedTargets.contains(TargetType.PERMANENT)) {
-            return opponentId;
+            return List.of(opponentId);
         }
 
         // Handle graveyard targeting (e.g. Unburial Rites, Gruesome Encore)
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
-            return findBestGraveyardTarget(gd, card, playerId, opponentId);
+            UUID graveyardTarget = findBestGraveyardTarget(gd, card, playerId, opponentId);
+            return graveyardTarget == null ? List.of() : List.of(graveyardTarget);
         }
 
         // Handle auras — beneficial auras target own creatures, detrimental target opponent's
@@ -974,39 +1100,44 @@ public class GameSimulator {
                 return gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                         .filter(p -> gameQueryService.isCreature(gd, p))
                         .filter(p -> passesTargetFilter(gd, card, p, playerId))
-                        .max(Comparator.comparingInt(p -> gameQueryService.getEffectiveToughness(gd, p)))
+                        .sorted(Comparator.comparingInt(
+                                (Permanent p) -> gameQueryService.getEffectiveToughness(gd, p)).reversed())
+                        .limit(Math.min(2, maxCandidates))
                         .map(Permanent::getId)
-                        .orElse(null);
+                        .toList();
             }
             // Detrimental aura — fall through to opponent's battlefield targeting below
         }
 
         List<Permanent> oppBattlefield = gd.playerBattlefields.getOrDefault(opponentId, List.of());
+        List<UUID> candidates = new ArrayList<>();
 
-        // Prefer creatures that pass the target filter
-        UUID creatureTarget = oppBattlefield.stream()
+        // Prefer creatures that pass the target filter, biggest power first
+        oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gd, p))
                 .filter(p -> passesTargetFilter(gd, card, p, playerId))
-                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gd, p)))
+                .sorted(Comparator.comparingInt(
+                        (Permanent p) -> gameQueryService.getEffectivePower(gd, p)).reversed())
+                .limit(Math.min(2, maxCandidates))
                 .map(Permanent::getId)
-                .orElse(null);
-        if (creatureTarget != null) {
-            return creatureTarget;
-        }
+                .forEach(candidates::add);
 
-        // "Any target" spells (creature/planeswalker/player): with no creature to hit, aim at the
-        // opponent's face. Falling through to the permanent fallback would pick illegal targets
-        // like lands (a null target filter passes everything).
-        if (allowedTargets.contains(TargetType.PLAYER)) {
-            return opponentId;
+        // "Any target" spells (creature/planeswalker/player) can also go to the opponent's
+        // face. The permanent fallback below must stay out of reach for them: it would pick
+        // illegal targets like lands (a null target filter passes everything).
+        if (allowedTargets.contains(TargetType.PLAYER) && candidates.size() < maxCandidates) {
+            candidates.add(opponentId);
         }
 
         // Fall back to any permanent that passes the target filter (e.g., artifacts/enchantments for Naturalize)
-        return oppBattlefield.stream()
-                .filter(p -> passesTargetFilter(gd, card, p, playerId))
-                .findFirst()
-                .map(Permanent::getId)
-                .orElse(null);
+        if (candidates.isEmpty()) {
+            oppBattlefield.stream()
+                    .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                    .findFirst()
+                    .map(Permanent::getId)
+                    .ifPresent(candidates::add);
+        }
+        return candidates;
     }
 
     private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {

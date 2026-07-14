@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "64")
+@CardRegistration(set = "7ED", collectorNumber = "62")
 @CardRegistration(set = "POR", collectorNumber = "42")
 public class BalefulStare extends Card {
 

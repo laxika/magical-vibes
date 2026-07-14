@@ -87,16 +87,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** "All damage that would be dealt to target creature this turn by a source of your choice is dealt to
      *  this creature instead." Chooses the source permanent; {@code protectedCreatureId} is the ability's
-     *  target and {@code redirectTargetId} is where redirected damage goes (Oracle's Attendants). */
-    record RedirectCreatureDamageSourceChoice(UUID controllerId, UUID protectedCreatureId, UUID redirectTargetId) implements PermanentChoiceContext {}
+     *  target and {@code redirectTargetId} is where redirected damage goes (Oracle's Attendants). When
+     *  {@code nextEventOnly} is true, only the next single damage event from the chosen source is
+     *  redirected before the shield is consumed (Jade Monolith); otherwise all such damage this turn. */
+    record RedirectCreatureDamageSourceChoice(UUID controllerId, UUID protectedCreatureId, UUID redirectTargetId,
+                                              boolean nextEventOnly) implements PermanentChoiceContext {}
 
     record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) implements PermanentChoiceContext {}
 
     record PreventNextDamageFromColoredSourceChoice(UUID controllerId, CardColor color) implements PermanentChoiceContext {}
 
-    /** "The next time a source of your choice would deal damage to you this turn, prevent that damage.
-     *  You gain life equal to the damage prevented this way." Any-color source (Reverse Damage). */
-    record PreventNextDamageFromSourceAndGainLifeChoice(UUID controllerId) implements PermanentChoiceContext {}
+    /** "The next time a source of your choice would deal damage to you this turn, prevent that damage."
+     *  Any-color source. When {@code gainLife} is true the controller also gains life equal to the
+     *  damage prevented (Reverse Damage); when false there is no life gain (Pentagram of the Ages). */
+    record PreventNextDamageFromSourceChoice(UUID controllerId, boolean gainLife) implements PermanentChoiceContext {}
 
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. */
@@ -292,5 +296,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  (tracking creature mana when {@code creatureSource}). Begun inline during mana-ability resolution. */
     record ManaAbilityAddToChosenPlayer(ManaColor color, int amount, boolean creatureSource,
                                         String sourceCardName) implements PermanentChoiceContext {}
+
+    /** Tariff tie-break: {@code playerId} chooses which of their creatures tied for greatest mana
+     *  value is the one they must pay for or sacrifice. */
+    record TariffTieBreak(UUID playerId, Card sourceCard) implements PermanentChoiceContext {}
+
+    /** Juxtapose tie-break: a player chooses which of their permanents tied for greatest mana value
+     *  participates in the exchange. {@code artifactPhase} distinguishes the creature step from the
+     *  artifact step. While {@code controllerChosen} is false the pending choice belongs to the spell's
+     *  controller; once true, {@code controllerPermanentId} holds the controller's already-selected
+     *  permanent and the pending choice belongs to the target player. */
+    record JuxtaposeTieBreak(Card sourceCard, UUID controllerId, UUID targetPlayerId,
+                             boolean artifactPhase, boolean controllerChosen,
+                             UUID controllerPermanentId) implements PermanentChoiceContext {}
 
 }

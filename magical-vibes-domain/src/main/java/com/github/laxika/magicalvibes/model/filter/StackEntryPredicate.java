@@ -16,6 +16,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryHasTargetPredicate,
         StackEntryIsSingleTargetPredicate,
         StackEntryManaValuePredicate,
+        StackEntryManaValueEqualsXPredicate,
         StackEntryManaValueAtMostControlledCountPredicate,
         StackEntryNotPredicate,
         StackEntrySharesChosenNameWithSourcePredicate,

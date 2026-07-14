@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -39,6 +40,7 @@ public class AutoPassService {
     private final StackResolutionService stackResolutionService;
     private final StepTriggerService stepTriggerService;
     private final CombatAttackService combatAttackService;
+    private final PotentialManaService potentialManaService;
 
     public AutoPassService(
             GameQueryService gameQueryService,
@@ -46,13 +48,15 @@ public class AutoPassService {
             TriggerCollectionService triggerCollectionService,
             StackResolutionService stackResolutionService,
             StepTriggerService stepTriggerService,
-            CombatAttackService combatAttackService) {
+            CombatAttackService combatAttackService,
+            PotentialManaService potentialManaService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
         this.stackResolutionService = stackResolutionService;
         this.stepTriggerService = stepTriggerService;
         this.combatAttackService = combatAttackService;
+        this.potentialManaService = potentialManaService;
     }
 
     /**
@@ -167,6 +171,20 @@ public class AutoPassService {
             List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
             if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
                 // Priority holder can act — stop and let them decide
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
+            }
+
+            // The strict check above uses the floating mana pool, which a live AI player
+            // almost never holds outside of a cast — so it would auto-pass an AI straight
+            // through combat even when an instant plus untapped lands gives it a play
+            // (e.g. pumping an unblocked attacker for lethal). Re-check against the
+            // potential pool for live AI players. Headless simulation keeps the strict
+            // behavior: rollouts don't enumerate mid-combat casts, and the extra
+            // potential-pool build per priority window would slow MCTS for nothing.
+            if (!gameData.simulation && gameData.aiPlayerIds.contains(priorityHolder)
+                    && !gameBroadcastService.getPotentialPlayableCardIndices(
+                            gameData, priorityHolder, List.of()).isEmpty()) {
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }

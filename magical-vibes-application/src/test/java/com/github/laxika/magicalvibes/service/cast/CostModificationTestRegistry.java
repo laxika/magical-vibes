@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.costmod.ConditionalCostModificationHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOpponentCastCostEffectHandler;
+import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostEffectHandler;
 import com.github.laxika.magicalvibes.service.cast.costmod.IncreaseSpellCostExceptOnControllersTurnEffectHandler;
@@ -40,6 +41,7 @@ public final class CostModificationTestRegistry {
         registry.register(new IncreaseOpponentCastCostEffectHandler());
         registry.register(new IncreaseEachPlayerCastCostPerSpellThisTurnEffectHandler());
         registry.register(new IncreaseSpellCostEffectHandler(predicateEvaluationService));
+        registry.register(new IncreaseOwnCastCostEffectHandler(predicateEvaluationService));
         registry.register(new IncreaseSpellCostExceptOnControllersTurnEffectHandler());
         registry.register(new IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler(gameQueryService));
         registry.register(new ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler(support, amountEvaluationService));

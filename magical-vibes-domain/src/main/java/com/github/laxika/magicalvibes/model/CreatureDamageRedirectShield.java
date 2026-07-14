@@ -12,6 +12,9 @@ import java.util.UUID;
  *   <li><b>Amount-limited, any source</b> (positive {@code remainingAmount}, null {@code damageSourceId}):
  *       only the next {@code remainingAmount} damage from any source is redirected, then the shield is
  *       consumed. Used by Zealous Inquisitor.</li>
+ *   <li><b>Next-event, chosen source</b> ({@link #NEXT_EVENT} amount, non-null {@code damageSourceId}):
+ *       the next single damage event the chosen source would deal to the protected creature this turn is
+ *       redirected in full, then the shield is consumed. Used by Jade Monolith.</li>
  * </ul>
  * Unlike {@link SourceDamageRedirectShield} (Harm's Way) this protects a single creature (not a player
  * and their permanents).
@@ -31,8 +34,15 @@ public record CreatureDamageRedirectShield(
     /** Sentinel {@code remainingAmount} meaning the shield has no amount limit. */
     public static final int UNLIMITED = -1;
 
+    /** Sentinel {@code remainingAmount} meaning the shield redirects only the next single damage event, in full. */
+    public static final int NEXT_EVENT = -2;
+
     public boolean isUnlimited() {
         return remainingAmount == UNLIMITED;
+    }
+
+    public boolean isNextEvent() {
+        return remainingAmount == NEXT_EVENT;
     }
 
     /**

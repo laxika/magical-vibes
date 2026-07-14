@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToC
 
 @CardRegistration(set = "M11", collectorNumber = "89")
 @CardRegistration(set = "SHM", collectorNumber = "62")
+@CardRegistration(set = "7ED", collectorNumber = "124")
 public class Corrupt extends Card {
 
     public Corrupt() {

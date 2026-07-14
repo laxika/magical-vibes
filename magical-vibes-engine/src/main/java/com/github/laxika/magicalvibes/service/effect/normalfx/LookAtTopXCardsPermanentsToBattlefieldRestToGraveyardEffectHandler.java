@@ -97,7 +97,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard.";
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
-                controllerId, revealedCards, cardIds, !toBottomRandom, false, false, toBottomRandom, 0, null,
+                controllerId, revealedCards, cardIds, !toBottomRandom, false, false, toBottomRandom, false, 0, null,
                 eligibleCards.size(), prompt));
 
         log.info("Game {} - {} resolving {} with X={}, {} revealed, {} eligible",

@@ -8,6 +8,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "23")
+@CardRegistration(set = "7ED", collectorNumber = "21")
 @CardRegistration(set = "9ED", collectorNumber = "20")
 @CardRegistration(set = "8ED", collectorNumber = "25")
 public class HonorGuard extends Card {

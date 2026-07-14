@@ -92,6 +92,40 @@ class CombatMathTest {
     }
 
     @Test
+    @DisplayName("Unblocked negative-power attacker deals no damage (CR 510.1a)")
+    void unblockedNegativePowerDealsNoDamage() {
+        CombatMath.Attacker weakling = attacker(creature(0, -2, 2, 0.5));
+        CombatOutcome outcome = CombatMath.simulateCombat(List.of(weakling), List.of(), 20);
+
+        // Negative power must clamp to 0 — not reduce (or "heal") the opponent's damage total
+        assertThat(outcome.opponentLifeChange()).isEqualTo(0);
+        assertThat(outcome.opponentPoisonChange()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Unblocked negative-power lifelink attacker gains no life")
+    void negativePowerLifelinkGainsNoLife() {
+        CombatMath.Attacker weakling = attacker(creature(0, -2, 2, 0.5, Keyword.LIFELINK));
+        CombatOutcome outcome = CombatMath.simulateCombat(List.of(weakling), List.of(), 20);
+
+        assertThat(outcome.aiLifeChange()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Counter-attack estimate clamps negative-power attackers to zero damage")
+    void counterAttackEstimateClampsNegativePower() {
+        // An unblockable -2/2 next to a 3/3: incoming damage is 3, not 1 — the
+        // negative power must not offset the real attacker's damage.
+        CombatMath.Attacker weakling = attacker(creature(0, -2, 2, 0.5));
+        CombatMath.Attacker bruiser = attacker(creature(1, 3, 3, 3.0));
+
+        double[] outcome = CombatMath.estimateCounterAttackOutcome(
+                List.of(weakling, bruiser), List.of(), null, 20);
+
+        assertThat(outcome[0]).isEqualTo(3.0);
+    }
+
+    @Test
     @DisplayName("Defender blocks favorably: small attacker dies to a big blocker")
     void defenderBlocksFavorably() {
         CreatureInfo blocker = creature(0, 4, 4, 4.0);

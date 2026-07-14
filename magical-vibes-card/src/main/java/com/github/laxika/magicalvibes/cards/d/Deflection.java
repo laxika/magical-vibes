@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 @CardRegistration(set = "8ED", collectorNumber = "74")
+@CardRegistration(set = "7ED", collectorNumber = "69")
+@CardRegistration(set = "6ED", collectorNumber = "63")
 public class Deflection extends Card {
 
     public Deflection() {

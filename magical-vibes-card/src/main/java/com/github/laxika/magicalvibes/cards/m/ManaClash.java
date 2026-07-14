@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "203")
 @CardRegistration(set = "8ED", collectorNumber = "202")
+@CardRegistration(set = "7ED", collectorNumber = "202")
 public class ManaClash extends Card {
 
     public ManaClash() {

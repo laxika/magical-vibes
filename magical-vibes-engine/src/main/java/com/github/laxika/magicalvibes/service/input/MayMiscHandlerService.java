@@ -301,11 +301,19 @@ public class MayMiscHandlerService {
      * player's graveyard. The library/graveyard owner is the targeted player, not
      * the prompted controller.
      */
-    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, boolean accepted, UUID libraryOwnerId) {
+    public void handleLookAtTargetPlayerTopCardChoice(GameData gameData, boolean accepted, UUID libraryOwnerId,
+                                                      UUID controllerId, int lifeCost) {
         List<Card> deck = gameData.playerDecks.get(libraryOwnerId);
         String ownerName = gameData.playerIdToName.get(libraryOwnerId);
 
-        if (accepted && deck != null && !deck.isEmpty()) {
+        boolean canPayLife = lifeCost <= 0 || gameData.getLife(controllerId) >= lifeCost;
+        if (accepted && canPayLife && deck != null && !deck.isEmpty()) {
+            if (lifeCost > 0) {
+                int life = gameData.getLife(controllerId);
+                gameData.playerLifeTotals.put(controllerId, life - lifeCost);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        gameData.playerIdToName.get(controllerId) + " pays " + lifeCost + " life.");
+            }
             Card topCard = deck.removeFirst();
             gameData.playerGraveyards.get(libraryOwnerId).add(topCard);
             gameBroadcastService.logAndBroadcast(gameData,

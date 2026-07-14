@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +36,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameBroadcastService gameBroadcastService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,18 +47,25 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ChooseCardsFromTargetHandEffect) effect;
 
+        int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, null));
+
+        // An X of 0 (e.g. Mind Warp for X=0) chooses no cards: nothing to reveal-and-choose.
+        if (count <= 0) {
+            return;
+        }
+
         switch (e.destination()) {
             case DISCARD -> {
                 gameData.discardCausedByOpponent = true;
-                playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, e.count(),
+                playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                         e.excludedTypes(), e.includedTypes(), true, false, null);
             }
             case EXILE -> {
                 UUID sourcePermanentId = e.returnOnSourceLeave() ? entry.getSourcePermanentId() : null;
-                playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, e.count(),
+                playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                         e.excludedTypes(), e.includedTypes(), false, true, sourcePermanentId);
             }
-            case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, e.count());
+            case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count);
         }
     }
 

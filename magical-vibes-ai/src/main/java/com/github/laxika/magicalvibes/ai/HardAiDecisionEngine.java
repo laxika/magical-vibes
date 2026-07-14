@@ -755,19 +755,33 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
+     * Result of the greedy block estimation: face damage that gets through plus the
+     * attackers that end up with no blocker assigned in the model (evasive ones and
+     * those the opponent runs out of blockers for).
+     */
+    private record UnblockableAttackEstimate(int damage, List<Permanent> unblockedAttackers) {}
+
+    private int estimateUnblockableDamage(GameData gameData,
+                                           List<Permanent> attackers,
+                                           List<Permanent> blockers) {
+        return estimateUnblockableAttack(gameData, attackers, blockers).damage();
+    }
+
+    /**
      * Estimates how much combat damage would get through to the opponent's face.
      * Separates attackers into "guaranteed damage" (truly unblockable due to evasion,
      * protection, fear/intimidate, landwalk, menace with too few legal blockers, etc.)
      * and "blockable". The greedy blocking simulation only runs on blockable attackers.
      */
-    private int estimateUnblockableDamage(GameData gameData,
-                                           List<Permanent> attackers,
-                                           List<Permanent> blockers) {
-        if (attackers.isEmpty()) return 0;
+    private UnblockableAttackEstimate estimateUnblockableAttack(GameData gameData,
+                                                                List<Permanent> attackers,
+                                                                List<Permanent> blockers) {
+        if (attackers.isEmpty()) return new UnblockableAttackEstimate(0, List.of());
         if (blockers.isEmpty()) {
-            return attackers.stream()
+            int damage = attackers.stream()
                     .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
                     .sum();
+            return new UnblockableAttackEstimate(damage, new ArrayList<>(attackers));
         }
 
         // Get the full defender battlefield (needed for landwalk checks in canBlockAttacker)
@@ -777,6 +791,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // Separate attackers into guaranteed damage vs blockable
         int guaranteedDamage = 0;
+        List<Permanent> unblockedAttackers = new ArrayList<>();
         List<Permanent> blockableAttackers = new ArrayList<>();
 
         for (Permanent attacker : attackers) {
@@ -794,12 +809,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (legalBlockerCount < requiredBlockers) {
                 // No legal blockers (or not enough for menace) — guaranteed damage
                 guaranteedDamage += Math.max(0, gameQueryService.getEffectivePower(gameData, attacker));
+                unblockedAttackers.add(attacker);
             } else {
                 blockableAttackers.add(attacker);
             }
         }
 
-        if (blockableAttackers.isEmpty()) return guaranteedDamage;
+        if (blockableAttackers.isEmpty()) {
+            return new UnblockableAttackEstimate(guaranteedDamage, unblockedAttackers);
+        }
 
         // Filter blockers to only those that can actually block at least one blockable attacker
         List<Permanent> relevantBlockers = new ArrayList<>();
@@ -828,6 +846,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         for (int i = blockerCount; i < blockableAttackers.size(); i++) {
             unblockableDamage += Math.max(0,
                     gameQueryService.getEffectivePower(gameData, blockableAttackers.get(i)));
+            unblockedAttackers.add(blockableAttackers.get(i));
         }
 
         // Blocked attackers with trample deal excess damage through
@@ -844,7 +863,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        return unblockableDamage;
+        return new UnblockableAttackEstimate(unblockableDamage, unblockedAttackers);
     }
 
     /**
@@ -2046,13 +2065,34 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
 
+        // "All-in" means every creature whose attack accomplishes something — a creature
+        // with power <= 0 assigns no combat damage (CR 510.1a) and just dies to a free block.
+        List<Integer> allInIndices = combatSimulator.filterZeroPowerAttackers(
+                gameData, aiPlayer.getId(), availableIndices, mustAttackIndices);
+
         // Alpha strike + burn lethal: if attacking with everything and then burning
         // the opponent's face with remaining mana would kill them, go all-in.
-        if (isAlphaStrikePlusBurnLethal(gameData, availableIndices)) {
-            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+        if (isAlphaStrikePlusBurnLethal(gameData, allInIndices)) {
+            List<Integer> attackerIndices = new ArrayList<>(allInIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
+                    attackerIndices.size(), gameId);
+            final List<Integer> finalAttackerIndices = attackerIndices;
+            send(() -> gameActions.handleDeclareAttackers(selfConnection,
+                    new DeclareAttackersRequest(finalAttackerIndices, null)));
+            return;
+        }
+
+        // Attack + pump lethal: pumping an unblocked attacker with an instant from hand
+        // finishes the opponent. The carrier may be a creature the zero-power filter
+        // would otherwise hold back (e.g. a -1/2 plus Giant Growth against 2 life).
+        List<Integer> pumpLethalAttackers = findPumpLethalAttackers(gameData, availableIndices, allInIndices);
+        if (!pumpLethalAttackers.isEmpty()) {
+            List<Integer> attackerIndices = enforceMustAttack(pumpLethalAttackers, mustAttackIndices);
+            attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
+            attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
+            log.info("AI (Hard): Attack + pump is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
             send(() -> gameActions.handleDeclareAttackers(selfConnection,
@@ -2068,7 +2108,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (raceState.aiWinningRace() && !raceState.aiLosingRace()) {
             log.info("AI (Hard): Winning the race (AI clock={}, opp clock={}), attacking aggressively in game {}",
                     raceState.aiClock(), raceState.opponentClock(), gameId);
-            List<Integer> attackerIndices = new ArrayList<>(availableIndices);
+            List<Integer> attackerIndices = new ArrayList<>(allInIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);
@@ -2707,6 +2747,148 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return totalDamage;
+    }
+
+    /**
+     * Collects the power boosts of instant-speed pump spells in hand that the AI can
+     * afford from the given mana pool, greedily fitted highest boost first (mirrors
+     * {@link #computeAffordableBurnDamage}). Returns one entry per affordable spell.
+     */
+    private List<Integer> computeAffordablePumpBoosts(GameData gameData, List<Card> hand, ManaPool virtualPool) {
+        record PumpCandidate(int boost, int effectiveCost) {}
+        List<PumpCandidate> candidates = new ArrayList<>();
+        AmountContext amountCtx = AmountContext.forEstimation(aiPlayer.getId());
+
+        for (Card card : hand) {
+            if (card.getManaCost() == null) continue;
+            // The pump is cast during combat, after attackers are declared — instant speed only
+            if (!isInstantSpeedCard(card) || !card.hasType(CardType.INSTANT)) continue;
+            int boost = 0;
+            for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+                if (effect instanceof BoostTargetCreatureEffect b) {
+                    boost = amountEvaluationService.evaluate(gameData, b.powerBoost(), amountCtx);
+                    break;
+                }
+            }
+            if (boost <= 0) continue;
+            if (!isSpellCastable(gameData, card, virtualPool)) continue;
+
+            int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+            int effectiveCost = Math.max(0, card.getManaValue() + costModifier);
+            candidates.add(new PumpCandidate(boost, effectiveCost));
+        }
+
+        if (candidates.isEmpty()) return List.of();
+
+        candidates.sort(Comparator.comparingInt(PumpCandidate::boost).reversed());
+
+        List<Integer> boosts = new ArrayList<>();
+        int manaSpent = 0;
+        int totalMana = virtualPool.getTotal();
+        for (PumpCandidate candidate : candidates) {
+            if (manaSpent + candidate.effectiveCost() <= totalMana) {
+                boosts.add(candidate.boost());
+                manaSpent += candidate.effectiveCost();
+            }
+        }
+        return boosts;
+    }
+
+    /**
+     * Checks whether attacking and then pumping unblocked attackers with instant-speed
+     * pump spells from hand deals lethal damage — the pump analogue of
+     * {@link #isAlphaStrikePlusBurnLethal}. Unlike the burn plan, the pump line can make
+     * a creature with 0 or negative power worth sending in: on its own it assigns no
+     * combat damage (CR 510.1a), but the pump raises it above zero. The returned attacker
+     * set therefore may include creatures
+     * {@link CombatSimulator#filterZeroPowerAttackers} would otherwise hold back.
+     *
+     * @return the attacker indices to declare for the pump-lethal line, or an empty
+     *         list when no lethal pump line exists
+     */
+    private List<Integer> findPumpLethalAttackers(GameData gameData, List<Integer> availableIndices,
+                                                  List<Integer> allInIndices) {
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        if (opponentId == null) return List.of();
+        int opponentLife = gameData.getLife(opponentId);
+        if (opponentLife <= 0) return List.of();
+
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        if (hand.isEmpty()) return List.of();
+
+        // Like the burn check, only land mana counts — creature mana producers may be
+        // tapped from attacking by the time the pump is cast.
+        VirtualManaPool landOnlyPool = manaManager.buildLandOnlyVirtualManaPool(gameData, aiPlayer.getId());
+        List<Integer> pumpBoosts = computeAffordablePumpBoosts(gameData, hand, landOnlyPool);
+        if (pumpBoosts.isEmpty()) return List.of();
+
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        List<Permanent> attackers = new ArrayList<>();
+        for (int idx : availableIndices) {
+            if (idx < aiBattlefield.size()) {
+                attackers.add(aiBattlefield.get(idx));
+            }
+        }
+        if (attackers.isEmpty()) return List.of();
+
+        // Gather opponent's potential blockers (untapped creatures)
+        List<Permanent> blockers = new ArrayList<>();
+        for (Permanent perm : gameData.playerBattlefields.getOrDefault(opponentId, List.of())) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockers.add(perm);
+        }
+
+        UnblockableAttackEstimate estimate = estimateUnblockableAttack(gameData, attackers, blockers);
+        List<Permanent> unblockedAttackers = estimate.unblockedAttackers();
+        if (unblockedAttackers.isEmpty()) return List.of();
+        // Pure combat lethal is handled by the race check / MCTS — this is pump-specific
+        if (estimate.damage() >= opponentLife) return List.of();
+
+        // Greedily assign each pump to the unblocked attacker where it adds the most face
+        // damage. On a negative-power attacker only the part above zero counts, so the
+        // greedy pick naturally prefers attackers that convert the full boost.
+        List<Integer> unblockedPowers = new ArrayList<>(unblockedAttackers.size());
+        for (Permanent perm : unblockedAttackers) {
+            unblockedPowers.add(gameQueryService.getEffectivePower(gameData, perm));
+        }
+        int extraDamage = 0;
+        List<Permanent> pumpCarriers = new ArrayList<>();
+        for (int boost : pumpBoosts) {
+            int bestIdx = -1;
+            int bestDelta = 0;
+            for (int i = 0; i < unblockedPowers.size(); i++) {
+                int power = unblockedPowers.get(i);
+                int delta = Math.max(0, power + boost) - Math.max(0, power);
+                if (delta > bestDelta) {
+                    bestDelta = delta;
+                    bestIdx = i;
+                }
+            }
+            if (bestIdx < 0) break;
+            extraDamage += bestDelta;
+            unblockedPowers.set(bestIdx, unblockedPowers.get(bestIdx) + boost);
+            pumpCarriers.add(unblockedAttackers.get(bestIdx));
+        }
+
+        if (estimate.damage() + extraDamage < opponentLife) return List.of();
+
+        // Declare the normally-worthwhile attackers plus the pump carriers (which may
+        // include zero/negative-power creatures the all-in filter would drop). Dropping
+        // the remaining weak attackers is safe: in the greedy model they were unblocked
+        // and contributing 0, so their absence doesn't change any block assignment.
+        List<Integer> attackerIndices = new ArrayList<>(allInIndices);
+        for (Permanent carrier : pumpCarriers) {
+            int idx = aiBattlefield.indexOf(carrier);
+            if (idx >= 0 && !attackerIndices.contains(idx)) {
+                attackerIndices.add(idx);
+            }
+        }
+        attackerIndices.sort(Integer::compareTo);
+
+        log.info("AI (Hard): Attack + pump is lethal! combat={} + pump={} >= life={} in game {}",
+                estimate.damage(), extraDamage, opponentLife, gameId);
+        return attackerIndices;
     }
 
     // ===== Smart Choice Overrides =====

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAn
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
@@ -821,7 +822,7 @@ public class SpellCastingService {
             if (multipleSpellTargets) {
                 targetLegalityService.validateMultiSpellTargetsOnStack(gameData, card, targetIds, playerId);
             } else {
-                targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+                targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId, effectiveXValue);
             }
         }
 
@@ -929,7 +930,7 @@ public class SpellCastingService {
 
         // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
         if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
-            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
+            targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
         }
 
         // Validate permanent targets for spells that also target a spell on the stack (e.g. Lost in the Mist)
@@ -1330,78 +1331,104 @@ public class SpellCastingService {
                     throw new IllegalStateException("Damage assignments required");
                 }
 
-                DealDividedDamageEffect dividedEffect = filteredSpellEffects.stream()
-                        .filter(e -> e instanceof DealDividedDamageEffect d
-                                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments())
-                        .map(DealDividedDamageEffect.class::cast)
+                PreventDividedDamageEffect preventDivided = filteredSpellEffects.stream()
+                        .filter(PreventDividedDamageEffect.class::isInstance)
+                        .map(PreventDividedDamageEffect.class::cast)
                         .findFirst().orElse(null);
-
-                int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-
-                if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
-                    // Fixed-damage divided damage spell (e.g. Ignite Disorder, Pyrotechnics)
-                    if (totalDamage != fixedTotal.value()) {
-                        throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
+                if (preventDivided != null) {
+                    // "Prevent the next N damage ... to any number of targets, divided as you choose"
+                    // (Remedy). Per-target shield amounts ride on damageAssignments; each target needs
+                    // at least 1, so N is the effective cap on the number of targets.
+                    int totalPrevention = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
+                    if (totalPrevention != preventDivided.amount()) {
+                        throw new IllegalStateException("Prevention assignments must sum to " + preventDivided.amount());
                     }
-                    boolean canTargetPlayers = dividedEffect.canTargetPlayers();
-                    // Unbounded (maxTargets 0) among any number of targets: each target needs at
-                    // least 1 damage, so the total damage is the effective cap (Pyrotechnics).
-                    int maxTargets = dividedEffect.maxTargets() > 0 ? dividedEffect.maxTargets()
-                            : (card.getMaxTargets() > 0 ? card.getMaxTargets() : fixedTotal.value());
-                    if (damageAssignments.size() > maxTargets) {
+                    if (damageAssignments.size() > preventDivided.amount()) {
                         throw new IllegalStateException("Too many targets");
                     }
                     for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        boolean isPlayer = gameData.playerIds.contains(assignment.getKey());
-                        if (isPlayer) {
-                            if (!canTargetPlayers) {
-                                throw new IllegalStateException("All targets must be creatures");
-                            }
-                        } else {
-                            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                            if (target == null || !gameQueryService.isCreature(gameData, target)) {
-                                throw new IllegalStateException("All targets must be creatures");
-                            }
-                            if (card.getTargetFilter() != null) {
-                                predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
-                            }
-                        }
-                        if (assignment.getValue() <= 0) {
-                            throw new IllegalStateException("Each damage assignment must be positive");
-                        }
-                    }
-                } else if (dividedEffect != null && dividedEffect.targetRestriction() == null
-                        && dividedEffect.canTargetPlayers()) {
-                    // Dynamic total divided as you choose among any number of targets, creatures
-                    // and/or players (e.g. Jaws of Stone — X = Mountains you control at cast time).
-                    int expectedTotal = amountEvaluationService.evaluate(gameData,
-                            dividedEffect.totalDamage(),
-                            com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
-                    if (totalDamage != expectedTotal) {
-                        throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
-                    }
-                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        UUID assignedTargetId = assignment.getKey();
-                        if (!gameData.playerIds.contains(assignedTargetId)
-                                && gameQueryService.findPermanentById(gameData, assignedTargetId) == null) {
+                        if (!gameData.playerIds.contains(assignment.getKey())
+                                && gameQueryService.findPermanentById(gameData, assignment.getKey()) == null) {
                             throw new IllegalStateException("Invalid target");
                         }
                         if (assignment.getValue() <= 0) {
-                            throw new IllegalStateException("Each damage assignment must be positive");
+                            throw new IllegalStateException("Each prevention assignment must be positive");
                         }
                     }
                 } else {
-                    // X-damage attacking creature divided damage spell (e.g. Hail of Arrows)
-                    if (totalDamage != resolvedXValue) {
-                        throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
-                    }
-                    for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
-                        Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
-                        if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isAttacking()) {
-                            throw new IllegalStateException("All targets must be attacking creatures");
+                    DealDividedDamageEffect dividedEffect = filteredSpellEffects.stream()
+                            .filter(e -> e instanceof DealDividedDamageEffect d
+                                    && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments())
+                            .map(DealDividedDamageEffect.class::cast)
+                            .findFirst().orElse(null);
+
+                    int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
+
+                    if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
+                        // Fixed-damage divided damage spell (e.g. Ignite Disorder, Pyrotechnics)
+                        if (totalDamage != fixedTotal.value()) {
+                            throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                         }
-                        if (assignment.getValue() <= 0) {
-                            throw new IllegalStateException("Each damage assignment must be positive");
+                        boolean canTargetPlayers = dividedEffect.canTargetPlayers();
+                        // Unbounded (maxTargets 0) among any number of targets: each target needs at
+                        // least 1 damage, so the total damage is the effective cap (Pyrotechnics).
+                        int maxTargets = dividedEffect.maxTargets() > 0 ? dividedEffect.maxTargets()
+                                : (card.getMaxTargets() > 0 ? card.getMaxTargets() : fixedTotal.value());
+                        if (damageAssignments.size() > maxTargets) {
+                            throw new IllegalStateException("Too many targets");
+                        }
+                        for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                            boolean isPlayer = gameData.playerIds.contains(assignment.getKey());
+                            if (isPlayer) {
+                                if (!canTargetPlayers) {
+                                    throw new IllegalStateException("All targets must be creatures");
+                                }
+                            } else {
+                                Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                                if (target == null || !gameQueryService.isCreature(gameData, target)) {
+                                    throw new IllegalStateException("All targets must be creatures");
+                                }
+                                if (card.getTargetFilter() != null) {
+                                    predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                                }
+                            }
+                            if (assignment.getValue() <= 0) {
+                                throw new IllegalStateException("Each damage assignment must be positive");
+                            }
+                        }
+                    } else if (dividedEffect != null && dividedEffect.targetRestriction() == null
+                            && dividedEffect.canTargetPlayers()) {
+                        // Dynamic total divided as you choose among any number of targets, creatures
+                        // and/or players (e.g. Jaws of Stone — X = Mountains you control at cast time).
+                        int expectedTotal = amountEvaluationService.evaluate(gameData,
+                                dividedEffect.totalDamage(),
+                                com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId));
+                        if (totalDamage != expectedTotal) {
+                            throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
+                        }
+                        for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                            UUID assignedTargetId = assignment.getKey();
+                            if (!gameData.playerIds.contains(assignedTargetId)
+                                    && gameQueryService.findPermanentById(gameData, assignedTargetId) == null) {
+                                throw new IllegalStateException("Invalid target");
+                            }
+                            if (assignment.getValue() <= 0) {
+                                throw new IllegalStateException("Each damage assignment must be positive");
+                            }
+                        }
+                    } else {
+                        // X-damage attacking creature divided damage spell (e.g. Hail of Arrows)
+                        if (totalDamage != resolvedXValue) {
+                            throw new IllegalStateException("Damage assignments must sum to X (" + resolvedXValue + ")");
+                        }
+                        for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
+                            Permanent target = gameQueryService.findPermanentById(gameData, assignment.getKey());
+                            if (target == null || !gameQueryService.isCreature(gameData, target) || !target.isAttacking()) {
+                                throw new IllegalStateException("All targets must be attacking creatures");
+                            }
+                            if (assignment.getValue() <= 0) {
+                                throw new IllegalStateException("Each damage assignment must be positive");
+                            }
                         }
                     }
                 }
@@ -1981,7 +2008,7 @@ public class SpellCastingService {
         if (!targetIds.isEmpty()) {
             // Multi-target flashback spell
             if (card.getMaxTargets() > 0) {
-                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
+                targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId, effectiveXValue);
             }
             stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),

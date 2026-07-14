@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "10E", collectorNumber = "261")
+@CardRegistration(set = "7ED", collectorNumber = "240")
 @CardRegistration(set = "8ED", collectorNumber = "241")
 @CardRegistration(set = "9ED", collectorNumber = "238")
 public class ElvishChampion extends Card {

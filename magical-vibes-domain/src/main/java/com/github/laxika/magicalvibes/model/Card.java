@@ -316,6 +316,18 @@ public class Card {
     }
 
     /**
+     * Declares a target group whose target count scales with the spell's X value
+     * ("Destroy X target nonblack creatures" — Dregs of Sorrow). The effective number of
+     * targets is bounded by X at cast time; {@code cap} is only a sanity ceiling.
+     */
+    public SpellTarget targetX(TargetFilter filter, int cap) {
+        assertMutable();
+        SpellTarget st = new SpellTarget(this, filter, 0, cap, spellTargets.size(), true);
+        spellTargets.add(st);
+        return st;
+    }
+
+    /**
      * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
      * Wrapper effects (conditional, may) register their inner effects under the same index,
      * because resolution unwraps them before dispatching to the handler — the handler must be
@@ -391,6 +403,33 @@ public class Card {
     }
 
     /**
+     * Returns true if any target group scales its target count with the spell's X value.
+     */
+    public boolean hasXScaledTargets() {
+        return spellTargets.stream().anyMatch(SpellTarget::isXScaled);
+    }
+
+    /**
+     * Returns the minimum total number of targets required for the given X value.
+     * X-scaled groups contribute {@code min(xValue, minTargets)}; others contribute their static minimum.
+     */
+    public int getEffectiveMinTargets(int xValue) {
+        return spellTargets.stream()
+                .mapToInt(st -> st.isXScaled() ? Math.min(xValue, st.getMinTargets()) : st.getMinTargets())
+                .sum();
+    }
+
+    /**
+     * Returns the maximum total number of targets allowed for the given X value.
+     * X-scaled groups contribute {@code min(xValue, maxTargets)}; others contribute their static maximum.
+     */
+    public int getEffectiveMaxTargets(int xValue) {
+        return spellTargets.stream()
+                .mapToInt(st -> st.isXScaled() ? Math.min(xValue, st.getMaxTargets()) : st.getMaxTargets())
+                .sum();
+    }
+
+    /**
      * Returns the spell target declarations.
      */
     public List<SpellTarget> getSpellTargets() {
@@ -432,7 +471,7 @@ public class Card {
     public void copyTargetingFrom(Card original) {
         assertMutable();
         for (SpellTarget st : original.spellTargets) {
-            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex()));
+            spellTargets.add(new SpellTarget(this, st.getFilter(), st.getMinTargets(), st.getMaxTargets(), st.getIndex(), st.isXScaled()));
         }
         effectTargetIndexMap.putAll(original.effectTargetIndexMap);
         castTimeTargetFilter = original.castTimeTargetFilter;

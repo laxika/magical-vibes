@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "272")
+@CardRegistration(set = "6ED", collectorNumber = "254")
 @CardRegistration(set = "8ED", collectorNumber = "282")
+@CardRegistration(set = "7ED", collectorNumber = "272")
 public class StreamOfLife extends Card {
 
     public StreamOfLife() {

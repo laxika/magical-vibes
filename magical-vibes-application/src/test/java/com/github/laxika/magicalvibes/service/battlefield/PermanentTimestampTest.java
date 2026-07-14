@@ -49,6 +49,7 @@ class PermanentTimestampTest {
     @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport permanentCounterSupport;
 
     @InjectMocks private BattlefieldEntryService battlefieldEntryService;
 
