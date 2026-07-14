@@ -68,7 +68,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
@@ -2782,15 +2782,16 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the global damage multiplier based on {@link DoubleDamageEffect} permanents on
-     * the battlefield. Each instance doubles the multiplier (e.g. two Furnaces = 4x damage).
+     * Returns the global damage multiplier based on {@link GlobalDamageMultiplyingEffect} permanents
+     * on the battlefield (e.g. Furnace of Rath). Each instance multiplies by its factor, and multiple
+     * instances stack multiplicatively (e.g. two Furnaces = 4x damage).
      */
     public int getDamageMultiplier(GameData gameData) {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof DoubleDamageEffect) {
-                    multiplier[0] *= 2;
+                if (effect instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
+                    multiplier[0] *= multiplyingEffect.damageMultiplierFactor();
                 }
             }
         });
@@ -2819,7 +2820,7 @@ public class GameQueryService {
     /**
      * Applies the global damage multiplier to the given damage amount.
      *
-     * @return the damage after applying all {@link DoubleDamageEffect} multipliers
+     * @return the damage after applying all {@link GlobalDamageMultiplyingEffect} multipliers
      */
     public int applyDamageMultiplier(GameData gameData, int damage) {
         return damage * getDamageMultiplier(gameData);

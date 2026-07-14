@@ -34,6 +34,12 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
   `canDamageCreatures()`, `canDamagePlayers()`. Impl `DealDamageToAnyTargetEffect`,
   `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect`
+- `GlobalDamageMultiplyingEffect` — static permanent that scales ALL damage in the game regardless of
+  source/target/controller; `damageMultiplierFactor()` (2 for a doubler, stacks multiplicatively). Read
+  by `GameQueryService.getDamageMultiplier` and the Myr Battlesphere damage path. Impl `DoubleDamageEffect`
+  (Furnace of Rath). NOT for the selective doublers (`DoubleControllerDamageEffect`,
+  `DoubleDamageToEnchantedPlayerEffect`, `DoubleEquippedCreatureCombatDamageEffect`) — each selects a
+  different permanent subset and stays concrete in its own dedicated query method
 - `RemovalEffect` — single-target destroy/exile/bounce; `removalKind()` returns `RemovalKind`
   (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when not single-target removal (e.g. mass bounce).
   Impl `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`,

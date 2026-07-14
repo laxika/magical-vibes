@@ -1536,3 +1536,80 @@ PATH this session); the regenerated baseline is byte-identical to the ratchet's 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
 The `MayEffect`-wrapped and destroy/sacrifice "damaged player controls" bespoke flows remain concrete for a
 later pass.
+
+## Step 13 — Audit the damage/life/mana/token MULTIPLIER family; migrate only the global damage doubler  (2026-07-14)
+
+Audited the seven multiplier records. Grepped `magical-vibes-engine/src/main/java` and
+`magical-vibes-ai/src/main/java` for `instanceof <RecordName>`, excluding the exempt zones
+(`service/effect/**`, `service/validate/**`). The AI module has **zero** multiplier `instanceof`. Every
+non-exempt site lives in `GameQueryService` except one: a duplicate of the global-damage loop in
+`MultiPermanentChoiceHandlerService` (Myr Battlesphere's ping). Each `GameQueryService` site is its own
+dedicated single-record method (`getDamageMultiplier`, `getEnchantedPlayerDamageMultiplier`,
+`getTokenMultiplier`, `getControllerDamageMultiplier`, `getEquippedCreatureCombatDamageMultiplier`,
+`lifeGainMultiplier`, `manaProductionMultiplier`) — **no single loop matches 2+ of these records**, so the
+"collapse several branches" arm of the rule never fires.
+
+### Audit table
+
+| Record | Non-exempt sites | Files | Decision | Reason |
+|--------|------------------|------:|----------|--------|
+| `DoubleDamageEffect` | `GameQueryService.getDamageMultiplier` (2792), `MultiPermanentChoiceHandlerService` (818) | **2** | **MIGRATE** | Same global-doubler check duplicated across two files (2+ non-exempt files). |
+| `DoubleDamageToEnchantedPlayerEffect` | `GameQueryService.getEnchantedPlayerDamageMultiplier` (2811) | 1 | LEAVE | Single dedicated check; selects only auras enchanting the damaged player. An interface renames, doesn't reduce. |
+| `DoubleControllerDamageEffect` | `GameQueryService.getControllerDamageMultiplier` (2887) | 1 | LEAVE | Single dedicated check with its own `stackFilter` / `appliesToCombatDamage` branching; distinct selection semantics. |
+| `DoubleEquippedCreatureCombatDamageEffect` | `GameQueryService.getEquippedCreatureCombatDamageMultiplier` (2936) | 1 | LEAVE | Single dedicated check; selects only equipment attached to the given creature. |
+| `DoubleLifeGainEffect` | `GameQueryService.lifeGainMultiplier` (473) | 1 | LEAVE | Single dedicated check; per-player life-gain doubler. |
+| `ManaReflectionEffect` | `GameQueryService.manaProductionMultiplier` (491) | 1 | LEAVE | Single dedicated check; per-player mana doubler. |
+| `MultiplyTokenCreationEffect` | `GameQueryService.getTokenMultiplier` (2840) | 1 | LEAVE | Single dedicated check; already reads `.multiplier()` (not a bare `instanceof`), per-controller token scaling. |
+
+**Why the four damage doublers can't share one interface:** they are checked in *separate* methods precisely
+because each selects a *different* permanent subset (global / auras on a player / same-controller with a
+stack-filter / equipment on a creature). A shared marker read by `getDamageMultiplier` would wrongly count the
+selective doublers and change damage results. So the migrated interface is scoped to the *global,
+unconditional* doubler only.
+
+### Migration done
+
+New domain effect-package interface
+`magical-vibes-domain/.../model/effect/GlobalDamageMultiplyingEffect.java` (`extends CardEffect`, one pure
+fact `int damageMultiplierFactor()`). `DoubleDamageEffect` now implements it (`return 2`) instead of
+`CardEffect`. Both consumer sites read the interface:
+
+- `GameQueryService.getDamageMultiplier` — `instanceof GlobalDamageMultiplyingEffect e` → `*= e.damageMultiplierFactor()`.
+- `MultiPermanentChoiceHandlerService` (Myr Battlesphere) — same swap; the `* 2` magic number now comes from the record.
+
+Both loops are otherwise byte-for-byte unchanged (same iteration, same multiplicative stacking), so damage
+results are identical. Imports and `{@link}` javadoc in both files re-pointed to the interface.
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/battlefield/GameQueryService.java` | 33 | 32 | -1 |
+| `service/input/MultiPermanentChoiceHandlerService.java` | 1 | 0 | -1 |
+
+Program total (ratchet sum): **542 → 540** (-2). Baseline hand-edited (Python not used this step to avoid
+recomputing against the earlier-step dirty tree): `GameQueryService` set to 32, the now-zero
+`MultiPermanentChoiceHandlerService` line deleted. `EFFECT_COUPLING_MATRIX.md` left as-is for the same reason
+(it is informational and not read by the ratchet); regenerate it alongside the next full `python
+scripts/effect-coupling-audit.py` run.
+
+### Tests run (all green)
+
+- `FurnaceOfRathTest` (20 — the sole `DoubleDamageEffect` card, exercises `getDamageMultiplier`).
+- `MyrBattlesphereTest` (9 — exercises the migrated `MultiPermanentChoiceHandlerService` damage path).
+- `SevenLayerTest` (100 — CR 613 layer regression, unaffected but confirms no continuous-effect fallout).
+- `EffectDispatchRatchetTest` — green after the baseline hand-edit.
+
+### Files changed
+
+- **New:** `magical-vibes-domain/.../model/effect/GlobalDamageMultiplyingEffect.java`.
+- `magical-vibes-domain/.../model/effect/DoubleDamageEffect.java` — implements the interface, adds
+  `damageMultiplierFactor()`.
+- `magical-vibes-engine/.../service/battlefield/GameQueryService.java`,
+  `magical-vibes-engine/.../service/input/MultiPermanentChoiceHandlerService.java` — interface swap + import/javadoc.
+- `refactor-docs/effect-dispatch-baseline.txt` (hand-edited, -2).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entry).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+The six selective/per-player multiplier records stay concrete by design (single dedicated query methods);
+migrating them would rename coupling without reducing it.

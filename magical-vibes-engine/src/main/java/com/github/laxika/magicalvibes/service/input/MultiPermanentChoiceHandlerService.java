@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -810,13 +810,13 @@ public class MultiPermanentChoiceHandlerService {
             if (sourcePrevented) {
                 gameBroadcastService.logAndBroadcast(gameData, sourceName + "'s damage to " + defenderName + " is prevented.");
             } else {
-                // Apply damage multiplier (DoubleDamageEffect)
+                // Apply damage multiplier (GlobalDamageMultiplyingEffect)
                 int damage = count;
                 final int[] multiplier = {1};
                 gameData.forEachPermanent((pid, p) -> {
                     for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
-                        if (e instanceof DoubleDamageEffect) {
-                            multiplier[0] *= 2;
+                        if (e instanceof GlobalDamageMultiplyingEffect multiplyingEffect) {
+                            multiplier[0] *= multiplyingEffect.damageMultiplierFactor();
                         }
                     }
                 });
