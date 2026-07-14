@@ -14,7 +14,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   (False Peace: "Target player skips all combat phases of their next turn").</li>
  * </ul>
  */
-public record SkipNextCombatPhaseEffect(boolean targetsPlayer) implements CardEffect {
+public record SkipNextCombatPhaseEffect(boolean targetsPlayer)
+        implements CombatDamageTriggerContextEffect {
 
     /** Non-targeting form (the affected player is baked in as {@code targetId}). */
     public SkipNextCombatPhaseEffect() {
@@ -24,5 +25,10 @@ public record SkipNextCombatPhaseEffect(boolean targetsPlayer) implements CardEf
     @Override
     public boolean canTargetPlayer() {
         return targetsPlayer;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
     }
 }

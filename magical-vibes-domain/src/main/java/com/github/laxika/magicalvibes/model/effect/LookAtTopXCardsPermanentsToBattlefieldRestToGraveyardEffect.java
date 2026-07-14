@@ -35,11 +35,16 @@ public record LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
         CardPredicate alwaysEligiblePredicate,
         CardPredicate mvCappedEligiblePredicate,
         boolean remainingToBottomRandom
-) implements CardEffect {
+) implements CombatDamageTriggerContextEffect {
 
     public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
             CardPredicate alwaysEligiblePredicate,
             CardPredicate mvCappedEligiblePredicate) {
         this(alwaysEligiblePredicate, mvCappedEligiblePredicate, false);
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT;
     }
 }

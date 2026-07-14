@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * count such as charge counters on the source ({@code CountersOnSource(CHARGE)}), or the number of
  * cards in the target player's hand ({@code CardsInHand(TARGET_PLAYER)} for Dreamborn Muse).
  */
-public record MillEffect(DynamicAmount count, MillRecipient recipient) implements CardEffect {
+public record MillEffect(DynamicAmount count, MillRecipient recipient)
+        implements CombatDamageTriggerContextEffect {
 
     /** Convenience constructor for a fixed mill count. */
     public MillEffect(int count, MillRecipient recipient) {
@@ -19,5 +20,10 @@ public record MillEffect(DynamicAmount count, MillRecipient recipient) implement
     @Override
     public boolean canTargetPlayer() {
         return recipient == MillRecipient.TARGET_PLAYER;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return recipient == MillRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

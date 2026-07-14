@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter)
-        implements DamageDealingEffect {
+        implements DamageDealingEffect, CombatDamageTriggerContextEffect {
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
         this(new Fixed(damage), recipient, null);
@@ -58,5 +58,10 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public boolean canDamagePlayers() {
         return true;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return recipient == DamageRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

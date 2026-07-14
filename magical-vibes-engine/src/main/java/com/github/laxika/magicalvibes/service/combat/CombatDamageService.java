@@ -22,50 +22,36 @@ import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeRestOfGameEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -986,28 +972,22 @@ public class CombatDamageService {
 
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
-                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect
-                        || effect instanceof DealDamageToEachCreatureDamagedPlayerControlsEffect
-                        || effect instanceof LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect) {
+                // A single capability interface reports the context the fired trigger needs (which
+                // player it targets, which permanent is its source); a null context means the plain
+                // stack entry (no bound player or source). Recipient-dependent effects (discard /
+                // mill / damage to the TARGET_PLAYER) report DAMAGED_PLAYER only for that recipient
+                // and null otherwise, matching the old per-recipient guards.
+                CombatDamageTriggerContextEffect.TriggerContext triggerContext =
+                        effect instanceof CombatDamageTriggerContextEffect contextEffect
+                                ? contextEffect.combatDamageTriggerContext()
+                                : null;
+                if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), damageDealt, defenderId, null);
-                } else if (effect instanceof PutCountersOnSourceEffect
-                        || effect instanceof RemoveAllCountersFromSelfEffect
-                        || effect instanceof ExploreEffect) {
+                } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), null, creature.getId());
-                } else if (effect instanceof ExileTopCardsRepeatOnDuplicateEffect
-                        || (effect instanceof DiscardEffect discardEffect
-                                && discardEffect.recipient() == DiscardRecipient.TARGET_PLAYER)
-                        || effect instanceof TargetPlayerRandomDiscardOrControllerDrawsEffect
-                        || effect instanceof RevealRandomCardFromTargetPlayerHandEffect
-                        || effect instanceof SphinxAmbassadorEffect
-                        || (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER)
-                        || effect instanceof TargetPlayerExilesFromHandEffect
-                        || effect instanceof ChooseCardsFromTargetHandEffect
-                        || effect instanceof SkipNextCombatPhaseEffect
-                        || effect instanceof TargetPlayerCantGainLifeRestOfGameEffect
-                        || (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER)) {
+                } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), defenderId, creature.getId());
                 } else {

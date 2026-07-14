@@ -1422,3 +1422,117 @@ hand-edit the ratchet's three "Good news" drops asked for.
 **For the user:** run the full test suite and commit. Behaviour-preserving dispatch swap — no game-rules
 change. The three pinned `GameQueryService` block sites plus the `BlockLegalityContext` typed-collection
 widening remain for a future step.
+
+## Step 12 — One capability interface for combat-damage trigger targeting  (2026-07-14)
+
+Collapsed the combat-damage-to-player **trigger-classification** chains in `CombatDamageService` (the
+three `if / else if` blocks that decided how a fired `ON_COMBAT_DAMAGE_TO_PLAYER` trigger's `StackEntry`
+should be populated) into a single capability-interface match + enum switch. The engine now asks each
+effect "what trigger context do you need?" instead of `instanceof`-ing 17 concrete record types.
+
+### Buckets found (the code, not the prompt, was authoritative)
+
+The chain assigned every effect to one of four `StackEntry` shapes:
+
+| Bucket | `StackEntry` shape (as built) | Enum constant |
+|--------|-------------------------------|---------------|
+| A | `(…, List.of(effect), xValue=damageDealt, targetId=defenderId, source=null)` | `DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT` |
+| B | `(…, List.of(effect), targetId=null, source=creature.getId())` | `SOURCE_SELF` |
+| C | `(…, List.of(effect), targetId=defenderId, source=creature.getId())` | `DAMAGED_PLAYER` |
+| default | `(…, List.of(effect))` (plain, no target/source) | *(interface not implemented, or returns `null`)* |
+
+### Interface design
+
+New domain effect-package interface `CombatDamageTriggerContextEffect extends CardEffect` with nested
+`enum TriggerContext { DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT, SOURCE_SELF, DAMAGED_PLAYER }` and one method
+`TriggerContext combatDamageTriggerContext()`. Pure function of record components. A `null` result means
+"needs the plain default entry" — identical to an effect that doesn't implement the interface — so the
+switch's `else` branch handles both non-implementers and `null`-returners. The engine site became:
+
+```java
+CombatDamageTriggerContextEffect.TriggerContext triggerContext =
+        effect instanceof CombatDamageTriggerContextEffect contextEffect
+                ? contextEffect.combatDamageTriggerContext() : null;
+if (triggerContext == …DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) { … }
+else if (triggerContext == …SOURCE_SELF) { … }
+else if (triggerContext == …DAMAGED_PLAYER) { … }
+else { /* plain entry */ }
+```
+
+Each `StackEntry` constructor call is byte-for-byte the same as before (same literal args, so overload
+resolution is unchanged) — only the *predicate* deciding which one runs moved into the records.
+
+### Records migrated (17)
+
+- **Bucket A → `DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT`** (3, unconditional):
+  `ReturnPermanentsOnCombatDamageToPlayerEffect`, `DealDamageToEachCreatureDamagedPlayerControlsEffect`,
+  `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect`.
+- **Bucket B → `SOURCE_SELF`** (3, unconditional): `PutCountersOnSourceEffect`,
+  `RemoveAllCountersFromSelfEffect`, `ExploreEffect`.
+- **Bucket C → `DAMAGED_PLAYER`** (11): unconditional — `ExileTopCardsRepeatOnDuplicateEffect`,
+  `TargetPlayerRandomDiscardOrControllerDrawsEffect`, `RevealRandomCardFromTargetPlayerHandEffect`,
+  `SphinxAmbassadorEffect`, `TargetPlayerExilesFromHandEffect`, `ChooseCardsFromTargetHandEffect`,
+  `SkipNextCombatPhaseEffect`, `TargetPlayerCantGainLifeRestOfGameEffect`; **recipient-conditional** —
+  `DiscardEffect` (`recipient == TARGET_PLAYER ? DAMAGED_PLAYER : null`), `MillEffect` (same on
+  `MillRecipient.TARGET_PLAYER`), `DealDamageToPlayersEffect` (same on `DamageRecipient.TARGET_PLAYER`).
+  The three conditional records return `null` for their other recipients, so those instances fall to the
+  default entry exactly as the old per-recipient `instanceof … && recipient() == …` guards did.
+
+`DealDamageToPlayersEffect` now implements `DamageDealingEffect, CombatDamageTriggerContextEffect` (added
+the second interface); the rest previously implemented `CardEffect` directly.
+
+### Types left concrete in `CombatDamageService` (deliberate, out of this step's scope)
+
+- **`MayEffect`-wrapped bespoke flows** (lines ~896-921): the may-ability queueing with its own
+  target-validity pre-checks (`ExilePermanentDamagedPlayerControlsEffect`, `DrawCardEffect` event-value
+  wiring) — a different mechanism (`queueMayAbility`), not `StackEntry` classification.
+- **`DestroyPermanentDamagedPlayerControlsEffect` / `SacrificePermanentDamagedPlayerControlsEffect`**
+  (lines ~923-985): each has a `minimumDamage` gate + valid-target scan + a distinct non-targeting
+  `StackEntry`; bespoke, left concrete as instructed.
+- **`instanceof DiscardEffect` at the event-value line** (post-classification `se.setEventValue(damageDealt)`
+  for "discards that many cards", Needle Specter): a *different* fact (does this effect read combat damage
+  as an event value), not trigger context — intentionally not folded into this interface. Kept concrete.
+- **`instanceof PutCountersOnSourceEffect` in `checkPlayerAttachedCurseCombatDamageTriggers`** (curse path,
+  ~line 1096): separate method with its own `StackEntry` shape; not part of the migrated chain. Kept.
+- Lifelink / `AllyCombatDamageTriggerEffect` / `ReplaceCombatDamageWithMillEffect` / `AssignCombatDamage*`
+  and all damage-to-creature flows: untouched (survivors for later passes, per scope limit).
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/combat/CombatDamageService.java` | 40 | 23 | -17 |
+
+Program total (ratchet sum): **559 → 542** (-17). All 17 removed `instanceof` were the trigger-classification
+chain; the two surviving migrated-type `instanceof` in the file (`DiscardEffect` event-value line,
+`PutCountersOnSourceEffect` curse path) are unrelated concerns documented above. `effect-dispatch-baseline.txt`
+and `EFFECT_COUPLING_MATRIX.md` regenerated via `python scripts/effect-coupling-audit.py` (Python 3.14.6 on
+PATH this session); the regenerated baseline is byte-identical to the ratchet's requested drop (40→23).
+
+### Tests run (all green)
+
+- Card tests covering all three buckets: `BalefireDragonTest` (5 — bucket A,
+  `DealDamageToEachCreatureDamagedPlayerControls`), `EmperorsVanguardTest` (7 — bucket B, combat-damage
+  `Explore`), `StigmaLasherTest` (3 — bucket C, `TargetPlayerCantGainLife`), `MerfolkSpyTest` (7 — bucket C,
+  `RevealRandomCardFromTargetPlayerHand`), `ScalpelexisTest` (10 — bucket C,
+  `ExileTopCardsRepeatOnDuplicate`), `BlindingAngelTest` (4 — bucket C, `SkipNextCombatPhase`).
+- `GameSimulatorTest` (`:magical-vibes-ai:test`) — AI/MCTS rollout regression, BUILD SUCCESSFUL. Combat
+  damage runs inside rollouts, so this guards the performance-sensitive path (plain dispatch swap only, no
+  new allocations/streams).
+- `EffectDispatchRatchetTest` — green after baseline regen.
+
+### Files changed
+
+- **New:** `magical-vibes-domain/.../model/effect/CombatDamageTriggerContextEffect.java` (interface + enum).
+- **17 records** in `magical-vibes-domain/.../model/effect/` re-pointed to implement the interface (listed
+  above); each adds one pure `combatDamageTriggerContext()` method.
+- `magical-vibes-engine/.../service/combat/CombatDamageService.java` — 3-chain block replaced with the
+  interface match + switch; 15 now-unused effect imports removed, `CombatDamageTriggerContextEffect` added
+  (`DiscardEffect`, `PutCountersOnSourceEffect`, `DealDamageToPlayersEffect`, `DamageRecipient`,
+  `ReturnPermanentsOnCombatDamageToPlayerEffect` imports kept — still referenced by the surviving sites).
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entries).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+The `MayEffect`-wrapped and destroy/sacrifice "damaged player controls" bespoke flows remain concrete for a
+later pass.

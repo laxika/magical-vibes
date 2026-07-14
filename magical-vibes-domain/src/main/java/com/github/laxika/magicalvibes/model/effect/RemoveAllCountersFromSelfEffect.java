@@ -8,8 +8,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * reference "that much" via an {@code EventValue} amount (e.g. Ashling the Pilgrim's "remove all
  * +1/+1 counters from it, and it deals that much damage to each creature and each player").
  */
-public record RemoveAllCountersFromSelfEffect(CounterType counterType) implements CardEffect {
+public record RemoveAllCountersFromSelfEffect(CounterType counterType)
+        implements CombatDamageTriggerContextEffect {
 
     @Override
     public boolean isSelfTargeting() { return true; }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.SOURCE_SELF;
+    }
 }

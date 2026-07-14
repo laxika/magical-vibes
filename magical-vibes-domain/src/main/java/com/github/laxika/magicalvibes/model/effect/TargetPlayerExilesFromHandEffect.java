@@ -12,7 +12,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param amount            number of cards to exile
  * @param controllerMayPlay whether the source's controller may play the exiled cards
  */
-public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay) implements CardEffect {
+public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay)
+        implements CombatDamageTriggerContextEffect {
 
     public TargetPlayerExilesFromHandEffect(int amount) {
         this(amount, false);
@@ -21,5 +22,10 @@ public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMay
     @Override
     public boolean canTargetPlayer() {
         return true;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
     }
 }

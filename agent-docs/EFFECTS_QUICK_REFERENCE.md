@@ -81,6 +81,23 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
   incl. `ConditionalEffect`-wrapped and floating grants) and `noDefenderAttackMatcher()`
   (`PermanentPredicate`, board-wide). Impl `CanAttackAsThoughNoDefenderEffect`,
   `MatchingCreaturesCanAttackAsThoughNoDefenderEffect`
+- `CombatDamageTriggerContextEffect` — how `CombatDamageService` should populate a fired
+  `ON_COMBAT_DAMAGE_TO_PLAYER` trigger's stack entry: `combatDamageTriggerContext()` returns a
+  `TriggerContext` — `DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT` (xValue = damage dealt, targetId = damaged
+  player, no source; Balefire Dragon), `SOURCE_SELF` (source = the dealing creature, no target;
+  explore / self-counter), `DAMAGED_PLAYER` (targetId = damaged player, source = the dealing creature;
+  "that player discards/mills/…") — or `null` for the plain no-context entry (also the default for
+  effects that don't implement it). Recipient-dependent effects return `DAMAGED_PLAYER` only when their
+  recipient is the target player and `null` otherwise. Impl `ReturnPermanentsOnCombatDamageToPlayerEffect`,
+  `DealDamageToEachCreatureDamagedPlayerControlsEffect`,
+  `LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect`, `PutCountersOnSourceEffect`,
+  `RemoveAllCountersFromSelfEffect`, `ExploreEffect`, `ExileTopCardsRepeatOnDuplicateEffect`,
+  `TargetPlayerRandomDiscardOrControllerDrawsEffect`, `RevealRandomCardFromTargetPlayerHandEffect`,
+  `SphinxAmbassadorEffect`, `TargetPlayerExilesFromHandEffect`, `ChooseCardsFromTargetHandEffect`,
+  `SkipNextCombatPhaseEffect`, `TargetPlayerCantGainLifeRestOfGameEffect`, `DiscardEffect` /
+  `MillEffect` / `DealDamageToPlayersEffect` (only when recipient is the target player). NOT for the
+  bespoke `MayEffect`-wrapped or destroy/sacrifice "damaged player controls" flows, which stay in
+  `CombatDamageService`
 
 ## Wrapper / modifier effects
 

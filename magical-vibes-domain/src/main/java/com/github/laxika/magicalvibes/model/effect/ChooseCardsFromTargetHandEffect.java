@@ -16,7 +16,7 @@ import java.util.List;
  * cards when the source permanent leaves).
  */
 public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes, List<CardType> includedTypes,
-                                              HandChoiceDestination destination, boolean returnOnSourceLeave) implements CardEffect {
+                                              HandChoiceDestination destination, boolean returnOnSourceLeave) implements CombatDamageTriggerContextEffect {
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes, HandChoiceDestination destination) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false);
@@ -39,5 +39,10 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     @Override
     public boolean canTargetPlayer() {
         return true;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
     }
 }

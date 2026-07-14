@@ -8,5 +8,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Used by Brazen Buccaneers and other Ixalan explore creatures.
  */
-public record ExploreEffect() implements CardEffect {
+public record ExploreEffect() implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.SOURCE_SELF;
+    }
 }

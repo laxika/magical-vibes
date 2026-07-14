@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                  player chooses which cards to discard
  */
 public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random)
-        implements CardEffect {
+        implements CombatDamageTriggerContextEffect {
 
     /** Fixed count, chosen or random per {@code random}. */
     public DiscardEffect(int amount, DiscardRecipient recipient, boolean random) {
@@ -37,5 +37,10 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
     @Override
     public boolean canTargetPlayer() {
         return recipient == DiscardRecipient.TARGET_PLAYER;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

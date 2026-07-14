@@ -5,5 +5,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * to each creature the damaged player controls (stored in targetId on the stack entry).
  * Used by Balefire Dragon.
  */
-public record DealDamageToEachCreatureDamagedPlayerControlsEffect() implements CardEffect {
+public record DealDamageToEachCreatureDamagedPlayerControlsEffect()
+        implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT;
+    }
 }

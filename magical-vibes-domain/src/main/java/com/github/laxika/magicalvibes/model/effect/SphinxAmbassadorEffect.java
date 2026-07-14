@@ -5,5 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * then that player chooses a card name. If you searched for a creature card that doesn't have
  * that name, you may put it onto the battlefield under your control. Then that player shuffles.
  */
-public record SphinxAmbassadorEffect() implements CardEffect {
+public record SphinxAmbassadorEffect() implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
+    }
 }

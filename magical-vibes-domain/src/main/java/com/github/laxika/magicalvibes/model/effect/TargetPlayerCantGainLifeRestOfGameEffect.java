@@ -6,5 +6,11 @@ package com.github.laxika.magicalvibes.model.effect;
  * life for the rest of the game.
  * Used by Stigma Lasher.
  */
-public record TargetPlayerCantGainLifeRestOfGameEffect() implements CardEffect {
+public record TargetPlayerCantGainLifeRestOfGameEffect()
+        implements CombatDamageTriggerContextEffect {
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return TriggerContext.DAMAGED_PLAYER;
+    }
 }
