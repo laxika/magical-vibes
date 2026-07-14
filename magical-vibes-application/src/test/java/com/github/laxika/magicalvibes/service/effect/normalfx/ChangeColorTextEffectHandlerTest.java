@@ -21,13 +21,13 @@ class ChangeColorTextEffectHandlerTest extends AbstractPlayerInteractionHandlerT
             @DisplayName("Begins color choice when target permanent exists")
             void beginsColorChoice() {
                 Card card = createCard("Trait Doctoring");
-                ChangeColorTextEffect effect = new ChangeColorTextEffect();
+                ChangeColorTextEffect effect = new ChangeColorTextEffect(true, false);
                 Permanent target = new Permanent(createCard("Grizzly Bears"));
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), target.getId());
 
                 when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-                resolveEffect(gd, entry, new ChangeColorTextEffect());
+                resolveEffect(gd, entry, new ChangeColorTextEffect(true, false));
 
                 verify(interactionHandlerRegistry).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
             }
@@ -36,13 +36,13 @@ class ChangeColorTextEffectHandlerTest extends AbstractPlayerInteractionHandlerT
             @DisplayName("Does nothing when target permanent is gone")
             void targetGone() {
                 Card card = createCard("Trait Doctoring");
-                ChangeColorTextEffect effect = new ChangeColorTextEffect();
+                ChangeColorTextEffect effect = new ChangeColorTextEffect(true, false);
                 UUID missingId = UUID.randomUUID();
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), missingId);
 
                 when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
 
-                resolveEffect(gd, entry, new ChangeColorTextEffect());
+                resolveEffect(gd, entry, new ChangeColorTextEffect(true, false));
 
                 verify(interactionHandlerRegistry, never()).begin(any(), any());
             }

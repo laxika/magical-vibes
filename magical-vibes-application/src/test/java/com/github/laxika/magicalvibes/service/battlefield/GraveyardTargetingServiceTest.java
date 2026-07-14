@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -24,7 +25,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,6 +67,47 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
         verify(gameBroadcastService).logAndBroadcast(gd, "Agent of Treachery's enter-the-battlefield ability triggers.");
+    }
+
+    @Test
+    @DisplayName("handleReturnToHandETBTargeting pushes empty-target trigger when no matching land cards")
+    void handleReturnToHandETBTargeting_pushesEmptyTriggerWhenNoLands() {
+        Card card = new Card();
+        card.setName("Tilling Treefolk");
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.LAND), 2);
+
+        service.handleReturnToHandETBTargeting(gd, player1Id, card, List.of(effect), effect);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
+        verify(gameBroadcastService).logAndBroadcast(gd, "Tilling Treefolk's enter-the-battlefield ability triggers.");
+    }
+
+    @Test
+    @DisplayName("handleReturnToHandETBTargeting prompts a multi-graveyard choice capped at maxTargets")
+    void handleReturnToHandETBTargeting_promptsMultiGraveyardChoice() {
+        Card card = new Card();
+        card.setName("Tilling Treefolk");
+        ReturnTargetCardsFromGraveyardToHandEffect effect =
+                new ReturnTargetCardsFromGraveyardToHandEffect(new CardTypePredicate(CardType.LAND), 2);
+
+        Card forest = new Card();
+        forest.setName("Forest");
+        forest.setType(CardType.LAND);
+        gd.playerGraveyards.get(player1Id).add(forest);
+        when(predicateEvaluationService.matchesCardPredicate(eq(forest), eq(effect.filter()), eq(card.getId())))
+                .thenReturn(true);
+
+        service.handleReturnToHandETBTargeting(gd, player1Id, card, List.of(effect), effect);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.graveyardTargetOperation.card).isSameAs(card);
+        assertThat(gd.graveyardTargetOperation.controllerId).isEqualTo(player1Id);
+        // Only one matching card, so the cap is min(2, 1) = 1
+        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
+                eq(1), org.mockito.ArgumentMatchers.anyString());
     }
 
     @Test

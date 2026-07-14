@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -127,6 +128,12 @@ public class Card {
     private List<CastingOption> castingOptions = new ArrayList<>();
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
+    /**
+     * Card-specific "cast this spell only if …" condition, evaluated for the caster when computing
+     * playability, or null for no such restriction. Talara's Battalion ("only if you've cast another
+     * green spell this turn").
+     */
+    private Condition castCondition;
 
     @Getter(AccessLevel.NONE)
     private Map<EffectSlot, List<EffectRegistration>> effectRegistrations = new EnumMap<>(EffectSlot.class);
@@ -209,6 +216,7 @@ public class Card {
         this.backFaceCard = source.backFaceCard;
         this.castingOptions = new ArrayList<>(source.castingOptions);
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
+        this.castCondition = source.castCondition;
         source.effectRegistrations.forEach((slot, regs) ->
                 this.effectRegistrations.put(slot, new ArrayList<>(regs)));
         // effectCache intentionally left empty — rebuilt lazily by getEffects()
@@ -275,6 +283,7 @@ public class Card {
     public void setMultiTargetConstraint(MultiTargetConstraint multiTargetConstraint) { assertMutable(); this.multiTargetConstraint = multiTargetConstraint; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
+    public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
     public void setWatermark(String watermark) { assertMutable(); this.watermark = watermark; }
     public void setBackFaceCard(Card backFaceCard) { assertMutable(); this.backFaceCard = backFaceCard; }
 

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
+import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -417,6 +418,42 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        if (destination == LibrarySearchDestination.EXILE_WITH_SOURCE) {
+            UUID sourcePermanentId = librarySearch.sourcePermanentId();
+            exileService.exileCard(gameData, deckOwnerId, chosenCard, sourcePermanentId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    player.getUsername() + " exiles " + chosenCard.getName() + ".");
+            log.info("Game {} - {} exiles {} with source (any-number search)",
+                    gameData.id, player.getUsername(), chosenCard.getName());
+
+            // "Any number": re-prompt for the next matching card until none remain or the player
+            // declines (handled by the cardIndex == -1 branch above, which shuffles and finishes).
+            List<Card> remainingMatches = filterPredicate != null
+                    ? deck.stream().filter(c -> predicateEvaluationService.matchesCardPredicate(
+                            c, filterPredicate, null, gameData, deckOwnerId)).toList()
+                    : new ArrayList<>(deck);
+            if (remainingCount > 1 && !remainingMatches.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(remainingMatches))
+                                .remainingCount(remainingCount - 1)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.EXILE_WITH_SOURCE)
+                                .filterPredicate(filterPredicate)
+                                .sourcePermanentId(sourcePermanentId)
+                                .shuffleAfterSelection(shuffleAfterSelection)
+                                .build(),
+                        "Search your library for a card to exile (any number).", true));
+                return;
+            }
+
+            if (shuffleAfterSelection) {
+                LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
+                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s library is shuffled.");
+            }
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         if (destination == LibrarySearchDestination.EXILE_PLAYABLE) {
             exileService.exileCard(gameData, playerId, chosenCard);
             gameData.exilePlayPermissions.put(chosenCard.getId(), playerId);
@@ -612,6 +649,7 @@ public class LibraryChoiceHandlerService {
                 case HAND -> "into their hand";
                 case EXILE_IMPRINT -> "into exile (imprint)";
                 case EXILE, EXILE_PLAYABLE -> "into exile";
+                case EXILE_WITH_SOURCE -> throw new IllegalStateException("EXILE_WITH_SOURCE should be handled earlier");
                 case TOP_OF_LIBRARY -> "on top of their library";
                 case GRAVEYARD -> "into their graveyard";
                 case SPHINX_AMBASSADOR -> throw new IllegalStateException("SPHINX_AMBASSADOR should be handled earlier");
@@ -872,6 +910,12 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
+        // Endless Horizons upkeep: controller chose which card exiled with the source to return.
+        if (gameData.hasPendingInteraction(PendingReturnExiledWithSourceCard.class)) {
+            handleReturnExiledWithSourceCard(gameData, allRevealedCards, cardIds, controllerId);
+            return;
+        }
+
         // Punisher reveal (Sword-Point Diplomacy etc.): opponent chose which cards to deny (paying life)
         if (libraryRevealChoice.lifeCostPerSelection() > 0 && libraryRevealChoice.beneficiaryPlayerId() != null) {
             handlePunisherRevealChoice(gameData, allRevealedCards, cardIds,
@@ -1093,6 +1137,27 @@ public class LibraryChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData,
                         controllerName + " returns " + card.getName() + " from exile to their hand.");
                 log.info("Game {} - {} returns {} from exile (silver counter) to hand",
+                        gameData.id, controllerName, card.getName());
+                break;
+            }
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleReturnExiledWithSourceCard(GameData gameData, List<Card> allRevealedCards,
+                                                  List<UUID> selectedCardIds, UUID controllerId) {
+        gameData.clearPendingInteractions(PendingReturnExiledWithSourceCard.class);
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
+        for (Card card : allRevealedCards) {
+            if (selectedIds.contains(card.getId())) {
+                gameData.removeFromExile(card.getId());
+                gameData.addCardToHand(controllerId, card);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        controllerName + " puts " + card.getName() + " from exile into their hand.");
+                log.info("Game {} - {} returns {} from exile to hand",
                         gameData.id, controllerName, card.getName());
                 break;
             }

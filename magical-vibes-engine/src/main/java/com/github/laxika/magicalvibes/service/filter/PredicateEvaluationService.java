@@ -99,6 +99,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -690,6 +691,7 @@ public class PredicateEvaluationService {
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;
+            case StackEntryTargetsYouPredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
         };

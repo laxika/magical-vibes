@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
@@ -46,6 +48,7 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoPlayerHasCardsInHand;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
@@ -100,6 +103,8 @@ public class ConditionEvaluationService {
      */
     public boolean isMet(GameData gameData, Condition condition, ConditionContext ctx) {
         return switch (condition) {
+            case NotCondition c ->
+                    !isMet(gameData, c.inner(), ctx);
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
             case Morbid ignored ->
@@ -163,6 +168,8 @@ public class ConditionEvaluationService {
                     countCardsInHand(gameData, ctx.controllerId()) >= c.threshold();
             case ActivePlayerHandEmpty ignored ->
                     countCardsInHand(gameData, gameData.activePlayerId) == 0;
+            case ControllerHandEmpty ignored ->
+                    countCardsInHand(gameData, ctx.controllerId()) == 0;
             case CastFromZone c ->
                     c.sourceZone() == ctx.sourceZone();
             case CastNotFromHand ignored ->
@@ -177,6 +184,8 @@ public class ConditionEvaluationService {
                     hasMatchingAttacker(gameData, ctx, c.predicate());
             case NoPlayerHasCardsInHand ignored ->
                     noPlayerHasCardsInHand(gameData);
+            case AnOpponentHandEmpty ignored ->
+                    isAnyOpponentHandEmpty(gameData, ctx.controllerId());
             case NoSpellsCastLastTurn ignored ->
                     noSpellsCastLastTurn(gameData);
             case TwoOrMoreSpellsCastLastTurn ignored ->
@@ -515,6 +524,18 @@ public class ConditionEvaluationService {
         return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
     }
 
+    private boolean isAnyOpponentHandEmpty(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null || hand.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean isAnyOpponentPoisoned(GameData gameData, UUID controllerId) {
         if (controllerId == null) return false;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -569,7 +590,8 @@ public class ConditionEvaluationService {
     private boolean sourceHasSubtype(GameData gameData, ConditionContext ctx, CardSubtype subtype) {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source != null) {
-            return source.getCard().getSubtypes().contains(subtype);
+            return source.getCard().getSubtypes().contains(subtype)
+                    || source.getGrantedSubtypes().contains(subtype);
         }
         return ctx.sourceCard() != null && ctx.sourceCard().getSubtypes().contains(subtype);
     }

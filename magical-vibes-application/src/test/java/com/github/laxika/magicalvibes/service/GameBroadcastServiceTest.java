@@ -49,6 +49,7 @@ class GameBroadcastServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     private GameBroadcastService svc;
     private GameData gd;
@@ -64,7 +65,7 @@ class GameBroadcastServiceTest {
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
                 support, gameQueryService, predicateEvaluationService);
         CastingPermissionService castingPermissionService =
-                new CastingPermissionService(gameQueryService, predicateEvaluationService);
+                new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
         svc = new GameBroadcastService(sessionManager, cardViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,

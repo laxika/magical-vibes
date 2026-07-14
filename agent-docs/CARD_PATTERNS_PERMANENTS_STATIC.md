@@ -17,12 +17,14 @@ All paths relative to `cards/`.
 | Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordEffect with PermanentColorInPredicate filter, OWN_CREATURES scope |
 | Color keyword lord (source qualifies) | `c/CorrosiveMentor.java` | STATIC GrantKeywordEffect(WITHER, ALL_OWN_CREATURES, PermanentColorInPredicate(BLACK)) — "Black creatures you control have wither"; ALL_OWN_CREATURES because the source is itself black and must pass the same filter |
 | Keyword lord + spell trigger | `h/HandOfThePraetors.java` | STATIC StaticBoostEffect with PermanentHasKeywordPredicate(INFECT) filter, OWN_CREATURES scope + ON_CONTROLLER_CASTS_SPELL GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, CardAllOfPredicate(CREATURE, INFECT)) |
-| Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, true), 2), same) — +2/+2 for each Aura and Equipment attached. Equipment-only: AttachmentsOnSource(false, true) (Goblin Gaveleer) |
+| Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, true), 2), same) — +2/+2 for each Aura and Equipment attached. Equipment-only: AttachmentsOnSource(false, true) (Goblin Gaveleer). Auras-only: AttachmentsOnSource(true, false) (Evershrike) |
+| Aura self-buff + X graveyard reanimate-with-Aura | `e/Evershrike.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, false), 2), same) (+2/+2 per Aura) + graveyard `{X}{W/B}{W/B}` ability: ReturnCardFromGraveyardEffect(self→BATTLEFIELD, returnAll) + PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect — returns itself, then may attach a hand Aura with mana value ≤ X or is exiled |
 | Tribal combat trigger (subtype counter lord) | `r/RakishHeir.java` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER AllyCombatDamageTriggerEffect(PermanentHasSubtypePredicate(VAMPIRE), PutCountersOnSourceEffect(1,1,1), bindSourceToDealer=true) — when a Vampire you control deals combat damage to a player, put +1/+1 counter on it |
 | Choose subtype + grant to own | `x/Xenograft.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC GrantChosenSubtypeToOwnCreaturesEffect |
 | Choose subtype + lord boost + cast draw | `v/VanquishersBanner.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1) + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(DrawCardEffect) — choose type on enter, +1/+1 to own creatures of that type, draw on casting creature of that type |
 | Choose subtype + charge on cast + counter-scaled lord | `d/DoorOfDestinies.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(PutCountersOnSelfEffect(CHARGE), false) + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1,CounterType.CHARGE) — charge counter whenever you cast any spell of the chosen type (creatureSpellOnly=false), own creatures of that type get +1/+1 per charge counter |
 | Shared-type pump | `c/CoatOfArms.java` | STATIC BoostBySharedCreatureTypeEffect |
+| Chroma anthem (own creatures) | `l/LightFromWithin.java` | STATIC BoostOwnCreaturesByManaSymbolEffect(ManaColor.WHITE, 1, 1) — each creature you control gets +1/+1 per white mana symbol in its own cost; hybrid/Phyrexian symbols of that color count |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |
 | Evasion (blocked only by) | `e/ElvenRiders.java` | STATIC CanBeBlockedOnlyByFilterEffect |
@@ -54,6 +56,7 @@ All paths relative to `cards/`.
 | Shroud to other enchantments + your enchanted creatures | `g/GreaterAuramancy.java` | STATIC GrantKeywordEffect(SHROUD, OWN_PERMANENTS, PermanentIsEnchantmentPredicate) + GrantKeywordEffect(SHROUD, OWN_CREATURES, PermanentIsEnchantedPredicate) — "other enchantments you control" via OWN_PERMANENTS (source excluded from static computation), "enchanted creatures you control" via new PermanentIsEnchantedPredicate (has an Aura attached) |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
 | Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) |
+| Opponents with more permanents of a type can't cast/play it | `w/WardOfBones.java` | STATIC WardOfBonesEffect |
 | Limit spells (all players) | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
 | Limit spells (enchanted player) | `c/CurseOfExhaustion.java` | STATIC LimitSpellsForEnchantedPlayerEffect |
 | Tax attackers | `w/WindbornMuse.java` | STATIC RequirePaymentToAttackEffect |

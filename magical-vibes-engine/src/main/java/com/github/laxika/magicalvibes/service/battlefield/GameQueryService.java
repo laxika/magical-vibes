@@ -459,6 +459,7 @@ public class GameQueryService {
      */
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
+        if (gameData.playersWhoCantGainLifeRestOfGame.contains(playerId)) return false;
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantGainLifeEffect.class);
     }
 
@@ -683,6 +684,25 @@ public class GameQueryService {
             if (candidateOpponentId.equals(controllerId)) continue;
             if (countLandsControlled(gameData, candidateOpponentId) > yourLands) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if any opponent of the given player controls a creature with flying
+     * (Groundling Pouncer's activation restriction).
+     */
+    public boolean anyOpponentControlsFlyingCreature(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(candidateOpponentId);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                if (isCreature(gameData, permanent) && hasKeyword(gameData, permanent, Keyword.FLYING)) {
+                    return true;
+                }
             }
         }
         return false;
@@ -1927,7 +1947,14 @@ public class GameQueryService {
         if (source == null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
-        return source != null && hasKeyword(gameData, source, keyword);
+        if (source != null) {
+            return hasKeyword(gameData, source, keyword);
+        }
+        // No permanent source: the stack entry itself is the source (e.g. an instant/sorcery
+        // spell like Puncture Blast). Its printed keywords (wither, etc.) apply. CR 702.80.
+        return entry.getSourcePermanentId() == null
+                && entry.getCard() != null
+                && entry.getCard().getKeywords().contains(keyword);
     }
 
     /**

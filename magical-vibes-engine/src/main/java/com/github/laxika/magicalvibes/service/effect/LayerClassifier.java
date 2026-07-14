@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostOwnCreaturesByManaSymbolEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -187,9 +188,10 @@ public final class LayerClassifier {
         // (replaces, CR 105.3) from "in addition to its other colors" (adds).
         map.put(GrantColorEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, ((GrantColorEffect) effect).overriding())));
-        // Both users ("becomes red" — Incite, "becomes blue" — Grand Architect) are setting.
+        // Setting ("becomes red" — Incite, "becomes blue" — Grand Architect) unless the effect is
+        // additive ("becomes blue in addition to its other colors" — Indigo Faerie).
         map.put(GrantColorUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
-                new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
+                new LayerClassification(Set.of(Layer.L5_COLOR), false, !((GrantColorUntilEndOfTurnEffect) effect).additive())));
         // "All nonland permanents are the chosen color" (Shifting Sky) replaces colors (CR 105.3).
         map.put(AllNonlandPermanentsAreChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
@@ -249,6 +251,7 @@ public final class LayerClassifier {
         map.put(BoostTargetCreatureEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostByOtherCreaturesWithSameNameEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostBySharedCreatureTypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
+        map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenSubtypeEffect.class, fixed(Layer.L7C_MODIFY_PT));
 

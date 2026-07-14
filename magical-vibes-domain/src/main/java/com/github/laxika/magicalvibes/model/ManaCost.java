@@ -79,6 +79,22 @@ public class ManaCost {
     }
 
     /**
+     * Number of mana symbols in this cost that include the given color (chroma counting). A colored
+     * symbol like {W}, a Phyrexian symbol {W/P}, and a hybrid symbol containing white ({W/U}, {2/W})
+     * each count as one white mana symbol; generic and {X} symbols never count.
+     */
+    public int countColorSymbols(ManaColor color) {
+        int count = coloredCosts.getOrDefault(color, 0);
+        count += phyrexianCosts.getOrDefault(color, 0);
+        for (HybridSymbol hybrid : hybridCosts) {
+            if (hybrid.colors().contains(color)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * X-cost-only colorless mana (Rosheen Meanderer) available to pay this cost. It is usable only
      * when the cost contains an {X} symbol, and only for generic portions (it is colorless).
      */

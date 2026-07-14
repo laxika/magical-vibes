@@ -8,6 +8,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *       Rager).</li>
  *   <li>{@link #TARGET_PLAYER} — the targeted player (stack entry's {@code targetId}) loses life;
  *       the effect targets a player.</li>
+ *   <li>{@link #TARGET_PERMANENT_CONTROLLER} — the controller of the targeted permanent (stack
+ *       entry's {@code targetId} is a permanent, not a player) loses life; the effect does not add
+ *       its own target. Used by "destroy target creature; ... its controller loses N life"
+ *       (Soul Reap). Resolve before any accompanying destroy so the permanent is still present.</li>
  *   <li>{@link #EACH_PLAYER} — every player loses life, in {@code orderedPlayerIds} order.</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller loses life, in
  *       {@code orderedPlayerIds} order.</li>
@@ -16,6 +20,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum LoseLifeRecipient {
     CONTROLLER,
     TARGET_PLAYER,
+    TARGET_PERMANENT_CONTROLLER,
     EACH_PLAYER,
     EACH_OPPONENT
 }

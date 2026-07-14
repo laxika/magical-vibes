@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatur
 public class StrongholdDiscipline extends Card {
 
     public StrongholdDiscipline() {
-        addEffect(EffectSlot.SPELL, new EachPlayerLosesLifePerCreatureControlledEffect(1));
+        addEffect(EffectSlot.SPELL, new EachPlayerLosesLifePerCreatureControlledEffect(1, false));
     }
 }

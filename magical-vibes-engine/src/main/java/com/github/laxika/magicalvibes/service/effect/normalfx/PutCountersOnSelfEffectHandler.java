@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,6 +34,9 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), e.count());
+        int count = e.amount() != null
+                ? amountEvaluationService.evaluate(gameData, e.amount(), AmountContext.forStackEntry(entry, self))
+                : e.count();
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, self, e.counterType(), count);
     }
 }

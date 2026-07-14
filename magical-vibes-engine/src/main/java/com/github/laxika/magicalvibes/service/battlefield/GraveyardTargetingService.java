@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -66,6 +67,54 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
+        }
+    }
+
+    /**
+     * ETB targeting for "return up to N target [type] cards from your graveyard to your hand"
+     * (Tilling Treefolk). The controller picks up to {@code maxTargets} matching cards from their
+     * own graveyard as the trigger goes on the stack; the chosen ids are stored on the triggered
+     * ability and moved to hand at resolution by
+     * {@code ReturnTargetCardsFromGraveyardToHandEffectHandler}. "Up to N" allows choosing zero,
+     * which covers the "you may" clause. With no matching cards the trigger is still put onto the
+     * stack with no targets.
+     */
+    public void handleReturnToHandETBTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, ReturnTargetCardsFromGraveyardToHandEffect returnEffect) {
+        CardPredicate filter = returnEffect.filter();
+
+        List<Card> matchingCards = new ArrayList<>();
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ETB ability",
+                    new ArrayList<>(effects),
+                    List.of()
+            ));
+            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no matching graveyard cards)",
+                    gameData.id, card.getName());
+        } else {
+            int maxTargets = Math.min(returnEffect.maxTargets(), matchingCards.size());
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
+                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "")
+                            + " from your graveyard to return to your hand.");
         }
     }
 

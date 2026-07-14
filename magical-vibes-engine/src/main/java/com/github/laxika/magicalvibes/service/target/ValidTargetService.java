@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -542,6 +543,18 @@ public class ValidTargetService {
                         return true;
                     }
                 }
+            }
+        }
+
+        if (allowedTargets.contains(TargetType.SPELL_ON_STACK)) {
+            // A "spell or permanent" targeter (e.g. Glamerdye) is castable when a spell is on the
+            // stack even if no permanent is available. The per-spell target filter is enforced at
+            // cast time; here it is enough that any spell (not an ability) is present.
+            boolean anySpellOnStack = gameData.stack.stream()
+                    .anyMatch(se -> se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                            && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY);
+            if (anySpellOnStack) {
+                return true;
             }
         }
 

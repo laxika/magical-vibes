@@ -83,6 +83,15 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  permanent; targeted "may" effects (e.g. Hollowsage's "you may have target player discard a
      *  card") pick their target at resolution via the {@code MayEffect} pending-may-ability flow. */
     ON_SELF_BECOMES_UNTAPPED,
+    /** Triggers whenever a permanent the controller controls becomes untapped (transitions from
+     *  tapped to untapped), from any source — the untap step or an untap effect. Fires on every
+     *  permanent with this slot on the untapped permanent's controller's battlefield (including the
+     *  untapped permanent itself). Wrap the effect in {@code TriggeringPermanentConditionalEffect}
+     *  to filter by the untapped permanent (e.g. "whenever a Merfolk you control becomes untapped").
+     *  Checked in {@code TriggerCollectionService.checkBecomesUntappedTriggers}, driven from the same
+     *  untap call sites as {@code ON_SELF_BECOMES_UNTAPPED}. Used by Wake Thrasher
+     *  ({@code BoostSelfEffect(1, 1)}). */
+    ON_ALLY_PERMANENT_BECOMES_UNTAPPED,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,

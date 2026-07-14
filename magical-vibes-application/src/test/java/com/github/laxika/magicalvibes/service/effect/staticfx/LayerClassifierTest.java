@@ -192,7 +192,7 @@ class LayerClassifierTest {
                     .layers()).containsExactly(Layer.L2_CONTROL);
             assertThat(LayerClassifier.classify(new ControlEnchantedCreatureEffect(), false).layers())
                     .containsExactly(Layer.L2_CONTROL);
-            assertThat(LayerClassifier.classify(new ChangeColorTextEffect(), false).layers())
+            assertThat(LayerClassifier.classify(new ChangeColorTextEffect(true, false), false).layers())
                     .containsExactly(Layer.L3_TEXT);
             assertThat(LayerClassifier.classify(new LoseAllCreatureTypesEffect(), false).layers())
                     .containsExactly(Layer.L4_TYPE);

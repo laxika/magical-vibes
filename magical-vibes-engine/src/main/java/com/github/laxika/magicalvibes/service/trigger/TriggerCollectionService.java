@@ -1050,6 +1050,36 @@ public class TriggerCollectionService {
             gameBroadcastService.logAndBroadcast(gameData, untappedPermanent.getCard().getName() + "'s ability triggers.");
             log.info("Game {} - {} triggers on becoming untapped", gameData.id, untappedPermanent.getCard().getName());
         }
+
+        // "Whenever a permanent you control becomes untapped" triggers (e.g. Wake Thrasher).
+        UUID untappedControllerId = controllerId;
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(untappedControllerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_UNTAPPED)) {
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(untappedPermanent, conditional.predicate(), filterContext)) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers on ally permanent untap ({})",
+                        gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
+            }
+        });
     }
 
     // ── Ability-activation triggers ────────────────────────────────────
@@ -1681,12 +1711,25 @@ public class TriggerCollectionService {
         });
     }
 
-    public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId) {
-        var ctx = new TriggerContext.CreatureDeath(null, dyingCreatureControllerId);
+    public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
+        Card dyingCard = dyingPermanent.getCard();
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(dyingCreatureControllerId)) return;
-            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CREATURE_DIES, ctx);
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                // Death conditionals may reference the dying creature's on-battlefield state (e.g.
+                // Necroskitter's "with a -1/-1 counter on it") — evaluate against the dying permanent.
+                CardEffect resolvedEffect = unwrapCreatureDeathConditional(
+                        effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
+                if (resolvedEffect == null) continue;
+                var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
+                registry.dispatch(match, EffectSlot.ON_OPPONENT_CREATURE_DIES, resolvedEffect, ctx);
+            }
         });
     }
 

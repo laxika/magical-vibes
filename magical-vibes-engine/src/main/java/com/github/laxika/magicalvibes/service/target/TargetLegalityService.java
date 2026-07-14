@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -833,6 +834,14 @@ public class TargetLegalityService {
         return ids != null && !ids.isEmpty() && ids.stream().noneMatch(existsCheck);
     }
 
+    /**
+     * True when {@code targetId} is the card id of a (non-ability) spell currently on the stack.
+     * Used to route a "spell or permanent" single target (e.g. Glamerdye) to the correct zone.
+     */
+    public boolean isSpellOnStack(GameData gameData, UUID targetId) {
+        return targetId != null && findSpellOnStack(gameData, targetId) != null;
+    }
+
     private StackEntry findSpellOnStack(GameData gameData, UUID targetId) {
         return gameData.stack.stream()
                 .filter(se -> se.getCard().getId().equals(targetId)
@@ -950,6 +959,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsYouOrCreatureYouControlPredicate) {
             return targetsPlayerOrCreatureControlledBy(gameData, stackEntry, controllerId);
         }
+        if (predicate instanceof StackEntryTargetsYouPredicate) {
+            return targetsPlayer(stackEntry, controllerId);
+        }
         if (predicate instanceof StackEntryTargetsPermanentPredicate targetsPermanent) {
             return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId);
         }
@@ -1040,6 +1052,20 @@ public class TargetLegalityService {
         if (stackEntry.getTargetIds() != null) {
             for (UUID targetId : stackEntry.getTargetIds()) {
                 if (targetsPlayerOrCreature(gameData, targetId, controllerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean targetsPlayer(StackEntry stackEntry, UUID controllerId) {
+        if (controllerId.equals(stackEntry.getTargetId())) {
+            return true;
+        }
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
+                if (controllerId.equals(targetId)) {
                     return true;
                 }
             }

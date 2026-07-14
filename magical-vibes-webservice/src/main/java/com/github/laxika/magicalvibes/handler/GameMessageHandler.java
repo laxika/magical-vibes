@@ -375,7 +375,8 @@ public class GameMessageHandler implements MessageHandler {
                         ? request.alternateCostSacrificePermanentIds() : java.util.List.of();
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.exileGraveyardCardIndices(), chosenGraveyardType, tapPermanentIds);
+                        request.exileGraveyardCardIndices(), chosenGraveyardType, tapPermanentIds,
+                        request.discardHandCardIndex());
             } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {
@@ -492,7 +493,7 @@ public class GameMessageHandler implements MessageHandler {
         }
 
         try {
-            gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex());
+            gameService.activateGraveyardAbility(gameData, player, request.graveyardCardIndex(), request.abilityIndex(), request.xValue());
         } catch (IllegalArgumentException | IllegalStateException e) {
             handleError(connection, e.getMessage());
         }

@@ -92,7 +92,8 @@ public class GraveyardChoiceHandlerService {
 
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
-                    || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
+                    || destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    || graveyardChoice.mandatory()) {
                 throw new IllegalStateException("Cannot decline forced graveyard choice");
             }
             // Player declined — if this is part of a "each player returns" flow, skip remaining
@@ -220,6 +221,26 @@ public class GraveyardChoiceHandlerService {
                             + " from their graveyard into their library.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                     log.info("Game {} - {} shuffles {} from graveyard into library", gameData.id,
+                            player.getUsername(), card.getName());
+                }
+                case TOP_OF_OWNERS_LIBRARY -> {
+                    UUID libraryOwnerId = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
+                    gameData.playerDecks.get(libraryOwnerId).addFirst(card);
+
+                    String logEntry = player.getUsername() + " puts " + card.getName()
+                            + " on top of their library from their graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} puts {} on top of library from graveyard", gameData.id,
+                            player.getUsername(), card.getName());
+                }
+                case BOTTOM_OF_OWNERS_LIBRARY -> {
+                    UUID libraryOwnerId = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
+                    gameData.playerDecks.get(libraryOwnerId).addLast(card);
+
+                    String logEntry = player.getUsername() + " puts " + card.getName()
+                            + " on the bottom of their library from their graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} puts {} on bottom of library from graveyard", gameData.id,
                             player.getUsername(), card.getName());
                 }
                 case EXILE -> {

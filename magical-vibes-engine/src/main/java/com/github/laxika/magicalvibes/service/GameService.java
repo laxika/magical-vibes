@@ -342,11 +342,19 @@ public class GameService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
-                    exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
+                    exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex);
         }
     }
 
@@ -472,10 +480,14 @@ public class GameService {
     }
 
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null);
+    }
+
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
-            abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+            abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue);
         }
     }
 

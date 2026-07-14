@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
@@ -672,6 +673,17 @@ public class SpellCastingService {
         // target() slot per filter, so the card now reports more than one spell target.
         boolean multipleSpellTargets = wasModal && unwrappedNeedsSpellTarget && card.getSpellTargets().size() > 1;
 
+        // A "spell or permanent" single-target chooser (e.g. Glamerdye) can target either zone. Infer
+        // which one this cast is using from the actual target id so the right validation/entry path runs.
+        boolean mixedSpellOrPermanentTarget = unwrappedNeedsSpellTarget && unwrappedNeedsTarget
+                && !multipleSpellTargets && targetIds.isEmpty();
+        boolean targetingSpellOnStack = mixedSpellOrPermanentTarget
+                ? targetLegalityService.isSpellOnStack(gameData, targetId)
+                : unwrappedNeedsSpellTarget;
+        if (mixedSpellOrPermanentTarget && targetId == null) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
         // Validate alternate casting cost if used (e.g. Demon of Death's Gate)
         if (usingAlternateCost) {
             AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)
@@ -805,7 +817,7 @@ public class SpellCastingService {
         }
 
         // Validate spell target (targeting a spell on the stack)
-        if (unwrappedNeedsSpellTarget) {
+        if (unwrappedNeedsSpellTarget && targetingSpellOnStack) {
             if (multipleSpellTargets) {
                 targetLegalityService.validateMultiSpellTargetsOnStack(gameData, card, targetIds, playerId);
             } else {
@@ -847,7 +859,7 @@ public class SpellCastingService {
         }
 
         // Validate target if specified (can be a permanent or a player)
-        if (targetId != null && !unwrappedNeedsSpellTarget) {
+        if (targetId != null && !targetingSpellOnStack) {
             if (needsExileTargeting) {
                 if (exileReturnEffect.ownedOnly()) {
                     boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
@@ -1397,7 +1409,7 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
-            } else if (unwrappedNeedsSpellTarget) {
+            } else if (unwrappedNeedsSpellTarget && targetingSpellOnStack) {
                 if (multipleSpellTargets) {
                     // Spell targets multiple distinct spells on the stack (e.g. Choreographed Sparks'
                     // "both" mode). Each spell target is resolved by its mapped effect via targetIds.
@@ -1740,9 +1752,17 @@ public class SpellCastingService {
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
                                     List<UUID> tapPermanentIds) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
         playFlashbackSpellFromLocation(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, retraceDiscardHandCardIndex);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
@@ -1761,13 +1781,13 @@ public class SpellCastingService {
             throw new IllegalArgumentException("Invalid graveyard card id");
         }
         playFlashbackSpellFromLocation(gameData, player, location.graveyard(), location.index(), xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds, null);
     }
 
     private void playFlashbackSpellFromLocation(GameData gameData, Player player, List<Card> graveyard,
                                     int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
-                                    List<UUID> tapPermanentIds) {
+                                    List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         if (tapPermanentIds == null) {
             tapPermanentIds = List.of();
         }
@@ -1790,6 +1810,7 @@ public class SpellCastingService {
         Card card = graveyard.get(graveyardCardIndex);
         var flashbackOpt = card.getCastingOption(FlashbackCast.class);
         var graveyardCastOpt = card.getCastingOption(GraveyardCast.class);
+        boolean isRetrace = card.getCastingOption(Retrace.class).isPresent() && flashbackOpt.isEmpty();
         boolean grantedFlashback = flashbackOpt.isEmpty()
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
         boolean emblemFlashback = flashbackOpt.isEmpty() && !grantedFlashback
@@ -1823,7 +1844,7 @@ public class SpellCastingService {
         }
 
         if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
-                && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay) {
+                && !isGraveyardCast && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
@@ -1842,7 +1863,7 @@ public class SpellCastingService {
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
         effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, graveyardCastOpt,
                 grantedFlashback, emblemFlashback, grantedHavengulCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
-                isGraveyardCast, effectiveXValue, additionalCost, tapPermanentIds);
+                isGraveyardCast, isRetrace, effectiveXValue, additionalCost, tapPermanentIds, retraceDiscardHandCardIndex);
         if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
             effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
@@ -1966,8 +1987,10 @@ public class SpellCastingService {
                     entryType, card, playerId, card.getName(),
                     spellEffects, effectiveXValue, targetIds
             );
-        } else if (EffectResolution.needsSpellTarget(card)) {
-            // Flashback spell that targets a spell on the stack (e.g. Increasing Vengeance)
+        } else if (EffectResolution.needsSpellTarget(card)
+                && (!EffectResolution.needsTarget(card) || targetLegalityService.isSpellOnStack(gameData, targetId))) {
+            // Spell that targets a spell on the stack (e.g. Increasing Vengeance flashback, or a
+            // Glamerdye retrace aimed at a spell rather than a permanent).
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
             stackEntry = new StackEntry(
                     entryType, card, playerId, card.getName(),
@@ -1997,7 +2020,9 @@ public class SpellCastingService {
                 );
             }
         }
-        stackEntry.setCastWithFlashback(true);
+        // Retrace (CR 702.81) keeps the normal graveyard disposition — unlike flashback it is not
+        // exiled after resolving, so it can be retraced again.
+        stackEntry.setCastWithFlashback(!isRetrace);
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(stackEntry);
 
@@ -2478,18 +2503,46 @@ public class SpellCastingService {
 
     private record GraveyardCardLocation(List<Card> graveyard, int index) {}
 
+    /**
+     * Pays retrace's additional cost (CR 702.81): discard a land card from the caster's hand.
+     * {@code discardHandCardIndex} indexes directly into the caster's hand (the retraced spell
+     * itself is in the graveyard, so no index adjustment is needed). Fires discard triggers.
+     */
+    private void payRetraceDiscardCost(GameData gameData, Player player, Card card, Integer discardHandCardIndex) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (discardHandCardIndex == null || hand == null
+                || discardHandCardIndex < 0 || discardHandCardIndex >= hand.size()) {
+            throw new IllegalStateException("Must discard a land card to retrace " + card.getName());
+        }
+        Card toDiscard = hand.get(discardHandCardIndex);
+        if (!toDiscard.hasType(CardType.LAND)) {
+            throw new IllegalStateException("Must discard a land card to retrace " + card.getName());
+        }
+        hand.remove((int) discardHandCardIndex);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        gameBroadcastService.logAndBroadcast(gameData,
+                player.getUsername() + " discards " + toDiscard.getName() + " to retrace " + card.getName() + ".");
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
+    }
+
     private int payFlashbackOrGraveyardCastCost(GameData gameData, Player player, Card card,
                                                 Optional<FlashbackCast> flashbackOpt,
                                                 Optional<GraveyardCast> graveyardCastOpt,
                                                 boolean grantedFlashback, boolean emblemFlashback,
                                                 boolean grantedHavengulCast, boolean isGrantedGraveyardCast,
                                                 boolean isGrantedGraveyardPlay, boolean isGraveyardCast,
-                                                int effectiveXValue, int additionalCost,
-                                                List<UUID> tapPermanentIds) {
+                                                boolean isRetrace, int effectiveXValue, int additionalCost,
+                                                List<UUID> tapPermanentIds, Integer retraceDiscardHandCardIndex) {
         UUID playerId = player.getId();
         boolean usesNormalManaCost = isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
-                || isGrantedGraveyardCast || isGrantedGraveyardPlay;
+                || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace;
         int manaSpent = 0;
+
+        // Retrace (CR 702.81): as an additional cost, discard a land card from hand.
+        if (isRetrace) {
+            payRetraceDiscardCost(gameData, player, card, retraceDiscardHandCardIndex);
+        }
 
         if (usesNormalManaCost) {
             ManaCost cost = new ManaCost(card.getManaCost());

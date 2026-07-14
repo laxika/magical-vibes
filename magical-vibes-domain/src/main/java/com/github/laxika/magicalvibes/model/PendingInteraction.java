@@ -18,6 +18,7 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
+        PendingReturnExiledWithSourceCard,
         PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
@@ -213,14 +214,26 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * re-begin, it is not carried across picks. {@code bottomThenDrawMode} routes the chosen
      * card to the bottom of the target's library and then makes them draw a card (Vendilion
      * Clique); {@code optional} lets the caster decline (answer {@code cardIndex == -1}) even
-     * when a legal choice exists.
+     * when a legal choice exists. {@code gainLifeToChooserEqualToChosenToughness} (discard mode
+     * only) makes the choosing player gain life equal to the chosen card's toughness before it is
+     * discarded (Talara's Bane).
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
                               java.util.List<Integer> validIndices, int remainingCount,
                               boolean discardMode, boolean exileMode,
                               java.util.List<Card> chosenCards, UUID sourcePermanentId,
-                              String prompt, boolean bottomThenDrawMode, boolean optional)
+                              String prompt, boolean bottomThenDrawMode, boolean optional,
+                              boolean gainLifeToChooserEqualToChosenToughness)
             implements PendingInteraction {
+
+        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                  java.util.List<Integer> validIndices, int remainingCount,
+                                  boolean discardMode, boolean exileMode,
+                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                                  String prompt, boolean bottomThenDrawMode, boolean optional) {
+            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
+                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false);
+        }
     }
 
     /**
@@ -284,7 +297,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
                            UUID mayAbilitySourcePermanentId,
                            CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
-                           String prompt)
+                           boolean mandatory, String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -313,6 +326,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private UUID mayAbilitySourcePermanentId;
             private CardSubtype grantSourceHasteIfSubtype;
             private UUID grantSourceHasteSourcePermanentId;
+            private boolean mandatory;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
                             GraveyardChoiceDestination destination, String prompt) {
@@ -378,13 +392,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder mandatory(boolean mandatory) {
+                this.mandatory = mandatory;
+                return this;
+            }
+
             public GraveyardChoice build() {
                 return new GraveyardChoice(playerId, validIndices, destination, cardPool,
                         gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype,
                         exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
-                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, prompt);
+                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, mandatory, prompt);
             }
         }
     }
@@ -450,8 +469,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * declinable (TARGETED_CARD_CHOICE).
      */
     record TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                  UUID targetId, String prompt)
+                                  UUID targetId, String prompt, UUID exileSourceIfDeclinedId)
             implements PendingInteraction, HandChoice {
+
+        /** Non-exiling variant (the common case): declining simply puts nothing onto the battlefield. */
+        public TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                      UUID targetId, String prompt) {
+            this(playerId, validIndices, targetId, prompt, null);
+        }
     }
 
     /**

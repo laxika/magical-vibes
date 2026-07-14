@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -31,6 +33,27 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveKeywordEffect) effect;
+
+        // OPPONENT_CREATURES: mass one-shot removal from every creature opponents control
+        // (e.g. Invert the Skies: "creatures your opponents control lose flying until end of turn").
+        if (remove.scope() == GrantScope.OPPONENT_CREATURES) {
+            for (UUID playerId : gameData.playerIds) {
+                if (playerId.equals(entry.getControllerId())) {
+                    continue;
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                if (battlefield == null) {
+                    continue;
+                }
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        removeFrom(gameData, entry, remove, p);
+                    }
+                }
+            }
+            return;
+        }
+
         UUID targetId = switch (remove.scope()) {
             case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             case TARGET -> entry.getTargetId();
@@ -44,7 +67,10 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
         if (target == null) {
             return;
         }
+        removeFrom(gameData, entry, remove, target);
+    }
 
+    private void removeFrom(GameData gameData, StackEntry entry, RemoveKeywordEffect remove, Permanent target) {
         // CR 613 layer engine: a one-shot keyword removal is a floating layer-6 effect with
         // its own timestamp — a later-timestamp grant of the same keyword re-adds it. The
         // legacy field is still written for direct Permanent.hasKeyword callers; the layered

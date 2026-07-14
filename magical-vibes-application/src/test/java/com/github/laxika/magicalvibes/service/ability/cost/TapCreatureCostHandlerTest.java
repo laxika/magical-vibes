@@ -57,7 +57,7 @@ class TapCreatureCostHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new TapCreatureCostHandler(cost, gameQueryService, predicateEvaluationService, gameBroadcastService,
-                triggerCollectionService);
+                triggerCollectionService, null);
         playerId = UUID.randomUUID();
         player = new Player(playerId, "TestPlayer");
         gameData = new GameData(UUID.randomUUID(), "test", playerId, "TestPlayer");

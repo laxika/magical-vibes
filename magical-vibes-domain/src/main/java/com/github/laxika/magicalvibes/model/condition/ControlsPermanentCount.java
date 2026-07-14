@@ -14,4 +14,14 @@ public record ControlsPermanentCount(int minCount, PermanentPredicate filter) im
     public String conditionNotMetReason() {
         return "controller controls fewer than " + minCount + " matching permanents";
     }
+
+    /**
+     * As an ETB intervening-"if" (CR 603.4) — "When ~ enters, if you control N or more [type],
+     * ..." (e.g. Gwyllion Hedge-Mage) — this is a game-state gate checked as the trigger goes on
+     * the stack, not a cast-time choice. A gated targeted ETB defers its target to trigger time.
+     */
+    @Override
+    public boolean isEtbTriggerGate() {
+        return true;
+    }
 }

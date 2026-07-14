@@ -499,7 +499,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());
-                triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
+                triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
                 triggerCollectionService.triggerDelayedReturnOnDeath(gameData, target.getCard().getId(), target.getOriginalCard(), ownerId);

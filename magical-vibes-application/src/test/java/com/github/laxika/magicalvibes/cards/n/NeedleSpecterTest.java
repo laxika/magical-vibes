@@ -1,0 +1,100 @@
+package com.github.laxika.magicalvibes.cards.n;
+
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class NeedleSpecterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Combat damage to a player makes that player discard cards equal to the damage dealt")
+    void discardsCardsEqualToCombatDamage() {
+        // Two +1/+1 counters make the 1/1 Specter deal 3 combat damage.
+        Permanent specter = addAttackingSpecter(player1);
+        specter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Forest(), new Forest())));
+
+        resolveCombat();
+
+        // Damaged player must discard exactly three cards, one choice at a time.
+        for (int i = 0; i < 3; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                    .isEqualTo(player2.getId());
+            harness.handleCardChosen(player2, 0);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Discards only as many as it can when the player has fewer cards than the damage")
+    void discardsLimitedByHandSize() {
+        Permanent specter = addAttackingSpecter(player1);
+        specter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // deals 3
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No trigger when the Specter is blocked and deals no combat damage to a player")
+    void noTriggerWhenBlocked() {
+        addAttackingSpecter(player1);
+        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setHand(player2, new ArrayList<>(List.of(new Forest())));
+
+        resolveCombat();
+
+        // No combat damage reached the player, so no discard was prompted.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    // ===== Helpers =====
+
+    private Permanent addReadyCreature(Player player, Card card) {
+        Permanent perm = new Permanent(card);
+        perm.setSummoningSick(false);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
+    }
+
+    private Permanent addAttackingSpecter(Player player) {
+        Permanent specter = addReadyCreature(player, new NeedleSpecter());
+        specter.setAttacking(true);
+        return specter;
+    }
+
+    private void resolveCombat() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        // Pass through combat damage and the resulting triggered ability resolution.
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+}

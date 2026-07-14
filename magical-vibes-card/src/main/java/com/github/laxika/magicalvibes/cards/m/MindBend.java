@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class MindBend extends Card {
 
     public MindBend() {
-        addEffect(EffectSlot.SPELL, new ChangeColorTextEffect());
+        addEffect(EffectSlot.SPELL, new ChangeColorTextEffect(true, false));
     }
 }

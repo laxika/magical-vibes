@@ -321,6 +321,7 @@ public class PotentialManaService {
         return switch (ability.getTimingRestriction()) {
             case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, playerId);
             case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case OPPONENT_CONTROLS_FLYING_CREATURE -> gameQueryService.anyOpponentControlsFlyingCreature(gameData, playerId);
             case OPPONENT_CONTROLS_MORE_LANDS -> gameQueryService.anyOpponentControlsMoreLands(gameData, playerId);
             case ONLY_DURING_YOUR_TURN -> playerId.equals(gameData.activePlayerId);
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)

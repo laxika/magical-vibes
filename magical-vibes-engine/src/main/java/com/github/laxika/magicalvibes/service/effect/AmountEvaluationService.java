@@ -4,10 +4,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
@@ -96,6 +101,12 @@ public class AmountEvaluationService {
                     countGraveyardCards(gameData, c, ctx);
             case CardsInHand c ->
                     countHandCards(gameData, c, ctx);
+            case ColorManaSymbolsAmongControlledPermanents c ->
+                    countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
+            case ColorManaSymbolsInGraveyard c ->
+                    countColorManaSymbolsInGraveyard(gameData, c, ctx);
+            case ColorManaSymbolsInHand c ->
+                    countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
             case CountersOnLinkedPermanent c ->
@@ -138,7 +149,16 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TargetPower ignored ->
                     targetEffectivePower(gameData, ctx);
+            case ChosenPermanentPower ignored ->
+                    chosenPermanentEffectivePower(gameData, ctx);
         };
+    }
+
+    private int chosenPermanentEffectivePower(GameData gameData, AmountContext ctx) {
+        if (ctx.chosenPermanentId() == null) return 0;
+        Permanent chosen = gameQueryService.findPermanentById(gameData, ctx.chosenPermanentId());
+        // Checked as the ability resolves; 0 if the chosen permanent has left (matches SourcePower).
+        return chosen == null ? 0 : Math.max(0, gameQueryService.getEffectivePower(gameData, chosen));
     }
 
     private int countOtherAttackersSharingCreatureTypeWithTarget(GameData gameData, AmountContext ctx) {
@@ -235,6 +255,38 @@ public class AmountEvaluationService {
         return matches;
     }
 
+    private int countColorManaSymbolsAmongControlledPermanents(
+            GameData gameData, ColorManaSymbolsAmongControlledPermanents amount, AmountContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        int total = 0;
+        for (Permanent permanent : battlefield) {
+            ManaCost cost = permanent.getCard().getParsedManaCost();
+            if (cost != null) {
+                total += cost.countColorSymbols(amount.color());
+            }
+        }
+        return total;
+    }
+
+    private int countColorManaSymbolsInGraveyard(
+            GameData gameData, ColorManaSymbolsInGraveyard amount, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(playerId, amount.scope(), ctx)) continue;
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card card : graveyard) {
+                if (card.isToken()) continue;
+                ManaCost cost = card.getParsedManaCost();
+                if (cost != null) {
+                    total += cost.countColorSymbols(amount.color());
+                }
+            }
+        }
+        return total;
+    }
+
     private int countGraveyardCards(GameData gameData, CardsInGraveyard count, AmountContext ctx) {
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -254,6 +306,20 @@ public class AmountEvaluationService {
     private int countCountersOnLinkedPermanent(GameData gameData, CountersOnLinkedPermanent count) {
         Permanent linked = gameQueryService.findPermanentById(gameData, count.linkedPermanentId());
         return linked == null ? 0 : linked.getCounterCount(count.counterType());
+    }
+
+    private int countColorManaSymbolsInHand(
+            GameData gameData, ColorManaSymbolsInHand amount, AmountContext ctx) {
+        List<Card> hand = gameData.playerHands.get(ctx.controllerId());
+        if (hand == null) return 0;
+        int total = 0;
+        for (Card card : hand) {
+            ManaCost cost = card.getParsedManaCost();
+            if (cost != null) {
+                total += cost.countColorSymbols(amount.color());
+            }
+        }
+        return total;
     }
 
     private int countHandCards(GameData gameData, CardsInHand count, AmountContext ctx) {

@@ -34,8 +34,11 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID targetId = entry.getTargetId();
+        boolean landTypesAllowed = effect instanceof ChangeColorTextEffect e && e.landTypesAllowed();
+
+        // Target may be a permanent (Mind Bend) or, for Glamerdye, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
+        if (target == null && gameQueryService.findStackEntryByCardId(gameData, targetId) == null) {
             return;
         }
 
@@ -43,10 +46,12 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
 
         List<String> options = new ArrayList<>();
         options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
-        options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
+        if (landTypesAllowed) {
+            options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, options,
-                "Choose a color word or basic land type to replace."));
+                landTypesAllowed ? "Choose a color word or basic land type to replace." : "Choose a color word to replace."));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);

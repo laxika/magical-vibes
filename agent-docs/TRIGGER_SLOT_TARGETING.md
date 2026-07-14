@@ -122,6 +122,11 @@ the untap step or any untap effect, via `TriggerCollectionService.checkBecomesUn
 from `UntapStepService` and `TapUntapSupport.untapPermanent`. Non-targeting: a "you may have target player
 …" is expressed as a `MayEffect`-wrapped targeting effect whose "may" and target are resolved on the stack
 via the pending-may-ability flow, not a target-choice pipeline),
+`ON_ALLY_PERMANENT_BECOMES_UNTAPPED` (Wake Thrasher; the untapped-ally counterpart of
+`ON_ALLY_PERMANENT_BECOMES_TAPPED` — fires once per untapped permanent on every permanent with the slot on
+the untapped permanent's controller's battlefield, including the source untapping itself; same
+`checkBecomesUntappedTriggers` call sites. Wrap in `TriggeringPermanentConditionalEffect` to filter by the
+untapped permanent),
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,
 `ON_OPENING_HAND_REVEAL`, `ON_OPPONENT_LOSES_LIFE`, `ON_OPPONENT_SHUFFLES_LIBRARY`,

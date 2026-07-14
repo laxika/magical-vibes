@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
@@ -793,6 +794,28 @@ public class DeathTriggerCollectorService {
     boolean handleOpponentCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        logOpponentCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnDyingOpponentCreatureUnderYourControlEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_DIES)
+    boolean handleOpponentCreatureReturnUnderControl(TriggerMatchContext match,
+            ReturnDyingOpponentCreatureUnderYourControlEffect effect, TriggerContext ctx) {
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        GameData gameData = match.gameData();
+        Card dyingCard = cd.dyingCard();
+        // The dying card must still be in its owner's graveyard for the return to have a target.
+        List<Card> graveyard = dyingCard == null ? null : gameData.playerGraveyards.get(cd.dyingCreatureControllerId());
+        if (graveyard == null || graveyard.stream().noneMatch(c -> c.getId().equals(dyingCard.getId()))) {
+            return false;
+        }
+        // "You may return that card ..." — a resolution-time optional. Bake the dying card id into
+        // the effect itself (not the stack entry's targetId, which the engine would validate as an
+        // on-battlefield permanent target and fizzle).
+        MayEffect may = new MayEffect(
+                new ReturnDyingOpponentCreatureUnderYourControlEffect(dyingCard.getId()),
+                "return " + dyingCard.getName() + " to the battlefield under your control?");
+        gameData.queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         logOpponentCreatureDeath(match);
         return true;
     }

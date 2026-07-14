@@ -54,6 +54,12 @@ public class StackEntry {
      * information when the source left the battlefield before resolution (sacrifice costs).
      */
     @Setter private Permanent sourcePermanentSnapshot;
+    /**
+     * The permanent chosen while activating this ability (e.g. the creature tapped to pay a
+     * {@code TapCreatureCost}). Read back at resolution by the {@code ChosenPermanentPower} dynamic
+     * amount so an effect can scale to that creature's power as the ability resolves (Impelled Giant).
+     */
+    @Setter private UUID chosenPermanentId;
     private final List<UUID> targetIds;
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
@@ -261,6 +267,7 @@ public class StackEntry {
         this.attackedTargetId = source.attackedTargetId;
         this.eventValue = source.eventValue;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
+        this.chosenPermanentId = source.chosenPermanentId;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 
@@ -346,6 +353,13 @@ public class StackEntry {
             if (g.getIndex() < firstFlatGroup) {
                 continue;
             }
+            // A target group whose bound effect was gated out of this trigger (its intervening-if
+            // was not met, e.g. Noggle Hedge-Mage's independent Islands / Mountains ETBs) chose no
+            // targets, so it contributes nothing to the flat list — skip it (consuming 0) so a
+            // still-active later group's slice isn't shifted (CR 603.4).
+            if (!isTargetGroupActive(g.getIndex())) {
+                continue;
+            }
             int size = Math.min(Math.max(g.getMaxTargets(), 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
                 return List.copyOf(targetIds.subList(consumed, consumed + size));
@@ -353,6 +367,25 @@ public class StackEntry {
             consumed += size;
         }
         return List.of();
+    }
+
+    /**
+     * Whether any effect that will actually resolve on this entry is bound to the given target
+     * group. A group with no surviving bound effect (a gated-out intervening-if trigger) consumed
+     * no targets from the flat {@link #targetIds} list. Returns {@code true} when the card declares
+     * no effect/group mapping, preserving legacy positional slicing for ordinary multi-target
+     * spells and abilities (where every declared group is always populated).
+     */
+    private boolean isTargetGroupActive(int groupIndex) {
+        if (card == null) {
+            return true;
+        }
+        for (CardEffect effect : effectsToResolve) {
+            if (card.getEffectTargetIndex(effect) == groupIndex) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

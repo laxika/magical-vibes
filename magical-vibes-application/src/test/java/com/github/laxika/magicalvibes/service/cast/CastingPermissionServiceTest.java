@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +40,7 @@ class CastingPermissionServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     private CastingPermissionService svc;
     private GameData gd;
@@ -48,7 +53,7 @@ class CastingPermissionServiceTest {
 
     @BeforeEach
     void setUp() {
-        svc = new CastingPermissionService(gameQueryService, predicateEvaluationService);
+        svc = new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -225,6 +230,37 @@ class CastingPermissionServiceTest {
             bolt.setManaCost("{R}");
 
             assertThat(svc.isSpellCastingAllowed(gd, player1Id, bolt)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("canCastWithCastCondition — card-level cast gate")
+    class CastConditionGate {
+
+        @Test
+        @DisplayName("Card with no cast condition always passes without evaluating anything")
+        void noConditionPasses() {
+            Card card = new Card();
+            card.setName("Grizzly Bears");
+
+            assertThat(svc.canCastWithCastCondition(gd, player1Id, card)).isTrue();
+            verify(conditionEvaluationService, never()).isMet(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Delegates to ConditionEvaluationService when a cast condition is present")
+        void delegatesWhenConditionPresent() {
+            Card card = new Card();
+            card.setName("Talara's Battalion");
+            card.setCastCondition(new Morbid());
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(card.getCastCondition()), any()))
+                    .thenReturn(false);
+            assertThat(svc.canCastWithCastCondition(gd, player1Id, card)).isFalse();
+
+            when(conditionEvaluationService.isMet(eq(gd), eq(card.getCastCondition()), any()))
+                    .thenReturn(true);
+            assertThat(svc.canCastWithCastCondition(gd, player1Id, card)).isTrue();
         }
     }
 }

@@ -19,4 +19,10 @@ public record GrantActivatedAbilityEffect(
     public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter) {
         this(ability, scope, filter, EffectDuration.CONTINUOUS);
     }
+
+    /** TARGET scope grants the ability to the spell/ability's target permanent (e.g. Banishing Knack). */
+    @Override
+    public boolean canTargetPermanent() {
+        return scope == GrantScope.TARGET;
+    }
 }

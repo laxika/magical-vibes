@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
@@ -196,6 +197,30 @@ public class DamageTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",
                 gameData.id, dc.damagedCreature().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = DealDamageToAnyTargetEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)
+    private boolean handleDealtDamageToAnyTarget(TriggerMatchContext match,
+            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent damagedCreature = dc.damagedCreature();
+        UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
+        if (controllerId == null) return false;
+
+        // "It deals that much damage to any target" (Spitemare): the damage amount snapshots
+        // into xValue, and the controller chooses any target when the trigger is serviced.
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(trigger)),
+                false, null, dc.damageDealt()));
+
+        String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} ON_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
+                gameData.id, damagedCreature.getCard().getName());
         return true;
     }
 

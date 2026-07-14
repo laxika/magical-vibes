@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -34,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -147,6 +149,7 @@ public class BattlefieldEntryService {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
+        carrySpellTextReplacements(gameData, permanent);
         applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
         applyEnterTappedEffects(permanent, enterTappedTypes);
         applySelfEnterTapped(permanent);
@@ -174,6 +177,18 @@ public class BattlefieldEntryService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+    }
+
+    /**
+     * CR 613.7: a text change made to a spell (e.g. Glamerdye targeting a permanent spell) carries
+     * onto the permanent that spell resolves into. The replacements were recorded keyed by the
+     * spell's card id; the entering permanent shares that card id, so move them onto it.
+     */
+    private void carrySpellTextReplacements(GameData gameData, Permanent permanent) {
+        List<TextReplacement> replacements = gameData.spellTextReplacements.remove(permanent.getCard().getId());
+        if (replacements != null) {
+            permanent.getTextReplacements().addAll(replacements);
+        }
     }
 
     /**
@@ -698,12 +713,16 @@ public class BattlefieldEntryService {
         // Separate opponent-graveyard steal effects (need single-target selection at trigger time)
         List<CardEffect> graveyardStealEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect).toList();
+        // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
+        List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
                 .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
+                .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
                 .filter(e -> !e.canTargetSpell()).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -859,6 +878,14 @@ public class BattlefieldEntryService {
         for (CardEffect effect : graveyardStealEffects) {
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handlePutCreatureFromOpponentGraveyardETBTargeting(gameData, controllerId, card, List.of(effect));
+            }
+        }
+
+        // Handle graveyard return-to-hand effects: up to N target cards in controller's graveyard
+        for (CardEffect effect : graveyardReturnToHandEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
+                        List.of(effect), (ReturnTargetCardsFromGraveyardToHandEffect) effect);
             }
         }
 

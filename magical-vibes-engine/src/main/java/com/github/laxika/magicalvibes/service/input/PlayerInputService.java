@@ -76,8 +76,17 @@ public class PlayerInputService {
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
+        beginTargetedCardChoice(gameData, playerId, validIndices, prompt, targetId, null);
+    }
+
+    /**
+     * Variant where declining the choice exiles the given permanent (e.g. Evershrike: "You may put an
+     * Aura ... onto the battlefield attached to it. If you don't, exile this creature.").
+     */
+    public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt,
+                                        UUID targetId, UUID exileSourceIfDeclinedId) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
-                playerId, new ArrayList<>(validIndices), targetId, prompt));
+                playerId, new ArrayList<>(validIndices), targetId, prompt, exileSourceIfDeclinedId));
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {

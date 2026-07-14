@@ -151,6 +151,19 @@ public class ETBTokenTargetService {
             }
 
             List<CardEffect> groupEffects = effectsForTargetGroup(card, pending.effects(), group.getIndex());
+
+            // A target group whose bound effect was gated out (its intervening-if wasn't met as the
+            // permanent entered, e.g. Noggle Hedge-Mage's Islands / Mountains ETBs) has no surviving
+            // effect to target — advance past it without demanding targets, so a still-active later
+            // group can still be chosen and the ability isn't wrongly skipped (CR 603.4).
+            if (groupEffects.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                continue;
+            }
+
             boolean canTargetPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
             boolean canTargetPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent);
 

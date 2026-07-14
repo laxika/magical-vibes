@@ -771,9 +771,15 @@ export class GameComponent implements OnInit, OnDestroy {
 
   activateGraveyardAbility(index: number): void {
     const card = this.myGraveyard[index];
-    if (card?.graveyardActivatedAbilities?.length > 0) {
-      this.websocketService.send({ type: MessageType.ACTIVATE_GRAVEYARD_ABILITY, graveyardCardIndex: index, abilityIndex: 0 });
+    const ability = card?.graveyardActivatedAbilities?.[0];
+    if (!ability) {
+      return;
     }
+    if (ability.manaCost?.includes('{X}')) {
+      this.choice.targeting.startGraveyardXValue(index, ability);
+      return;
+    }
+    this.websocketService.send({ type: MessageType.ACTIVATE_GRAVEYARD_ABILITY, graveyardCardIndex: index, abilityIndex: 0 });
   }
 
   isFlashbackPlayable(index: number): boolean {

@@ -123,6 +123,8 @@ public class TurnCleanupService {
         gameData.playerCreaturesCantBeTargetedByColorsThisTurn.clear();
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
+        gameData.playersCantPlayLandsThisTurn.clear();
+        gameData.playersCantCastCreatureSpellsThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.mayTapLandsForSpellsUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();

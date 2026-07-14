@@ -24,6 +24,9 @@ import java.util.UUID;
  * @param staticEvaluation  when {@code true}, permanent predicates are matched with the
  *                          recursion-safe intrinsic matcher (no {@code computeStaticBonus}
  *                          lookups) so static bonus computation cannot recurse
+ * @param chosenPermanentId id of the permanent chosen while activating the ability behind this
+ *                          entry (e.g. the creature tapped for a {@code TapCreatureCost}); read by
+ *                          {@code ChosenPermanentPower}. {@code null} outside stack resolution
  */
 public record AmountContext(
         UUID controllerId,
@@ -31,18 +34,25 @@ public record AmountContext(
         UUID targetPermanentId,
         int xValue,
         int eventValue,
-        boolean staticEvaluation
+        boolean staticEvaluation,
+        UUID chosenPermanentId
 ) {
+
+    /** Convenience for the common case with no chosen permanent (all non-stack-resolution sites). */
+    public AmountContext(UUID controllerId, Permanent sourcePermanent, UUID targetPermanentId,
+                         int xValue, int eventValue, boolean staticEvaluation) {
+        this(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue, staticEvaluation, null);
+    }
 
     /** Context for resolving an effect on a stack entry (stack resolution time). */
     public static AmountContext forStackEntry(StackEntry entry, Permanent sourcePermanent) {
         return new AmountContext(entry.getControllerId(), sourcePermanent, entry.getTargetId(),
-                entry.getXValue(), entry.getEventValue(), false);
+                entry.getXValue(), entry.getEventValue(), false, entry.getChosenPermanentId());
     }
 
     /** Context for static (continuous) effect computation from a source permanent. */
     public static AmountContext forStaticEffect(Permanent source, UUID controllerId) {
-        return new AmountContext(controllerId, source, null, 0, 0, true);
+        return new AmountContext(controllerId, source, null, 0, 0, true, null);
     }
 
     /**
@@ -51,12 +61,12 @@ public record AmountContext(
      * (CR 605.3a), so there is no {@link StackEntry} to read.
      */
     public static AmountContext forManaAbility(Permanent source, UUID controllerId) {
-        return new AmountContext(controllerId, source, null, 0, 0, false);
+        return new AmountContext(controllerId, source, null, 0, 0, false, null);
     }
 
     /** Source-less context for heuristic estimation (AI evaluation). */
     public static AmountContext forEstimation(UUID controllerId) {
-        return new AmountContext(controllerId, null, null, 0, 0, false);
+        return new AmountContext(controllerId, null, null, 0, 0, false, null);
     }
 
     /**
@@ -65,6 +75,6 @@ public record AmountContext(
      * (graveyard/battlefield counts) are meaningful here.
      */
     public static AmountContext forCasting(UUID castingPlayerId) {
-        return new AmountContext(castingPlayerId, null, null, 0, 0, false);
+        return new AmountContext(castingPlayerId, null, null, 0, 0, false, null);
     }
 }

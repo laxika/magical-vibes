@@ -184,6 +184,14 @@ public class EffectResolutionService {
         }
         gameData.pendingEffectResolutionEntry = null;
         gameData.pendingEffectResolutionIndex = 0;
+        // Cast-time mana snapshots (converge, colors spent) live until resolution truly finishes.
+        // They must survive an async pause (e.g. a "you may" that re-runs a ColorSpentToCast
+        // ConditionalEffect on resume, like Cankerous Thirst); StackResolutionService only clears
+        // them when resolution is not paused, so clear here once the effect loop has fully drained.
+        if (entry.getCard() != null) {
+            gameData.clearSpellCastConvergeValue(entry.getCard().getId());
+            gameData.clearSpellCastColorsSpent(entry.getCard().getId());
+        }
         destroyPendingLethalDamageCreatures(gameData);
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

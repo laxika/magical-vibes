@@ -387,11 +387,26 @@ public class GraveyardReturnSupport {
             return;
         }
 
+        // Greatest-power restriction (e.g. Desecrator Hag): keep only the matching card(s) tied for
+        // the greatest power. A single such card is a forced return; ties let the controller choose.
+        if (effect.greatestPower()) {
+            int maxPower = matchingIndices.stream()
+                    .map(i -> graveyard.get(i).getPower())
+                    .filter(Objects::nonNull)
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(Integer.MIN_VALUE);
+            matchingIndices = matchingIndices.stream()
+                    .filter(i -> graveyard.get(i).getPower() != null && graveyard.get(i).getPower() == maxPower)
+                    .toList();
+        }
+
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
         String prompt = "Return a " + filterLabel + " from your graveyard to " + destText + ".";
 
         PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
                 .builder(controllerId, matchingIndices, effect.destination(), prompt)
+                .mandatory(effect.greatestPower())
                 .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
             choice.grantColor(effect.grantColor());
@@ -551,6 +566,18 @@ public class GraveyardReturnSupport {
     public void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
                                          CardColor grantColor, CardSubtype grantSubtype,
                                          boolean enterTapped, boolean enterAttacking) {
+        putCardOntoBattlefield(gameData, controllerId, card, grantColor, grantSubtype,
+                enterTapped, enterAttacking, null);
+    }
+
+    /**
+     * Puts a card from a graveyard onto the battlefield, optionally with one counter of
+     * {@code enterWithCounter} on it as it enters (e.g. Pyrrhic Revival's -1/-1 counter).
+     */
+    public void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+                                         CardColor grantColor, CardSubtype grantSubtype,
+                                         boolean enterTapped, boolean enterAttacking,
+                                         CounterType enterWithCounter) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
@@ -565,6 +592,9 @@ public class GraveyardReturnSupport {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(permanent, grantColor, grantSubtype);
+        if (enterWithCounter != null) {
+            permanent.setCounterCount(enterWithCounter, 1);
+        }
         if (enterTapped) {
             permanent.tap();
         }

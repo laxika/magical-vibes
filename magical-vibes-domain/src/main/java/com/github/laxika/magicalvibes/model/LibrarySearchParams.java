@@ -27,6 +27,7 @@ public record LibrarySearchParams(
         String filterCardName,
         UUID attachToPlayerId,
         CardPredicate filterPredicate,
+        UUID sourcePermanentId,
         LibrarySearchFollowUp followUp
 ) {
     public LibrarySearchParams {
@@ -57,6 +58,7 @@ public record LibrarySearchParams(
         private String filterCardName;
         private UUID attachToPlayerId;
         private CardPredicate filterPredicate;
+        private UUID sourcePermanentId;
         private LibrarySearchFollowUp followUp = LibrarySearchFollowUp.NONE;
 
         private Builder(UUID playerId, List<Card> cards) {
@@ -139,6 +141,11 @@ public record LibrarySearchParams(
             return this;
         }
 
+        public Builder sourcePermanentId(UUID sourcePermanentId) {
+            this.sourcePermanentId = sourcePermanentId;
+            return this;
+        }
+
         public Builder followUp(LibrarySearchFollowUp followUp) {
             this.followUp = followUp;
             return this;
@@ -148,7 +155,7 @@ public record LibrarySearchParams(
             return new LibrarySearchParams(playerId, cards, reveals, canFailToFind, targetPlayerId,
                     remainingCount, sourceCards, reorderRemainingToBottom, reorderRemainingToTop,
                     shuffleAfterSelection, prompt, destination, filterCardTypes, accumulatedCards,
-                    filterCardName, attachToPlayerId, filterPredicate, followUp);
+                    filterCardName, attachToPlayerId, filterPredicate, sourcePermanentId, followUp);
         }
     }
 }

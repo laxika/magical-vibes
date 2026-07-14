@@ -26,7 +26,8 @@ public class EachPlayerLosesLifePerCreatureControlledEffectHandler implements No
         gameData.forEachBattlefield((playerId, battlefield) -> {
             int creatureCount = 0;
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().hasType(CardType.CREATURE)) {
+                if (permanent.getCard().hasType(CardType.CREATURE)
+                        && (!e.attackingOnly() || permanent.isAttacking())) {
                     creatureCount++;
                 }
             }

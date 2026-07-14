@@ -33,12 +33,14 @@ public class SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+                boolean sacrificerIsController =
+                        ((SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect) effect).sacrificerIsController();
+                UUID targetPlayerId = sacrificerIsController ? controllerId : entry.getTargetId();
                 if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                     return;
                 }
 
-                UUID controllerId = entry.getControllerId();
                 String cardName = entry.getCard().getName();
 
                 List<UUID> creatureIds = destructionSupport.collectCreatureIds(gameData, targetPlayerId, p -> true);

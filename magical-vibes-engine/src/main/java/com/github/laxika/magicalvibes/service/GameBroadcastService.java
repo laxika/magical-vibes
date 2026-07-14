@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
+import com.github.laxika.magicalvibes.model.Retrace;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -425,7 +426,9 @@ public class GameBroadcastService {
                                    int extraConvokeMana, int additionalGenericCost, SpellPlayabilityContext ctx) {
         boolean landPlayable = card.hasType(CardType.LAND)
                 && ctx.isActivePlayer() && ctx.isMainPhase()
-                && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty();
+                && ctx.landsPlayed() < gameData.getMaxLandsThisTurn(playerId) && ctx.stackEmpty()
+                && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
         // The 601.2c/601.2b/714.1 filters below never apply to land plays
@@ -493,6 +496,9 @@ public class GameBroadcastService {
             return false;
         }
         if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card)) {
+            return false;
+        }
+        if (!castingPermissionService.canCastWithCastCondition(gameData, playerId, card)) {
             return false;
         }
 
@@ -627,7 +633,9 @@ public class GameBroadcastService {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         boolean stackEmpty = gameData.stack.isEmpty();
 
-        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty) {
+        if (!isActivePlayer || !isMainPhase || landsPlayed >= gameData.getMaxLandsThisTurn(playerId) || !stackEmpty
+                || gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                || castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)) {
             return playable;
         }
 
@@ -721,8 +729,21 @@ public class GameBroadcastService {
                 isGrantedGraveyardCast = CastingPermissionService.hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
+            // Retrace (CR 702.81): castable from the graveyard for its normal mana cost if the
+            // player has a land card in hand to discard as the additional cost.
+            boolean isRetrace = card.getCastingOption(Retrace.class).isPresent()
+                    && flashback.isEmpty()
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && !grantedHavengulCast
+                    && !isGrantedGraveyardPlay
+                    && !isGraveyardCast
+                    && !isGrantedGraveyardCast
+                    && gameData.playerHands.getOrDefault(playerId, List.of()).stream()
+                            .anyMatch(c -> c.hasType(CardType.LAND));
+
             if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
-                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay) {
+                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay && !isRetrace) {
                 continue;
             }
 
@@ -735,7 +756,7 @@ public class GameBroadcastService {
             // GraveyardCast, granted flashback, emblem flashback, granted graveyard cast, and granted
             // graveyard play use the card's mana cost
             String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
-                    || isGrantedGraveyardCast || isGrantedGraveyardPlay)
+                    || isGrantedGraveyardCast || isGrantedGraveyardPlay || isRetrace)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -841,7 +862,9 @@ public class GameBroadcastService {
             }
 
             if (card.hasType(CardType.LAND)) {
-                if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty) {
+                if (isActivePlayer && isMainPhase && landsPlayed < gameData.getMaxLandsThisTurn(playerId) && stackEmpty
+                        && !gameData.playersCantPlayLandsThisTurn.contains(playerId)
+                        && !castingPermissionService.isLandPlayRestrictedByWardOfBones(gameData, playerId)) {
                     playable.add(cardViewFactory.create(card));
                 }
                 continue;

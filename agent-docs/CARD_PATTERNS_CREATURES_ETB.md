@@ -50,6 +50,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryEffect(CardAllOf(ARTIFACT, MinMV 6))) — artifact with MV 6+ |
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryEffect(new Fixed(3), new CardNamedPredicate("Squadron Hawk"), LibrarySearchDestination.HAND)) — up to 3 copies by name to hand |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
+| ETB return greatest-power creature from GY | `d/DesecratorHag.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).greatestPower(true).build() — mandatory; single card forced, ties chosen |
 | ETB may bounce own historic | `g/GuardiansOfKoilos.java` | MayEffect(ReturnToHandEffect.target()) + PermanentPredicateTargetFilter(AllOf(AnyOf(artifact, legendary, Saga), controlled-by-source, not-source)) — "you may return another target historic permanent you control to its owner's hand" |
 | ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(MillEffect(7, EACH_OPPONENT)) |
 | ETB explore | `b/BrazenBuccaneers.java` | ON_ENTER_BATTLEFIELD ExploreEffect() — reveal top card; land → hand, non-land → +1/+1 counter + may put to graveyard |

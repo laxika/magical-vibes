@@ -9,6 +9,7 @@ package com.github.laxika.magicalvibes.model.condition;
 public sealed interface Condition permits
         ActivePlayerHandEmpty,
         ActivationCount,
+        AnOpponentHandEmpty,
         AnyLibraryAtMost,
         AnyPlayerControlsPermanent,
         AnyPlayerControlsPermanentCount,
@@ -24,6 +25,7 @@ public sealed interface Condition permits
         ColorSpentToCast,
         ControllerCastAnotherSpellThisTurn,
         ControllerHasMoreLifeThanAnOpponent,
+        ControllerHandEmpty,
         ControllerLifeAtLeast,
         ControllerLifeAtMost,
         ControllerTurn,
@@ -50,6 +52,7 @@ public sealed interface Condition permits
         NoOtherPermanent,
         NoPlayerHasCardsInHand,
         NoSpellsCastLastTurn,
+        NotCondition,
         NotControllerTurn,
         NotKicked,
         NthAbilityResolutionThisTurn,

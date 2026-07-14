@@ -516,7 +516,11 @@ public class StackResolutionService {
             handleSpellDisposition(gameData, entry);
         }
 
-        if (entry.getCard() != null) {
+        // Only clear cast-time mana snapshots when resolution finished synchronously. If it paused
+        // for player input (pendingEffectResolutionEntry set), the snapshots must survive until the
+        // resumed resolution drains — EffectResolutionService clears them at that point. Clearing
+        // now would break a ColorSpentToCast condition re-checked on a "you may" resume.
+        if (entry.getCard() != null && gameData.pendingEffectResolutionEntry == null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
         }

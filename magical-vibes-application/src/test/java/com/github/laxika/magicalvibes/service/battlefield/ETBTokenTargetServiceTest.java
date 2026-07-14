@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -21,6 +23,9 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -110,5 +115,29 @@ class ETBTokenTargetServiceTest {
         service.processNextETBTokenTargetTrigger(gd);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multi-target trigger skips a target group whose bound effect was gated out")
+    void processNextETBTokenMultiTargetTrigger_skipsGatedOutGroup() {
+        // Two target groups (like Noggle Hedge-Mage). The first group's effect was gated out
+        // (its intervening-if wasn't met as the permanent entered), so only the second group's
+        // effect survives in pending.effects(). The first group must be skipped so the second
+        // group's target is still chosen — not treated as a mandatory group with no targets.
+        Card card = new Card();
+        card.setName("Noggle Hedge-Mage");
+        var group0Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(1);
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, group0Effect);
+        var group1Effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
+        card.target(null, 1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, group1Effect);
+
+        gd.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                card, player1Id, List.of(group1Effect), UUID.randomUUID(), List.of(), 0, 0));
+
+        service.processNextETBTokenMultiTargetTrigger(gd);
+
+        // Group 0 (gated out) is skipped; the controller is prompted for group 1's target instead.
+        verify(playerInputService).beginAnyTargetChoice(
+                eq(gd), eq(player1Id), anyList(), eq(List.of(player1Id)), contains("target 2"));
     }
 }

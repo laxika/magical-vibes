@@ -106,6 +106,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.DestroyDamagedPlayerControls ctx) {
             handleDestroyDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeDamagedPlayerControls ctx) {
+            handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
@@ -223,6 +225,28 @@ public class MultiPermanentChoiceHandlerService {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
                 destructionSupport.tryDestroyAndLog(gameData, target, context.sourceName());
+                permanentRemovalService.removeOrphanedAuras(gameData);
+            }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleSacrificeDamagedPlayerControlsPermanent(GameData gameData, List<UUID> permanentIds,
+                                                               MultiPermanentChoiceContext.SacrificeDamagedPlayerControls context) {
+        if (!permanentIds.isEmpty()) {
+            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+            if (target != null) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+                String ownerName = controllerId != null ? gameData.playerIdToName.get(controllerId) : "Unknown";
+                if (permanentRemovalService.removePermanentToGraveyard(gameData, target)) {
+                    if (controllerId != null) {
+                        triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, controllerId, target.getCard());
+                    }
+                    String logEntry = ownerName + " sacrifices " + target.getCard().getName() + ".";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrificed by {}", gameData.id, target.getCard().getName(), context.sourceName());
+                }
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
         }

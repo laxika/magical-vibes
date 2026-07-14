@@ -26,7 +26,11 @@ import com.github.laxika.magicalvibes.model.effect.NoncreatureSpellsCantBeCastEf
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.WardOfBonesEffect;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -50,8 +54,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CastingPermissionService {
 
+    private static final Set<CardType> WARD_OF_BONES_SPELL_TYPES =
+            Set.of(CardType.CREATURE, CardType.ARTIFACT, CardType.ENCHANTMENT);
+
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     /**
      * Returns true if the player is allowed to cast this spell considering non-mana
@@ -128,6 +136,10 @@ public class CastingPermissionService {
 
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
+        // Moonhold etc.: per-turn "can't cast creature spells" restriction on a player.
+        if (gameData.playersCantCastCreatureSpellsThisTurn.contains(playerId)) {
+            restricted.add(CardType.CREATURE);
+        }
         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
         if (bf == null) return restricted;
         for (Permanent perm : bf) {
@@ -137,7 +149,58 @@ public class CastingPermissionService {
                 }
             }
         }
+        addWardOfBonesRestrictedTypes(gameData, playerId, restricted);
         return restricted;
+    }
+
+    /**
+     * Ward of Bones (EVE): each opponent who controls more creatures/artifacts/enchantments than the
+     * source's controller can't cast spells of that type. Each type is compared independently, and
+     * the source's own controller is never restricted ("Each opponent…").
+     */
+    private void addWardOfBonesRestrictedTypes(GameData gameData, UUID playerId, Set<CardType> restricted) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId) || !controlsWardOfBones(gameData, controllerId)) continue;
+            for (CardType type : WARD_OF_BONES_SPELL_TYPES) {
+                if (countControlledOfType(gameData, playerId, type)
+                        > countControlledOfType(gameData, controllerId, type)) {
+                    restricted.add(type);
+                }
+            }
+        }
+    }
+
+    /**
+     * Ward of Bones (EVE): returns true if any opponent controls a Ward of Bones and this player
+     * controls more lands than that opponent, in which case this player can't play lands.
+     */
+    public boolean isLandPlayRestrictedByWardOfBones(GameData gameData, UUID playerId) {
+        for (UUID controllerId : gameData.orderedPlayerIds) {
+            if (controllerId.equals(playerId) || !controlsWardOfBones(gameData, controllerId)) continue;
+            if (countControlledOfType(gameData, playerId, CardType.LAND)
+                    > countControlledOfType(gameData, controllerId, CardType.LAND)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean controlsWardOfBones(GameData gameData, UUID playerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        return bf.stream().anyMatch(perm -> perm.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(WardOfBonesEffect.class::isInstance));
+    }
+
+    private long countControlledOfType(GameData gameData, UUID playerId, CardType type) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return 0;
+        return bf.stream().filter(perm -> switch (type) {
+            case CREATURE -> gameQueryService.isCreature(gameData, perm);
+            case ARTIFACT -> gameQueryService.isArtifact(gameData, perm);
+            case ENCHANTMENT -> gameQueryService.isEnchantment(gameData, perm);
+            default -> perm.getCard().hasType(type);
+        }).count();
     }
 
     /**
@@ -238,6 +301,17 @@ public class CastingPermissionService {
                     gameData.currentStep == TurnStep.DECLARE_ATTACKERS
                             && gameQueryService.isPlayerBeingAttacked(gameData, playerId);
         };
+    }
+
+    /**
+     * Returns true if the card's card-specific "cast this spell only if …" condition (if any) is
+     * currently satisfied for the caster. Cards without such a condition always pass. Talara's
+     * Battalion ("only if you've cast another green spell this turn").
+     */
+    public boolean canCastWithCastCondition(GameData gameData, UUID playerId, Card card) {
+        Condition condition = card.getCastCondition();
+        if (condition == null) return true;
+        return conditionEvaluationService.isMet(gameData, condition, ConditionContext.forCasting(playerId));
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {

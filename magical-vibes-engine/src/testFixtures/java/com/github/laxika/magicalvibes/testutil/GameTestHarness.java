@@ -323,6 +323,20 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardId, null, null, List.of(), null, null);
     }
 
+    /** Retrace a spell from the graveyard, discarding the hand card at {@code discardHandCardIndex}. */
+    public void castRetrace(Player player, int graveyardCardIndex, int discardHandCardIndex) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), null, null,
+                List.of(), discardHandCardIndex);
+    }
+
+    /** Retrace a targeted spell from the graveyard, discarding the hand card at {@code discardHandCardIndex}. */
+    public void castRetrace(Player player, int graveyardCardIndex, int discardHandCardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, targetId, List.of(), null, null,
+                List.of(), discardHandCardIndex);
+    }
+
     public void castFromExile(Player player, UUID exileCardId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, null);
@@ -680,6 +694,11 @@ public class GameTestHarness {
     public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex) {
         ensurePriority(player);
         gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+    }
+
+    public void activateGraveyardAbility(Player player, int graveyardCardIndex, int abilityIndex, int xValue) {
+        ensurePriority(player);
+        gameService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue);
     }
 
     public void activateHandAbility(Player player, int handCardIndex, UUID targetId) {

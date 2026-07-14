@@ -277,6 +277,8 @@ public class GameData {
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
+    /** Players who can't gain life for the rest of the game (e.g. Stigma Lasher). */
+    public final Set<UUID> playersWhoCantGainLifeRestOfGame = ConcurrentHashMap.newKeySet();
 
     /** Tracks source-linked animations (Awakener Druid-style).
      *  Maps animated target permanent UUID → source permanent UUID.
@@ -293,11 +295,21 @@ public class GameData {
      *  "Target spell can't be countered"). Only relevant while the spell is on the stack. */
     public final Set<UUID> spellsMadeUncounterable = ConcurrentHashMap.newKeySet();
 
+    /** Text-change replacements applied to a spell on the stack (e.g. Glamerdye targeting a spell).
+     *  Keyed by the spell's card id; carried onto the permanent it resolves into (CR 613.7). */
+    public final Map<UUID, List<TextReplacement>> spellTextReplacements = new ConcurrentHashMap<>();
+
     /** Per-player: this player has protection from these colors until end of turn (e.g. Faith's Shield fateful hour). Cleared at end of turn. */
     public final Map<UUID, Set<CardColor>> playerProtectionFromColorsUntilEndOfTurn = new ConcurrentHashMap<>();
 
     /** Players who can't cast spells this turn (e.g. Silence). Cleared at end of turn and on new turn. */
     public final Set<UUID> playersSilencedThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't play lands this turn (e.g. Moonhold). Cleared at end of turn. */
+    public final Set<UUID> playersCantPlayLandsThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players who can't cast creature spells this turn (e.g. Moonhold). Cleared at end of turn. */
+    public final Set<UUID> playersCantCastCreatureSpellsThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Card IDs that have been granted flashback until end of turn (e.g. Past in Flames).
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
@@ -1203,7 +1215,17 @@ public class GameData {
      * directly onto the stack.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
-        stack.add(new StackEntry(
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0);
+    }
+
+    /**
+     * Same as {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID)} but also snapshots an
+     * {@code eventValue} (e.g. combat damage dealt) onto the stack entry so that the wrapped effect
+     * can reference "that many" via an {@code EventValue} amount at resolution time (e.g.
+     * Cold-Eyed Selkie's "you may draw that many cards").
+     */
+    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId, int eventValue) {
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
@@ -1211,7 +1233,9 @@ public class GameData {
                 new ArrayList<>(List.of(may)),
                 targetCardId,
                 sourcePermanentId
-        ));
+        );
+        entry.setEventValue(eventValue);
+        stack.add(entry);
     }
 
     /**
@@ -1471,6 +1495,9 @@ public class GameData {
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);
 
+        // --- Permanent "can't gain life" grants (Stigma Lasher) ---
+        copy.playersWhoCantGainLifeRestOfGame.addAll(this.playersWhoCantGainLifeRestOfGame);
+
         // --- Source-linked animations (Awakener Druid-style) ---
         copy.sourceLinkedAnimations.putAll(this.sourceLinkedAnimations);
 
@@ -1480,11 +1507,14 @@ public class GameData {
         this.playerCreaturesCantBeTargetedByColorsThisTurn.forEach((k, v) ->
                 copy.playerCreaturesCantBeTargetedByColorsThisTurn.put(k, new HashSet<>(v)));
         copy.spellsMadeUncounterable.addAll(this.spellsMadeUncounterable);
+        this.spellTextReplacements.forEach((k, v) -> copy.spellTextReplacements.put(k, new ArrayList<>(v)));
         this.playerProtectionFromColorsUntilEndOfTurn.forEach((k, v) ->
                 copy.playerProtectionFromColorsUntilEndOfTurn.put(k, new HashSet<>(v)));
 
         // --- Silence-style "opponents can't cast" flag ---
         copy.playersSilencedThisTurn.addAll(this.playersSilencedThisTurn);
+        copy.playersCantPlayLandsThisTurn.addAll(this.playersCantPlayLandsThisTurn);
+        copy.playersCantCastCreatureSpellsThisTurn.addAll(this.playersCantCastCreatureSpellsThisTurn);
 
         // --- Spell copy until end of turn (The Mirari Conjecture chapter III) ---
         copy.playersWithSpellCopyUntilEndOfTurn.addAll(this.playersWithSpellCopyUntilEndOfTurn);

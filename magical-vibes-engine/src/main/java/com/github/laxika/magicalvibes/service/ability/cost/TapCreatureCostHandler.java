@@ -26,6 +26,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TriggerCollectionService triggerCollectionService;
+    private final UUID sourcePermanentId;
 
     /**
      * @param cost                       the cost effect record specifying the creature predicate
@@ -33,16 +34,20 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
      * @param predicateEvaluationService used to evaluate the creature predicate
      * @param gameBroadcastService       used to log and broadcast the tap action
      * @param triggerCollectionService   used to fire "enchanted permanent becomes tapped" triggers
+     * @param sourcePermanentId          the ability's source, excluded when {@code cost.excludeSelf()}
+     *                                   ("tap an untapped creature other than this creature")
      */
     public TapCreatureCostHandler(TapCreatureCost cost, GameQueryService gameQueryService,
                                   PredicateEvaluationService predicateEvaluationService,
                                   GameBroadcastService gameBroadcastService,
-                                  TriggerCollectionService triggerCollectionService) {
+                                  TriggerCollectionService triggerCollectionService,
+                                  UUID sourcePermanentId) {
         this.cost = cost;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameBroadcastService = gameBroadcastService;
         this.triggerCollectionService = triggerCollectionService;
+        this.sourcePermanentId = sourcePermanentId;
     }
 
     @Override public CardEffect costEffect() { return cost; }
@@ -60,6 +65,7 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         return battlefield.stream()
+                .filter(p -> !cost.excludeSelf() || !p.getId().equals(sourcePermanentId))
                 .filter(p -> gameQueryService.isCreature(gameData, p))
                 .filter(p -> !p.isTapped())
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, cost.predicate()))
@@ -69,6 +75,9 @@ public class TapCreatureCostHandler implements PermanentChoiceCostHandler {
 
     @Override
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
+        if (cost.excludeSelf() && chosen.getId().equals(sourcePermanentId)) {
+            throw new IllegalStateException("Must tap a creature other than this one");
+        }
         if (!gameQueryService.isCreature(gameData, chosen)) {
             throw new IllegalStateException("Must tap a creature");
         }

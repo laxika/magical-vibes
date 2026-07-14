@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -49,8 +50,10 @@ public class CardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final PlayerInteractionSupport playerInteractionSupport;
+    private final LifeSupport lifeSupport;
     private final EquipSupport equipSupport;
     private final ExileService exileService;
+    private final com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     /** Answers CARD_CHOICE and TARGETED_CARD_CHOICE (put a card/Aura from hand onto the battlefield). */
@@ -65,6 +68,7 @@ public class CardChoiceHandlerService {
         boolean sacrificeAtEndStep = false;
         boolean enterAttacking = false;
         UUID attachEquipmentCardId = null;
+        UUID exileSourceIfDeclinedId = null;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
@@ -80,6 +84,7 @@ public class CardChoiceHandlerService {
             validIndices = thc.validIndices();
             targetId = thc.targetId();
             isTargeted = true;
+            exileSourceIfDeclinedId = thc.exileSourceIfDeclinedId();
         } else {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -95,6 +100,16 @@ public class CardChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
+
+            // "If you don't, exile this creature." (Evershrike) — declining exiles the source permanent.
+            if (exileSourceIfDeclinedId != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, exileSourceIfDeclinedId);
+                if (source != null) {
+                    permanentRemovalService.removePermanentToExile(gameData, source);
+                    gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName() + " is exiled.");
+                    log.info("Game {} - {} is exiled (no Aura put onto it)", gameData.id, source.getCard().getName());
+                }
+            }
         } else {
             if (!validIndices.contains(cardIndex)) {
                 throw new IllegalStateException("Invalid card index: " + cardIndex);
@@ -359,6 +374,14 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
 
             if (discardMode) {
+                // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.
+                if (revealedHandChoice.gainLifeToChooserEqualToChosenToughness()) {
+                    int toughness = chosenCards.stream()
+                            .mapToInt(c -> c.getToughness() != null ? c.getToughness() : 0)
+                            .sum();
+                    lifeSupport.applyGainLife(gameData, player.getId(), toughness);
+                }
+
                 // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
                 List<Card> replacedCards = new ArrayList<>();
                 for (Card discarded : chosenCards) {

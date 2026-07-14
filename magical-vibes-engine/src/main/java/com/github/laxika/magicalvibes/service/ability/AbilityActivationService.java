@@ -16,14 +16,17 @@ import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCost
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
+import com.github.laxika.magicalvibes.service.ability.cost.SacrificeXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapTwoSharingCreatureTypeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.RemoveCounterFromCreatureCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.PutCounterOnCreatureCostHandler;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -67,6 +70,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounte
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
@@ -74,8 +78,10 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.UntapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapTwoCreaturesSharingTypeCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
@@ -523,11 +529,15 @@ public class AbilityActivationService {
      * the player can pay the mana cost. Pays the cost and pushes the ability onto the stack.</p>
      */
     public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+        activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, null);
+    }
+
+    public void activateGraveyardAbility(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, Integer xValue) {
         // Spell-only mana (Piracy) can't pay ability costs — hide it for the duration of this activation.
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         Map<ManaColor, Integer> withheldSpellOnlyMana = pool != null ? pool.withdrawSpellOnlyMana() : Map.of();
         try {
-            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex);
+            activateGraveyardAbilityImpl(gameData, player, graveyardCardIndex, abilityIndex, xValue != null ? xValue : 0);
         } finally {
             if (pool != null && !withheldSpellOnlyMana.isEmpty()) {
                 pool.restoreSpellOnlyMana(withheldSpellOnlyMana);
@@ -535,7 +545,7 @@ public class AbilityActivationService {
         }
     }
 
-    private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex) {
+    private void activateGraveyardAbilityImpl(GameData gameData, Player player, int graveyardCardIndex, Integer abilityIndex, int xValue) {
         // Ashes of the Abhorrent etc.: players can't activate abilities of cards in graveyards
         if (!gameQueryService.canPlayersActivateGraveyardAbilities(gameData)) {
             throw new IllegalStateException("Abilities of cards in graveyards can't be activated");
@@ -589,7 +599,7 @@ public class AbilityActivationService {
         // Pay mana cost
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
-            payManaCost(gameData, playerId, abilityCost, 0, false, false);
+            payManaCost(gameData, playerId, abilityCost, xValue, false, false);
         }
 
         // Pay permanent-choice costs (auto-pay or enter interactive mode)
@@ -599,7 +609,7 @@ public class AbilityActivationService {
             }
         }
 
-        completeGraveyardAbilityActivation(gameData, player, card, ability);
+        completeGraveyardAbilityActivation(gameData, player, card, ability, xValue);
     }
 
     private boolean handleGraveyardPermanentChoiceCost(GameData gameData, Player player, Card card,
@@ -682,10 +692,10 @@ public class AbilityActivationService {
             }
         }
 
-        completeGraveyardAbilityActivation(gameData, player, card, ability);
+        completeGraveyardAbilityActivation(gameData, player, card, ability, 0);
     }
 
-    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card, ActivatedAbility ability) {
+    private void completeGraveyardAbilityActivation(GameData gameData, Player player, Card card, ActivatedAbility ability, int xValue) {
         UUID playerId = player.getId();
 
         // Filter out cost effects for the snapshot
@@ -702,7 +712,10 @@ public class AbilityActivationService {
                 card,
                 playerId,
                 card.getName() + "'s ability",
-                snapshotEffects
+                snapshotEffects,
+                xValue,
+                null,
+                Map.of()
         );
         gameData.stack.add(stackEntry);
 
@@ -1273,7 +1286,7 @@ public class AbilityActivationService {
         for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
             // Capture sacrificed creature's tracked values before auto-pay (e.g. Birthing Pod, Fling)
             if (handler.costEffect() instanceof SacrificeCreatureCost sacCost
-                    && (sacCost.trackSacrificedManaValue() || sacCost.trackSacrificedPower() || sacCost.trackSacrificedToughness())) {
+                    && (sacCost.trackSacrificedManaValue() || sacCost.trackSacrificedPower() || sacCost.trackSacrificedToughness() || sacCost.trackSacrificedColorSymbols() != null)) {
                 List<UUID> autoPayIds = handler.getValidChoiceIds(gameData, playerId);
                 if (autoPayIds.size() <= handler.requiredCount() && !autoPayIds.isEmpty()) {
                     Permanent autoTarget = gameQueryService.findPermanentById(gameData, autoPayIds.getFirst());
@@ -1281,7 +1294,20 @@ public class AbilityActivationService {
                         if (sacCost.trackSacrificedManaValue()) effectiveXValue = autoTarget.getCard().getManaValue();
                         if (sacCost.trackSacrificedPower()) effectiveXValue = gameQueryService.getEffectivePower(gameData, autoTarget);
                         if (sacCost.trackSacrificedToughness()) effectiveXValue = gameQueryService.getEffectiveToughness(gameData, autoTarget);
+                        if (sacCost.trackSacrificedColorSymbols() != null) {
+                            var mc = autoTarget.getCard().getParsedManaCost();
+                            effectiveXValue = mc != null ? mc.countColorSymbols(sacCost.trackSacrificedColorSymbols()) : 0;
+                        }
                     }
+                }
+            }
+            // Remember the auto-tapped creature so ChosenPermanentPower can read its power at
+            // resolution (Impelled Giant). Only the single-valid-choice case auto-pays here;
+            // multi-choice payment records the pick in completeActivatedAbilityCostChoice.
+            if (handler.costEffect() instanceof TapCreatureCost tapCost && tapCost.trackTappedCreaturePower()) {
+                List<UUID> tapChoiceIds = handler.getValidChoiceIds(gameData, playerId);
+                if (tapChoiceIds.size() == 1) {
+                    permanent.setChosenPermanentId(tapChoiceIds.getFirst());
                 }
             }
             if (handlePermanentChoiceCost(gameData, player, permanent, effectiveIndex,
@@ -1308,12 +1334,15 @@ public class AbilityActivationService {
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
-        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof UntapMultiplePermanentsCost c) return new MultiplePermanentUntapCostHandler(c, predicateEvaluationService, gameBroadcastService, sourcePermanentId);
         if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof SacrificeXPermanentsCost c) return new SacrificeXPermanentsCostHandler(c, xValue, predicateEvaluationService, sacAction);
         if (effect instanceof TapTwoCreaturesSharingTypeCost c) return new TapTwoSharingCreatureTypeCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, chosenSoFar);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameBroadcastService);
+        if (effect instanceof PutCounterOnControlledCreatureCost c) return new PutCounterOnCreatureCostHandler(c, gameQueryService, gameBroadcastService);
         return null;
     }
 
@@ -1390,9 +1419,18 @@ public class AbilityActivationService {
             if (sacCost.trackSacrificedToughness()) {
                 updatedXValue = gameQueryService.getEffectiveToughness(gameData, chosen);
             }
+            if (sacCost.trackSacrificedColorSymbols() != null) {
+                var mc = chosen.getCard().getParsedManaCost();
+                updatedXValue = mc != null ? mc.countColorSymbols(sacCost.trackSacrificedColorSymbols()) : 0;
+            }
         }
 
         handler.validateAndPay(gameData, player, chosen);
+
+        // Remember the tapped creature so ChosenPermanentPower reads its power at resolution (Impelled Giant).
+        if (context.costEffect() instanceof TapCreatureCost tapCost && tapCost.trackTappedCreaturePower()) {
+            sourcePermanent.setChosenPermanentId(chosenPermanentId);
+        }
 
         int remaining = context.remaining() - handler.lastPaymentWeight();
         // Costs whose valid choices depend on prior picks (e.g. tap two creatures sharing a type)
@@ -1775,6 +1813,11 @@ public class AbilityActivationService {
             if (ability.getTimingRestriction() == ActivationTimingRestriction.MORBID) {
                 if (!gameQueryService.isMorbidMet(gameData)) {
                     throw new IllegalStateException("Morbid — activate only if a creature died this turn");
+                }
+            }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_FLYING_CREATURE) {
+                if (!gameQueryService.anyOpponentControlsFlyingCreature(gameData, playerId)) {
+                    throw new IllegalStateException("Activate only if an opponent controls a creature with flying");
                 }
             }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_MORE_LANDS) {

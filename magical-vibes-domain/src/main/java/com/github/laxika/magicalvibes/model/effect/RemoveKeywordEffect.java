@@ -13,4 +13,9 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
     public boolean canTargetPermanent() {
         return scope == GrantScope.TARGET;
     }
+
+    @Override
+    public boolean isSelfTargeting() {
+        return scope == GrantScope.SELF;
+    }
 }

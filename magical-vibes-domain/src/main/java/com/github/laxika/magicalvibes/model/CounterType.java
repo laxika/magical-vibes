@@ -21,5 +21,6 @@ public enum CounterType {
     WISH,
     LORE,
     SILVER,
-    PAGE
+    PAGE,
+    TOWER
 }

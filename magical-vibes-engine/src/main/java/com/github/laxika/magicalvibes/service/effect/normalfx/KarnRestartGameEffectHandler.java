@@ -178,6 +178,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.openingHandManaTriggers.clear();
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
+        gameData.playersWhoCantGainLifeRestOfGame.clear();
         gameData.priorityPassedBy.clear();
         gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
         gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);

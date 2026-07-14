@@ -44,6 +44,7 @@ export class TargetingChoiceService {
     this.xValueCardName = '';
     this.xValueInput = 0;
     this.xValueMaximum = 0;
+    this.graveyardXCardIndex = -1;
     // Targeting
     this.selectingTarget = false;
     this.targetingCardIndex = -1;
@@ -137,6 +138,9 @@ export class TargetingChoiceService {
   xValueCardName = '';
   xValueInput = 0;
   xValueMaximum = 0;
+  // Graveyard activated ability with an X cost (e.g. Evershrike); -1 when the X prompt
+  // is for a hand/battlefield source instead of a graveyard ability.
+  graveyardXCardIndex = -1;
 
   // --- Modal mode picker state ---
   choosingMode = false;
@@ -820,9 +824,41 @@ export class TargetingChoiceService {
     this.pendingCastMessage = null;
   }
 
+  /** Open the X prompt for a graveyard activated ability whose cost contains {X} (e.g. Evershrike). */
+  startGraveyardXValue(graveyardCardIndex: number, ability: ActivatedAbilityView): void {
+    let base = 0;
+    const baseCost = (ability.manaCost ?? '').replace('{X}', '');
+    const matches = baseCost.match(/\{([^}]+)\}/g) || [];
+    for (const m of matches) {
+      const inner = m.slice(1, -1);
+      const num = parseInt(inner);
+      base += isNaN(num) ? 1 : num;
+    }
+    this.graveyardXCardIndex = graveyardCardIndex;
+    this.choosingXValue = true;
+    this.xValueCardIndex = -1;
+    this.xValueCardName = ability.description ?? 'Ability';
+    this.xValueInput = 0;
+    this.xValueMaximum = Math.max(0, this.totalManaFn() - base);
+  }
+
   confirmXValue(): void {
     const g = this.gameSignal();
     if (!g) return;
+
+    if (this.graveyardXCardIndex >= 0) {
+      this.websocketService.send({
+        type: MessageType.ACTIVATE_GRAVEYARD_ABILITY,
+        graveyardCardIndex: this.graveyardXCardIndex,
+        abilityIndex: 0,
+        xValue: this.xValueInput
+      });
+      this.choosingXValue = false;
+      this.graveyardXCardIndex = -1;
+      this.xValueCardName = '';
+      this.xValueInput = 0;
+      return;
+    }
 
     if (this.targetingForAbility) {
       const perm = this.myBattlefieldFn()[this.xValueCardIndex];
@@ -885,6 +921,7 @@ export class TargetingChoiceService {
   cancelXValue(): void {
     this.choosingXValue = false;
     this.xValueCardIndex = -1;
+    this.graveyardXCardIndex = -1;
     this.xValueCardName = '';
     this.xValueInput = 0;
     this.targetingForAbility = false;

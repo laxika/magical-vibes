@@ -37,19 +37,26 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         }
 
         // CR 613 layer engine: "becomes [color] until end of turn" is a floating layer-5
-        // color-setting effect with its own timestamp — it beats earlier setters (an already
+        // color effect with its own timestamp — it beats earlier setters (an already
         // attached Nim Deathmantle) and loses to later ones, then wears off at cleanup. The
         // legacy fields are still written for direct Permanent.getEffectiveColor callers; the
-        // layered pass seeds them and then replays this setter at its real timestamp.
-        target.getTransientColors().clear();
-        target.getTransientColors().add(e.color());
-        target.setColorOverridden(true);
+        // layered pass seeds them and then replays this effect at its real timestamp.
+        if (!e.additive()) {
+            target.getTransientColors().clear();
+            target.getTransientColors().add(e.color());
+            target.setColorOverridden(true);
+        }
+        // For an additive grant ("in addition to its other colors") the legacy fields are left
+        // untouched: seedLegacyColorAndAbilityState folds transientColors into the *seeded* colors
+        // before snapshotting, so the query pass would strip them as intrinsic. The floating
+        // effect below adds the color after the snapshot, so it registers as a granted color.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(), e,
                 target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
-        String logEntry = target.getCard().getName() + " becomes " + colorName + " until end of turn.";
+        String suffix = e.additive() ? " in addition to its other colors until end of turn." : " until end of turn.";
+        String logEntry = target.getCard().getName() + " becomes " + colorName + suffix;
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);

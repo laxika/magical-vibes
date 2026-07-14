@@ -7,12 +7,15 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsToExileEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +31,7 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
 
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,9 +40,12 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int count = ((SearchTargetLibraryForCardsToExileEffect) effect).count();
+        SearchTargetLibraryForCardsToExileEffect e = (SearchTargetLibraryForCardsToExileEffect) effect;
         UUID controllerId = entry.getControllerId();
         UUID targetPlayerId = entry.getTargetId();
+        int count = amountEvaluationService.evaluate(gameData, e.count(),
+                AmountContext.forStackEntry(entry, null));
+        boolean canFailToFind = e.upTo();
 
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
 
@@ -53,12 +60,21 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
         }
 
         int effectiveCount = Math.min(count, deck.size());
+        if (effectiveCount <= 0) {
+            // "up to X" with X == 0 (e.g. Nightmare Incursion with no Swamps): exile nothing,
+            // but the targeted player still shuffles.
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " searches " + targetName + "'s library for no cards. Library is shuffled.");
+            return;
+        }
         String prompt = "Search " + targetName + "'s library for a card to exile (" + effectiveCount + " remaining).";
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(deck))
                 .targetPlayerId(targetPlayerId)
                 .remainingCount(effectiveCount)
+                .canFailToFind(canFailToFind)
                 .destination(LibrarySearchDestination.EXILE)
-                .build(), prompt, false, controllerName + " searches " + targetName + "'s library.");
+                .build(), prompt, canFailToFind, controllerName + " searches " + targetName + "'s library.");
 
         log.info("Game {} - {} searching {}'s library to exile {} cards ({} in library)",
                 gameData.id, controllerName, targetName, effectiveCount, deck.size());

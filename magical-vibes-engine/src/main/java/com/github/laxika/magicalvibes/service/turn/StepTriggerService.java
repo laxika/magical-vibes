@@ -33,10 +33,12 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
@@ -380,6 +382,27 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: library >= {})",
                                 gameData.id, perm.getCard().getName(), libraryCheck.threshold());
                     }
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof SourceCounterThreshold counterCheck) {
+                    // Intervening-if: only trigger if the source permanent has enough counters of the
+                    // given type (Helix Pinnacle — 100+ tower counters)
+                    if (conditionEvaluationService.isMet(gameData, counterCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                activePlayerId,
+                                perm.getCard().getName() + "'s upkeep ability",
+                                new ArrayList<>(List.of(effect)),
+                                (UUID) null,
+                                perm.getId()
+                        ));
+
+                        String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {}+ {} counters)",
+                                gameData.id, perm.getCard().getName(), counterCheck.threshold(), counterCheck.counterType());
+                    }
                 } else if (effect instanceof SurveilEffect) {
                     // Surveil is part of a compound triggered ability (e.g. "surveil 1, then if...").
                     // Group ALL upkeep effects into a single stack entry so they resolve sequentially.
@@ -454,16 +477,19 @@ public class StepTriggerService {
                 for (CardEffect effect : upkeepEffects) {
                     CardEffect innerEffect = effect;
 
-                    // Unwrap metalcraft conditional — check metalcraft before offering the ability
-                    if (innerEffect instanceof ConditionalEffect metalcraft
-                            && metalcraft.condition() instanceof Metalcraft) {
-                        if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
+                    // Unwrap intervening-if conditional — check the gate at trigger time before
+                    // offering the ability (Kuldotha Phoenix metalcraft, Rekindled Flame's "if an
+                    // opponent has no cards in hand")
+                    if (innerEffect instanceof ConditionalEffect conditional
+                            && (conditional.condition() instanceof Metalcraft
+                                    || conditional.condition() instanceof AnOpponentHandEmpty)) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 new ConditionContext(activePlayerId, null, null, card, false, false, null, 0, null, null, false))) {
-                            log.info("Game {} - {} graveyard metalcraft ability skipped (fewer than three artifacts)",
-                                    gameData.id, card.getName());
+                            log.info("Game {} - {} graveyard upkeep ability skipped ({})",
+                                    gameData.id, card.getName(), conditional.condition().conditionNotMetReason());
                             continue;
                         }
-                        innerEffect = metalcraft.wrapped();
+                        innerEffect = conditional.wrapped();
                     }
 
                     if (innerEffect instanceof MayPayManaEffect mayPay) {

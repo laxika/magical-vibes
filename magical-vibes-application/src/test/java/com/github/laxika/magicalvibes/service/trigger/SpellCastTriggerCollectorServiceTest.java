@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
@@ -768,6 +769,34 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    // ===== ON_CONTROLLER_CASTS_SPELL — BoostEquippedCreatureUntilEndOfTurnEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — BoostEquippedCreatureUntilEndOfTurnEffect")
+    class ControllerBoostEquippedOnSpellCast {
+
+        @Test
+        @DisplayName("puts triggered ability on stack carrying the source permanent id")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Leering Emblem");
+            var effect = new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(2));
+            Card spellCard = createInstant("Lightning Bolt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 

@@ -23,11 +23,14 @@ import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnb
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageToDefendingCreatureWhenUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -52,10 +55,12 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeRestOfGameEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyPermanentDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
@@ -906,7 +911,11 @@ public class CombatDamageService {
                             continue;
                         }
                     }
-                    gameData.queueMayAbility(creature.getCard(), attackerId, may, defenderId, creature.getId());
+                    // Wire the combat damage dealt as the event value so a wrapped "draw that many
+                    // cards" (DrawCardEffect with an EventValue amount, e.g. Cold-Eyed Selkie) reads it.
+                    int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
+                            && draw.amount() instanceof EventValue ? damageDealt : 0;
+                    gameData.queueMayAbility(creature.getCard(), attackerId, may, defenderId, creature.getId(), mayEventValue);
                     gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger fires.");
                     continue;
                 }
@@ -943,6 +952,38 @@ public class CombatDamageService {
                     continue;
                 }
 
+                if (effect instanceof SacrificePermanentDamagedPlayerControlsEffect sacrificeEffect) {
+                    if (damageDealt < sacrificeEffect.minimumDamage()) {
+                        gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                + "'s ability does not trigger — less than " + sacrificeEffect.minimumDamage()
+                                + " damage dealt.");
+                        continue;
+                    }
+                    List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
+                    boolean hasValidTargets = false;
+                    if (defenderBf != null) {
+                        for (Permanent p : defenderBf) {
+                            if (sacrificeEffect.predicate() == null
+                                    || predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificeEffect.predicate())) {
+                                hasValidTargets = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasValidTargets) {
+                        gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
+                                + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId)
+                                + " has no valid targets.");
+                        continue;
+                    }
+                    StackEntry sacrificeSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
+                            creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId, creature.getId());
+                    sacrificeSe.setNonTargeting(true);
+                    gameData.stack.add(sacrificeSe);
+                    gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName() + "'s combat damage trigger goes on the stack.");
+                    continue;
+                }
+
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry se;
                 if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect
@@ -965,12 +1006,18 @@ public class CombatDamageService {
                         || effect instanceof TargetPlayerExilesFromHandEffect
                         || effect instanceof ChooseCardsFromTargetHandEffect
                         || effect instanceof SkipNextCombatPhaseEffect
+                        || effect instanceof TargetPlayerCantGainLifeRestOfGameEffect
                         || (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER)) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), defenderId, creature.getId());
                 } else {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect));
+                }
+                // Wire the combat damage dealt as the event value so "discards that many cards"
+                // (DiscardEffect with an EventValue amount, e.g. Needle Specter) reads it.
+                if (effect instanceof DiscardEffect) {
+                    se.setEventValue(damageDealt);
                 }
                 se.setNonTargeting(true);
                 gameData.stack.add(se);
@@ -1351,6 +1398,18 @@ public class CombatDamageService {
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false, null
                         ));
+                    }
+                    String logEntry = data.card().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
+                    continue;
+                } else if (effect instanceof DealDamageToAnyTargetEffect) {
+                    // "It deals that much damage to any target" (Spitemare): the damage amount
+                    // snapshots into xValue, and the controller chooses any target when serviced.
+                    if (data.damageDealt() > 0) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                data.card(), data.controllerId(), new ArrayList<>(List.of(effect)),
+                                false, null, data.damageDealt()));
                     }
                     String logEntry = data.card().getName() + "'s ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);

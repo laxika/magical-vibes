@@ -61,6 +61,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         switch (e.recipient()) {
             case CONTROLLER -> lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
             case TARGET_PLAYER -> loseTargetPlayerLife(gameData, entry, amount, sourceName);
+            case TARGET_PERMANENT_CONTROLLER -> loseTargetPermanentControllerLife(gameData, entry, amount, sourceName);
             case EACH_PLAYER -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, false);
             case EACH_OPPONENT -> eachPlayerLosesLife(gameData, e, controllerId, amount, sourceName, true);
         }
@@ -79,6 +80,17 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
             gameBroadcastService.logAndBroadcast(gameData, lossLog);
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, amount, sourceName);
         }
+    }
+
+    private void loseTargetPermanentControllerLife(GameData gameData, StackEntry entry, int amount, String sourceName) {
+        // targetId is the targeted permanent; the controller of that permanent loses life. Runs
+        // before any accompanying destroy effect so the permanent is still on the battlefield.
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        lifeSupport.applyLifeLoss(gameData, controllerId, amount, sourceName);
     }
 
     private void eachPlayerLosesLife(GameData gameData, LoseLifeEffect e, UUID controllerId,

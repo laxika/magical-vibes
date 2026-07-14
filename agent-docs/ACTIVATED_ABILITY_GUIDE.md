@@ -35,6 +35,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `ONLY_WHILE_CREATURE` | Abilities on creature lands that only work while animated |
 | `METALCRAFT` | Activate only if you control three or more artifacts |
 | `MORBID` | Activate only if a creature died this turn (checks `gameQueryService.isMorbidMet()`) |
+| `OPPONENT_CONTROLS_FLYING_CREATURE` | Activate only if an opponent controls a creature with flying (checks `gameQueryService.anyOpponentControlsFlyingCreature()`). Groundling Pouncer |
 | `OPPONENT_CONTROLS_MORE_LANDS` | Activate only if an opponent controls strictly more lands than you (checks `gameQueryService.anyOpponentControlsMoreLands()`). Weathered Wayfarer |
 | `POWER_4_OR_GREATER` | Activate only if this creature's power is 4 or greater (checks effective power incl. static bonuses) |
 | `RAID` | Activate only if you attacked this turn (checks `playersDeclaredAttackersThisTurn`). Works with both battlefield and graveyard activated abilities |
@@ -362,6 +363,15 @@ addGraveyardActivatedAbility(new ActivatedAbility(
 
 Cards: `MagmaPhoenix`
 
+**X-cost graveyard abilities** are supported: use an `{X}...` mana cost and read the paid X at
+resolution via `entry.getXValue()` in your effect handler. The paid X flows through
+`activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex, xValue)` onto the stack
+entry (harness: `activateGraveyardAbility(player, gyIndex, abilityIndex, xValue)`; frontend routes any
+graveyard ability whose cost contains `{X}` through the X-value prompt). Cards: `Evershrike`
+(`{X}{W/B}{W/B}: Return this card from your graveyard to the battlefield. You may put an Aura card with
+mana value X or less from your hand onto the battlefield attached to it. If you don't, exile this
+creature.` — self-return `ReturnCardFromGraveyardEffect` + `PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect`).
+
 ---
 
 ### 13. Hand activated ability (Reinforce)
@@ -439,7 +449,10 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `SacrificePermanentCost` | `(PermanentPredicate filter, String description)` or `(PermanentPredicate filter, String description, boolean excludeSource)` | "Sacrifice an artifact or creature: ..." or "Sacrifice a Goblin: ..." — generic predicate-based sacrifice. Use `PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)))` and `excludeSource=false` for subtype creature costs that can sacrifice the source |
 | `SacrificeMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` | "Sacrifice three artifacts: ..." (use with matching predicate) |
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
+| `TapMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` or `(int, PermanentPredicate, boolean excludeSource)` | "Tap N untapped [matching] you control: ..." — taps N untapped matching permanents as cost (Captivating Vampire, Gilt-Leaf Archdruid, Crackleburr's damage half). Combine `PermanentIsCreaturePredicate` + `PermanentColorInPredicate` via `PermanentAllOfPredicate` for "tap two red creatures". |
+| `UntapMultiplePermanentsCost` | `(int count, PermanentPredicate filter)` or `(int, PermanentPredicate, boolean excludeSource)` | Untap-symbol `{Q}` mirror of `TapMultiplePermanentsCost`: "Untap N tapped [matching] you control: ..." — valid choices are *tapped* matching permanents, which get untapped as cost. Pair with `.withRequiresUntap()` on the ability. Crackleburr ("Untap two tapped blue creatures you control"). |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
+| `SacrificeXPermanentsCost` | `(PermanentPredicate filter)` | "Sacrifice X [matching]: ..." — sacrifices X permanents matching the filter, where X is the ability's xValue chosen at activation (the sacrifice-analog of `TapXPermanentsCost`). Springjack Pasture (`PermanentAllOfPredicate(creature + Goat subtype)`); the number sacrificed becomes X for the ability's `AwardXAnyColorManaEffect` + gain-X-life rider |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` or `(CardPredicate, String label, boolean manaValueEqualsX)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any. `manaValueEqualsX=true` → "Discard a card with mana value X" (restricts valid discards to MV == chosen X; pair with an `{X}` cost). Knollspine Invocation |
 | `DiscardHandCost` | `()` | "Discard your hand: ..." — discards the controller's entire hand as a cost (no choice, no legality restriction; empty hand is fine). Fires per-card discard triggers. Slate of Ancestry |
 | `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
@@ -447,6 +460,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `RevealTwoCardsSharingColorCost` | `()` | "Reveal two cards from your hand that share a color: ..." (Illuminated Folio). Revealed cards stay in hand; the cost only gates the ability, so payment auto-reveals any qualifying pair (a valid pair must exist to activate; colorless cards never qualify). |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 | `PutCounterOnSourceCost` | `()` = -1/-1 ×1, or `(powerMod, toughnessMod, count)` | "Put a -1/-1 counter on this creature: ..." — puts counters on the source as a cost (paid immediately on activation). Respects `cantHaveCounters`/`cantHaveMinusOneMinusOneCounters`. Barrenton Medic |
+| `PutCounterOnControlledCreatureCost` | `(CounterType counterType, int count)` | "Put a -1/-1 counter on a creature you control: ..." — puts counter(s) on any creature you control (not just the source), chosen via the `PermanentChoiceCostHandler` pattern (auto-selects when only one creature exists, prompts when multiple). Also valid as a SPELL-slot cost (Scarscale Ritual). Hatchet Bully |
 | `PayManaCost` | `(String manaCost)` | Payable side of `ForcedCostOrElseEffect` only (not an `ActivatedAbility` cost). "you may pay {cost}; if you don't, [penalty]" — e.g. Force of Nature `ForcedCostOrElseEffect(PayManaCost("{G}{G}{G}{G}"), penalties, true)` |
 
 ```java

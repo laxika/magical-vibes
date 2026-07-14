@@ -106,6 +106,10 @@ import lombok.Builder;
  *                             card) gains haste until end of turn if the returned card has this subtype
  *                             (e.g. Warren Pilferers — "If that card is a Goblin card, this creature gains
  *                             haste until end of turn"); only meaningful for {@code HAND} search-and-choose
+ * @param greatestPower        {@code true} to restrict the (mandatory) search-and-choose to the matching
+ *                             card(s) in the controller's graveyard with the greatest power; a single
+ *                             greatest-power card is returned without a real decision, ties let the
+ *                             controller pick one and cannot be declined (e.g. Desecrator Hag)
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -134,7 +138,8 @@ public record ReturnCardFromGraveyardEffect(
         boolean enterAttacking,
         boolean maxManaValueEqualsLifeGainedThisTurn,
         boolean enterWithMannequinCounter,
-        CardSubtype grantSourceHasteIfSubtype
+        CardSubtype grantSourceHasteIfSubtype,
+        boolean greatestPower
 ) implements CardEffect {
 
     /**

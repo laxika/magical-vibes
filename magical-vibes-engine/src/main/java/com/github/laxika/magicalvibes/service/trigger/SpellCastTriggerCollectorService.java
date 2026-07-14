@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
@@ -34,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -200,6 +204,28 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = CasterLosesLifeOnSpellCastEffect.class, slot = EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)
+    private boolean handleCasterLosesLifeOnSpellCast(TriggerMatchContext match,
+            CasterLosesLifeOnSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+        // "that player" = the caster; preset the target so the loss falls on them, not a choice.
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new LoseLifeEffect(trigger.amount(), LoseLifeRecipient.TARGET_PLAYER)))
+        );
+        entry.setTargetId(sc.castingPlayerId());
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
     // ── ON_CONTROLLER_CASTS_SPELL ──────────────────────────────────────
 
     @CollectsTrigger(value = PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
@@ -215,6 +241,26 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleBoostEquippedOnSpellCast(TriggerMatchContext match,
+            BoostEquippedCreatureUntilEndOfTurnEffect trigger, TriggerContext ctx) {
+        // "Whenever you cast a spell, equipped creature gets +X/+Y until end of turn" (Leering Emblem).
+        // Carry the source permanent id so the handler can find the equipment and its equipped creature
+        // (the effect fizzles at resolution if the Equipment is no longer attached).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                null,
+                match.permanent().getId()
+        ));
+        log.info("Game {} - {} spell-cast equipped-boost trigger queued",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 
     @CollectsTrigger(value = CopyControllerCastSpellOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)

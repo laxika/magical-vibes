@@ -21,6 +21,10 @@ public sealed interface MultiPermanentChoiceContext {
     record DestroyDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
     }
 
+    /** Sacrifice a permanent the damaged player controls (mandatory combat damage trigger, e.g. Ashling, the Extinguisher). */
+    record SacrificeDamagedPlayerControls(String sourceName) implements MultiPermanentChoiceContext {
+    }
+
     /** "You may sacrifice [source]. If you do, destroy target creature that player controls." */
     record SacrificeSelfToDestroy(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }

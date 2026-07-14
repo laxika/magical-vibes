@@ -94,6 +94,6 @@ class CardFreezeTest {
         assertThat(instanceFields)
                 .as("Card's instance field count changed — copy the new field in Card(Card source) "
                         + "and update this expected count")
-                .isEqualTo(40);
+                .isEqualTo(42);
     }
 }

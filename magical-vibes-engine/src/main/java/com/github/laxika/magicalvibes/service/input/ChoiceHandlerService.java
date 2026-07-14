@@ -335,6 +335,12 @@ public class ChoiceHandlerService {
     }
 
     private void handleTextChangeFromWordChosen(GameData gameData, Player player, String chosenWord, ChoiceContext.TextChangeFromWord ctx) {
+        // Only words that were actually offered are legal — Glamerdye offers color words only, so a
+        // basic land type must be rejected even though it is a valid word for Mind Bend.
+        PendingInteraction.ColorChoice active = gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (active != null && !active.options().contains(chosenWord)) {
+            throw new IllegalArgumentException("Invalid choice: " + chosenWord);
+        }
         boolean isColor = GameQueryService.TEXT_CHANGE_COLOR_WORDS.contains(chosenWord);
         boolean isLandType = GameQueryService.TEXT_CHANGE_LAND_TYPES.contains(chosenWord);
         if (!isColor && !isLandType) {
@@ -372,10 +378,11 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
 
+        String fromText = textChangeChoiceToWord(ctx.fromWord());
+        String toText = textChangeChoiceToWord(chosenWord);
+
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (target != null) {
-            String fromText = textChangeChoiceToWord(ctx.fromWord());
-            String toText = textChangeChoiceToWord(chosenWord);
             target.getTextReplacements().add(new TextReplacement(fromText, toText));
 
             // If the permanent has a chosenColor matching the from-color, update it
@@ -390,6 +397,18 @@ public class ChoiceHandlerService {
             String logEntry = player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " + target.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} changes {} to {} on {}", gameData.id, player.getUsername(), fromText, toText, target.getCard().getName());
+        } else {
+            // Glamerdye may target a spell still on the stack; record the change so it carries onto the
+            // permanent that spell resolves into (CR 613.7). For instants/sorceries it is a no-op.
+            StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, ctx.targetId());
+            if (targetSpell != null) {
+                gameData.spellTextReplacements
+                        .computeIfAbsent(ctx.targetId(), k -> new ArrayList<>())
+                        .add(new TextReplacement(fromText, toText));
+                String logEntry = player.getUsername() + " changes all instances of " + fromText + " to " + toText + " on " + targetSpell.getCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} changes {} to {} on spell {}", gameData.id, player.getUsername(), fromText, toText, targetSpell.getCard().getName());
+            }
         }
 
         gameData.priorityPassedBy.clear();
