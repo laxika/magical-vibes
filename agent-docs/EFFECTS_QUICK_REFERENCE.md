@@ -27,7 +27,19 @@ concrete type. **When you add a new effect that fits one of these families, impl
 (return existing record components — the impl is purely additive) so the AI scores/targets it without
 a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 
-- `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature)
+- `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature). AI
+  cost-valuation facets describe the resource paying gives up (default to neutral; override only the
+  one that matches the record): `consumedPermanentFilter()` (`PermanentPredicate` selecting a
+  payer-chosen battlefield permanent to sacrifice/return — creature/artifact/filtered),
+  `consumesSourcePermanent()` (sacrifice this permanent), `sacrificesChosenCreature()` (plain
+  "sacrifice a creature"), `lifePaid(currentLife)`, `sourceCountersRemoved()`,
+  `consumedGraveyardCardCount()` + `consumedGraveyardCardType()`. Read by `GameSimulator`
+  (payment-planning: find a sacrifice target / graveyard cards to exile) and
+  `HardAiDecisionEngine.evaluateAbilityCosts` (score the cost). Overridden by `SacrificeCreatureCost`,
+  `SacrificeArtifactCost`, `SacrificePermanentCost`, `SacrificeSelfCost`, `PayLifeCost`,
+  `RemoveChargeCountersFromSourceCost`, `ExileNCardsFromGraveyardCost`; all other cost records inherit
+  the neutral defaults (the AI never reasoned about them). Payment EXECUTION stays concrete in
+  `AbilityActivationService`.
 - `ManaProducingEffect` — mana abilities (CR 605.1a). AI-estimator facets (default to neutral;
   override only if the AI should model the mana): `estimatedManaColor()`, `estimatedManaAmount()`,
   `estimatedCountsAllColors()`, `estimatedWildcardMana()`, `modeledByManaEstimator()`

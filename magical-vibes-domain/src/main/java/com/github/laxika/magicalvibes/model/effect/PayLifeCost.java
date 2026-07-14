@@ -21,4 +21,9 @@ public record PayLifeCost(int amount, boolean halfLifeRoundedUp) implements Cost
     public int effectiveAmount(int currentLife) {
         return halfLifeRoundedUp ? (currentLife + 1) / 2 : amount;
     }
+
+    @Override
+    public int lifePaid(int currentLife) {
+        return effectiveAmount(currentLife);
+    }
 }

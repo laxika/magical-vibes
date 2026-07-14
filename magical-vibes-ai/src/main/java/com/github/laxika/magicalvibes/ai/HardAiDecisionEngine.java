@@ -34,13 +34,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
-import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -1976,23 +1972,26 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof SacrificeSelfCost) {
+            if (!(effect instanceof CostEffect costEffect)) {
+                continue;
+            }
+            if (costEffect.consumesSourcePermanent()) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     cost += boardEval.creatureScore(gameData, permanent, aiPlayer.getId(), opponentId);
                 } else {
                     cost += permanent.getCard().getManaValue() * 3.0;
                 }
-            } else if (effect instanceof SacrificeCreatureCost) {
+            } else if (costEffect.sacrificesChosenCreature()) {
                 // Deduct the value of the best sacrifice candidate (cheapest to lose)
                 List<Permanent> creatures = gameData.playerBattlefields
                         .getOrDefault(aiPlayer.getId(), List.of()).stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
                         .toList();
                 cost += boardEval.bestSacrificeCost(gameData, creatures, aiPlayer.getId(), opponentId);
-            } else if (effect instanceof PayLifeCost lifeCost) {
-                cost += lifeCost.effectiveAmount(gameData.getLife(aiPlayer.getId())) * 1.5;
-            } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
-                cost += counterCost.count();
+            } else {
+                // Scalar resources: life paid and/or charge counters removed from the source.
+                cost += costEffect.lifePaid(gameData.getLife(aiPlayer.getId())) * 1.5;
+                cost += costEffect.sourceCountersRemoved();
             }
         }
         return cost;

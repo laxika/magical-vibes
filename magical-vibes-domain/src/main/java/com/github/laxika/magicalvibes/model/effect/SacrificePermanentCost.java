@@ -6,4 +6,9 @@ public record SacrificePermanentCost(PermanentPredicate filter, String descripti
     public SacrificePermanentCost(PermanentPredicate filter, String description) {
         this(filter, description, true);
     }
+
+    @Override
+    public PermanentPredicate consumedPermanentFilter() {
+        return filter;
+    }
 }

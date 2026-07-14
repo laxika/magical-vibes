@@ -2015,3 +2015,105 @@ EXEMPT `service/effect/**` zone (zero counted violations). Baseline + matrix reg
   interface-keyed-by-concrete-implementor note added).
 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+
+## Step 17 — Give activation COSTS AI cost-valuation facets on `CostEffect`  (2026-07-15)
+
+Phase-2 continuation: stop the AI from `instanceof`-ing concrete cost-record types. `CostEffect` was a
+pure marker; it now also carries DESCRIPTIVE facets (mirroring `ManaProducingEffect`'s AI-estimator
+facets — Step 7) that answer "what resource does paying this cost give up, and how much?" from the
+record's existing components. The AI's *valuation* logic stays in the AI; only the type-recognition
+moved.
+
+### Question-per-site inventory (grep `instanceof .*Cost`, authoritative)
+
+**`GameSimulator` (payment-planning for simulation):**
+- `computeExileNGraveyardIndices` — `ExileNCardsFromGraveyardCost`: "how many graveyard cards does this
+  exile, and of what type?" (reads `count()` / `requiredType()`).
+- `computeSacrificeTarget` — `SacrificeCreatureCost` / `SacrificeArtifactCost` /
+  `SacrificePermanentCost`: "which battlefield permanent may I pick to pay this sacrifice cost?" (any
+  creature / any artifact / matches the record's `filter()`).
+
+**`HardAiDecisionEngine.evaluateAbilityCosts` (score a cost as a value deduction):**
+- `SacrificeSelfCost`: "does paying this sacrifice the source itself?" → score the source permanent.
+- `SacrificeCreatureCost`: "does paying this sacrifice a creature I choose?" → score the cheapest
+  creature I could give up. (Artifact/permanent sacrifices are deliberately NOT folded into this
+  creature-specific estimate — original behavior.)
+- `PayLifeCost`: "how much life?" → `effectiveAmount(currentLife)`.
+- `RemoveChargeCountersFromSourceCost`: "how many counters removed from the source?" → `count()`.
+
+### Facet design (all default-neutral on `CostEffect`; a record overrides only its own)
+
+- `PermanentPredicate consumedPermanentFilter()` — the predicate selecting a payer-chosen battlefield
+  permanent this cost consumes, or `null`. `SacrificeCreatureCost` → shared
+  `PermanentIsCreaturePredicate` constant, `SacrificeArtifactCost` → shared `PermanentIsArtifactPredicate`
+  constant, `SacrificePermanentCost` → its `filter()`. (Constants, so allocation-free on the rollout
+  path. `PredicateEvaluationService` maps the creature/artifact predicates to `isCreature`/`isArtifact`
+  when `gameData != null`, so `GameSimulator`'s unified `matchesPermanentPredicate` call is byte-for-byte
+  equivalent to the old `isCreature`/`isArtifact` branches.)
+- `boolean consumesSourcePermanent()` — `SacrificeSelfCost` → true.
+- `boolean sacrificesChosenCreature()` — `SacrificeCreatureCost` → true (the creature-specific scoring
+  question, kept distinct from `consumedPermanentFilter()` so artifact/permanent sacrifices still score 0
+  in `evaluateAbilityCosts`, preserving behavior).
+- `int lifePaid(int currentLife)` — `PayLifeCost` → `effectiveAmount(currentLife)`.
+- `int sourceCountersRemoved()` — `RemoveChargeCountersFromSourceCost` → `count()`.
+- `int consumedGraveyardCardCount()` + `CardType consumedGraveyardCardType()` — `ExileNCardsFromGraveyardCost`
+  → `count()` / `requiredType()`.
+
+Implemented on exactly the 7 cost records the AI reads; every other cost record inherits the neutral
+defaults (the AI never recognized them, so this is the pre-refactor behavior). Facets are pure functions
+of record components and allocation-free — safe inside MCTS rollouts.
+
+### Sites migrated per file
+
+| File | Before | After | Δ |
+|------|-------:|------:|--:|
+| `ai/HardAiDecisionEngine.java` | 7 | 3 | -4 |
+| `ai/simulation/GameSimulator.java` | 6 | 2 | -4 |
+
+`HardAiDecisionEngine`: the 4 cost branches in `evaluateAbilityCosts` collapse to one
+`instanceof CostEffect` (structural, uncounted) + facet reads; the else-branch adds
+`lifePaid(...) * 1.5 + sourceCountersRemoved()` (each 0 for a non-matching cost, so identical to the old
+mutually-exclusive branches). 4 now-unused cost-type imports pruned.
+`GameSimulator`: both helper loops now key on `instanceof CostEffect` + a facet; 4 cost-type imports
+pruned, `CostEffect` + `PermanentPredicate` imports added, the `{@link ExileNCardsFromGraveyardCost}`
+javadoc reference reworded to describe the shape.
+
+### `AbilityActivationService` split — nothing migrated (documented decision)
+
+`AbilityActivationService` (service/ability, NON-exempt, 37 counted `instanceof`) is the payment
+EXECUTOR: its cost `instanceof` sites (a) construct the concrete cost handler in
+`toPermanentChoiceCostHandler` (the big factory), (b) snapshot per-record tracked values before auto-pay
+(`SacrificeCreatureCost.trackSacrificed*`, `TapCreatureCost.trackTappedCreaturePower`), or (c) execute a
+specific payment (`RevealTwoCardsSharingColorCost`, `RemoveCounterFromSourceCost`, `MillControllerCost`,
+`DiscardHandCost`, `RemoveChargeCountersFromSourceCost`, `PutCounterOnSourceCost`). None is a pure
+"can this cost be paid right now?" QUESTION expressible by the new resource-DESCRIPTION facets (the facets
+describe *what* a cost consumes for AI valuation, not a can-pay boolean or the payment mechanics). So per
+the step's rule — migrate only pure can-pay questions, leave every payment site — **all 37 stay**, and the
+baseline line for this file is unchanged. The three `!(effect instanceof CostEffect)` marker filters are
+already structural/uncounted.
+
+### Violation drops
+
+Program total (ratchet sum): **492 → 484 (-8)**, all in the two AI files above. `git diff` of
+`effect-dispatch-baseline.txt` touches exactly two lines (both pure drops); `EFFECT_COUPLING_MATRIX.md`
+regenerated in lockstep via `python scripts/effect-coupling-audit.py`.
+
+### Tests run (all green)
+
+Card tests (one per migrated cost shape): `AshnodsAltarTest` (SacrificeCreatureCost),
+`BloodPetTest` (SacrificeSelfCost), `PhyrexiasCoreTest` (SacrificeArtifactCost),
+`ArguelsBloodFastTest` (PayLifeCost), `GolemFoundryTest` (RemoveChargeCountersFromSourceCost),
+`SkaabRuinatorTest` (ExileNCardsFromGraveyardCost). AI regression: `GameSimulatorTest`,
+`SpellEvaluatorTest`. `EffectDispatchRatchetTest` — green after baseline regen.
+
+### Files changed
+
+- **Interface:** `model/effect/CostEffect.java` — 7 default facets added (still a marker).
+- **Records (overrides only):** `SacrificeCreatureCost`, `SacrificeArtifactCost`, `SacrificePermanentCost`,
+  `SacrificeSelfCost`, `PayLifeCost`, `RemoveChargeCountersFromSourceCost`, `ExileNCardsFromGraveyardCost`.
+- **AI:** `HardAiDecisionEngine.java`, `simulation/GameSimulator.java` (migrated + imports pruned).
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (cost facets cataloged).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+

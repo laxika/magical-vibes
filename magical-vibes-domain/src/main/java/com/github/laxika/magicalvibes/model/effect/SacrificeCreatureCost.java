@@ -1,8 +1,23 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 public record SacrificeCreatureCost(boolean trackSacrificedManaValue, boolean trackSacrificedPower, boolean trackSacrificedToughness, boolean excludeSelf, ManaColor trackSacrificedColorSymbols) implements CostEffect {
+
+    private static final PermanentPredicate CREATURE_FILTER = new PermanentIsCreaturePredicate();
+
+    @Override
+    public PermanentPredicate consumedPermanentFilter() {
+        return CREATURE_FILTER;
+    }
+
+    @Override
+    public boolean sacrificesChosenCreature() {
+        return true;
+    }
+
     public SacrificeCreatureCost() {
         this(false, false, false, false, null);
     }

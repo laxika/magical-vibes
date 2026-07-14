@@ -21,17 +21,15 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -945,22 +943,24 @@ public class GameSimulator {
     }
 
     /**
-     * Computes graveyard card indices to exile for {@link ExileNCardsFromGraveyardCost}.
-     * Returns null if the card has no such cost.
+     * Computes graveyard card indices to exile for a cost that exiles an exact number of
+     * graveyard cards of a given type. Returns null if the card has no such cost.
      */
     private List<Integer> computeExileNGraveyardIndices(GameData gd, UUID playerId, Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
+            if (effect instanceof CostEffect cost && cost.consumedGraveyardCardCount() > 0) {
+                int count = cost.consumedGraveyardCardCount();
+                CardType requiredType = cost.consumedGraveyardCardType();
                 List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
                 List<Integer> matchingIndices = new ArrayList<>();
                 for (int i = 0; i < graveyard.size(); i++) {
                     Card c = graveyard.get(i);
-                    if (cost.requiredType() == null || c.hasType(cost.requiredType())) {
+                    if (requiredType == null || c.hasType(requiredType)) {
                         matchingIndices.add(i);
                     }
                 }
-                if (matchingIndices.size() < cost.count()) return null;
-                return new ArrayList<>(matchingIndices.subList(0, cost.count()));
+                if (matchingIndices.size() < count) return null;
+                return new ArrayList<>(matchingIndices.subList(0, count));
             }
         }
         return null;
@@ -973,18 +973,13 @@ public class GameSimulator {
     private UUID computeSacrificeTarget(GameData gd, UUID playerId, Card card) {
         List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeCreatureCost) {
-                return battlefield.stream()
-                        .filter(p -> gameQueryService.isCreature(gd, p))
-                        .findFirst().map(Permanent::getId).orElse(null);
-            } else if (effect instanceof SacrificeArtifactCost) {
-                return battlefield.stream()
-                        .filter(p -> gameQueryService.isArtifact(gd, p))
-                        .findFirst().map(Permanent::getId).orElse(null);
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                return battlefield.stream()
-                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, sacCost.filter()))
-                        .findFirst().map(Permanent::getId).orElse(null);
+            if (effect instanceof CostEffect cost) {
+                PermanentPredicate filter = cost.consumedPermanentFilter();
+                if (filter != null) {
+                    return battlefield.stream()
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, filter))
+                            .findFirst().map(Permanent::getId).orElse(null);
+                }
             }
         }
         return null;

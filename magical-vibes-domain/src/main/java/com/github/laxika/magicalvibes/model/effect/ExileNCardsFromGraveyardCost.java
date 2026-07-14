@@ -12,4 +12,14 @@ import com.github.laxika.magicalvibes.model.CardType;
  * @param requiredType the card type required (null = any)
  */
 public record ExileNCardsFromGraveyardCost(int count, CardType requiredType) implements CostEffect {
+
+    @Override
+    public int consumedGraveyardCardCount() {
+        return count;
+    }
+
+    @Override
+    public CardType consumedGraveyardCardType() {
+        return requiredType;
+    }
 }
