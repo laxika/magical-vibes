@@ -16,7 +16,12 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param wrapped the effect applied only on a lost (or tied) clash
  */
-public record IfLostClashEffect(CardEffect wrapped) implements CardEffect {
+public record IfLostClashEffect(CardEffect wrapped) implements ClashOutcomeConditionalEffect {
+
+    @Override
+    public boolean appliesOnWin() {
+        return false;
+    }
 
     @Override
     public boolean canTargetPermanent() {

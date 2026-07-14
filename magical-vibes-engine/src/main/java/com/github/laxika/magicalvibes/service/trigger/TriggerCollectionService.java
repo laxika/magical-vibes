@@ -32,8 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.ClashOutcomeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
@@ -93,7 +93,7 @@ public class TriggerCollectionService {
             gameData.playersWhoCastFirstSpellInGame.add(castingPlayerId);
             for (OpeningHandRevealTrigger trigger : gameData.openingHandRevealTriggers) {
                 if (!trigger.revealingPlayerId().equals(castingPlayerId)
-                        && trigger.effect() instanceof CounterUnlessPaysEffect counterEffect) {
+                        && trigger.effect() instanceof CounterUnlessEffect counterEffect) {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             trigger.sourceCard(),
@@ -666,8 +666,10 @@ public class TriggerCollectionService {
         if (effects.isEmpty()) return;
 
         for (CardEffect effect : effects) {
-            if (effect instanceof CounterUnlessPaysEffect counterEffect) {
-                // Put counter-unless-pays directly on the stack targeting the spell
+            if (effect instanceof CounterUnlessEffect counterEffect) {
+                // Put the counter-unless effect directly on the stack targeting the spell. The pay
+                // and discard variants queue an identical trigger entry; only the log wording differs
+                // by the kind of ransom demanded.
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
@@ -679,25 +681,19 @@ public class TriggerCollectionService {
                 );
                 gameData.stack.add(entry);
 
-                String logEntry = source.getCard().getName() + "'s triggered ability triggers — counter unless controller pays {" + counterEffect.amount() + "}.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} becomes-target-of-opponent-spell counter trigger queued", gameData.id, source.getCard().getName());
-            } else if (effect instanceof CounterUnlessDiscardsEffect discardEffect) {
-                // Ward—Discard a card: counter unless the controller discards a card
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(),
-                        controllerId,
-                        source.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(discardEffect)),
-                        spellEntry.getCard().getId(),
-                        Zone.STACK
-                );
-                gameData.stack.add(entry);
-
-                String logEntry = source.getCard().getName() + "'s triggered ability triggers — counter unless controller discards a card.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} becomes-target-of-opponent-spell counter-unless-discard trigger queued", gameData.id, source.getCard().getName());
+                switch (counterEffect.ransomKind()) {
+                    case PAY_MANA -> {
+                        gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName()
+                                + "'s triggered ability triggers — counter unless controller pays {"
+                                + counterEffect.ransomMagnitude() + "}.");
+                        log.info("Game {} - {} becomes-target-of-opponent-spell counter trigger queued", gameData.id, source.getCard().getName());
+                    }
+                    case DISCARD_CARD -> {
+                        gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName()
+                                + "'s triggered ability triggers — counter unless controller discards a card.");
+                        log.info("Game {} - {} becomes-target-of-opponent-spell counter-unless-discard trigger queued", gameData.id, source.getCard().getName());
+                    }
+                }
             }
         }
     }
@@ -715,7 +711,7 @@ public class TriggerCollectionService {
         if (controllerId.equals(spellOrAbilityControllerId)) return;
 
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
-                .filter(e -> !(e instanceof CounterUnlessPaysEffect) && !(e instanceof CounterUnlessDiscardsEffect))
+                .filter(e -> !(e instanceof CounterUnlessEffect))
                 .toList();
         if (effects.isEmpty()) return;
 
@@ -1475,10 +1471,8 @@ public class TriggerCollectionService {
             // Resolve win-conditional clauses now: the clash has ended, so the winner is fixed.
             List<CardEffect> resolvedEffects = new ArrayList<>();
             for (CardEffect effect : effects) {
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.IfWonClashEffect ifWon) {
-                    if (won) resolvedEffects.add(ifWon.wrapped());
-                } else if (effect instanceof com.github.laxika.magicalvibes.model.effect.IfLostClashEffect ifLost) {
-                    if (!won) resolvedEffects.add(ifLost.wrapped());
+                if (effect instanceof ClashOutcomeConditionalEffect clashOutcome) {
+                    if (clashOutcome.appliesOnWin() == won) resolvedEffects.add(clashOutcome.wrapped());
                 } else {
                     resolvedEffects.add(effect);
                 }

@@ -12,7 +12,12 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param wrapped the effect applied only on a won clash (e.g. a {@code SkipNextUntapEffect})
  */
-public record IfWonClashEffect(CardEffect wrapped) implements CardEffect {
+public record IfWonClashEffect(CardEffect wrapped) implements ClashOutcomeConditionalEffect {
+
+    @Override
+    public boolean appliesOnWin() {
+        return true;
+    }
 
     @Override
     public boolean canTargetPermanent() {

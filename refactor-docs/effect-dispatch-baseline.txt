@@ -33,9 +33,9 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatTriggerService.java=3
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/graveyard/GraveyardService.java=6
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/CardChoiceHandlerService.java=1
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayAbilityHandlerService.java=61
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayAbilityHandlerService.java=59
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayCastHandlerService.java=2
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayPenaltyChoiceHandlerService.java=12
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayPenaltyChoiceHandlerService.java=10
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/PermanentChoiceBattlefieldHandlerService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/spell/SpellCastingService.java=9
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/state/StateBasedActionService.java=1
@@ -45,7 +45,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigge
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/EnterTriggerCollectorService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/LandTapTriggerCollectorService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/SpellCastTriggerCollectorService.java=1
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/TriggerCollectionService.java=21
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/TriggerCollectionService.java=14
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/StepTriggerService.java=18
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/TurnCleanupService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/TurnProgressionService.java=1

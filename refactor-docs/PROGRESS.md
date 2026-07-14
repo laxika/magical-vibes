@@ -1613,3 +1613,116 @@ scripts/effect-coupling-audit.py` run.
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
 The six selective/per-player multiplier records stay concrete by design (single dedicated query methods);
 migrating them would rename coupling without reducing it.
+
+## Step 14 — Unify the "counter unless …" family; collapse the clash-outcome pair; audit the rest  (2026-07-14)
+
+Trigger-collection cleanup. Migrated two genuine multi-implementor families to capability interfaces
+and audited every other non-exempt effect-type `instanceof` in `TriggerCollectionService` and
+`StepTriggerService`. The remaining sites are single-implementor special cases and stay concrete.
+
+### Part 1 — the counter-unless family
+
+New descriptive interface `magical-vibes-domain/.../model/effect/CounterUnlessEffect.java`
+(`extends CardEffect`, nested `RansomKind { PAY_MANA, DISCARD_CARD }`, two pure facts
+`ransomKind()` + `ransomMagnitude()`). Implemented by both records:
+
+- `CounterUnlessPaysEffect` — now `implements CounterSpellingEffect, CounterUnlessEffect`;
+  `ransomKind()` = `PAY_MANA`, `ransomMagnitude()` = `amount()`. (Keeps `CounterSpellingEffect` so the
+  AI instant classifier still sees it as a counterspell.)
+- `CounterUnlessDiscardsEffect` — now `implements CounterUnlessEffect` (was bare `CardEffect`);
+  `ransomKind()` = `DISCARD_CARD`, `ransomMagnitude()` = 1. (Deliberately NOT `CounterSpellingEffect`,
+  preserving its prior non-counterspell classification.)
+
+Recognition sites rewritten to the interface (the pay/discard choice-flow orchestration itself is
+unchanged — it now switches on `ransomKind()` instead of the concrete types):
+
+- `TriggerCollectionService` — Chancellor opening-hand-reveal match (was `CounterUnlessPaysEffect`),
+  the "becomes target of opponent spell" branch (the two per-kind branches collapsed into one shared
+  stack-entry build + a `ransomKind()` switch for the log wording, reading `ransomMagnitude()` where it
+  read `amount()`), and the negative filter (`!(e instanceof CounterUnlessPaysEffect) && !(e instanceof
+  CounterUnlessDiscardsEffect)` → `!(e instanceof CounterUnlessEffect)`).
+- `MayAbilityHandlerService` — the two routing `anyMatch` checks collapsed into one interface filter +
+  `ransomKind()` switch dispatching to the same pay/discard handlers.
+- `MayPenaltyChoiceHandlerService` — the pay handler filters on `instanceof CounterUnlessEffect ce &&
+  ce.ransomKind()==PAY_MANA` then casts to `CounterUnlessPaysEffect` for its per-kind fields (`amount`,
+  `exileIfCountered`, `onNotPaidEffects`); the discard handler's presence check filters on the interface
+  + `DISCARD_CARD`. (Plain casts aren't ratchet violations, so keeping the concrete cast in the kept
+  per-kind branch is fine.)
+
+### Part 2 — bounded audit of the two trigger files
+
+Decision rule applied: migrate a type only if it collapses a genuine multi-implementor family sharing a
+loop (or a clean cross-file family). A single concrete record checked on its own — even across several
+files — is NOT migrated: extracting an interface with one implementor just renames the coupling, it
+doesn't collapse any multi-type branch. (Matches on condition types — Metalcraft/Morbid/Raid/… — and the
+exempt structural wrappers `ConditionalEffect`/`MayEffect`/… are not effect-type violations and are
+excluded, as are `TargetFilter` matches.)
+
+| File | Type(s) | Site(s) | Other non-exempt files | Impls | Decision | Reason |
+|------|---------|---------|------------------------|------:|----------|--------|
+| TriggerCollectionService | `IfWonClashEffect` + `IfLostClashEffect` | 1478/1480 | — | 2 | **MIGRATE** | Two wrapper records in one `if/else-if` clash loop; both just carry `wrapped()` gated on the outcome. Collapsed to `ClashOutcomeConditionalEffect` (`wrapped()` + `appliesOnWin()`): `if (won == clash.appliesOnWin()) add(wrapped)`. Clean fact collapse. |
+| TriggerCollectionService | `ReflectAllyDamageToDamagedCreatureControllerEffect` + `DamageDamagedCreatureControllerAndSelfEffect` | 911/934 | — | 1 each | LEAVE | Share a loop, but the two branches build **structurally different** stack entries (source-filter predicate + a single `damage` reflect vs. two fixed damage amounts gated on a self-fire check). An interface can't express both without per-type reconstruction — construction-shaped, not a fact read. |
+| TriggerCollectionService | `SpellCastTriggerEffect` | 145 | — | 1 | LEAVE | Single-site special case. |
+| TriggerCollectionService | `ExileTargetOnControllerSpellCastEffect` | 179 | — | 1 | LEAVE | Single-site. |
+| TriggerCollectionService | `CopyThisSpellIfConditionEffect` | 298 | — | 1 | LEAVE | Single-site. |
+| TriggerCollectionService | `EnterBattlefieldOnDiscardEffect` | 376 (neg filter) | CardChoiceHandlerService:984 | 1 | LEAVE | Technically hits the "2+ files" arm, but it's a **single concrete record** checked for mere presence/absence — a marker interface would have exactly one implementor and collapse no multi-type branch (rename only). Its 2nd site is outside the trigger-collection area. Deferred unless the program later decides single-impl markers pay off. |
+| TriggerCollectionService | `CopyControllerActivatedAbilityTriggerEffect` | 1197 | — | 1 | LEAVE | Single-site. |
+| TriggerCollectionService | `TriggeringPermanentConditionalEffect` | 1026/1055/1119/1157/2371 | — | 1 | LEAVE | One wrapper type across five dedicated methods; no multi-type chain to collapse. |
+| TriggerCollectionService | `EnterCreatureConditionalEffect` | 2255 | — | 1 | LEAVE | Single wrapper type. |
+| TriggerCollectionService | `TriggeringCardConditionalEffect` | 2348/2364 | — | 1 | LEAVE | Single wrapper type across two dedicated methods. |
+| StepTriggerService | `ExileGraveyardCardsEffect` | 690, 2300 | TriggeredAbilityQueueService:89, ValidTargetService (×3), TargetLegalityService:186 | 1 | LEAVE | Hits "2+ files" heavily, but is a **single concrete record** whose own fields (`scope()`, `canTargetGraveyard()`) are read — an interface would 1:1-rename the type, not collapse a family. Most of its sites live in the target-validation subsystem (`service/target`), whose sanctioned home is `@ValidatesTarget` validators — out of this step's scope. |
+| StepTriggerService | `SurveilEffect` | 453 | MayAbilityHandlerService:279 | 1 | LEAVE | 2 files but a single record checked for presence — marker rename, no family. |
+| StepTriggerService | `ExchangeControlOfTargetPermanentsEffect` | 260/261 | — | 1 | LEAVE | Single type (direct + `MayEffect`-wrapped in the same expression). |
+| StepTriggerService | `MayRevealSubtypeFromHandEffect` | 271 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `BecomeCopyOfTargetCreatureEffect` | 279 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `DestroyOneOfTargetsAtRandomEffect` | 299 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `WinGameIfCreaturesInGraveyardEffect` | 471 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `DealDamageIfFewCardsInHandEffect` | 609 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `EnchantedCreatureControllerLosesLifeEffect` | 656 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `LeylineStartOnBattlefieldEffect` | 1117 | — | 1 | LEAVE | Single-site (`MayEffect`-wrapped). |
+| StepTriggerService | `SkipDrawStepEffect` | 1185 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `DrawCardForTargetPlayerEffect` | 1232 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `DealDamageIfDidntCastSpellThisTurnEffect` | 1734 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `SacrificeSelfAndReturnCardsExiledWithSourceEffect` | 1755 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `DestroyRandomOpponentPermanentWithCounterEffect` | 1951 | — | 1 | LEAVE | Single-site. |
+| StepTriggerService | `GainControlIfSubtypesDealtCombatDamageEffect` | 2034 | — | 1 | LEAVE | Single-site. |
+
+**Conclusion for future sessions:** apart from the two families migrated this step, the remaining
+trigger-collection dispatch is interaction/construction-shaped or single-implementor. Do NOT re-litigate
+it — extracting an interface for any single concrete record (including the cross-file
+`EnterBattlefieldOnDiscardEffect` / `ExileGraveyardCardsEffect` / `SurveilEffect`) renames coupling
+without collapsing a multi-type branch, and the `ExileGraveyardCardsEffect` target-validation sites
+belong to the `@ValidatesTarget` subsystem, not a capability interface.
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/trigger/TriggerCollectionService.java` | 21 | 14 | -7 |
+| `service/input/MayAbilityHandlerService.java` | 61 | 59 | -2 |
+| `service/input/MayPenaltyChoiceHandlerService.java` | 12 | 10 | -2 |
+
+Program total (ratchet sum): **540 → 529** (-11). Working tree was clean apart from this step, so the
+baseline and `EFFECT_COUPLING_MATRIX.md` were regenerated with `python scripts/effect-coupling-audit.py`
+(Python 3.14.6 on PATH); the regenerated baseline diff touches exactly these three files.
+
+### Tests run (all green)
+
+- `ManaLeakTest` (7 — counter-unless-pays), `ForumNecroscribeTest` (6 — counter-unless-discards / Ward),
+  `ChancellorOfTheAnnexTest` (15 — opening-hand-reveal counter path), `SpiketailHatchlingTest` (10 —
+  becomes-target-of-opponent-spell counter path), `FrostTitanTest` (may-ability counter path),
+  `RebellionOfTheFlamekinTest` (4 — clash `IfWon`/`IfLost`), `EntanglingTrapTest` (4 — targeting clash).
+- `EffectDispatchRatchetTest` — green after baseline regen.
+
+### Files changed
+
+- **New:** `magical-vibes-domain/.../model/effect/CounterUnlessEffect.java`,
+  `magical-vibes-domain/.../model/effect/ClashOutcomeConditionalEffect.java`.
+- `CounterUnlessPaysEffect`, `CounterUnlessDiscardsEffect`, `IfWonClashEffect`, `IfLostClashEffect` —
+  implement the new interfaces (pure facts only).
+- `service/trigger/TriggerCollectionService.java`, `service/input/MayAbilityHandlerService.java`,
+  `service/input/MayPenaltyChoiceHandlerService.java` — recognition sites re-pointed; imports updated.
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entries).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.

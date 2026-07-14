@@ -56,6 +56,14 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 - `ControlStealingEffect` — `controlDuration()`. Impl `GainControlOfTargetEffect`
 - `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,
   `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`
+- `CounterUnlessEffect` — "counter unless controller pays a ransom" family; `ransomKind()`
+  (`PAY_MANA`/`DISCARD_CARD`) + `ransomMagnitude()` (mana amount, or 1 for a discard). Lets the
+  trigger-collection and may-ability choice-flow services recognise the family and route on kind
+  without `instanceof`-ing each variant (the pay/discard orchestration itself stays in the engine).
+  Impl `CounterUnlessPaysEffect`, `CounterUnlessDiscardsEffect`
+- `ClashOutcomeConditionalEffect` — clash-trigger effect applied only on one outcome; `wrapped()` +
+  `appliesOnWin()`. Read by `TriggerCollectionService.fireClashTriggers` to resolve the won/lost
+  clause without branching on the two wrapper types. Impl `IfWonClashEffect`, `IfLostClashEffect`
 - `RegenerationEffect` — marker for regeneration. Impl `RegenerateEffect`
 - `ProtectionGrantingEffect` — static "protection from …" facts read by the engine query layer
   (`GameQueryService`), not the AI: `protectionFromColors()` + `protectionScope()`

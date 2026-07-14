@@ -5,10 +5,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * "Ward—Discard a card" variant of the Ward ability (e.g. Forum Necroscribe). The affected
  * player chooses whether to discard a card (any card) or let their spell/ability be countered.
  */
-public record CounterUnlessDiscardsEffect() implements CardEffect {
+public record CounterUnlessDiscardsEffect() implements CounterUnlessEffect {
 
     @Override
     public boolean canTargetSpell() {
         return true;
+    }
+
+    @Override
+    public RansomKind ransomKind() {
+        return RansomKind.DISCARD_CARD;
+    }
+
+    @Override
+    public int ransomMagnitude() {
+        return 1;
     }
 }

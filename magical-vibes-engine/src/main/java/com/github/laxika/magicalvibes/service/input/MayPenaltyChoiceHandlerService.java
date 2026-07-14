@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
@@ -71,7 +71,7 @@ public class MayPenaltyChoiceHandlerService {
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         CounterUnlessPaysEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessPaysEffect)
+                .filter(e -> e instanceof CounterUnlessEffect ce && ce.ransomKind() == CounterUnlessEffect.RansomKind.PAY_MANA)
                 .map(e -> (CounterUnlessPaysEffect) e)
                 .findFirst().orElseThrow();
         int amount = effect.amount();
@@ -154,7 +154,7 @@ public class MayPenaltyChoiceHandlerService {
     public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         // Presence check — the effect is a marker; wording differs from counter-unless-pays.
         ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessDiscardsEffect)
+                .filter(e -> e instanceof CounterUnlessEffect ce && ce.ransomKind() == CounterUnlessEffect.RansomKind.DISCARD_CARD)
                 .findFirst().orElseThrow();
 
         UUID targetCardId = ability.targetCardId();

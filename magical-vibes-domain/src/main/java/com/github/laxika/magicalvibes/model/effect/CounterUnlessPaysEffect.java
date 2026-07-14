@@ -19,7 +19,7 @@ import java.util.List;
  */
 public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
                                       DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects)
-        implements CounterSpellingEffect {
+        implements CounterSpellingEffect, CounterUnlessEffect {
 
     /** Fixed-amount counter-unless-pays (e.g. Mana Leak). */
     public CounterUnlessPaysEffect(int amount) {
@@ -47,5 +47,15 @@ public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exi
     @Override
     public boolean canTargetSpell() {
         return true;
+    }
+
+    @Override
+    public RansomKind ransomKind() {
+        return RansomKind.PAY_MANA;
+    }
+
+    @Override
+    public int ransomMagnitude() {
+        return amount;
     }
 }

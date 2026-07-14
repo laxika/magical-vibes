@@ -25,8 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpel
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -453,17 +452,18 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // Counter-unless-pays — handled via the may ability system
-        boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
-        if (isCounterUnlessPays) {
-            mayPenaltyChoiceHandlerService.handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Counter-unless-discard (Ward—Discard a card) — handled via the may ability system
-        boolean isCounterUnlessDiscards = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessDiscardsEffect);
-        if (isCounterUnlessDiscards) {
-            mayPenaltyChoiceHandlerService.handleCounterUnlessDiscardsChoice(gameData, player, accepted, ability);
+        // Counter-unless-pays / counter-unless-discard (Ward—Discard a card) — handled via the may
+        // ability system. Recognise the family through the capability interface, then route on the
+        // kind of ransom demanded.
+        CounterUnlessEffect counterUnless = ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessEffect)
+                .map(e -> (CounterUnlessEffect) e)
+                .findFirst().orElse(null);
+        if (counterUnless != null) {
+            switch (counterUnless.ransomKind()) {
+                case PAY_MANA -> mayPenaltyChoiceHandlerService.handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+                case DISCARD_CARD -> mayPenaltyChoiceHandlerService.handleCounterUnlessDiscardsChoice(gameData, player, accepted, ability);
+            }
             return;
         }
 
