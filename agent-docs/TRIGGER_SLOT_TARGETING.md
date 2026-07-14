@@ -34,6 +34,28 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 
 ---
 
+## Spell / activated-ability target validation (a DIFFERENT mechanism)
+
+The pipelines above are for TRIGGERED abilities. A **spell** (SPELL slot) or **activated ability**
+that carries a single `targetId` is validated on a separate path, and a targeted effect there
+**REQUIRES a `@ValidatesTarget` validator** under `service/validate/` to narrow the legal permanent
+type (creature / land / any permanent / …). Without one, the single-`targetId` cast path does NO
+type checking on the effect — the Fireball-burns-a-Plains class of bug.
+
+- Register the validator as a `@Service` under `service/validate/` annotated
+  `@ValidatesTarget(YourEffect.class)`; it is auto-discovered (no manual wiring).
+- All **three** spell-target validation paths — UI/AI enumeration (`ValidTargetService`), multi-target
+  cast, and single-`targetId` cast (`TargetLegalityService.checkSpellTargeting`) — share ONE structural
+  core, `TargetLegalityService.checkSpellPermanentTargetableReason` (protection / shroud / hexproof /
+  cant-be-targeted); the single-target paths additionally run the per-effect validators via
+  `TargetValidationService.checkEffectTargets`. So a validator you add is honoured by cast-time AND by
+  what the UI/AI offers — you cannot narrow one without the other.
+- NOT every targeted effect needs one: spell-on-stack (`canTargetSpell`), player-only, and multi-target
+  effects are validated by other mechanisms (card / position `TargetFilter`), and trigger/ETB-slot
+  targets are chosen by the pipelines below.
+
+---
+
 ## Pipeline capability matrix
 
 | Pipeline                   | `Options` constant | Player target | Permanent target | `PlayerRelationPredicate.OPPONENT` (via `PlayerPredicateTargetFilter`) | `PermanentPredicateTargetFilter` | `ControlledPermanentPredicateTargetFilter` | Effect-level `targetPredicate()` |

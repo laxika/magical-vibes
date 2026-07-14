@@ -18,18 +18,39 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 - Targeting is computed by `EffectResolution.needsTarget(card)` / `needsSpellCastTarget(card)`.
 - Never call `setNeedsTarget`/`setNeedsSpellTarget` directly.
 
-## Marker interfaces
+## Capability / marker interfaces
+
+DESCRIPTIVE interfaces in `model/effect/` that a family of effects implements so the AI
+(`SpellEvaluator`, `InstantCategoryClassifier`, `AiTargetSelector`, `HardAiDecisionEngine`,
+`GameSimulator`, `AiManaManager`) can read a FACT about the effect instead of `instanceof`-ing each
+concrete type. **When you add a new effect that fits one of these families, implement the interface**
+(return existing record components — the impl is purely additive) so the AI scores/targets it without
+a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 
 - `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature)
-- `ManaProducingEffect` — mana abilities (CR 605.1a)
+- `ManaProducingEffect` — mana abilities (CR 605.1a). AI-estimator facets (default to neutral;
+  override only if the AI should model the mana): `estimatedManaColor()`, `estimatedManaAmount()`,
+  `estimatedCountsAllColors()`, `estimatedWildcardMana()`, `modeledByManaEstimator()`
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
-  `canDamageCreatures()`, `canDamagePlayers()`. Implemented by `DealDamageToAnyTargetEffect`,
-  `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect` (descriptive; AI evaluators
-  read it instead of `instanceof`-ing each concrete burn type)
+  `canDamageCreatures()`, `canDamagePlayers()`. Impl `DealDamageToAnyTargetEffect`,
+  `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect`
 - `RemovalEffect` — single-target destroy/exile/bounce; `removalKind()` returns `RemovalKind`
   (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when not single-target removal (e.g. mass bounce).
-  Implemented by `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`,
+  Impl `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`,
   `ReturnTargetPermanentToHandWithManaValueConditionalEffect`, `ReturnToHandEffect` (TARGET scope)
+- `CardDrawingEffect` — `drawnCardAmount()` (`DynamicAmount`). Impl `DrawCardEffect`
+- `LifeGainEffect` — `lifeGainAmount()` (`DynamicAmount`). Impl `GainLifeEffect`
+- `TokenCreatingEffect` — `tokenAmount()`, `tokenType()`, `tokenPower()`, `tokenToughness()`.
+  Impl `CreateTokenEffect`
+- `CreatureBoostEffect` — targeted P/T pump; `powerBoost()`, `toughnessBoost()` (`DynamicAmount`).
+  Impl `BoostTargetCreatureEffect`
+- `StaticCreatureBoostEffect` — continuous anthem/aura boost; `powerBoost()`, `toughnessBoost()`
+  (int), `grantedKeywords()`, `scope()`, `filter()`. Impl `StaticBoostEffect`
+- `KeywordGrantingEffect` — `keywords()`, `scope()`. Impl `GrantKeywordEffect`
+- `ControlStealingEffect` — `controlDuration()`. Impl `GainControlOfTargetEffect`
+- `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,
+  `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`
+- `RegenerationEffect` — marker for regeneration. Impl `RegenerateEffect`
 
 ## Wrapper / modifier effects
 

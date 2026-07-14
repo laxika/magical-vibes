@@ -258,6 +258,7 @@ Then do all of:
   public void validateYourNewEffect(TargetValidationContext ctx, YourNewEffect effect) { ... }
   ```
   Use `TargetValidationService` helper methods: `requireTarget()`, `requireBattlefieldTarget()`, `requireCreature()`, `checkProtection()`, `requireTargetPlayer()`.
+- If the effect fits an AI-scored family, implement the matching **capability interface** in `model/effect/` (`DamageDealingEffect`, `RemovalEffect`, `ManaProducingEffect`, `CardDrawingEffect`, `LifeGainEffect`, `TokenCreatingEffect`, `CreatureBoostEffect`, `StaticCreatureBoostEffect`, `KeywordGrantingEffect`, `ControlStealingEffect`, `CounterSpellingEffect`, `RegenerationEffect`) so the AI reads a FACT about it instead of `instanceof`-ing the concrete type. Implementations return existing record components — purely additive. See `EFFECTS_QUICK_REFERENCE.md` § "Capability / marker interfaces". `EffectDispatchRatchetTest` blocks any new concrete-effect `instanceof` outside `service/effect/**` / `service/validate/**`.
 - Add test coverage for normal path + invalid/fizzle path if applicable
 
 ## When a new PermanentPredicate is required

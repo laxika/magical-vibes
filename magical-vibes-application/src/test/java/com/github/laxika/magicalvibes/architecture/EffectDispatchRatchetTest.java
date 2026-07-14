@@ -93,8 +93,18 @@ class EffectDispatchRatchetTest {
             if (now > was) {
                 messages.add(String.format(
                         "New instanceof-on-CardEffect dispatch added in %s (was %d, now %d). "
-                                + "Register knowledge with the effect's handler/validator instead, or — only if this "
-                                + "is genuinely sanctioned — regenerate the baseline with: "
+                                + "Do NOT branch on a concrete effect type; register the knowledge in the ONE place that owns it:%n"
+                                + "      - resolution behaviour -> add a NormalEffectHandlerBean under "
+                                + "service/effect/normalfx (EffectHandlerRegistry);%n"
+                                + "      - static/continuous behaviour -> add a StaticEffectHandler under "
+                                + "service/effect/staticfx (StaticEffectHandlerRegistry);%n"
+                                + "      - legal-target checking for a targeted effect -> add a @ValidatesTarget "
+                                + "validator under service/validate;%n"
+                                + "      - AI/query needs a FACT about the effect -> implement the matching capability "
+                                + "interface in magical-vibes-domain model/effect (e.g. DamageDealingEffect, RemovalEffect, "
+                                + "ManaProducingEffect, CardDrawingEffect, LifeGainEffect, CreatureBoostEffect, ...) and read "
+                                + "the fact, never the type.%n"
+                                + "    Only if this dispatch is genuinely sanctioned, regenerate the baseline with: "
                                 + "python scripts/effect-coupling-audit.py",
                         file, was, now));
             } else if (now < was) {

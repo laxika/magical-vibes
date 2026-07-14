@@ -57,13 +57,15 @@ The constructor contains **only engine logic** — `addEffect()`, `addActivatedA
 
 ## Step 5 — Only if a new effect is genuinely needed
 
-After confirming no existing effect/combination works — read `agent-docs/ARCHITECTURE.md` first (engine invariants: card freezing, layer system, thread safety, Jackson 3 imports):
+After confirming no existing effect/combination works — read `agent-docs/ARCHITECTURE.md` first (engine invariants: card freezing, layer system, thread safety, Jackson 3 imports). **Never add a new `instanceof <ConcreteEffect>` — `EffectDispatchRatchetTest` fails the build if you do.** Register the effect's knowledge in the ONE place that owns it:
 1. Add a record implementing `CardEffect` in `magical-vibes-domain/.../model/effect/`.
-2. Add resolution logic in `GameService.resolveStackEntry()` (instanceof dispatch).
-3. If Scryfall returns a new subtype/keyword, add it to `CardSubtype` / `Keyword`.
-4. If the effect needs a new view flag, update `CardView` / `CardViewFactory` and the frontend `Card` interface in `websocket.service.ts`.
-5. **Update the relevant `agent-docs/` files** so the new effect is discoverable.
-6. If a service you extended has unit tests, add tests for the new behavior too.
+2. Add resolution as a `@Component` implementing `NormalEffectHandlerBean` (declaring `handledEffect()`) under `service/effect/normalfx/` — NOT via `instanceof` in `GameService`. For a continuous/static effect use a `StaticEffectHandler` under `service/effect/staticfx/` instead (see `agent-docs/STATIC_EFFECT_HANDLERS.md` / `LAYER_SYSTEM.md`).
+3. **If the effect is targeted** (a single-`targetId` spell or activated ability), add a `@ValidatesTarget(YourEffect.class)` validator `@Service` under `service/validate/` to narrow the legal target type — otherwise the cast path does no type checking (Fireball-burns-a-Plains bug). See `agent-docs/TRIGGER_SLOT_TARGETING.md` § "Spell / activated-ability target validation".
+4. **If the effect fits an AI-scored family**, implement the matching capability interface in `model/effect/` (`DamageDealingEffect`, `RemovalEffect`, `ManaProducingEffect`, `CardDrawingEffect`, `LifeGainEffect`, `TokenCreatingEffect`, `CreatureBoostEffect`, `StaticCreatureBoostEffect`, `KeywordGrantingEffect`, `ControlStealingEffect`, `CounterSpellingEffect`, `RegenerationEffect`) so the AI reads a FACT, not the type. See `agent-docs/EFFECTS_QUICK_REFERENCE.md` § "Capability / marker interfaces".
+5. If Scryfall returns a new subtype/keyword, add it to `CardSubtype` / `Keyword`.
+6. If the effect needs a new view flag, update `CardView` / `CardViewFactory` and the frontend `Card` interface in `websocket.service.ts`.
+7. **Update the relevant `agent-docs/` files** so the new effect is discoverable.
+8. If a service you extended has unit tests, add tests for the new behavior too.
 
 ## Step 6 — Write tests (skip per script guidance)
 

@@ -19,6 +19,20 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 | `ManaProducingEffect` | `CardEffect` | Marks effects that produce mana. Used to identify mana abilities (CR 605.1a) without listing individual effect types. Implement this instead of `CardEffect` for new mana-producing effects. |
 | `DamageDealingEffect` | `CardEffect` | Descriptive capability for effects that deal a single evaluated `DynamicAmount` to one target category: `damageAmount()`, `canDamageCreatures()`, `canDamagePlayers()`. Lets AI evaluators score burn without `instanceof`-ing each concrete type. Implemented by `DealDamageToAnyTargetEffect`, `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect`. Not for split/mass damage (`DealDividedDamageEffect`, `MassDamageEffect`) or amount-less X burn. |
 | `RemovalEffect` | `CardEffect` | Descriptive capability for single-target removal: `removalKind()` returns `RemovalKind` (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when the config isn't single-target removal (e.g. mass bounce). Implemented by `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`, `ReturnTargetPermanentToHandWithManaValueConditionalEffect`, `ReturnToHandEffect` (only for `BounceScope.TARGET`). |
+| `CardDrawingEffect` | `CardEffect` | `drawnCardAmount()` (`DynamicAmount`). Impl `DrawCardEffect`. |
+| `LifeGainEffect` | `CardEffect` | `lifeGainAmount()` (`DynamicAmount`). Impl `GainLifeEffect`. |
+| `TokenCreatingEffect` | `CardEffect` | Token profile: `tokenAmount()`, `tokenType()`, `tokenPower()`, `tokenToughness()`. Impl `CreateTokenEffect`. |
+| `CreatureBoostEffect` | `CardEffect` | Targeted P/T pump: `powerBoost()`, `toughnessBoost()` (`DynamicAmount`). Impl `BoostTargetCreatureEffect`. |
+| `StaticCreatureBoostEffect` | `CardEffect` | Continuous anthem/aura boost: `powerBoost()`, `toughnessBoost()` (int), `grantedKeywords()`, `scope()`, `filter()`. Impl `StaticBoostEffect`. |
+| `KeywordGrantingEffect` | `CardEffect` | `keywords()`, `scope()`. Impl `GrantKeywordEffect`. |
+| `ControlStealingEffect` | `CardEffect` | `controlDuration()`. Impl `GainControlOfTargetEffect`. |
+| `CounterSpellingEffect` | `CardEffect` | Marker: "counter target spell". Impl `CounterSpellEffect`, `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`. |
+| `RegenerationEffect` | `CardEffect` | Marker: regeneration. Impl `RegenerateEffect`. |
+
+The descriptive interfaces above (all but `CostEffect`) let the AI read a FACT about an effect
+instead of `instanceof`-ing the concrete type; implement the matching one when adding an effect to
+that family (see `EFFECTS_QUICK_REFERENCE.md`). `EffectDispatchRatchetTest` enforces that no new
+concrete-effect `instanceof` is added outside `service/effect/**` / `service/validate/**`.
 
 ### `targetPredicate()` default method on `CardEffect`
 

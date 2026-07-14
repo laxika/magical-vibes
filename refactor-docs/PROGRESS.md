@@ -891,3 +891,169 @@ human report; it will reproduce this baseline.
 (GameSimulator rollout, HardAi decision) was touched, consider a before/after MCTS benchmark
 (`MCTSBenchmarkTest` with `-DmctsBench=true`) — not run here per the ground rules; the changes are
 interface-dispatch only (no added allocation), so no throughput regression is expected.
+
+---
+
+## Step 8 — Close-out  (2026-07-14)
+
+Locked the new rules in and made them discoverable by the daily card workflow. No production source
+was changed this step (only the ratchet test's failure message, the `agent-docs/`, and the
+`implement-card` skill), so the baseline needed no regeneration.
+
+### Re-audit & burn-down
+
+**Audit tool could not be re-run:** `python` is still unavailable this session (Store-alias stubs
+only, as in every step 1–7), so the human report `EFFECT_COUPLING_MATRIX.md` still shows the
+pre-step-5 figures. The machine-readable baseline `effect-dispatch-baseline.txt` IS current, and
+`EffectDispatchRatchetTest` (which re-implements the audit's counting rules in Java and recomputes
+per-file totals from live source) **passes against it** — so the baseline equals a fresh audit's
+per-file output. The burn-down below is derived from that ratchet-verified baseline vs the step-1
+numbers recorded above. **Re-run `python scripts/effect-coupling-audit.py` when Python is available
+to refresh the human report; it will reproduce the current baseline (total 585).**
+
+**Burn-down — per module:**
+| Module | Step 1 | Step 8 | Δ |
+|--------|-------:|-------:|--:|
+| engine | 512 | 512 | 0 |
+| ai | 174 | 73 | −101 |
+| **total** | **686** | **585** | **−101 (−15%)** |
+
+Engine is unchanged: this program's AI-visibility work never touched engine dispatch; steps 3–4 added
+validators in the exempt `service/validate/` zone and refactored the target services without any net
+new/removed effect-`instanceof` (the `service/target` package stayed at 19). All 101 removed
+violations are in the AI module.
+
+**Burn-down — per AI package / per migrated file:**
+| Bucket | Step 1 | Step 8 | Δ |
+|--------|-------:|-------:|--:|
+| ai (root) | 161 | 67 | −94 |
+| ai/simulation | 13 | 6 | −7 |
+| · SpellEvaluator | 65 | 26 | −39 |
+| · HardAiDecisionEngine | 30 | 7 | −23 |
+| · InstantCategoryClassifier | 14 | 2 | −12 |
+| · AiTargetSelector | 21 | 10 | −11 |
+| · AiManaManager | 12 | 3 | −9 |
+| · GameSimulator | 13 | 6 | −7 |
+
+The six migrated files account for the entire −101 (39+23+12+11+9+7). Non-migrated AI files
+(AiDecisionEngine 7, BoardEvaluator 8, RaceEvaluator 2, CombatSimulator 1, EasyAiDecisionEngine 1)
+were left as-is (out of the step 5–7 family scope).
+
+### Top-5 remaining offenders — classified
+
+All five are ENGINE files, all outside this program's AI-visibility scope. Legend: (a) misdetected
+interaction-model dispatch → fix the script; (b) justified survivor documented in an earlier step;
+(c) genuine leftover for a future pass.
+
+1. **`MayAbilityHandlerService` (61, service/input)** — **(c)**. Engine interaction-model dispatch:
+   routes each concrete effect to its bespoke "you may …" player-choice presentation (may-cast,
+   surveil, explore, counter-unless-pays, imprint, copy-spell retarget, …). Not AI, not the
+   resolution registry — a different registry problem. Candidate for a future `MayEffectHandler`
+   registry (analogous to `normalfx`). NOT (a): its only non-effect tokens (`MayEffect` wrapper,
+   `PermanentPredicateTargetFilter`) are already correctly excluded by the script.
+2. **`GameQueryService` (55, service/battlefield)** — **(c)**. Static/continuous-effect QUERY
+   dispatch (protection / can-be-blocked / animation / double-damage read off continuous effects) —
+   CR 613 layer-system query logic. A future pass could move it behind capability interfaces or
+   extend the `staticfx` registry with query methods. (`ConditionalEffect` = exempt wrapper.)
+3. **`ActivatedAbilityExecutionService` (42, service/ability)** — **(b)**. Documented in Step 7 as a
+   SKIPPED ENGINE MANA SITE: the full per-type `Award*Mana*Effect` RESOLUTION switch (rules-critical
+   mana routing, a resolution-shaped contract NOT mechanically equivalent to the AI's lightweight
+   estimator facets) plus cost records. Deliberately left; migrating it needs resolution-shaped
+   interface methods, out of AI scope.
+4. **`CombatDamageService` (40, service/combat)** — **(c)**. Engine combat-damage RESOLUTION dispatch
+   (route combat damage to lifelink / destroy / exile / draw / mill / poison triggers). Noted as an
+   engine consumer already in Step 5; a future pass could route it via a combat-damage-effect handler
+   registry. (`ConditionalEffect`/`MayEffect` exempt; `Metalcraft`/`EventValue` are not effect types.)
+5. **`AbilityActivationService` (37, service/ability)** — mixed **(b)+(c)**. Majority is cost-record
+   dispatch (`Sacrifice*Cost` / `Tap*Cost` / `RemoveCounter*Cost` / …) — the documented cost-record
+   survivor class of steps 5–7 (no capability interface); the remainder are a few engine-resolution
+   effect checks out of AI scope. (`Fixed` = `DynamicAmount.Fixed`, correctly excluded per Step 1;
+   `CostEffect`/`ManaProducingEffect` = exempt interfaces.)
+
+**No (a) case exists → no script classification fix needed.** The audit universe is exactly the
+filenames under `model/effect/`, so interaction-model types (`ChoiceContext`, `PendingInteraction`,
+`SimulationAction`), `TargetFilter` types, `DynamicAmount.Fixed`, `Metalcraft`, `EventValue`, etc. are
+already never counted. The script's classification is correct as written.
+
+### Ratchet tightened
+
+`EffectDispatchRatchetTest` confirmed green against the current baseline. Its "new dispatch added"
+failure message was rewritten from the vague "Register knowledge with the effect's handler/validator
+instead" to an ACTIONABLE menu of the four sanctioned mechanisms steps 3–7 established, telling a
+card-implementing agent exactly what to do instead of adding an `instanceof`:
+- resolution behaviour → a `NormalEffectHandlerBean` under `service/effect/normalfx` (EffectHandlerRegistry);
+- static/continuous behaviour → a `StaticEffectHandler` under `service/effect/staticfx` (StaticEffectHandlerRegistry);
+- legal-target checking for a targeted effect → a `@ValidatesTarget` validator under `service/validate`;
+- AI/query needs a FACT → implement the matching capability interface in `magical-vibes-domain`
+  `model/effect` (DamageDealingEffect, RemovalEffect, ManaProducingEffect, CardDrawingEffect, …).
+(The message change is in the test module — not scanned by the ratchet — and contains no
+`instanceof <EffectType>` token, so the baseline is unaffected.)
+
+### Docs updated
+
+- **`agent-docs/ARCHITECTURE.md`** "Key Patterns" → Effect-system bullet rewritten: corrected the
+  stale "`GameService.resolveStackEntry()` … via `instanceof`" claim to the class-keyed
+  `NormalEffectHandlerBean` + `EffectHandlerRegistry` mechanism, and added the full NEW-effect
+  registration checklist (record + normalfx/staticfx + `@ValidatesTarget` IF targeted + capability
+  interface IF AI-family, all 12 named) with the ratchet-enforcement note.
+- **`agent-docs/EFFECTS_QUICK_REFERENCE.md`** → "Marker interfaces" expanded into a "Capability /
+  marker interfaces" catalog: all 12 interfaces (was 4) with what each describes, the step-7
+  `ManaProducingEffect` estimator facets, and a "when to implement" instruction.
+- **`agent-docs/EFFECTS_INDEX.md`** → "Marker interfaces" table gained the 9 step-6/7 interfaces
+  (was 4 rows) plus the ratchet-enforcement note.
+- **`agent-docs/TRIGGER_SLOT_TARGETING.md`** → new section "Spell / activated-ability target
+  validation (a DIFFERENT mechanism)": targeted single-`targetId` effects REQUIRE a `@ValidatesTarget`
+  validator; all three spell-target validation paths share one structural core
+  (`TargetLegalityService.checkSpellPermanentTargetableReason`), and the single-target paths run
+  per-effect validators via `TargetValidationService.checkEffectTargets`.
+- **`agent-docs/CARD_IMPLEMENTATION_PLAYBOOK.md`** → "When a new effect is actually required" gained
+  the capability-interface bullet (the record + normalfx/staticfx + cost-mod + `@ValidatesTarget`
+  steps were already present and accurate).
+- **`.claude/skills/implement-card/SKILL.md`** (skill IS editable) → Step 5 rewritten: corrected the
+  stale "Add resolution logic in `GameService.resolveStackEntry()` (instanceof dispatch)" to
+  `NormalEffectHandlerBean`/`staticfx`, added the `@ValidatesTarget` (targeted) and capability-interface
+  (AI) steps, and the ratchet warning.
+- Grepped all `agent-docs/` for stale validation/`resolveStackEntry` claims — none remain
+  (`EFFECTS_INDEX.md` §8–12 and `CARD_IMPLEMENTATION_PLAYBOOK.md` already described
+  `NormalEffectHandlerBean` + `@ValidatesTarget` correctly).
+
+### Final verification sweep (all green)
+
+- `EffectDispatchRatchetTest` — 1 test, re-run fresh after the failure-message edit (recompiled, 0.8s).
+- Card tests, one per letter touched by steps 3–4: `WrackWithMadnessTest` (7), `DarkNourishmentTest`
+  (7), `FireballTest` (19), `TerrorTest` (6), `PacifismTest` (14), `ArcTrailTest` (12) — all pass.
+- `GameSimulatorTest` — 17 tests, 0 failures.
+- `SpellEvaluatorTest` — 63 tests, 0 failures.
+
+### Future work (accumulated across all 8 steps)
+
+1. **Interaction-model dispatch (out of scope by definition):** `MayAbilityHandlerService` (61)
+   "may"-choice routing; `GameSimulator`/`HardAiDecisionEngine` non-effect `instanceof`
+   (`ChoiceContext`/`PendingInteraction`/`SimulationAction`). A `MayEffectHandler` registry could
+   absorb the "may" family.
+2. **Static/continuous-effect query dispatch:** `GameQueryService` (55) — move behind capability
+   interfaces or a `staticfx` query API.
+3. **Engine combat resolution dispatch:** `CombatDamageService` (40), `CombatBlockService` (18),
+   `CombatAttackService` (15) — a combat-effect handler registry (analogous to `normalfx`).
+4. **Resolution-side guard TODOs from Step 3:** belt-and-suspenders resolution-time type re-checks in
+   the `normalfx` handlers for the creature-only effects (none required by a failing test today; the
+   step-3 targeting validators already block the illegal target before resolution).
+5. **Skipped engine mana sites from Step 7 (rules-critical, NOT AI-facet-equivalent):**
+   `PotentialManaService` (19), `ActivatedAbilityExecutionService` mana RESOLUTION switch (in the 42),
+   `AbilityActivationService` (37, mostly cost records), `LandTapTriggerCollectorService` (2).
+   Migrating needs resolution-shaped interface methods.
+6. **Cost-record dispatch** (`Sacrifice*Cost`/`Tap*Cost`/…): no capability interface yet; pervasive in
+   `AbilityActivationService`, `GameSimulator`, `HardAiDecisionEngine`. A `CostEffect`-family facet
+   could collapse these if ever wanted.
+7. **Record-family collapses the matrix suggests** (see the DynamicAmount-refactor roadmap): the
+   remaining `Award*Mana` producer variants and SpellEvaluator's board-wipe / split-damage / no-amount-X
+   survivor families.
+8. **AiTargetSelector cleanups:** the redundant hand-patch left in place in Step 4, and the 8
+   heterogeneous graveyard-targeting effects (Step 6) — could unify behind a graveyard-target
+   capability if a uniform fact emerges.
+9. **Refresh the human matrix report:** `EFFECT_COUPLING_MATRIX.md` is stale (Python was unavailable
+   in every session 1–8). Run `python scripts/effect-coupling-audit.py` once Python is available; it
+   reproduces the current ratchet-verified baseline (total 585).
+
+**For the user:** run the full test suite and commit the program's changes (this session touched only
+the ratchet test message, `agent-docs/`, and the `implement-card` skill; nothing under `src/main`).
