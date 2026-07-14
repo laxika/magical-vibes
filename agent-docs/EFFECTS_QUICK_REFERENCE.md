@@ -22,6 +22,14 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 - `CostEffect` — additional costs (sacrifice, discard, exile, counter removal, tap creature)
 - `ManaProducingEffect` — mana abilities (CR 605.1a)
+- `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
+  `canDamageCreatures()`, `canDamagePlayers()`. Implemented by `DealDamageToAnyTargetEffect`,
+  `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect` (descriptive; AI evaluators
+  read it instead of `instanceof`-ing each concrete burn type)
+- `RemovalEffect` — single-target destroy/exile/bounce; `removalKind()` returns `RemovalKind`
+  (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when not single-target removal (e.g. mass bounce).
+  Implemented by `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`,
+  `ReturnTargetPermanentToHandWithManaValueConditionalEffect`, `ReturnToHandEffect` (TARGET scope)
 
 ## Wrapper / modifier effects
 

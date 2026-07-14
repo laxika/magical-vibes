@@ -492,3 +492,124 @@ before and after. Ratchet `EffectDispatchRatchetTest`. The two refactored servic
 card tests: `ArcTrailTest` (multi-target), `NaturalizeTest` / `TerrorTest` (permanent / creature
 destruction), `PacifismTest` (aura), `IncinerateTest` (any-target burn),
 `RootwaterCommandoTest` (targeted ability). Plus the two new divergence tests.
+
+---
+
+## Step 5 — AI metadata (damage/removal)  (2026-07-14)
+
+Introduced two DESCRIPTIVE capability interfaces in the domain effect package (mirroring
+`ManaProducingEffect`) for the two biggest AI effect families, and migrated `SpellEvaluator`'s
+damage and removal dispatch onto them. Semantics-preserving for the AI: every branch reproduces
+the *exact* prior score, computed via interface facts instead of concrete-type `instanceof`. No
+record component/constructor/engine behavior changed — only added `implements` clauses and
+interface-method bodies that return existing components (`git diff` on `magical-vibes-domain` is
+purely additive).
+
+### Capability interfaces added (`magical-vibes-domain/.../model/effect/`)
+
+- **`DamageDealingEffect extends CardEffect`** — "deals a single evaluated amount to one target
+  category":
+  - `DynamicAmount damageAmount()` — per-target amount (exposes the existing `DynamicAmount`
+    component; no flattening to int, per the DynamicAmount abstraction).
+  - `boolean canDamageCreatures()`
+  - `boolean canDamagePlayers()`
+- **`RemovalEffect extends CardEffect`** — "single-target removal, of what kind":
+  - `RemovalKind removalKind()` — `DESTROY` | `EXILE` | `BOUNCE`, or **`null`** when the current
+    configuration is not single-target removal (e.g. a mass/all-matching bounce). Nullable-fact
+    style mirrors `CardEffect.targetPredicate()`.
+- **`RemovalKind`** enum (`DESTROY, EXILE, BOUNCE`).
+
+Both new interfaces are declared `interface` in the effect package, so the audit script and
+`EffectDispatchRatchetTest` auto-exempt `instanceof DamageDealingEffect` / `instanceof
+RemovalEffect` (verified: ratchet green, and the file dropped, proving the interface hits are not
+counted). `RemovalKind` is an enum but is never `instanceof`-checked (used via `switch`), so it
+adds no violations.
+
+### Family members (records now implementing the interfaces)
+
+- **`DamageDealingEffect`** (3): `DealDamageToAnyTargetEffect` (creatures+players),
+  `DealDamageToTargetCreatureEffect` (creatures only), `DealDamageToPlayersEffect` (players only;
+  docstring literally "never creatures"). All three carry a real `DynamicAmount` component
+  (`damage()`/`damage()`/`amount()`), so `damageAmount()` needs no synthetic value.
+- **`RemovalEffect`** (4): `DestroyTargetPermanentEffect` (DESTROY), `ExileTargetPermanentEffect`
+  (EXILE), `ReturnTargetPermanentToHandWithManaValueConditionalEffect` (BOUNCE), and
+  `ReturnToHandEffect` (BOUNCE only for `scope == TARGET`, else `removalKind()` returns `null` —
+  its mass/self scopes are board sweeps / self-return, not single-target removal).
+
+### SpellEvaluator inventory (damage/removal `instanceof` before this step) and what each became
+
+DAMAGE — read fields → scoring path:
+- `DealDamageToAnyTargetEffect` (`damage()`) → `evaluateDamageEffect` (max kill-value vs face);
+  ETB + single + `isRemovalEffect`. **Migrated** → `DamageDealingEffect` (creatures&&players).
+- `DealDamageToTargetCreatureEffect` (`damage()`) → `evaluateDamageToCreature`; ETB + single +
+  `isRemovalEffect`. **Migrated** → `DamageDealingEffect` (creatures only).
+- `DealDamageToPlayersEffect` (`amount()`, `recipient()`) → `TARGET_PLAYER` +amt*1.5,
+  `CONTROLLER` −amt*1.5, else 0. **Survivor** (see below); still implements the interface.
+- `MassDamageEffect` (`amount()`) → `evaluateBoardWipeDamage`; also `isBoardWipeEffect`. **Survivor**.
+- `DealDividedDamageEffect` (mode/etbAssignments/canTargetPlayers/totalDamage) → narrow
+  "CHOSEN, non-ETB, creatures-only, Fixed total" → `evaluateDamageToCreature`. **Survivor**.
+- `DealXDamageToAnyTargetAndGainXLifeEffect` (no amount field; implicitly X) →
+  `evaluateDamageEffect(estimateMaxX)` + X lifegain. **Survivor**.
+
+REMOVAL — all scored off `bestTargetCreatureValue` with a per-kind factor:
+- `DestroyTargetPermanentEffect` (×1.0), `ExileTargetPermanentEffect` (×1.1),
+  `ReturnToHandEffect` scope==TARGET (×0.6), `ReturnTargetPermanentToHandWithManaValueConditionalEffect`
+  (×0.6); each in ETB + single + `isRemovalEffect`. **All migrated** → one `RemovalEffect` branch
+  delegating to a new `removalScore(kind,…)` helper (DESTROY→base, EXILE→base*1.1, BOUNCE→base*0.6),
+  identical factors in both `evaluateEtbEffect` and `evaluateSingleEffect`.
+
+Cross-checked `EFFECT_COUPLING_MATRIX.md` (ii): the same family types are also dispatched by
+`AiTargetSelector`, `BoardEvaluator`, `HardAiDecisionEngine`, `InstantCategoryClassifier`,
+`RaceEvaluator`, `AiManaManager` (AI, steps 6–7) and `CombatDamageService`, `CombatBlockService`,
+`AbilityActivationService` (engine, out of this program's AI scope). The interfaces were designed
+to answer what those consumers ask (amount / who-can-be-hit / removal-kind), even though only
+`SpellEvaluator` is migrated now.
+
+### Concrete-type survivors kept in SpellEvaluator (each with reason)
+
+1. `DealDamageToPlayersEffect` (×2, `evaluateSingleEffect`) — recipient decides the **sign**
+   (`TARGET_PLAYER` beneficial, `CONTROLLER` a self-damage drawback, other recipients 0); no
+   descriptive damage fact expresses the drawback/recipient enum. It *does* implement
+   `DamageDealingEffect`, and the migrated damage branch is gated on `canDamageCreatures()` — which
+   is `false` here — so a player-only effect cleanly falls through to these survivor branches
+   without changing order or score.
+2. `MassDamageEffect` (`evaluateSingleEffect` + `isBoardWipeEffect`) — board-wipe scoring across all
+   creatures/players; not the single-amount/single-category shape. Does **not** implement
+   `DamageDealingEffect` (kept off the interface so the migrated branch can't accidentally catch it).
+3. `DestroyAllPermanentsEffect` (`evaluateSingleEffect` + `isBoardWipeEffect`) — predicate-filtered
+   board wipe; not single-target removal. Does not implement `RemovalEffect`.
+4. `DealDividedDamageEffect` (`evaluateSingleEffect`) — split-a-total-among-many shape behind a
+   narrow gate; does not fit "single amount to one category". Not on the interface.
+5. `DealXDamageToAnyTargetAndGainXLifeEffect` (`evaluateSingleEffect`) — has **no** `DynamicAmount`
+   component (implicitly X) and its scoring couples X-damage with X-lifegain. Not on the interface.
+6. `ReturnToHandEffect` scope==`ALL_MATCHING` (`evaluateSingleEffect` + `isBoardWipeEffect`) — mass
+   bounce board sweep. `ReturnToHandEffect` implements `RemovalEffect` but `removalKind()` returns
+   `null` for non-`TARGET` scopes, so these two scope-gated concrete checks remain as board-wipe
+   handling (not removal).
+7. `GainControlOfTargetEffect` (steal) — not destroy/exile/bounce; a separate control/steal family,
+   out of scope for this step.
+
+### Verification (all green)
+
+- `SpellEvaluatorTest` (28 tests) — the direct owner test; passes after the change. The migration
+  is score-for-score identical by construction (same branches, interface facts substituted for
+  concrete `instanceof`).
+- AI evaluators/consumers that touch these families: `InstantCategoryClassifierTest`,
+  `RaceEvaluatorTest`, `BoardEvaluatorTest`, `HardAiDecisionEngineTest`, `AiDecisionEngineTest`,
+  `EasyAiDecisionEngineTest`, `GameSimulatorTest` — all pass (calibrated MCTS/simulation tests
+  unaffected: no rollout-cost or scoring-VALUE change).
+- Engine inertness (domain-record additions are no-ops for resolution): `FireballTest` (any-target
+  X + divided), `IncinerateTest` (any-target burn, can't-regenerate), `TerrorTest` (destroy),
+  `UnsummonTest` (single-target bounce), `CribSwapTest` (exile + token). All pass.
+- `EffectDispatchRatchetTest`: **SpellEvaluator 65 → 47** (−18). Baseline
+  `effect-dispatch-baseline.txt` updated (that single line; no other consumer file changed since I
+  edited only domain records + `SpellEvaluator`, so this equals what the audit would emit). Ratchet
+  green after the update.
+
+**New SpellEvaluator violation count: 47 (was 65).**
+
+**Note — matrix report not regenerated:** `python` is unavailable in this environment (as in steps
+1–2), so `EFFECT_COUPLING_MATRIX.md` still shows the pre-step-5 figures (total 686, SpellEvaluator
+65). The machine-readable baseline the ratchet reads *is* correct (SpellEvaluator=47; new total
+668). Re-run `python scripts/effect-coupling-audit.py` when Python is available to refresh the human
+report; it will reproduce the same baseline.

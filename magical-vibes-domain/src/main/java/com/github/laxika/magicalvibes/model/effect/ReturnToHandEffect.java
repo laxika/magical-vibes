@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *       player owns matching the filter, regardless of controller (Hurkyl's Recall).</li>
  * </ul>
  */
-public final class ReturnToHandEffect implements CardEffect {
+public final class ReturnToHandEffect implements RemovalEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
@@ -85,5 +85,12 @@ public final class ReturnToHandEffect implements CardEffect {
     @Override
     public boolean canTargetPlayer() {
         return scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED;
+    }
+
+    @Override
+    public RemovalKind removalKind() {
+        // Only a single-target bounce is targeted removal; the mass/self scopes are board
+        // sweeps or self-return, not single-target removal.
+        return scope == BounceScope.TARGET ? RemovalKind.BOUNCE : null;
     }
 }

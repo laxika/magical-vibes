@@ -22,20 +22,19 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -364,11 +363,9 @@ public class SpellEvaluator {
             return bestValue;
         }
 
-        if (effect instanceof DestroyTargetPermanentEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof ExileTargetPermanentEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
+        // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
+        if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
+            return removalScore(gameData, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof GainControlOfTargetEffect steal
                 && steal.duration() == ControlDuration.PERMANENT) {
@@ -388,19 +385,12 @@ public class SpellEvaluator {
                 return 3.0 * tokenAmount;
             }
         }
-        if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
-            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
-            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
-        }
-        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
+        // Damage to creatures / any target (player-only damage isn't scored on the ETB path)
+        if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
+            int damage = estimateDamageAmount(gameData, card, dmg.damageAmount(), aiPlayerId);
+            return dmg.canDamagePlayers()
+                    ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
+                    : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof GainLifeEffect gain) {
             int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
@@ -443,12 +433,9 @@ public class SpellEvaluator {
             return bestValue;
         }
 
-        // Removal
-        if (effect instanceof DestroyTargetPermanentEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof ExileTargetPermanentEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
+        // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
+        if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
+            return removalScore(gameData, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
 
         // Steal (opponent loses creature + we gain it)
@@ -462,14 +449,14 @@ public class SpellEvaluator {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
-        // Damage
-        if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
-            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
-        }
-        if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
-            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
+        // Damage to creatures / any target. Player-only damage (canDamageCreatures() == false)
+        // falls through to the DealDamageToPlayersEffect survivor branches below, whose recipient
+        // decides the sign — a fact no descriptive interface method expresses.
+        if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
+            int damage = estimateDamageAmount(gameData, card, dmg.damageAmount(), aiPlayerId);
+            return dmg.canDamagePlayers()
+                    ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
+                    : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) {
             return estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
@@ -495,13 +482,8 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
 
-        // Bounce
-        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
-        }
-        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
-            return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
-        }
+        // Bounce (single-target bounce is handled by the removal branch above; this is the
+        // mass "return every matching permanent" board sweep)
         if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING) {
             double oppValue = oppBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
@@ -973,6 +955,21 @@ public class SpellEvaluator {
         return value;
     }
 
+    /**
+     * Scores single-target removal against the opponent's best creature, weighted by kind:
+     * exile (1.1x) edges destroy (1.0x) because it dodges regeneration/death triggers, while
+     * bounce (0.6x) is temporary. These are the exact factors the former per-type branches used.
+     */
+    private double removalScore(GameData gameData, RemovalKind kind, List<Permanent> oppBattlefield,
+                                UUID opponentId, UUID aiPlayerId) {
+        double base = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
+        return switch (kind) {
+            case DESTROY -> base;
+            case EXILE -> base * 1.1;
+            case BOUNCE -> base * 0.6;
+        };
+    }
+
     private double bestTargetCreatureValue(GameData gameData, List<Permanent> battlefield,
                                            UUID controllerId, UUID opponentId) {
         return battlefield.stream()
@@ -1129,12 +1126,11 @@ public class SpellEvaluator {
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream().anyMatch(o -> isRemovalEffect(o.effect()));
         }
-        return effect instanceof DestroyTargetPermanentEffect
-                || effect instanceof ExileTargetPermanentEffect
-                || effect instanceof DealDamageToAnyTargetEffect
-                || effect instanceof DealDamageToTargetCreatureEffect
-                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
-                || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
+        // Single-target removal (destroy/exile/bounce) or creature-hitting damage counts as
+        // removal; player-only damage (canDamageCreatures() == false) does not, matching the
+        // former explicit any-target/creature-only list.
+        return (effect instanceof RemovalEffect rem && rem.removalKind() != null)
+                || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
                 || (effect instanceof GainControlOfTargetEffect steal
                         && steal.duration() == ControlDuration.PERMANENT);
     }

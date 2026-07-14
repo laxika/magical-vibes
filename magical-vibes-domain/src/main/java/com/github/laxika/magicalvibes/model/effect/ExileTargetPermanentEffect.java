@@ -7,7 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param tokenForController if non-null, creates this token for each exiled permanent's controller
  */
-public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController) implements CardEffect {
+public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController)
+        implements RemovalEffect {
 
     public ExileTargetPermanentEffect() {
         this(null);
@@ -16,5 +17,10 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController) i
     @Override
     public boolean canTargetPermanent() {
         return true;
+    }
+
+    @Override
+    public RemovalKind removalKind() {
+        return RemovalKind.EXILE;
     }
 }

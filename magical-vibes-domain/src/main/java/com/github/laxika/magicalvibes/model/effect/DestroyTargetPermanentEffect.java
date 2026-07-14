@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record DestroyTargetPermanentEffect(
         boolean cannotBeRegenerated,
         CreateTokenEffect tokenForController
-) implements CardEffect {
+) implements RemovalEffect {
 
     public DestroyTargetPermanentEffect() {
         this(false, null);
@@ -28,5 +28,10 @@ public record DestroyTargetPermanentEffect(
     @Override
     public boolean isDamageOrDestruction() {
         return true;
+    }
+
+    @Override
+    public RemovalKind removalKind() {
+        return RemovalKind.DESTROY;
     }
 }

@@ -8,10 +8,15 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param conditionalEffect the bonus effect to resolve when the condition is met
  */
 public record ReturnTargetPermanentToHandWithManaValueConditionalEffect(
-        int maxManaValue, CardEffect conditionalEffect) implements CardEffect {
+        int maxManaValue, CardEffect conditionalEffect) implements RemovalEffect {
 
     @Override
     public boolean canTargetPermanent() {
         return true;
+    }
+
+    @Override
+    public RemovalKind removalKind() {
+        return RemovalKind.BOUNCE;
     }
 }

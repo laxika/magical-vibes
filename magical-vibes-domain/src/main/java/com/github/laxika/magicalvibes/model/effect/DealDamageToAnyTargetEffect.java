@@ -22,7 +22,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                           additional-target list, e.g. Goblin Barrage's kicked target)
  */
 public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
-                                          boolean exileInsteadOfDie, int targetGroup) implements CardEffect {
+                                          boolean exileInsteadOfDie, int targetGroup)
+        implements DamageDealingEffect {
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate, boolean exileInsteadOfDie) {
         this(damage, cantRegenerate, exileInsteadOfDie, -1);
@@ -57,6 +58,21 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
 
     @Override
     public boolean isDamageOrDestruction() {
+        return true;
+    }
+
+    @Override
+    public DynamicAmount damageAmount() {
+        return damage;
+    }
+
+    @Override
+    public boolean canDamageCreatures() {
+        return true;
+    }
+
+    @Override
+    public boolean canDamagePlayers() {
         return true;
     }
 }

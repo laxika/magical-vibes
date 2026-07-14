@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param damage        the amount of damage to deal
  * @param unpreventable when true, the damage can't be prevented (e.g. Combust)
  */
-public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unpreventable) implements CardEffect {
+public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unpreventable)
+        implements DamageDealingEffect {
 
     public DealDamageToTargetCreatureEffect(int damage) {
         this(new Fixed(damage), false);
@@ -32,5 +33,20 @@ public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unp
     @Override
     public boolean isDamageOrDestruction() {
         return true;
+    }
+
+    @Override
+    public DynamicAmount damageAmount() {
+        return damage;
+    }
+
+    @Override
+    public boolean canDamageCreatures() {
+        return true;
+    }
+
+    @Override
+    public boolean canDamagePlayers() {
+        return false;
     }
 }

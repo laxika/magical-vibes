@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * player that match the predicate, and {@code amount} is ignored.
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
-                                        PermanentPredicate attachedCountFilter) implements CardEffect {
+                                        PermanentPredicate attachedCountFilter)
+        implements DamageDealingEffect {
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {
         this(new Fixed(damage), recipient, null);
@@ -42,5 +43,20 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public boolean canTargetPermanent() {
         return recipient == DamageRecipient.TARGET_PERMANENT_CONTROLLER;
+    }
+
+    @Override
+    public DynamicAmount damageAmount() {
+        return amount;
+    }
+
+    @Override
+    public boolean canDamageCreatures() {
+        return false;
+    }
+
+    @Override
+    public boolean canDamagePlayers() {
+        return true;
     }
 }

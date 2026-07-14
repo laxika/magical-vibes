@@ -17,6 +17,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 |-----------|---------|---------|
 | `CostEffect` | `CardEffect` | Marks effects that represent additional costs (sacrifice, discard, exile, counter removal, tap creature). Cost effects are filtered out during effect snapshotting and excluded from mana ability detection. Implement this instead of `CardEffect` for new cost effects. |
 | `ManaProducingEffect` | `CardEffect` | Marks effects that produce mana. Used to identify mana abilities (CR 605.1a) without listing individual effect types. Implement this instead of `CardEffect` for new mana-producing effects. |
+| `DamageDealingEffect` | `CardEffect` | Descriptive capability for effects that deal a single evaluated `DynamicAmount` to one target category: `damageAmount()`, `canDamageCreatures()`, `canDamagePlayers()`. Lets AI evaluators score burn without `instanceof`-ing each concrete type. Implemented by `DealDamageToAnyTargetEffect`, `DealDamageToTargetCreatureEffect`, `DealDamageToPlayersEffect`. Not for split/mass damage (`DealDividedDamageEffect`, `MassDamageEffect`) or amount-less X burn. |
+| `RemovalEffect` | `CardEffect` | Descriptive capability for single-target removal: `removalKind()` returns `RemovalKind` (`DESTROY`/`EXILE`/`BOUNCE`) or `null` when the config isn't single-target removal (e.g. mass bounce). Implemented by `DestroyTargetPermanentEffect`, `ExileTargetPermanentEffect`, `ReturnTargetPermanentToHandWithManaValueConditionalEffect`, `ReturnToHandEffect` (only for `BounceScope.TARGET`). |
 
 ### `targetPredicate()` default method on `CardEffect`
 
