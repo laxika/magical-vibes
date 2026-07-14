@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.carddata.CardDataConfiguration;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
+import com.github.laxika.magicalvibes.service.effect.mayfx.MayEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
@@ -50,6 +52,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;
     private final EffectHandlerRegistry effectHandlerRegistry;
+    private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
     private final TargetValidatorRegistry targetValidatorRegistry;
     private final TriggerCollectorRegistry triggerCollectorRegistry;
@@ -59,6 +62,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     public GameEngineConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         this.effectHandlerRegistry = new EffectHandlerRegistry();
+        this.mayEffectHandlerRegistry = new MayEffectHandlerRegistry();
         this.staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         this.targetValidatorRegistry = new TargetValidatorRegistry();
         this.triggerCollectorRegistry = new TriggerCollectorRegistry();
@@ -69,6 +73,11 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     @Bean
     public EffectHandlerRegistry effectHandlerRegistry() {
         return effectHandlerRegistry;
+    }
+
+    @Bean
+    public MayEffectHandlerRegistry mayEffectHandlerRegistry() {
+        return mayEffectHandlerRegistry;
     }
 
     @Bean
@@ -102,6 +111,8 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                 new ArrayList<>(applicationContext.getBeansOfType(StaticEffectHandlerBean.class).values());
         List<NormalEffectHandlerBean> normalEffectHandlerBeans =
                 new ArrayList<>(applicationContext.getBeansOfType(NormalEffectHandlerBean.class).values());
+        List<MayEffectHandlerBean> mayEffectHandlerBeans =
+                new ArrayList<>(applicationContext.getBeansOfType(MayEffectHandlerBean.class).values());
 
         int validatorCount = 0;
         for (String beanName : applicationContext.getBeanDefinitionNames()) {
@@ -121,6 +132,10 @@ public class GameEngineConfig implements SmartInitializingSingleton {
             effectHandlerRegistry.register(bean.handledEffect(), bean);
         }
 
+        for (MayEffectHandlerBean bean : mayEffectHandlerBeans) {
+            mayEffectHandlerRegistry.register(bean.handledEffect(), bean);
+        }
+
         for (InteractionHandler<?> bean : applicationContext.getBeansOfType(InteractionHandler.class).values()) {
             interactionHandlerRegistry.register(bean);
         }
@@ -131,8 +146,8 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
         int triggerCount = registerTriggerCollectors();
 
-        log.info("Effect auto-registration complete: {} normal handlers, {} static handlers, {} target validators",
-                normalEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
+        log.info("Effect auto-registration complete: {} normal handlers, {} may handlers, {} static handlers, {} target validators",
+                normalEffectHandlerBeans.size(), mayEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
         log.info("Trigger auto-registration complete: {} trigger collectors", triggerCount);
     }
 

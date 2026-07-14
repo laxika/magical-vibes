@@ -18,9 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
@@ -29,31 +27,18 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTargetPlayerTopCardMayGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
-import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayImprintedCardWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
@@ -71,17 +56,15 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -106,13 +89,10 @@ public class MayAbilityHandlerService {
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
-    private final ExileFreeCastSupport exileFreeCastSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
-    // @Lazy breaks the circular dependency:
-    // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
-    private final ParadigmService paradigmService;
     private final ValidTargetService validTargetService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
+    private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -128,11 +108,10 @@ public class MayAbilityHandlerService {
                                     DestructionSupport destructionSupport,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
-                                    ExileFreeCastSupport exileFreeCastSupport,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
-                                    @Lazy ParadigmService paradigmService,
                                     ValidTargetService validTargetService,
-                                    com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport) {
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport,
+                                    MayEffectHandlerRegistry mayEffectHandlerRegistry) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
@@ -147,11 +126,10 @@ public class MayAbilityHandlerService {
         this.destructionSupport = destructionSupport;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
-        this.exileFreeCastSupport = exileFreeCastSupport;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
-        this.paradigmService = paradigmService;
         this.validTargetService = validTargetService;
         this.tariffSupport = tariffSupport;
+        this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
     }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -193,67 +171,15 @@ public class MayAbilityHandlerService {
             return;
         }
 
-        // "As it enters, you may reveal a [subtype] card; if you don't, it enters tapped."
-        // (Lorwyn dual lands, e.g. Ancient Amphitheater). Declining taps the just-entered permanent.
-        RevealSubtypeOrEntersTappedEffect revealOrTapped = ability.effects().stream()
-                .filter(e -> e instanceof RevealSubtypeOrEntersTappedEffect)
-                .map(e -> (RevealSubtypeOrEntersTappedEffect) e)
-                .findFirst().orElse(null);
-        if (revealOrTapped != null) {
-            if (accepted) {
-                List<Card> hand = gameData.playerHands.get(ability.controllerId());
-                Card revealed = hand == null ? null : hand.stream()
-                        .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
-                        .findFirst().orElse(null);
-                String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
-                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped.");
-                log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
-                        player.getUsername(), revealedName, ability.sourceCard().getName());
-            } else {
-                Permanent source = ability.sourcePermanentId() != null
-                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                if (source != null) {
-                    source.tap();
-                }
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declines — "
-                        + ability.sourceCard().getName() + " enters tapped.");
-                log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
+        // Registry dispatch (mayfx): route to the first effect in the ability's list that has a
+        // migrated handler. No card bundles two registered may-effect types at the top level of
+        // effects(), so list order matches the old fixed code-order chain (see refactor-docs).
+        for (CardEffect effect : ability.effects()) {
+            var mayHandler = mayEffectHandlerRegistry.getHandler(effect);
+            if (mayHandler != null) {
+                mayHandler.handle(gameData, player, accepted, ability);
+                return;
             }
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // Cast-from-hand-without-paying — e.g. Counterlash (one may ability per eligible card)
-        boolean isMayCastFromHand = ability.effects().stream()
-                .anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect);
-        if (isMayCastFromHand) {
-            mayCastHandlerService.handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability);
-            return;
-        }
-
-        boolean isParadigmCast = ability.effects().stream()
-                .anyMatch(e -> e instanceof ParadigmMayCastFromExileEffect);
-        if (isParadigmCast) {
-            paradigmService.handleMayCastChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Play-exiled-countered-card-without-paying — e.g. Guile. Declining leaves the card exiled.
-        boolean isMayPlayExiledCountered = ability.effects().stream()
-                .anyMatch(e -> e instanceof MayPlayExiledCounteredCardEffect);
-        if (isMayPlayExiledCountered) {
-            if (accepted && ability.targetCardId() != null) {
-                exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
-            } else {
-                String logEntry = player.getUsername() + " declines to play " + ability.sourceCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} declines to play exiled {} (Guile)", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
         }
 
         // Cast-from-library-without-paying — e.g. Galvanoth (second phase: cast prompt)
@@ -263,165 +189,6 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
             mayCastHandlerService.handleCastFromLibraryChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Play-from-library-or-exile — e.g. Djinn of Wishes (play any card or exile)
-        boolean isPlayFromLibraryOrExile = ability.effects().stream()
-                .anyMatch(e -> e instanceof RevealTopCardMayPlayFreeOrExileEffect);
-        if (isPlayFromLibraryOrExile) {
-            mayCastHandlerService.handlePlayFromLibraryOrExileChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Surveil — may put top card into graveyard (e.g. Search for Azcanta)
-        boolean isSurveil = ability.effects().stream()
-                .anyMatch(e -> e instanceof SurveilEffect);
-        if (isSurveil) {
-            mayMiscHandlerService.handleSurveilMayGraveyardChoice(gameData, player, accepted);
-            return;
-        }
-
-        // Eye Spy — may put target player's looked-at top card into their graveyard
-        LookAtTargetPlayerTopCardMayGraveyardEffect eyeSpy = ability.effects().stream()
-                .filter(e -> e instanceof LookAtTargetPlayerTopCardMayGraveyardEffect)
-                .map(e -> (LookAtTargetPlayerTopCardMayGraveyardEffect) e)
-                .findFirst().orElse(null);
-        if (eyeSpy != null) {
-            mayMiscHandlerService.handleLookAtTargetPlayerTopCardChoice(gameData, accepted,
-                    eyeSpy.libraryOwnerId(), player.getId(), eyeSpy.lifeCost());
-            return;
-        }
-
-        // Explore — may put revealed non-land card into graveyard
-        boolean isExplore = ability.effects().stream()
-                .anyMatch(e -> e instanceof ExploreEffect);
-        if (isExplore) {
-            mayMiscHandlerService.handleExploreMayGraveyardChoice(gameData, player, accepted);
-            return;
-        }
-
-        // Reveal top card creature-to-battlefield or may-bottom — e.g. Lurking Predators
-        boolean isRevealCreatureOrBottom = ability.effects().stream()
-                .anyMatch(e -> e instanceof RevealTopCardCreatureToBattlefieldOrMayBottomEffect);
-        if (isRevealCreatureOrBottom) {
-            mayMiscHandlerService.handleRevealTopCardMayBottomChoice(gameData, player, accepted);
-            return;
-        }
-
-        // Look at top card, may reveal to transform — e.g. Delver of Secrets
-        // Per ruling (2011-09-22): you may reveal even if it's not an instant or sorcery.
-        // The card stays on top of your library. Transform only happens if revealed card matches.
-        LookAtTopCardMayRevealTypeTransformEffect revealTypeTransform = ability.effects().stream()
-                .filter(e -> e instanceof LookAtTopCardMayRevealTypeTransformEffect)
-                .map(e -> (LookAtTopCardMayRevealTypeTransformEffect) e)
-                .findFirst().orElse(null);
-        if (revealTypeTransform != null) {
-            if (accepted) {
-                List<Card> deck = gameData.playerDecks.get(ability.controllerId());
-                if (!deck.isEmpty()) {
-                    Card topCard = deck.getFirst();
-                    String revealLog = player.getUsername() + " reveals " + topCard.getName() + " from the top of their library.";
-                    gameBroadcastService.logAndBroadcast(gameData, revealLog);
-
-                    // Transform only if the revealed card matches the required types
-                    boolean matches = revealTypeTransform.cardTypes().contains(topCard.getType())
-                            || topCard.getAdditionalTypes().stream().anyMatch(revealTypeTransform.cardTypes()::contains);
-                    if (matches) {
-                        Permanent self = ability.sourcePermanentId() != null
-                                ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                        if (self != null && !self.isTransformed()) {
-                            Card backFace = self.getOriginalCard().getBackFaceCard();
-                            if (backFace != null) {
-                                String frontName = self.getCard().getName();
-                                self.setCard(backFace);
-                                self.setTransformed(true);
-                                String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                                gameBroadcastService.logAndBroadcast(gameData, transformLog);
-                                log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
-                                        gameData.id, frontName, backFace.getName());
-                            }
-                        }
-                    } else {
-                        log.info("Game {} - {} revealed {} but it's not a matching type, no transform",
-                                gameData.id, player.getUsername(), topCard.getName());
-                    }
-                }
-            } else {
-                String logEntry = player.getUsername() + " chooses not to reveal.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // Kinship (Morningtide) — the top card shares a creature type; you may reveal it to resolve
-        // the reveal effects against the source creature. The card stays on top of the library.
-        KinshipEffect kinship = ability.effects().stream()
-                .filter(e -> e instanceof KinshipEffect)
-                .map(e -> (KinshipEffect) e)
-                .findFirst().orElse(null);
-        if (kinship != null) {
-            if (accepted) {
-                List<Card> deck = gameData.playerDecks.get(ability.controllerId());
-                if (deck != null && !deck.isEmpty()) {
-                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
-                            + deck.getFirst().getName() + " from the top of their library.");
-                }
-                Permanent self = ability.sourcePermanentId() != null
-                        ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
-                if (self != null && !kinship.revealEffects().isEmpty()) {
-                    StackEntry kinshipEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(), ability.controllerId(),
-                            ability.sourceCard().getName() + " (Kinship)",
-                            kinship.revealEffects(), 0, ability.sourcePermanentId());
-                    effectResolutionService.resolveEffects(gameData, kinshipEntry);
-                }
-            } else {
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " chooses not to reveal.");
-                log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-            }
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
-        // Cast-from-graveyard — e.g. Chancellor of the Spires
-        CastTargetInstantOrSorceryFromGraveyardEffect castFromGraveyardEffect = ability.effects().stream()
-                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
-                .map(e -> (CastTargetInstantOrSorceryFromGraveyardEffect) e)
-                .findFirst().orElse(null);
-        if (castFromGraveyardEffect != null) {
-            mayCastHandlerService.handleCastFromGraveyardChoice(gameData, player, accepted, ability, castFromGraveyardEffect);
-            return;
-        }
-
-        // Play-imprinted-card-without-paying — e.g. Howltooth Hollow (Hideaway)
-        boolean isPlayImprinted = ability.effects().stream()
-                .anyMatch(e -> e instanceof PlayImprintedCardWithoutPayingManaCostEffect);
-        if (isPlayImprinted) {
-            mayCastHandlerService.handlePlayImprintedCardChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Play-from-graveyard-without-paying — e.g. Horde of Notions
-        PlayTargetCardFromGraveyardWithoutPayingManaCostEffect playFromGraveyardEffect = ability.effects().stream()
-                .filter(e -> e instanceof PlayTargetCardFromGraveyardWithoutPayingManaCostEffect)
-                .map(e -> (PlayTargetCardFromGraveyardWithoutPayingManaCostEffect) e)
-                .findFirst().orElse(null);
-        if (playFromGraveyardEffect != null) {
-            mayCastHandlerService.handlePlayFromGraveyardChoice(gameData, player, accepted, ability, playFromGraveyardEffect);
-            return;
-        }
-
-        // May-not-untap choice from untap step (e.g. Rust Tick)
-        boolean isMayNotUntap = ability.effects().stream().anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
-        if (isMayNotUntap) {
-            mayMiscHandlerService.handleMayNotUntapChoice(gameData, player, accepted, ability);
             return;
         }
 

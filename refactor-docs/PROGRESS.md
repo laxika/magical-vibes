@@ -1726,3 +1726,150 @@ baseline and `EFFECT_COUPLING_MATRIX.md` were regenerated with `python scripts/e
 - `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entries).
 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+
+## Step 15 — Build the `mayfx` "you may …" handler registry; migrate the first half of `MayAbilityHandlerService`  (2026-07-14)
+
+`MayAbilityHandlerService.handleMayAbilityChosen` was one long fixed-order chain: for each pending
+may-ability it scanned `ability.effects()` for one concrete effect type after another and routed to a
+bespoke accept/decline block. This step built the class-keyed registry that mirrors `normalfx`/`staticfx`
+and migrated the first 15 effect-type blocks into it. The remaining chain is untouched and unmigrated
+types fall through to it.
+
+### Registry design (mirrors `normalfx` exactly)
+
+- **`service/effect/mayfx/MayEffectHandlerBean`** — interface: `Class<? extends CardEffect> handledEffect()`
+  + `void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability)`.
+  (Uniform signature — the old branches only ever needed those four values; handlers that want a typed
+  view of their effect re-extract it from `ability.effects()` with the same `filter/map/findFirst` the
+  branch used.)
+- **`service/effect/MayEffectHandlerRegistry`** — class-keyed `LinkedHashMap`, same shape as
+  `EffectHandlerRegistry` (`register` / `getHandler(effect)` by `effect.getClass()`).
+- **`GameEngineConfig`** — new `@Bean mayEffectHandlerRegistry()`; `afterSingletonsInstantiated` collects
+  all `MayEffectHandlerBean`s via `getBeansOfType` and registers them (identical mechanism to the normal
+  handlers). Startup log line now reports the may-handler count too.
+- **Dispatch** in `handleMayAbilityChosen`: after the three non-effect preambles, a loop
+  `for (CardEffect effect : ability.effects()) { var h = registry.getHandler(effect); if (h != null) { h.handle(...); return; } }`.
+  Unmigrated types find no handler and fall through to the untouched chain below.
+
+### Preambles that stay in the service (out of scope, run BEFORE dispatch)
+
+1. Pile-separation completion (`completeCardPileSeparationStep2` / `completePileSeparationStep2`).
+2. `resolvingMayEffectFromStack` resolution-time path (`handleResolutionTimeMayChoice`).
+3. Pending equipment-attach (`handleEquipmentAttachChoice`).
+
+### Ordering-hazard decision (step 2/3)
+
+The old chain tests effect types in **fixed code order**; the new loop dispatches in **`effects()` list
+order**. These differ only if a single may-ability's top-level `effects()` list contains two
+registered types. Grepped all 16 first-half types across `magical-vibes-card/src/main/java`: every hit is
+a lone type (import + one usage). The one file with two of them — `LeafCrownedElder` (`KinshipEffect` +
+`RevealTopCardMayPlayFreeOrExileEffect`) — nests the second **inside** `KinshipEffect.revealEffects()`, so
+at the top level `effects()` is `[KinshipEffect]` only. **No top-level co-occurrence exists**, so list
+order == code order for the migrated set and **no explicit priority was needed**. Documented here so the
+next session re-checks before adding more.
+
+**Block 5 deliberately NOT migrated** (`CastTopOfLibraryWithoutPayingManaCostEffect`, Galvanoth): its
+branch has an extra runtime guard
+(`castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())`) and **falls through to the
+generic handling when the guard fails**. A plain class-keyed handler can't express "matched the type but
+decline to handle, keep going," so migrating it would need either a `boolean`/tri-state return from
+`handle` or the handler to replicate the generic stack-entry fallthrough. Left in the chain verbatim; the
+dispatch loop simply doesn't find a handler for it and falls through as before (`GalvanothTest` green).
+
+### Full ordered block list (next session resumes from here)
+
+Migrated → `mayfx` bean; Remaining → still in the in-service chain.
+
+- [x] 1. `RevealSubtypeOrEntersTappedEffect` → `RevealSubtypeOrEntersTappedHandler` (inline)
+- [x] 2. `MayCastFromHandWithoutPayingManaCostEffect` → `MayCastFromHandWithoutPayingHandler`
+- [x] 3. `ParadigmMayCastFromExileEffect` → `ParadigmMayCastFromExileHandler` (@Lazy ParadigmService)
+- [x] 4. `MayPlayExiledCounteredCardEffect` → `MayPlayExiledCounteredCardHandler` (inline)
+- [ ] 5. `CastTopOfLibraryWithoutPayingManaCostEffect` — **REMAINING** (conditional guard, see above)
+- [x] 6. `RevealTopCardMayPlayFreeOrExileEffect` → `RevealTopCardMayPlayFreeOrExileHandler`
+- [x] 7. `SurveilEffect` → `SurveilMayGraveyardHandler`
+- [x] 8. `LookAtTargetPlayerTopCardMayGraveyardEffect` → `LookAtTargetPlayerTopCardMayGraveyardHandler`
+- [x] 9. `ExploreEffect` → `ExploreMayGraveyardHandler`
+- [x] 10. `RevealTopCardCreatureToBattlefieldOrMayBottomEffect` → `RevealTopCardCreatureToBattlefieldOrMayBottomHandler`
+- [x] 11. `LookAtTopCardMayRevealTypeTransformEffect` → `LookAtTopCardMayRevealTypeTransformHandler` (inline)
+- [x] 12. `KinshipEffect` → `KinshipHandler` (inline)
+- [x] 13. `CastTargetInstantOrSorceryFromGraveyardEffect` → `CastTargetInstantOrSorceryFromGraveyardHandler`
+- [x] 14. `PlayImprintedCardWithoutPayingManaCostEffect` → `PlayImprintedCardWithoutPayingHandler`
+- [x] 15. `PlayTargetCardFromGraveyardWithoutPayingManaCostEffect` → `PlayTargetCardFromGraveyardWithoutPayingHandler`
+- [x] 16. `MayNotUntapDuringUntapStepEffect` → `MayNotUntapDuringUntapStepHandler`
+- [ ] 17. `LeylineStartOnBattlefieldEffect` — REMAINING (`handleLeylineChoice`)
+- [ ] 18. `RegisterDelayedCounterTriggerEffect` — REMAINING (`handleOpeningHandDelayedCounterTrigger`; also used in the resolution-time preamble — check both)
+- [ ] 19. `RegisterDelayedManaTriggerEffect` — REMAINING (`handleOpeningHandDelayedManaTrigger`; also resolution-time preamble)
+- [ ] 20. `CounterUnlessEffect` (interface) — REMAINING (`switch(ransomKind())` → pay/discard handlers)
+- [ ] 21. `LoseLifeUnlessDiscardEffect` — REMAINING
+- [ ] 22. `LoseLifeUnlessPaysEffect` — REMAINING
+- [ ] 23. `DiscardHandUnlessPaysLifeEffect` — REMAINING
+- [ ] 24. `EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect` — REMAINING (`tariffSupport`)
+- [ ] 25. `OpponentMayReturnExiledCardOrDrawEffect` — REMAINING
+- [ ] 26. `LibraryOfLatNamEffect` — REMAINING
+- [ ] 27. `DiscardUnlessExileCardFromGraveyardEffect` — REMAINING
+- [ ] 28. `SacrificeUnlessDiscardCardTypeEffect` — REMAINING
+- [ ] 29. `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` — REMAINING
+- [ ] 30. `ForcedCostOrElseEffect` — REMAINING
+- [ ] 31. `ReplaceSingleDrawEffect` — REMAINING
+- [ ] 32. `ChooseNewTargetsForTargetSpellEffect` — REMAINING (also resolution-time preamble — check both)
+- [ ] 33. `CopySpellEffect` — REMAINING
+- [ ] 34. `CopyActivatedAbilityRetargetEffect` — REMAINING
+- [ ] 35. `BecomeCopyOfTargetCreatureEffect` — REMAINING
+- [ ] 36. `CopyPermanentOnEnterEffect` — REMAINING
+- [ ] 37. `SacrificeArtifactThenDealDividedDamageEffect` — REMAINING
+- [ ] 38. `SphinxAmbassadorPutOnBattlefieldEffect` — REMAINING
+- [ ] 39. `ShuffleLibraryEffect` — REMAINING (inline)
+
+**Below block 39 is NOT a routing chain** — it is the generic accept path: a mana-payment preamble, then
+targeted/untargeted stack-entry construction. Its two `instanceof` clusters (`needsSelfTarget` over
+`PutCountersOnSelfEffect` / `AnimatePermanentsEffect(SELF)` / `BoostSelfEffect` / `ImprintDyingCreatureEffect`
+/ `ExileFromHandToImprintEffect` / `ReturnDyingCreatureToBattlefieldAndAttachSourceEffect` /
+`BecomeCopyOfDyingCreatureEffect`, and `needsEnteringTarget` over `CreateTokenCopyOfTargetPermanentEffect`)
+plus the resolution-time helpers (`extractInnerEffect`, `setUpSelfTargetIfNeeded`,
+`handleGraveyardTargetedMayAbility`, `handleResolutionTimeGraveyardTargetSelection`, which read
+`ExileTargetCardFromGraveyard*Effect` fields) are **construction-shaped**, not bespoke accept/decline
+routing — they likely resolve via capability interfaces (`needsSelfTarget()` / entering-target facts)
+rather than `mayfx` beans. Decide their fate as a separate sub-step.
+
+### Circular-dependency note
+
+`MayAbilityHandlerService` no longer injects `ParadigmService` or `ExileFreeCastSupport` (their only
+callers, blocks 3 and 4, moved out); both fields + ctor params and the now-unused `@Lazy` import were
+removed. The `@Lazy` edge moved to `ParadigmMayCastFromExileHandler` (explicit ctor, `@Lazy ParadigmService`),
+preserving the original cycle break. `mayfx` beans that orchestrate a sub-service inject it directly; the
+registry itself is populated post-construction (`getBeansOfType`), so it adds no ctor edge back into
+`MayAbilityHandlerService`. (`turnProgressionService` was already an unused field before this step — left
+as-is, out of scope.)
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/input/MayAbilityHandlerService.java` | 59 | 44 | -15 |
+
+Program total (ratchet sum): **529 → 514** (-15). The 15 migrated blocks moved into `mayfx` beans under
+`service/effect/**`, which is an EXEMPT zone, so they add zero counted violations. Baseline + matrix
+regenerated with `python scripts/effect-coupling-audit.py`; `git diff` of the baseline touches exactly one
+line (`MayAbilityHandlerService` 59→44, a pure drop).
+
+### Tests run (all green)
+
+`DelverOfSecretsTest` (7, block 11), `AncientAmphitheaterTest` (5, block 1), `CounterlashTest` (12, block 2),
+`GuileTest` (7, block 4), `DjinnOfWishesTest` (9, block 6), `SearchForAzcantaTest` (8, block 7),
+`EyeSpyTest` (4, block 8), `DeadeyeTrackerTest` (10, block 9), `LurkingPredatorsTest` (10, block 10),
+`WolfSkullShamanTest` (4, block 12), `LeafCrownedElderTest` (4, blocks 6+12 nested), `ChancellorOfTheSpiresTest`
+(14, block 13), `HowltoothHollowTest` (4, block 14), `HordeOfNotionsTest` (4, block 15), `RustTickTest`
+(12, block 16), `GalvanothTest` (9, kept block 5 guard path). `EffectDispatchRatchetTest` — green after
+baseline regen.
+
+### Files changed
+
+- **New:** `service/effect/MayEffectHandlerRegistry.java`, `service/effect/mayfx/MayEffectHandlerBean.java`
+  + 15 `@Component` handler beans in `service/effect/mayfx/`.
+- `service/GameEngineConfig.java` — registry bean + auto-registration + log line.
+- `service/input/MayAbilityHandlerService.java` — dispatch loop added; 15 branches deleted; two unused
+  service deps + `@Lazy` import removed; migrated-type imports pruned.
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/ARCHITECTURE.md`, `agent-docs/EFFECTS_QUICK_REFERENCE.md` (mayfx registry documented).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.

@@ -783,6 +783,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 All normal (stack-resolution) effects: one `NormalEffectHandlerBean` `@Component` per effect in `service/effect/normalfx/`, auto-registered by `GameEngineConfig`. Shared logic in `*Support` classes in the same package.
 
+"You may …" accept/decline abilities follow the mirror pattern: one `MayEffectHandlerBean` `@Component` per effect in `service/effect/mayfx/` (declares `handledEffect()`, implements `handle(GameData, Player, boolean accepted, PendingMayAbility)`), auto-registered into `MayEffectHandlerRegistry` by `GameEngineConfig`. `MayAbilityHandlerService.handleMayAbilityChosen` runs its non-effect preambles, then iterates the ability's `effects()` in list order and dispatches to the first registered handler. Migration of the in-service chain into `mayfx` is incremental — unmigrated effect types still fall through to the remaining chain. Beans that just orchestrate a sub-service (`MayCastHandlerService`, `MayMiscHandlerService`, …) inject it; inline beans inject `GameBroadcastService`/`GameQueryService`/`InputCompletionService`/etc. directly.
+
 | Category | Handler package | Shared helpers |
 |----------|-----------------|----------------|
 | Damage | `normalfx/*EffectHandler` | `DamageSupport` |
