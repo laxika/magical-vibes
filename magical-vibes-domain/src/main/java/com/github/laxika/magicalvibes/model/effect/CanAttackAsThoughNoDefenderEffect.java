@@ -5,5 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * Typically wrapped in a ConditionalEffect (e.g. with a Metalcraft condition)
  * so the creature can only attack when the condition is met.
  */
-public record CanAttackAsThoughNoDefenderEffect() implements CardEffect {
+public record CanAttackAsThoughNoDefenderEffect() implements NoDefenderAttackPermissionEffect {
+
+    @Override
+    public boolean grantsCarrierAttackAsThoughNoDefender() {
+        return true;
+    }
 }

@@ -59,6 +59,28 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
   `ProtectionFromCardTypesEffect`, `ProtectionFromSubtypesEffect`, `ProtectionFromManaValueEffect`.
   NOT for runtime-only protection: chosen-color (`ProtectionFromChosenColorEffect`, a
   `ChooseColorEffect`) or "protection from non-[subtype] creatures" (tracked on the `Permanent`)
+- `BlockabilityRestrictionEffect` — attacker-side evasion facts read by the engine query layer
+  (`GameQueryService`): `cantBeBlocked()`, `unblockableIfDefenderControls()` (`PermanentPredicate`),
+  `unblockableIfControllerCastHistoricSpellThisTurn()`, `unblockableWhileAttackingAlone()`,
+  `blockableOnlyBy()` + `blockableOnlyByDescription()`, `cantBeBlockedByCreaturesMatching()`. The engine
+  evaluates the predicates and supplies engine-computed facts (attacking-alone, historic-spell). Impl
+  `CantBeBlockedEffect`, `CanBeBlockedOnlyByFilterEffect`, `CantBeBlockedByCreaturesMatchingPredicateEffect`,
+  `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`,
+  `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect`, `CantBeBlockedIfAttackingAloneEffect`
+- `BlockingRestrictionEffect` — blocker-side restriction facts (`GameQueryService`): `cantBlock()`,
+  `canBlockOnlyAttackersMatching()` + `canBlockOnlyAttackersDescription()`, and the board-wide
+  `globalCantBlockBlockerMatcher()` / `globalCantBlockAttackerMatcher()` / `globalCantBlockDescription()`.
+  Impl `CantBlockEffect`, `CanBlockOnlyIfAttackerMatchesPredicateEffect`,
+  `MatchingCreaturesCantBlockMatchingCreaturesEffect`
+- `AttackOrBlockRestrictionEffect` — combined "can't attack or block" facts (attack side in
+  `CombatAttackService`, block side in `GameQueryService`): `globallyCantAttackOrBlock()`
+  (`PermanentPredicate`), `cantAttackOrBlockUnless()` (`Condition`), `restrictionDescription()`. Impl
+  `MatchingCreaturesCantAttackOrBlockEffect`, `CantAttackOrBlockUnlessEffect`
+- `NoDefenderAttackPermissionEffect` — "attack as though no defender" facts
+  (`GameQueryService.canAttackDespiteDefender`): `grantsCarrierAttackAsThoughNoDefender()` (self grant,
+  incl. `ConditionalEffect`-wrapped and floating grants) and `noDefenderAttackMatcher()`
+  (`PermanentPredicate`, board-wide). Impl `CanAttackAsThoughNoDefenderEffect`,
+  `MatchingCreaturesCanAttackAsThoughNoDefenderEffect`
 
 ## Wrapper / modifier effects
 

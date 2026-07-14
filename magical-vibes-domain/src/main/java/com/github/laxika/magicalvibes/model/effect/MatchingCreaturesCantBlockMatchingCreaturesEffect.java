@@ -15,5 +15,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public record MatchingCreaturesCantBlockMatchingCreaturesEffect(PermanentPredicate blockerPredicate,
                                                                 PermanentPredicate attackerPredicate,
-                                                                String description) implements CardEffect {
+                                                                String description) implements BlockingRestrictionEffect {
+
+    @Override
+    public PermanentPredicate globalCantBlockBlockerMatcher() {
+        return blockerPredicate;
+    }
+
+    @Override
+    public PermanentPredicate globalCantBlockAttackerMatcher() {
+        return attackerPredicate;
+    }
+
+    @Override
+    public String globalCantBlockDescription() {
+        return description;
+    }
 }

@@ -7,5 +7,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * This creature can block only attackers that match the provided predicate.
  */
 public record CanBlockOnlyIfAttackerMatchesPredicateEffect(PermanentPredicate attackerPredicate, String allowedAttackersDescription)
-        implements CardEffect {
+        implements BlockingRestrictionEffect {
+
+    @Override
+    public PermanentPredicate canBlockOnlyAttackersMatching() {
+        return attackerPredicate;
+    }
+
+    @Override
+    public String canBlockOnlyAttackersDescription() {
+        return allowedAttackersDescription;
+    }
 }

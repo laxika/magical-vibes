@@ -8,5 +8,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@link CanAttackAsThoughNoDefenderEffect}, checked in
  * {@code GameQueryService.canAttackDespiteDefender}. Used by Rolling Stones (Wall creatures).
  */
-public record MatchingCreaturesCanAttackAsThoughNoDefenderEffect(PermanentPredicate matcher) implements CardEffect {
+public record MatchingCreaturesCanAttackAsThoughNoDefenderEffect(PermanentPredicate matcher)
+        implements NoDefenderAttackPermissionEffect {
+
+    @Override
+    public PermanentPredicate noDefenderAttackMatcher() {
+        return matcher;
+    }
 }

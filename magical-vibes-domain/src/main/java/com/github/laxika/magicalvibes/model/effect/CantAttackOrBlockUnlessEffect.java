@@ -13,5 +13,16 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * @param condition              the condition that must be met for this creature to attack or block
  * @param requirementDescription human-readable "unless" clause (e.g. "you control another Giant")
  */
-public record CantAttackOrBlockUnlessEffect(Condition condition, String requirementDescription) implements CardEffect {
+public record CantAttackOrBlockUnlessEffect(Condition condition, String requirementDescription)
+        implements AttackOrBlockRestrictionEffect {
+
+    @Override
+    public Condition cantAttackOrBlockUnless() {
+        return condition;
+    }
+
+    @Override
+    public String restrictionDescription() {
+        return requirementDescription;
+    }
 }

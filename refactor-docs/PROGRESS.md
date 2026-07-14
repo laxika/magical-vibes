@@ -1164,3 +1164,168 @@ no longer stale.**
 
 **For the user:** run the full test suite and commit. This step touched `src/main` (domain + engine)
 for the first time in the program — a behaviour-preserving query refactor, no game-rules change.
+
+## Step 10 — Engine block/attack restriction family → four combat-restriction capability interfaces  (2026-07-14)
+
+Second **phase-2** step. Collapses the block/attack RESTRICTION family that `GameQueryService`
+dispatched via `instanceof <concrete record>` into four descriptive capability interfaces in the
+domain effect package. Scope this step: **`GameQueryService` consuming sites only** — `CombatBlockService`
+and `CombatAttackService` are deliberately left for the next step (they still `instanceof` these records).
+
+### Interface designs (domain `model/effect/`, all pure component reads, engine owns evaluation)
+
+1. **`BlockabilityRestrictionEffect`** (Group A — attacker-side "who may block this creature"):
+   - `boolean cantBeBlocked()` — default `false`
+   - `PermanentPredicate unblockableIfDefenderControls()` — default `null`
+   - `boolean unblockableIfControllerCastHistoricSpellThisTurn()` — default `false`
+   - `boolean unblockableWhileAttackingAlone()` — default `false`
+   - `PermanentPredicate blockableOnlyBy()` — default `null`
+   - `String blockableOnlyByDescription()` — default `null`
+   - `PermanentPredicate cantBeBlockedByCreaturesMatching()` — default `null`
+   Impl: `CantBeBlockedEffect`, `CanBeBlockedOnlyByFilterEffect`,
+   `CantBeBlockedByCreaturesMatchingPredicateEffect`,
+   `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`,
+   `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect`, `CantBeBlockedIfAttackingAloneEffect`.
+
+2. **`BlockingRestrictionEffect`** (Group B — blocker-side "what a creature may block"):
+   - `boolean cantBlock()` — default `false`
+   - `PermanentPredicate canBlockOnlyAttackersMatching()` — default `null`
+   - `String canBlockOnlyAttackersDescription()` — default `null`
+   - `PermanentPredicate globalCantBlockBlockerMatcher()` — default `null`
+   - `PermanentPredicate globalCantBlockAttackerMatcher()` — default `null`
+   - `String globalCantBlockDescription()` — default `null`
+   Impl: `CantBlockEffect`, `CanBlockOnlyIfAttackerMatchesPredicateEffect`,
+   `MatchingCreaturesCantBlockMatchingCreaturesEffect`.
+
+3. **`AttackOrBlockRestrictionEffect`** (Group C — combined "can't attack or block"):
+   - `PermanentPredicate globallyCantAttackOrBlock()` — default `null`
+   - `Condition cantAttackOrBlockUnless()` — default `null`
+   - `String restrictionDescription()` — default `null`
+   Impl: `MatchingCreaturesCantAttackOrBlockEffect`, `CantAttackOrBlockUnlessEffect`.
+
+4. **`NoDefenderAttackPermissionEffect`** (Group D — "attack as though no defender"):
+   - `boolean grantsCarrierAttackAsThoughNoDefender()` — default `false`
+   - `PermanentPredicate noDefenderAttackMatcher()` — default `null`
+   Impl: `CanAttackAsThoughNoDefenderEffect`, `MatchingCreaturesCanAttackAsThoughNoDefenderEffect`.
+
+Design notes:
+- **Umbrella-with-defaults pattern** (as `ProtectionGrantingEffect`): each record overrides only the
+  facet it carries; a query site matches the interface once and reads the relevant facet, and records
+  that don't carry that facet return the empty/`false`/`null` default → behaviour-neutral when several
+  record kinds share a static-effect loop.
+- **Predicates are exposed, never evaluated in the domain.** Methods return the raw `PermanentPredicate`
+  / `Condition` off the record; the engine keeps calling `predicateEvaluationService` /
+  `conditionEvaluationService`. The domain imports nothing new (both are already domain types).
+- **Escape hatch used at the attacking-alone site.** `unblockableWhileAttackingAlone()` is a pure
+  marker; the engine-side `isAttackingAlone(gameData, attacker)` computation (combat state not on
+  `GameData`) stays in `GameQueryService` and is `&&`-ed with the marker. Likewise the historic-spell
+  fact stays engine-side (`playerCastHistoricSpellThisTurn`).
+- **Group C uses one combined interface**, not separate attack/block interfaces: the "can't attack or
+  block" records read the SAME components for both sides, so `AttackOrBlockRestrictionEffect` serves the
+  block-side consumer here AND the attack-side consumer (`CombatAttackService`) in the next step.
+
+### Sites migrated in `GameQueryService` (15 concrete `instanceof` → interface)
+
+| Method | Was `instanceof` | Now |
+|--------|------------------|-----|
+| `canAttackDespiteDefender` (self) | `CanAttackAsThoughNoDefenderEffect` | `NoDefenderAttackPermissionEffect` + `grantsCarrierAttackAsThoughNoDefender()` |
+| `canAttackDespiteDefender` (Conditional-wrapped) | `CanAttackAsThoughNoDefenderEffect` | same interface + facet |
+| `canAttackDespiteDefender` (floating) | `CanAttackAsThoughNoDefenderEffect` | same interface + facet |
+| `canAttackDespiteDefender` (global) | `MatchingCreaturesCanAttackAsThoughNoDefenderEffect` | `NoDefenderAttackPermissionEffect` + `noDefenderAttackMatcher() != null` |
+| `hasCantBeBlocked` | `CantBeBlockedEffect` | `BlockabilityRestrictionEffect` + `cantBeBlocked()` |
+| `hasGlobalCantAttackOrBlockRestriction` | `MatchingCreaturesCantAttackOrBlockEffect` | `AttackOrBlockRestrictionEffect` + `globallyCantAttackOrBlock() != null` |
+| `isCantBlockUnlessConditionUnmet` | `CantAttackOrBlockUnlessEffect` | `AttackOrBlockRestrictionEffect` + `cantAttackOrBlockUnless() != null` |
+| `findBlockDenial` pair loop (x2) | `CanBeBlockedOnlyByFilterEffect`, `CantBeBlockedByCreaturesMatchingPredicateEffect` | one `BlockabilityRestrictionEffect` match + `blockableOnlyBy()` / `cantBeBlockedByCreaturesMatching()` facets |
+| `buildAttackerFacts` unblockable (x3) | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`, `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect`, `CantBeBlockedIfAttackingAloneEffect` | one `BlockabilityRestrictionEffect` match + `unblockableIfDefenderControls()` / `unblockableIfControllerCastHistoricSpellThisTurn()` / `unblockableWhileAttackingAlone()` |
+| `buildAttackerFacts` pair collect (x2) | `CanBeBlockedOnlyByFilterEffect` OR `CantBeBlockedByCreaturesMatchingPredicateEffect` | `BlockabilityRestrictionEffect` + `blockableOnlyBy()!=null` / `cantBeBlockedByCreaturesMatching()!=null` |
+| `buildBlockerFacts` cant-block | `CantBlockEffect` | `BlockingRestrictionEffect` + `cantBlock()` |
+
+Two `instanceof` in the `findBlockDenial` pair loop collapsed into a single interface match, so the 15
+concrete-`instanceof` removals cover the 13 logical checks listed above.
+
+### Sites intentionally left concrete (3) — pinned by out-of-scope `BlockLegalityContext` typed collections
+
+These collect a single record type into a `List<ConcreteRecord>` field that lives on
+`BlockLegalityContext` (a separate class, outside this step's `GameQueryService`-only scope). Migrating
+them requires re-typing those fields to the interface, so they stay concrete for now:
+- `createBlockLegalityContext` → `MatchingCreaturesCantBlockMatchingCreaturesEffect` (into
+  `List<MatchingCreaturesCantBlockMatchingCreaturesEffect> globalBlockRestrictions`).
+- `buildBlockerFacts` → `CanBlockOnlyIfAttackerMatchesPredicateEffect` (into
+  `List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions`).
+- `getAuraGrantedBlockingRestrictions` → `CanBeBlockedOnlyByFilterEffect` (into
+  `List<CanBeBlockedOnlyByFilterEffect>`).
+All three records DO implement their interface (facets exposed), so the pinned sites can be re-pointed
+whenever `BlockLegalityContext`'s field types are widened.
+
+`.class` / `::isInstance` sites are NOT counted by the ratchet (only `instanceof <ConcreteType>` is), so
+the aura/granted-effect lookups (`hasAuraWithEffect(..., CantBeBlockedEffect.class)`, the `canBlock`
+`CantBlockEffect.class::isInstance` stream, etc.) were left on the concrete class — they need a concrete
+`Class<?>` argument and don't affect the count. Imports kept for those: `CanAttackAsThoughNoDefenderEffect`,
+`CantBeBlockedEffect`, `CantBlockEffect`, plus the three pinned records. Seven now-unused record imports
+were dropped and two javadoc `{@link}`s (retargeted off the removed `MatchingCreaturesCantAttackOrBlockEffect`
+and `CantAttackOrBlockUnlessEffect`) reworded to plain phrases.
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/battlefield/GameQueryService.java` | 48 | 33 | -15 |
+
+Program total (ratchet-verified, regenerated via `python scripts/effect-coupling-audit.py`): **578 → 563**
+(-15, all in `GameQueryService`). Both `effect-dispatch-baseline.txt` and `EFFECT_COUPLING_MATRIX.md`
+refreshed; the baseline diff is the single line `GameQueryService=48` → `=33`.
+
+### >>> For the NEXT session — interfaces available for the CombatBlockService / CombatAttackService re-point
+
+All four interfaces are in `com.github.laxika.magicalvibes.model.effect` and fully implemented on the 13
+records. `CombatBlockService` (block side) and `CombatAttackService` (attack side) still `instanceof`
+these concrete records; re-point them with:
+
+- **`BlockabilityRestrictionEffect`** (attacker evasion): `boolean cantBeBlocked()`,
+  `PermanentPredicate unblockableIfDefenderControls()`, `boolean unblockableIfControllerCastHistoricSpellThisTurn()`,
+  `boolean unblockableWhileAttackingAlone()`, `PermanentPredicate blockableOnlyBy()`,
+  `String blockableOnlyByDescription()`, `PermanentPredicate cantBeBlockedByCreaturesMatching()`.
+- **`BlockingRestrictionEffect`** (blocker restriction): `boolean cantBlock()`,
+  `PermanentPredicate canBlockOnlyAttackersMatching()`, `String canBlockOnlyAttackersDescription()`,
+  `PermanentPredicate globalCantBlockBlockerMatcher()`, `PermanentPredicate globalCantBlockAttackerMatcher()`,
+  `String globalCantBlockDescription()`.
+- **`AttackOrBlockRestrictionEffect`** (combined; serves BOTH services):
+  `PermanentPredicate globallyCantAttackOrBlock()`, `Condition cantAttackOrBlockUnless()`,
+  `String restrictionDescription()`.
+- **`NoDefenderAttackPermissionEffect`** (attack-permission):
+  `boolean grantsCarrierAttackAsThoughNoDefender()`, `PermanentPredicate noDefenderAttackMatcher()`.
+
+When re-pointing, also widen the three `BlockLegalityContext` `List<ConcreteRecord>` fields noted above so
+the last three `GameQueryService` pinned sites can move too.
+
+### Tests run (all green)
+
+- Card tests — one+ per record: `BlightedAgentTest` (CantBeBlocked), `DreadWarlockTest`
+  (CanBeBlockedOnlyByFilter), `BogRatsTest` (CantBeBlockedByCreaturesMatchingPredicate),
+  `ScrapdiverSerpentTest` (CantBeBlockedIfDefenderControls), `RelicRunnerTest`
+  (CantBeBlockedIfControllerCastHistoric), `DreamProwlerTest` (CantBeBlockedIfAttackingAlone),
+  `AesthirGliderTest` (CantBlock), `CloudDragonTest` (CanBlockOnlyIfAttackerMatches),
+  `BoldwyrIntimidatorTest` (MatchingCreaturesCantBlockMatchingCreatures — pinned site),
+  `KulrathKnightTest` + `LightOfDayTest` (MatchingCreaturesCantAttackOrBlock), `BlindSpotGiantTest`
+  (CantAttackOrBlockUnless), `AnimateWallTest` + `SpireSerpentTest` (CanAttackAsThoughNoDefender),
+  `RollingStonesTest` (MatchingCreaturesCanAttackAsThoughNoDefender).
+- `SevenLayerTest` — CR 613 layer spec, all 100 pass. No expectation weakened.
+- `EffectDispatchRatchetTest` — green after the baseline regen (48 → 33).
+
+### Files changed
+
+- New: `BlockabilityRestrictionEffect`, `BlockingRestrictionEffect`, `AttackOrBlockRestrictionEffect`,
+  `NoDefenderAttackPermissionEffect` (domain `model/effect/`).
+- 13 records implement their interface: `CantBeBlockedEffect`, `CanBeBlockedOnlyByFilterEffect`,
+  `CantBeBlockedByCreaturesMatchingPredicateEffect`, `CantBeBlockedIfDefenderControlsMatchingPermanentEffect`,
+  `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect`, `CantBeBlockedIfAttackingAloneEffect`,
+  `CantBlockEffect`, `CanBlockOnlyIfAttackerMatchesPredicateEffect`,
+  `MatchingCreaturesCantBlockMatchingCreaturesEffect`, `MatchingCreaturesCantAttackOrBlockEffect`,
+  `CantAttackOrBlockUnlessEffect`, `CanAttackAsThoughNoDefenderEffect`,
+  `MatchingCreaturesCanAttackAsThoughNoDefenderEffect`.
+- `magical-vibes-engine/.../service/battlefield/GameQueryService.java` (15 sites + imports/javadoc).
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md`, `agent-docs/EFFECTS_INDEX.md` (catalog entries).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving query refactor — no
+game-rules change.

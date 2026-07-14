@@ -20,5 +20,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param description       short human-readable phrase for the restriction message
  */
 public record MatchingCreaturesCantAttackOrBlockEffect(PermanentPredicate affectedPredicate,
-                                                       String description) implements CardEffect {
+                                                       String description) implements AttackOrBlockRestrictionEffect {
+
+    @Override
+    public PermanentPredicate globallyCantAttackOrBlock() {
+        return affectedPredicate;
+    }
+
+    @Override
+    public String restrictionDescription() {
+        return description;
+    }
 }

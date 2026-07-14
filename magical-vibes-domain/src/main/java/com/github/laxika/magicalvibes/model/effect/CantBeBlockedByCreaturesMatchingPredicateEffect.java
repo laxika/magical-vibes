@@ -8,5 +8,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * (e.g. Taoist Mystic: "can't be blocked by creatures with horsemanship").
  */
 public record CantBeBlockedByCreaturesMatchingPredicateEffect(PermanentPredicate blockerPredicate)
-        implements CardEffect {
+        implements BlockabilityRestrictionEffect {
+
+    @Override
+    public PermanentPredicate cantBeBlockedByCreaturesMatching() {
+        return blockerPredicate;
+    }
 }

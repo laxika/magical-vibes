@@ -7,5 +7,15 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * This creature can be blocked only by blockers that match the provided blocker filter.
  */
 public record CanBeBlockedOnlyByFilterEffect(PermanentPredicate blockerPredicate, String allowedBlockersDescription)
-        implements CardEffect {
+        implements BlockabilityRestrictionEffect {
+
+    @Override
+    public PermanentPredicate blockableOnlyBy() {
+        return blockerPredicate;
+    }
+
+    @Override
+    public String blockableOnlyByDescription() {
+        return allowedBlockersDescription;
+    }
 }

@@ -7,5 +7,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * This creature can't be blocked as long as defending player controls a permanent matching the given predicate.
  */
 public record CantBeBlockedIfDefenderControlsMatchingPermanentEffect(PermanentPredicate defenderPermanentPredicate)
-        implements CardEffect {
+        implements BlockabilityRestrictionEffect {
+
+    @Override
+    public PermanentPredicate unblockableIfDefenderControls() {
+        return defenderPermanentPredicate;
+    }
 }
