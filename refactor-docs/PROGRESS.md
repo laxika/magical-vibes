@@ -126,3 +126,54 @@ reachable and drop the ones that are not.
 - **Python interpreter note:** no `python`/`py` is on PATH in this environment;
   the script was validated with a locally vendored CPython 3.11. The script is
   pure stdlib (`re`, `collections`, `pathlib`) so any Python 3 will run it.
+
+---
+
+## Step 2 — Ratchet  (2026-07-14)
+
+**Deliverable:** `magical-vibes-application/src/test/java/.../architecture/EffectDispatchRatchetTest.java`
+— a pure test-code architecture guard. No production (`src/main`) file was
+touched. It re-implements the step-1 audit's counting rules in Java, recomputes
+the per-file effect-`instanceof` totals from source, and compares them to the
+baseline. It fails when any file:
+- **exceeds** its baseline (or is absent from the baseline with count > 0) —
+  "New instanceof-on-CardEffect dispatch added in <file> (was N, now M)…";
+- **drops below** its baseline — "Good news: <file> dropped from N to M.
+  Regenerate the baseline…" (keeps the baseline honest as later steps shrink it);
+- **is in the baseline but no longer exists** — same regenerate-the-baseline ask.
+
+**Where the baseline lives:** unchanged — `refactor-docs/effect-dispatch-baseline.txt`.
+The test discovers the repo root by walking up from the Gradle test working
+directory until a `settings.gradle.kts`/`settings.gradle` is found, then reads
+the baseline (and scans sources) relative to that root. The baseline was NOT
+relocated and the audit script's output path was NOT changed, so there is a
+single source of truth for both producer (Python) and consumer (Java).
+
+**Regenerate the baseline** (only when a drop/rename is legitimately locked in,
+or a sanctioned new dispatch is added): `python scripts/effect-coupling-audit.py`
+from the repo root. It rewrites `effect-dispatch-baseline.txt` and
+`EFFECT_COUPLING_MATRIX.md`.
+
+**Run the ratchet test:**
+`.\scripts\run-card-test.ps1 com.github.laxika.magicalvibes.architecture.EffectDispatchRatchetTest`
+(use the FQCN — the wrapper treats bare names as `cards.{letter}.{Name}` card tests).
+
+**Lockstep contract:** the counting rules are duplicated in
+`scripts/effect-coupling-audit.py` and in `EffectDispatchRatchetTest`; a comment
+block at the top of each names the other and requires changing both together.
+Verified consistent: the test PASSES against the committed baseline (which the
+Python audit generated), proving the two implementations agree token-for-token.
+
+**Counting caveat (documented in both files):** the scan is line-agnostic
+(whole-file regex), so an `instanceof <EffectType>` appearing inside a comment or
+string literal is counted. This is acceptable for a ratchet — false positives
+only tighten it, and since the audit script has the identical behavior the two
+stay consistent. If a real dispatch is ever removed but a commented-out mention
+lingers, regenerate the baseline (both tools will agree on the new count).
+
+**Verification performed:** ran the test against a real injected violation
+(`instanceof DrawCardEffect` added to `GameService`, baseline 1) — it failed
+with the exact "was 1, now 2 …" message — then reverted; the tree is clean and
+the test passes again. Python was unavailable this session (only Store-alias
+stubs), so the baseline was not regenerated; none was needed since no production
+source changed since step 1.
