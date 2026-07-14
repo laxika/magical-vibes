@@ -11,7 +11,7 @@ public record StaticBoostEffect(
         Set<Keyword> grantedKeywords,
         GrantScope scope,
         PermanentPredicate filter
-) implements CardEffect {
+) implements StaticCreatureBoostEffect {
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope) {
         this(powerBoost, toughnessBoost, grantedKeywords, scope, null);

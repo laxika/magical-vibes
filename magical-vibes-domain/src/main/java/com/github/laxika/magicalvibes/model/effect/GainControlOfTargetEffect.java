@@ -17,10 +17,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *                       duration, the only duration any card grants a subtype with.
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype)
-        implements CardEffect {
+        implements ControlStealingEffect {
 
     public GainControlOfTargetEffect(ControlDuration duration) {
         this(duration, null);
+    }
+
+    @Override
+    public ControlDuration controlDuration() {
+        return duration;
     }
 
     @Override

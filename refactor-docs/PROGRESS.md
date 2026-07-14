@@ -613,3 +613,120 @@ to answer what those consumers ask (amount / who-can-be-hit / removal-kind), eve
 65). The machine-readable baseline the ratchet reads *is* correct (SpellEvaluator=47; new total
 668). Re-run `python scripts/effect-coupling-audit.py` when Python is available to refresh the human
 report; it will reproduce the same baseline.
+
+---
+
+## Step 6 — AI metadata (evaluator/classifier/selector)  (2026-07-14)
+
+### Plan (families → interface), written before coding
+
+Continues the step-5 pattern: DESCRIPTIVE capability interfaces in
+`magical-vibes-domain/.../model/effect/` that family records implement, so the three read-only AI
+consumers dispatch on ONE interface instead of many concrete effect types. Semantics-preserving:
+every branch reproduces the exact prior score / category / target choice, computed via interface
+facts. Domain diff is additive (`implements` clauses + method bodies returning existing components).
+
+Inventory of the three consumers (concrete-effect `instanceof`, post-step-5) grouped into families,
+and the interface (new / reused) each maps to. Cross-checked `EFFECT_COUPLING_MATRIX.md` (ii) so the
+new interfaces also answer what step-7 consumers (GameSimulator, HardAiDecisionEngine, AiManaManager)
++ BoardEvaluator/RaceEvaluator ask (draw amount, life amount, token profile, boost, keyword grant,
+control duration, "is a counter/regen").
+
+New interfaces (9):
+- **`CardDrawingEffect`** `DynamicAmount drawnCardAmount()` — impl `DrawCardEffect`.
+- **`LifeGainEffect`** `DynamicAmount lifeGainAmount()` — impl `GainLifeEffect`.
+- **`TokenCreatingEffect`** `DynamicAmount tokenAmount()`, `CardType tokenType()`, `int tokenPower()`,
+  `int tokenToughness()` — impl `CreateTokenEffect`.
+- **`CounterSpellingEffect`** (marker) — impl `CounterSpellEffect`, `CounterSpellAndExileEffect`,
+  `CounterUnlessPaysEffect` (migrates InstantCategoryClassifier only).
+- **`CreatureBoostEffect`** `DynamicAmount powerBoost()`, `DynamicAmount toughnessBoost()` — impl
+  `BoostTargetCreatureEffect` (a *targeted* creature P/T boost; self-boost is a different shape).
+- **`KeywordGrantingEffect`** `Set<Keyword> keywords()`, `GrantScope scope()` — impl
+  `GrantKeywordEffect`.
+- **`StaticCreatureBoostEffect`** `int powerBoost()`, `int toughnessBoost()`,
+  `Set<Keyword> grantedKeywords()`, `GrantScope scope()` — impl `StaticBoostEffect`.
+- **`ControlStealingEffect`** `ControlDuration controlDuration()` — impl `GainControlOfTargetEffect`.
+- **`RegenerationEffect`** (marker) — impl `RegenerateEffect`.
+
+Reused step-5 interfaces: `RemovalEffect` (InstantCategoryClassifier removal, AiTargetSelector
+destroy/exile detection via `removalKind() == DESTROY|EXILE`), `DamageDealingEffect`
+(InstantCategoryClassifier creature-damage removal, AiTargetSelector ability-damage targeting).
+
+Concrete-type survivors (justified; not migrated this step):
+- SpellEvaluator: recipient-sign families (`DealDamageToPlayersEffect`, `LoseLifeEffect`), board-wipe
+  families (`MassDamageEffect`, `DestroyAllPermanentsEffect`, `ReturnToHandEffect` ALL_MATCHING),
+  split-total (`DealDividedDamageEffect`), no-amount X (`DealXDamageToAnyTargetAndGainXLifeEffect`),
+  bespoke ability-only scoring (`BoostSelfEffect`, `ScryEffect`, `TapPermanentsEffect`,
+  `PutCounterOnEachControlledPermanentEffect`, `PutCounterOnTargetPermanentEffect`),
+  `CounterSpellEffect` (narrow "plain counter" scoring — broadening to `CounterSpellingEffect` would
+  newly score CounterUnlessPays/CounterSpellAndExile spells), `DiscardEffect` (recipient/random),
+  cost records (`SacrificeCreatureCost`, `SacrificeSelfCost`), and the mana family
+  (`AwardManaEffect`, `AwardAnyColorManaEffect`, `AwardAnyColorChosenSubtypeCreatureManaEffect`) —
+  deferred to **step 7** (widen `ManaProducingEffect`).
+- InstantCategoryClassifier: `DealDamageToTargetCreatureOrPlaneswalkerEffect` (NOT put on
+  `DamageDealingEffect` — that would newly score it in SpellEvaluator's ability path, a scoring
+  change), `DealDamageToPlayersEffect` (recipient → BURN_TO_FACE).
+- AiTargetSelector: `ExtraTurnEffect` (beneficial player-target marker), `DealDividedDamageEffect`
+  (divided-damage assignment builder), and the 8 graveyard-targeting effects
+  (`ReturnCardFromGraveyardEffect`, `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect`,
+  `CastTargetInstantOrSorceryFromGraveyardEffect`, `ExileGraveyardCardsEffect`,
+  `GrantFlashbackToTargetGraveyardCardEffect`, `ExileTargetCardFromGraveyardAndImprintOnSourceEffect`,
+  `PutCardFromOpponentGraveyardOntoBattlefieldEffect`,
+  `ExileTargetGraveyardCardAndSameNameFromZonesEffect`) — heterogeneous per-effect candidate filters
+  duplicating `GraveyardTargetValidators`; no uniform capability fact answerable from existing
+  components (the type/predicate checks live in the selector, not the effect). Left as a group.
+
+### Results
+
+**New/extended interfaces:** the 9 new interfaces above, all declared `interface` in the effect
+package (so the audit script and `EffectDispatchRatchetTest` auto-exempt `instanceof` on them).
+Reused step-5 `RemovalEffect` + `DamageDealingEffect`. No step-5 interface needed widening. Domain
+diff is purely additive: `implements` clause swaps plus interface-method bodies returning existing
+record components (`DrawCardEffect.drawnCardAmount()→amount`, `GainLifeEffect.lifeGainAmount()→amount`,
+`CreateTokenEffect.token*()→amount/primaryType/power/toughness`,
+`GainControlOfTargetEffect.controlDuration()→duration`; `CreatureBoostEffect`/`KeywordGrantingEffect`/
+`StaticCreatureBoostEffect` are satisfied by the records' existing accessors;
+`CounterSpellingEffect`/`RegenerationEffect` are markers). No record component/constructor/engine
+behavior changed.
+
+**Per-file effect-concrete `instanceof` counts (before → after):**
+- `SpellEvaluator.java`: **47 → 26**
+- `InstantCategoryClassifier.java`: **14 → 2**
+- `AiTargetSelector.java`: **21 → 12**
+
+Baseline `effect-dispatch-baseline.txt` updated for those three lines (Python unavailable this
+session, as in steps 1–5, so the machine-readable baseline was hand-edited to the counts the ratchet
+recomputes from source; `EFFECT_COUPLING_MATRIX.md` still shows pre-step-6 figures — re-run
+`python scripts/effect-coupling-audit.py` when Python is available to refresh the human report).
+
+**Migration detail (each consumer):**
+- *InstantCategoryClassifier* — counters → `CounterSpellingEffect`; destroy/exile/bounce →
+  `RemovalEffect.removalKind()!=null`; creature-hitting damage → `DamageDealingEffect.canDamageCreatures()`;
+  pump → `CreatureBoostEffect`; draw → `CardDrawingEffect`; lifegain → `LifeGainEffect`. Same priority
+  order preserved.
+- *SpellEvaluator* — draw/lifegain/token/pump/keyword-grant/static-boost/steal/regen families migrated
+  to their interfaces in every branch (ability, ETB, single-effect, synergy, aura, removal-detection).
+- *AiTargetSelector* — destroy/exile removal detection → new `isDestroyOrExileRemoval` helper using
+  `RemovalEffect.removalKind() == DESTROY|EXILE` (bounce deliberately excluded to keep its
+  general-fallback target selection — a behavior-preserving narrowing); aura beneficial-check →
+  `StaticCreatureBoostEffect`/`KeywordGrantingEffect`; ability beneficial-check →
+  `CreatureBoostEffect`/`RegenerationEffect`/`KeywordGrantingEffect`; ability damage-target search →
+  `DamageDealingEffect.canDamageCreatures()`.
+
+**Survivors (justified):** as listed in the Plan above. Key ones: SpellEvaluator's recipient-sign
+(`DealDamageToPlayersEffect`, `LoseLifeEffect`), board-wipe, split-total and no-amount-X damage,
+bespoke ability-only scoring (`BoostSelfEffect`, `ScryEffect`, `TapPermanentsEffect`, the two
+counter-placement effects), `CounterSpellEffect` (narrow "plain counter" scoring), `DiscardEffect`,
+cost records, and the mana family (deferred to step 7); InstantCategoryClassifier's
+`DealDamageToTargetCreatureOrPlaneswalkerEffect` (kept off `DamageDealingEffect` to avoid newly
+scoring it in SpellEvaluator) and `DealDamageToPlayersEffect`; AiTargetSelector's `ExtraTurnEffect`,
+`DealDividedDamageEffect`, and the 8 heterogeneous graveyard-targeting effects.
+
+**Tests run (all green, unchanged outcomes):**
+- Consumer unit tests: `SpellEvaluatorTest`, `InstantCategoryClassifierTest`, `AiTargetSelectorTest`.
+- Broader AI decision/simulation: `HardAiDecisionEngineTest`, `AiDecisionEngineTest`,
+  `MediumAiDecisionEngineTest`, `EasyAiDecisionEngineTest`, `GameSimulatorTest`, `RaceEvaluatorTest`,
+  `BoardEvaluatorTest` (calibrated MCTS/simulation unaffected — no rollout-cost or scoring-VALUE
+  change).
+- `EffectDispatchRatchetTest` green against the new lower baseline (26 / 2 / 12).
+- Full compile of `:magical-vibes-application:compileTestJava :magical-vibes-ai:compileTestJava`.

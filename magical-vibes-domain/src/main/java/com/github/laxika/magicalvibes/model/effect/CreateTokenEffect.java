@@ -33,7 +33,27 @@ public record CreateTokenEffect(
         boolean legendary,
         int initialPlusOnePlusOneCounters,
         Set<Keyword> grantedKeywordsUntilEndOfTurn
-) implements CardEffect {
+) implements TokenCreatingEffect {
+
+    @Override
+    public DynamicAmount tokenAmount() {
+        return amount;
+    }
+
+    @Override
+    public CardType tokenType() {
+        return primaryType;
+    }
+
+    @Override
+    public int tokenPower() {
+        return power;
+    }
+
+    @Override
+    public int tokenToughness() {
+        return toughness;
+    }
 
     /** Canonical shape with a fixed token count */
     public CreateTokenEffect(CardType primaryType, int amount, String tokenName, int power, int toughness,

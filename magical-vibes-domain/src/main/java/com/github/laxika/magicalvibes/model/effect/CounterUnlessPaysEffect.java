@@ -19,7 +19,7 @@ import java.util.List;
  */
 public record CounterUnlessPaysEffect(int amount, boolean useXValue, boolean exileIfCountered,
                                       DynamicAmount dynamicAmount, List<CardEffect> onNotPaidEffects)
-        implements CardEffect {
+        implements CounterSpellingEffect {
 
     /** Fixed-amount counter-unless-pays (e.g. Mana Leak). */
     public CounterUnlessPaysEffect(int amount) {

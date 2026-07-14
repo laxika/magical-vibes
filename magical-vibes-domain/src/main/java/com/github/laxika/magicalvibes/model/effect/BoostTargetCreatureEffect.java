@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * same effect with different amount parameters. Counting contexts ("you control", "in your
  * graveyard") resolve against the effect's controller, not the target.
  */
-public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) implements CardEffect {
+public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) implements CreatureBoostEffect {
 
     /** Convenience for plain fixed boosts ("gets +2/+2 until end of turn"). */
     public BoostTargetCreatureEffect(int powerBoost, int toughnessBoost) {

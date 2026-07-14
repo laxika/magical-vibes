@@ -4,24 +4,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 
 /**
  * Classifies instant-speed cards by their primary role. For instants, scans the
@@ -66,34 +59,30 @@ public final class InstantCategoryClassifier {
 
     private static InstantCategory classifySingleEffect(CardEffect effect) {
         // Counter spells (highest priority — reactive by nature)
-        if (effect instanceof CounterSpellEffect
-                || effect instanceof CounterSpellAndExileEffect
-                || effect instanceof CounterUnlessPaysEffect) {
+        if (effect instanceof CounterSpellingEffect) {
             return InstantCategory.COUNTERSPELL;
         }
 
-        // Hard removal (destroy, exile, bounce)
-        if (effect instanceof DestroyTargetPermanentEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof ExileTargetPermanentEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return InstantCategory.REMOVAL;
-        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return InstantCategory.REMOVAL;
+        // Hard removal (destroy, exile, single-target bounce). removalKind() is non-null exactly for
+        // the single-target destroy/exile/bounce configurations.
+        if (effect instanceof RemovalEffect rem && rem.removalKind() != null) return InstantCategory.REMOVAL;
 
-        // Damage-based removal (targets creatures)
-        if (effect instanceof DealDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;
+        // Damage-based removal (anything that can damage creatures — target-creature or any-target).
+        // Player-only damage (canDamageCreatures() == false) drops through to the burn check below.
+        if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) return InstantCategory.REMOVAL;
+        // Creature-or-planeswalker fixed damage does not implement DamageDealingEffect (that would
+        // newly score it in SpellEvaluator); handled explicitly here.
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) return InstantCategory.REMOVAL;
 
-        // Damage to any target — primarily removal (can also go face)
-        if (effect instanceof DealDamageToAnyTargetEffect) return InstantCategory.REMOVAL;
-
-        // Combat tricks (pump spells)
-        if (effect instanceof BoostTargetCreatureEffect) return InstantCategory.COMBAT_TRICK;
+        // Combat tricks (targeted pump spells)
+        if (effect instanceof CreatureBoostEffect) return InstantCategory.COMBAT_TRICK;
 
         // Burn to face
         if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) return InstantCategory.BURN_TO_FACE;
 
         // Card advantage
-        if (effect instanceof DrawCardEffect) return InstantCategory.CARD_ADVANTAGE;
-        if (effect instanceof GainLifeEffect) return InstantCategory.CARD_ADVANTAGE;
+        if (effect instanceof CardDrawingEffect) return InstantCategory.CARD_ADVANTAGE;
+        if (effect instanceof LifeGainEffect) return InstantCategory.CARD_ADVANTAGE;
 
         return null;
     }

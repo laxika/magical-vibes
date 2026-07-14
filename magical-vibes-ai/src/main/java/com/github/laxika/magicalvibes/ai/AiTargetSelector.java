@@ -12,27 +12,26 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
@@ -113,16 +112,15 @@ class AiTargetSelector {
                     .orElse(null);
         }
 
-        // Handle destroy/exile removal effects (ETB creatures or removal spells)
+        // Handle destroy/exile removal effects (ETB creatures or removal spells). Bounce removal is
+        // deliberately excluded — it keeps its general-fallback target selection.
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof DestroyTargetPermanentEffect
-                    || effect instanceof ExileTargetPermanentEffect) {
+            if (isDestroyOrExileRemoval(effect)) {
                 return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof DestroyTargetPermanentEffect
-                    || effect instanceof ExileTargetPermanentEffect) {
+            if (isDestroyOrExileRemoval(effect)) {
                 return chooseDestroyTarget(gameData, card, aiPlayerId, opponentId);
             }
         }
@@ -130,9 +128,9 @@ class AiTargetSelector {
         boolean isBeneficial = false;
         if (card.isAura()) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if ((effect instanceof StaticBoostEffect boost
+                if ((effect instanceof StaticCreatureBoostEffect boost
                         && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
-                        || (effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
+                        || (effect instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
                     isBeneficial = true;
                     break;
                 }
@@ -421,6 +419,16 @@ class AiTargetSelector {
             if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
         }
         return result;
+    }
+
+    /**
+     * True for single-target destroy or exile removal (the two removal kinds routed through the
+     * dedicated destroy-target selection). Bounce removal ({@code RemovalKind.BOUNCE}) is excluded
+     * so it keeps its general-fallback target selection.
+     */
+    private static boolean isDestroyOrExileRemoval(CardEffect effect) {
+        return effect instanceof RemovalEffect rem
+                && (rem.removalKind() == RemovalKind.DESTROY || rem.removalKind() == RemovalKind.EXILE);
     }
 
     private UUID chooseDestroyTarget(GameData gameData, Card card, UUID aiPlayerId, UUID opponentId) {
@@ -737,10 +745,10 @@ class AiTargetSelector {
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
-                (e instanceof BoostTargetCreatureEffect boost
+                (e instanceof CreatureBoostEffect boost
                         && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
-                        || e instanceof RegenerateEffect
-                        || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGET));
+                        || e instanceof RegenerationEffect
+                        || (e instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.TARGET));
 
         if (canTargetPermanent) {
             if (isBeneficial) {
@@ -789,10 +797,10 @@ class AiTargetSelector {
         AmountContext amountCtx = new AmountContext(aiPlayerId, source, null, 0, 0, false);
         for (CardEffect effect : effects) {
             final int damage;
-            if (effect instanceof DealDamageToAnyTargetEffect dmg)
-                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
-            else if (effect instanceof DealDamageToTargetCreatureEffect dmg)
-                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
+            // Creature-hitting damage (target-creature or any-target); player-only damage
+            // (canDamageCreatures() == false) contributes no kill-target search.
+            if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
+                damage = amountEvaluationService.evaluate(gameData, dmg.damageAmount(), amountCtx);
             else damage = 0;
 
             if (damage > 0) {

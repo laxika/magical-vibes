@@ -19,7 +19,7 @@ import java.util.Set;
  * the keyword grant. Use {@link #toTargetIf(Keyword, PermanentPredicate)} to build one.
  */
 public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, PermanentPredicate filter,
-                                 GrantDuration duration, PermanentPredicate grantCondition) implements CardEffect {
+                                 GrantDuration duration, PermanentPredicate grantCondition) implements KeywordGrantingEffect {
 
     public GrantKeywordEffect(Keyword keyword, GrantScope scope) {
         this(Set.of(keyword), scope, null, GrantDuration.END_OF_TURN, null);

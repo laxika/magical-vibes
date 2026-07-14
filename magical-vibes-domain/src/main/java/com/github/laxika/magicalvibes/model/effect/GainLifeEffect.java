@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * Renewing Dawn's "gain 2 life for each Mountain target opponent controls".
  */
 public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
-                             boolean targetsPlayer) implements CardEffect {
+                             boolean targetsPlayer) implements LifeGainEffect {
 
     public GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient) {
         this(amount, recipient, false);
@@ -26,6 +26,11 @@ public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
 
     public GainLifeEffect(int amount) {
         this(new Fixed(amount));
+    }
+
+    @Override
+    public DynamicAmount lifeGainAmount() {
+        return amount;
     }
 
     @Override

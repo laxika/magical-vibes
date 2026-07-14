@@ -14,14 +14,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.TokenCreatingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -32,20 +32,20 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
+import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
@@ -109,7 +109,7 @@ public class SpellEvaluator {
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
         // Regenerate (shield from destruction)
-        if (effect instanceof RegenerateEffect) {
+        if (effect instanceof RegenerationEffect) {
             return 4.0;
         }
         // Scry
@@ -241,7 +241,7 @@ public class SpellEvaluator {
     }
 
     private boolean isDrawEffect(CardEffect effect) {
-        if (effect instanceof DrawCardEffect) return true;
+        if (effect instanceof CardDrawingEffect) return true;
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream().anyMatch(o -> isDrawEffect(o.effect()));
         }
@@ -331,7 +331,7 @@ public class SpellEvaluator {
     }
 
     private boolean isLifeGainEffect(CardEffect effect) {
-        if (effect instanceof GainLifeEffect) return true;
+        if (effect instanceof LifeGainEffect) return true;
         if (effect instanceof ChooseOneEffect coe) {
             return coe.options().stream().anyMatch(o -> isLifeGainEffect(o.effect()));
         }
@@ -367,19 +367,19 @@ public class SpellEvaluator {
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
             return removalScore(gameData, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof GainControlOfTargetEffect steal
-                && steal.duration() == ControlDuration.PERMANENT) {
+        if (effect instanceof ControlStealingEffect steal
+                && steal.controlDuration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
-        if (effect instanceof DrawCardEffect draw) {
-            return amountEvaluationService.evaluate(gameData, draw.amount(),
+        if (effect instanceof CardDrawingEffect draw) {
+            return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
-        if (effect instanceof CreateTokenEffect token) {
-            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+        if (effect instanceof TokenCreatingEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                     AmountContext.forEstimation(aiPlayerId));
-            if (token.primaryType() == CardType.CREATURE) {
-                double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
+            if (token.tokenType() == CardType.CREATURE) {
+                double tokenScore = token.tokenPower() * 3.0 + token.tokenToughness() * 1.5;
                 return tokenScore * tokenAmount;
             } else {
                 return 3.0 * tokenAmount;
@@ -392,8 +392,8 @@ public class SpellEvaluator {
                     ? evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId)
                     : evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof GainLifeEffect gain) {
-            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+        if (effect instanceof LifeGainEffect gain) {
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.lifeGainAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
@@ -439,13 +439,13 @@ public class SpellEvaluator {
         }
 
         // Steal (opponent loses creature + we gain it)
-        if (effect instanceof GainControlOfTargetEffect steal
-                && steal.duration() == ControlDuration.PERMANENT) {
+        if (effect instanceof ControlStealingEffect steal
+                && steal.controlDuration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         // Temporary steal (attack with opponent's creature this turn)
-        if (effect instanceof GainControlOfTargetEffect steal
-                && steal.duration() == ControlDuration.END_OF_TURN) {
+        if (effect instanceof ControlStealingEffect steal
+                && steal.controlDuration() == ControlDuration.END_OF_TURN) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
@@ -477,8 +477,8 @@ public class SpellEvaluator {
         }
 
         // Draw
-        if (effect instanceof DrawCardEffect draw) {
-            return amountEvaluationService.evaluate(gameData, draw.amount(),
+        if (effect instanceof CardDrawingEffect draw) {
+            return amountEvaluationService.evaluate(gameData, draw.drawnCardAmount(),
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
 
@@ -497,11 +497,11 @@ public class SpellEvaluator {
         }
 
         // Tokens
-        if (effect instanceof CreateTokenEffect token) {
-            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+        if (effect instanceof TokenCreatingEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                     AmountContext.forEstimation(aiPlayerId));
-            if (token.primaryType() == CardType.CREATURE) {
-                double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
+            if (token.tokenType() == CardType.CREATURE) {
+                double tokenScore = token.tokenPower() * 3.0 + token.tokenToughness() * 1.5;
                 return tokenScore * tokenAmount;
             } else {
                 return 3.0 * tokenAmount;
@@ -509,8 +509,8 @@ public class SpellEvaluator {
         }
 
         // Life — scaled by danger level: more valuable when AI is under pressure
-        if (effect instanceof GainLifeEffect gain) {
-            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+        if (effect instanceof LifeGainEffect gain) {
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.lifeGainAmount(),
                     AmountContext.forEstimation(aiPlayerId));
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
@@ -559,7 +559,7 @@ public class SpellEvaluator {
         }
 
         // P/T boost to target creature
-        if (effect instanceof BoostTargetCreatureEffect boost) {
+        if (effect instanceof CreatureBoostEffect boost) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
@@ -654,7 +654,7 @@ public class SpellEvaluator {
         // Check if this equipment grants a meaningful P/T boost
         double equipBoost = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof StaticBoostEffect boost
+            if (effect instanceof StaticCreatureBoostEffect boost
                     && boost.scope() == GrantScope.EQUIPPED_CREATURE) {
                 equipBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
             }
@@ -701,7 +701,7 @@ public class SpellEvaluator {
         // Check if this card has an anthem/lord static boost
         double perCreatureBoost = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof StaticBoostEffect boost) {
+            if (effect instanceof StaticCreatureBoostEffect boost) {
                 GrantScope scope = boost.scope();
                 if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                         || scope == GrantScope.ALL_CREATURES) {
@@ -710,7 +710,7 @@ public class SpellEvaluator {
                         perCreatureBoost += boost.grantedKeywords().size() * 3.0;
                     }
                 }
-            } else if (effect instanceof GrantKeywordEffect grant) {
+            } else if (effect instanceof KeywordGrantingEffect grant) {
                 GrantScope scope = grant.scope();
                 if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
                         || scope == GrantScope.ALL_CREATURES) {
@@ -740,14 +740,14 @@ public class SpellEvaluator {
         // Check if this card creates creature tokens
         int tokenCount = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
+                tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+            if (effect instanceof TokenCreatingEffect token && token.tokenType() == CardType.CREATURE) {
+                tokenCount += amountEvaluationService.evaluate(gameData, token.tokenAmount(),
                         AmountContext.forEstimation(aiPlayerId));
             }
         }
@@ -793,12 +793,12 @@ public class SpellEvaluator {
         boolean isBeneficial = false;
 
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof StaticBoostEffect boost
+            if (effect instanceof StaticCreatureBoostEffect boost
                     && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE)) {
                 isBeneficial = true;
                 value += boost.powerBoost() * 2.0 + boost.toughnessBoost();
             }
-            if (effect instanceof GrantKeywordEffect grant
+            if (effect instanceof KeywordGrantingEffect grant
                     && grant.scope() == GrantScope.ENCHANTED_CREATURE) {
                 isBeneficial = true;
                 value += 3;
@@ -1131,8 +1131,8 @@ public class SpellEvaluator {
         // former explicit any-target/creature-only list.
         return (effect instanceof RemovalEffect rem && rem.removalKind() != null)
                 || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
-                || (effect instanceof GainControlOfTargetEffect steal
-                        && steal.duration() == ControlDuration.PERMANENT);
+                || (effect instanceof ControlStealingEffect steal
+                        && steal.controlDuration() == ControlDuration.PERMANENT);
     }
 
     /**
