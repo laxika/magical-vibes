@@ -180,16 +180,20 @@ class MCTSEngineTest {
     void mctsSelectsRemovalOverCreatureWithBlocker() {
         // 3-way root decision: PlayCard(Eviscerate), PlayCard(Bears), PassPriority.
         // AI has no creatures on the battlefield; opponent has Hill Giant (3/3).
-        // - Cast Eviscerate → kill Hill Giant → rollout casts Bears → Bears attacks unblocked → 2 damage
-        // - Cast Bears → Bears on battlefield with summoning sickness → next turn blocked by 3/3 → trade
+        // Mana (3B + 1G, 4 total) affords Eviscerate ({3}{B}) OR Bears ({1}{G}) this
+        // turn, but not both — the choice must be exclusive, otherwise the two casts
+        // transpose (either order ends with both spells cast) and the preferred order
+        // is pure search noise.
+        // - Cast Eviscerate → kill Hill Giant → Bears follows later → attacks unblocked
+        // - Cast Bears → 3/3 stays, Bears at best trades with it next turn
         // - Pass → nothing happens
-        // Eviscerate into Bears is the best plan; requires depth-2 evaluation to see it.
+        // Eviscerate is the best plan; requires depth-2 evaluation to see it.
         // Uses a time-budgeted engine — this 3-way decision needs more iterations to converge reliably.
         MCTSEngine timedEngine = new MCTSEngine(simulator);
 
         harness.setHand(player1, List.of(new Eviscerate(), new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         Permanent oppBlocker = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         oppBlocker.setSummoningSick(false);
