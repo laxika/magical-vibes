@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Set;
 
@@ -26,4 +27,10 @@ public interface StaticCreatureBoostEffect extends CardEffect {
 
     /** The scope of creatures the boost applies to. */
     GrantScope scope();
+
+    /**
+     * An optional predicate narrowing which creatures within {@link #scope()} receive the boost
+     * (e.g. "other Goblins you control"), or {@code null} when every creature in scope is affected.
+     */
+    PermanentPredicate filter();
 }

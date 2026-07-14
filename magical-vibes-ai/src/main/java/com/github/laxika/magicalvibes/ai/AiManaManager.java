@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -406,12 +404,13 @@ public class AiManaManager {
     public void addCardManaToPool(Card card, ManaPool pool) {
         if (hasOnTapManaEffects(card)) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
-                if (effect instanceof AwardManaEffect manaEffect) {
-                    pool.add(manaEffect.color(), potentialManaService.estimateManaAmount(manaEffect.amount(), null, null));
-                } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    pool.add(ManaColor.COLORLESS, aace.amount());
-                } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
-                    pool.add(ManaColor.COLORLESS);
+                if (effect instanceof ManaProducingEffect mp) {
+                    if (mp.estimatedManaColor() != null) {
+                        pool.add(mp.estimatedManaColor(),
+                                potentialManaService.estimateManaAmount(mp.estimatedManaAmount(), null, null));
+                    } else if (mp.estimatedWildcardMana() > 0) {
+                        pool.add(ManaColor.COLORLESS, mp.estimatedWildcardMana());
+                    }
                 }
             }
         } else {
@@ -427,24 +426,31 @@ public class AiManaManager {
     public Set<ManaColor> getProducedColors(Card card) {
         Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
         for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
-            if (effect instanceof AwardManaEffect manaEffect) {
-                colors.add(manaEffect.color());
-            } else if (effect instanceof AwardAnyColorManaEffect) {
-                Collections.addAll(colors, ManaColor.values());
-            }
+            addEstimatedColors(effect, colors);
         }
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
             if (isFreeTapManaAbility(ability)) {
                 for (CardEffect effect : ability.getEffects()) {
-                    if (effect instanceof AwardManaEffect manaEffect) {
-                        colors.add(manaEffect.color());
-                    } else if (effect instanceof AwardAnyColorManaEffect) {
-                        Collections.addAll(colors, ManaColor.values());
-                    }
+                    addEstimatedColors(effect, colors);
                 }
             }
         }
         return colors;
+    }
+
+    /**
+     * Adds the colors an effect contributes to a card's producible-color set per the lightweight
+     * mana estimator: a fixed single color, or all five colors for a plain any-color producer.
+     * Special-routing producers contribute nothing (the estimator ignores them).
+     */
+    private static void addEstimatedColors(CardEffect effect, Set<ManaColor> colors) {
+        if (effect instanceof ManaProducingEffect mp) {
+            if (mp.estimatedManaColor() != null) {
+                colors.add(mp.estimatedManaColor());
+            } else if (mp.estimatedCountsAllColors()) {
+                Collections.addAll(colors, ManaColor.values());
+            }
+        }
     }
 
     /**
@@ -518,19 +524,21 @@ public class AiManaManager {
         Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
 
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof AwardManaEffect award) {
-                ManaColor color = award.color();
-                int needed = coloredCosts.getOrDefault(color, 0);
-                int have = currentPool.get(color);
-                if (needed > have) {
-                    // This color is needed for a colored cost we can't yet pay
-                    return hasSideEffects ? 15 : 20;
+            if (effect instanceof ManaProducingEffect mp) {
+                ManaColor color = mp.estimatedManaColor();
+                if (color != null) {
+                    int needed = coloredCosts.getOrDefault(color, 0);
+                    int have = currentPool.get(color);
+                    if (needed > have) {
+                        // This color is needed for a colored cost we can't yet pay
+                        return hasSideEffects ? 15 : 20;
+                    }
+                    // Can contribute to generic costs
+                    return hasSideEffects ? 1 : 5;
                 }
-                // Can contribute to generic costs
-                return hasSideEffects ? 1 : 5;
-            }
-            if (effect instanceof AwardAnyColorManaEffect) {
-                return hasSideEffects ? 1 : 5;
+                if (mp.estimatedCountsAllColors()) {
+                    return hasSideEffects ? 1 : 5;
+                }
             }
         }
         return 0;

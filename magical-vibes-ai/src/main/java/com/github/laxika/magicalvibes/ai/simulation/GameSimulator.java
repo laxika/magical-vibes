@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,18 +20,16 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -997,7 +996,7 @@ public class GameSimulator {
      */
     private boolean tapOrActivateMana(GameData gd, Player player, Permanent perm, int index, ManaCost cost, ManaPool currentPool) {
         boolean hasOnTapMana = perm.getCard().getEffects(EffectSlot.ON_TAP).stream()
-                .anyMatch(e -> e instanceof AwardManaEffect || e instanceof AwardAnyColorManaEffect || e instanceof AwardAnyColorChosenSubtypeCreatureManaEffect);
+                .anyMatch(e -> e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator());
         if (hasOnTapMana) {
             gameService.tapPermanent(gd, player, index);
             return true;
@@ -1025,13 +1024,16 @@ public class GameSimulator {
                         && dmg.recipient() == com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER);
         var coloredCosts = cost.getColoredCosts();
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof AwardManaEffect award) {
-                int needed = coloredCosts.getOrDefault(award.color(), 0);
-                int have = pool.get(award.color());
-                if (needed > have) return hasSideEffects ? 15 : 20;
-                return hasSideEffects ? 1 : 5;
+            if (effect instanceof ManaProducingEffect mp) {
+                ManaColor color = mp.estimatedManaColor();
+                if (color != null) {
+                    int needed = coloredCosts.getOrDefault(color, 0);
+                    int have = pool.get(color);
+                    if (needed > have) return hasSideEffects ? 15 : 20;
+                    return hasSideEffects ? 1 : 5;
+                }
+                if (mp.estimatedCountsAllColors()) return hasSideEffects ? 1 : 5;
             }
-            if (effect instanceof AwardAnyColorManaEffect) return hasSideEffects ? 1 : 5;
         }
         return 0;
     }
@@ -1089,9 +1091,9 @@ public class GameSimulator {
         if (card.isAura()) {
             boolean isBeneficial = false;
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if ((effect instanceof StaticBoostEffect boost
+                if ((effect instanceof StaticCreatureBoostEffect boost
                         && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
-                        || (effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
+                        || (effect instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
                     isBeneficial = true;
                     break;
                 }

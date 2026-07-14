@@ -21,4 +21,14 @@ public record AwardManaEffect(ManaColor color, DynamicAmount amount) implements 
     public AwardManaEffect(ManaColor color, int amount) {
         this(color, new Fixed(amount));
     }
+
+    @Override
+    public ManaColor estimatedManaColor() {
+        return color;
+    }
+
+    @Override
+    public DynamicAmount estimatedManaAmount() {
+        return amount;
+    }
 }

@@ -23,29 +23,25 @@ import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.BounceScope;
-import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
@@ -507,7 +503,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     if (attackers.isEmpty()) break;
                     int totalBoost = 0;
                     for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                        if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                        if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                                 && (boost.scope() == GrantScope.OWN_CREATURES
                                     || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
                             for (Permanent attacker : attackers) {
@@ -664,7 +660,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             // Check for static power boost effects (lord/anthem)
             int totalBoost = 0;
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && (boost.scope() == GrantScope.OWN_CREATURES
                             || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
                     for (Permanent attacker : attackers) {
@@ -899,7 +895,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (card.getKeywords().contains(Keyword.HASTE)) return CombatRelevance.HASTE_CREATURE;
 
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof StaticBoostEffect boost && boost.powerBoost() > 0
+                if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && (boost.scope() == GrantScope.OWN_CREATURES
                             || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
                     return CombatRelevance.PUMP;
@@ -917,16 +913,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             return false;
         }
-        return effect instanceof DestroyTargetPermanentEffect
-                || effect instanceof ExileTargetPermanentEffect
-                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
-                || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
-                || effect instanceof DealDamageToTargetCreatureEffect
+        return (effect instanceof RemovalEffect removal && removal.removalKind() != null)
+                || (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures())
                 || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect
-                || effect instanceof DealDamageToAnyTargetEffect
-                || (effect instanceof GainControlOfTargetEffect steal
-                        && (steal.duration() == ControlDuration.PERMANENT
-                                || steal.duration() == ControlDuration.END_OF_TURN));
+                || (effect instanceof ControlStealingEffect steal
+                        && (steal.controlDuration() == ControlDuration.PERMANENT
+                                || steal.controlDuration() == ControlDuration.END_OF_TURN));
     }
 
     /**
@@ -959,28 +951,23 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             return false;
         }
-        if (effect instanceof DestroyTargetPermanentEffect) {
-            return !gameQueryService.hasKeyword(gameData, creature, Keyword.INDESTRUCTIBLE);
+        if (effect instanceof RemovalEffect removal && removal.removalKind() != null) {
+            if (removal.removalKind() == RemovalKind.DESTROY) {
+                return !gameQueryService.hasKeyword(gameData, creature, Keyword.INDESTRUCTIBLE);
+            }
+            return true; // EXILE / BOUNCE always removes the creature from the battlefield
         }
-        if (effect instanceof ExileTargetPermanentEffect) return true;
-        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return true;
-        if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return true;
-        if (effect instanceof GainControlOfTargetEffect steal
-                && (steal.duration() == ControlDuration.PERMANENT
-                        || steal.duration() == ControlDuration.END_OF_TURN)) return true;
-        if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damage(), aiPlayer.getId());
+        if (effect instanceof ControlStealingEffect steal
+                && (steal.controlDuration() == ControlDuration.PERMANENT
+                        || steal.controlDuration() == ControlDuration.END_OF_TURN)) return true;
+        if (effect instanceof DamageDealingEffect dmg && dmg.canDamageCreatures()) {
+            int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damageAmount(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
             return damage >= toughness - creature.getMarkedDamage();
         }
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect dmg) {
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
             return dmg.damage() >= toughness - creature.getMarkedDamage();
-        }
-        if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damage(), aiPlayer.getId());
-            int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
-            return damage >= toughness - creature.getMarkedDamage();
         }
         return false;
     }
@@ -1623,9 +1610,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      * is happening (caller should fall back to flat evaluation).
      */
     double evaluateCombatTrickInCombat(GameData gameData, Card card, boolean isOpponentsTurn) {
-        BoostTargetCreatureEffect boost = null;
+        CreatureBoostEffect boost = null;
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof BoostTargetCreatureEffect b) {
+            if (effect instanceof CreatureBoostEffect b) {
                 boost = b;
                 break;
             }
@@ -2022,9 +2009,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 .toList();
 
         boolean isPump = nonCostEffects.stream().anyMatch(e ->
-                e instanceof BoostSelfEffect || e instanceof BoostTargetCreatureEffect);
-        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof DrawCardEffect);
-        boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerateEffect);
+                e instanceof BoostSelfEffect || e instanceof CreatureBoostEffect);
+        boolean isDraw = nonCostEffects.stream().anyMatch(e -> e instanceof CardDrawingEffect);
+        boolean isRegen = nonCostEffects.stream().anyMatch(e -> e instanceof RegenerationEffect);
 
         TurnStep step = gameData.currentStep;
         boolean isOpponentsTurn = !aiPlayer.getId().equals(gameData.activePlayerId);
@@ -2495,12 +2482,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     }
 
     /**
-     * Returns true if the card has a {@link DrawCardEffect} in its
+     * Returns true if the card has a {@link CardDrawingEffect} in its
      * enter-the-battlefield effects (useful for prioritizing draw-first casting).
      */
     private boolean hasCardDrawEtb(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (effect instanceof DrawCardEffect) {
+            if (effect instanceof CardDrawingEffect) {
                 return true;
             }
         }
@@ -2765,7 +2752,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (!isInstantSpeedCard(card) || !card.hasType(CardType.INSTANT)) continue;
             int boost = 0;
             for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-                if (effect instanceof BoostTargetCreatureEffect b) {
+                if (effect instanceof CreatureBoostEffect b) {
                     boost = amountEvaluationService.evaluate(gameData, b.powerBoost(), amountCtx);
                     break;
                 }

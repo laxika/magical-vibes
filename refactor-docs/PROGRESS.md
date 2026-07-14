@@ -730,3 +730,164 @@ scoring it in SpellEvaluator) and `DealDamageToPlayersEffect`; AiTargetSelector'
   change).
 - `EffectDispatchRatchetTest` green against the new lower baseline (26 / 2 / 12).
 - Full compile of `:magical-vibes-application:compileTestJava :magical-vibes-ai:compileTestJava`.
+
+---
+
+## Step 7 — AI metadata (simulator/hard-AI/mana)  (2026-07-14)
+
+### Inventory & plan (written before coding)
+
+Three consumers: `GameSimulator` (13), `HardAiDecisionEngine` (30), `AiManaManager` (12). Non-effect
+`instanceof` (ChoiceContext, PendingInteraction, SimulationAction) is OUT OF SCOPE. Cost records
+(Sacrifice*Cost, PayLifeCost, RemoveChargeCountersFromSourceCost, ExileNCardsFromGraveyardCost,
+SacrificePermanentCost) are concrete-dispatch survivors (no capability interface; kept, as in steps
+5/6). Below, each in-scope effect `instanceof` classified (a) mana family, (b) covered by a step-5/6
+interface, (c) needs widening, (d) survivor.
+
+**Mana family — widen `ManaProducingEffect`.** The interface already exists (marker) and is
+implemented by 15 records, but the three AI consumers still `instanceof` the concrete
+`AwardManaEffect` / `AwardAnyColorManaEffect` / `AwardAnyColorChosenSubtypeCreatureManaEffect`
+because the marker exposed nothing. CRITICAL CONSTRAINT: the AI reacts to ONLY those 3 of the 15
+implementors, and their treatment DIFFERS per site (see table), so I must NOT broaden dispatch to
+`instanceof ManaProducingEffect` naively — that would pull in the other 12 special-routing producers
+(chosen-player, restricted-bucket, among-controlled, lands-could-produce, double-pool,
+flashback/instant-sorcery/subtype-restricted, X, one-of-each) and change AI decisions. Instead widen
+`ManaProducingEffect` with DESCRIPTIVE, allocation-free facets that the 3 override and the other 12
+leave at neutral defaults, so `instanceof ManaProducingEffect mp` + facet checks reproduce the exact
+per-type behavior.
+
+Per-type AI treatment the facets must reproduce:
+| type | getProducedColors | addCardManaToPool / virtual pool | mana-ability score | "has on-tap mana" |
+|---|---|---|---|---|
+| AwardManaEffect | its `color` | `(color, estimate(amount))` | color-vs-cost 20/15 or 5/1 | yes |
+| AwardAnyColorManaEffect | all 5 | `(COLORLESS, amount)` | generic 5/1 | yes |
+| AwardAnyColorChosenSubtypeCreatureManaEffect | — (none) | `(COLORLESS, 1)` | 0 (skipped) | yes |
+| other 12 | — | — | 0 | no |
+
+Widened facets (all defaults preserve the 12; overridden only on the 3):
+- `ManaColor estimatedManaColor()` → AwardManaEffect: `color`; else null.
+- `DynamicAmount estimatedManaAmount()` → AwardManaEffect: `amount`; else null.
+- `boolean estimatedCountsAllColors()` → AwardAnyColorManaEffect: true; else false.
+- `int estimatedWildcardMana()` → AwardAnyColorManaEffect: `amount`; ChosenSubtype: 1; else 0.
+- `default boolean modeledByManaEstimator()` = `estimatedManaColor()!=null || estimatedCountsAllColors()
+  || estimatedWildcardMana()>0` (true for exactly the 3; used for the "has on-tap mana" check).
+All return existing components / literals — NO per-call allocation (hot-path safe). The
+chosen-subtype restriction the prompt calls out is captured implicitly: ChosenSubtype has
+`estimatedCountsAllColors()==false` (no color coverage, no scoring) + `estimatedWildcardMana()==1`
+(virtual-pool wildcard), which is exactly how it differs from plain any-color today.
+
+**Covered by step-5/6 interfaces (migrate):**
+- GameSimulator `StaticBoostEffect`(scope) → `StaticCreatureBoostEffect.scope()`; `GrantKeywordEffect`(scope)
+  → `KeywordGrantingEffect.scope()`.
+- HardAiDecisionEngine `StaticBoostEffect`(powerBoost/scope/filter ×3) → `StaticCreatureBoostEffect`
+  (needs `filter()` added — see below); `BoostTargetCreatureEffect` ×3 → `CreatureBoostEffect`;
+  `DrawCardEffect` ×2 → `CardDrawingEffect`; `RegenerateEffect` → `RegenerationEffect`; the
+  removal/damage/steal chains in `isSingleEffectRemoval` / `canSingleEffectRemoveCreature`:
+  Destroy/Exile/ReturnToHand(TARGET)/ReturnTargetPermanentToHandWithMVConditional →
+  `RemovalEffect.removalKind()` (DESTROY vs EXILE/BOUNCE), DealDamageToTargetCreature/DealDamageToAnyTarget
+  → `DamageDealingEffect.canDamageCreatures()` + `.damageAmount()`, GainControlOfTarget →
+  `ControlStealingEffect.controlDuration()`.
+
+**Widen (small):** `StaticCreatureBoostEffect` gains `PermanentPredicate filter()` (HardAi reads
+`boost.filter()` at the anthem sites; `StaticBoostEffect` already has the accessor, sole implementor,
+purely additive).
+
+**Survivors (kept concrete, justified):**
+- Recipient-sign `DealDamageToPlayersEffect`(recipient==CONTROLLER) — pain-land side-effect detection
+  in AiManaManager (×2) and GameSimulator (×1); recipient enum decides a drawback, no descriptive
+  fact (same survivor as SpellEvaluator in step 5).
+- `ReturnCardFromGraveyardEffect` — AiManaManager (requiresManaValueEqualsX X-calc) + GameSimulator
+  (graveyard-target selection reads source()/filter()); heterogeneous graveyard family, left as a
+  group in step 6.
+- `DealDamageToTargetCreatureOrPlaneswalkerEffect` — HardAi; deliberately NOT on `DamageDealingEffect`
+  (step 6 kept it off to avoid newly scoring it in SpellEvaluator); its `damage()` is a plain int.
+- `BoostSelfEffect` — HardAi isPump; no interface (self-boost is a different shape than the targeted
+  `CreatureBoostEffect`).
+- Cost records — Sacrifice*Cost / PayLifeCost / RemoveChargeCountersFromSourceCost /
+  ExileNCardsFromGraveyardCost / SacrificePermanentCost; concrete-dispatch, no capability interface.
+
+**Skipped ENGINE mana sites (rules-critical, left as-is; NOT mechanically equivalent to the AI
+facets):** `PotentialManaService` (19), `ActivatedAbilityExecutionService` (the full per-type mana
+RESOLUTION switch), `AbilityActivationService`, `LandTapTriggerCollectorService`. These do actual
+mana routing (per-restriction buckets, chosen-player pools, among-controlled color scans, etc.), a
+different contract than the AI's lightweight estimator facets; migrating them would need
+resolution-shaped interface methods and is out of this program's AI scope.
+
+### Results
+
+**`ManaProducingEffect` new shape (all additive, all allocation-free — hot-path safe):**
+```
+default ManaColor     estimatedManaColor()        // AwardManaEffect → color; else null
+default DynamicAmount estimatedManaAmount()        // AwardManaEffect → amount; else null
+default boolean       estimatedCountsAllColors()   // AwardAnyColorManaEffect → true; else false
+default int           estimatedWildcardMana()      // AwardAnyColorManaEffect → amount;
+                                                    //   AwardAnyColorChosenSubtypeCreatureManaEffect → 1; else 0
+default boolean       modeledByManaEstimator()     // = color!=null || countsAllColors || wildcard>0
+```
+Overridden on exactly the 3 producers the AI models; the other 12 implementors keep the neutral
+defaults, so `instanceof ManaProducingEffect mp` + facet checks reproduce the pre-refactor matched
+set and per-type behavior EXACTLY (no broadening → no decision change). Each facet returns an
+existing record component or a literal — verified no per-call allocation. `StaticCreatureBoostEffect`
+also gained `PermanentPredicate filter()` (satisfied by `StaticBoostEffect`'s existing accessor; sole
+implementor; purely additive).
+
+**Per-file effect-concrete `instanceof` counts (before → after):**
+- `AiManaManager.java`: **12 → 3** (survivors: 2× DealDamageToPlayersEffect recipient-sign, 1×
+  ReturnCardFromGraveyardEffect).
+- `GameSimulator.java`: **13 → 6** (survivors: 4 cost records, 1× DealDamageToPlayersEffect,
+  1× ReturnCardFromGraveyardEffect).
+- `HardAiDecisionEngine.java`: **30 → 7** (survivors: 4 cost records, 2×
+  DealDamageToTargetCreatureOrPlaneswalkerEffect, 1× BoostSelfEffect).
+
+Migration onto interfaces: mana family → widened `ManaProducingEffect` (all 9 Award* sites in
+AiManaManager, both scoring/`hasOnTapMana` sites in GameSimulator); GameSimulator aura beneficial
+check → `StaticCreatureBoostEffect`/`KeywordGrantingEffect`; HardAi anthem sites →
+`StaticCreatureBoostEffect`, removal/damage/steal chains → `RemovalEffect.removalKind()` +
+`DamageDealingEffect.canDamageCreatures()/damageAmount()` + `ControlStealingEffect.controlDuration()`,
+pump → `CreatureBoostEffect`, draw → `CardDrawingEffect`, regen → `RegenerationEffect`. Semantics
+preserved by construction: verified each interface's implementor set is exactly the types the old
+concrete checks matched (RemovalEffect = Destroy/Exile/ReturnToHand-TARGET/ReturnTgtPermToHandWithMV;
+DamageDealingEffect∩canDamageCreatures = DealDamageToTargetCreature/DealDamageToAnyTarget;
+CreatureBoost/CardDrawing/Regeneration/ControlStealing/StaticCreatureBoost each single-implementor).
+
+**Survivors (justified):** recipient-sign `DealDamageToPlayersEffect` (pain-land drawback, no
+descriptive fact), `ReturnCardFromGraveyardEffect` + GameSimulator graveyard selection (heterogeneous
+graveyard family from step 6), `DealDamageToTargetCreatureOrPlaneswalkerEffect` (deliberately off
+`DamageDealingEffect` per step 6; int `damage()`), `BoostSelfEffect` (self-boost shape, no
+interface), cost records.
+
+**Skipped engine mana sites (rules-critical, NOT migrated):** `PotentialManaService` (19 incl. the
+same 3-type `hasOnTapManaEffects` check — equivalent to `modeledByManaEstimator()` but left as-is
+since it is engine mana logic and `AiManaManager.hasOnTapManaEffects` delegates to it),
+`ActivatedAbilityExecutionService` (full per-type mana RESOLUTION switch — different, resolution-
+shaped contract), `AbilityActivationService`, `LandTapTriggerCollectorService`. These do actual mana
+routing, not lightweight estimation; migrating them is out of this program's AI scope.
+
+**Baseline note:** Python still unavailable this session (Store-alias stubs only), so
+`effect-dispatch-baseline.txt` was hand-edited to the counts the ratchet recomputes from source
+(AiManaManager 3, GameSimulator 6, HardAiDecisionEngine 7). Running the ratchet also surfaced a
+**pre-existing stale step-6 baseline for `AiTargetSelector` (12 → real 10)** — a file NOT touched this
+step; corrected to 10 (independently re-counted: 8 graveyard + 2 divided-damage concrete survivors;
+none related to the mana/interface changes). `EFFECT_COUPLING_MATRIX.md` still shows pre-step-5
+figures — re-run `python scripts/effect-coupling-audit.py` when Python is available to refresh the
+human report; it will reproduce this baseline.
+
+**Tests run (all green, first attempt, no re-runs needed):**
+- Consumer/owner: `AiManaManagerTest`, `GameSimulatorTest`, `HardAiDecisionEngineTest`.
+- Decision/MCTS/evaluator: `AiDecisionEngineTest`, `MediumAiDecisionEngineTest`,
+  `EasyAiDecisionEngineTest`, `InstantCategoryClassifierTest`, `AiTargetSelectorTest`,
+  `BoardEvaluatorTest`, `RaceEvaluatorTest`, `SpellEvaluatorTest`, `MCTSEngineTest`,
+  `simulation.RolloutPolicyTest` (calibrated MCTS unaffected — no rollout-cost or scoring-VALUE
+  change; no borderline re-runs required).
+- Mana-ability card tests (engine inertness of the additive domain changes): `LlanowarElvesTest`
+  (ON_TAP AwardManaEffect), `BirdsOfParadiseTest` (AwardAnyColorManaEffect), `PillarOfOriginsTest`
+  (AwardAnyColorChosenSubtypeCreatureManaEffect), `ManaforgeCinderTest` (AwardManaOfColorsEffect —
+  a "special" producer the estimator ignores).
+- `EffectDispatchRatchetTest` green against the corrected baseline (AiManaManager 3, GameSimulator 6,
+  HardAiDecisionEngine 7, AiTargetSelector 10).
+- Full compile of `:magical-vibes-ai:compileTestJava :magical-vibes-application:compileTestJava`.
+
+**Follow-ups for the user:** (a) run the full test suite; (b) since MCTS hot-path code
+(GameSimulator rollout, HardAi decision) was touched, consider a before/after MCTS benchmark
+(`MCTSBenchmarkTest` with `-DmctsBench=true`) — not run here per the ground rules; the changes are
+interface-dispatch only (no added allocation), so no throughput regression is expected.

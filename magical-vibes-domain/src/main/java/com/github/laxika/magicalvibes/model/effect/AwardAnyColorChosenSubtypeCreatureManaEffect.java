@@ -6,4 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by Pillar of Origins, Unclaimed Territory, etc.
  */
 public record AwardAnyColorChosenSubtypeCreatureManaEffect() implements ManaProducingEffect {
+
+    @Override
+    public int estimatedWildcardMana() {
+        return 1;
+    }
 }
