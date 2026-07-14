@@ -73,7 +73,16 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: rides on the spell-level player target declared via the card's
             // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack
             // entry's targetId and never enters trigger-target collection.
-            "TargetPlayerLosesAllUnspentManaEffect"
+            "TargetPlayerLosesAllUnspentManaEffect",
+            // Pre-resolved: the affected player is carried as the stack entry's target — the
+            // spell-level player target (Moonhold) or the trigger's damaged player (Stigma Lasher) —
+            // and the handler reads entry.getTargetId(); never enters trigger-target collection.
+            "TargetPlayerCantCastCreatureSpellsThisTurnEffect",
+            "TargetPlayerCantGainLifeRestOfGameEffect",
+            "TargetPlayerCantPlayLandsThisTurnEffect",
+            // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
+            // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
+            "TargetSpellControllerDrawsCardEffect"
     );
 
     @Test

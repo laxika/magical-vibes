@@ -377,7 +377,17 @@ public class StackEntry {
      * spells and abilities (where every declared group is always populated).
      */
     private boolean isTargetGroupActive(int groupIndex) {
-        if (card == null) {
+        // The group-active concept only applies to entries that carry their surviving effects in
+        // effectsToResolve (triggered abilities whose intervening-if may have gated some out). Spell
+        // entries resolve from card.getEffects(...) and leave effectsToResolve empty — there every
+        // declared group is populated, so fall back to legacy positional slicing (all groups active).
+        if (card == null || effectsToResolve.isEmpty()) {
+            return true;
+        }
+        // A bare positional target group — one no effect is bound to, e.g. Blood Feud's first fight
+        // target which the FightTargetsEffect (bound to the second group) reads by index — is never a
+        // gated-out trigger group; it always contributes its chosen targets to the flat list.
+        if (!card.bindsEffectToTargetGroup(groupIndex)) {
             return true;
         }
         for (CardEffect effect : effectsToResolve) {

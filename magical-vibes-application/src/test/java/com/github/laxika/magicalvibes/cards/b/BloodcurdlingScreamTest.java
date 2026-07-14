@@ -58,6 +58,9 @@ class BloodcurdlingScreamTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        // A creature must exist so the spell has a legal target and is castable (CR 601.2c);
+        // targeting the noncreature is then rejected by the spell's target-type validation.
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new BloodcurdlingScream()));
         harness.addMana(player1, ManaColor.BLACK, 2);

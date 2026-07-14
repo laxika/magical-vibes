@@ -444,6 +444,16 @@ public class Card {
     }
 
     /**
+     * True if any spell effect is bound (via {@code target(...).addEffect(...)}) to the given target
+     * group. A group with no bound effect is a bare positional target that another effect reads by
+     * index (e.g. Blood Feud's first fight target, read by the {@code FightTargetsEffect} bound to the
+     * second group); such a group is never a gated-out trigger group.
+     */
+    public boolean bindsEffectToTargetGroup(int groupIndex) {
+        return effectTargetIndexMap.containsValue(groupIndex);
+    }
+
+    /**
      * Returns true if the target group at the given expanded position allows player targets.
      * Used by the valid target service to determine per-position player targeting in multi-target spells.
      */

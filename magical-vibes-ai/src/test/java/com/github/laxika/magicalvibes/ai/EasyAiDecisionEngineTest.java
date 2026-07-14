@@ -110,7 +110,10 @@ class EasyAiDecisionEngineTest {
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
                 castingCostService, castingPermissionService,
-                targetValidationService, null);
+                targetValidationService,
+                new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
+                        new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
+                        targetValidationService));
         engine.setSelfConnection(selfConnection);
         return engine;
     }
@@ -536,7 +539,10 @@ class EasyAiDecisionEngineTest {
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
                 castingCostService, castingPermissionService,
-                targetValidationService, null);
+                targetValidationService,
+                new com.github.laxika.magicalvibes.service.target.TargetLegalityService(gameQueryService,
+                        new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(gameQueryService),
+                        targetValidationService));
         engine.setSelfConnection(selfConnection);
         engine.handleMessage("GAME_STATE", "");
 

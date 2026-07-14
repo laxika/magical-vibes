@@ -93,6 +93,7 @@ class TaintedStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears()); // legal creature target so the spell is castable (CR 601.2c)
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new TaintedStrike()));
         harness.addMana(player1, ManaColor.BLACK, 1);

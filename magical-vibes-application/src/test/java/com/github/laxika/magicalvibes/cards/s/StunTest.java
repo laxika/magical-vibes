@@ -56,6 +56,7 @@ class StunTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears()); // legal creature target so the spell is castable (CR 601.2c)
         harness.addToBattlefield(player2, new FountainOfYouth());
         harness.setHand(player1, List.of(new Stun()));
         harness.addMana(player1, ManaColor.RED, 1);

@@ -51,6 +51,9 @@ class AuraGraftTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with Aura Graft")
     void cannotTargetCreature() {
         Permanent creature = addCreatureReady(player2);
+        // A legal target (an aura attached to a permanent) must exist so the spell is castable
+        // (CR 601.2c); targeting the creature is then rejected by the aura target filter.
+        addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -67,6 +70,10 @@ class AuraGraftTest extends BaseCardTest {
         com.github.laxika.magicalvibes.cards.g.GloriousAnthem anthem = new com.github.laxika.magicalvibes.cards.g.GloriousAnthem();
         Permanent anthemPerm = new Permanent(anthem);
         gd.playerBattlefields.get(player2.getId()).add(anthemPerm);
+        // A legal target (an aura attached to a permanent) must exist so the spell is castable
+        // (CR 601.2c); targeting the non-aura enchantment is then rejected by the aura target filter.
+        Permanent creature = addCreatureReady(player2);
+        addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -82,6 +89,10 @@ class AuraGraftTest extends BaseCardTest {
         // Create an aura on the battlefield that isn't attached (orphan state)
         Permanent aura = new Permanent(new HolyStrength());
         gd.playerBattlefields.get(player2.getId()).add(aura);
+        // A legal target (an aura attached to a permanent) must exist so the spell is castable
+        // (CR 601.2c); targeting the unattached aura is then rejected by the aura target filter.
+        Permanent creature = addCreatureReady(player2);
+        addAuraAttachedTo(player2, new HolyStrength(), creature);
 
         harness.setHand(player1, List.of(new AuraGraft()));
         harness.addMana(player1, ManaColor.BLUE, 2);

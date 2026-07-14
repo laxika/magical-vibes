@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -397,7 +398,12 @@ class AiTargetSelectorTest {
         void setUp() {
             mockGqs = mock(GameQueryService.class);
             mockTvs = mock(TargetValidationService.class);
-            unitSelector = new AiTargetSelector(mockGqs, mockTvs, null);
+            // The shared spell-target core delegates structural legality to TargetLegalityService;
+            // stub it to report every candidate structurally legal so the distribution logic runs.
+            TargetLegalityService mockTls = mock(TargetLegalityService.class);
+            lenient().when(mockTls.checkSpellPermanentTargetableReason(any(), any(), any(), any()))
+                    .thenReturn(Optional.empty());
+            unitSelector = new AiTargetSelector(mockGqs, mockTvs, mockTls);
 
             aiId = UUID.randomUUID();
             opponentId = UUID.randomUUID();

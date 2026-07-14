@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllNonlandPermanentsAreChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.AllPermanentsGainChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
@@ -199,6 +200,10 @@ public final class LayerClassifier {
         // "All nonland permanents are the chosen color" (Shifting Sky) replaces colors (CR 105.3).
         map.put(AllNonlandPermanentsAreChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
                 (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));
+        // "All permanents are the chosen color in addition to their other colors" (Painter's Servant)
+        // — additive, not replacing (CR 105.3 / 613.1e).
+        map.put(AllPermanentsGainChosenColorEffect.class, new Entry(Set.of(Layer.L5_COLOR),
+                (effect, fromOwnStaticSlot) -> new LayerClassification(Set.of(Layer.L5_COLOR), false, false)));
         // "Becomes the color or colors of your choice" (Prismwake Merrow) — setting (CR 105.3).
         map.put(BecomeChosenColorsUntilEndOfTurnEffect.class, new Entry(Set.of(Layer.L5_COLOR), (effect, fromOwnStaticSlot) ->
                 new LayerClassification(Set.of(Layer.L5_COLOR), false, true)));

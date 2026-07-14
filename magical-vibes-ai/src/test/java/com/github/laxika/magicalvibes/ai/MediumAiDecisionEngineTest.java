@@ -454,7 +454,10 @@ class MediumAiDecisionEngineTest {
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
                     mockCastingCostService, mockCastingPermissionService,
-                    mockTargetValidationService, null);
+                    mockTargetValidationService,
+                    new com.github.laxika.magicalvibes.service.target.TargetLegalityService(mockGameQueryService,
+                            new com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService(mockGameQueryService),
+                            mockTargetValidationService));
             engine.setSelfConnection(mockConnection);
             return engine;
         }

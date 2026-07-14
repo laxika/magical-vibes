@@ -45,6 +45,7 @@ class CardImmutabilityArchTest {
             "CopySupport",             // assembles fresh spell-copy cards
             "CopySpellEffectHandler",  // decorates the fresh spell-copy card
             "MayCopyHandlerService",   // re-adds the copy ability on the fresh clone-copy card
+            "BecomeCopyOfDyingCreatureEffectHandler", // "except it has this ability" on the fresh clone-copy card (Cemetery Puca)
             "DestructionSupport",
             "GraveyardReturnSupport",
             "PermanentControlSupport",
