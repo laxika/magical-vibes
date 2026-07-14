@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WrackWithMadnessTest extends BaseCardTest {
 
@@ -91,6 +93,26 @@ class WrackWithMadnessTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    // ===== Illegal target — "target creature" can't be a land =====
+    // Wrack with Madness carries no card-level target filter, so the effect's @ValidatesTarget
+    // validator is the only thing that stops the single-targetId cast at a land.
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player2, new GrizzlyBears()); // valid target so the spell is castable
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, plainsId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+
+        assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Plains"));
     }
 
     @Test

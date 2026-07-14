@@ -177,3 +177,181 @@ with the exact "was 1, now 2 …" message — then reverted; the tree is clean a
 the test passes again. Python was unavailable this session (only Store-alias
 stubs), so the baseline was not regenerated; none was needed since no production
 source changed since step 1.
+
+---
+
+## Step 3 — Validator coverage  (2026-07-14)
+
+Closed the `@ValidatesTarget` gap on the single-`targetId` path
+(`TargetLegalityService.checkSpellTargeting` → `TargetValidationService.checkEffectTargets`
+on the SPELL slot, and `validateActivatedAbilityTargeting` for abilities). Started from the
+162-entry "Validator coverage gap" list in `EFFECT_COUPLING_MATRIX.md`.
+
+**Method used to build the verified worklist:**
+1. Bucketed all 162 by which `canTarget*()` each overrides (grep of `model/effect/`).
+2. For the permanent-targeting subset, grepped every constructing card and the `EffectSlot` /
+   `ActivatedAbility` each usage sits in — an effect is in scope only if it is the target-carrying
+   effect of a **spell (SPELL slot)** or **activated ability**, the only two paths that route a
+   single `targetId` through `checkEffectTargets`. Trigger/ETB/combat slots choose their targets in
+   the trigger pipelines (`TriggerTargetCollector`, honouring the card's `TargetFilter`), never
+   through `@ValidatesTarget`, so they are a different mechanism.
+3. Determined each kept effect's legal target set from the oracle text of its cards (the
+   `"Target must be a …"` filter strings and, where absent/ambiguous, the card names on the web).
+   Where cards using one effect disagree (e.g. Erode "creature or planeswalker" vs Ghost Quarter
+   "land" both use `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect`), the
+   validator uses the **broadest** legal type (any permanent) so it never rejects a legal target —
+   over-restriction is a rules bug too.
+
+**Key architectural facts relied on** (so a later step can re-check):
+- `checkSpellTargeting` already splits player-vs-permanent (`computeAllowedTargets`) and applies the
+  card's `getTargetFilter()` **before** `checkEffectTargets`, and runs its own `checkSpellProtection`.
+  So the effect validator's *unique* contribution on the spell path is narrowing the **permanent
+  type** when no card filter does (the Fireball-burns-a-Plains class). Two representative cards carry
+  **no** card filter — Wrack with Madness and Dark Nourishment — so their new validators are the only
+  gate and were live latent bugs (a land was a legal target before this step).
+- The activated-ability path (`validateActivatedAbilityTargeting`) applies the ability's own
+  `getTargetFilter()` but does **not** run the general protection or player-vs-permanent split, so the
+  effect validator adds real coverage there (e.g. catches a player passed to a "target permanent"
+  ability).
+- Registration is automatic: every `@Service` under `service/validate/` is scanned for
+  `@ValidatesTarget` by `GameEngineConfig.afterSingletonsInstantiated`; the test harness boots the
+  same Spring context, so the new `PreventionTargetValidators` bean needs no manual wiring.
+
+**Protection-check policy** (matching existing validators' scope, no more): included
+`tvs.checkProtection` only on clearly *harmful* effects (damage, fight, exile, destroy, sacrifice) —
+mirroring the `DealDamageToAnyTarget` / `DestroyTargetPermanent` exemplars; omitted it on benign /
+neutral effects (boost, grant, counters, combat-shaping, prevention, redirect-protective, bounce,
+land-grant, equip) — mirroring `BoostTargetCreature` / `AnimatePermanents`. `checkProtection` never
+rejects a *legal* target (protection = can't be targeted), so this is safe either way; the split just
+keeps scope consistent with the existing files.
+
+**Validators added — 55 effects (effect → file, legal target):**
+
+- `DamageTargetValidators.java` (13): any-target burn `DealDamageToAnyTargetAndGainLifeEffect`,
+  `DealDamageToAnyTargetEqualToChosenTypeCountEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`,
+  `MillControllerAndDealDamageByHighestManaValueEffect`; creature damage/fight
+  `DealDamageToTargetControllerIfTargetHasKeywordEffect`,
+  `DealDamageToTargetCreatureEqualToChosenTypeCountEffect`,
+  `PlaneswalkerDealDamageAndReceivePowerDamageEffect`, `TargetCreatureDealsPowerDamageToSelfEffect`,
+  `TargetCreatureDealsPowerDamageToControllerEffect`, `SourceFightsTargetCreatureEffect`; creature
+  damage-redirection (no protection) `RedirectNextDamageToTargetCreatureEffect`,
+  `RedirectTargetCreatureDamageFromChosenSourceToSelfEffect`,
+  `RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffect`.
+- `PreventionTargetValidators.java` (NEW, 6): any-target `PreventDamageToTargetEffect`,
+  `PreventDamageToTargetFromChosenSourceEffect`,
+  `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect` (harmful redirect → protection);
+  creature `PreventAllDamageToTargetCreatureEffect`, `PreventAllDamageByTargetCreatureEffect`;
+  divided any-target (tolerates null `targetId` like `DealDividedDamage`) `PreventDividedDamageEffect`.
+- `ExileTargetValidators.java` (6): any-permanent `ExileTargetPermanentEffect` (19 cards),
+  `ExileTargetPermanentAndTrackWithSourceEffect`, `ExileTargetPermanentMayPlayUntilNextTurnEffect`;
+  creature `ExileTargetCreatureAndAllWithSameNameEffect`,
+  `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect`,
+  `MarkTargetCreatureExileInsteadOfDieThisTurnEffect`.
+- `DestructionTargetValidators.java` (6): land `DestroyTargetLandAndDamageControllerEffect`,
+  `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`; any-permanent
+  `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect`,
+  `DestroyTargetPermanentAtEndStepEffect`, `SacrificeTargetPermanentAtEndStepEffect`; creature
+  `SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect`.
+- `BounceTargetValidators.java` (2): any-permanent `ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect`,
+  `ReturnTargetPermanentToHandAtEndStepEffect`.
+- `CreatureModTargetValidators.java` (22): creature `BoostTargetCreaturePerChosenTypeCountEffect`,
+  `EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect`,
+  `GrantEffectToTargetUntilEndOfTurnEffect`, `GrantChosenKeywordToTargetEffect`,
+  `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect`, `MustAttackThisTurnEffect`,
+  `MustBeBlockedByAllCreaturesThisTurnEffect`, `MustBeBlockedIfAbleThisTurnEffect`,
+  `CantBlockSourceEffect`, `RemoveTargetFromCombatEffect`, `MakeTargetCreaturePreparedEffect`,
+  `RemoveCounterFromTargetAndGainLifeEffect`, `EquipEffect`; creature fights (protection)
+  `MassFightTargetCreatureEffect`, `PackHuntEffect`; any-permanent
+  `GrantProtectionChoiceUntilEndOfTurnEffect`, `CreateTokenCopyOfTargetPermanentEffect`,
+  `SetChosenColorUntilEndOfTurnEffect`, `DoubleCountersOnTargetPermanentEffect`,
+  `RemoveChargeCountersFromTargetPermanentEffect`, `RemoveCountersFromTargetAndBoostSelfEffect`;
+  land `GrantBasicLandTypeToTargetEffect`.
+
+**Representative tests** (imitating `FireballTest`'s illegal-target section — "coherent group sharing
+one code path" → one test each for the type-narrowing paths):
+- `WrackWithMadnessTest.cannotTargetLand` — creature path (`requireCreature`), on a **filterless**
+  card, so the validator is the sole gate (real fix).
+- `DarkNourishmentTest.cannotTargetLand` — any-target path, also **filterless** (real fix).
+- The land path is already covered by the pre-existing `MeltTerrainTest.cannotTargetCreature` (its
+  card filter and the new validator agree on "Target must be a land"), so no new land test was added.
+
+**Regression / safety runs (all green):** the two edited tests; `FireballTest`, `FightWithFireTest`
+(original Fireball fix); `EffectDispatchRatchetTest` (validators live in the exempt `service/validate/`
+zone, so the baseline was untouched and did not need regenerating); `:magical-vibes-ai *GameSimulatorTest`;
+and 49 tests for cards whose effects gained a validator (BlackbladeReforged, GolemArtisan,
+DistortingLens, HexParasite, GilderBairn, Woeleecher, Chainbreaker, AlluringSiren, ConsignToDream,
+Mirrorweave, HarmsWay, HealingGrace, Bandage, InquisitorsSnare, StoneGiant, GhostQuarter, FieldOfRuin,
+Erode, GarrukRelentless, ApostlesBlessing, TowerAbove, RabidAttack, MercyKilling, HeatedArgument,
+Unmake, Dispatch, CoordinatedBarrage, BurnTheImpure, RoarOfTheCrowd, EssenceDrain, ConsumeSpirit,
+HereticsPunishment, TraitorsRoar, WiltInTheHeat, DeadlyAllure, TauntingChallenge, AlluringScent,
+Incite, MasterOfTheWildHunt, DragonMask, LowlandOaf, GremlinMine, AppliedGeometry, CacklingCounterpart,
+SuspendAggression, Helvault, KarnLiberated, OblivionRing, FiendHunter) — these all cast at *legal*
+targets, so they would fail if any validator over-restricted; none did.
+
+**Dropped worklist entries (107) and why:**
+- **Spell-on-stack targeting (16)** — `canTargetSpell` effects are validated by
+  `TargetLegalityService.checkSpellTargetOnStack` via the card's `TargetFilter`, a different path that
+  `checkEffectTargets` never reaches (a stack target makes `findPermanentById` null →
+  `checkSpellTargeting` returns "Invalid target" first): every `CounterSpell*`, `CounterUnless*`,
+  `Counterlash`, `CopySpellEffect`, `ChangeTargetOfTargetSpell*`, `ChooseNewTargetsForTargetSpellEffect`,
+  `MakeTargetSpellUncounterableEffect`.
+- **Player-only targeting (~60)** — `canTargetPlayer`-only effects: `checkSpellTargeting`'s
+  `computeAllowedTargets` pre-check already rejects a permanent target ("This spell can only target
+  players"), and opponent/relation restrictions ride on the card's `PlayerPredicateTargetFilter`. All
+  the `TargetPlayer*`, `Reveal*Hand*`, `Search*Library*`, `Discard*`, `Mill*Player*`, `LookAtHand*`,
+  `SetTargetPlayerLife*`, `ControlTargetPlayer*`, `ExtraTurnEffect`, `ManaClashEffect`, `HeadGamesEffect`,
+  `JuxtaposeEffect`, `PsychicTransferEffect`, etc.
+- **Trigger / ETB / combat-slot only (~18)** — targets are chosen by the trigger pipelines, honouring
+  the card's `TargetFilter`, never through `@ValidatesTarget`: `AttachAllAurasToAnotherPermanentEffect`,
+  `AttachSourceEquipmentToTargetCreatureEffect`, `BecomeCopyOfTargetCreature*Effect`,
+  `DestroyCombatOpponentAtEndOfCombatEffect`, `DestroySubtypeCombatOpponentEffect`,
+  `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect`, `ExileTargetPermanentAndImprintEffect`,
+  `ExileTargetPermanentUntilSourceLeavesEffect` (Fiend Hunter / Oblivion Ring — ETB),
+  `GainControlUntapAndHasteTargetEffect`, `MakeTargetCreatureUnpreparedEffect`,
+  `MoveDyingSourceCountersToTargetCreatureEffect`, `PutCounterOnTargetForEachDyingSourceCounterEffect`,
+  `RemoveCounterFromTargetPermanentEffect`, `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect`,
+  etc. (Effects with a mixed spell/ability usage — e.g. `RemoveTargetFromCombatEffect`,
+  `MakeTargetCreaturePreparedEffect`, `MustAttackThisTurnEffect`,
+  `TargetCreatureDealsPowerDamageToControllerEffect` — were **kept** for the spell/ability usage; the
+  validator simply isn't invoked on their ETB/trigger usage.)
+- **Multi-target (9)** — two target groups / X targets / "up to N", validated by
+  `validateMultiSpellTargets` / `validateMultiTargetAbility` per-position `TargetFilter`s, not the
+  single-`targetId` path: `FightTargetsEffect`, `TargetDealsPowerDamageToTargetEffect`,
+  `MoveCounterFromTargetCreatureToTargetCreatureEffect`, `MustBlockTargetCreatureEffect`,
+  `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`, `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect`,
+  `AttachTargetEquipmentToTargetCreatureEffect`, `DealDamageToEachTargetEffect`,
+  `DestroyEachTargetPermanentEffect`, `DestroyUpToTargetsThenReturnFromGraveyardEffect`.
+- **Graveyard/exile-zone multi-target (2)** — `ExileCardsFromGraveyardEffect`,
+  `ExileGraveyardCardWithConditionalBonusEffect` — graveyard-card targets validated by
+  `validateMultiTargetGraveyardAbility` / the graveyard-retarget path, not the single permanent path.
+- **Not a targeted effect (1)** — `TargetingRestrictionEffect` is a STATIC continuous effect
+  (overrides no `canTarget*()`); it appears in the gap list only because it is `instanceof`-checked in
+  the targeting services, not because it carries a target.
+- **Dual spell/permanent, no narrower type (1)** — `ChangeColorTextEffect` (Glamerdye, Mind Bend):
+  targets a spell **or** any permanent; the permanent branch is "any permanent" so there is no type to
+  narrow, and the spell branch is routed to `checkSpellTargetOnStack` (see the `isSpellOnStack`
+  comment in `TargetLegalityService`).
+- **No card constructs it (3)** — `AttachSourceAuraToTargetCreatureEffect`,
+  `ExileTargetOnControllerSpellCastEffect`, `ExileTargetOpponentPermanentOnDrawEffect` (only referenced
+  reflectively/never `new`-ed by any card).
+
+**Resolution-side guards TODO (not fixed this step, none required by a failing test):**
+No normalfx handler was found to *require* a guard: the two filterless bug cards' effects already
+no-op safely on a non-creature (a fight/`*DealsPowerDamage*` reads `0` power off a land and deals
+nothing; damage/exile/destroy would still act, but the new targeting validators now block the illegal
+target before resolution). A future belt-and-suspenders pass could add resolution-side type re-checks
+to the `normalfx` handlers for the creature-only effects listed above, but it is out of scope here and
+no test needed it.
+
+**Oracle-text judgment calls to double-check:**
+- `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect` → **any permanent** (not
+  land): Erode targets "creature or planeswalker", Ghost Quarter targets "land" — the two disagree, so
+  the validator only requires a battlefield permanent.
+- `GrantChosenKeywordToTargetEffect` → **creature**: Golem Artisan ("artifact creature") and Practiced
+  Offense both target creatures; no card grants a keyword to a non-creature permanent.
+- `ExileTargetPermanentMayPlayUntilNextTurnEffect` / `SacrificeTargetPermanentAtEndStepEffect` /
+  `DestroyTargetPermanentAtEndStepEffect` → **any permanent**: named `…Permanent…` and the sole users
+  (Suspend Aggression "nonland permanent", Lowland Oaf, Stone Giant) narrow further on the card, so the
+  validator stays at "any permanent" to avoid over-restriction.
+- Prevention/"any target" effects (Bandage, Healing Salve line, Harm's Way, Remedy) treated as
+  creature/planeswalker/player per the modern "any target" erratum.

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,8 +12,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DarkNourishmentTest extends BaseCardTest {
 
@@ -90,6 +93,25 @@ class DarkNourishmentTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
         // Controller still gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    // ===== Illegal target — "any target" is creature / planeswalker / player, never a land =====
+    // Dark Nourishment carries no card-level target filter, so the effect's @ValidatesTarget
+    // validator is the only thing that stops the single-targetId cast at a land.
+    @Test
+    @DisplayName("Cannot target a land")
+    void cannotTargetLand() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DarkNourishment()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, forestId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature, planeswalker, or player");
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Forest"));
     }
 
     // ===== Fizzle =====

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -9,6 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -79,6 +86,54 @@ public class DestructionTargetValidators {
     @ValidatesTarget(DestroyTargetThenRevealUntilTypeToBattlefieldEffect.class)
     public void validateDestroyTargetThenRevealUntilType(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    // ===== Land destruction (Cryoclasm, Melt Terrain, Field of Ruin) =====
+
+    @ValidatesTarget(DestroyTargetLandAndDamageControllerEffect.class)
+    public void validateDestroyTargetLandAndDamageController(TargetValidationContext ctx) {
+        requireLandTarget(ctx);
+    }
+
+    @ValidatesTarget(DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect.class)
+    public void validateDestroyTargetAndEachPlayerSearchesBasicLand(TargetValidationContext ctx) {
+        requireLandTarget(ctx);
+    }
+
+    // ===== Any-permanent destruction / sacrifice (Ghost Quarter & Erode target creature/pw/land,
+    // Stone Giant a creature, Lowland Oaf a creature — the card/ability filter narrows further) =====
+
+    @ValidatesTarget(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class)
+    public void validateDestroyTargetPermanentAndControllerSearchesLibrary(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(DestroyTargetPermanentAtEndStepEffect.class)
+    public void validateDestroyTargetPermanentAtEndStep(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(SacrificeTargetPermanentAtEndStepEffect.class)
+    public void validateSacrificeTargetPermanentAtEndStep(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect.class)
+    public void validateSacrificeTargetCreatureThenCreateTokens(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+        tvs.checkProtection(ctx, target);
+    }
+
+    private void requireLandTarget(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        if (!target.getCard().hasType(CardType.LAND)) {
+            throw new IllegalStateException("Target must be a land");
+        }
         tvs.checkProtection(ctx, target);
     }
 }

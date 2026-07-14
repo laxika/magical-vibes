@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndStepEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -27,6 +29,16 @@ public class BounceTargetValidators {
 
     @ValidatesTarget(ReturnTargetPermanentToHandWithManaValueConditionalEffect.class)
     public void validateReturnTargetPermanentToHandWithConditionalScry(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect.class)
+    public void validateReturnTargetPermanentToHandOrLibraryTopByPredicate(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(ReturnTargetPermanentToHandAtEndStepEffect.class)
+    public void validateReturnTargetPermanentToHandAtEndStep(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 }

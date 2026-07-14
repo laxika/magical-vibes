@@ -1,7 +1,30 @@
 package com.github.laxika.magicalvibes.service.validate;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustAttackThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
+import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturePreparedEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EquipEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SetChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -145,5 +168,138 @@ public class CreatureModTargetValidators {
         if (effect.scope() == GrantScope.TARGET) {
             tvs.requireBattlefieldTarget(ctx);
         }
+    }
+
+    // ===== Target-creature modifiers (benign / neutral: type only, no spell-color protection —
+    // matching BoostTargetCreature above) =====
+
+    @ValidatesTarget(BoostTargetCreaturePerChosenTypeCountEffect.class)
+    public void validateBoostTargetCreaturePerChosenTypeCount(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect.class)
+    public void validateEachOtherCreatureBecomesCopyOfTargetCreature(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(GrantEffectToTargetUntilEndOfTurnEffect.class)
+    public void validateGrantEffectToTargetUntilEndOfTurn(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(GrantChosenKeywordToTargetEffect.class)
+    public void validateGrantChosenKeywordToTarget(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(TargetCreatureBecomesSubtypeUntilEndOfTurnEffect.class)
+    public void validateTargetCreatureBecomesSubtypeUntilEndOfTurn(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(MustAttackThisTurnEffect.class)
+    public void validateMustAttackThisTurn(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(MustBeBlockedByAllCreaturesThisTurnEffect.class)
+    public void validateMustBeBlockedByAllCreaturesThisTurn(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(MustBeBlockedIfAbleThisTurnEffect.class)
+    public void validateMustBeBlockedIfAbleThisTurn(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(CantBlockSourceEffect.class)
+    public void validateCantBlockSource(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(RemoveTargetFromCombatEffect.class)
+    public void validateRemoveTargetFromCombat(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(MakeTargetCreaturePreparedEffect.class)
+    public void validateMakeTargetCreaturePrepared(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    @ValidatesTarget(RemoveCounterFromTargetAndGainLifeEffect.class)
+    public void validateRemoveCounterFromTargetAndGainLife(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    // Equip: "Attach to target creature you control" (control restriction rides on the ability filter).
+    @ValidatesTarget(EquipEffect.class)
+    public void validateEquip(TargetValidationContext ctx) {
+        requireCreatureTarget(ctx);
+    }
+
+    // ===== Fights (harmful): a fight spell can't target a creature with protection from its color
+    // at targeting time (CR 702.16e), so protection is honoured =====
+
+    @ValidatesTarget(MassFightTargetCreatureEffect.class)
+    public void validateMassFightTargetCreature(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+        tvs.checkProtection(ctx, target);
+    }
+
+    @ValidatesTarget(PackHuntEffect.class)
+    public void validatePackHunt(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+        tvs.checkProtection(ctx, target);
+    }
+
+    // ===== Target-permanent modifiers (any permanent; the card/ability filter narrows further) =====
+
+    @ValidatesTarget(GrantProtectionChoiceUntilEndOfTurnEffect.class)
+    public void validateGrantProtectionChoiceUntilEndOfTurn(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(CreateTokenCopyOfTargetPermanentEffect.class)
+    public void validateCreateTokenCopyOfTargetPermanent(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(SetChosenColorUntilEndOfTurnEffect.class)
+    public void validateSetChosenColorUntilEndOfTurn(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(DoubleCountersOnTargetPermanentEffect.class)
+    public void validateDoubleCountersOnTargetPermanent(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(RemoveChargeCountersFromTargetPermanentEffect.class)
+    public void validateRemoveChargeCountersFromTargetPermanent(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    @ValidatesTarget(RemoveCountersFromTargetAndBoostSelfEffect.class)
+    public void validateRemoveCountersFromTargetAndBoostSelf(TargetValidationContext ctx) {
+        tvs.requireBattlefieldTarget(ctx);
+    }
+
+    // ===== Land-type granting (target land) =====
+
+    @ValidatesTarget(GrantBasicLandTypeToTargetEffect.class)
+    public void validateGrantBasicLandTypeToTarget(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        if (!target.getCard().hasType(CardType.LAND)) {
+            throw new IllegalStateException("Target must be a land");
+        }
+    }
+
+    private void requireCreatureTarget(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
     }
 }
