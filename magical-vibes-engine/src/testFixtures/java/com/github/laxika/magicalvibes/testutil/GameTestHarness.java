@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
@@ -49,6 +50,7 @@ public class GameTestHarness {
     private static GameQueryService staticGameQueryService;
     private static TargetValidationService staticTargetValidationService;
     private static TargetLegalityService staticTargetLegalityService;
+    private static ValidTargetService staticValidTargetService;
     private static GameSetupService staticGameSetupService;
     private static LegendRuleService staticLegendRuleService;
     private static PermanentRemovalService staticPermanentRemovalService;
@@ -77,6 +79,7 @@ public class GameTestHarness {
         staticGameQueryService = context.getBean(GameQueryService.class);
         staticTargetValidationService = context.getBean(TargetValidationService.class);
         staticTargetLegalityService = context.getBean(TargetLegalityService.class);
+        staticValidTargetService = context.getBean(ValidTargetService.class);
         staticGameSetupService = context.getBean(GameSetupService.class);
         staticLegendRuleService = context.getBean(LegendRuleService.class);
         staticPermanentRemovalService = context.getBean(PermanentRemovalService.class);
@@ -102,6 +105,7 @@ public class GameTestHarness {
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
+    private final ValidTargetService validTargetService;
     private final GameSetupService gameSetupService;
     private final GameData gameData;
     private final Player player1;
@@ -137,6 +141,7 @@ public class GameTestHarness {
         gameQueryService = staticGameQueryService;
         targetValidationService = staticTargetValidationService;
         targetLegalityService = staticTargetLegalityService;
+        validTargetService = staticValidTargetService;
         gameSetupService = staticGameSetupService;
         legendRuleService = staticLegendRuleService;
         permanentRemovalService = staticPermanentRemovalService;
@@ -928,6 +933,10 @@ public class GameTestHarness {
 
     public TargetLegalityService getTargetLegalityService() {
         return targetLegalityService;
+    }
+
+    public ValidTargetService getValidTargetService() {
+        return validTargetService;
     }
 
     public LegendRuleService getLegendRuleService() {

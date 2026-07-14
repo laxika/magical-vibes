@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -39,6 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -47,13 +49,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -72,8 +74,8 @@ class ValidTargetServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private TargetValidationService targetValidationService;
 
-    @InjectMocks
     private ValidTargetService validTargetService;
 
     private GameData gameData;
@@ -92,6 +94,16 @@ class ValidTargetServiceTest {
         gameData.orderedPlayerIds.add(player2Id);
         gameData.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gameData.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        // Use a REAL TargetLegalityService over the mocked GameQueryService/PredicateEvaluationService so the
+        // shared structural spell-target core (protection/hexproof/shroud) is exercised through the same mocks
+        // this test already stubs. The per-effect @ValidatesTarget validators are mocked to a no-op so the
+        // structural + "any target" enumeration behaviour under test is isolated from validator coverage.
+        TargetLegalityService targetLegalityService = new TargetLegalityService(
+                gameQueryService, predicateEvaluationService, targetValidationService);
+        validTargetService = new ValidTargetService(
+                gameQueryService, predicateEvaluationService, targetLegalityService, targetValidationService);
+        lenient().when(targetValidationService.checkEffectTargets(any(), any())).thenReturn(Optional.empty());
     }
 
     // ===== Helpers =====
@@ -225,7 +237,9 @@ class ValidTargetServiceTest {
             Permanent perm = new Permanent(creatureCard);
 
             when(gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)).thenReturn(false);
-            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)).thenReturn(true);
+            // Shared untargetable core checks controller before the hexproof keyword, so for an own
+            // permanent the keyword is never consulted; keep the stub lenient.
+            lenient().when(gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player1Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -257,7 +271,9 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
+            // Shared untargetable core checks controller before the granted-hexproof effect, so for an
+            // own permanent it is never consulted; keep the stub lenient.
+            lenient().when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player1Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -1498,7 +1514,9 @@ class ValidTargetServiceTest {
             Permanent perm = new Permanent(creatureCard);
 
             when(gameQueryService.hasKeyword(gameData, perm, Keyword.SHROUD)).thenReturn(false);
-            when(gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)).thenReturn(true);
+            // Shared untargetable core checks controller before the hexproof keyword, so for a
+            // null controller the keyword is never consulted; keep the stub lenient.
+            lenient().when(gameQueryService.hasKeyword(gameData, perm, Keyword.HEXPROOF)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(null);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -1515,7 +1533,9 @@ class ValidTargetServiceTest {
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
+            // Shared untargetable core checks controller before the granted-hexproof effect, so for a
+            // null controller it is never consulted; keep the stub lenient.
+            lenient().when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(null);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -1589,6 +1609,10 @@ class ValidTargetServiceTest {
                         Card c = inv.getArgument(0);
                         CardPredicate p = inv.getArgument(1);
                         if (p instanceof CardTypePredicate tp) return c.hasType(tp.cardType());
+                        if (p instanceof CardAnyOfPredicate anyOf) {
+                            return anyOf.predicates().stream()
+                                    .anyMatch(sub -> sub instanceof CardTypePredicate tp && c.hasType(tp.cardType()));
+                        }
                         return true;
                     });
         }

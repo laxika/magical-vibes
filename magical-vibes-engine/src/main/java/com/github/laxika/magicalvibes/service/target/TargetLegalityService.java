@@ -370,11 +370,8 @@ public class TargetLegalityService {
         }
 
         if (target != null && needsTarget) {
-            String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
-            if (protectionReason != null) return Optional.of(protectionReason);
-
-            String untargetable = untargetableReason(gameData, target, controllerId);
-            if (untargetable != null) return Optional.of(untargetable);
+            Optional<String> structuralReason = checkSpellPermanentTargetableReason(gameData, target, card, controllerId);
+            if (structuralReason.isPresent()) return structuralReason;
         }
 
         if (target == null && needsTarget && gameData.playerIds.contains(targetId)) {
@@ -504,9 +501,8 @@ public class TargetLegalityService {
             }
 
             if (EffectResolution.needsTarget(card)) {
-                validateSpellProtections(gameData, target, card);
-                validateHexproofFromColor(gameData, target, card, controllerId);
-                validatePermanentTargetable(gameData, target, controllerId);
+                checkSpellPermanentTargetableReason(gameData, target, card, controllerId)
+                        .ifPresent(reason -> { throw new IllegalStateException(reason); });
             }
         }
 
@@ -786,8 +782,27 @@ public class TargetLegalityService {
         }
     }
 
-    private String checkSpellProtection(GameData gameData, Permanent target, Card card) {
-        return checkSpellProtection(gameData, target, card, null);
+    /**
+     * The single per-permanent structural targeting core for a spell, shared by all three
+     * spell-target validation paths: UI/AI enumeration ({@link ValidTargetService}), the
+     * multi-target cast path ({@link #validateMultiSpellTargets}) and the single-target cast path
+     * ({@link #checkSpellTargeting}). Checks protection (color/type/subtype), can't-be-targeted
+     * (spell color / any spell / non-color sources), shroud, hexproof, granted hexproof, and
+     * hexproof-from-color, returning the reason a permanent can't legally be targeted or empty if
+     * it is structurally legal. It deliberately does NOT apply the card's {@code TargetFilter} or
+     * the per-effect {@code @ValidatesTarget} validators — those are layered on by each entry point
+     * (filters via list/position bookkeeping; validators as the shared type-narrowing mechanism).
+     */
+    public Optional<String> checkSpellPermanentTargetableReason(GameData gameData, Permanent target, Card card, UUID controllerId) {
+        String protectionReason = checkSpellProtection(gameData, target, card, controllerId);
+        if (protectionReason != null) {
+            return Optional.of(protectionReason);
+        }
+        String untargetable = untargetableReason(gameData, target, controllerId);
+        if (untargetable != null) {
+            return Optional.of(untargetable);
+        }
+        return Optional.empty();
     }
 
     private String checkSpellProtection(GameData gameData, Permanent target, Card card, UUID sourcePlayerId) {
@@ -814,13 +829,6 @@ public class TargetLegalityService {
             if (hexReason != null) return hexReason;
         }
         return null;
-    }
-
-    private void validateSpellProtections(GameData gameData, Permanent target, Card card) {
-        String reason = checkSpellProtection(gameData, target, card);
-        if (reason != null) {
-            throw new IllegalStateException(reason);
-        }
     }
 
     private void validateMultiTargetCount(List<UUID> targetIds, int min, int max) {

@@ -81,7 +81,8 @@ class AiTargetSelector {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
+        this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService,
+                targetLegalityService, targetValidationService);
         this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.boardEvaluator = boardEvaluator;
     }

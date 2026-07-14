@@ -355,3 +355,140 @@ no test needed it.
   validator stays at "any permanent" to avoid over-restriction.
 - Prevention/"any target" effects (Bandage, Healing Salve line, Harm's Way, Remedy) treated as
   creature/planeswalker/player per the modern "any target" erratum.
+
+---
+
+## Step 4 — Targeting unification  (2026-07-14)
+
+Unified the three spell-target validation paths so a permanent candidate is judged by the SAME
+core no matter which path it arrives through. This is a behavior-preserving-or-STRICTER refactor:
+the one path that was *under*-checking (UI/AI enumeration) is now brought up to the strictest of
+the applicable rules.
+
+### Path map (which path guards which entry point)
+
+**Path 1 — UI / enumeration (`ValidTargetService`)** — per-candidate core `isValidPermanentTarget`:
+- `computeValidTargetsForSpell` ← `GameMessageHandler` (frontend "what can I target"),
+  `ExileCastTargetSupport` (exile-cast per-slot enumeration).
+- `computeValidTargetsForAbility` ← `GameMessageHandler`, `MayCopyHandlerService`.
+- `hasValidTargetsForSpell` ← `GameBroadcastService` (CR 601.2c castability gate).
+- `isValidSpellPermanentTarget` / `isValidMultiTargetPermanent` ← AI `AiTargetSelector`.
+- `canPermanentBeTargetedBySpell` ← `CopySpellForEachOtherSubtypePermanentEffectHandler`
+  (resolution-time copy retarget).
+
+**Path 2 — multi-target cast (`TargetLegalityService.validateMultiSpellTargets`)** — flat
+`targetIds` list: ← `SpellCastingService` (kicked/multi cast sites).
+
+**Path 3 — single-`targetId` cast (`TargetLegalityService.checkSpellTargeting` via
+`validateSpellTargeting`)**: ← `SpellCastingService` (single-target/kicked-primary sites),
+`MayCopyHandlerService` (copy cast), `TargetRedirectionSupport` (retarget-candidate check).
+
+(Adjacent, out of scope: `validateActivatedAbilityTargeting` / `validateMultiTargetAbility`
+[abilities — already routed through the `@ValidatesTarget` mechanism in step 3],
+`checkSpellTargetOnStack` [spell-on-stack], `isTargetIllegalOnResolution` [resolution-time fizzle].)
+
+### Divergence inventory (per-permanent-candidate rules)
+
+| Rule | Path 1 (before) | Path 2 | Path 3 | Decision |
+|---|---|---|---|---|
+| Protection (color / card-type / subtype) | ✓ | ✓ | ✓ | agree → unified into `checkSpellPermanentTargetableReason` |
+| cant-be-targeted (spell-color / any-spell / non-color-source) | ✓ | ✓ | ✓ | agree → unified |
+| shroud / hexproof / granted hexproof | ✓ | ✓ | ✓ | agree → unified |
+| hexproof-from-color | ✓ | ✓ | ✓ | agree → unified |
+| card / position `TargetFilter` | ✓ | ✓ | ✓ | keep per-path (list/position bookkeeping) |
+| any-target ⇒ creature/planeswalker (structural) | ✓ block | — | — (relies on validators) | kept in path 1 as belt-and-suspenders backstop |
+| require-creature default (no filter) | multi-target only | ✓ | — | reviewed pre-existing difference (see below) |
+| per-effect `@ValidatesTarget` validators | **✗ MISSING (bug)** | ✗ (multi = position-filter mechanism) | ✓ | **FIX path 1** |
+
+### Decisions (rules-checked)
+
+- **Divergence FIXED — path 1 did not run the per-effect `@ValidatesTarget` validators.** After
+  step 3 closed the validator gap on the single-`targetId` cast path, path 1 (UI/AI enumeration)
+  could still *offer* a target that path 3 (cast) rejects. Concrete live bug: filterless
+  "target creature" / "any target" spells (Wrack with Madness, Dark Nourishment) listed a **land**
+  in the UI though casting at it throws. The AI even hand-patched this exact gap in
+  `AiTargetSelector.isValidPermanentTarget` ("Run the same `@ValidatesTarget` validators that spell
+  casting uses"). **Rules: the validator encodes the correct legal target type; enumeration must
+  run it.** Fix: `ValidTargetService.isValidPermanentTarget` now runs
+  `TargetValidationService.checkEffectTargets` for the single-target case (positionFilter == null &&
+  !isMultiTarget), mirroring `checkSpellTargeting` exactly. This is the ONLY observable behavior
+  change: UI/AI enumeration no longer offers a permanent that resolution-time validation rejects
+  (STRICTER, correct). The AI's hand-patch is now redundant but left in place (harmless; it also
+  covers ETB-slot effects) — a future cleanup could drop it.
+- **Path 2 (multi-target) intentionally does NOT run the single-target validators.** Multi-target
+  effects were excluded from validator scope in step 3 (their positions are governed by per-position
+  `TargetFilter`s); validating every SPELL effect against one of several targets would be
+  semantically wrong. No behavior change.
+- **any-target ⇒ creature/planeswalker vs require-creature.** Path 1's structural block narrows an
+  all-any-target spell to creature/planeswalker; path 2's no-filter default requires a *creature*
+  (stricter, no planeswalker); path 3 narrows via validators (creature/planeswalker/player). In
+  production these converge for the reachable set (every single-target any-target spell has a
+  validator after step 3), so path 1's structural block is now a redundant backstop kept for safety.
+  Path 2's creature-only default is a **pre-existing reviewed behavior** (encoded by
+  `TargetLegalityServiceTest.throwsWhenNonCreatureTargetWithoutFilter`) — no current multi-target
+  spell needs a planeswalker in a filterless position, so it is left unchanged (would require a card
+  that exercises it plus a rules review to widen).
+
+### Shared core
+
+Folded the structural rules into a single method `TargetLegalityService.checkSpellPermanentTargetableReason`
+(`checkSpellProtection` + `untargetableReason`), which is the single home the two service classes now
+share. All three paths delegate candidate structural legality to it:
+- `checkSpellTargeting` (path 3) — delegates (was already an inline copy of the same two calls).
+- `validateMultiSpellTargets` (path 2) — delegates (replaced `validateSpellProtections` +
+  `validateHexproofFromColor` + `validatePermanentTargetable`; `validateSpellProtections` removed as
+  dead code).
+- `ValidTargetService.canPermanentBeTargetedBySpell` / `…Core` (path 1) — delegate the structural
+  block; enumeration adds only the card `TargetFilter` and (new) the effect validators.
+The type-narrowing dimension is unified onto the `@ValidatesTarget` validator mechanism (every path
+that should narrow now does so through it; path 1 additionally keeps the structural any-target
+backstop). No new `instanceof`-on-effect dispatch was introduced, so the ratchet baseline is
+untouched (EffectDispatchRatchetTest green, no regeneration needed).
+
+Note on check ORDER: the unified `untargetableReason` checks the target's controller *before* the
+hexproof/granted-hexproof keyword (path-3 order), whereas path 1's old
+`isBlockedByHexproofOrGrantedEffect` checked the keyword first. Same result for every case (an own /
+null-controller permanent is never blocked), but four `ValidTargetServiceTest` mock stubs that
+pre-stubbed the keyword for own/null-controller permanents became *unnecessary* under strict
+stubbing and were marked `lenient()` (behavior asserted is unchanged).
+
+### New tests
+
+- `WrackWithMadnessTest.targetEnumerationExcludesLand` — path-1 enumeration
+  (`computeValidTargetsForSpell`) now excludes a land for a filterless creature-only spell (the case
+  where path 1's structural block did NOT fire pre-change, so the land leaked into enumeration). This
+  is the definitive proof of the fix.
+- `DarkNourishmentTest.targetEnumerationExcludesLand` — same for the any-target family (creature ✓,
+  land ✗, both players ✓).
+- `ValidTargetServiceTest` — real `TargetLegalityService` now wired over the mocks so the shared
+  structural core is exercised through the same stubs; `targetValidationService` added as a mock.
+  Four own/null-controller hexproof stubs relaxed to `lenient()` (order change, see above).
+- Added a harness accessor `GameTestHarness.getValidTargetService()` (testFixtures) so card tests can
+  exercise the UI enumeration path.
+
+### Callers / signatures
+
+All three entry-point method signatures are preserved. Two `new ValidTargetService(...)` construction
+sites were touched (not entry-point signatures): `AiTargetSelector` now passes the two collaborators
+it already holds; a legacy 2-arg constructor (null collaborators) is kept for
+`StepTriggerServiceTest`'s trigger-player-target-only usage.
+
+### Tests I believe are rules-wrong
+
+None. (Incidental: `ValidTargetServiceTest.GraveyardTypeFiltering` — the
+"PutCardFromOpponentGraveyard filters to artifacts and creatures" case — was **already failing on
+clean main**, a test-only mock bug: the `matchesCardPredicate` stub didn't handle `CardAnyOfPredicate`
+so it returned all six graveyard cards. Fixed the stub to mirror real predicate semantics; no
+production change. This is unrelated to the targeting unification.)
+
+### Verification (all green)
+
+Regression guards `FireballTest`, `FightWithFireTest`, and `:magical-vibes-ai *GameSimulatorTest`
+before and after. Ratchet `EffectDispatchRatchetTest`. The two refactored service unit tests
+`ValidTargetServiceTest`, `TargetLegalityServiceTest`. Direct-caller service tests
+`SpellCastingServiceTest`, `AbilityActivationServiceTest`, `StepTriggerServiceTest`,
+`CopySpellForEachOtherSubtypePermanentEffectHandlerTest`,
+`ChangeTargetOfTargetSpellToSourceEffectHandlerTest`, `AiTargetSelectorTest`. Six diverse targeting
+card tests: `ArcTrailTest` (multi-target), `NaturalizeTest` / `TerrorTest` (permanent / creature
+destruction), `PacifismTest` (aura), `IncinerateTest` (any-target burn),
+`RootwaterCommandoTest` (targeted ability). Plus the two new divergence tests.

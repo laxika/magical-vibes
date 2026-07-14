@@ -38,7 +38,9 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -47,11 +49,34 @@ import java.util.Set;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class ValidTargetService {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TargetLegalityService targetLegalityService;
+    private final TargetValidationService targetValidationService;
+
+    @Autowired
+    public ValidTargetService(GameQueryService gameQueryService,
+                              PredicateEvaluationService predicateEvaluationService,
+                              TargetLegalityService targetLegalityService,
+                              TargetValidationService targetValidationService) {
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.targetLegalityService = targetLegalityService;
+        this.targetValidationService = targetValidationService;
+    }
+
+    /**
+     * Legacy 2-arg constructor for contexts that only enumerate player targets for triggers
+     * (e.g. StepTriggerService's upkeep pipeline) and never route a permanent through the shared
+     * spell-target core. The structural and validator collaborators are left null; calling any
+     * permanent-legality method on such an instance would NPE by design.
+     */
+    public ValidTargetService(GameQueryService gameQueryService,
+                              PredicateEvaluationService predicateEvaluationService) {
+        this(gameQueryService, predicateEvaluationService, null, null);
+    }
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds) {
         return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, null, null);
@@ -294,42 +319,9 @@ public class ValidTargetService {
      * protection from card types, cant-be-targeted-by-spell-color, and the spell's TargetFilter.
      */
     public boolean canPermanentBeTargetedBySpell(GameData gameData, Permanent perm, Card spellCard, UUID castingPlayerId) {
-        CardColor sourceColor = spellCard.getColor();
-
-        // Protection from source color
-        if (gameQueryService.hasProtectionFrom(gameData, perm, sourceColor)) {
-            return false;
-        }
-        // Protection from source card type
-        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) {
-            return false;
-        }
-        // Protection from source subtype
-        if (gameQueryService.hasProtectionFromSourceSubtypes(perm, spellCard)) {
-            return false;
-        }
-
-        if (isBlockedByHexproofOrGrantedEffect(gameData, perm, castingPlayerId)) {
-            return false;
-        }
-
-        // Hexproof from color (blocks opponent's spells of the specified color)
-        if (isBlockedByHexproofFromColor(gameData, perm, sourceColor, castingPlayerId)) {
-            return false;
-        }
-
-        // Can't be targeted by spell color
-        if (gameQueryService.cantBeTargetedBySpellColor(gameData, perm, sourceColor)) {
-            return false;
-        }
-
-        // Can't be targeted by any spell (e.g. Dense Foliage)
-        if (gameQueryService.cantBeTargetedByAnySpell(gameData, perm)) {
-            return false;
-        }
-
-        // Can't be targeted by non-color sources (e.g. Gaea's Revenge)
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) {
+        // Structural targeting rules (protection, can't-be-targeted, shroud, hexproof, hexproof-from-color)
+        // are owned by the shared spell-target core; enumeration adds only the card's TargetFilter.
+        if (!targetLegalityService.checkSpellPermanentTargetableReason(gameData, perm, spellCard, castingPlayerId).isEmpty()) {
             return false;
         }
 
@@ -386,6 +378,18 @@ public class ValidTargetService {
             }
         }
 
+        // Per-effect @ValidatesTarget validators — the same type-narrowing the single-target cast
+        // path (TargetLegalityService.checkSpellTargeting) applies. Running them here keeps UI/AI
+        // enumeration from offering a permanent that cast-time validation would reject (e.g. a land
+        // for a filterless "target creature" spell such as Wrack with Madness). Scoped to the
+        // single-target case; multi-target positions are governed by their per-position TargetFilter
+        // (validators for multi-target effects are intentionally out of scope — see refactor step 3).
+        if (positionFilter == null && !isMultiTarget
+                && targetValidationService.checkEffectTargets(spellEffects,
+                        new TargetValidationContext(gameData, perm.getId(), null, card)).isPresent()) {
+            return false;
+        }
+
         return true;
     }
 
@@ -394,16 +398,7 @@ public class ValidTargetService {
      * Used by multi-target spells where per-position filters handle type restriction.
      */
     private boolean canPermanentBeTargetedBySpellCore(GameData gameData, Permanent perm, Card spellCard, UUID castingPlayerId) {
-        CardColor sourceColor = spellCard.getColor();
-        if (gameQueryService.hasProtectionFrom(gameData, perm, sourceColor)) return false;
-        if (gameQueryService.hasProtectionFromSourceCardTypes(perm, spellCard)) return false;
-        if (gameQueryService.hasProtectionFromSourceSubtypes(perm, spellCard)) return false;
-        if (isBlockedByHexproofOrGrantedEffect(gameData, perm, castingPlayerId)) return false;
-        if (isBlockedByHexproofFromColor(gameData, perm, sourceColor, castingPlayerId)) return false;
-        if (gameQueryService.cantBeTargetedBySpellColor(gameData, perm, sourceColor)) return false;
-        if (gameQueryService.cantBeTargetedByAnySpell(gameData, perm)) return false;
-        if (gameQueryService.cantBeTargetedByNonColorSources(gameData, perm, spellCard)) return false;
-        return true;
+        return targetLegalityService.checkSpellPermanentTargetableReason(gameData, perm, spellCard, castingPlayerId).isEmpty();
     }
 
     /**

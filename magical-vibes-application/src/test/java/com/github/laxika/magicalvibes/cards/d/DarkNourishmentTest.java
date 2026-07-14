@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -112,6 +113,26 @@ class DarkNourishmentTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Forest"));
+    }
+
+    // Step 4 (targeting unification): the UI/AI enumeration path judges "any target" candidates by the
+    // same rule as the cast path — creature/planeswalker/player, never a land.
+    @Test
+    @DisplayName("Target enumeration excludes a land (same rule as the cast path)")
+    void targetEnumerationExcludesLand() {
+        Permanent bear = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bear);
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new DarkNourishment()));
+
+        Card darkNourishment = gd.playerHands.get(player1.getId()).getFirst();
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+
+        var response = harness.getValidTargetService()
+                .computeValidTargetsForSpell(gd, darkNourishment, player1.getId(), null);
+
+        assertThat(response.validPermanentIds()).contains(bear.getId()).doesNotContain(forestId);
+        assertThat(response.validPlayerIds()).contains(player1.getId(), player2.getId());
     }
 
     // ===== Fizzle =====

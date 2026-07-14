@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -113,6 +114,29 @@ class WrackWithMadnessTest extends BaseCardTest {
 
         assertThat(harness.getGameData().playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Plains"));
+    }
+
+    // Step 4 (targeting unification): the UI/AI enumeration path (ValidTargetService) must judge a
+    // candidate by the SAME logic as the single-targetId cast path. Before unification this filterless
+    // "target creature" spell's structural any-target block did NOT fire (its effect is creature-only,
+    // not "any target"), so the enumeration path offered a land that the cast path rejected. The shared
+    // @ValidatesTarget validator now runs on both paths.
+    @Test
+    @DisplayName("Target enumeration excludes a land (same rule as the cast path)")
+    void targetEnumerationExcludesLand() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+
+        GameData gd = harness.getGameData();
+        Card wrack = gd.playerHands.get(player1.getId()).getFirst();
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID plainsId = harness.getPermanentId(player2, "Plains");
+
+        var response = harness.getValidTargetService()
+                .computeValidTargetsForSpell(gd, wrack, player1.getId(), null);
+
+        assertThat(response.validPermanentIds()).contains(bearId).doesNotContain(plainsId);
     }
 
     @Test
