@@ -17,38 +17,18 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.LibraryOfLatNamEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -61,7 +41,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +57,6 @@ public class MayAbilityHandlerService {
     private final InputCompletionService inputCompletionService;
     private final MayCastHandlerService mayCastHandlerService;
     private final MayCopyHandlerService mayCopyHandlerService;
-    private final MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService;
     private final MayMiscHandlerService mayMiscHandlerService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -91,13 +69,11 @@ public class MayAbilityHandlerService {
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final ValidTargetService validTargetService;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
                                     MayCopyHandlerService mayCopyHandlerService,
-                                    MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService,
                                     MayMiscHandlerService mayMiscHandlerService,
                                     GameQueryService gameQueryService,
                                     PredicateEvaluationService predicateEvaluationService,
@@ -110,12 +86,10 @@ public class MayAbilityHandlerService {
                                     MayAbilityTapCostService mayAbilityTapCostService,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                                     ValidTargetService validTargetService,
-                                    com.github.laxika.magicalvibes.service.effect.normalfx.TariffSupport tariffSupport,
                                     MayEffectHandlerRegistry mayEffectHandlerRegistry) {
         this.inputCompletionService = inputCompletionService;
         this.mayCastHandlerService = mayCastHandlerService;
         this.mayCopyHandlerService = mayCopyHandlerService;
-        this.mayPenaltyChoiceHandlerService = mayPenaltyChoiceHandlerService;
         this.mayMiscHandlerService = mayMiscHandlerService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -128,7 +102,6 @@ public class MayAbilityHandlerService {
         this.mayAbilityTapCostService = mayAbilityTapCostService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.validTargetService = validTargetService;
-        this.tariffSupport = tariffSupport;
         this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
     }
 
@@ -189,210 +162,6 @@ public class MayAbilityHandlerService {
                 .findFirst().orElse(null);
         if (castFromLibEffect != null && castFromLibEffect.castableTypes().contains(ability.sourceCard().getType())) {
             mayCastHandlerService.handleCastFromLibraryChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Leyline pregame choice (CR 103.6a) — put card onto battlefield from opening hand
-        boolean isLeyline = ability.effects().stream().anyMatch(e -> e instanceof LeylineStartOnBattlefieldEffect);
-        if (isLeyline) {
-            mayMiscHandlerService.handleLeylineChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Opening hand delayed counter trigger (e.g. Chancellor of the Annex)
-        RegisterDelayedCounterTriggerEffect delayedCounterTrigger = ability.effects().stream()
-                .filter(e -> e instanceof RegisterDelayedCounterTriggerEffect)
-                .map(e -> (RegisterDelayedCounterTriggerEffect) e)
-                .findFirst().orElse(null);
-        if (delayedCounterTrigger != null) {
-            mayMiscHandlerService.handleOpeningHandDelayedCounterTrigger(gameData, player, accepted, ability, delayedCounterTrigger);
-            return;
-        }
-
-        // Opening hand delayed mana trigger (e.g. Chancellor of the Tangle)
-        RegisterDelayedManaTriggerEffect delayedManaTrigger = ability.effects().stream()
-                .filter(e -> e instanceof RegisterDelayedManaTriggerEffect)
-                .map(e -> (RegisterDelayedManaTriggerEffect) e)
-                .findFirst().orElse(null);
-        if (delayedManaTrigger != null) {
-            mayMiscHandlerService.handleOpeningHandDelayedManaTrigger(gameData, player, accepted, ability, delayedManaTrigger);
-            return;
-        }
-
-        // Counter-unless-pays / counter-unless-discard (Ward—Discard a card) — handled via the may
-        // ability system. Recognise the family through the capability interface, then route on the
-        // kind of ransom demanded.
-        CounterUnlessEffect counterUnless = ability.effects().stream()
-                .filter(e -> e instanceof CounterUnlessEffect)
-                .map(e -> (CounterUnlessEffect) e)
-                .findFirst().orElse(null);
-        if (counterUnless != null) {
-            switch (counterUnless.ransomKind()) {
-                case PAY_MANA -> mayPenaltyChoiceHandlerService.handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
-                case DISCARD_CARD -> mayPenaltyChoiceHandlerService.handleCounterUnlessDiscardsChoice(gameData, player, accepted, ability);
-            }
-            return;
-        }
-
-        // Lose-life-unless-discard — handled via the may ability system
-        boolean isLoseLifeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessDiscardEffect);
-        if (isLoseLifeUnlessDiscard) {
-            mayPenaltyChoiceHandlerService.handleLoseLifeUnlessDiscardChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Lose-life-unless-pays — handled via the may ability system
-        boolean isLoseLifeUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof LoseLifeUnlessPaysEffect);
-        if (isLoseLifeUnlessPays) {
-            mayPenaltyChoiceHandlerService.handleLoseLifeUnlessPaysChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Discard-hand-unless-pays-life — handled via the may ability system (e.g. Tyrannize)
-        boolean isDiscardHandUnlessPaysLife = ability.effects().stream().anyMatch(e -> e instanceof DiscardHandUnlessPaysLifeEffect);
-        if (isDiscardHandUnlessPaysLife) {
-            mayPenaltyChoiceHandlerService.handleDiscardHandUnlessPaysLifeChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Tariff: pay this creature's mana cost or sacrifice it — handled via the may ability system
-        boolean isTariffPayOrSacrifice = ability.effects().stream()
-                .anyMatch(e -> e instanceof EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect);
-        if (isTariffPayOrSacrifice) {
-            tariffSupport.handlePayOrSacrificeChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Opponent may return exiled card to hand, or controller draws N (e.g. Distant Memories)
-        OpponentMayReturnExiledCardOrDrawEffect opponentExileChoice = ability.effects().stream()
-                .filter(e -> e instanceof OpponentMayReturnExiledCardOrDrawEffect)
-                .map(e -> (OpponentMayReturnExiledCardOrDrawEffect) e)
-                .findFirst().orElse(null);
-        if (opponentExileChoice != null) {
-            mayPenaltyChoiceHandlerService.handleOpponentExileChoice(gameData, player, accepted, ability, opponentExileChoice);
-            return;
-        }
-
-        // Opponent chooses one of two modes for the controller (e.g. Library of Lat-Nam)
-        boolean isLibraryOfLatNamChoice = ability.effects().stream().anyMatch(e -> e instanceof LibraryOfLatNamEffect);
-        if (isLibraryOfLatNamChoice) {
-            mayPenaltyChoiceHandlerService.handleLibraryOfLatNamChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Discard-unless-exile-from-graveyard — handled via the may ability system
-        boolean isDiscardUnlessExile = ability.effects().stream().anyMatch(e -> e instanceof DiscardUnlessExileCardFromGraveyardEffect);
-        if (isDiscardUnlessExile) {
-            mayPenaltyChoiceHandlerService.handleDiscardUnlessExileChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Sacrifice-unless-discard — handled via the may ability system
-        boolean isSacrificeUnlessDiscard = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect);
-        if (isSacrificeUnlessDiscard) {
-            mayPenaltyChoiceHandlerService.handleSacrificeUnlessDiscardChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Sacrifice-unless-return-own-permanent — handled via the may ability system
-        boolean isSacrificeUnlessReturnPermanent = ability.effects().stream().anyMatch(e -> e instanceof SacrificeUnlessReturnOwnPermanentTypeToHandEffect);
-        if (isSacrificeUnlessReturnPermanent) {
-            mayPenaltyChoiceHandlerService.handleSacrificeUnlessReturnOwnPermanentChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Optional "you may sacrifice ..., if you don't [penalty]" — e.g. Yawgmoth Demon
-        boolean isForcedCostOrElse = ability.effects().stream().anyMatch(e -> e instanceof ForcedCostOrElseEffect);
-        if (isForcedCostOrElse) {
-            mayPenaltyChoiceHandlerService.handleForcedCostOrElseOptionalChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Generic single-draw replacement
-        ReplaceSingleDrawEffect replaceSingleDrawEffect = ability.effects().stream()
-                .filter(e -> e instanceof ReplaceSingleDrawEffect)
-                .map(e -> (ReplaceSingleDrawEffect) e)
-                .findFirst()
-                .orElse(null);
-        if (replaceSingleDrawEffect != null) {
-            mayMiscHandlerService.handleSingleDrawReplacementChoice(gameData, player, accepted, ability, replaceSingleDrawEffect);
-            return;
-        }
-
-        // Redirect retarget — choose new targets for target spell (e.g. Redirect)
-        boolean isRedirectRetarget = ability.effects().stream().anyMatch(e -> e instanceof ChooseNewTargetsForTargetSpellEffect);
-        if (isRedirectRetarget) {
-            mayCopyHandlerService.handleRedirectRetargetChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Copy spell retarget — choose new targets for a copied spell
-        boolean isCopySpellRetarget = ability.effects().stream().anyMatch(e -> e instanceof CopySpellEffect);
-        if (isCopySpellRetarget) {
-            mayCopyHandlerService.handleCopySpellRetargetChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Copy activated ability retarget — choose a new target for a copied ability (Rings of Brighthearth)
-        CopyActivatedAbilityRetargetEffect abilityRetarget = ability.effects().stream()
-                .filter(e -> e instanceof CopyActivatedAbilityRetargetEffect)
-                .map(e -> (CopyActivatedAbilityRetargetEffect) e)
-                .findFirst().orElse(null);
-        if (abilityRetarget != null) {
-            mayCopyHandlerService.handleCopyActivatedAbilityRetargetChoice(gameData, player, accepted, ability, abilityRetarget);
-            return;
-        }
-
-        // BecomeCopyOfTargetCreatureEffect — targets "another creature" (e.g. Cryptoplasm)
-        boolean isBecomeCopyEffect = ability.effects().stream().anyMatch(e -> e instanceof BecomeCopyOfTargetCreatureEffect);
-        if (isBecomeCopyEffect) {
-            mayCopyHandlerService.handleBecomeCopyChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Copy permanent effect (Clone / Sculpting Steel) — handled as replacement effect (pre-entry)
-        CopyPermanentOnEnterEffect copyEffect = ability.effects().stream()
-                .filter(e -> e instanceof CopyPermanentOnEnterEffect)
-                .map(e -> (CopyPermanentOnEnterEffect) e)
-                .findFirst().orElse(null);
-        if (copyEffect != null) {
-            mayCopyHandlerService.handleCopyPermanentOnEnterChoice(gameData, player, accepted, ability, copyEffect);
-            return;
-        }
-
-        // Sacrifice-artifact for divided damage (e.g. Kuldotha Flamefiend)
-        boolean isSacrificeArtifact = ability.effects().stream()
-                .anyMatch(e -> e instanceof SacrificeArtifactThenDealDividedDamageEffect);
-        if (isSacrificeArtifact) {
-            mayMiscHandlerService.handleMaySacrificeArtifactForDividedDamage(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Sphinx Ambassador — put selected card onto battlefield or return to library
-        boolean isSphinxAmbassador = ability.effects().stream()
-                .anyMatch(e -> e instanceof SphinxAmbassadorPutOnBattlefieldEffect);
-        if (isSphinxAmbassador) {
-            mayMiscHandlerService.handleSphinxAmbassadorChoice(gameData, player, accepted, ability);
-            return;
-        }
-
-        // Shuffle library — resolved directly without creating a stack entry (e.g. Ponder "You may shuffle")
-        boolean isShuffleLibrary = ability.effects().stream()
-                .anyMatch(e -> e instanceof ShuffleLibraryEffect);
-        if (isShuffleLibrary) {
-            if (accepted) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, ability.controllerId());
-                String logEntry = player.getUsername() + " shuffles their library.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} shuffles their library ({})", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-            } else {
-                String logEntry = player.getUsername() + " chooses not to shuffle.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} declines shuffle ({})", gameData.id,
-                        player.getUsername(), ability.sourceCard().getName());
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

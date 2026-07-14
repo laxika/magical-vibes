@@ -33,7 +33,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/combat/CombatTriggerService.java=3
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/graveyard/GraveyardService.java=6
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/CardChoiceHandlerService.java=1
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayAbilityHandlerService.java=44
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayAbilityHandlerService.java=22
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayCastHandlerService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/MayPenaltyChoiceHandlerService.java=10
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/input/PermanentChoiceBattlefieldHandlerService.java=1

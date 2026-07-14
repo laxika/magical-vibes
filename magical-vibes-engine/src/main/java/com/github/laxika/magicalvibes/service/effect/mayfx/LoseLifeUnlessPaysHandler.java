@@ -1,0 +1,30 @@
+package com.github.laxika.magicalvibes.service.effect.mayfx;
+
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+/**
+ * Lose-life-unless-pays — "unless you pay [cost], you lose N life".
+ */
+@Component
+@RequiredArgsConstructor
+public class LoseLifeUnlessPaysHandler implements MayEffectHandlerBean {
+
+    private final MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return LoseLifeUnlessPaysEffect.class;
+    }
+
+    @Override
+    public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        mayPenaltyChoiceHandlerService.handleLoseLifeUnlessPaysChoice(gameData, player, accepted, ability);
+    }
+}

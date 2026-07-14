@@ -1873,3 +1873,145 @@ baseline regen.
 - `agent-docs/ARCHITECTURE.md`, `agent-docs/EFFECTS_QUICK_REFERENCE.md` (mayfx registry documented).
 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
+
+## Step 16 — Finish the `MayAbilityHandlerService` routing migration; sweep the two sibling "may" services  (2026-07-15)
+
+Continued step 15. Migrated **every remaining effect-keyed routing block** (17–39 on the step-15
+checklist, except the deliberately-kept block 5 guard) out of `MayAbilityHandlerService.handleMayAbilityChosen`
+into `mayfx` beans, then evaluated the two sibling services. `MayAbilityHandlerService` is now
+**dispatch-routing-free**: no effect-keyed accept/decline chain remains — only construction/target-selection/
+resolution-time survivors (below).
+
+### Ordering-hazard re-check (before any change)
+
+Step 15 proved no top-level `effects()` co-occurrence for the migrated set. Re-ran the sweep (Python,
+`scratchpad/cooc.py`) over all card files for the **full** post-step-16 registered set **plus** block 5's
+`CastTopOfLibraryWithoutPayingManaCostEffect`. Three files reference two registered types each, all safe:
+- `LeafCrownedElder` — known nested case (RevealTopCardMayPlayFreeOrExile inside KinshipEffect.revealEffects());
+  top-level `effects()` is `[KinshipEffect]`.
+- `ChancellorOfTheAnnex` — `CounterUnlessPaysEffect` and `RegisterDelayedCounterTriggerEffect` live in
+  **different EffectSlots** (`ON_OPPONENT_CASTS_SPELL` vs `ON_OPENING_HAND_REVEAL`) → distinct triggered
+  abilities, never one `PendingMayAbility.effects()`.
+- `WildRicochet` — `ChooseNewTargetsForTargetSpellEffect` + `CopySpellEffect` both resolve via the
+  **resolution-time** path (`resolvingMayEffectFromStack` returns early *before* the main dispatch loop), so
+  the loop never sees them together.
+No card pairs block 5's type with any registered type, so migrating 17–39 introduces no block-5 ordering
+change. **No hazard; list order == old code order.** (Re-verify this sweep before registering more types.)
+
+### Blocks migrated (23 blocks → 24 beans)
+
+All are `@Component` `MayEffectHandlerBean`s in `service/effect/mayfx/`; most delegate to the existing
+accept/decline method verbatim, a few re-extract their typed effect (mirroring the old branch) and one is inline.
+
+- 17 `LeylineStartOnBattlefieldEffect` → `LeylineStartOnBattlefieldHandler`
+- 18 `RegisterDelayedCounterTriggerEffect` → `OpeningHandDelayedCounterTriggerHandler` (extracts effect)
+- 19 `RegisterDelayedManaTriggerEffect` → `OpeningHandDelayedManaTriggerHandler` (extracts effect)
+- 20 `CounterUnlessEffect` (interface) → **two** concrete-keyed beans `CounterUnlessPaysHandler`
+  (`CounterUnlessPaysEffect` → `PAY_MANA`) and `CounterUnlessDiscardsHandler` (`CounterUnlessDiscardsEffect`
+  → `DISCARD_CARD`). The registry keys on `effect.getClass()`, so an interface can't be registered directly;
+  the old `switch(ransomKind())` is replaced by the bijective concrete-class → method mapping (verified
+  hardcoded in each record).
+- 21 `LoseLifeUnlessDiscardEffect` → `LoseLifeUnlessDiscardHandler`
+- 22 `LoseLifeUnlessPaysEffect` → `LoseLifeUnlessPaysHandler`
+- 23 `DiscardHandUnlessPaysLifeEffect` → `DiscardHandUnlessPaysLifeHandler`
+- 24 `EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect` → `TariffPayOrSacrificeHandler`
+  (injects `TariffSupport`)
+- 25 `OpponentMayReturnExiledCardOrDrawEffect` → `OpponentMayReturnExiledCardOrDrawHandler` (extracts effect)
+- 26 `LibraryOfLatNamEffect` → `LibraryOfLatNamChoiceHandler`
+- 27 `DiscardUnlessExileCardFromGraveyardEffect` → `DiscardUnlessExileFromGraveyardHandler`
+- 28 `SacrificeUnlessDiscardCardTypeEffect` → `SacrificeUnlessDiscardHandler`
+- 29 `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` → `SacrificeUnlessReturnOwnPermanentHandler`
+- 30 `ForcedCostOrElseEffect` → `ForcedCostOrElseHandler`
+- 31 `ReplaceSingleDrawEffect` → `SingleDrawReplacementHandler` (extracts effect; no card user exists yet)
+- 32 `ChooseNewTargetsForTargetSpellEffect` → `RedirectRetargetHandler` (main-path only; resolution-time
+  variant stays — see survivors)
+- 33 `CopySpellEffect` → `CopySpellRetargetHandler`
+- 34 `CopyActivatedAbilityRetargetEffect` → `CopyActivatedAbilityRetargetHandler` (extracts effect)
+- 35 `BecomeCopyOfTargetCreatureEffect` → `BecomeCopyOfTargetCreatureChoiceHandler`
+- 36 `CopyPermanentOnEnterEffect` → `CopyPermanentOnEnterChoiceHandler` (extracts effect)
+- 37 `SacrificeArtifactThenDealDividedDamageEffect` → `SacrificeArtifactForDividedDamageHandler`
+- 38 `SphinxAmbassadorPutOnBattlefieldEffect` → `SphinxAmbassadorPutOnBattlefieldChoiceHandler`
+- 39 `ShuffleLibraryEffect` → `ShuffleLibraryMayHandler` (**inline**: injects `GameBroadcastService` +
+  `InputCompletionService`, calls `LibraryShuffleHelper.shuffleLibrary`, verbatim log/broadcast text)
+
+### Documented survivors — stay in `MayAbilityHandlerService` (22 counted `instanceof`)
+
+Not routing; entangled with construction/target-selection/resolution-time state, exactly the "separate
+sub-step" step 15 flagged. Each is a FACT-reading construction step or a state-machine preamble, not a
+bespoke accept/decline branch:
+
+1. **Block 5 guard** (`CastTopOfLibraryWithoutPayingManaCostEffect`, Galvanoth): matched-type-but-decline
+   fallthrough when `castableTypes()` excludes the source type — a class-keyed handler cannot express
+   "keep going." Kept verbatim (step-15 decision).
+2. **Generic accept / stack-construction cluster**: `needsSelfTarget` over `PutCountersOnSelfEffect` /
+   `AnimatePermanentsEffect(SELF)` / `BoostSelfEffect` / `ImprintDyingCreatureEffect` /
+   `ExileFromHandToImprintEffect` / `ReturnDyingCreatureToBattlefieldAndAttachSourceEffect` /
+   `BecomeCopyOfDyingCreatureEffect`, and `needsEnteringTarget` over `CreateTokenCopyOfTargetPermanentEffect`
+   — set the just-built stack entry's `targetId`.
+3. **Graveyard target-selection helpers** (`handleGraveyardTargetedMayAbility` +
+   `handleResolutionTimeGraveyardTargetSelection`): read `ExileTargetCardFromGraveyardAndImprintOnSource*` /
+   `*AndCreateTokenCopy*` `filter()` to build the graveyard target list.
+4. **Resolution-time may path** (`handleResolutionTimeMayChoice` + `setUpSelfTargetIfNeeded` +
+   `extractInnerEffect`): CR 603.5, runs before the dispatch loop (early `return` at
+   `resolvingMayEffectFromStack`), entangled with `pendingEffectResolutionEntry`/index. Handles the
+   resolution-time variants of `RegisterDelayedCounterTriggerEffect`, `RegisterDelayedManaTriggerEffect`,
+   `ChooseNewTargetsForTargetSpellEffect` (whose **main-path** variants ARE migrated — blocks 18/19/32),
+   unwraps `MayEffect`, and repeats the self-target construction facts.
+
+### Part 2 — sibling services: both **stay whole** (documented decision)
+
+- `MayPenaltyChoiceHandlerService` (10 counted) and `MayCastHandlerService` (2 counted): read both in full.
+  Every `instanceof` site is **effect-field extraction inside the accept/decline implementation method**
+  (e.g. `handleCounterUnlessPaysChoice` filtering its own `CounterUnlessEffect` to read `amount()`), i.e.
+  these methods are the *destinations* the new `mayfx` beans delegate *into* — not dispatch sites. The one
+  exception (`MayCastHandlerService:577`) is a `pendingMayAbilities.removeIf(... instanceof
+  MayCastFromHandWithoutPayingManaCostEffect)` collection-cleanup after casting one spell. None is a routing
+  dispatch; migrating any into the registry would be circular. Both services keep their exact counts (10 / 2),
+  confirmed by the baseline diff being a single line.
+
+### Circular-dependency / field cleanup
+
+`MayAbilityHandlerService` no longer references `MayPenaltyChoiceHandlerService` or `TariffSupport`
+(their only callers, blocks 20–30 and 24, moved out) — both fields + ctor params + assignments removed.
+`MayCopyHandlerService` (resolution-time redirect) and `MayCastHandlerService` (block 5) stay. 21 now-unused
+effect-type imports + the `LibraryShuffleHelper` import pruned. The pre-existing unused `turnProgressionService`
+field is left as-is (out of scope, per step 15). Beans injecting a sub-service create no cycle back into
+`MayAbilityHandlerService` (registry is populated post-construction via `getBeansOfType`).
+
+### Per-file violation drop
+
+| File | Before | After | Delta |
+|------|-------:|------:|------:|
+| `service/input/MayAbilityHandlerService.java` | 44 | 22 | -22 |
+| `service/input/MayPenaltyChoiceHandlerService.java` | 10 | 10 | 0 (stays whole) |
+| `service/input/MayCastHandlerService.java` | 2 | 2 | 0 (stays whole) |
+
+Program total (ratchet sum): **514 → 492** (-22). The 23 migrated blocks moved into `mayfx` beans under the
+EXEMPT `service/effect/**` zone (zero counted violations). Baseline + matrix regenerated with
+`python scripts/effect-coupling-audit.py`; `git diff` of the baseline touches exactly one line
+(`MayAbilityHandlerService` 44→22, a pure drop).
+
+### Tests run (all green — 24 card classes covering every migrated block + decline paths)
+
+`ChancellorOfTheAnnexTest` (15, blocks 18+20a), `LeylineOfSanctityTest` (11, block 17),
+`ChancellorOfTheTangleTest` (9, block 19), `ManaLeakTest` (7, block 20a), `ForumNecroscribeTest` (6, block 20b),
+`PainfulQuandaryTest` (10, block 21), `IsolationCellTest` (9, block 22), `TyrannizeTest` (3, block 23),
+`TariffTest` (5, block 24), `DistantMemoriesTest` (8, block 25), `LibraryOfLatNamTest` (3, block 26),
+`UrzasTomeTest` (6, block 27), `HiddenHorrorTest` (13, block 28), `GlintHawkTest` (7, block 29),
+`HecatombTest` (7, block 30), `RedirectTest` (10, block 32), `IncreasingVengeanceTest` (7, block 33),
+`RingsOfBrighthearthTest` (4, block 34), `CryptoplasmTest` (10, block 35), `CloneTest` (11, block 36),
+`SculptingSteelTest` (8, block 36), `KuldothaFlamefiendTest` (9, block 37), `SphinxAmbassadorTest` (9, block 38),
+`PonderTest` (10, block 39). Block 31 (`ReplaceSingleDrawEffect`) has no card user, so nothing exercises it.
+`EffectDispatchRatchetTest` — green after baseline regen.
+
+### Files changed
+
+- **New:** 24 `@Component` handler beans in `service/effect/mayfx/` (blocks 17–39; `CounterUnlessEffect`
+  split into two).
+- `service/input/MayAbilityHandlerService.java` — 23 routing branches deleted; 2 unused service deps +
+  21 effect-type imports + `LibraryShuffleHelper` import pruned.
+- `refactor-docs/effect-dispatch-baseline.txt`, `refactor-docs/EFFECT_COUPLING_MATRIX.md` (regenerated).
+- `agent-docs/ARCHITECTURE.md`, `agent-docs/EFFECTS_QUICK_REFERENCE.md` (routing chain fully migrated;
+  interface-keyed-by-concrete-implementor note added).
+
+**For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
