@@ -17,7 +17,7 @@ public record ExileTargetPermanentUntilSourceLeavesEffect(boolean imprint) imple
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

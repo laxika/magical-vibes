@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect(int damage) implements CardEffect {
 
     @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, true, null, false, 1);
     }
 }

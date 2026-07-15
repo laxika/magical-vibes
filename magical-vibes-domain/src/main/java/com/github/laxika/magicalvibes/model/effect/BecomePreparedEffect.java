@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record BecomePreparedEffect() implements CardEffect {
 
     @Override
-    public boolean isSelfTargeting() {
-        return true;
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
     }
 }

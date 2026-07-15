@@ -18,7 +18,7 @@ public record MustBlockTargetCreatureEffect(int blockerTargetGroup, int blockedT
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

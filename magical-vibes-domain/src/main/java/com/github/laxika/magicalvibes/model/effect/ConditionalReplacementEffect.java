@@ -7,9 +7,12 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * {@link Condition}. When the condition is met the upgraded effect is resolved;
  * otherwise the base effect is used ("instead" patterns, e.g. kicker upgrades).
  * <p>
- * Targeting delegates to both inner effects so target selection works for either path.
- * Condition evaluation is handled externally by the engine's
- * {@code ConditionEvaluationService} since domain records cannot depend on game services.
+ * Targeting delegates to the upgraded effect. Every base/upgraded pair is a magnitude-only
+ * replacement (same target shape, e.g. "deal 3" vs "deal 5"), so the upgraded effect's
+ * {@code targetSpec()} reproduces the base-OR-upgraded targeting exactly; the enters-tapped
+ * convenience form has a {@code null} base and a non-targeting upgraded effect. Condition
+ * evaluation is handled externally by the engine's {@code ConditionEvaluationService} since
+ * domain records cannot depend on game services.
  */
 public record ConditionalReplacementEffect(
         Condition condition,
@@ -35,32 +38,7 @@ public record ConditionalReplacementEffect(
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return (baseEffect != null && baseEffect.canTargetPlayer()) || upgradedEffect.canTargetPlayer();
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return (baseEffect != null && baseEffect.canTargetPermanent()) || upgradedEffect.canTargetPermanent();
-    }
-
-    @Override
-    public boolean canTargetSpell() {
-        return (baseEffect != null && baseEffect.canTargetSpell()) || upgradedEffect.canTargetSpell();
-    }
-
-    @Override
-    public boolean canTargetGraveyard() {
-        return (baseEffect != null && baseEffect.canTargetGraveyard()) || upgradedEffect.canTargetGraveyard();
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return (baseEffect != null && baseEffect.isDamageOrDestruction()) || upgradedEffect.isDamageOrDestruction();
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return (baseEffect != null && baseEffect.isSelfTargeting()) || upgradedEffect.isSelfTargeting();
+    public TargetSpec targetSpec() {
+        return upgradedEffect.targetSpec();
     }
 }

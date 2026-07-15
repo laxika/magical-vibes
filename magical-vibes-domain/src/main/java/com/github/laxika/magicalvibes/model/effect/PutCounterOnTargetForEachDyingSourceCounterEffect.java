@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
  * Death trigger for "When this creature dies, put a {@code counterType} counter on target creature
@@ -25,12 +24,7 @@ public record PutCounterOnTargetForEachDyingSourceCounterEffect(CounterType coun
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public PermanentPredicate targetPredicate() {
-        return new PermanentIsCreaturePredicate();
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentIsCreaturePredicate());
     }
 }

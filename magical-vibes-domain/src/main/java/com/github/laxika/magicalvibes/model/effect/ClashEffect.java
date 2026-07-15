@@ -35,14 +35,14 @@ public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolea
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return (onWin != null && onWin.canTargetPermanent())
+    public TargetSpec targetSpec() {
+        boolean perm = (onWin != null && onWin.canTargetPermanent())
                 || beforeClash.stream().anyMatch(CardEffect::canTargetPermanent);
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return (onWin != null && onWin.canTargetPlayer())
+        boolean player = (onWin != null && onWin.canTargetPlayer())
                 || beforeClash.stream().anyMatch(CardEffect::canTargetPlayer);
+        TargetCategory category = perm
+                ? (player ? TargetCategory.PLAYER_OR_PERMANENT : TargetCategory.PERMANENT)
+                : (player ? TargetCategory.PLAYER : TargetCategory.NONE);
+        return new TargetSpec(category, false, null, false, 1);
     }
 }

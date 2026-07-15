@@ -10,5 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public record RemoveCountersAndTransformSelfEffect(CounterType counterType) implements CardEffect {
 
     @Override
-    public boolean isSelfTargeting() { return true; }
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+    }
 }

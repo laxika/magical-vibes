@@ -29,7 +29,7 @@ public record BecomeCreatureTypeWithBasePowerToughnessEffect(int power, int toug
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return false;
+    public TargetSpec targetSpec() {
+        return TargetSpec.NONE;
     }
 }

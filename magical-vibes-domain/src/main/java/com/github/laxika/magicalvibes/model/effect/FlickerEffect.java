@@ -72,12 +72,13 @@ public record FlickerEffect(
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == FlickerScope.TARGET;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == FlickerScope.TARGET_PLAYERS_PERMANENTS;
+    public TargetSpec targetSpec() {
+        if (scope == FlickerScope.TARGET) {
+            return TargetSpec.benign(TargetCategory.PERMANENT);
+        }
+        if (scope == FlickerScope.TARGET_PLAYERS_PERMANENTS) {
+            return TargetSpec.benign(TargetCategory.PLAYER);
+        }
+        return TargetSpec.NONE;
     }
 }

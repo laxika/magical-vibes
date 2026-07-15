@@ -12,22 +12,7 @@ public record TriggeringCardConditionalEffect(
 ) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return wrapped.canTargetPermanent();
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return wrapped.canTargetPlayer();
-    }
-
-    @Override
-    public boolean canTargetSpell() {
-        return wrapped.canTargetSpell();
-    }
-
-    @Override
-    public boolean canTargetGraveyard() {
-        return wrapped.canTargetGraveyard();
+    public TargetSpec targetSpec() {
+        return wrapped.targetSpec();
     }
 }

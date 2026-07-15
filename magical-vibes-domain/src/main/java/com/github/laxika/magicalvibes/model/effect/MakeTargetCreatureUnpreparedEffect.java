@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MakeTargetCreatureUnpreparedEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

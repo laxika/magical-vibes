@@ -20,17 +20,7 @@ public record IfWonClashEffect(CardEffect wrapped) implements ClashOutcomeCondit
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return wrapped.canTargetPermanent();
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return wrapped.canTargetPlayer();
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return wrapped.isSelfTargeting();
+    public TargetSpec targetSpec() {
+        return wrapped.targetSpec();
     }
 }

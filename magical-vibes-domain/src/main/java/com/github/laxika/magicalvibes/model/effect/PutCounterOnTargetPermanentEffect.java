@@ -70,5 +70,7 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
     }
 
     @Override
-    public boolean canTargetPermanent() { return predicate == null; }
+    public TargetSpec targetSpec() {
+        return predicate == null ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
+    }
 }

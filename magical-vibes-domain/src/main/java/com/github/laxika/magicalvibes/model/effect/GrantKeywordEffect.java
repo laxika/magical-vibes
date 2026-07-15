@@ -54,11 +54,13 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
         return new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, GrantDuration.END_OF_TURN, grantCondition);
     }
 
-    @Override public boolean canTargetPermanent() { return scope == GrantScope.TARGET; }
-
-    @Override public boolean canTargetPlayer() { return scope == GrantScope.TARGET_PLAYERS_CREATURES; }
-
-    @Override public boolean isSelfTargeting() { return scope == GrantScope.SELF; }
-
-    @Override public PermanentPredicate targetPredicate() { return scope == GrantScope.TARGET ? filter : null; }
+    @Override
+    public TargetSpec targetSpec() {
+        return switch (scope) {
+            case TARGET -> TargetSpec.benign(TargetCategory.PERMANENT, filter);
+            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetCategory.PLAYER);
+            case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            default -> TargetSpec.NONE;
+        };
+    }
 }

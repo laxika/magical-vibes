@@ -17,7 +17,7 @@ public record DealDamageToEachPlayerControllingMatchingPermanentEffect(int damag
         implements CardEffect {
 
     @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, true, null, false, 1);
     }
 }

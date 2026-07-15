@@ -20,7 +20,8 @@ public record NthSpellCastTriggerEffect(
 ) implements CardEffect {
 
     @Override
-    public boolean isSelfTargeting() {
-        return resolvedEffects.stream().anyMatch(CardEffect::isSelfTargeting);
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, false, null,
+                resolvedEffects.stream().anyMatch(CardEffect::isSelfTargeting), 1);
     }
 }

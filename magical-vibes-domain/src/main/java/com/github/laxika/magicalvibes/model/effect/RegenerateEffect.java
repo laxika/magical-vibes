@@ -7,10 +7,9 @@ public record RegenerateEffect(boolean targetsPermanent) implements Regeneration
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return targetsPermanent;
+    public TargetSpec targetSpec() {
+        return targetsPermanent
+                ? TargetSpec.benign(TargetCategory.PERMANENT)
+                : new TargetSpec(TargetCategory.NONE, false, null, true, 1);
     }
-
-    @Override
-    public boolean isSelfTargeting() { return !targetsPermanent; }
 }

@@ -11,12 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record DealDamageToEachTargetEffect(DynamicAmount damage) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

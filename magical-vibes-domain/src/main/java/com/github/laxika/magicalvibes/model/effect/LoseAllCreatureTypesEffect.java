@@ -18,12 +18,13 @@ public record LoseAllCreatureTypesEffect(GrantScope scope) implements CardEffect
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == GrantScope.TARGET;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == GrantScope.TARGET_PLAYERS_CREATURES;
+    public TargetSpec targetSpec() {
+        if (scope == GrantScope.TARGET) {
+            return TargetSpec.benign(TargetCategory.PERMANENT);
+        }
+        if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
+            return TargetSpec.benign(TargetCategory.PLAYER);
+        }
+        return TargetSpec.NONE;
     }
 }

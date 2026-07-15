@@ -20,7 +20,7 @@ public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup) im
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

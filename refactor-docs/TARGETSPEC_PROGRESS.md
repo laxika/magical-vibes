@@ -1188,3 +1188,185 @@ mill), `JestersCapTest` (SearchTargetLibraryForCardsToExileEffect — search-lib
 (ExchangeTargetPlayersLifeTotalsEffect — the 2-player-target spec), `BoggartForagerTest`
 (ShuffleLibraryEffect `targetPlayer=true` → benign(PLAYER) branch), `PonderTest` (ShuffleLibraryEffect
 `targetPlayer=false` → NONE branch, non-targeting).
+
+---
+
+## Step 9 — Trigger/combat/multi-target permanent-slot, metadata-only, and the delegating wrappers  (2026-07-15)
+
+Migrated the **final 66 in-scope records** — everything left in `targetspec-baseline.txt` after step 8.
+**No `@ValidatesTarget` method was touched this step: none of the 66 has a validator** (`records with a
+validator: 0`). The audit's `validators total` stays **34** (the step-2..8 escape hatches). After this
+step **`targetspec-baseline.txt` is EMPTY** — all 277 in-scope records expose their targeting through
+one derived `TargetSpec targetSpec()`. `@ValidatesTarget` now survives only as the escape hatch for
+step 10.
+
+### How the two null-target hazards were resolved (read before the buckets)
+
+`TargetValidationService.validateSpec` runs only inside `checkEffectTargets`, whose call sites are:
+`TargetLegalityService.checkSpellTargeting` (a `null` `targetId` short-circuits at "Invalid target"
+BEFORE `checkEffectTargets`), `validateActivatedAbilityTargeting` (returns early when
+`minTargets==0 && targetId==null`), the graveyard/zone/retarget entry points (targetId supplied), and
+`AiTargetSelector.isValidPermanentTarget` (passes a concrete permanent id). The **multi-target cast
+paths** (`validateMultiSpellTargets` / `validateMultiTargetAbility`) do NOT call `checkEffectTargets`.
+Consequences that drive the category choices below:
+- A **non-no-op** category (`PERMANENT`/`CREATURE`/`LAND`) is safe for a **single-target** or
+  **trigger/ETB/combat-slot** effect: its `requireBattlefieldTarget` either runs on the real permanent
+  target (inert) or never runs (trigger effects don't reach `checkEffectTargets`).
+- For a **multi-target** effect (targets ride `entry.getTargetIds()`/`targetsForGroup(...)`, single
+  `targetId` null — step-5's Garruk lesson), a non-no-op category would `requireBattlefieldTarget` on
+  the null single-target and throw, so the **no-op `PLAYER_OR_PERMANENT`** is used (documented inert
+  `canTargetPlayer` widening — multi-target selection goes through per-position filters, not the
+  single-target boolean). Each candidate effect's handler was inspected for `getTargetIds`/
+  `targetsForGroup` to classify single vs multi.
+
+### The permanent+player decision (brief item 1) — PLAYER_OR_PERMANENT, recorded
+
+Every permanent+player record uses **`PLAYER_OR_PERMANENT`** (never `ANY_TARGET`). Rationale, checked
+against `ValidTargetService`'s structural any-target backstop (lines ~366-378, the `allAnyTarget`
+block): that backstop is an **offering-time** restriction that reads the derived
+`canTargetPermanent`/`canTargetPlayer` booleans — both `true` under `PLAYER_OR_PERMANENT`, unchanged —
+so it keeps firing exactly as before (a no-target-filter perm+player spell still offers only
+creature/planeswalker/player). It never runs at cast, and these records have **no validator = no
+cast-time type gate**, so the no-op `PLAYER_OR_PERMANENT` is behavior-preserving-at-cast. `ANY_TARGET`
+was rejected: it would (a) add a cast gate these validator-less effects never had and (b) `requireTarget`
+would throw on the null single-`targetId` of the multi-target member (`DealDamageToEachTargetEffect`).
+
+### Bucket 1 — trigger/ETB/combat + multi-target permanent records (no validator)
+
+- **Single-target / trigger / ETB / combat permanent-only** get `benign`/`harmful(PERMANENT)` (inert or
+  never-run `requireBattlefieldTarget`): `AttachAllAurasToAnotherPermanentEffect`,
+  `AttachSourceAuraToTargetCreatureEffect`, `AttachSourceEquipmentToTargetCreatureEffect`,
+  `BecomeCopyOfTargetCreatureEffect`, `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect`,
+  `ExileTargetOnControllerSpellCastEffect`, `ExileTargetOpponentPermanentOnDrawEffect`,
+  `ExileTargetPermanentAndImprintEffect`, `ExileTargetPermanentUntilSourceLeavesEffect`,
+  `GainControlUntapAndHasteTargetEffect`, `MakeTargetCreatureUnpreparedEffect`,
+  `RemoveCounterFromTargetPermanentEffect` (all benign); `harmful(PERMANENT)` (kept
+  `isDamageOrDestruction=true`) — `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect`,
+  `DestroyCombatOpponentAtEndOfCombatEffect`, `DestroySubtypeCombatOpponentEffect`.
+- **Multi-target permanent** get `PLAYER_OR_PERMANENT` (no-op, verified via handler `getTargetIds`/
+  `targetsForGroup`): benign — `FightTargetsEffect`, `TargetDealsPowerDamageToTargetEffect`,
+  `MoveCounterFromTargetCreatureToTargetCreatureEffect`, `MustBlockTargetCreatureEffect`,
+  `AttachTargetEquipmentToTargetCreatureEffect`, `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect`;
+  harmful (kept `isDamageOrDestruction`) — `DestroyEachTargetPermanentEffect`,
+  `DestroyUpToTargetsThenReturnFromGraveyardEffect`.
+- **Permanent+player** get `PLAYER_OR_PERMANENT`: `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect`
+  (benign, multi), `DealDamageToEachTargetEffect` (benign — never overrode `isDamageOrDestruction`; its
+  protection is the multi-target structural core, so `harmful` would be a widening, not a preservation),
+  `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect` and
+  `RevealTopCardsBottomThenDamageIfCopyRevealedEffect` (harmful — kept `isDamageOrDestruction`).
+- **Per-scope conditional records** (switch reproduces the old conditional booleans exactly; all
+  single-target per handler): `FlickerEffect` (`TARGET`→PERMANENT, `TARGET_PLAYERS_PERMANENTS`→PLAYER,
+  else NONE), `SkipNextUntapEffect` (same shape), `GrantActivatedAbilityEffect`
+  (`GrantScope.TARGET`→PERMANENT else NONE), `LosesAllAbilitiesEffect`
+  (`UNTIL_END_OF_TURN`→PERMANENT else NONE), `RemoveKeywordEffect` (`TARGET`→PERMANENT, `SELF`→self-NONE,
+  else NONE), `MakeCreatureUnblockableEffect` (`selfTargeting`→self-NONE else PERMANENT), `RegenerateEffect`
+  (`targetsPermanent`→PERMANENT else self-NONE), `LoseAllCreatureTypesEffect` (`TARGET`→PERMANENT,
+  `TARGET_PLAYERS_CREATURES`→PLAYER, else NONE).
+- **`GrantKeywordEffect`** uses a per-scope switch carrying the predicate:
+  `TARGET`→`benign(PERMANENT, filter)`, `TARGET_PLAYERS_CREATURES`→`benign(PLAYER)`, `SELF`→self-NONE,
+  default→NONE. The `filter` moves into the spec's predicate field (reproducing the old
+  `targetPredicate() = scope==TARGET ? filter : null` for the end-step/saga pipelines). Where `filter`
+  is non-null and the effect is a single-target spell, `validateSpec` now enforces it at cast — the same
+  stricter-and-more-correct predicate enforcement documented for `UntapPermanents`/`MustBlockSource` in
+  step 5; almost all `GrantKeyword` usages have a `null` filter (no change).
+- **`BecomeCreatureTypeWithBasePowerToughnessEffect`** (the step-1 WARNING record, redundantly
+  `canTargetPermanent()==false`) becomes `TargetSpec.NONE`.
+
+### Bucket 2 — `isSelfTargeting`-only (metadata) become `new TargetSpec(NONE, false, null, true, 1)`
+
+`BecomePreparedEffect`, `BoostSelfAndLoseKeywordEffect`, `BoostSelfEffect`,
+`DoubleSelfPowerToughnessEffect`, `IncrementTriggerEffect`, `PutCounterOnSelfThenTransformIfThresholdEffect`,
+`PutCountersOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`, `RemoveAllCountersFromSelfEffect`,
+`RemoveCounterFromSourceEffect`, `RemoveCountersAndTransformSelfEffect`, `TapAndTransformSelfEffect`. Plus
+`NthSpellCastTriggerEffect` becomes `new TargetSpec(NONE, false, null,
+resolvedEffects.stream().anyMatch(CardEffect::isSelfTargeting), 1)` (only `isSelfTargeting` was
+delegated; its other booleans were its own `NONE` defaults and stay `NONE`).
+
+### Bucket 3 — `targetPredicate` records
+
+- `MoveDyingSourceCountersToTargetCreatureEffect`, `PutCounterOnTargetForEachDyingSourceCounterEffect`
+  (both `ON_DEATH`, single-target) become `benign(PERMANENT, new PermanentIsCreaturePredicate())`. The
+  predicate moves into the spec (preserving the derived `targetPredicate()`); `validateSpec` never runs
+  for a death trigger, so no cast-time enforcement is added. Unused `PermanentPredicate` import pruned.
+- `GrantKeywordEffect`'s predicate — handled in bucket 1 above.
+- `PutCounterOnTargetPermanentEffect` — its `canTargetPermanent()` was `predicate == null`, so
+  `targetSpec() = predicate == null ? benign(PERMANENT) : NONE`. Its `targetPredicate` **record
+  component** already satisfies the interface `targetPredicate()` (like `ChangeColorTextEffect`'s
+  `canTargetSpell` component in step 7), so it is NOT copied into the spec — the accessor keeps
+  returning it independently, and the spec's `null` predicate preserves the old "no cast-time predicate
+  gate" behavior.
+
+### Bucket 4 — `isDamageOrDestruction`-only (non-targeting damage siblings) become `new TargetSpec(NONE, true, null, false, 1)`
+
+`DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect`,
+`DealDamageToAllCreaturesTargetControlsEffect`,
+`DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect`,
+`DealDamageToEachPlayerControllingMatchingPermanentEffect`, `DestroySelfAtEndOfCombatEffect`. `harmful`
+is a pure `isDamageOrDestruction` carrier here (category `NONE` means `validateSpec` never runs, so no
+`checkProtection` is added) — same pattern as step 8's `DealDamageToEachMatchingPermanentEffect` NONE
+branch.
+
+### Bucket 5 — the delegating wrappers use FULL delegation
+
+- `ConditionalEffect`, `MayEffect`, `TriggeringCardConditionalEffect`,
+  `TriggeringPermanentConditionalEffect`, `IfWonClashEffect`, `IfLostClashEffect` become
+  `targetSpec() = wrapped.targetSpec()`.
+- `ConditionalReplacementEffect` becomes `targetSpec() = upgradedEffect.targetSpec()`. Verified from every
+  non-enters-tapped card usage (Brimstone Volley, Galvanic Blast, Elder Cathar, Huatli's Spurring, ...)
+  that base and upgraded are always the SAME targeting shape (magnitude-only replacement), so
+  `upgraded`'s spec reproduces the old `base OR upgraded` booleans exactly; the enters-tapped
+  convenience form has a `null` base and a non-targeting `upgraded`. Class javadoc updated. (The spec
+  interpreter still unwraps this wrapper to `baseEffect()` for validation, unchanged.)
+- `ClashEffect` computes from its aggregate (`onWin` + `beforeClash`): `perm`/`player` booleans map to
+  `PLAYER_OR_PERMANENT`/`PERMANENT`/`PLAYER`/`NONE`, benign, non-self. (All current clash cards
+  aggregate to `NONE`; the mapping preserves the exact booleans for any future targeting reward.)
+
+**Deliberate strict-improvement from full delegation (documented per BEHAVIOR-PRESERVING-OR-STRICTER):**
+these wrappers previously delegated only a SUBSET of the targeting booleans (e.g. `ConditionalEffect`
+delegated `canTargetGraveyard` but left `canTargetAnyGraveyard`/`canTargetExile`/
+`targetsControllersGraveyardOnly`/`targetPredicate`/`requiredPlayerTargetCount` at the wrapper's own
+defaults; the `Clash`/`Triggering*` wrappers left `isDamageOrDestruction`/`canTargetSpell` at default).
+`targetSpec() = wrapped.targetSpec()` now delegates ALL of them, which is strictly more faithful (a
+wrapper honestly reports the wrapped effect's real targeting). This can only *widen* a previously-false
+boolean to the wrapped effect's true value (e.g. a "may deal damage" `MayEffect` now reports
+`isDamageOrDestruction=true`, so the offering filters protected permanents) — never narrow. Verified by
+the regression + `StepTriggerServiceTest` + `CardEffectTargetingConsistencyTest` + the wrapper card
+tests; no card relied on the old partial-delegation gap.
+
+### Oracle / judgment calls
+
+- No card behavior narrowed illegally. `harmful` flags exactly reproduce each record's prior
+  `isDamageOrDestruction` (bucket 1/4) except where a non-no-op harmful category adds `checkProtection`
+  at cast for a single-target destroy/damage effect — the same stricter-and-more-correct resolution of
+  the HARMFUL-FLAG-vs-narrowing tension established in steps 3-8 (protection = can't be targeted).
+- The `PLAYER_OR_PERMANENT` `canTargetPlayer` widening on permanent-only multi-target effects is inert
+  (per-position filters govern multi-target selection) — step-5 precedent.
+- No web ruling needed (behavior-preserving-at-cast declarative migration; the documented widenings are
+  offering-consistency / rules-correct-protection improvements).
+
+### Audit re-run + lockstep
+
+`python scripts/targetspec-audit.py` re-run: **records in scope 66 -> 0**; sum of baseline counts
+**114 -> 0**; every category in-scope count -> **0**; `targetspec-baseline.txt` is EMPTY (both ratchets
+green — the baseline shrank to nothing). `@ValidatesTarget` total unchanged at **34** (no validator
+touched; `records with a validator: 0`). `TARGETSPEC_MATRIX.md` regenerated. `effect-dispatch-baseline.txt`
+NOT touched (no `instanceof`-on-effect counts changed).
+
+**Tests run** (one filtered `:magical-vibes-application:test` invocation `-x
+:magical-vibes-frontend:buildAngular`, `BUILD SUCCESSFUL`, plus a separate `:magical-vibes-ai:test`):
+fixed regression set — `WrackWithMadnessTest`, `DarkNourishmentTest`, `FireballTest`,
+`EffectDispatchRatchetTest`, `TargetSpecRatchetTest` (both ratchets green — baseline now empty),
+`ValidTargetServiceTest`, `TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`; step-9
+verification — `com.github.laxika.magicalvibes.service.turn.StepTriggerServiceTest` (trigger-slot
+effects), `CardEffectTargetingConsistencyTest`, `OblivionRingTest` + `FiendHunterTest`
+(ExileTargetPermanentUntilSourceLeaves ETB), `PacifismTest` (aura), and the AI simulator
+`:magical-vibes-ai` `com.github.laxika.magicalvibes.ai.GameSimulatorTest`; one card test per migrated
+family — `FistfulOfForceTest`/`GiltLeafAmbushTest`/`HoardersGreedTest` (Clash), `BrimstoneVolleyTest`/
+`GalvanicBlastTest` (ConditionalReplacement), `BloodFeudTest` (FightTargets), `AncientAnimusTest`
+(PutCounterOnTargetPermanent), `DregsOfSorrowTest` (DestroyEachTargetPermanent), `HuntDownTest`
+(MustBlock), `BrassSquireTest` (AttachTargetEquipment), `ShapesharerTest` (MakeTargetCopy/BecomeCopy),
+`GriefTyrantTest` (PutCounterOnTargetForEachDyingSourceCounter), `ScoldingAdministratorTest`
+(MoveDyingSourceCounters), `ActOfTreasonTest`/`BanishingKnackTest` (GrantKeyword/GrantActivatedAbility),
+`MirrorweaveTest`, `SentryOakTest` (Clash + BoostSelfAndLoseKeyword), `VancesBlastingCannonsTest`
+(NthSpellCast + MayEffect + transform). All green. Effects without a dedicated card test are covered by
+the family representative above and the AI simulator sweep.

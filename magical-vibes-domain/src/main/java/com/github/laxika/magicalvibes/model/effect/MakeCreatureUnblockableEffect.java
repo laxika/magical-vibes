@@ -7,12 +7,9 @@ public record MakeCreatureUnblockableEffect(boolean selfTargeting) implements Ca
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return !selfTargeting;
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return selfTargeting;
+    public TargetSpec targetSpec() {
+        return selfTargeting
+                ? new TargetSpec(TargetCategory.NONE, false, null, true, 1)
+                : TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

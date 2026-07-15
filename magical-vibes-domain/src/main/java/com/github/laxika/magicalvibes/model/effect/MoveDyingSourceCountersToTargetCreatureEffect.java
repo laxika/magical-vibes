@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Map;
 
@@ -25,12 +24,7 @@ public record MoveDyingSourceCountersToTargetCreatureEffect(Map<CounterType, Int
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public PermanentPredicate targetPredicate() {
-        return new PermanentIsCreaturePredicate();
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT, new PermanentIsCreaturePredicate());
     }
 }

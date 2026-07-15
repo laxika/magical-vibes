@@ -23,5 +23,7 @@ public record PutCountersOnSelfEffect(CounterType counterType, int count, Dynami
     }
 
     @Override
-    public boolean isSelfTargeting() { return true; }
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+    }
 }

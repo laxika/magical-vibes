@@ -14,12 +14,7 @@ public record DestroyEachTargetPermanentEffect(boolean cannotBeRegenerated) impl
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

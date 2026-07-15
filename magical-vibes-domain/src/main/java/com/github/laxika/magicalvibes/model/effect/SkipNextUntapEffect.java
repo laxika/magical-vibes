@@ -23,12 +23,13 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == TapUntapScope.TARGET;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS;
+    public TargetSpec targetSpec() {
+        if (scope == TapUntapScope.TARGET) {
+            return TargetSpec.benign(TargetCategory.PERMANENT);
+        }
+        if (scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
+            return TargetSpec.benign(TargetCategory.PLAYER);
+        }
+        return TargetSpec.NONE;
     }
 }

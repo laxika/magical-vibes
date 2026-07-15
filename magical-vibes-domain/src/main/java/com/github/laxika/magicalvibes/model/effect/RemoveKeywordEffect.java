@@ -10,12 +10,13 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == GrantScope.TARGET;
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return scope == GrantScope.SELF;
+    public TargetSpec targetSpec() {
+        if (scope == GrantScope.TARGET) {
+            return TargetSpec.benign(TargetCategory.PERMANENT);
+        }
+        if (scope == GrantScope.SELF) {
+            return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+        }
+        return TargetSpec.NONE;
     }
 }

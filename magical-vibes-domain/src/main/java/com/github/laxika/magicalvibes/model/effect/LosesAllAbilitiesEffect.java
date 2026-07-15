@@ -23,7 +23,8 @@ public record LosesAllAbilitiesEffect(GrantScope scope, EffectDuration duration)
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return duration == EffectDuration.UNTIL_END_OF_TURN;
+    public TargetSpec targetSpec() {
+        return duration == EffectDuration.UNTIL_END_OF_TURN
+                ? TargetSpec.benign(TargetCategory.PERMANENT) : TargetSpec.NONE;
     }
 }

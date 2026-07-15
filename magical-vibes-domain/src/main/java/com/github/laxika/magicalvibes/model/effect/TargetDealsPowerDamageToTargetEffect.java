@@ -20,7 +20,7 @@ public record TargetDealsPowerDamageToTargetEffect(int sourceTargetGroup, int vi
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

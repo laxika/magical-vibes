@@ -23,32 +23,7 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped) impleme
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return wrapped.canTargetPlayer();
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return wrapped.canTargetPermanent();
-    }
-
-    @Override
-    public boolean canTargetSpell() {
-        return wrapped.canTargetSpell();
-    }
-
-    @Override
-    public boolean canTargetGraveyard() {
-        return wrapped.canTargetGraveyard();
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return wrapped.isDamageOrDestruction();
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return wrapped.isSelfTargeting();
+    public TargetSpec targetSpec() {
+        return wrapped.targetSpec();
     }
 }

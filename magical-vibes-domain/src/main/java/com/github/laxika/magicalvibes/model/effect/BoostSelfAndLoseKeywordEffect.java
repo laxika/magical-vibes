@@ -12,7 +12,7 @@ public record BoostSelfAndLoseKeywordEffect(int powerBoost, int toughnessBoost, 
         implements CardEffect {
 
     @Override
-    public boolean isSelfTargeting() {
-        return true;
+    public TargetSpec targetSpec() {
+        return new TargetSpec(TargetCategory.NONE, false, null, true, 1);
     }
 }
