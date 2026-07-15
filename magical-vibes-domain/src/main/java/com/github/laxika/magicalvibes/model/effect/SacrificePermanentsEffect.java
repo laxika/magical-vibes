@@ -37,7 +37,11 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return recipient == SacrificeRecipient.TARGET_PLAYER;
+    public TargetSpec targetSpec() {
+        // Only the target-player recipient targets a player; the kept validator enforces the
+        // requireTargetPlayer guard the no-op PLAYER category cannot reproduce.
+        return recipient == SacrificeRecipient.TARGET_PLAYER
+                ? TargetSpec.benign(TargetCategory.PLAYER)
+                : TargetSpec.NONE;
     }
 }

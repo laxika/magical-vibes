@@ -16,7 +16,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record ReturnTargetCardFromExileToHandEffect(CardPredicate filter, boolean ownedOnly) implements CardEffect {
 
     @Override
-    public boolean canTargetExile() {
-        return true;
+    public TargetSpec targetSpec() {
+        // The kept validator enforces the exile zone and the card filter, which the EXILE_CARD
+        // category (a no-op in the interpreter) cannot express.
+        return TargetSpec.benign(TargetCategory.EXILE_CARD);
     }
 }

@@ -11,8 +11,8 @@ public record ReturnTargetPermanentToHandWithManaValueConditionalEffect(
         int maxManaValue, CardEffect conditionalEffect) implements RemovalEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 
     @Override

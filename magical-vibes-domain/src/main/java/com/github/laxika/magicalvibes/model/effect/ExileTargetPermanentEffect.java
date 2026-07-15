@@ -15,8 +15,8 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController)
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.PERMANENT);
     }
 
     @Override

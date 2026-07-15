@@ -15,7 +15,12 @@ public record PutTargetOnTopOfLibraryEffect(PutOnTopOfLibraryScope scope) implem
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == PutOnTopOfLibraryScope.TARGET;
+    public TargetSpec targetSpec() {
+        // Only the TARGET scope targets a permanent; the SELF scope targets the source and needs no
+        // pipeline target. The kept validator still reads canTargetPermanent() (derived from this
+        // spec) until step 10 rewrites the reader.
+        return scope == PutOnTopOfLibraryScope.TARGET
+                ? TargetSpec.benign(TargetCategory.PERMANENT)
+                : TargetSpec.NONE;
     }
 }

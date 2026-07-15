@@ -78,13 +78,17 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == BounceScope.TARGET;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED;
+    public TargetSpec targetSpec() {
+        // Only the single-target scope targets a battlefield permanent (PERMANENT reproduces its
+        // requireBattlefieldTarget guard); the target-players scopes target a player (the old
+        // validator imposed no guard there); the self / all-matching scopes target nothing.
+        if (scope == BounceScope.TARGET) {
+            return TargetSpec.benign(TargetCategory.PERMANENT);
+        }
+        if (scope == BounceScope.TARGET_PLAYERS_PERMANENTS || scope == BounceScope.TARGET_PLAYERS_OWNED) {
+            return TargetSpec.benign(TargetCategory.PLAYER);
+        }
+        return TargetSpec.NONE;
     }
 
     @Override

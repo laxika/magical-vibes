@@ -45,12 +45,7 @@ public record DestroyTargetPermanentThenEffect(
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.PERMANENT);
     }
 }

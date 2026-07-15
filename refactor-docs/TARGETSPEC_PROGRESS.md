@@ -482,3 +482,148 @@ plus `TargetValidationServiceSpecTest`; one card test per migrated effect —
 `ChandrasOutrageTest` (DealDamageToPlayers), `RemedyTest` (PreventDividedDamage).
 FireballTest covers `DealDividedDamageEffect`; DarkNourishmentTest covers
 `DealDamageToAnyTargetAndGainLifeEffect`.
+
+---
+
+## Step 4 — Destruction / Exile / Bounce / PermanentControl validators  (2026-07-15)
+
+Migrated every effect whose `@ValidatesTarget` method lives in `DestructionTargetValidators`
+(12), `ExileTargetValidators` (7), `BounceTargetValidators` (4), or
+`PermanentControlTargetValidators` (11) — **34 effects total**. Each validator was read and
+classified STRUCTURAL vs NON-STRUCTURAL before touching the record. (The step-4 brief said "13"
+for Destruction; the file holds 12 `@ValidatesTarget` methods plus the private `requireLandTarget`
+helper — 12 effects migrated.)
+
+**Migrated onto `targetSpec()`, validator DELETED (28 = 10 Destruction + 6 Exile + 4 Bounce + 8
+PermanentControl):**
+- Destruction (10), all `harmful` (each validator called `checkProtection`):
+  `harmful(CREATURE)` — `DestroyAttachmentsOnTargetCreatureEffect`,
+  `SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect`;
+  `harmful(PERMANENT)` — `DestroyTargetPermanentThenEffect`,
+  `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect`,
+  `DestroyTargetThenRevealUntilTypeToBattlefieldEffect`,
+  `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect`,
+  `DestroyTargetPermanentAtEndStepEffect`, `SacrificeTargetPermanentAtEndStepEffect`;
+  `harmful(LAND)` — `DestroyTargetLandAndDamageControllerEffect`,
+  `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`.
+- Exile (6), all `harmful` (each validator called `checkProtection`):
+  `harmful(PERMANENT)` — `ExileTargetPermanentEffect`, `ExileTargetPermanentAndTrackWithSourceEffect`,
+  `ExileTargetPermanentMayPlayUntilNextTurnEffect`;
+  `harmful(CREATURE)` — `ExileTargetCreatureAndAllWithSameNameEffect`,
+  `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect`,
+  `MarkTargetCreatureExileInsteadOfDieThisTurnEffect`.
+- Bounce (4), no `checkProtection`: `benign(PERMANENT)` —
+  `ReturnTargetPermanentToHandWithManaValueConditionalEffect`,
+  `ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect`,
+  `ReturnTargetPermanentToHandAtEndStepEffect`; per-scope conditional —
+  `ReturnToHandEffect` (`benign(PERMANENT)` for `TARGET`, `benign(PLAYER)` for the two
+  `TARGET_PLAYERS_*` scopes, else `NONE`). `ReturnToHandEffect`'s validator only guarded
+  `requireBattlefieldTarget` for the `TARGET` scope — which the non-no-op `PERMANENT` category
+  reproduces exactly, and the player/self/all scopes carried no guard — so it is fully reproduced by
+  the per-scope spec and DELETED (this is the 4th Bounce validator, leaving `BounceTargetValidators`
+  empty → the file was removed). Contrast the no-op-PLAYER cases below whose validators cannot be
+  deleted.
+- PermanentControl (8), all `benign` (control-change / library tuck — no `checkProtection`):
+  `benign(CREATURE)` — `GainControlOfEnchantedTargetEffect`, `IllicitAuctionEffect`;
+  `benign(PERMANENT)` — `GainControlOfTargetEffect`, `AttachTargetToSourcePermanentEffect`,
+  `PutTargetOnBottomOfLibraryEffect`, `PutTargetPermanentIntoLibraryNFromTopEffect`,
+  `ShuffleTargetPermanentIntoLibraryEffect`, `GrantSubtypeToTargetCreatureEffect` (see the judgment
+  note — `PERMANENT`, not `CREATURE`, because its validator omits `requireCreature`).
+
+`BounceTargetValidators` became empty and was **deleted** (git rm). Deleted the private helper
+`requireLandTarget` in Destruction once its two callers were gone; removed the now-unused `tvs`
+field from `ExileTargetValidators`; pruned all now-unused imports and rewrote each class javadoc to
+describe the remaining escape hatch(es).
+
+**Migrated with the structural part in the spec, validator KEPT WHOLE (escape hatch — 6):**
+- `SacrificePermanentsEffect` → per-recipient: `benign(PLAYER)` for `TARGET_PLAYER`, else `NONE`.
+  Same pattern as step 3's `DealDamageToPlayersEffect`: the no-op PLAYER category cannot reproduce
+  the validator's `requireTargetPlayer` guard for `TARGET_PLAYER`, so the validator is kept and the
+  spec computed per-recipient to reproduce the conditional `canTargetPlayer` boolean. Benign (no
+  `checkProtection`; the target is the sacrificing player, not a permanent).
+- `DestroyCreatureBlockingThisEffect` → `harmful(CREATURE)`. Non-structural: combat-relation state
+  (`isBlocking()` + `blockingTargets.contains(source)`). See the judgment note on `harmful`.
+- `ReturnTargetCardFromExileToHandEffect` → `benign(EXILE_CARD)`. Non-structural: validates a card
+  in the EXILE zone (a no-op category) and applies the effect's own card filter. Benign (return to
+  hand, no `checkProtection`).
+- `GainControlOfTargetAuraEffect` → `benign(PERMANENT)`. Non-structural: requires the target be an
+  Aura **attached** to a permanent (`isAttached()` — an attachment-state check).
+- `PutTargetOnTopOfLibraryEffect` → per-scope: `benign(PERMANENT)` for `TARGET`, else `NONE`.
+  Its validator READS `effect.canTargetPermanent()` (now derived from this spec:
+  `PERMANENT.includesPermanents()==true` for TARGET, `NONE`→false for SELF — the reader is preserved
+  exactly). Per the step-4 brief the reader is left intact; step 10 rewrites it. The per-instance
+  spec fully reproduces the validator's conditional `requireBattlefieldTarget`, but the validator is
+  kept because the brief forbids touching the reader now.
+- `TargetPlayerGainsControlOfSourceCreatureEffect` → `benign(PLAYER)`. Same no-op-PLAYER reasoning as
+  `SacrificePermanentsEffect`: the validator's sole job is `requireTargetPlayer`, which the PLAYER
+  category cannot reproduce, so the validator is kept.
+
+The distinguishing rule for kept-vs-deleted conditional validators: a validator whose only guard is a
+permanent requirement (`requireBattlefieldTarget`) is reproducible because `PERMANENT` is NOT a no-op
+category (it calls `requireBattlefieldTarget`) — so `ReturnToHandEffect` and, structurally,
+`PutTargetOnTopOfLibraryEffect` are fully reproduced; a validator whose guard is a PLAYER requirement
+(`requireTargetPlayer`) is NOT reproducible because `PLAYER` is a no-op — so `SacrificePermanentsEffect`
+and `TargetPlayerGainsControlOfSourceCreatureEffect` must keep their validators.
+`PutTargetOnTopOfLibraryEffect` is kept anyway (its validator reads `canTargetPermanent()` — the brief
+forbids touching that reader before step 10).
+
+**Oracle / judgment calls:**
+- **`harmful` flips `isDamageOrDestruction()` false→true on many effects (step-3 precedent).** Most
+  migrated Destruction/Exile effects overrode only `canTargetPermanent` (never
+  `isDamageOrDestruction`), yet their validators called `checkProtection`. Per HARMFUL FLAG POLICY
+  the spec is `harmful`, so the derived `isDamageOrDestruction()` is now `true`. Effect:
+  `ValidTargetService` also filters protection-having permanents from the OFFERED list. Final
+  legality is unchanged (the kept-then-deleted validator already rejected protected targets at cast);
+  the offering is now consistent with the validator — stricter-or-equal, allowed, and more
+  rules-correct (a protected permanent is not a legal target).
+- **`DestroyCreatureBlockingThisEffect` is the ONE case where the record already overrode
+  `isDamageOrDestruction`=`true` but its (kept) validator does NOT call `checkProtection`.** Choosing
+  `benign` would flip `isDamageOrDestruction` true→false (less strict offering — FORBIDDEN by
+  BEHAVIOR-PRESERVING-OR-STRICTER), so `harmful(CREATURE)` is required to preserve it. The
+  consequence is that the spec now runs `checkProtection` at cast where the old validator did not —
+  strictly stricter, and more rules-correct (protection = can't be targeted; a blocker with
+  protection from the source can't be the target of "destroy target creature blocking this"). This
+  is the deliberate resolution of the HARMFUL FLAG POLICY vs. BEHAVIOR-PRESERVING tension; documented
+  here as required.
+- **Two LAND effects were `PERMANENT` in the matrix's coarse inference but their validator
+  (`requireLandTarget`) enforces LAND.** Category read off the kept validator per the "category from
+  the type check" rule: `DestroyTargetLandAndDamageControllerEffect` and
+  `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect` → `harmful(LAND)`.
+- **`GrantSubtypeToTargetCreatureEffect` → `PERMANENT`, not `CREATURE`.** Despite the name, its
+  validator does only `requireBattlefieldTarget` (no `requireCreature`); the creature restriction is
+  the card's own target filter. `PERMANENT` preserves `canTargetPermanent()==true` exactly.
+- **No `checkProtection` added to any bounce or pure control-change effect.** Per the brief, bounce
+  and control-change are harmful only if their old validator called `checkProtection` — none did — so
+  all are `benign`.
+- No card behavior narrowed illegally; no web ruling needed (every choice is behavior-preserving or
+  the documented stricter-and-more-correct offering/target filter).
+
+**Audit re-run:** `python scripts/targetspec-audit.py` regenerated `targetspec-baseline.txt` +
+`TARGETSPEC_MATRIX.md`. Records in scope 248 → **214** (−34); sum of baseline counts 326 → **283**
+(−43); `canTargetPermanent` overrides 117 → **86** (−31); `@ValidatesTarget` methods 99 → **71**
+(−28 deleted: 10 Destruction + 6 Exile + 4 Bounce + 8 PermanentControl). `LAND` in-scope count is
+still 1 (the two migrated LAND effects dropped out of scope; the remaining 1 is the unmigrated
+`GrantBasicLandTypeToTargetEffect`); `CREATURE` 21, `PERMANENT` 45, `PLAYER_OR_PERMANENT` 13. The
+auto-generated escape-hatch table still shows 7 (the graveyard controller/opponent-compare set); the
+8 escape hatches kept this step are not auto-flagged by the audit heuristic — they are kept by
+deliberate decision (no-op PLAYER/EXILE_CARD categories, attachment/combat state, the reader) and are
+enumerated above for step 10. `effect-dispatch-baseline.txt` NOT touched (no instanceof-on-effect
+counts changed).
+
+**Tests run** (one targeted `:magical-vibes-application:test --tests …` invocation, `BUILD
+SUCCESSFUL`): fixed regression set — `WrackWithMadnessTest`, `DarkNourishmentTest`, `FireballTest`,
+`EffectDispatchRatchetTest`, `TargetSpecRatchetTest` (both ratchets green — baseline shrank
+monotonically), `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`;
+one card test per migrated effect (all 34 exist and pass) — `CruelEdictTest` (SacrificePermanents),
+`KnightOfDuskTest` (DestroyCreatureBlockingThis), `StripBareTest`, `DeathsCaressTest`
+(DestroyTargetPermanentThen), `ShapeAnewTest`, `PolymorphTest`, `CryoclasmTest`, `FieldOfRuinTest`,
+`ErodeTest`, `StoneGiantTest`, `LowlandOafTest`, `MercyKillingTest`, `RunicRepetitionTest`
+(ReturnTargetCardFromExile), `ArchonOfJusticeTest` (ExileTargetPermanent), `HelvaultTest`,
+`SuspendAggressionTest`, `SeverTheBloodlineTest`, `HeatedArgumentTest`, `WiltInTheHeatTest`,
+`AcademyJourneymageTest` (ReturnToHand), `PerilousVoyageTest`, `ConsignToDreamTest`, `DragonMaskTest`,
+`RootwaterMatriarchTest` (GainControlOfEnchantedTarget), `ActOfAggressionTest` (GainControlOfTarget),
+`IllicitAuctionTest`, `OgreGeargrabberTest` (AttachTargetToSourcePermanent), `AuraGraftTest`
+(GainControlOfTargetAura), `BrutalizerExarchTest` (PutTargetOnBottomOfLibrary), `AethertowTest`
+(PutTargetOnTopOfLibrary), `TeferiHeroOfDominariaTest` (PutTargetPermanentIntoLibraryNFromTop),
+`DeglamerTest` (ShuffleTargetPermanentIntoLibrary), `OliviaVoldarenTest` (GrantSubtypeToTargetCreature),
+`JinxedIdolTest` (TargetPlayerGainsControlOfSourceCreature).

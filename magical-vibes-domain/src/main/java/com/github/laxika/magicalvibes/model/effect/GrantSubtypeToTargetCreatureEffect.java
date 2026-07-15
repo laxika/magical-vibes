@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 public record GrantSubtypeToTargetCreatureEffect(CardSubtype subtype) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        // The validator enforces only a battlefield permanent (PERMANENT); the creature restriction
+        // is the card's own target filter, so this preserves the old canTargetPermanent boolean.
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

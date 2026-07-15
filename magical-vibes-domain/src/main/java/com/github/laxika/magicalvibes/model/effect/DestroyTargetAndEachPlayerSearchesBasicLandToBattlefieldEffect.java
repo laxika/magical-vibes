@@ -10,12 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.LAND);
     }
 }

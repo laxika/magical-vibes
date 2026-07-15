@@ -3,16 +3,8 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.IllicitAuctionEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -21,34 +13,21 @@ import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Escape-hatch validators for the control-change / library-tuck family. The structural
+ * single-target effects now carry a benign {@code TargetSpec} interpreted by
+ * {@code TargetValidationService} (PERMANENT / CREATURE); only the three effects below retain a
+ * validator: an Aura target needs an attachment-state check, "put target on top of library" reads
+ * its own {@code canTargetPermanent()} (derived from its spec until step 10 rewrites the reader),
+ * and the player-gains-control effect needs the {@code requireTargetPlayer} guard the no-op PLAYER
+ * category cannot reproduce.
+ */
 @Service
 @RequiredArgsConstructor
 public class PermanentControlTargetValidators {
 
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
-
-    @ValidatesTarget(GainControlOfEnchantedTargetEffect.class)
-    public void validateGainControlOfEnchantedTarget(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-    }
-
-    @ValidatesTarget(GainControlOfTargetEffect.class)
-    public void validateGainControlOfTarget(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(IllicitAuctionEffect.class)
-    public void validateIllicitAuction(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-    }
-
-    @ValidatesTarget(AttachTargetToSourcePermanentEffect.class)
-    public void validateAttachTargetToSourcePermanent(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
 
     @ValidatesTarget(GainControlOfTargetAuraEffect.class)
     public void validateGainControlOfTargetAura(TargetValidationContext ctx) {
@@ -61,31 +40,11 @@ public class PermanentControlTargetValidators {
         }
     }
 
-    @ValidatesTarget(PutTargetOnBottomOfLibraryEffect.class)
-    public void validatePutTargetOnBottomOfLibrary(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
     @ValidatesTarget(PutTargetOnTopOfLibraryEffect.class)
     public void validatePutTargetOnTopOfLibrary(TargetValidationContext ctx, PutTargetOnTopOfLibraryEffect effect) {
         if (effect.canTargetPermanent()) {
             tvs.requireBattlefieldTarget(ctx);
         }
-    }
-
-    @ValidatesTarget(PutTargetPermanentIntoLibraryNFromTopEffect.class)
-    public void validatePutTargetPermanentIntoLibraryNFromTop(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(ShuffleTargetPermanentIntoLibraryEffect.class)
-    public void validateShuffleTargetPermanentIntoLibrary(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(GrantSubtypeToTargetCreatureEffect.class)
-    public void validateGrantSubtypeToTargetCreature(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
     }
 
     @ValidatesTarget(TargetPlayerGainsControlOfSourceCreatureEffect.class)

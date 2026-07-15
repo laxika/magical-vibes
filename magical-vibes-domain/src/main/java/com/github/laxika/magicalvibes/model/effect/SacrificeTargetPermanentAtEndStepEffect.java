@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record SacrificeTargetPermanentAtEndStepEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.PERMANENT);
     }
 }

@@ -1,20 +1,9 @@
 package com.github.laxika.magicalvibes.service.validate;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetLandAndDamageControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -22,6 +11,14 @@ import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+/**
+ * Escape-hatch validators for the destroy / sacrifice family. The structural single-target
+ * destroy / sacrifice effects now carry a harmful {@code TargetSpec} interpreted by
+ * {@code TargetValidationService} (PERMANENT / CREATURE / LAND, all honouring protection); only the
+ * two effects below retain a validator because they encode logic beyond target-type structure:
+ * a conditional player requirement the no-op PLAYER category cannot reproduce, and a
+ * combat-relation ("blocking this") state check.
+ */
 @Service
 @RequiredArgsConstructor
 public class DestructionTargetValidators {
@@ -31,7 +28,8 @@ public class DestructionTargetValidators {
 
     // The validator is keyed by effect class and runs unconditionally, so only the
     // target-player recipient requires a targeted player; controller / each-player / each-opponent
-    // recipients take no target.
+    // recipients take no target. The PLAYER TargetSpec category is a no-op in the interpreter, so
+    // this guard cannot be expressed declaratively.
     @ValidatesTarget(SacrificePermanentsEffect.class)
     public void validateSacrificePermanents(TargetValidationContext ctx, SacrificePermanentsEffect effect) {
         if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER) {
@@ -50,84 +48,5 @@ public class DestructionTargetValidators {
         if (sourceIndex < 0 || !target.getBlockingTargets().contains(sourceIndex)) {
             throw new IllegalStateException("Target must be a creature blocking this creature");
         }
-    }
-
-    @ValidatesTarget(DestroyAttachmentsOnTargetCreatureEffect.class)
-    public void validateDestroyAttachmentsOnTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
-    // Covers the whole destroy-plus-value family (DestroyTargetPermanentThenEffect). All members are
-    // single-battlefield-target with protection honoured; the type restriction is the card's own
-    // target filter. FoolishFate wraps it in a ConditionalReplacementEffect, whose base effect
-    // (DestroyTargetPermanentEffect) carries the validation instead — checkEffectTargets unwraps to
-    // the base, whose harmful PERMANENT TargetSpec is then interpreted — so this validator does not
-    // run for that card.
-    @ValidatesTarget(DestroyTargetPermanentThenEffect.class)
-    public void validateDestroyTargetPermanentThen(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)
-    public void validateSacrificeTargetThenRevealUntilType(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DestroyTargetThenRevealUntilTypeToBattlefieldEffect.class)
-    public void validateDestroyTargetThenRevealUntilType(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    // ===== Land destruction (Cryoclasm, Melt Terrain, Field of Ruin) =====
-
-    @ValidatesTarget(DestroyTargetLandAndDamageControllerEffect.class)
-    public void validateDestroyTargetLandAndDamageController(TargetValidationContext ctx) {
-        requireLandTarget(ctx);
-    }
-
-    @ValidatesTarget(DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect.class)
-    public void validateDestroyTargetAndEachPlayerSearchesBasicLand(TargetValidationContext ctx) {
-        requireLandTarget(ctx);
-    }
-
-    // ===== Any-permanent destruction / sacrifice (Ghost Quarter & Erode target creature/pw/land,
-    // Stone Giant a creature, Lowland Oaf a creature — the card/ability filter narrows further) =====
-
-    @ValidatesTarget(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class)
-    public void validateDestroyTargetPermanentAndControllerSearchesLibrary(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DestroyTargetPermanentAtEndStepEffect.class)
-    public void validateDestroyTargetPermanentAtEndStep(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(SacrificeTargetPermanentAtEndStepEffect.class)
-    public void validateSacrificeTargetPermanentAtEndStep(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect.class)
-    public void validateSacrificeTargetCreatureThenCreateTokens(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
-    private void requireLandTarget(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        if (!target.getCard().hasType(CardType.LAND)) {
-            throw new IllegalStateException("Target must be a land");
-        }
-        tvs.checkProtection(ctx, target);
     }
 }
