@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetPlayerLifeEffect;
@@ -32,8 +33,7 @@ public class DoubleTargetPlayerLifeEffectHandler implements NormalEffectHandlerB
 
         if (lifeSupport.applySetLifeTotal(gameData, targetPlayerId, newLife)) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s life total is doubled from " + currentLife + " to " + newLife + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total is doubled from " + currentLife + " to " + newLife + "."));
             log.info("Game {} - {}'s life doubled from {} to {}", gameData.id, playerName, currentLife, newLife);
         }
     }

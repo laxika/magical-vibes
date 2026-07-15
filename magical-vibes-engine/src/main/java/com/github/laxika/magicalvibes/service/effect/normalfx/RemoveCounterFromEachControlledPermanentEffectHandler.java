@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,7 +48,7 @@ public class RemoveCounterFromEachControlledPermanentEffectHandler implements No
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = e.amount() == 1 ? "a " + counterName + " counter" : e.amount() + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " removes " + counterText + " from " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} removes {} {} counter(s) from {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), e.amount(), counterName, count);
     }

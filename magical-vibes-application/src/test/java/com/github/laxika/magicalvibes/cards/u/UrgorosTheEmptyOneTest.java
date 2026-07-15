@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -47,7 +49,7 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("at random"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("at random"));
         // Controller should NOT draw when opponent discarded
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize);
     }
@@ -81,7 +83,7 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandSize + 1);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
     }
 
     @Test

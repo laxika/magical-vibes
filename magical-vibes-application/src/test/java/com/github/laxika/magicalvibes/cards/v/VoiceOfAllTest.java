@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -141,7 +143,7 @@ class VoiceOfAllTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses black") && log.contains("Voice of All"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses black") && log.contains("Voice of All"));
     }
 
     @Test

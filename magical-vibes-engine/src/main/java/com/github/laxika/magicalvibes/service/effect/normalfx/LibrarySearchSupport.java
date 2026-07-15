@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -97,8 +98,7 @@ public class LibrarySearchSupport {
 
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
             if (deck == null || deck.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " searches their library but it is empty. Library is shuffled.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
                 continue;
             }
 
@@ -108,8 +108,7 @@ public class LibrarySearchSupport {
 
             if (creatures.isEmpty()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " searches their library but finds no creature cards. Library is shuffled.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
                 continue;
             }
 
@@ -125,7 +124,7 @@ public class LibrarySearchSupport {
                     .build();
 
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " searches their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library."));
             return true;
         }
         return false;
@@ -212,7 +211,7 @@ public class LibrarySearchSupport {
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return false;
         }
 
@@ -221,7 +220,7 @@ public class LibrarySearchSupport {
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no " + noMatchDescription + ". Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDescription);
             return false;
         }
@@ -254,7 +253,7 @@ public class LibrarySearchSupport {
                         if (paidSet == null || !paidSet.contains(perm.getId())) {
                             String playerName = gameData.playerIdToName.get(searchingPlayerId);
                             String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
-                            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                             log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
                                     gameData.id, playerName);
                             return false;
@@ -298,7 +297,7 @@ public class LibrarySearchSupport {
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
                 params, prompt, canFailToFind));
 
-        gameBroadcastService.logAndBroadcast(gameData, logMessage);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMessage));
     }
 
     public boolean isSearchPrevented(GameData gameData, UUID searchingPlayerId) {
@@ -317,7 +316,7 @@ public class LibrarySearchSupport {
         hand.clear();
         String logMsg = playerName + " puts " + pluralCards(handSize)
                 + " from their hand on top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
     }
 
     public static String pluralCards(int count) {

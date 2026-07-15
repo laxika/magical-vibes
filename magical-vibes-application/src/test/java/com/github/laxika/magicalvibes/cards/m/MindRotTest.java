@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -172,7 +174,7 @@ class MindRotTest extends BaseCardTest {
         // No discard prompt — hand is empty
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
     // ===== Targeting self =====
@@ -229,8 +231,8 @@ class MindRotTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
     }
 }
 

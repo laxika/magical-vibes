@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -153,8 +154,8 @@ class DistantMemoriesEffectHandlerTest {
                 distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("it is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("it is empty")));
                 verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
             }
 }

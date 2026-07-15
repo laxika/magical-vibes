@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -101,7 +103,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("searches their library"));
     }
 
     // ===== Death trigger =====
@@ -158,7 +160,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Mycosynth Wellspring");
-        assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("searches their library"));
     }
 
     private void setupLibraryWithBasicLands() {

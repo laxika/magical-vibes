@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -53,15 +54,13 @@ public class RevealCardsChooseOneToDiscardEffectHandler implements NormalEffectH
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    targetName + " has no cards in hand to reveal.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " has no cards in hand to reveal."));
             log.info("Game {} - {}'s hand is empty for reveal-and-discard", gameData.id, targetName);
             return;
         }
 
         if (revealCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    casterName + " controls no matching permanents — no cards are revealed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(casterName + " controls no matching permanents — no cards are revealed."));
             log.info("Game {} - {} controls 0 matching permanents; nothing revealed", gameData.id, casterName);
             return;
         }
@@ -69,8 +68,7 @@ public class RevealCardsChooseOneToDiscardEffectHandler implements NormalEffectH
         // Target's hand is already small enough — everything is revealed, go straight to the caster's pick.
         if (hand.size() <= revealCount) {
             String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-            gameBroadcastService.logAndBroadcast(gameData,
-                    targetName + " reveals their hand: " + cardNames + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their hand: " + cardNames + "."));
             beginDiscardChoice(gameData, casterId, targetPlayerId, new ArrayList<>(hand));
             return;
         }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -46,7 +47,7 @@ public class PreparedSupport {
         permanent.setPreparedSpellCardId(copy.getId());
 
         String logEntry = permanent.getCard().getName() + " becomes prepared.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes prepared (prepare spell {} exiled)",
                 gameData.id, permanent.getCard().getName(), copy.getName());
         return true;
@@ -71,7 +72,7 @@ public class PreparedSupport {
         permanent.setPreparedSpellCardId(null);
 
         String logEntry = permanent.getCard().getName() + " becomes unprepared.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes unprepared", gameData.id, permanent.getCard().getName());
         return true;
     }

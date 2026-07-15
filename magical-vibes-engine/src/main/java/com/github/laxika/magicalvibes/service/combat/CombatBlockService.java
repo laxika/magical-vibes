@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -297,7 +298,7 @@ public class CombatBlockService {
         if (!blockerAssignments.isEmpty()) {
             String logEntry = player.getUsername() + " declares " + blockerAssignments.size() +
                     " blocker" + (blockerAssignments.size() > 1 ? "s" : "") + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         }
 
         // Collect all blocker-step triggers, then reorder per APNAP (CR 603.3b)
@@ -337,7 +338,7 @@ public class CombatBlockService {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));
                     String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                     log.info("Game {} - {} block trigger queued for target selection", gameData.id,
                             blocker.getCard().getName());
                     continue;
@@ -365,7 +366,7 @@ public class CombatBlockService {
                 blockTrigger.setNonTargeting(true);
                 gameData.stack.add(blockTrigger);
                 String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
             }
 
@@ -401,7 +402,7 @@ public class CombatBlockService {
             multiBlockTrigger.setNonTargeting(true);
             gameData.stack.add(multiBlockTrigger);
             String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
             log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
 
@@ -434,7 +435,7 @@ public class CombatBlockService {
                             attacker.getId()
                     ));
                     String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                     log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 }
 
@@ -471,7 +472,7 @@ public class CombatBlockService {
                         trigger.setNonTargeting(true);
                         gameData.stack.add(trigger);
                         String triggerLog = attacker.getCard().getName() + "'s becomes-blocked ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                         log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                     }
                 }
@@ -618,8 +619,8 @@ public class CombatBlockService {
             // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            gameBroadcastService.logAndBroadcast(gameData, attacker.getCard().getName()
-                    + "'s unblocked-attack ability triggers.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attacker.getCard().getName()
+                    + "'s unblocked-attack ability triggers."));
             log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             pushed++;
         }
@@ -672,7 +673,7 @@ public class CombatBlockService {
                 gameData.stack.add(trigger);
                 pushed++;
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS_UNBLOCKED trigger for {} unblocked",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
@@ -737,7 +738,7 @@ public class CombatBlockService {
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
             String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",
                     gameData.id, perm.getCard().getName(), blockedAttacker.getCard().getName());
         }

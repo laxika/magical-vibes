@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -77,7 +79,7 @@ class StormFleetSpyTest extends BaseCardTest {
 
         // Hand size unchanged (no draw)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
     // ===== Creature enters battlefield regardless =====

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -137,7 +139,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library") && log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library") && log.contains("empty"));
     }
 
     @Test
@@ -153,7 +155,7 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no land cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no land cards"));
     }
 
     // ===== Static boost =====

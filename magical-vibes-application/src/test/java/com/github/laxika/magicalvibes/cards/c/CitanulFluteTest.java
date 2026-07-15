@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -255,7 +257,7 @@ class CitanulFluteTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Log should mention "reveals" and "puts it into their hand"
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
     }
 
     // ===== Fail to find (CR 701.19b — searching for stated qualities) =====
@@ -296,7 +298,7 @@ class CitanulFluteTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions declining
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("chooses not to take a card"));
     }
 
     // ===== No eligible creatures =====
@@ -311,7 +313,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
     @Test
@@ -327,7 +329,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no creature card with mana value"));
     }
 
     // ===== Empty library =====
@@ -343,7 +345,7 @@ class CitanulFluteTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
     // ===== Helpers =====

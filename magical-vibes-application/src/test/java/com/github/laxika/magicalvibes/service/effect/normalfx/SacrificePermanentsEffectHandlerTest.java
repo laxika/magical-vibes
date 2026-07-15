@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -139,7 +141,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Grizzly Bears."));
         }
 
         @Test
@@ -163,7 +165,7 @@ class SacrificePermanentsEffectHandlerTest {
         void noEffectWithNoCreatures() {
             handler.resolve(gd, entry(player1Id, player2Id), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 has no creatures to sacrifice."));
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
 
@@ -173,7 +175,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.TARGET_PLAYER));
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
         }
     }
 
@@ -200,7 +202,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, forest);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Forest.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Forest."));
         }
 
         @Test
@@ -226,7 +228,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no permanents to sacrifice.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 has no permanents to sacrifice."));
         }
 
         @Test
@@ -239,7 +241,7 @@ class SacrificePermanentsEffectHandlerTest {
 
             handler.resolve(gd, entry(player1Id, player2Id), landSac());
 
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no matching permanents to sacrifice.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 has no matching permanents to sacrifice."));
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
     }
@@ -262,7 +264,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.CONTROLLER));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player1 sacrifices Grizzly Bears.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 sacrifices Grizzly Bears."));
         }
     }
 
@@ -284,7 +286,7 @@ class SacrificePermanentsEffectHandlerTest {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 sacrifices Grizzly Bears."));
         }
 
         @Test
@@ -292,8 +294,8 @@ class SacrificePermanentsEffectHandlerTest {
         void noEffectWhenOpponentHasNoCreatures() {
             handler.resolve(gd, entry(player1Id, null), creatureSac(SacrificeRecipient.EACH_OPPONENT));
 
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
-            verify(gameBroadcastService, never()).logAndBroadcast(gd, "Player1 has no creatures to sacrifice.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 has no creatures to sacrifice."));
+            verify(gameBroadcastService, never()).logAndBroadcast(gd, GameLog.text("Player1 has no creatures to sacrifice."));
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
     }

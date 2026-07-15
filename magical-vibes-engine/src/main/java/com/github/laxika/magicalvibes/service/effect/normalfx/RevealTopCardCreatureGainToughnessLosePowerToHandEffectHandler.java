@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureGainToughnessLosePowerToHandEffect;
@@ -34,14 +35,13 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s library is empty (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         // Reveal the top card. It only leaves the library if it's a creature card.
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ")."));
 
         if (!topCard.hasType(CardType.CREATURE)) {
             return;
@@ -62,8 +62,7 @@ public class RevealTopCardCreatureGainToughnessLosePowerToHandEffectHandler impl
         }
 
         gameData.addCardToHand(controllerId, topCard);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " puts " + topCard.getName() + " into their hand (" + sourceName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand (" + sourceName + ")."));
 
         log.info("Game {} - {} reveals creature {} (P/T {}/{}) via {}",
                 gameData.id, playerName, topCard.getName(), power, toughness, sourceName);

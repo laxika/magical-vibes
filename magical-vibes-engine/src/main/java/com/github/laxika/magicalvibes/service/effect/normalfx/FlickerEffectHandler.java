@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -136,7 +137,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
         String logEntry = card.getName() + " is exiled by " + entry.getCard().getName()
                 + " and returns to the battlefield under " + gameData.playerIdToName.get(ownerId) + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
@@ -150,7 +151,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             }
             String drawLog = gameData.playerIdToName.get(entry.getControllerId())
                     + " draws a card (" + card.getName() + " was a " + e.bonusSubtype().getDisplayName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, drawLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
         }
     }
 }

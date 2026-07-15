@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -124,8 +125,8 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 
             @Test

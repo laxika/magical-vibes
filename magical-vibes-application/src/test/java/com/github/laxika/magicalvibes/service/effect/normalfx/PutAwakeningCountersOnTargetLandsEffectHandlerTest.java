@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -52,7 +53,7 @@ class PutAwakeningCountersOnTargetLandsEffectHandlerTest extends AbstractPlayerI
                 resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no lands")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no lands")));
             }
 }

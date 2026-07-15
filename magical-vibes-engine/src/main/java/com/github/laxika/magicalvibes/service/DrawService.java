@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -67,7 +68,7 @@ public class DrawService {
     public void resolveDrawCard(GameData gameData, UUID playerId) {
         if (isDrawPrevented(gameData)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't draw a card.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't draw a card."));
             log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
             return;
         }
@@ -87,7 +88,7 @@ public class DrawService {
                     UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                     String lossLog = gameData.playerIdToName.get(playerId)
                             + " can't return a card from their graveyard and loses the game.";
-                    gameBroadcastService.logAndBroadcast(gameData, lossLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
                     log.info("Game {} - {} loses (Forbidden Crypt: empty graveyard on draw)",
                             gameData.id, gameData.playerIdToName.get(playerId));
                     gameOutcomeService.declareWinner(gameData, winnerId);
@@ -120,8 +121,7 @@ public class DrawService {
                 UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
                 Card revealed = deck.getFirst();
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " reveals " + revealed.getName() + " with " + zursWeirdingSource.getName() + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealed.getName() + " with " + zursWeirdingSource.getName() + "."));
 
                 if (gameData.getLife(otherPlayerId) >= 2) {
                     gameData.pendingMayAbilities.add(new PendingMayAbility(
@@ -142,7 +142,7 @@ public class DrawService {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Draw redirect: {}'s draw goes to {} instead",
                     gameData.id, playerName, controllerName);
             performDrawCard(gameData, replacementController);
@@ -152,7 +152,7 @@ public class DrawService {
         // Thought Reflection: if you would draw a card, draw two cards instead.
         if (findDoubleDrawSourceCard(gameData, playerId) != null) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s draw is doubled — they draw two cards instead.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s draw is doubled — they draw two cards instead."));
             log.info("Game {} - {}'s draw doubled (Thought Reflection)", gameData.id, playerName);
             performDrawCard(gameData, playerId);
             performDrawCard(gameData, playerId);
@@ -165,7 +165,7 @@ public class DrawService {
     public void resolveDrawCardWithoutStaticReplacementCheck(GameData gameData, UUID playerId) {
         if (isDrawPrevented(gameData)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't draw a card.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't draw a card."));
             log.info("Game {} - {} can't draw (draw prevention in effect)", gameData.id, playerName);
             return;
         }
@@ -175,7 +175,7 @@ public class DrawService {
             String playerName = gameData.playerIdToName.get(playerId);
             String controllerName = gameData.playerIdToName.get(replacementController);
             String logEntry = playerName + "'s draw is redirected — " + controllerName + " draws a card instead.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Draw redirect: {}'s draw goes to {} instead",
                     gameData.id, playerName, controllerName);
 
@@ -272,20 +272,20 @@ public class DrawService {
         if (deck == null || deck.isEmpty()) {
             gameData.playersAttemptedDrawFromEmptyLibrary.add(playerId);
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to draw.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
             // Check for Laboratory Maniac-style replacement: win instead of lose
             if (hasWinOnEmptyLibraryDraw(gameData, playerId)) {
                 UUID opponentId = gameQueryService.getOpponentId(gameData, playerId);
                 if (gameQueryService.canPlayerLoseGame(gameData, opponentId)) {
                     String winLog = gameData.playerIdToName.get(playerId) + " wins the game (drew from an empty library with a replacement effect).";
-                    gameBroadcastService.logAndBroadcast(gameData, winLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(winLog));
                     log.info("Game {} - {} wins (empty library draw replacement)", gameData.id, gameData.playerIdToName.get(playerId));
                     gameOutcomeService.declareWinner(gameData, playerId);
                 } else {
                     String blockedLog = gameData.playerIdToName.get(playerId) + "'s win condition is met but " +
                             gameData.playerIdToName.get(opponentId) + " can't lose the game.";
-                    gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(blockedLog));
                     log.info("Game {} - {} empty library win prevented — opponent can't lose", gameData.id, gameData.playerIdToName.get(playerId));
                 }
                 return;
@@ -295,7 +295,7 @@ public class DrawService {
             if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
-                gameBroadcastService.logAndBroadcast(gameData, lossLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
                 log.info("Game {} - {} loses (drew from empty library)", gameData.id, gameData.playerIdToName.get(playerId));
                 gameOutcomeService.declareWinner(gameData, winnerId);
             }
@@ -309,7 +309,7 @@ public class DrawService {
         gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);
 
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} draws a card from effect", gameData.id, gameData.playerIdToName.get(playerId));
 
         checkControllerDrawTriggers(gameData, playerId);
@@ -338,8 +338,7 @@ public class DrawService {
             if (!reveals) continue;
 
             String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + "."));
 
             boolean basicLand = drawn.hasType(CardType.LAND)
                     && drawn.getSupertypes().contains(CardSupertype.BASIC);
@@ -353,8 +352,7 @@ public class DrawService {
                         drawingPlayerId,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData,
-                        perm.getCard().getName() + " triggers — draw a card.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " triggers — draw a card."));
                 log.info("Game {} - {} triggers on {} revealing a basic land",
                         gameData.id, perm.getCard().getName(), drawerName);
             }
@@ -377,8 +375,7 @@ public class DrawService {
                 if (!isBoobyTrap) continue;
 
                 String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawerName + " reveals " + drawn.getName() + " with " + perm.getCard().getName() + "."));
 
                 if (drawn.getName().equals(perm.getChosenName())) {
                     gameData.stack.add(new StackEntry(
@@ -390,8 +387,7 @@ public class DrawService {
                             drawingPlayerId,
                             perm.getId()
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            perm.getCard().getName() + " triggers on " + drawerName + " drawing " + drawn.getName() + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " triggers on " + drawerName + " drawing " + drawn.getName() + "."));
                     log.info("Game {} - Booby Trap triggers on {} drawing {}",
                             gameData.id, drawerName, drawn.getName());
                 }
@@ -422,7 +418,7 @@ public class DrawService {
                     ));
 
                     String triggerLog = perm.getCard().getName() + " triggers — each opponent loses life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                     log.info("Game {} - {} controller-draw trigger pushed onto stack",
                             gameData.id, perm.getCard().getName());
                 }
@@ -489,7 +485,7 @@ public class DrawService {
                     }
 
                     String logEntry = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} triggers on opponent draw", gameData.id, perm.getCard().getName());
                 }
             }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.EachPlayerPayLifeState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -72,7 +73,7 @@ public class EachPlayerPaysAnyLifeForTokensEffectHandler implements NormalEffect
                 state.lifePaid.merge(playerId, amount, Integer::sum);
                 state.consecutivePasses = 0;
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + " pays no life for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays no life for " + cardName + "."));
                 state.consecutivePasses++;
             }
             state.index = (state.index + 1) % state.order.size();

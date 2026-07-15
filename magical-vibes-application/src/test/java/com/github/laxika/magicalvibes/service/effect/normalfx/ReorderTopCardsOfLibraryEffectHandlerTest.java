@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -116,8 +117,8 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
                 assertThat(gd.interaction.activeInteraction()).isNull();
             }
 
@@ -132,8 +133,8 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("looks at the top card")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("looks at the top card")));
                 assertThat(gd.interaction.activeInteraction()).isNull();
             }
 

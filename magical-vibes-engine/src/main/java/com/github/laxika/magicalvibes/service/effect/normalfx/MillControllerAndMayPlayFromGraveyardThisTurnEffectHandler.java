@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromGraveyardThisTurnEffect;
@@ -34,7 +35,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to mill.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -46,7 +47,7 @@ public class MillControllerAndMayPlayFromGraveyardThisTurnEffectHandler implemen
 
         String logEntry = controllerName + " mills " + milledCard.getName()
                 + " and may play it from their graveyard this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} mills {} and may play it from graveyard this turn",
                 gameData.id, controllerName, milledCard.getName());
     }

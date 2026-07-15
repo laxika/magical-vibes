@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
@@ -32,7 +33,7 @@ public class ShuffleLibraryEffectHandler implements NormalEffectHandlerBean {
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
         String logEntry = playerName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} shuffles their library", gameData.id, playerName);
     }
 }

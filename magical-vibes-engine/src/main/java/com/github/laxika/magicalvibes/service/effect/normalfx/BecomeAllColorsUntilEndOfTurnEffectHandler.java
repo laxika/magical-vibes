@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeAllColorsUntilEndOfTurnEffect;
@@ -53,7 +54,7 @@ public class BecomeAllColorsUntilEndOfTurnEffectHandler implements NormalEffectH
                 self.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = self.getCard().getName() + " becomes all colors until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes all colors until end of turn", gameData.id, self.getCard().getName());
     }
 }

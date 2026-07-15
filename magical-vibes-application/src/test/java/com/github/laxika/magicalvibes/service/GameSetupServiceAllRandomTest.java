@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -64,8 +66,7 @@ class GameSetupServiceAllRandomTest {
         assertThat(gd.playerDecks.get(creator.getId()))
                 .isNotSameAs(gd.playerDecks.get(joiner.getId()));
 
-        assertThat(gd.gameLog)
-                .contains("Carol is playing with a randomly generated deck.")
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText).toList()).contains("Carol is playing with a randomly generated deck.")
                 .contains("Dave is playing with a randomly generated deck.");
 
         gameRegistry.remove(gd.id);
@@ -80,8 +81,7 @@ class GameSetupServiceAllRandomTest {
         assertThat(gd.playerDeckChoices)
                 .containsEntry(creator.getId(), "10e-white-theme-deck")
                 .containsEntry(joiner.getId(), "10e-red-theme-deck");
-        assertThat(gd.gameLog)
-                .contains("Carol is playing with 10E White Theme Deck.");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText).toList()).contains("Carol is playing with 10E White Theme Deck.");
 
         gameRegistry.remove(gd.id);
     }

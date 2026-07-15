@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GravebornMuse;
@@ -338,7 +340,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
     }
 
     @Test
@@ -352,7 +354,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
     }
@@ -385,7 +387,7 @@ class LordOfTheUndeadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Zombie cards in graveyard"));
     }
 
     // ===== Activated ability: validation =====

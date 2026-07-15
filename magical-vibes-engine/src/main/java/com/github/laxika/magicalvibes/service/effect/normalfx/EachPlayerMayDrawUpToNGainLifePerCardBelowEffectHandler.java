@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -80,15 +81,13 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
         String playerName = gameData.playerIdToName.get(playerId);
         if (chosen > 0) {
             playerInteractionSupport.applyDrawCards(gameData, playerId, chosen);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " draws " + chosen + " card" + (chosen != 1 ? "s" : "") + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + chosen + " card" + (chosen != 1 ? "s" : "") + "."));
         }
         int lifeGained = e.lifePerCardBelow() * (e.maxDraw() - chosen);
         if (lifeGained > 0) {
             lifeSupport.applyGainLife(gameData, playerId, lifeGained, null,
                     entry.getCard(), entry.getEntryType());
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " gains " + lifeGained + " life.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " gains " + lifeGained + " life."));
         }
     }
 }

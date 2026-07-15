@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -71,13 +72,13 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean {
         UUID targetPlayerId = entry.getTargetId();
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - amount);
 
             String lossLog = targetName + " loses " + amount + " life (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, lossLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, amount, sourceName);
         }
     }

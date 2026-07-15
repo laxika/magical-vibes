@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -125,7 +127,7 @@ class MindBendTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("changes all instances of black to green") && log.contains("Paladin en-Vec"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("changes all instances of black to green") && log.contains("Paladin en-Vec"));
     }
 
     // ===== Resolving - Basic land type replacement =====
@@ -258,7 +260,7 @@ class MindBendTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Mind Bend"));

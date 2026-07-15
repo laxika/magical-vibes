@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 
@@ -152,7 +154,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creatures to sacrifice"));
     }
 
     // ===== -6 ability: Separate permanents into two piles =====
@@ -279,7 +281,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no permanents to separate"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no permanents to separate"));
     }
 
     @Test

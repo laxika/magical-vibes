@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
@@ -34,7 +35,7 @@ public class MillHalfLibraryEffectHandler implements NormalEffectHandlerBean {
         int cardsToMill = e.roundUp() ? (deck.size() + 1) / 2 : deck.size() / 2;
         if (cardsToMill == 0) {
             String logEntry = playerName + "'s library has " + pluralCards(deck.size()) + " — mills nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 

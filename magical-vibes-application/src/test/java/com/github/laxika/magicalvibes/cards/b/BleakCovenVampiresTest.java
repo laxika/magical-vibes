@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -90,8 +92,8 @@ class BleakCovenVampiresTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("loses 4 life"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains 4 life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses 4 life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains 4 life"));
     }
 
     // ===== ETB without metalcraft =====
@@ -154,7 +156,7 @@ class BleakCovenVampiresTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("metalcraft ability does nothing"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("metalcraft ability does nothing"));
     }
 
     // ===== Creature enters battlefield regardless =====

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetSpellUncounterableEffect;
@@ -31,6 +32,6 @@ public class MakeTargetSpellUncounterableEffectHandler implements NormalEffectHa
         if (targetSpell == null) return;
 
         gameData.spellsMadeUncounterable.add(targetCardId);
-        gameBroadcastService.logAndBroadcast(gameData, targetSpell.getCard().getName() + " can't be countered.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetSpell.getCard().getName() + " can't be countered."));
     }
 }

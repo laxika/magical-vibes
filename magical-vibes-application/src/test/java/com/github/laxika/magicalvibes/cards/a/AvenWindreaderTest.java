@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -62,7 +64,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals") && log.contains(topCardName));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals") && log.contains(topCardName));
         // Card stays on top — deck size unchanged
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(deckSizeBefore);
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo(topCardName);
@@ -82,7 +84,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals") && log.contains(topCardName));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals") && log.contains(topCardName));
         assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(deckSizeBefore);
     }
 
@@ -100,7 +102,7 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
     @Test
@@ -115,14 +117,14 @@ class AvenWindreaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        long revealCount = gd.gameLog.stream().filter(log -> log.contains("reveals")).count();
+        long revealCount = gd.gameLog.stream().map(GameLogEntry::plainText).filter(log -> log.contains("reveals")).count();
         assertThat(revealCount).isEqualTo(1);
 
         // Second activation — same permanent, not tapped
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        long revealCountAfter = gd.gameLog.stream().filter(log -> log.contains("reveals")).count();
+        long revealCountAfter = gd.gameLog.stream().map(GameLogEntry::plainText).filter(log -> log.contains("reveals")).count();
         assertThat(revealCountAfter).isEqualTo(2);
     }
 

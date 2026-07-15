@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,14 +42,12 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    targetName + "'s library is empty (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " looks at the top card of " + targetName + "'s library (" + sourceName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library (" + sourceName + ")."));
         log.info("Game {} - {} looks at top of {}'s library: {} ({})",
                 gameData.id, controllerName, targetName, topCard.getName(), sourceName);
 
@@ -56,15 +55,13 @@ public class LookAtTargetPlayerTopCardMayGraveyardEffectHandler implements Norma
 
         // Wand of Denial only lets you bin the card if it's a nonland card.
         if (typed.nonlandOnly() && topCard.hasType(CardType.LAND)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    "The top card is a land; it stays on top (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The top card is a land; it stays on top (" + sourceName + ")."));
             return;
         }
 
         // "you may pay N life" — only offer the choice if the controller can pay.
         if (typed.lifeCost() > 0 && gameData.getLife(controllerId) < typed.lifeCost()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " can't pay " + typed.lifeCost() + " life (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " can't pay " + typed.lifeCost() + " life (" + sourceName + ")."));
             return;
         }
 

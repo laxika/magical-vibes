@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
@@ -76,8 +77,7 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
                         destroyed.add(targetPermanent);
                     }
                 } else {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented."));
                 }
             }
         }

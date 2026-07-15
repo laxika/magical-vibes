@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -179,7 +181,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
         // No search prompt since no basic lands
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
     @Test

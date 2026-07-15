@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -64,8 +65,7 @@ public class SearchTargetLibraryForCardsToExileEffectHandler implements NormalEf
             // "up to X" with X == 0 (e.g. Nightmare Incursion with no Swamps): exile nothing,
             // but the targeted player still shuffles.
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " searches " + targetName + "'s library for no cards. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library for no cards. Library is shuffled."));
             return;
         }
         String prompt = "Search " + targetName + "'s library for a card to exile (" + effectiveCount + " remaining).";

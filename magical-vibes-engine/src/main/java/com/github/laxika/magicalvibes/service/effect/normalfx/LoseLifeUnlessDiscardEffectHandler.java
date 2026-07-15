@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,12 +42,12 @@ public class LoseLifeUnlessDiscardEffectHandler implements NormalEffectHandlerBe
         if (!hasCards) {
             // No cards to discard — auto-apply life loss
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - e.lifeLoss());
                 String logEntry = playerName + " has no cards to discard. " + playerName + " loses " + e.lifeLoss() + " life.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (no cards to discard, {})",
                         gameData.id, playerName, e.lifeLoss(), entry.getCard().getName());
             }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,7 +39,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData, "Source creature is no longer on the battlefield. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Source creature is no longer on the battlefield. Exchange doesn't occur."));
             return;
         }
 
@@ -51,15 +52,14 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         // CR 118.7: if the player's life total can't change, the exchange doesn't occur
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
 
         if (currentLife == currentStat) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " exchanges life total with " + source.getCard().getName()
-                            + "'s " + statName + " (both at " + currentLife + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exchanges life total with " + source.getCard().getName()
+                            + "'s " + statName + " (both at " + currentLife + ")."));
             return;
         }
 
@@ -67,15 +67,14 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         boolean lifeWouldIncrease = currentStat > currentLife;
         if (lifeWouldIncrease && !gameQueryService.canPlayerGainLife(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't gain life. Exchange doesn't occur."));
             return;
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " exchanges life total with " + source.getCard().getName()
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exchanges life total with " + source.getCard().getName()
                         + "'s " + statName + " (" + playerName + ": " + currentLife + " -> " + currentStat
-                        + ", " + source.getCard().getName() + " " + statName + ": " + currentStat + " -> " + currentLife + ").");
+                        + ", " + source.getCard().getName() + " " + statName + ": " + currentStat + " -> " + currentLife + ")."));
 
         // Set player's life total to the creature's stat
         gameData.playerLifeTotals.put(controllerId, currentStat);

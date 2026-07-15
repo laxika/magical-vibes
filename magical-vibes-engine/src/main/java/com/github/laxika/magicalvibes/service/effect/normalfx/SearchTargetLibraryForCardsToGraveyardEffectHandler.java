@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -45,7 +46,7 @@ public class SearchTargetLibraryForCardsToGraveyardEffectHandler implements Norm
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -56,7 +57,7 @@ public class SearchTargetLibraryForCardsToGraveyardEffectHandler implements Norm
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = controllerName + " searches " + targetName + "'s library but finds no matching cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 

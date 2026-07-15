@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -53,7 +54,7 @@ public class SacrificeCreatureToCreateTokensEqualToToughnessEffectHandler implem
 
         if (validIds.isEmpty()) {
             String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creature to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
             return;
@@ -66,7 +67,7 @@ public class SacrificeCreatureToCreateTokensEqualToToughnessEffectHandler implem
                 entry.getCard().getName() + " — Choose a creature to sacrifice.");
 
         String logEntry = playerName + " is choosing a creature to sacrifice for " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing a creature to sacrifice for {}",
                 gameData.id, playerName, entry.getCard().getName());
     

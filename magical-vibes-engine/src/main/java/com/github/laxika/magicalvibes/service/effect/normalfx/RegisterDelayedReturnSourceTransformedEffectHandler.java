@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefield
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceTransformedEffect;
@@ -35,7 +36,7 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         if (ownerId == null) {
             String logEntry = card.getName() + "'s delayed return fizzles - it is no longer in a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Delayed transformed return for {} not registered (no longer in graveyard)",
                     gameData.id, card.getName());
             return;
@@ -45,9 +46,8 @@ public class RegisterDelayedReturnSourceTransformedEffectHandler implements Norm
         gameData.queueDelayedAction(
                 new DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                card.getName() + " will return to the battlefield transformed under " + playerName
-                        + "'s control at the beginning of the next end step.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " will return to the battlefield transformed under " + playerName
+                        + "'s control at the beginning of the next end step."));
         log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",
                 gameData.id, card.getName(), ownerId, controllerId);
     }

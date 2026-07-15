@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -215,11 +217,11 @@ class ContaminatedBondTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Contaminated Bond") && log.contains("triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Contaminated Bond") && log.contains("triggers"));
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("loses") && log.contains("3") && log.contains("life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses") && log.contains("3") && log.contains("life"));
     }
 
     // ===== Helpers =====

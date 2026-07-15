@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -180,7 +182,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -200,8 +202,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Knowledge Pool's ability — original spell is no longer on the stack."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Knowledge Pool's ability — original spell is no longer on the stack.")));
             }
 
             @Test
@@ -235,8 +236,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 assertThat(gd.getCardsExiledByPermanent(kp.getId())).contains(originalCard);
                 verify(exileService).exileCard(gd, player1Id, originalCard, kp.getId());
                 // No eligible cards â†’ log message
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Knowledge Pool — no other nonland cards exiled. Player1 cannot cast a spell.")));
             }
 
             @Test
@@ -287,8 +287,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
 
                 exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Player1 declines to cast a spell from Knowledge Pool."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 declines to cast a spell from Knowledge Pool.")));
                 verify(gameBroadcastService).broadcastGameState(gd);
                 assertThat(gd.peekPendingInteraction(PendingKnowledgePoolCast.class)).isNull();
             }

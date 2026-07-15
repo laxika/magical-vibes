@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -67,7 +68,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logEntry = controllerName + " restarts the game with Karn Liberated!";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} restarts the game with Karn Liberated ({} cards saved)",
                 gameData.id, controllerName, karnExiledCards.size());
 
@@ -261,7 +262,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 gameData.addCardToHand(playerId, deck.removeFirst());
             }
             String drawLog = gameData.playerIdToName.get(playerId) + " draws 7 cards.";
-            gameBroadcastService.logAndBroadcast(gameData, drawLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
         }
 
         // Step 5: Controller goes first (CR 726)
@@ -278,7 +279,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playerNeedsToBottom.clear();
         gameData.status = GameStatus.MULLIGAN;
 
-        gameBroadcastService.logAndBroadcast(gameData, "Mulligan phase — decide to keep or mulligan.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Mulligan phase — decide to keep or mulligan."));
         gameBroadcastService.broadcastGameState(gameData);
 
         // Kick off the new mulligan round for message-driven clients (AI players decide on

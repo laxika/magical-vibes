@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -85,8 +86,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = amount == 1 ? "a " + counterName + " counter" : amount + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + " puts " + counterText + " on " + count + " creature(s).");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " puts " + counterText + " on " + count + " creature(s)."));
         log.info("Game {} - {} puts {} {} counter(s) on {} matching permanent(s)", gameData.id,
                 entry.getCard().getName(), amount, counterName, count);
 

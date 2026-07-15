@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -164,7 +166,7 @@ class AuriokSurvivorsTest extends BaseCardTest {
         castAndAcceptMay();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no Equipment"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no Equipment"));
     }
 
     @Test

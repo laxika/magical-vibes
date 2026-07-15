@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -58,7 +59,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
 
             Card card = target.getCard();
             if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
-                gameBroadcastService.logAndBroadcast(gameData, card.getName() + " is destroyed.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " is destroyed."));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, card.getName(), sourceName);
                 cardsToReturn.add(card);
             }
@@ -76,7 +77,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
                 gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
                 String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                         + " onto the battlefield from a graveyard; it stays in the graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(blockedLog));
                 log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
                         gameData.id, card.getName());
                 continue;
@@ -91,8 +92,7 @@ public class DestroyUpToTargetsThenReturnFromGraveyardEffectHandler implements N
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + card.getName() + " onto the battlefield from a graveyard."));
             log.info("Game {} - {} returns {} to the battlefield under {}", gameData.id, playerName,
                     card.getName(), playerName);
 

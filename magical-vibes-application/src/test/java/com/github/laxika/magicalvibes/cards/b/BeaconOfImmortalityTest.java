@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -57,7 +59,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(40);
-        assertThat(harness.getGameData().gameLog).anyMatch(log -> log.contains("doubled from 20 to 40"));
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("doubled from 20 to 40"));
     }
 
     @Test
@@ -110,7 +112,7 @@ class BeaconOfImmortalityTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Beacon of Immortality"));
         // Log confirms shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
     @Test

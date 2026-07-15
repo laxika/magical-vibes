@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,7 +53,7 @@ public class SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedE
 
         if (landIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(controllerId) + " controls no lands to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no lands to sacrifice for {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), entry.getCard().getName());
             return;

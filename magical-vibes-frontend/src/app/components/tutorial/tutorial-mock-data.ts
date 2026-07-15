@@ -1,4 +1,4 @@
-import { Game, GameStatus, TurnStep, Card, Permanent, StackEntry } from '../../services/websocket.service';
+import { Game, GameStatus, TurnStep, Card, Permanent, StackEntry, logText } from '../../services/websocket.service';
 
 function makeCard(overrides: Partial<Card>): Card {
   return {
@@ -270,16 +270,16 @@ export const TUTORIAL_MOCK_GAME: Game = {
   playerNames: ['You', 'Opponent'],
   playerIds: ['tutorial-player', 'tutorial-opponent'],
   gameLog: [
-    'Game started.',
-    'You play Forest.',
-    'Opponent plays Island.',
-    'You play Plains.',
-    'Opponent plays Island.',
-    "You cast Avacyn's Pilgrim.",
-    'Opponent plays Swamp.',
-    'You play Forest.',
-    'Opponent casts Battleground Geist.',
-    'You play Forest.',
+    logText('Game started.'),
+    logText('You play Forest.'),
+    logText('Opponent plays Island.'),
+    logText('You play Plains.'),
+    logText('Opponent plays Island.'),
+    logText("You cast Avacyn's Pilgrim."),
+    logText('Opponent plays Swamp.'),
+    logText('You play Forest.'),
+    logText('Opponent casts Battleground Geist.'),
+    logText('You play Forest.'),
   ],
   currentStep: TurnStep.PRECOMBAT_MAIN,
   activePlayerId: 'tutorial-player',

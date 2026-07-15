@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentE
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -64,7 +65,7 @@ public class DamageTriggerCollectorService {
             permanentRemovalService.removeOrphanedAuras(gameData);
             String logEntry = match.permanent().getCard().getName() + " triggers — "
                     + currentSource.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} triggers, bouncing {} to owner's hand",
                     gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
         }
@@ -116,7 +117,7 @@ public class DamageTriggerCollectorService {
         if (destroyed) {
             String logEntry = match.permanent().getCard().getName() + " triggers - "
                     + currentSource.getCard().getName() + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         }
         log.info("Game {} - {} triggers, destroying damage source {}",
                 gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
@@ -194,7 +195,7 @@ public class DamageTriggerCollectorService {
         }
 
         String logEntry = dc.damagedCreature().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",
                 gameData.id, dc.damagedCreature().getCard().getName());
         return true;
@@ -218,7 +219,7 @@ public class DamageTriggerCollectorService {
                 false, null, dc.damageDealt()));
 
         String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} ON_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
                 gameData.id, damagedCreature.getCard().getName());
         return true;
@@ -258,7 +259,7 @@ public class DamageTriggerCollectorService {
         gameData.stack.add(entry);
 
         String logEntry = aura.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
@@ -286,7 +287,7 @@ public class DamageTriggerCollectorService {
                 damagedCreature.getId()
         ));
         String logEntry = damagedCreature.getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} ON_DEALT_DAMAGE trigger fires", gameData.id, damagedCreature.getCard().getName());
     }
 }

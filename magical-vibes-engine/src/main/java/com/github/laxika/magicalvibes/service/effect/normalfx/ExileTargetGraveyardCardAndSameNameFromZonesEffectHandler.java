@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -73,7 +74,7 @@ public class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandler implement
 
             String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
                     + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
             log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
             return;
         }

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Component;
 public class SacrificeAtEndOfCombatEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,8 +30,10 @@ public class SacrificeAtEndOfCombatEffectHandler implements NormalEffectHandlerB
                 Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 if (self != null) {
                     gameData.queueDelayedAction(new SacrificeAtEndOfCombat(self.getId()));
-                    String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
-                    gameData.gameLog.add(logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                            .card(entry.getCard())
+                            .text(" will be sacrificed at end of combat.")
+                            .build());
                 }
     
     }

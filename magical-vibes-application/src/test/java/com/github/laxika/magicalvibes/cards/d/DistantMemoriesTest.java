@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -144,8 +146,8 @@ class DistantMemoriesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Log should mention exile and shuffle
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("exiles a card"));
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("shuffled"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("exiles a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("shuffled"));
     }
 
     // ===== Empty library — draw three directly =====
@@ -170,7 +172,7 @@ class DistantMemoriesTest extends BaseCardTest {
         // Should NOT be in library search mode (library was empty)
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Log should mention empty library
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
     // ===== Sorcery goes to graveyard =====

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.SpellstutterSprite;
@@ -125,7 +127,7 @@ class ThievingSpriteTest extends BaseCardTest {
         castThievingSprite(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards in hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards in hand"));
     }
 
     // ===== Rejections =====

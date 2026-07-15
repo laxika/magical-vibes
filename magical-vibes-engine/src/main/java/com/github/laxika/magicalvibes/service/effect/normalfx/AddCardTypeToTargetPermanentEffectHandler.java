@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
@@ -41,7 +42,7 @@ public class AddCardTypeToTargetPermanentEffectHandler implements NormalEffectHa
         String typeName = e.cardType().name().charAt(0) + e.cardType().name().substring(1).toLowerCase();
         String duration = e.persistent() ? "" : " until end of turn";
         String logEntry = target.getCard().getName() + " becomes an " + typeName + " in addition to its other types" + duration + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} becomes an {}{}", gameData.id, target.getCard().getName(), typeName, duration);
     }

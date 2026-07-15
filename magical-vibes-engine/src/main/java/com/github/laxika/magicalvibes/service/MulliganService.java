@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -63,7 +64,7 @@ public class MulliganService {
 
             String logEntry = player.getUsername() + " keeps their hand and must put " + cardsToBottom +
                     " card" + (cardsToBottom > 1 ? "s" : "") + " on the bottom of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} kept hand, needs to bottom {} cards (mulligan count: {})", gameData.id, player.getUsername(), cardsToBottom, mulliganCount);
 
@@ -71,7 +72,7 @@ public class MulliganService {
             sessionManager.sendToPlayer(player.getId(), new SelectCardsToBottomMessage(cardsToBottom));
         } else {
             String logEntry = player.getUsername() + " keeps their hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} kept hand (no mulligans)", gameData.id, player.getUsername());
 
@@ -114,7 +115,7 @@ public class MulliganService {
 
         String logEntry = player.getUsername() + " puts " + bottomCards.size() +
                 " card" + (bottomCards.size() > 1 ? "s" : "") + " on the bottom of their library (keeping " + hand.size() + " cards).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} bottomed {} cards, hand size now {}", gameData.id, player.getUsername(), bottomCards.size(), hand.size());
 
@@ -147,7 +148,7 @@ public class MulliganService {
         sessionManager.sendToPlayers(gameData.orderedPlayerIds, new MulliganResolvedMessage(player.getUsername(), false, newMulliganCount));
 
         String logEntry = player.getUsername() + " takes a mulligan (mulligan #" + newMulliganCount + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} mulliganed (count: {})", gameData.id, player.getUsername(), newMulliganCount);
         gameBroadcastService.broadcastGameState(gameData);
@@ -221,7 +222,7 @@ public class MulliganService {
                 }
 
                 String entryLog = controllerName + " puts " + card.getName() + " onto the battlefield (Karn Liberated).";
-                gameBroadcastService.logAndBroadcast(gameData, entryLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entryLog));
                 log.info("Game {} - {} puts {} onto the battlefield from Karn's exile",
                         gameData.id, controllerName, card.getName());
             }
@@ -235,8 +236,8 @@ public class MulliganService {
 
         String logEntry1 = "Mulligan phase complete!";
         String logEntry2 = "Turn 1 begins. " + gameData.playerIdToName.get(gameData.activePlayerId) + "'s turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry1);
-        gameBroadcastService.logAndBroadcast(gameData, logEntry2);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry1));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry2));
 
         gameBroadcastService.broadcastGameState(gameData);
 

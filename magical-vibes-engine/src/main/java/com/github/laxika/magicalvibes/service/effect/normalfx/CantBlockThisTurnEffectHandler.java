@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
@@ -50,7 +51,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
                 }
                 target.setCantBlockThisTurn(true);
                 String logMsg = target.getCard().getName() + " can't block this turn.";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                 log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
             }
             return;
@@ -65,7 +66,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
         target.setCantBlockThisTurn(true);
 
         String logEntry = target.getCard().getName() + " can't block this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} can't block this turn", gameData.id, target.getCard().getName());
     }
 
@@ -99,7 +100,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         if (count > 0) {
             String logEntry = "Creatures controlled by " + playerName + " can't block this turn.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} creatures controlled by {} can't block this turn", gameData.id, count, playerName);
         }
     }
@@ -121,7 +122,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
         if (count > 0) {
             String logEntry = "Some creatures can't block this turn.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} creatures can't block this turn", gameData.id, count);
         }
     }

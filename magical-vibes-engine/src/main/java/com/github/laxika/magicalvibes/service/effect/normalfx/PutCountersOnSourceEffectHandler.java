@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -50,7 +51,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + e.amount());
         }
         String logEntry = source.getCard().getName() + " gets " + e.amount() + " " + counterLabel + " counter(s).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), e.amount(), counterLabel);
 
         if (e.powerModifier() <= 0) {

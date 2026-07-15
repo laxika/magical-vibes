@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -136,8 +138,7 @@ class CounterSpellAndExileEffectHandlerTest {
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
                 verify(exileService).exileCard(gd, player1Id, bears);
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Grizzly Bears is countered and exiled."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is countered and exiled.")));
             }
 
             @Test
@@ -167,7 +168,7 @@ class CounterSpellAndExileEffectHandlerTest {
                 counterSpellAndExileHandler.resolve(gd, dissipateEntry, new CounterSpellAndExileEffect());
 
                 verify(exileService, never()).exileCard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test

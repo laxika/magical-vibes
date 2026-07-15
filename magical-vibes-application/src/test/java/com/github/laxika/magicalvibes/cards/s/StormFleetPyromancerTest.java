@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -111,7 +113,7 @@ class StormFleetPyromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
     // ===== Fizzle =====
@@ -133,7 +135,7 @@ class StormFleetPyromancerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB — fizzles
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     // ===== Target prompt =====

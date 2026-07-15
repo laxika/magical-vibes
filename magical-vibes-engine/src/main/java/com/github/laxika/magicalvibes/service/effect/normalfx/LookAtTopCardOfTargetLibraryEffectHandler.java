@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -46,8 +47,7 @@ public class LookAtTopCardOfTargetLibraryEffectHandler implements NormalEffectHa
         String controllerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + ": " + targetName + "'s library is empty.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + ": " + targetName + "'s library is empty."));
             return;
         }
 
@@ -67,8 +67,7 @@ public class LookAtTopCardOfTargetLibraryEffectHandler implements NormalEffectHa
     private void resolveSingleCardLook(GameData gameData, StackEntry entry, UUID controllerId,
             UUID targetPlayerId, List<Card> deck, String targetName, String controllerName) {
         // Public log records only that a look happened, never the card's identity (private look).
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " looks at the top card of " + targetName + "'s library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top card of " + targetName + "'s library."));
 
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, 1);
         String prompt = "The top card of " + targetName + "'s library. It will remain on top.";
@@ -101,8 +100,8 @@ public class LookAtTopCardOfTargetLibraryEffectHandler implements NormalEffectHa
         List<Card> topCards = new ArrayList<>(deck.subList(0, actual));
 
         // Public log records only that a look happened, never the cards' identity (private look).
-        gameBroadcastService.logAndBroadcast(gameData, controllerName + " looks at the top "
-                + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " looks at the top "
+                + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library."));
 
         List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(controllerId, new RevealLibraryTopMessage(cardViews, targetName));

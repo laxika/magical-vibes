@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
@@ -47,14 +48,14 @@ public class TransformAllEffectHandler implements NormalEffectHandlerBean {
                 perm.setCard(backFace);
                 perm.setTransformed(true);
                 String logEntry = frontName + " transforms into " + backFace.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             } else {
                 String backName = perm.getCard().getName();
                 perm.setCard(originalCard);
                 perm.setTransformed(false);
                 String logEntry = backName + " transforms into " + originalCard.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
             }
         });

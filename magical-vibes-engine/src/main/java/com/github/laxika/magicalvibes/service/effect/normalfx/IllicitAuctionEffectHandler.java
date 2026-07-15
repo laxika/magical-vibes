@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.IllicitAuctionState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -85,11 +86,9 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             if (bid > state.highBid) {
                 state.highBid = bid;
                 state.highBidderId = bidder;
-                gameBroadcastService.logAndBroadcast(gameData,
-                        bidderName + " bids " + bid + " life for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bidderName + " bids " + bid + " life for " + cardName + "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        bidderName + " passes on " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bidderName + " passes on " + cardName + "."));
             }
             promptNextBidderOrFinish(gameData, entry, cardName);
         }
@@ -139,8 +138,8 @@ public class IllicitAuctionEffectHandler implements NormalEffectHandlerBean {
             creatureControlService.applyControlEffect(gameData, winnerId, target,
                     new GainControlOfTargetEffect(ControlDuration.PERMANENT),
                     ControlDuration.PERMANENT.toEffectDuration(), null, cardName);
-            gameBroadcastService.logAndBroadcast(gameData, gameData.playerIdToName.get(winnerId)
-                    + " gains control of " + target.getCard().getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(winnerId)
+                    + " gains control of " + target.getCard().getName() + "."));
         }
         state.reset();
     }

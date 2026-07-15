@@ -3,6 +3,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
@@ -45,7 +46,7 @@ public class RegisterDelayedReturnCardFromGraveyardToHandEffectHandler implement
 
         if (ownerId == null) {
             String logEntry = "Delayed return fizzles — card is no longer in any graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Delayed return registered but card {} not in any graveyard", gameData.id, cardId);
             return;
         }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -108,7 +109,7 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
         String logMsg = reorderedToBottom
                 ? player.getUsername() + " puts " + count + " cards on the bottom of their library."
                 : player.getUsername() + " puts " + count + " cards back on top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
                 reorderedToBottom ? "bottom" : "top");
 

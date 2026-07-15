@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -101,7 +102,7 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                     String logMsg = e.grantHaste()
                             ? "A token copy of " + imprintedCard.getName() + " is created with haste."
                             : "A token copy of " + imprintedCard.getName() + " is created.";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

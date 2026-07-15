@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -51,7 +52,7 @@ public class ReturnLandControlledByPlayerToHandEffectHandler implements NormalEf
 
         if (landIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " controls no lands to return.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " controls no lands to return."));
             return;
         }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffect;
@@ -35,7 +36,7 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (sourceCard == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} tuck-on-death trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);
             return;
@@ -47,7 +48,7 @@ public class PutSourceCardFromGraveyardOnTopOfOwnersLibraryEffectHandler impleme
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = sourceCard.getName() + " is put on top of " + ownerName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} put on top of {}'s library from graveyard", gameData.id, sourceCard.getName(), ownerName);
     }
 }

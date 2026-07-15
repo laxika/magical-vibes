@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
@@ -250,7 +251,7 @@ class EndTurnEffectHandlerTest {
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("The turn ends."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("The turn ends.")));
             }
 
             @Test

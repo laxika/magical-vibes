@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -135,8 +136,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, bears);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Grizzly Bears is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is countered.")));
             }
 
             @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -72,7 +73,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
                     String logEntry = "A 0/0 black Phyrexian Germ creature token enters the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
                     if (!gameData.interaction.isAwaitingInput()) {
@@ -91,7 +92,7 @@ public class LivingWeaponEffectHandler implements NormalEffectHandlerBean {
                         // CR 613.7e: an Equipment receives a new timestamp each time it becomes attached.
                         equipment.setTimestamp(gameData.nextTimestamp());
                         String attachLog = entry.getCard().getName() + " is now attached to Phyrexian Germ.";
-                        gameBroadcastService.logAndBroadcast(gameData, attachLog);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attachLog));
                         log.info("Game {} - {} attached to Phyrexian Germ token via living weapon", gameData.id, entry.getCard().getName());
                     }
                 }

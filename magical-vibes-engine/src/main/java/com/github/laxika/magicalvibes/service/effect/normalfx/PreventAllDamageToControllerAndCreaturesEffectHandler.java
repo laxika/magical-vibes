@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndCreaturesEffect;
@@ -27,6 +28,6 @@ public class PreventAllDamageToControllerAndCreaturesEffectHandler implements No
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = "All damage that would be dealt to " + playerName + " and creatures " + playerName + " controls this turn is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

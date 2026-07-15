@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -133,7 +135,7 @@ class SpellskiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spellskite's ability resolves but does nothing (spell has no targets)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("has no targets"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no targets"));
 
         // Counsel of the Soratami still resolves normally
         harness.passBothPriorities();
@@ -164,6 +166,6 @@ class SpellskiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Spellskite");
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("already targets"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("already targets"));
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -62,7 +63,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = playerName + " has no cards in hand (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} trigger: {} has no cards in hand", gameData.id, sourceName, playerName);
             return;
         }
@@ -72,7 +73,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
         Card revealed = hand.get(randomIndex);
 
         String revealLog = playerName + " reveals " + revealed.getName() + " at random (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -87,7 +88,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, new Permanent(revealed));
 
             String landLog = playerName + " puts " + revealed.getName() + " onto the battlefield (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, landLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(landLog));
             log.info("Game {} - {} puts {} onto battlefield (Wild Evocation)", gameData.id, playerName, revealed.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, targetPlayerId, revealed, null, false);
@@ -122,7 +123,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 if (validTargets.isEmpty()) {
                     // Can't cast — card stays in hand
                     String noTargetLog = revealed.getName() + " has no valid targets and stays in " + playerName + "'s hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, noTargetLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noTargetLog));
                     log.info("Game {} - {} can't be cast (no targets), stays in hand", gameData.id, revealed.getName());
                     return;
                 }
@@ -135,7 +136,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                         "Choose a target for " + revealed.getName() + ".");
 
                 String castLog = playerName + " casts " + revealed.getName() + " without paying its mana cost — choosing target (" + sourceName + ").";
-                gameBroadcastService.logAndBroadcast(gameData, castLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(castLog));
                 log.info("Game {} - {} casts {} (Wild Evocation), choosing target", gameData.id, playerName, revealed.getName());
             } else {
                 // Non-targeted spell — remove from hand and put directly on stack
@@ -149,7 +150,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                 gameData.priorityPassedBy.clear();
 
                 String castLog = playerName + " casts " + revealed.getName() + " without paying its mana cost (" + sourceName + ").";
-                gameBroadcastService.logAndBroadcast(gameData, castLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(castLog));
                 log.info("Game {} - {} casts {} (Wild Evocation) without paying mana", gameData.id, playerName, revealed.getName());
 
                 triggerCollectionService.checkSpellCastTriggers(gameData, revealed, targetPlayerId, false);

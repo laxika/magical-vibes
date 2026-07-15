@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -49,8 +50,7 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
         // persist return does nothing and the card stays in the graveyard.
         if (graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    card.getName() + " can't return from the graveyard (persist); it stays in the graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " can't return from the graveyard (persist); it stays in the graveyard."));
             log.info("Game {} - {} persist return blocked (can't enter from a graveyard)", gameData.id, card.getName());
             return;
         }
@@ -64,8 +64,7 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " returns " + card.getName() + " to the battlefield with a -1/-1 counter (persist).");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " returns " + card.getName() + " to the battlefield with a -1/-1 counter (persist)."));
         log.info("Game {} - {} returns via persist with a -1/-1 counter", gameData.id, card.getName());
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -56,7 +57,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
 
         String logEntry = entry.getCard().getName() + " grants a temporary " + e.slot().name()
                 + " ability to " + target.getCard().getName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} grants temporary {} effect to {}", gameData.id,
                 entry.getCard().getName(), e.slot().name(), target.getCard().getName());
     }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -49,7 +50,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
 
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " has no cards to discard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard."));
             return;
         }
 
@@ -58,7 +59,7 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card discarded = hand.remove(randomIndex);
         graveyardService.addCardToGraveyard(gameData, controllerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " discards " + discarded.getName() + " at random.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + discarded.getName() + " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 

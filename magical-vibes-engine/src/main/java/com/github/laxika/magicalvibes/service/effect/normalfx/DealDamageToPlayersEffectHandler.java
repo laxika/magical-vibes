@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -66,8 +67,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
     /** CONTROLLER: "deals N damage to you". */
     private void resolveController(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + "'s damage to controller is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s damage to controller is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, entry.getControllerId());
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
@@ -97,8 +97,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         String cardName = entry.getCard().getName();
 
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int amount = evaluateAmount(gameData, entry, e, controllerId);
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);

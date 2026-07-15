@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -45,7 +46,7 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
 
                     if (creatures.isEmpty()) {
                         String playerName = gameData.playerIdToName.get(playerId);
-                        gameBroadcastService.logAndBroadcast(gameData, playerName + " has no creatures.");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no creatures."));
                         continue;
                     }
 
@@ -53,8 +54,7 @@ public class EachPlayerChoosesCreatureDestroyRestEffectHandler implements Normal
                         // Auto-keep the only creature
                         protectedIds.add(creatures.getFirst().getId());
                         String playerName = gameData.playerIdToName.get(playerId);
-                        gameBroadcastService.logAndBroadcast(gameData,
-                                playerName + " keeps " + creatures.getFirst().getCard().getName() + " (only creature).");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps " + creatures.getFirst().getCard().getName() + " (only creature)."));
                         continue;
                     }
 

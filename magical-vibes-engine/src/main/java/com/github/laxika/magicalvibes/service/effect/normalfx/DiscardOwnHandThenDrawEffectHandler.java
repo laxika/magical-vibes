@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
@@ -56,7 +57,7 @@ public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerB
 
             String discardLog = playerName + " discards their hand (" + discardCount
                     + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, discardLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
             log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
         }
 
@@ -67,7 +68,7 @@ public class DiscardOwnHandThenDrawEffectHandler implements NormalEffectHandlerB
         }
         if (drawCount > 0) {
             String drawLog = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".";
-            gameBroadcastService.logAndBroadcast(gameData, drawLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
             log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, drawCount, cardName);
         }
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.c.ChampionOfTheParish;
@@ -145,7 +147,7 @@ class ElderCatharTest extends BaseCardTest {
             // No valid targets (player1 has no creatures, can't target opponent's)
             // The trigger should be skipped
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
         }
 
         @Test
@@ -164,7 +166,7 @@ class ElderCatharTest extends BaseCardTest {
 
             // All creatures dead — no valid targets for "creature you control"
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
         }
 
         @Test
@@ -189,7 +191,7 @@ class ElderCatharTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         }
 
         @Test

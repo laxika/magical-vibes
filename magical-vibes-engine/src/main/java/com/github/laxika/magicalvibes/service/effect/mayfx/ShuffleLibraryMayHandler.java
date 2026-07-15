@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,12 +34,12 @@ public class ShuffleLibraryMayHandler implements MayEffectHandlerBean {
         if (accepted) {
             LibraryShuffleHelper.shuffleLibrary(gameData, ability.controllerId());
             String logEntry = player.getUsername() + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} shuffles their library ({})", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
         } else {
             String logEntry = player.getUsername() + " chooses not to shuffle.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines shuffle ({})", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
         }

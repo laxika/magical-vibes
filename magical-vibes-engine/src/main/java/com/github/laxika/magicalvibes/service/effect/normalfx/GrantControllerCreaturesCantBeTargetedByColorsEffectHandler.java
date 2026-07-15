@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
@@ -35,6 +36,6 @@ public class GrantControllerCreaturesCantBeTargetedByColorsEffectHandler impleme
                 .reduce((a, b) -> a + " or " + b)
                 .orElse("");
         String logEntry = "Creatures " + gameData.playerIdToName.get(controllerId) + " controls can't be the targets of " + colorNames + " spells this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

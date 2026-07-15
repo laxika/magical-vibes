@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
@@ -146,7 +148,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Beacon of Unrest"));
         // Log confirms shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
     @Test
@@ -187,12 +189,12 @@ class BeaconOfUnrestTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Should not be awaiting graveyard choice since no valid targets
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no artifact or creature cards in any graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no artifact or creature cards in any graveyard"));
         // Per Magic rules: spell fizzles when no legal targets — Beacon goes to graveyard, NOT shuffled into library
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Beacon of Unrest"));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("shuffled into its owner's library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
     // ===== Cards from both graveyards =====

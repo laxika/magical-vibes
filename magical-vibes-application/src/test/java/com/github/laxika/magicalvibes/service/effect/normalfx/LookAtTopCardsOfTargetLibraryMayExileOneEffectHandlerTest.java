@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -118,8 +119,8 @@ class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandlerTest {
 
                 lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 
             @Test
@@ -139,7 +140,7 @@ class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("Player1") && msg.contains("Player2")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Player1") && logEntry.plainText().contains("Player2")));
             }
 }

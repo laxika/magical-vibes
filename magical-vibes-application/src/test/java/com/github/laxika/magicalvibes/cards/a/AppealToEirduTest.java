@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -145,7 +147,7 @@ class AppealToEirduTest extends BaseCardTest {
 
         // Spell should fizzle
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Card should go to graveyard even when fizzled
         assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Appeal to Eirdu"));

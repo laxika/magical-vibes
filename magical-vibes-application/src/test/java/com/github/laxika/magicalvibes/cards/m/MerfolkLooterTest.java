@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -149,7 +151,7 @@ class MerfolkLooterTest extends BaseCardTest {
         // Should be awaiting discard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
     }
 
     @Test
@@ -174,7 +176,7 @@ class MerfolkLooterTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         // No longer awaiting input
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 
     @Test
@@ -212,7 +214,7 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Should still be awaiting discard
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to draw"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to draw"));
     }
 
     @Test
@@ -227,7 +229,7 @@ class MerfolkLooterTest extends BaseCardTest {
 
         // No card drawn, hand still empty - discard should be skipped
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
     @Test

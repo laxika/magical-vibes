@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
@@ -34,7 +35,7 @@ public class SkipNextCombatPhaseEffectHandler implements NormalEffectHandlerBean
 
         String affectedName = gameData.playerIdToName.get(affectedPlayerId);
         String logEntry = affectedName + " skips their next combat phase.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} will skip their next combat phase", gameData.id, affectedName);
     }
 }

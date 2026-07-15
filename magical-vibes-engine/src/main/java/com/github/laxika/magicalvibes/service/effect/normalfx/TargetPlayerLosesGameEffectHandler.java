@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -38,7 +39,7 @@ public class TargetPlayerLosesGameEffectHandler implements NormalEffectHandlerBe
         // Check if the player can't lose (e.g. Platinum Angel)
         if (!gameQueryService.canPlayerLoseGame(gameData, losingPlayerId)) {
             String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} can't lose the game (protected)", gameData.id,
                     gameData.playerIdToName.get(losingPlayerId));
             return;
@@ -49,7 +50,7 @@ public class TargetPlayerLosesGameEffectHandler implements NormalEffectHandlerBe
         String winnerName = gameData.playerIdToName.get(winnerId);
 
         String logEntry = loserName + " loses the game from " + entry.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, winnerId);

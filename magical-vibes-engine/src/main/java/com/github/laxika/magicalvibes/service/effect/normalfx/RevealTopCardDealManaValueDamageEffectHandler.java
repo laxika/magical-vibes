@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageEffect;
@@ -42,14 +43,13 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, targetPlayerName + "'s library is empty.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPlayerName + "'s library is empty."));
             return;
         }
 
         Card topCard = deck.getFirst();
         int manaValue = topCard.getManaValue();
-        gameBroadcastService.logAndBroadcast(gameData,
-                targetPlayerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPlayerName + " reveals " + topCard.getName() + " (mana value " + manaValue + ") from the top of their library."));
 
         if (manaValue > 0 && !gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
             int damage = gameQueryService.applyDamageMultiplier(gameData, manaValue, entry);
@@ -70,8 +70,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
         }
 
         if (e.returnToHandIfLand() && topCard.hasType(CardType.LAND)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    "A land card was revealed — " + cardName + " is returned to its owner's hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("A land card was revealed — " + cardName + " is returned to its owner's hand."));
             entry.setReturnToHandAfterResolving(true);
         }
     

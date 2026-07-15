@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -46,7 +47,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -57,7 +58,7 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
         if (basicLands.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 

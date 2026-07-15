@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -156,7 +158,7 @@ class FavorOfTheWoodsTest extends BaseCardTest {
 
         // Life gain still applies — the triggered ability already went on the stack and
         // captured the aura's controller, independent of the creature leaving the battlefield.
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains") && log.contains("3") && log.contains("life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains") && log.contains("3") && log.contains("life"));
     }
 
     // ===== Targeting restriction =====
@@ -206,11 +208,11 @@ class FavorOfTheWoodsTest extends BaseCardTest {
 
         declareBlockers(player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Favor of the Woods") && log.contains("triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Favor of the Woods") && log.contains("triggers"));
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gain") && log.contains("3") && log.contains("life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gain") && log.contains("3") && log.contains("life"));
     }
 
     // ===== Helpers =====

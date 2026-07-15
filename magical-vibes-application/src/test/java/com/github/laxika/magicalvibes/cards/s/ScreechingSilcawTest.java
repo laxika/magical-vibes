@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -101,8 +103,8 @@ class ScreechingSilcawTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("metalcraft ability triggers"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("mills 4 card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("metalcraft ability triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("mills 4 card"));
     }
 
     @Test

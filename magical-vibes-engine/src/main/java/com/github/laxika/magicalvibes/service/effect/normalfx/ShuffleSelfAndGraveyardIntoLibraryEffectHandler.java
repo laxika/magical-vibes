@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -65,16 +66,16 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
         if (selfShuffled && graveyardCount > 0) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName()
                     + " and their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else if (selfShuffled) {
             String logEntry = playerName + " shuffles " + entry.getCard().getName() + " into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else if (graveyardCount > 0) {
             String logEntry = playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount) + ") into their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             String logEntry = playerName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         }
 
         log.info("Game {} - {} shuffles self={} + graveyard ({} cards) into library",

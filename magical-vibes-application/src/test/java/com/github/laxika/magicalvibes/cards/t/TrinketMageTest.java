@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GolemsHeart;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -89,7 +91,7 @@ class TrinketMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("searches their library"));
     }
 
     @Test
@@ -107,7 +109,7 @@ class TrinketMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
     }
 
     @Test
@@ -125,7 +127,7 @@ class TrinketMageTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no artifact cards with mana value 1 or less"));
     }
 
     @Test

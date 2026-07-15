@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -141,7 +143,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         // Creature should stay with player2
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("not enchanted"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("not enchanted"));
     }
 
     // ===== Creature returns when no longer enchanted =====
@@ -289,7 +291,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     // ===== Game log =====
@@ -304,7 +306,7 @@ class RootwaterMatriarchTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("gains control of") && log.contains("Grizzly Bears"));
     }
 

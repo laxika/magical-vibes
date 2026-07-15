@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -157,7 +158,7 @@ public class PermanentControlSupport {
             if (isCreature) {
                 String tappedAttackingDesc = token.tappedAndAttacking() ? " tapped and attacking" : (token.tapped() ? " tapped" : "");
                 String logEntry = "A " + token.power() + "/" + token.toughness() + " " + colorDesc + token.tokenName() + " creature token enters the battlefield" + tappedAttackingDesc + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
                 if (!gameData.interaction.isAwaitingInput()) {
@@ -166,7 +167,7 @@ public class PermanentControlSupport {
             } else {
                 String tokenTypeDesc = token.primaryType().name().charAt(0) + token.primaryType().name().substring(1).toLowerCase();
                 String logEntry = "A " + colorDesc + token.tokenName() + " " + tokenTypeDesc.toLowerCase() + " token enters the battlefield.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             }
         }
 

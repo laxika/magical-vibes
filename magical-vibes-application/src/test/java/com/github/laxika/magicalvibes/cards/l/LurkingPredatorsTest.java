@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -178,7 +180,7 @@ class LurkingPredatorsTest extends BaseCardTest {
         setupOpponentCastsSpell();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("reveals") && log.contains("Grizzly Bears"));
     }
 

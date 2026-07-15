@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -213,6 +215,6 @@ class LeylineOfSanctityTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("begins the game with Leyline of Sanctity"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("begins the game with Leyline of Sanctity"));
     }
 }

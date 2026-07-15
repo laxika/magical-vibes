@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -74,7 +75,7 @@ public class EachPlayerExilesTopCardsToSourceEffectHandler implements NormalEffe
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames)
                         + " from the top of their library (" + sourcePermanent.getCard().getName() + ").";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} exiles {} cards from library to {}",
                         gameData.id, playerName, toExile, sourcePermanent.getCard().getName());
             }

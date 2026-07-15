@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -51,8 +52,7 @@ public class LookAtTopCardsPutOneOnTopRestOnBottomEffectHandler implements Norma
         if (topCards.size() == 1) {
             // Only one card looked at — it goes back on top, nothing to put on the bottom.
             gameData.playerDecks.get(controllerId).addFirst(topCards.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts a card on top of their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts a card on top of their library."));
             return;
         }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -50,7 +51,7 @@ public class EquipSupport {
             Permanent oldCreature = gameQueryService.findPermanentById(gameData, oldAttachedTo);
             if (oldCreature != null) {
                 String sacrificeLog = oldCreature.getCard().getName() + " is sacrificed (" + equipment.getCard().getName() + " became unattached).";
-                gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sacrificeLog));
                 log.info("Game {} - {} sacrificed due to {} unattach", gameData.id, oldCreature.getCard().getName(), equipment.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, oldCreature);
                 permanentRemovalService.removeOrphanedAuras(gameData);

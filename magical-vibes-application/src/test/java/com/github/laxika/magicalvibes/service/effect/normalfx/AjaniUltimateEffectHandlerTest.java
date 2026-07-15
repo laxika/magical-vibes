@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -116,8 +117,8 @@ class AjaniUltimateEffectHandlerTest {
 
                 ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty") || msg.contains("no cards")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty") || logEntry.plainText().contains("no cards")));
             }
 
             @Test
@@ -132,8 +133,8 @@ class AjaniUltimateEffectHandlerTest {
 
                 ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no eligible cards")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no eligible cards")));
                 // Card should be put back into deck
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
             }

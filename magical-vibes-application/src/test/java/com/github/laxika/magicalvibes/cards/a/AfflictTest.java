@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -80,7 +82,7 @@ class AfflictTest extends BaseCardTest {
         // After resolving, player should have drawn a card
         GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
     }
 
     @Test
@@ -119,7 +121,7 @@ class AfflictTest extends BaseCardTest {
 
         // Spell should fizzle — no crash, stack should be empty
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     @Test

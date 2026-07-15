@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -303,7 +305,7 @@ class LeoninScimitarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Leonin Scimitar"))
                 .findFirst().orElseThrow();
         assertThat(scimitar.getAttachedTo()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     // ===== Helpers =====

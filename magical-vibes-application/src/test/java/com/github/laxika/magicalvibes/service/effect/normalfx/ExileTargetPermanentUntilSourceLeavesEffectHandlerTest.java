@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -257,7 +258,6 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
                 exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Spellbook is exiled by Leonin Relic-Warder."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Spellbook is exiled by Leonin Relic-Warder.")));
             }
 }

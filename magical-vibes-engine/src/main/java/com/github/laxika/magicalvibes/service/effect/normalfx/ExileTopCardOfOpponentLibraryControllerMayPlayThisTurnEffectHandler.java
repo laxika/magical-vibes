@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffect;
@@ -43,8 +44,7 @@ public class ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffectHandler
         List<Card> deck = gameData.playerDecks.get(opponentId);
         String opponentName = gameData.playerIdToName.get(opponentId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    opponentName + "'s library is empty — nothing to exile.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + "'s library is empty — nothing to exile."));
             return;
         }
 
@@ -56,8 +56,8 @@ public class ExileTopCardOfOpponentLibraryControllerMayPlayThisTurnEffectHandler
         gameData.exilePlayPermissionsExpireEndOfTurn.add(topCard.getId());
 
         String controllerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, opponentName + " exiles " + topCard.getName()
-                + " from the top of their library — " + controllerName + " may play it this turn.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " exiles " + topCard.getName()
+                + " from the top of their library — " + controllerName + " may play it this turn."));
         log.info("Game {} - {} exiles {} from {}'s library top; {} may play it this turn",
                 gameData.id, opponentName, topCard.getName(), opponentName, controllerName);
     }

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -106,7 +107,7 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -313,7 +314,7 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -355,7 +356,7 @@ class DiscardTriggerCollectorServiceTest {
                     EffectSlot.ON_OPPONENT_DISCARDS, effect, ctx);
 
             assertThat(result).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 }

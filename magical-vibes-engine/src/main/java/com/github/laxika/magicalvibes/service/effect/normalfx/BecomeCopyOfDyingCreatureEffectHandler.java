@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
@@ -46,7 +47,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         Card dyingCard = gameQueryService.findCardInGraveyardById(gameData, e.dyingCardId());
         if (dyingCard == null) {
             String logEntry = source.getCard().getName() + "'s ability fizzles (the creature that died is no longer available to copy).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Become-copy-of-dying fizzles, dying card not found", gameData.id);
             return;
         }
@@ -61,7 +62,7 @@ public class BecomeCopyOfDyingCreatureEffectHandler implements NormalEffectHandl
         }
 
         String logEntry = originalName + " becomes a copy of " + dyingCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, dyingCard.getName());
     }
 }

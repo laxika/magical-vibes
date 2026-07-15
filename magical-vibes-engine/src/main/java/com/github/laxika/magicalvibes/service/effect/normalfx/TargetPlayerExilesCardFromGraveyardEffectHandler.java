@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,7 +48,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = targetName + " has no cards in graveyard to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no graveyard cards to exile", gameData.id, targetName);
             return;
         }
@@ -59,7 +60,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
             exileService.exileCard(gameData, targetPlayerId, card);
 
             String logEntry = targetName + " exiles " + card.getName() + " from their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} exiles {} from graveyard", gameData.id, targetName, card.getName());
 
             if (e.lifeGainIfCreature() > 0 && card.hasType(CardType.CREATURE)) {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -131,9 +132,9 @@ class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
                 returnSelfToHandOnCoinFlipLossHandler.resolve(gd, entry, new ReturnSelfToHandOnCoinFlipLossEffect());
 
                 // Verify coin flip was logged
-                ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);
+                ArgumentCaptor<GameLogEntry> logCaptor = ArgumentCaptor.forClass(GameLogEntry.class);
                 verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), logCaptor.capture());
-                List<String> allLogs = logCaptor.getAllValues();
+                List<String> allLogs = logCaptor.getAllValues().stream().map(GameLogEntry::plainText).toList();
                 assertThat(allLogs).anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
 
                 // Verify exactly one outcome: won (no bounce) or lost (bounced)

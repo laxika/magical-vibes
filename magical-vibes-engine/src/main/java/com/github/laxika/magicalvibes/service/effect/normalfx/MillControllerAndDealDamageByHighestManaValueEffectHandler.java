@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
@@ -46,7 +47,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
 
         if (cardsToMill == 0) {
             String logEntry = controllerName + "'s library is empty — " + cardName + " deals no damage.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -63,7 +64,7 @@ public class MillControllerAndDealDamageByHighestManaValueEffectHandler implemen
 
         if (highestManaValue == 0) {
             String logEntry = cardName + " deals 0 damage (greatest mana value among milled cards is 0).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 

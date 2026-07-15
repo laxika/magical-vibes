@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -42,7 +43,7 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         target.getGrantedKeywords().add(e.keyword());
         String keywordName = e.keyword().name().charAt(0) + e.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gains {} (chosen creature)", gameData.id, target.getCard().getName(), e.keyword());
     }
 }

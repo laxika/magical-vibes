@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
@@ -38,7 +39,7 @@ public class TeferiHeroEmblemEffectHandler implements NormalEffectHandlerBean {
         gameData.emblems.add(emblem);
 
         String logEntry = playerName + " gets an emblem with \"Whenever you draw a card, exile target permanent an opponent controls.\".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets Teferi Hero emblem", gameData.id, playerName);
     }

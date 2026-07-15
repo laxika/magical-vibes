@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -133,7 +134,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore - 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -406,7 +407,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 2);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -470,7 +471,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -566,7 +567,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -643,7 +644,7 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(forest.getSkipUntapCount()).isEqualTo(1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test

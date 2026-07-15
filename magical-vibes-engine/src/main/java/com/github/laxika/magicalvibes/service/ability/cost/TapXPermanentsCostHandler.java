@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -77,7 +78,7 @@ public class TapXPermanentsCostHandler implements PermanentChoiceCostHandler {
         chosen.tap();
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         String tapLog = player.getUsername() + " taps " + chosen.getCard().getName() + " as a cost.";
-        gameBroadcastService.logAndBroadcast(gameData, tapLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
@@ -37,7 +38,7 @@ public class DamageSourceControllerGetsPoisonCounterEffectHandler implements Nor
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " gets a poison counter (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets a poison counter from {}", gameData.id, playerName, entry.getCard().getName());
     }

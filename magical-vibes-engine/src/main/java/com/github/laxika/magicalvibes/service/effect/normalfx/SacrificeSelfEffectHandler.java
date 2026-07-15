@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,7 +42,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
                 if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
                     triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
                     String logEntry = self.getCard().getName() + " is sacrificed.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     permanentRemovalService.removeOrphanedAuras(gameData);
                 }
     

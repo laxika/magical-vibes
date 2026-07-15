@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -182,8 +183,8 @@ public class StepTriggerService {
                 for (int i = 0; i < pending.count(); i++) {
                     drawService.resolveDrawCard(gameData, pending.controllerId());
                 }
-                gameBroadcastService.logAndBroadcast(gameData, playerName + " draws " + pending.count()
-                        + " cards from " + pending.sourceCard().getName() + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + pending.count()
+                        + " cards from " + pending.sourceCard().getName() + "."));
                 log.info("Game {} - {} draws {} cards from delayed upkeep trigger ({})",
                         gameData.id, playerName, pending.count(), pending.sourceCard().getName());
             }
@@ -204,8 +205,7 @@ public class StepTriggerService {
                 gameData.removeFromExile(action.cardId());
                 graveyardService.addCardToGraveyard(gameData, action.ownerId(), exiled.card());
                 String sourceName = action.sourceCard() != null ? action.sourceCard().getName() : "an effect";
-                gameBroadcastService.logAndBroadcast(gameData,
-                        "The card exiled with " + sourceName + " is put into its owner's graveyard.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The card exiled with " + sourceName + " is put into its owner's graveyard."));
                 log.info("Game {} - unplayed card exiled with {} put into owner's graveyard",
                         gameData.id, sourceName);
             }
@@ -319,7 +319,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other matching permanents)",
                                 gameData.id, perm.getCard().getName());
                     }
@@ -340,7 +340,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
                                 gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.threshold());
                     }
@@ -364,7 +364,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} matching permanents >= {})",
                                 gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
                     }
@@ -384,7 +384,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: hand >= {})",
                                 gameData.id, perm.getCard().getName(), handCheck.threshold());
                     }
@@ -405,7 +405,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: active player has no cards in hand)",
                                 gameData.id, perm.getCard().getName());
                     }
@@ -425,7 +425,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: library >= {})",
                                 gameData.id, perm.getCard().getName(), libraryCheck.threshold());
                     }
@@ -446,7 +446,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {}+ {} counters)",
                                 gameData.id, perm.getCard().getName(), counterCheck.threshold(), counterCheck.counterType());
                     }
@@ -464,7 +464,7 @@ public class StepTriggerService {
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} upkeep trigger pushed onto stack (surveil compound)",
                             gameData.id, perm.getCard().getName());
                     break; // All effects grouped into one entry
@@ -487,7 +487,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: {} creatures in graveyard)",
                                 gameData.id, perm.getCard().getName(), creatureCount);
                     }
@@ -509,7 +509,7 @@ public class StepTriggerService {
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
@@ -553,7 +553,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = card.getName() + "'s upkeep ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} graveyard upkeep trigger pushed onto stack", gameData.id, card.getName());
                     }
                 }
@@ -591,7 +591,7 @@ public class StepTriggerService {
                 }
 
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} each-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
@@ -633,7 +633,7 @@ public class StepTriggerService {
                     ));
 
                     String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} opponent-upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
                 }
             }
@@ -668,7 +668,7 @@ public class StepTriggerService {
                 ));
 
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} enchanted-permanent-controller upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
@@ -704,7 +704,7 @@ public class StepTriggerService {
                 ));
 
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} enchanted-player upkeep trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
@@ -727,7 +727,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = card.getName() + "'s upkeep ability triggers (exiled with egg counters).";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} egg counter upkeep trigger pushed onto stack", gameData.id, card.getName());
                     }
                 }
@@ -812,7 +812,7 @@ public class StepTriggerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} upkeep any-target trigger skipped (no valid targets)",
                     gameData.id, trigger.sourceCard().getName());
             processNextUpkeepAnyTargetTrigger(gameData);
@@ -836,7 +836,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger — choose " + targetDescription + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep any-target trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
     }
@@ -870,7 +870,7 @@ public class StepTriggerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} upkeep permanent-target trigger skipped (no valid targets)",
                     gameData.id, trigger.sourceCard().getName());
             processNextUpkeepPermanentTarget(gameData);
@@ -890,7 +890,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep trigger — choose " + targetDescription + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep permanent-target trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
     }
@@ -915,7 +915,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + "'s ability — Choose target player.");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep trigger awaiting player target selection", gameData.id, trigger.sourceCard().getName());
     }
 
@@ -940,7 +940,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + "'s ability — Choose first target player.");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep trigger awaiting first player target selection", gameData.id, trigger.sourceCard().getName());
     }
 
@@ -1003,7 +1003,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + " — Choose a creature to target.");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep copy trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
     }
 
@@ -1041,7 +1041,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep trigger awaiting own target selection", gameData.id, trigger.sourceCard().getName());
     }
 
@@ -1096,7 +1096,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
 
         String logEntry = trigger.sourceCard().getName() + "'s upkeep ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} upkeep trigger awaiting own target selection (Puca's Mischief)",
                 gameData.id, trigger.sourceCard().getName());
     }
@@ -1130,7 +1130,7 @@ public class StepTriggerService {
 
                         String playerName = gameData.playerIdToName.get(playerId);
                         String logEntry = playerName + " reveals " + card.getName() + " from their opening hand.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} reveals {} from opening hand, trigger pushed onto stack",
                                 gameData.id, playerName, card.getName());
                     }
@@ -1153,7 +1153,7 @@ public class StepTriggerService {
         // The starting player skips their entire draw step on turn 1 (rule 103.7a)
         if (gameData.turnNumber == 1 && activePlayerId.equals(gameData.startingPlayerId)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips the draw (first turn).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw on turn 1", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
@@ -1161,7 +1161,7 @@ public class StepTriggerService {
         // A permanent may instruct its controller to skip their draw step (e.g. Colfenor's Plans).
         if (controlsSkipDrawStep(gameData, activePlayerId)) {
             String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} skips draw step (SkipDrawStepEffect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
             return;
         }
@@ -1215,7 +1215,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     }
                 }
@@ -1245,7 +1245,7 @@ public class StepTriggerService {
                 ));
 
                 String logEntry = perm.getCard().getName() + "'s draw step ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} draw-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
             }
         });
@@ -1284,7 +1284,7 @@ public class StepTriggerService {
                     ));
 
                     String logEntry = trigger.sourceCard().getName() + "'s delayed trigger fires — adds mana.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {}'s opening hand mana trigger fires for {}",
                             gameData.id, trigger.sourceCard().getName(),
                             gameData.playerIdToName.get(activePlayerId));
@@ -1310,7 +1310,7 @@ public class StepTriggerService {
             ));
 
             String logEntry = reward.sourceCard().getName() + "'s delayed ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {}'s delayed mana reward fires for {}",
                     gameData.id, reward.sourceCard().getName(),
                     gameData.playerIdToName.get(mainPhasePlayerId));
@@ -1345,7 +1345,7 @@ public class StepTriggerService {
             ));
 
             String logEntry = perm.getCard().getName() + "'s ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} precombat main trigger pushed onto stack",
                     gameData.id, perm.getCard().getName());
         }
@@ -1372,7 +1372,7 @@ public class StepTriggerService {
             saga.setCounterCount(CounterType.LORE, newLoreCount);
 
             String counterLog = card.getName() + " gets a lore counter (" + newLoreCount + ").";
-            gameBroadcastService.logAndBroadcast(gameData, counterLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(counterLog));
             log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), newLoreCount);
 
             // Trigger the appropriate chapter ability
@@ -1402,14 +1402,14 @@ public class StepTriggerService {
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
                                 card.getSagaChapterTargetFilters(chapterSlot)));
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             } else if (needsGraveyardTarget) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterGraveyardTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName));
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             } else {
                 gameData.stack.add(new StackEntry(
@@ -1423,7 +1423,7 @@ public class StepTriggerService {
                 ));
 
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
             }
         }
@@ -1459,7 +1459,7 @@ public class StepTriggerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
         }
@@ -1483,7 +1483,7 @@ public class StepTriggerService {
                 if (token != null) {
                     permanentRemovalService.removePermanentToExile(gameData, token);
                     String logEntry = token.getCard().getName() + " token is exiled.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} token exiled at end step (Mimic Vat)", gameData.id, token.getCard().getName());
                     permanentRemovalService.removeOrphanedAuras(gameData);
                 }
@@ -1499,7 +1499,7 @@ public class StepTriggerService {
                 if (perm != null) {
                     permanentRemovalService.removePermanentToGraveyard(gameData, perm);
                     String logEntry = perm.getCard().getName() + " is sacrificed.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} sacrificed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
                     permanentRemovalService.removeOrphanedAuras(gameData);
                 }
@@ -1515,7 +1515,7 @@ public class StepTriggerService {
                 if (perm != null) {
                     if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
                         String logEntry = perm.getCard().getName() + " is destroyed at end step.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
                     }
                 }
@@ -1531,7 +1531,7 @@ public class StepTriggerService {
                 if (perm != null) {
                     permanentRemovalService.removePermanentToHand(gameData, perm);
                     String logEntry = perm.getCard().getName() + " is returned to its owner's hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} returned to hand at end step (delayed trigger)", gameData.id, perm.getCard().getName());
                     permanentRemovalService.removeOrphanedAuras(gameData);
                 }
@@ -1554,7 +1554,7 @@ public class StepTriggerService {
                 ));
                 String logEntry = action.sourceCard().getName() + "'s delayed trigger — "
                         + gameData.playerIdToName.get(action.playerId()) + " loses the game.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} delayed lose-game trigger pushed onto stack",
                         gameData.id, action.sourceCard().getName());
             }
@@ -1591,7 +1591,7 @@ public class StepTriggerService {
                 }
 
                 String logEntry = perm.getCard().getName() + "'s delayed trigger — " + triggerCount + " trigger(s), adding " + totalCountersToAdd + " +1/+1 counter(s).";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} delayed +1/+1 counter regrowth: {} trigger(s) pushed onto stack", gameData.id, perm.getCard().getName(), triggerCount);
             }
         }
@@ -1609,7 +1609,7 @@ public class StepTriggerService {
                         new ArrayList<>(List.of(new UntapUpToControlledPermanentsEffect(pending.count(), pending.filter())))
                 ));
                 String logEntry = pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s).";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} delayed untap {} permanent(s) trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName(), pending.count());
             }
@@ -1628,7 +1628,7 @@ public class StepTriggerService {
                         new ArrayList<>(List.of(pending.tokenEffect()))
                 ));
                 String logEntry = pending.sourceCard().getName() + "'s delayed trigger — create token.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} delayed token creation trigger pushed onto stack",
                         gameData.id, pending.sourceCard().getName());
             }
@@ -1653,7 +1653,7 @@ public class StepTriggerService {
                     gameData.addCardToHand(pending.ownerId(), cardToReturn);
                     String playerName = gameData.playerIdToName.get(pending.ownerId());
                     String logEntry = cardToReturn.getName() + " returns to " + playerName + "'s hand (delayed trigger).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} returns to {}'s hand from graveyard (delayed end-step trigger)",
                             gameData.id, cardToReturn.getName(), playerName);
                 } else {
@@ -1689,8 +1689,7 @@ public class StepTriggerService {
                     continue;
                 }
                 if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            cardToReturn.getName() + " can't return from the graveyard; it stays in the graveyard.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardToReturn.getName() + " can't return from the graveyard; it stays in the graveyard."));
                     continue;
                 }
 
@@ -1704,7 +1703,7 @@ public class StepTriggerService {
                 String playerName = gameData.playerIdToName.get(pending.controllerId());
                 String logEntry = cardToReturn.getName() + " returns to the battlefield transformed as "
                         + backFace.getName() + " under " + playerName + "'s control.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} returns transformed as {} for {}",
                         gameData.id, cardToReturn.getName(), backFace.getName(), playerName);
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.controllerId(), backFace, null, false);
@@ -1750,7 +1749,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step didn't-cast-spell trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof SacrificeSelfAndReturnCardsExiledWithSourceEffect sacReturn) {
                         // Intervening-if: only trigger if N or more cards have been exiled with the
@@ -1770,7 +1769,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step sacrifice-and-return trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof NotKicked) {
@@ -1791,7 +1790,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step not-kicked trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof NoOtherPermanent) {
@@ -1812,7 +1811,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step no-other-permanent trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof AnyPlayerControlsPermanentCountAtMost) {
@@ -1834,7 +1833,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step count-at-most trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect morbid
                             && morbid.condition() instanceof Morbid) {
@@ -1861,7 +1860,7 @@ public class StepTriggerService {
                                     perm.getId()
                             ));
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} end-step morbid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
@@ -1886,7 +1885,7 @@ public class StepTriggerService {
                                 perm.getId()
                         ));
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step conditional-may trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else {
                         gameData.stack.add(new StackEntry(
@@ -1900,7 +1899,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     }
                 }
@@ -1943,7 +1942,7 @@ public class StepTriggerService {
                             ));
 
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step raid trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof MayEffect may) {
@@ -1981,7 +1980,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof ControlsPermanentCount countCheck) {
@@ -2007,7 +2006,7 @@ public class StepTriggerService {
                         ));
 
                         String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, countLogEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(countLogEntry));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof DidntAttack) {
@@ -2029,7 +2028,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof GainControlIfSubtypesDealtCombatDamageEffect subtypeEffect) {
                         // Intervening-if: check if any opponent was dealt combat damage by enough
@@ -2079,7 +2078,7 @@ public class StepTriggerService {
                             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped))));
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step graveyard-target trigger queued", gameData.id, perm.getCard().getName());
                         } else if (wrapped.targetSpec().category().includesPermanents() || wrapped.targetSpec().category().includesPlayers()) {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
@@ -2095,7 +2094,7 @@ public class StepTriggerService {
                                     perm.getId()
                             ));
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect instanceof ConditionalEffect conditional
@@ -2123,7 +2122,7 @@ public class StepTriggerService {
                                     perm.getId()
                             ));
                             String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                             log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                         }
                     } else if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
@@ -2142,7 +2141,7 @@ public class StepTriggerService {
                         ));
 
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     }
                 }
@@ -2175,7 +2174,7 @@ public class StepTriggerService {
                 ));
 
                 String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} enchanted-permanent-controller end-step trigger pushed onto stack",
                         gameData.id, perm.getCard().getName());
             }
@@ -2225,7 +2224,7 @@ public class StepTriggerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = trigger.sourceCard().getName() + "'s end step trigger has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} end-step trigger skipped (no valid targets)",
                     gameData.id, trigger.sourceCard().getName());
             // Try next pending trigger
@@ -2250,7 +2249,7 @@ public class StepTriggerService {
                 trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
 
         String logEntry = trigger.sourceCard().getName() + "'s end step trigger — choose " + targetDescription + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} end-step trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
     }
 
@@ -2310,7 +2309,7 @@ public class StepTriggerService {
                                     perm.getCard(), activePlayerId,
                                     new ArrayList<>(mandatoryEffects), perm.getId()));
                     String logMsg = perm.getCard().getName() + "'s beginning of combat ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                     log.info("Game {} - {} beginning-of-combat trigger queued for targeting",
                             gameData.id, perm.getCard().getName());
                 } else {
@@ -2325,7 +2324,7 @@ public class StepTriggerService {
                     ));
 
                     String logMsg = perm.getCard().getName() + "'s beginning of combat ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                     log.info("Game {} - {} beginning-of-combat trigger pushed onto stack",
                             gameData.id, perm.getCard().getName());
                 }
@@ -2370,7 +2369,7 @@ public class StepTriggerService {
 
         if (validTargets.isEmpty()) {
             String logEntry = trigger.sourceCard().getName() + "'s beginning of combat trigger has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} beginning-of-combat trigger skipped (no valid targets)",
                     gameData.id, trigger.sourceCard().getName());
             processNextBeginningOfCombatTriggerTarget(gameData);
@@ -2395,7 +2394,7 @@ public class StepTriggerService {
 
         String logEntry = trigger.sourceCard().getName() + "'s beginning of combat trigger — choose "
                 + targetDescription + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} beginning-of-combat trigger awaiting target selection",
                 gameData.id, trigger.sourceCard().getName());
     }

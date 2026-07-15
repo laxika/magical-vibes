@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,7 +61,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
             // "If the player does" fails — original spell already gone (countered or exiled by another KP)
             log.info("Game {} - Original spell no longer on stack, Knowledge Pool 'if the player does' fails", gameData.id);
             String logEntry = "Knowledge Pool's ability — original spell is no longer on the stack.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -74,7 +75,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
         String playerName = gameData.playerIdToName.get(castingPlayerId);
         String exileLog = playerName + " exiles " + originalCard.getName() + " (Knowledge Pool).";
-        gameBroadcastService.logAndBroadcast(gameData, exileLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiles {} to Knowledge Pool", gameData.id, playerName, originalCard.getName());
 
         // Step 4: Collect eligible cards — nonland, not the just-exiled card, from KP's pool
@@ -85,7 +86,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
         if (eligible.isEmpty()) {
             String noChoiceLog = "Knowledge Pool — no other nonland cards exiled. " + playerName + " cannot cast a spell.";
-            gameBroadcastService.logAndBroadcast(gameData, noChoiceLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noChoiceLog));
             log.info("Game {} - No eligible cards in Knowledge Pool for {}", gameData.id, playerName);
             return;
         }

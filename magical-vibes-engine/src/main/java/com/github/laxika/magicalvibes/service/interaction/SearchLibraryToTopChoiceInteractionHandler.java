@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -114,22 +115,21 @@ public class SearchLibraryToTopChoiceInteractionHandler
 
         if (!chosen.isEmpty()) {
             String revealed = chosen.stream().map(Card::getName).collect(Collectors.joining(", "));
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " reveals " + revealed
-                    + " and shuffles their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " reveals " + revealed
+                    + " and shuffles their library."));
         }
 
         if (chosen.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " puts no cards on top of their library. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts no cards on top of their library. Library is shuffled."));
             finishResolution(gameData);
         } else if (chosen.size() == 1) {
             deck.addFirst(chosen.getFirst());
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " puts "
-                    + chosen.getFirst().getName() + " on top of their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts "
+                    + chosen.getFirst().getName() + " on top of their library."));
             finishResolution(gameData);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " puts " + chosen.size()
-                    + " cards on top of their library — choosing order.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + chosen.size()
+                    + " cards on top of their library — choosing order."));
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                     controllerId, chosen, false, controllerId,
                     "Put these cards on top of your library in any order (top to bottom)."));

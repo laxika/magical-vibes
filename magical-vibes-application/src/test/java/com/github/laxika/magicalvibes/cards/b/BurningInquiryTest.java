@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -85,7 +87,7 @@ class BurningInquiryTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         // 3 discards for player1 + 3 discards for player2 = 6

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -118,8 +119,8 @@ class ImprintFromTopCardsEffectHandlerTest {
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 
             @Test
@@ -137,8 +138,8 @@ class ImprintFromTopCardsEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction()).isNull();
                 verify(exileService).exileCard(gd, player1Id, singleCard);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("exiles a card face down")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("exiles a card face down")));
             }
 
             @Test

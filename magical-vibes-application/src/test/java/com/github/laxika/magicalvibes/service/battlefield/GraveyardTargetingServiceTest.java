@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +27,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,7 +70,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
-        verify(gameBroadcastService).logAndBroadcast(gd, "Agent of Treachery's enter-the-battlefield ability triggers.");
+        verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Agent of Treachery's enter-the-battlefield ability triggers."));
     }
 
     @Test
@@ -82,7 +86,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
-        verify(gameBroadcastService).logAndBroadcast(gd, "Tilling Treefolk's enter-the-battlefield ability triggers.");
+        verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Tilling Treefolk's enter-the-battlefield ability triggers."));
     }
 
     @Test
@@ -107,7 +111,7 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.graveyardTargetOperation.controllerId).isEqualTo(player1Id);
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
-                eq(1), org.mockito.ArgumentMatchers.anyString());
+                eq(1), anyString());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -61,7 +62,7 @@ public class SetAllUnblockedCreaturesBasePowerToughnessEffectHandler implements 
 
         String logEntry = entry.getCard().getName() + " sets base power and toughness of " + count
                 + " unblocked creature(s) to " + power + "/" + toughness + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} sets base P/T of {} unblocked creature(s) to {}/{}",
                 gameData.id, entry.getCard().getName(), count, power, toughness);

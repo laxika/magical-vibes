@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -284,7 +286,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top") && log.contains("3"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("3"));
     }
 
     @Test
@@ -305,7 +307,7 @@ class DarkBargainTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("puts 2 cards into their hand") && log.contains("graveyard"));
     }
 

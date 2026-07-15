@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
@@ -49,11 +50,9 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
                 if (damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage)) {
                     gameData.pendingLethalDamageDestructions.add(target);
                 }
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + " deals " + rawDamage + " damage to " + target.getCard().getName() + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + rawDamage + " damage to " + target.getCard().getName() + "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + "'s damage to " + target.getCard().getName() + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
             }
         }
 
@@ -67,9 +66,8 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
             int newLoyalty = Math.max(0, sourcePlaneswalker.getCounterCount(CounterType.LOYALTY) - targetPower);
             sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
-                            + ". (" + cardName + " now has " + newLoyalty + " loyalty.)");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
+                            + ". (" + cardName + " now has " + newLoyalty + " loyalty.)"));
             log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
                     gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
         }

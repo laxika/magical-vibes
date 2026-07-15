@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -47,14 +48,13 @@ public class SearchTargetLibraryForCardToBattlefieldUnderControlEffectHandler im
         // Search prevented (e.g. Leonin Arbiter): the target still shuffles per rules.
         if (!librarySearchSupport.checkSearchRestriction(gameData, controllerId)) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s library is shuffled."));
             return;
         }
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " searches " + targetName + "'s library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -64,8 +64,7 @@ public class SearchTargetLibraryForCardToBattlefieldUnderControlEffectHandler im
 
         if (matching.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " finds no matching card in " + targetName + "'s library. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " finds no matching card in " + targetName + "'s library. Library is shuffled."));
             return;
         }
 

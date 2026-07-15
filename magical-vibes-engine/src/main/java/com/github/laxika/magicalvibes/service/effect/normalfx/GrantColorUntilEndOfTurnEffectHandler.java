@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -57,7 +58,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         String colorName = e.color().name().charAt(0) + e.color().name().substring(1).toLowerCase();
         String suffix = e.additive() ? " in addition to its other colors until end of turn." : " until end of turn.";
         String logEntry = target.getCard().getName() + " becomes " + colorName + suffix;
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} becomes {} until end of turn", gameData.id, target.getCard().getName(), colorName);
     }

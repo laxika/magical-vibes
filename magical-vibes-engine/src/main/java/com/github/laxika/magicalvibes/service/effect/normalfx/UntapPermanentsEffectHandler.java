@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -56,7 +57,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         tapUntapSupport.untapPermanent(gameData, target);
 
         String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
@@ -75,7 +76,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             tapUntapSupport.untapPermanent(gameData, target);
 
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         }
     }
@@ -90,7 +91,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         tapUntapSupport.untapPermanent(gameData, self);
 
         String logEntry = entry.getCard().getName() + " untaps.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
     }
@@ -111,7 +112,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -138,7 +139,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logEntry = entry.getCard().getName() + " untaps " + count + " other creature(s) you control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {} other creature(s)", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -166,7 +167,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logEntry = entry.getCard().getName() + " untaps " + count + " permanent(s).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -187,7 +188,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         });
 
         String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
@@ -203,7 +204,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         });
 
         String logEntry = entry.getCard().getName() + " untaps " + count[0] + " creature(s) that attacked this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {} attacked creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 }

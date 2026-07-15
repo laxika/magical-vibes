@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -71,7 +72,7 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
         if (auraIndices.isEmpty()) {
             // No eligible Aura in hand — "If you don't, exile this creature."
             permanentRemovalService.removePermanentToExile(gameData, self);
-            gameBroadcastService.logAndBroadcast(gameData, self.getCard().getName() + " is exiled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName() + " is exiled."));
             log.info("Game {} - {} exiled (no Aura with mana value {} or less in hand)",
                     gameData.id, entry.getCard().getName(), maxManaValue);
             return;

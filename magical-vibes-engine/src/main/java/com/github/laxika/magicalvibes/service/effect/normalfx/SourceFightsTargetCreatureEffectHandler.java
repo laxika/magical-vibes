@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
@@ -56,11 +57,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             if (damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage)) {
                 gameData.pendingLethalDamageDestructions.add(target);
             }
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + "."));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s damage to " + target.getCard().getName() + " is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
         }
 
         // Target deals damage equal to its power back to source (only if source is still on the battlefield)
@@ -71,11 +70,9 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
                 if (damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
                     gameData.pendingLethalDamageDestructions.add(source);
                 }
-                gameBroadcastService.logAndBroadcast(gameData,
-                        target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + "."));
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        target.getCard().getName() + "'s damage to " + cardName + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + cardName + " is prevented."));
             }
         }
 

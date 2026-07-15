@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -87,7 +89,7 @@ class FurnaceScampTest extends BaseCardTest {
         // Player 2 takes only 1 combat damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     @Test

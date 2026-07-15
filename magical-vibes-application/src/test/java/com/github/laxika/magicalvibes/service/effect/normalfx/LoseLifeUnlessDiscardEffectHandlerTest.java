@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -27,8 +28,8 @@ class LoseLifeUnlessDiscardEffectHandlerTest extends AbstractPlayerInteractionHa
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to discard") && msg.contains("loses 3 life")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to discard") && logEntry.plainText().contains("loses 3 life")));
             }
 
             @Test

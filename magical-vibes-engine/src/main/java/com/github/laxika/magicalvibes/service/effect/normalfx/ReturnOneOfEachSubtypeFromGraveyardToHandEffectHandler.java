@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -54,8 +55,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
 
             if (matching.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " has no " + subtype.getDisplayName() + " cards in their graveyard.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no " + subtype.getDisplayName() + " cards in their graveyard."));
                 continue;
             }
 
@@ -67,8 +67,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 gameData.addCardToHand(controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " returns " + card.getName() + " from graveyard to hand.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " returns " + card.getName() + " from graveyard to hand."));
             } else {
                 // Multiple matches — queue a choice prompt
                 gameData.pendingGraveyardReturnQueue.add(

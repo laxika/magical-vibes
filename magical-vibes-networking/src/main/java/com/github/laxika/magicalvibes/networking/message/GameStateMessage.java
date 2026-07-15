@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.MessageType;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public record GameStateMessage(
         List<Integer> playableCardIndices,
         List<Integer> playableGraveyardLandIndices,
         List<CardView> playableExileCards,
-        List<String> newLogEntries,
+        List<GameLogEntryView> newLogEntries,
         int searchTaxCost,
         UUID mindControlledPlayerId,
         List<List<CardView>> revealedLibraryTopCards,
@@ -63,7 +64,7 @@ public record GameStateMessage(
             List<Integer> playableCardIndices,
             List<Integer> playableGraveyardLandIndices,
             List<CardView> playableExileCards,
-            List<String> newLogEntries,
+            List<GameLogEntryView> newLogEntries,
             int searchTaxCost,
             UUID mindControlledPlayerId,
             List<List<CardView>> revealedLibraryTopCards,

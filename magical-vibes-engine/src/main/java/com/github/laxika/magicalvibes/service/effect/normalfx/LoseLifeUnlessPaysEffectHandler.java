@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,12 +42,12 @@ public class LoseLifeUnlessPaysEffectHandler implements NormalEffectHandlerBean 
         if (!canPay) {
             // Can't pay — auto-apply life loss
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - e.lifeLoss());
                 String logEntry = playerName + " can't pay {" + e.payAmount() + "}. " + playerName + " loses " + e.lifeLoss() + " life.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (can't pay {}, {})",
                         gameData.id, playerName, e.lifeLoss(), e.payAmount(), entry.getCard().getName());
             }

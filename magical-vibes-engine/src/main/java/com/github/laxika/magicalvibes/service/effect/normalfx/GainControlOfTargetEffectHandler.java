@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -57,7 +58,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (e.grantedSubtype() != null && !target.getGrantedSubtypes().contains(e.grantedSubtype())) {
                 target.getGrantedSubtypes().add(e.grantedSubtype());
                 String subtypeLog = target.getCard().getName() + " becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.";
-                gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(subtypeLog));
             }
         }
     }
@@ -82,13 +83,13 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (source left the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
         UUID sourceController = gameQueryService.findPermanentController(gameData, sourcePermanentId);
         if (sourceController == null || !sourceController.equals(entry.getControllerId())) {
             String logEntry = entry.getCard().getName() + "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 

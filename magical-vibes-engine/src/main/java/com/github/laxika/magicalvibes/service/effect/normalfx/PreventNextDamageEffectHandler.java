@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageEffect;
@@ -27,7 +28,7 @@ public class PreventNextDamageEffectHandler implements NormalEffectHandlerBean {
         gameData.globalDamagePreventionShield += prevent.amount();
 
         String logEntry = "The next " + prevent.amount() + " damage that would be dealt to any permanent or player is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Global prevention shield increased by {}", gameData.id, prevent.amount());
     }
 }

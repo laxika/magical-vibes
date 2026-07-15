@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -48,8 +49,7 @@ public class MayAbilityTapCostService {
         try {
             handler.validateCanPay(gameData, playerId);
         } catch (IllegalStateException e) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    player.getUsername() + " cannot tap enough permanents to pay the cost.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " cannot tap enough permanents to pay the cost."));
             gameData.resolvedMayAccepted = false;
             resumeEffectResolution(gameData);
             return false;

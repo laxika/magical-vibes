@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -41,7 +43,7 @@ class SleeperAgentTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Sleeper Agent"));
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Sleeper Agent"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains control of Sleeper Agent"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains control of Sleeper Agent"));
     }
 
     @Test

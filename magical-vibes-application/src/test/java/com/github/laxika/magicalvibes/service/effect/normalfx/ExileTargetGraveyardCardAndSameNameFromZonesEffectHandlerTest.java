@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -69,7 +70,7 @@ class ExileTargetGraveyardCardAndSameNameFromZonesEffectHandlerTest extends Abst
 
                 resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("exiles 0 cards") && msg.contains("Unique Spell")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("exiles 0 cards") && logEntry.plainText().contains("Unique Spell")));
             }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
@@ -41,7 +42,7 @@ public class RedirectDrawsEffectHandler implements NormalEffectHandlerBean {
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = cardName + " resolves targeting " + targetName
                 + ". Until end of turn, " + targetName + "'s draws are replaced.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {}: {}'s draws replaced by {} until end of turn",
                 gameData.id, cardName, targetName, controllerName);
     

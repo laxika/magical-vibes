@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect;
@@ -43,7 +44,7 @@ public class ReturnEnchantedCreatureToBattlefieldUnderOwnersControlOnDeathEffect
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (creature not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;

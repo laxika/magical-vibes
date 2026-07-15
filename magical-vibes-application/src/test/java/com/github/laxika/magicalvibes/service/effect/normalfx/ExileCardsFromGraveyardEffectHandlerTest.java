@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -113,9 +115,9 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 verify(exileService).exileCard(gd, player1Id, creature);
                 verify(exileService).exileCard(gd, player2Id, artifact);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("exiles") && msg.contains("Grizzly Bears")
-                                && msg.contains("Leonin Scimitar")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("exiles") && logEntry.plainText().contains("Grizzly Bears")
+                                && logEntry.plainText().contains("Leonin Scimitar")));
             }
 
             @Test
@@ -152,6 +154,6 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(exileService, never()).exileCard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 }

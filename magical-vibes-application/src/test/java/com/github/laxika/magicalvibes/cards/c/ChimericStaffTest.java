@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -339,7 +341,7 @@ class ChimericStaffTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 3, null);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("activates Chimeric Staff's ability"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Chimeric Staff's ability"));
     }
 
     @Test
@@ -351,7 +353,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("becomes a 3/3 creature"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("becomes a 3/3 creature"));
     }
 
     // ===== Helper methods =====

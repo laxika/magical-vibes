@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -120,7 +121,7 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             logMsg = player.getUsername() + " puts " + topCardOrder.size() + " card(s) on top and "
                     + bottomCardOrder.size() + " on the bottom of their library.";
         }
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} scry completed: {} top, {} bottom", gameData.id, player.getUsername(),
                 topCardOrder.size(), bottomCardOrder.size());
 

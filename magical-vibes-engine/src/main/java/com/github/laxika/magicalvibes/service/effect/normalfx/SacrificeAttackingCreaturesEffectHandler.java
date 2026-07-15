@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,7 +50,7 @@ public class SacrificeAttackingCreaturesEffectHandler implements NormalEffectHan
                 if (attackingCreatureIds.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(targetPlayerId);
                     String logEntry = playerName + " has no attacking creatures to sacrifice.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} has no attacking creatures to sacrifice", gameData.id, playerName);
                     return;
                 }

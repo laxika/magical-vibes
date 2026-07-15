@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,7 +27,7 @@ class FlipCoinWinEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
                 // Can't control ThreadLocalRandom, but we can verify the broadcast always happens
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("coin flip") && msg.contains("Player1")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("coin flip") && logEntry.plainText().contains("Player1")));
             }
 }

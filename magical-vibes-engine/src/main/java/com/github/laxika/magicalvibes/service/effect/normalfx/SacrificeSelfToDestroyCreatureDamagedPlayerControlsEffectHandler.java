@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -43,7 +44,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source == null) {
                     String logEntry = entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     return;
                 }
 
@@ -61,7 +62,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
                 if (validCreatureIds.isEmpty()) {
                     String logEntry = entry.getCard().getName() + "'s ability resolves, but "
                             + gameData.playerIdToName.get(defenderId) + " has no creatures.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     return;
                 }
 

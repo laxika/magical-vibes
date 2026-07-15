@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -142,7 +145,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(0);
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -166,8 +169,7 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("After this main phase, there is an additional combat phase followed by an additional main phase."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("After this main phase, there is an additional combat phase followed by an additional main phase.")));
             }
 
             @Test
@@ -179,7 +181,6 @@ class AdditionalCombatMainPhaseEffectHandlerTest {
 
                 additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("After this main phase, there are 3 additional combat phases followed by additional main phases."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("After this main phase, there are 3 additional combat phases followed by additional main phases.")));
             }
 }

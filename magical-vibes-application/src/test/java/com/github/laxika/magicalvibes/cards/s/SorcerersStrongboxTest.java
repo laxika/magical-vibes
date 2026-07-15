@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -34,12 +36,12 @@ class SorcerersStrongboxTest extends BaseCardTest {
         if (inGraveyard) {
             // Won the flip: sacrificed and drew 3
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("wins the coin flip"));
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("is sacrificed"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("wins the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("is sacrificed"));
         } else {
             // Lost the flip: nothing happens, hand unchanged
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("loses the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses the coin flip"));
         }
     }
 
@@ -73,7 +75,6 @@ class SorcerersStrongboxTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog)
-                .anyMatch(log -> log.contains("coin flip for Sorcerer's Strongbox"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("coin flip for Sorcerer's Strongbox"));
     }
 }

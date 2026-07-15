@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -50,7 +51,7 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, topCards.getFirst());
             }
             String exileLog = playerName + " exiles a card face down with " + entry.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
             return;
         }
 

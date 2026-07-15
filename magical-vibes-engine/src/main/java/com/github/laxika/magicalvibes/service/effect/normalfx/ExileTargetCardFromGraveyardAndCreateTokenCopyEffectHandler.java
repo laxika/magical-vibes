@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
@@ -38,23 +39,20 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
         if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String filterLabel = CardPredicateUtils.describeFilter(e.filter());
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ")."));
             return;
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (e.ownGraveyardOnly() && graveyardOwnerId != null
                 && !graveyardOwnerId.equals(entry.getControllerId())) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target is not in your graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not in your graveyard)."));
             return;
         }
 
@@ -64,8 +62,7 @@ public class ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler impleme
         }
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName() + " from a graveyard."));
 
         graveyardReturnSupport.createTokenCopyFromCard(gameData, entry, targetCard, e.additionalSubtypes(),
                 e.grantHaste(), e.exileAtEndStep());

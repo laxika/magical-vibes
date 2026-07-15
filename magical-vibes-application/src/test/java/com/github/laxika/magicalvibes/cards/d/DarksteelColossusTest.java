@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GravePact;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -50,7 +52,7 @@ class DarksteelColossusTest extends BaseCardTest {
         // NOT in graveyard
         harness.assertNotInGraveyard(player2, "Darksteel Colossus");
         // Log confirms indestructible
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darksteel Colossus") && log.contains("indestructible"));
     }
 
@@ -77,7 +79,7 @@ class DarksteelColossusTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Darksteel Colossus"));
         // Log confirms replacement
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darksteel Colossus") && log.contains("shuffled into its owner's library instead"));
     }
 

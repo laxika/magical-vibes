@@ -48,7 +48,7 @@ public class GameData {
     public final Map<UUID, Integer> mulliganCounts = new ConcurrentHashMap<>();
     public final Set<UUID> playerKeptHand = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerNeedsToBottom = new ConcurrentHashMap<>();
-    public final List<String> gameLog = Collections.synchronizedList(new ArrayList<>());
+    public final List<GameLogEntry> gameLog = Collections.synchronizedList(new ArrayList<>());
     public UUID startingPlayerId;
     public TurnStep currentStep;
     public UUID activePlayerId;

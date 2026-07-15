@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -45,8 +46,8 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("no cards to discard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("no cards to discard")));
             verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
                     any(DiscardFollowUp.class));
         }
@@ -80,8 +81,8 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("no cards to discard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("no cards to discard")));
         }
 
         @Test
@@ -95,8 +96,8 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("discards 0 cards")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("discards 0 cards")));
             verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt(),
                     any(DiscardFollowUp.class));
         }
@@ -202,8 +203,8 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
                     any(DiscardFollowUp.class));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Player1") && msg.contains("no cards to discard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Player1") && logEntry.plainText().contains("no cards to discard")));
         }
 
         @Test
@@ -270,8 +271,8 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             resolveEffect(gd, entry, effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("no cards to discard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("no cards to discard")));
         }
 
         @Test

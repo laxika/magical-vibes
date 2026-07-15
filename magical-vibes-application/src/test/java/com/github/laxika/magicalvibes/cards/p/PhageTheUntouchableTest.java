@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
@@ -56,7 +58,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("loses the game from Phage the Untouchable"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses the game from Phage the Untouchable"));
     }
 
     @Test
@@ -71,7 +73,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Bob loses the game from Phage the Untouchable"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Bob loses the game from Phage the Untouchable"));
     }
 
     @Test

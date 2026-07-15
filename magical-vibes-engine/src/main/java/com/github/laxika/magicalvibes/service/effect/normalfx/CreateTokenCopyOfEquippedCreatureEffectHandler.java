@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -110,7 +111,7 @@ public class CreateTokenCopyOfEquippedCreatureEffectHandler implements NormalEff
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
                     String logMsg = "A token copy of " + sourceCard.getName() + " is created (non-legendary, with haste).";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                     log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

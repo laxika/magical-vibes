@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -137,7 +139,7 @@ class BeaconOfDestructionTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Beacon of Destruction"));
         // Log confirms shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
     @Test

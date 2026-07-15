@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -51,7 +52,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
 
         if (validArtifactIds.isEmpty()) {
             String logEntry = playerName + " has no artifacts to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no artifacts to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
             gameData.pendingETBDamageAssignments = Map.of();
@@ -66,7 +67,7 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
                 entry.getCard().getName() + " — Choose an artifact to sacrifice.");
 
         String logEntry = playerName + " is choosing an artifact to sacrifice.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing artifact to sacrifice for divided damage",
                 gameData.id, playerName);
     

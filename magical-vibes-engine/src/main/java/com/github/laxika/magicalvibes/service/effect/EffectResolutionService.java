@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -89,7 +90,7 @@ public class EffectResolutionService {
                         conditionContext)) {
                     String logEntry = entry.getCard().getName() + "'s " + conditional.conditionName()
                             + " ability does nothing (" + conditional.conditionNotMetReason() + ").";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} condition no longer met for {}", gameData.id,
                             conditional.conditionName(), entry.getCard().getName());
                     continue;
@@ -205,7 +206,7 @@ public class EffectResolutionService {
         if (gameData.pendingLethalDamageDestructions.isEmpty()) return;
         for (Permanent target : gameData.pendingLethalDamageDestructions) {
             permanentRemovalService.removePermanentToGraveyard(gameData, target);
-            gameBroadcastService.logAndBroadcast(gameData, target.getCard().getName() + " is destroyed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is destroyed."));
             log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
         }
         gameData.pendingLethalDamageDestructions.clear();

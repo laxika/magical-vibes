@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
@@ -98,7 +100,7 @@ class ShipwreckLooterTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ETB trigger — raid no longer met
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
     // ===== Creature enters battlefield regardless =====

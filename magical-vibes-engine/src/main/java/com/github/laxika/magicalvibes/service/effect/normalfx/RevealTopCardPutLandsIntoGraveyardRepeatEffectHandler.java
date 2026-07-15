@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutLandsIntoGraveyardRepeatEffect;
@@ -42,8 +43,7 @@ public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements No
         int landsBinned = 0;
         while (deck != null && !deck.isEmpty()) {
             Card topCard = deck.getFirst();
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " reveals " + topCard.getName() + " from the top of their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " from the top of their library."));
 
             if (!topCard.hasType(CardType.LAND)) {
                 break;
@@ -51,8 +51,7 @@ public class RevealTopCardPutLandsIntoGraveyardRepeatEffectHandler implements No
 
             deck.removeFirst();
             graveyardService.addCardToGraveyard(gameData, controllerId, topCard);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + topCard.getName() + " into their graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their graveyard."));
             landsBinned++;
         }
 

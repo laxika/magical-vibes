@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
@@ -284,7 +286,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(aura.getAttachedTo()).isEqualTo(opponentCreature.getId());
 
         // Log should mention it stays attached
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("stays attached"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("stays attached"));
     }
 
     // ===== Fizzle =====
@@ -306,7 +308,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         // Aura Graft should go to graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Aura Graft"));
@@ -404,12 +406,12 @@ class AuraGraftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Log should record gaining control
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains control of") && log.contains("Holy Strength"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains control of") && log.contains("Holy Strength"));
 
         harness.handlePermanentChosen(player1, myCreature.getId());
 
         // Log should record reattachment
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Holy Strength") && log.contains("is now attached to") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Holy Strength") && log.contains("is now attached to") && log.contains("Grizzly Bears"));
     }
 
     // ===== Helper methods =====

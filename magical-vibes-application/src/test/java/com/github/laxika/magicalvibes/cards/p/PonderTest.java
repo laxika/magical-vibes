@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -186,7 +188,7 @@ class PonderTest extends BaseCardTest {
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     @Test
@@ -201,6 +203,6 @@ class PonderTest extends BaseCardTest {
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2));
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 }

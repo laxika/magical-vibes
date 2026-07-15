@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.model.Card;
@@ -73,7 +75,7 @@ class ReminisceTest extends BaseCardTest {
         // Bears should be in library
         assertThat(gd.playerDecks.get(player1.getId()).stream().filter(c -> c.getName().equals("Grizzly Bears")).count()).isEqualTo(2);
         // Log confirms shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their graveyard"));
     }
 
     // ===== Resolving — target opponent =====
@@ -118,7 +120,7 @@ class ReminisceTest extends BaseCardTest {
         // Deck size unchanged
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         // Log indicates empty graveyard
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("graveyard is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("graveyard is empty"));
     }
 
     @Test

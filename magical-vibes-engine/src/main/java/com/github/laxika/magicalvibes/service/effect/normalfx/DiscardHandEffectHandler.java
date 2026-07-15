@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
@@ -76,8 +77,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
         List<Card> hand = gameData.playerHands.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no cards to discard (" + cardName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard (" + cardName + ")."));
             log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
             return;
         }
@@ -91,8 +91,8 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " discards their hand ("
-                + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards their hand ("
+                + discarded.size() + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ")."));
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
     }
 }

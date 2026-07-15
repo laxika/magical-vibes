@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -121,7 +123,7 @@ class GlamerSpinnersTest extends BaseCardTest {
         resolveSpinnersEtb(bare.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("no Auras to move"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("no Auras to move"));
     }
 
     @Test
@@ -135,7 +137,7 @@ class GlamerSpinnersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(aura.getAttachedTo()).isEqualTo(enchanted.getId());
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("stay attached"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("stay attached"));
     }
 
     // ===== Enchant restriction of the moved Aura is honoured =====

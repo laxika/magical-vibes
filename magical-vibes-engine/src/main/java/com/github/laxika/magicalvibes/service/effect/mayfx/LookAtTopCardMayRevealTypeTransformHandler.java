@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,7 +47,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                 if (!deck.isEmpty()) {
                     Card topCard = deck.getFirst();
                     String revealLog = player.getUsername() + " reveals " + topCard.getName() + " from the top of their library.";
-                    gameBroadcastService.logAndBroadcast(gameData, revealLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
                     // Transform only if the revealed card matches the required types
                     boolean matches = revealTypeTransform.cardTypes().contains(topCard.getType())
@@ -61,7 +62,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                                 self.setCard(backFace);
                                 self.setTransformed(true);
                                 String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
                                 log.info("Game {} - {} transforms into {} (revealed instant/sorcery)",
                                         gameData.id, frontName, backFace.getName());
                             }
@@ -73,7 +74,7 @@ public class LookAtTopCardMayRevealTypeTransformHandler implements MayEffectHand
                 }
             } else {
                 String logEntry = player.getUsername() + " chooses not to reveal.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

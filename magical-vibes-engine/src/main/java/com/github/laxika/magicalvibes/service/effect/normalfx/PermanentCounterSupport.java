@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class PermanentCounterSupport {
         }
 
         String removeLog = "All " + counterName + " counters removed from " + self.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, removeLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(removeLog));
         log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
 
         // Transform
@@ -67,7 +68,7 @@ public class PermanentCounterSupport {
                 self.setCard(backFace);
                 self.setTransformed(true);
                 String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             }
         } else {
@@ -75,7 +76,7 @@ public class PermanentCounterSupport {
             self.setCard(originalCard);
             self.setTransformed(false);
             String transformLog = backName + " transforms into " + originalCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, transformLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         }
     }
@@ -88,7 +89,7 @@ public class PermanentCounterSupport {
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         String logEntry = target.getCard().getName() + " gets " + counterText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
 
         firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
@@ -112,7 +113,7 @@ public class PermanentCounterSupport {
             String counterName = counterType.name().toLowerCase();
             String logEntry = entry.getCard().getName() + " puts an " + counterName + " counter on "
                     + String.join(", ", names) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} places {} counters on {} permanents", gameData.id,
                     entry.getCard().getName(), counterName, names.size());
         }
@@ -137,7 +138,7 @@ public class PermanentCounterSupport {
 
         if (eligibleIds.isEmpty()) {
             String logEntry = entry.getCard().getName() + ": no eligible permanent to put counters on.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} no eligible permanent for counter placement", gameData.id, entry.getCard().getName());
             return;
         }
@@ -195,7 +196,7 @@ public class PermanentCounterSupport {
         Card card = target.getCard();
         String counterText = count == 1 ? "a " + counterName + " counter" : count + " " + counterName + " counters";
         String logEntry = entry.getCard().getName() + " puts " + counterText + " on " + card.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} puts {} {} counter(s) on {}", gameData.id,
                 entry.getCard().getName(), count, counterName, card.getName());
 
@@ -259,7 +260,7 @@ public class PermanentCounterSupport {
         ));
 
         String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
@@ -292,7 +293,7 @@ public class PermanentCounterSupport {
                             null,
                             source.getId()
                     ));
-                    gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s triggered ability triggers.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + "'s triggered ability triggers."));
                 }
                 log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
             }
@@ -329,7 +330,7 @@ public class PermanentCounterSupport {
         ));
 
         String logEntry = card.getName() + "'s triggered ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 }

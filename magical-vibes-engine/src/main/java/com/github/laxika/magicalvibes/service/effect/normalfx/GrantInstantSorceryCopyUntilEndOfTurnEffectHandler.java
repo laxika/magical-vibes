@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantInstantSorceryCopyUntilEndOfTurnEffect;
@@ -29,7 +30,7 @@ public class GrantInstantSorceryCopyUntilEndOfTurnEffectHandler implements Norma
 
         String logMsg = gameData.playerIdToName.get(controllerId)
                 + "'s instant and sorcery spells will be copied for the rest of the turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} granted spell copy until end of turn", gameData.id, controllerId);
     }
 }

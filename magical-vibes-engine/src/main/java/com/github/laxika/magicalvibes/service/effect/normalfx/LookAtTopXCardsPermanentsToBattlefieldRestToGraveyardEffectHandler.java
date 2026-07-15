@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
@@ -49,7 +50,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
             String logMsg = entry.getCard().getName() + ": " + playerName
                     + (deck.isEmpty() ? "'s library is empty."
                     : toBottomRandom ? " reveals 0 cards (0 damage dealt)." : " looks at 0 cards (X is 0).");
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -58,7 +59,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
         String logMsg = toBottomRandom
                 ? playerName + " reveals the top " + LibraryRevealSupport.pluralCards(count) + " of their library."
                 : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
 
         // Filter eligible cards using predicates
         List<Card> eligibleCards = new ArrayList<>();
@@ -79,14 +80,14 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
                 Collections.shuffle(revealedCards);
                 deck.addAll(revealedCards);
                 String noEligibleLog = playerName + " finds no eligible cards. All cards are put on the bottom of their library in a random order.";
-                gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noEligibleLog));
             } else {
                 // No eligible cards — put all into graveyard
                 for (Card card : revealedCards) {
                     gameData.playerGraveyards.get(controllerId).add(card);
                 }
                 String noEligibleLog = playerName + " finds no eligible cards. All cards are put into their graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, noEligibleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noEligibleLog));
             }
             return;
         }

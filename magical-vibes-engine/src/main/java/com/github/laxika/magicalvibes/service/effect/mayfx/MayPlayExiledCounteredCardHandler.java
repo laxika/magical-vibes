@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -35,7 +36,7 @@ public class MayPlayExiledCounteredCardHandler implements MayEffectHandlerBean {
             exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
         } else {
             String logEntry = player.getUsername() + " declines to play " + ability.sourceCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to play exiled {} (Guile)", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -119,7 +121,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
 
         // Should not be awaiting any choice
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
     @Test
@@ -249,7 +251,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
     }
 
     @Test
@@ -267,7 +269,7 @@ class AgonizingMemoriesTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
     }
 }
 

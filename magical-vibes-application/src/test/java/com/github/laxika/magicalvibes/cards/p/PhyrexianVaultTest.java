@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -187,7 +189,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to draw"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to draw"));
     }
 
     // ===== Validation =====
@@ -274,7 +276,7 @@ class PhyrexianVaultTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
     }
 
     @Test
@@ -287,7 +289,7 @@ class PhyrexianVaultTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("activates Phyrexian Vault's ability"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Phyrexian Vault's ability"));
     }
 
     @Test
@@ -302,7 +304,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("draws a card"));
     }
 
     // ===== Helpers =====

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -81,7 +82,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 ? "until your next turn" : "until end of turn";
         String logEntry = entry.getCard().getName() + " grants \"" + e.ability().getDescription()
                 + "\" to " + count + " creature(s) " + durationText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} grants activated ability to {} creature(s) {}",
                 gameData.id, entry.getCard().getName(), count, durationText);
     }

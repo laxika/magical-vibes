@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -43,8 +44,8 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
                 resolveEffect(gd, entry, effect);
 
                 verify(interactionHandlerRegistry, never()).begin(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to discard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to discard")));
             }
 
             @Test

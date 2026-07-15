@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,10 +37,10 @@ class BottleOfSuleimanTest extends BaseCardTest {
                 .isTrue();
 
         if (hasDjinn) {
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("wins the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("wins the coin flip"));
             assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
         } else {
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("loses the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses the coin flip"));
         }
     }
 
@@ -51,7 +53,6 @@ class BottleOfSuleimanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog)
-                .anyMatch(log -> log.contains("coin flip for Bottle of Suleiman"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("coin flip for Bottle of Suleiman"));
     }
 }

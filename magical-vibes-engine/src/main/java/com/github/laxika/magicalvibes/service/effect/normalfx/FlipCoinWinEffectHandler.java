@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -38,7 +39,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
         String flipLog = wonFlip
                 ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName + "."
                 : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, flipLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(flipLog));
 
         CardEffect branch = wonFlip ? e.wrapped() : e.lost();
         if (branch == null) {

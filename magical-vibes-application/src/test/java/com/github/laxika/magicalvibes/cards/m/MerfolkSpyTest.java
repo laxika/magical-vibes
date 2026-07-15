@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -50,7 +52,7 @@ class MerfolkSpyTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Grizzly Bears");
 
         // Game log records the reveal
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals") && log.contains("at random"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals") && log.contains("at random"));
     }
 
     @Test
@@ -79,7 +81,7 @@ class MerfolkSpyTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to reveal"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to reveal"));
     }
 
     @Test
@@ -99,7 +101,7 @@ class MerfolkSpyTest extends BaseCardTest {
         resolveCombat();
 
         // No reveal log entries should appear
-        assertThat(gd.gameLog.stream().skip(logSizeBefore))
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText).skip(logSizeBefore))
                 .noneMatch(log -> log.contains("reveals") && log.contains("at random"));
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.paradigm;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
@@ -75,13 +76,13 @@ public class ParadigmService {
                 gameData.paradigmDelayedTriggers.add(
                         new GameData.ParadigmDelayedTrigger(controllerId, prototype));
                 String logEntry = spellName + " paradigm is registered.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} paradigm registered for {}", gameData.id, spellName, controllerId);
             }
 
             exileService.exileCard(gameData, controllerId, card);
             String exileLog = spellName + " is exiled (paradigm).";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
         }
     }
 
@@ -103,7 +104,7 @@ public class ParadigmService {
                     new ArrayList<>(List.of(new ParadigmCastCopyEffect()))
             ));
             String logEntry = prototype.getName() + "'s paradigm triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} paradigm trigger pushed onto stack", gameData.id, prototype.getName());
         }
     }
@@ -128,7 +129,7 @@ public class ParadigmService {
         ));
 
         String logEntry = "A copy of " + prototype.getName() + " is created in exile.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Paradigm copy of {} created for {}", gameData.id, prototype.getName(), controllerId);
 
         if (!gameData.interaction.isAwaitingInput()) {
@@ -146,7 +147,7 @@ public class ParadigmService {
         if (!accepted) {
             gameData.removeFromExile(exileCardId);
             String logEntry = player.getUsername() + " declines to cast the paradigm copy.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines paradigm copy cast", gameData.id, player.getUsername());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

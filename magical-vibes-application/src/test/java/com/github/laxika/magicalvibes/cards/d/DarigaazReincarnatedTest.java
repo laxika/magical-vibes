@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -60,7 +62,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gd.exiledCardEggCounters.get(exiledCard.getId())).isEqualTo(3);
         // Log confirms replacement
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darigaaz Reincarnated") && log.contains("exiled with 3 egg counters"));
     }
 
@@ -110,7 +112,7 @@ class DarigaazReincarnatedTest extends BaseCardTest {
         // Counter tracking removed
         assertThat(gd.exiledCardEggCounters).doesNotContainKey(card.getId());
         // Log confirms return
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Darigaaz Reincarnated") && log.contains("returns to the battlefield"));
     }
 

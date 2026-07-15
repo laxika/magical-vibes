@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
@@ -47,8 +48,7 @@ public class ShuffleSelfFromGraveyardIntoLibraryEffectHandler implements NormalE
         graveyardService.notifyCardsLeftGraveyard(gameData, ownerId);
 
         String playerName = gameData.playerIdToName.get(ownerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " shuffles " + sourceCard.getName() + " into their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles " + sourceCard.getName() + " into their library."));
         log.info("Game {} - {} shuffled into {}'s library", gameData.id, sourceCard.getName(), playerName);
     }
 }

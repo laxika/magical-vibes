@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
                 graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                 gameData.playerHands.get(controllerId).add(found);
                 String logMsg = playerName + " searches their graveyard, reveals " + found.getName() + ", and puts it into their hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                 log.info("Game {} - {} finds {} in graveyard", gameData.id, playerName, effect.cardName());
                 return;
             }
@@ -67,7 +68,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -78,7 +79,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String logMsg = playerName + " searches their library but finds no cards named " + effect.cardName() + ". Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageToControllerAndRedirectToTargetPlayerEffect;
@@ -39,7 +40,7 @@ public class PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler im
         String logEntry = entry.getCard().getName() + " — the next " + xValue + " damage that would be dealt to "
                 + controllerName + " this turn is prevented. If prevented, " + entry.getCard().getName()
                 + " deals that much damage to " + targetName + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Damage redirect shield {} added: protecting {} → redirecting to {}",
                 gameData.id, xValue, controllerName, targetName);
     }

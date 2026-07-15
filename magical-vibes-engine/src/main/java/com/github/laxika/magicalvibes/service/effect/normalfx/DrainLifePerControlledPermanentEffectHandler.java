@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,20 +45,20 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
         int drainAmount = (int) count * e.multiplier();
 
         if (drainAmount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName() + " drains 0 life (no matching permanents).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " drains 0 life (no matching permanents)."));
             return;
         }
 
         // Target loses life
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - drainAmount);
 
             String lossLog = targetName + " loses " + drainAmount + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, lossLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, drainAmount, entry.getCard().getName());
         }
 

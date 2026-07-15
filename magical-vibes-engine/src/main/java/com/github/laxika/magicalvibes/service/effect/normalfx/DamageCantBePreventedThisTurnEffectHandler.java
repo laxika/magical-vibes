@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
@@ -22,7 +23,6 @@ public class DamageCantBePreventedThisTurnEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         gameData.damageCantBePreventedThisTurn = true;
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + ": damage can't be prevented this turn.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + ": damage can't be prevented this turn."));
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
@@ -53,15 +54,13 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
         boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target);
         if (targetPrevented) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    target.getCard().getName() + "'s damage is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage is prevented."));
         } else {
             for (Permanent other : otherCreatures) {
                 if (gameQueryService.isDamagePreventable(gameData)
                         && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            other.getCard().getName() + " has protection — damage from "
-                                    + target.getCard().getName() + " prevented.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(other.getCard().getName() + " has protection — damage from "
+                                    + target.getCard().getName() + " prevented."));
                     continue;
                 }
                 int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
@@ -75,15 +74,13 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
 
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isPreventedFromDealingDamage(gameData, other)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        other.getCard().getName() + "'s damage is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(other.getCard().getName() + "'s damage is prevented."));
                 continue;
             }
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, other)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        target.getCard().getName() + " has protection — damage from "
-                                + other.getCard().getName() + " prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " has protection — damage from "
+                                + other.getCard().getName() + " prevented."));
                 continue;
             }
             int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);

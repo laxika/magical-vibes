@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -89,8 +90,8 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
 
-        gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " puts " + moving.size()
-                + " card(s) on the " + (onTop ? "top" : "bottom") + " of their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts " + moving.size()
+                + " card(s) on the " + (onTop ? "top" : "bottom") + " of their library."));
         log.info("Game {} - {} put {} card(s) on {} of library", gameData.id, player.getUsername(),
                 moving.size(), onTop ? "top" : "bottom");
 

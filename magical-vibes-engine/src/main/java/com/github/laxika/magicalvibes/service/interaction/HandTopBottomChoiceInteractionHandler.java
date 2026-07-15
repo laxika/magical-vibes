@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -106,7 +107,7 @@ public class HandTopBottomChoiceInteractionHandler
         } else {
             logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
         }
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
 
         turnProgressionService.resolveAutoPass(gameData);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -118,7 +119,7 @@ public class JuxtaposeSupport {
 
         String logEntry = sourceCard.getName() + ": " + controllerPerm.getCard().getName() + " and "
                 + targetPerm.getCard().getName() + " exchange controllers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, sourceCard.getName(),
                 controllerPerm.getCard().getName(), targetPerm.getCard().getName());
     }

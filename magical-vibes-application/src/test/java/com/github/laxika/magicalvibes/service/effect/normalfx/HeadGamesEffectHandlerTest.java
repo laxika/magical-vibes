@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -133,8 +134,8 @@ class HeadGamesEffectHandlerTest {
                 headGamesHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("has no cards in hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("has no cards in hand")));
             }
 
             @Test
@@ -160,8 +161,8 @@ class HeadGamesEffectHandlerTest {
                 // Player1 should be searching player2's library
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("puts") && msg.contains("from their hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("puts") && logEntry.plainText().contains("from their hand")));
             }
 
             @Test
@@ -178,7 +179,7 @@ class HeadGamesEffectHandlerTest {
                 headGamesHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("3 cards")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("3 cards")));
             }
 }

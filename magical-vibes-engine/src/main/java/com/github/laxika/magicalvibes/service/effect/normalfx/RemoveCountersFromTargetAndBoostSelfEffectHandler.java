@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -103,7 +104,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
 
         if (totalRemoved > 0) {
             String logEntry = totalRemoved + " counter(s) removed from " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} counter(s) removed from {}", gameData.id, totalRemoved, target.getCard().getName());
         }
 
@@ -113,7 +114,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
             if (source != null) {
                 source.setPowerModifier(source.getPowerModifier() + totalRemoved);
                 String boostLog = source.getCard().getName() + " gets +" + totalRemoved + "/+0 until end of turn.";
-                gameBroadcastService.logAndBroadcast(gameData, boostLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
                 log.info("Game {} - {} gets +{}/+0", gameData.id, source.getCard().getName(), totalRemoved);
             }
         }

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -103,8 +104,8 @@ player1Id = UUID.randomUUID();
 
                 millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
                 verifyNoInteractions(graveyardService);
                 verifyNoInteractions(permanentControlSupport);
             }

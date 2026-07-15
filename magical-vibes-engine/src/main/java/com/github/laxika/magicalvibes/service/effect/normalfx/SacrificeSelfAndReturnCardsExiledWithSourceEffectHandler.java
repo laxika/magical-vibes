@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,7 +61,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
             return;
         }
         triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-        gameBroadcastService.logAndBroadcast(gameData, self.getCard().getName() + " is sacrificed.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName() + " is sacrificed."));
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         // Return every card exiled with it to the battlefield under its owner's control.
@@ -74,7 +75,7 @@ public class SacrificeSelfAndReturnCardsExiledWithSourceEffectHandler implements
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
             String logEntry = card.getName() + " returns to the battlefield under "
                     + gameData.playerIdToName.get(ownerId) + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returns from exile via {} (three or more cards exiled)",
                     gameData.id, card.getName(), entry.getCard().getName());
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);

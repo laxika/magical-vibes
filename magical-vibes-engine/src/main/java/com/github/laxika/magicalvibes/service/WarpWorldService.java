@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,7 +64,7 @@ public class WarpWorldService {
                 "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
 
         String logMsg = gameData.playerIdToName.get(playerId) + " orders cards for the bottom of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
     }
 
     public void beginNextPendingWarpWorldAuraChoice(GameData gameData) {
@@ -126,8 +127,7 @@ public class WarpWorldService {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.warpWorldOperation.sourceName + " shuffles all permanents into libraries and warps the world."));
 
         gameData.warpWorldOperation.pendingCreaturesByPlayer.clear();
         gameData.warpWorldOperation.pendingAuraChoices.clear();

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDealDamageToDamagedPlayerEffect;
@@ -42,15 +43,13 @@ public class SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler implements N
         // Check source creature is still on the battlefield
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield."));
             return;
         }
 
         // Sacrifice the source creature
         permanentRemovalService.removePermanentToGraveyard(gameData, source);
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + " is sacrificed.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " is sacrificed."));
 
         // Deal damage to the damaged player
         if (!gameData.playerIds.contains(defenderId)) {

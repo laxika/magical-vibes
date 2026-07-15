@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -46,7 +47,7 @@ public class DistantMemoriesEffectHandler implements NormalEffectHandlerBean {
         if (deck == null || deck.isEmpty()) {
             // Empty library: no card to exile, but the "if no player does" clause still triggers — draw 3
             String logMsg = playerName + " searches their library but it is empty. " + playerName + " draws three cards.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             for (int i = 0; i < 3; i++) {
                 drawService.resolveDrawCard(gameData, controllerId);
             }

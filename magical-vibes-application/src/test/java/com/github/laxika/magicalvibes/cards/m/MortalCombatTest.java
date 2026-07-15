@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -49,7 +51,7 @@ class MortalCombatTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("wins the game"));
     }
 
     @Test
@@ -148,7 +150,7 @@ class MortalCombatTest extends BaseCardTest {
 
         // Condition no longer met — game should NOT be finished
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("condition is no longer met"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("condition is no longer met"));
     }
 
     // ===== Does not trigger on opponent's upkeep =====
@@ -194,12 +196,12 @@ class MortalCombatTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         // Log mentions the trigger
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("Mortal Combat") && l.contains("triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("Mortal Combat") && l.contains("triggers"));
 
         harness.passBothPriorities();
 
         // Log mentions creature count and winning
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("20 creature cards") && l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("20 creature cards") && l.contains("wins the game"));
     }
 }
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.ability;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -258,7 +259,7 @@ class AbilityActivationServiceTest {
 
             service.tapPermanent(gameData, player1, 0);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 taps Island."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 taps Island.")));
         }
     }
 
@@ -350,7 +351,7 @@ class AbilityActivationServiceTest {
 
             service.sacrificePermanent(gameData, player1, 0, targetId);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Aura of Silence."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 sacrifices Aura of Silence.")));
         }
     }
 
@@ -998,7 +999,7 @@ class AbilityActivationServiceTest {
 
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, husk);
             verify(triggerCollectionService).checkAllyPermanentSacrificedTriggers(gameData, player1Id, husk.getCard());
-            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq("Player1 sacrifices Nantuko Husk."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("Player1 sacrifices Nantuko Husk.")));
         }
 
         @Test

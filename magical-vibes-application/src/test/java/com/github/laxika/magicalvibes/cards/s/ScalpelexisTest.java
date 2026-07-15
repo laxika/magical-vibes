@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -84,7 +86,7 @@ class ScalpelexisTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(8);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("repeating the process"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("repeating the process"));
     }
 
     @Test
@@ -171,7 +173,7 @@ class ScalpelexisTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
     @Test
@@ -256,8 +258,8 @@ class ScalpelexisTest extends BaseCardTest {
         resolveCombat();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles cards from the top"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("Serra Angel"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles cards from the top"));
     }
 }
 

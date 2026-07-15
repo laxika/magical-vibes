@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -39,7 +40,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
 
         if (deck.isEmpty()) {
             String logEntry = targetPlayerName + "'s library is empty — " + sourceName + "'s ability does nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} ability: {}'s library is empty", gameData.id, sourceName, targetPlayerName);
             return;
         }
@@ -48,7 +49,7 @@ public class MillBottomOfTargetLibraryConditionalTokenEffectHandler implements N
         graveyardService.addCardToGraveyard(gameData, targetPlayerId, bottomCard);
 
         String logEntry = targetPlayerName + " puts " + bottomCard.getName() + " from the bottom of their library into their graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} ability: {} puts {} from bottom of library into graveyard",
                 gameData.id, sourceName, targetPlayerName, bottomCard.getName());
 

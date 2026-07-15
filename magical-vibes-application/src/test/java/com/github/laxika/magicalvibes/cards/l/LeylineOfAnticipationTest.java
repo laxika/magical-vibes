@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -101,7 +103,7 @@ class LeylineOfAnticipationTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("begins the game with Leyline of Anticipation"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("begins the game with Leyline of Anticipation"));
     }
 
     @Test

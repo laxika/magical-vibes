@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -48,7 +50,7 @@ class MilitiasPrideTest extends BaseCardTest {
                     assertThat(p.isAttackedThisTurn()).isTrue();
                 });
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Kithkin Soldier") && log.contains("tapped and attacking"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Kithkin Soldier") && log.contains("tapped and attacking"));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -191,7 +193,7 @@ class LifesFinaleTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, -1);
 
         // Log should mention shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
     }
 
     // ===== Empty / no creature library =====
@@ -227,7 +229,7 @@ class LifesFinaleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Log should mention no matching cards
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no matching cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no matching cards"));
     }
 
     // ===== Sorcery after resolution =====

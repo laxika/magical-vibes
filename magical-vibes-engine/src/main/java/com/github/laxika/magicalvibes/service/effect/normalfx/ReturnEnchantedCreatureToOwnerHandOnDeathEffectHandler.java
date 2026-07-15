@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -42,7 +43,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
         if (creatureCard == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (creature not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} death trigger fizzles (creature card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;
@@ -54,7 +55,7 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
 
         String ownerName = gameData.playerIdToName.get(ownerId);
         String logEntry = creatureCard.getName() + " returns from graveyard to " + ownerName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} returns {} from graveyard to {}'s hand",
                 gameData.id, entry.getCard().getName(), creatureCard.getName(), ownerName);
     }

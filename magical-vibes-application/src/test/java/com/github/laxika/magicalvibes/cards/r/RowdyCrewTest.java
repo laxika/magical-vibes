@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -43,7 +45,7 @@ class RowdyCrewTest extends BaseCardTest {
         // Deck should be empty (had 3, drew 3)
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         // 2 random discards should be logged
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         assertThat(randomDiscardLogs).isEqualTo(2);
@@ -162,7 +164,7 @@ class RowdyCrewTest extends BaseCardTest {
         assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // No random discard logs
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         assertThat(randomDiscardLogs).isEqualTo(0);

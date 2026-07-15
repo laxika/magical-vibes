@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
@@ -108,7 +109,7 @@ public class CardChoiceHandlerService {
 
         if (cardIndex == -1) {
             String logEntry = player.getUsername() + " chooses not to put a card onto the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines to put a card onto the battlefield", gameData.id, player.getUsername());
 
             // "If you don't, exile this creature." (Evershrike) — declining exiles the source permanent.
@@ -116,7 +117,7 @@ public class CardChoiceHandlerService {
                 Permanent source = gameQueryService.findPermanentById(gameData, exileSourceIfDeclinedId);
                 if (source != null) {
                     permanentRemovalService.removePermanentToExile(gameData, source);
-                    gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName() + " is exiled.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " is exiled."));
                     log.info("Game {} - {} is exiled (no Aura put onto it)", gameData.id, source.getCard().getName());
                 }
             }
@@ -171,13 +172,13 @@ public class CardChoiceHandlerService {
             Permanent permanent = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
             String logEntry = player.getUsername() + " discards " + card.getName() + " — it enters the battlefield instead.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
             replacedByBattlefield = true;
         } else {
             graveyardService.addCardToGraveyard(gameData, playerId, card);
             String logEntry = player.getUsername() + " discards " + card.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
         }
 
@@ -228,8 +229,7 @@ public class CardChoiceHandlerService {
                     drawService.resolveDrawCard(gameData, playerId);
                 }
                 String drawPlayerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawPlayerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
             }
 
             // Untap permanent after "discard a card, then untap [source]" completes
@@ -242,7 +242,7 @@ public class CardChoiceHandlerService {
                         if (p.getId().equals(permanentId)) {
                             p.untap();
                             String untapLog = p.getCard().getName() + " untaps.";
-                            gameBroadcastService.logAndBroadcast(gameData, untapLog);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(untapLog));
                             break;
                         }
                     }
@@ -323,7 +323,7 @@ public class CardChoiceHandlerService {
         }
 
         String logEntry = player.getUsername() + " exiles " + card.getName() + " from hand.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
 
         int remainingExiles = Math.max(exileChoice.remainingCount() - 1, 0);
@@ -373,7 +373,7 @@ public class CardChoiceHandlerService {
         chosenCards.add(chosenCard);
 
         String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
         int remainingChoices = Math.max(revealedHandChoice.remainingCount() - 1, 0);
@@ -421,7 +421,7 @@ public class CardChoiceHandlerService {
                         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
                         replacedCards.add(discarded);
                         String replaceLog = targetName + " discards " + discarded.getName() + " — it enters the battlefield instead.";
-                        gameBroadcastService.logAndBroadcast(gameData, replaceLog);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(replaceLog));
                         log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                                 gameData.id, targetName, discarded.getName());
                     } else {
@@ -435,7 +435,7 @@ public class CardChoiceHandlerService {
                 if (!normallyDiscarded.isEmpty()) {
                     String cardNames = String.join(", ", normallyDiscarded.stream().map(Card::getName).toList());
                     String discardLog = targetName + " discards " + cardNames + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, discardLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
                     log.info("Game {} - {} discards {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
                 }
 
@@ -456,7 +456,7 @@ public class CardChoiceHandlerService {
 
                 String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
                 String exileLog = player.getUsername() + " exiles " + cardNames + " from " + targetName + "'s hand.";
-                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
                 log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
 
                 // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
@@ -476,7 +476,7 @@ public class CardChoiceHandlerService {
 
                 String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
                 String putLog = targetName + " reveals " + cardNames + ", puts it on the bottom of their library, then draws a card.";
-                gameBroadcastService.logAndBroadcast(gameData, putLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(putLog));
                 log.info("Game {} - {} bottoms {} from {}'s hand and {} draws", gameData.id,
                         player.getUsername(), cardNames, targetName, targetName);
 
@@ -492,7 +492,7 @@ public class CardChoiceHandlerService {
 
                 String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
                 String putLog = player.getUsername() + " puts " + cardNames + " on top of " + targetName + "'s library.";
-                gameBroadcastService.logAndBroadcast(gameData, putLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(putLog));
                 log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
             }
 
@@ -525,7 +525,7 @@ public class CardChoiceHandlerService {
 
         String targetName = gameData.playerIdToName.get(revealedHandChoice.targetPlayerId());
         String declineLog = player.getUsername() + " chooses no card from " + targetName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, declineLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(declineLog));
         log.info("Game {} - {} declines the revealed-hand choice", gameData.id, player.getUsername());
 
         // Resume resolving remaining effects on the same spell/ability.
@@ -582,7 +582,7 @@ public class CardChoiceHandlerService {
 
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String cardNames = String.join(", ", revealedCards.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals " + cardNames + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals " + cardNames + "."));
         log.info("Game {} - {} reveals {}", gameData.id, targetName, cardNames);
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ChooseRevealedCardToDiscardChoice(
@@ -623,7 +623,7 @@ public class CardChoiceHandlerService {
         hand.remove(handIndex);
 
         String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         gameData.discardCausedByOpponent = true;
         discardRevealedCard(gameData, targetPlayerId, targetName, chosenCard);
@@ -641,8 +641,7 @@ public class CardChoiceHandlerService {
         if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
             Permanent permanent = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " discards " + card.getName() + " — it enters the battlefield instead."));
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                     gameData.id, targetName, card.getName());
             triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
@@ -652,7 +651,7 @@ public class CardChoiceHandlerService {
             return;
         }
         graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
-        gameBroadcastService.logAndBroadcast(gameData, targetName + " discards " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " discards " + card.getName() + "."));
         log.info("Game {} - {} discards {}", gameData.id, targetName, card.getName());
         triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
     }
@@ -736,8 +735,7 @@ public class CardChoiceHandlerService {
             if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
                 Permanent permanent = new Permanent(card);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " discards " + card.getName() + " — it enters the battlefield instead."));
                 log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                         gameData.id, targetName, card.getName());
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
@@ -746,8 +744,7 @@ public class CardChoiceHandlerService {
                 }
             } else {
                 graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        controllerName + " chooses " + card.getName() + "; " + targetName + " discards it.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + card.getName() + "; " + targetName + " discards it."));
                 log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
             }
@@ -812,11 +809,11 @@ public class CardChoiceHandlerService {
             gameData.setImprintedCard(sourcePermanent.getCard(), card);
 
             String logEntry = card.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} imprinted {} from hand on {}", gameData.id, player.getUsername(), card.getName(), sourcePermanent.getCard().getName());
         } else {
             String logEntry = card.getName() + " is exiled (source permanent no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
         }
 
@@ -831,12 +828,12 @@ public class CardChoiceHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, auraPerm);
 
             String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield attached to " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} puts {} onto the battlefield attached to {}", gameData.id, player.getUsername(), card.getName(), target.getCard().getName());
         } else {
             gameData.addCardToHand(playerId, card);
             String logEntry = card.getName() + " can't be attached (target left the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Aura target gone, {} returned to hand", gameData.id, card.getName());
         }
     }
@@ -863,7 +860,7 @@ public class CardChoiceHandlerService {
                 : "";
         String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield"
                 + stateSuffix + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} puts {} onto the battlefield{}", gameData.id, player.getUsername(), card.getName(),
                 stateSuffix);
 
@@ -930,7 +927,7 @@ public class CardChoiceHandlerService {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = equipment.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} attached to {}", gameData.id, equipment.getCard().getName(), target.getCard().getName());
     }
 
@@ -942,7 +939,7 @@ public class CardChoiceHandlerService {
         if (discardedCard.hasType(pending.requiredType())) {
             gameData.addCardToHand(pending.controllerId(), pending.card());
             String logEntry = pending.card().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returned to hand (land discarded)", gameData.id, pending.card().getName());
             gameData.pendingReturnToHandOnDiscardType = null;
         }
@@ -962,7 +959,7 @@ public class CardChoiceHandlerService {
             // Untap
             source.untap();
             String untapLog = source.getCard().getName() + " untaps.";
-            gameBroadcastService.logAndBroadcast(gameData, untapLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(untapLog));
             log.info("Game {} - {} untaps (creature discarded)", gameData.id, source.getCard().getName());
 
             // Transform
@@ -973,7 +970,7 @@ public class CardChoiceHandlerService {
                 source.setCard(backFace);
                 source.setTransformed(true);
                 String transformLog = frontName + " transforms into " + backFace.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, transformLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(transformLog));
                 log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
             }
         }

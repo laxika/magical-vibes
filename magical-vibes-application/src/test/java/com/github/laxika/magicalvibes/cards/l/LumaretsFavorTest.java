@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +37,7 @@ class LumaretsFavorTest extends BaseCardTest {
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(2);
         assertThat(bear.getToughnessModifier()).isEqualTo(4);
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("A copy of Lumaret's Favor"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("A copy of Lumaret's Favor"));
         assertThat(gd.stack).isEmpty();
     }
 
@@ -57,7 +59,7 @@ class LumaretsFavorTest extends BaseCardTest {
 
         // Resolve the copy trigger — it creates a copy and offers new targets.
         harness.passBothPriorities();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("A copy of Lumaret's Favor"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("A copy of Lumaret's Favor"));
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // Decline to choose new targets — the copy keeps the original target.

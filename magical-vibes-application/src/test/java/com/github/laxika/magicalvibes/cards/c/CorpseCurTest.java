@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BlightMamba;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -126,7 +128,7 @@ class CorpseCurTest extends BaseCardTest {
         castAndAcceptMay();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature card with infect"));
     }
 
     @Test
@@ -135,7 +137,7 @@ class CorpseCurTest extends BaseCardTest {
         castAndAcceptMay();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature card with infect"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature card with infect"));
     }
 
     @Test

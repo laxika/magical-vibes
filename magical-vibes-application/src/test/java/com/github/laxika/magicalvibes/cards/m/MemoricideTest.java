@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -229,7 +231,7 @@ class MemoricideTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
 
         // Log should mention 0 cards exiled
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 0 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 0 cards"));
     }
 
     @Test
@@ -262,7 +264,7 @@ class MemoricideTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Peek");
 
         // Log should mention shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Partial selection =====
@@ -309,7 +311,7 @@ class MemoricideTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears3.getId()));
 
         // Library still shuffled
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Zero selection =====
@@ -345,8 +347,8 @@ class MemoricideTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears2.getId()));
 
         // Log should mention 0 cards exiled and library shuffled
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 0 cards"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 0 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Targeting =====
@@ -407,7 +409,7 @@ class MemoricideTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Grizzly Bears");
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
     }
 
     @Test
@@ -425,6 +427,6 @@ class MemoricideTest extends BaseCardTest {
         harness.handleListChoice(player1, "Grizzly Bears");
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 1 card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 1 card"));
     }
 }

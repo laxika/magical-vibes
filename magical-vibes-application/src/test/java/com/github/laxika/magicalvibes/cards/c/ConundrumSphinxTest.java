@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -204,11 +206,11 @@ class ConundrumSphinxTest extends BaseCardTest {
         harness.handleListChoice(player2, "Wrong Card");
 
         // Verify name choices are logged
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses \"Lightning Bolt\""));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses \"Wrong Card\""));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses \"Lightning Bolt\""));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses \"Wrong Card\""));
         // Verify reveals are logged
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals Lightning Bolt"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Lightning Bolt"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Grizzly Bears"));
     }
 
     // ===== Interaction clears after both name =====

@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -873,7 +875,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -958,8 +960,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Kaervek the Merciless's triggered ability triggers — choose a target for 2 damage.")));
         }
     }
 
@@ -1037,7 +1038,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 

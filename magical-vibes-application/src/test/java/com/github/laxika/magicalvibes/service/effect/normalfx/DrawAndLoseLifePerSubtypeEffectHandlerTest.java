@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -51,8 +52,8 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("controls no") && msg.contains("Zombie")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("controls no") && logEntry.plainText().contains("Zombie")));
             }
 
             @Test
@@ -73,7 +74,7 @@ class DrawAndLoseLifePerSubtypeEffectHandlerTest extends AbstractPlayerInteracti
 
                 verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("life total can't change")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("life total can't change")));
             }
 }

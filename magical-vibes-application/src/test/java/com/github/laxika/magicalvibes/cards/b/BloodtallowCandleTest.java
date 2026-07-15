@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -161,7 +163,7 @@ class BloodtallowCandleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ability should fizzle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
 
         // Bloodtallow Candle is still sacrificed (cost already paid)
         harness.assertNotOnBattlefield(player1, "Bloodtallow Candle");

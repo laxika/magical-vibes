@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -61,7 +62,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());
             return;
@@ -78,7 +79,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
 
         if (dyingTypes.isEmpty() && !dyingIsChangeling) {
             String fizzleLog = auraCard.getName() + "'s ability fizzles (dying creature had no creature type).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} death trigger fizzles (dying creature has no creature type)",
                     gameData.id, auraCard.getName());
             return;
@@ -109,7 +110,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
 
         if (validTargetIds.isEmpty()) {
             String fizzleLog = auraCard.getName() + "'s ability fizzles (no creature shares a creature type).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} death trigger fizzles (no shared-type creatures)",
                     gameData.id, auraCard.getName());
             return;
@@ -128,7 +129,7 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
             String logEntry = auraCard.getName() + " returns to the battlefield attached to "
                     + target.getCard().getName() + " under " + ownerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
         } else {

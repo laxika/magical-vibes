@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -192,7 +194,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(singleCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top card"));
     }
 
     @Test
@@ -236,7 +238,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
     // ===== Flashback =====
@@ -311,7 +313,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top") && log.contains("4"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("4"));
     }
 
     @Test
@@ -330,7 +332,7 @@ class ForbiddenAlchemyTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.handleMultipleCardsChosen(player1, List.of(card0.getId()));
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("puts one card into their hand") && log.contains("graveyard"));
     }
 

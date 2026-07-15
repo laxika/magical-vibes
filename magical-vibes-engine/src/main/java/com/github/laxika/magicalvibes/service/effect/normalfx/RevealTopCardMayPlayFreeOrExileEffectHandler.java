@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,14 +40,14 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.getFirst();
 
         String revealLog = playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
         log.info("Game {} - {} reveals top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         // Lands can only be played if it's the controller's turn and they haven't played a land this turn
@@ -59,13 +60,11 @@ public class RevealTopCardMayPlayFreeOrExileEffectHandler implements NormalEffec
                     // Can't play the land — exile it
                     deck.removeFirst();
                     exileService.exileCard(gameData, controllerId, topCard);
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            topCard.getName() + " can't be played (" + reason + ") and is exiled.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(topCard.getName() + " can't be played (" + reason + ") and is exiled."));
                     log.info("Game {} - {} exiled (can't play land: {})", gameData.id, topCard.getName(), reason);
                 } else {
                     // Can't play the land — it stays on top of the library
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            topCard.getName() + " can't be played (" + reason + ") and stays on top of the library.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(topCard.getName() + " can't be played (" + reason + ") and stays on top of the library."));
                     log.info("Game {} - {} stays on top (can't play land: {})", gameData.id, topCard.getName(), reason);
                 }
                 return;

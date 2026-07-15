@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -141,8 +142,7 @@ class CounterUnlessPaysEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Llanowar Elves"));
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, elves);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Llanowar Elves is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Llanowar Elves is countered.")));
             }
 
             @Test

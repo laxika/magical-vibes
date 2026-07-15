@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
@@ -39,8 +40,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
                 .toList();
 
         if (silverCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " has no exiled cards with silver counters.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no exiled cards with silver counters."));
             log.info("Game {} - {} has no silver counter cards for Karn Scion -1", gameData.id, controllerName);
             return;
         }
@@ -52,8 +52,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
             gameData.exiledCardsWithSilverCounters.remove(card.getId());
             gameData.addCardToHand(controllerId, card);
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " returns " + card.getName() + " from exile to their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " returns " + card.getName() + " from exile to their hand."));
             log.info("Game {} - {} returns {} from exile (silver counter) to hand",
                     gameData.id, controllerName, card.getName());
             return;

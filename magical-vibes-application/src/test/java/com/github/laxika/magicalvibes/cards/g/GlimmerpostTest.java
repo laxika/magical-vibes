@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -79,7 +81,7 @@ class GlimmerpostTest extends BaseCardTest {
         playGlimmerpost(player1);
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains 1 life"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains 1 life"));
     }
 
     // ===== Land enters battlefield =====

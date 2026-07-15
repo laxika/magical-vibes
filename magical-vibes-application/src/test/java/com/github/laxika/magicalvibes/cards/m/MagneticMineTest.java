@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -190,7 +192,7 @@ class MagneticMineTest extends BaseCardTest {
         harness.castInstant(player1, 0, mindStoneId);
         harness.passBothPriorities(); // Resolve Naturalize
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Magnetic Mine") && log.contains("triggers"));
     }
 }

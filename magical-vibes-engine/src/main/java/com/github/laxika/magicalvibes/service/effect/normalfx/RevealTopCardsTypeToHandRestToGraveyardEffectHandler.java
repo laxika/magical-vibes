@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
@@ -48,8 +49,7 @@ public class RevealTopCardsTypeToHandRestToGraveyardEffectHandler implements Nor
 
         // Broadcast the reveal with all card names
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         for (Card card : toHand) {
             gameData.addCardToHand(controllerId, card);
@@ -60,13 +60,11 @@ public class RevealTopCardsTypeToHandRestToGraveyardEffectHandler implements Nor
 
         if (!toHand.isEmpty()) {
             String landNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + landNames + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + landNames + " into their hand."));
         }
         if (!toGraveyard.isEmpty()) {
             String restNames = toGraveyard.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + restNames + " into their graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + restNames + " into their graveyard."));
         }
 
         log.info("Game {} - {} resolving {} — {} to hand, {} to graveyard",

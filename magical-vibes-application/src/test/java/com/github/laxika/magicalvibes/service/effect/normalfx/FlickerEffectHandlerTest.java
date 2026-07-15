@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -178,8 +179,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Grizzly Bears is exiled. It will return at the beginning of the next end step."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is exiled. It will return at the beginning of the next end step.")));
         }
     }
 
@@ -239,8 +239,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Argent Sphinx is exiled. It will return at the beginning of the next end step."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Argent Sphinx is exiled. It will return at the beginning of the next end step.")));
         }
     }
 }

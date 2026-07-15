@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -46,7 +47,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
 
                 if (self == null) {
                     String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no longer on the battlefield).";
-                    gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
                     log.info("Game {} - {} ETB fizzles, creature left battlefield", gameData.id, entry.getCard().getName());
                     return;
                 }
@@ -64,7 +65,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
                 if (auraIndices.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(controllerId);
                     String logEntry = playerName + " has no Aura cards in hand.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} has no Auras in hand for {} ETB", gameData.id, playerName, entry.getCard().getName());
                     return;
                 }

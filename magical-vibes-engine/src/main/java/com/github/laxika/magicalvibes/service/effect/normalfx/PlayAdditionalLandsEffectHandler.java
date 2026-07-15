@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
@@ -31,7 +32,7 @@ public class PlayAdditionalLandsEffectHandler implements NormalEffectHandlerBean
         String controllerName = gameData.playerIdToName.get(controllerId);
         String logEntry = controllerName + " may play up to " + e.count() + " additional land"
                 + (e.count() == 1 ? "" : "s") + " this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} may play {} additional lands this turn", gameData.id, controllerName, e.count());
     }
 }

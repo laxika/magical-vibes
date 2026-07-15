@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.GameLog;
 /**
  * Trigger collectors for enter-the-battlefield events. Mirrors the other {@code *CollectorService}
  * beans: each {@link CollectsTrigger}-annotated method handles one (slot, effect class) pair and the
@@ -157,8 +158,7 @@ public class EnterTriggerCollectorService {
         String cardName = match.permanent().getCard().getName();
         enqueue(match, new GainLifeEffect(amount), pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
         String controllerName = gameData.playerIdToName.get(match.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData,
-                cardName + " triggers — " + controllerName + " will gain " + amount + " life.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " triggers — " + controllerName + " will gain " + amount + " life."));
         log.info("Game {} - {} triggers for {} entering (gain {} life)",
                 gameData.id, cardName, pe.enteringCard().getName(), amount);
         return true;
@@ -177,8 +177,7 @@ public class EnterTriggerCollectorService {
         enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
                 pe.perEffectTriggerCount());
         String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + "."));
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
         return true;
@@ -358,8 +357,7 @@ public class EnterTriggerCollectorService {
     }
 
     private void logTriggered(TriggerMatchContext match) {
-        gameBroadcastService.logAndBroadcast(match.gameData(),
-                match.permanent().getCard().getName() + "'s ability triggers.");
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(match.permanent().getCard().getName() + "'s ability triggers."));
     }
 
     private static boolean isTargeting(CardEffect effect) {

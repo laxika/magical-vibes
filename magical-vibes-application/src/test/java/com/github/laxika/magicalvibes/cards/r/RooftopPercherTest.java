@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -108,7 +110,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions exile
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("exiles") && entry.contains("from graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("exiles") && entry.contains("from graveyard"));
     }
 
     @Test
@@ -258,7 +260,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
 
         // Log mentions fizzle
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("fizzles"));
     }
 
     // ===== Validation =====

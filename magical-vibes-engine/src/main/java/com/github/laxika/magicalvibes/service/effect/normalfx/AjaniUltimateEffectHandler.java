@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AjaniUltimateEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -43,7 +44,7 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         int count = Math.min(lifeTotal, deck.size());
         if (count <= 0) {
             String logMsg = playerName + " looks at no cards (library is empty or life total is 0). Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             return;
         }
@@ -64,14 +65,14 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = playerName + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
 
         if (eligibleCards.isEmpty()) {
             // No eligible cards — put all back and shuffle
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String shuffleLog = playerName + " finds no eligible cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
             return;
         }
 

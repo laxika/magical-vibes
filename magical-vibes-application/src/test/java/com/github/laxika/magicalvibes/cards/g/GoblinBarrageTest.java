@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -144,7 +146,7 @@ class GoblinBarrageTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -167,7 +169,7 @@ class GoblinBarrageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell should NOT fizzle — player target is still valid
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("fizzles"));
         // Player still takes 4 damage
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }

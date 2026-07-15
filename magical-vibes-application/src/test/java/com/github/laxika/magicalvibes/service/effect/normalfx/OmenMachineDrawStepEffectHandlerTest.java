@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -162,8 +163,7 @@ class OmenMachineDrawStepEffectHandlerTest {
 
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Player1's library is empty (Omen Machine)."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1's library is empty (Omen Machine).")));
             }
 
             @Test
@@ -181,8 +181,7 @@ class OmenMachineDrawStepEffectHandlerTest {
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Player1 puts Forest onto the battlefield."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 puts Forest onto the battlefield.")));
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             }
 
@@ -220,7 +219,6 @@ class OmenMachineDrawStepEffectHandlerTest {
 
                 omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Doom Blade has no valid targets and remains in exile."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Doom Blade has no valid targets and remains in exile.")));
             }
 }

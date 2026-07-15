@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -141,7 +142,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
 
                 putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("fizzles")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("fizzles")));
                 verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                         any(), any(), any(Permanent.class), any());
             }
@@ -163,7 +164,7 @@ class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest 
                 putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        argThat(msg -> msg.contains("fizzles") && msg.contains("not in opponent's graveyard")));
+                        argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("fizzles") && logEntry.plainText().contains("not in opponent's graveyard")));
                 verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
                         any(), any(), any(Permanent.class), any());
             }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -151,7 +153,7 @@ class HiddenHorrorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
 
         // Log confirms the sacrifice
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no creature card to discard")
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creature card to discard")
                 && log.contains("Hidden Horror") && log.contains("sacrificed"));
     }
 

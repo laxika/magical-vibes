@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -274,11 +276,11 @@ class FogElementalTest extends BaseCardTest {
 
         gs.declareAttackers(gd, player1, List.of(0));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Fog Elemental") && log.contains("attack") && log.contains("trigger"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Fog Elemental") && log.contains("attack") && log.contains("trigger"));
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Fog Elemental") && log.contains("sacrificed"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Fog Elemental") && log.contains("sacrificed"));
     }
 }
 

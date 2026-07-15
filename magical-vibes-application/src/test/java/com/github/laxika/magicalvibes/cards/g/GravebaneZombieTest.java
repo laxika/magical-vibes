@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -37,7 +39,7 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(library.get(1)).isSameAs(filler);
 
         // Log confirms the replacement
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Gravebane Zombie") && log.contains("on top of its owner's library"));
     }
 }

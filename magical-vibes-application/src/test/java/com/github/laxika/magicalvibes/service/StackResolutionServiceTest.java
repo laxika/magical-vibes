@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -566,10 +567,8 @@ class StackResolutionServiceTest {
 
             svc.resolveTopOfStack(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Chainer's Torment gets a lore counter (1).");
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Chainer's Torment's chapter I ability triggers.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment gets a lore counter (1)."));
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment's chapter I ability triggers."));
         }
 
         @Test

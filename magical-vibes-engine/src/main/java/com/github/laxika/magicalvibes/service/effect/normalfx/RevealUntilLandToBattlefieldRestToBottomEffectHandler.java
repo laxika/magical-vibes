@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,14 +52,12 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
         }
 
         if (revealed.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s library is empty — no cards are revealed with " + cardName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
             return;
         }
 
         String revealedNames = revealed.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         // The land (if any) enters the battlefield; the rest go on the bottom in any order.
         List<Card> rest = new ArrayList<>(revealed);
@@ -66,11 +65,9 @@ public class RevealUntilLandToBattlefieldRestToBottomEffectHandler implements No
             rest.remove(land);
             Permanent perm = new Permanent(land);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    land.getName() + " enters the battlefield under " + playerName + "'s control.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(land, playerName));
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " reveals their entire library — no land found.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their entire library — no land found."));
         }
 
         log.info("Game {} - {} resolving {} — land={}, {} cards to bottom",

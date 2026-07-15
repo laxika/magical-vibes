@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -57,13 +59,12 @@ class ScoriaWurmTest extends BaseCardTest {
         assertThat(onBattlefield != inHand).isTrue();
         if (inHand) {
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("returned to its owner's hand"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("returned to its owner's hand"));
         } else {
             assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         }
 
-        assertThat(gd.gameLog)
-                .anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("coin flip for Scoria Wurm"));
     }
 }
 

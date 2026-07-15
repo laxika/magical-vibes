@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
@@ -153,7 +154,7 @@ public class CombatService {
             for (Permanent perm : toSacrifice) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
                 String logEntry = perm.getCard().getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
         });
@@ -174,7 +175,7 @@ public class CombatService {
             for (Permanent perm : toExile) {
                 permanentRemovalService.removePermanentToExile(gameData, perm);
                 String logEntry = perm.getCard().getName() + " token is exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} exiled at end of combat", gameData.id, perm.getCard().getName());
             }
         });
@@ -203,7 +204,7 @@ public class CombatService {
             for (Permanent equipment : equipmentToDestroy) {
                 if (permanentRemovalService.tryDestroyPermanent(gameData, equipment)) {
                     String logEntry = equipment.getCard().getName() + " is destroyed.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
                             gameData.id, equipment.getCard().getName());
                 }
@@ -232,7 +233,7 @@ public class CombatService {
             }
             if (permanentRemovalService.tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
                 String logEntry = perm.getCard().getName() + " is destroyed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} destroyed at end of combat", gameData.id, perm.getCard().getName());
             }
         }
@@ -260,7 +261,7 @@ public class CombatService {
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE,
                     perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + action.amount());
             String logEntry = perm.getCard().getName() + " gets " + action.amount() + " -1/-1 counter(s).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), action.amount());
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, action.amount());
@@ -311,7 +312,7 @@ public class CombatService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, newPerm);
 
             String logEntry = originalCard.getName() + " is exiled and returns transformed as " + backFace.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} exiled and returned transformed as {}",
                     gameData.id, originalCard.getName(), backFace.getName());
         }

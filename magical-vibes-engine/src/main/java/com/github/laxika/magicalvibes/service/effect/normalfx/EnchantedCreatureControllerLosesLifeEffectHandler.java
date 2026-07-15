@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -33,7 +34,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
 
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
 
@@ -42,7 +43,7 @@ public class EnchantedCreatureControllerLosesLifeEffectHandler implements Normal
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " loses " + e.amount() + " life (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, e.amount(), entry.getCard().getName());
     }

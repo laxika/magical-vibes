@@ -263,13 +263,27 @@ export interface StackEntry {
   targetId: string | null;
 }
 
+export interface GameLogSegment {
+  type: 'text' | 'card';
+  text?: string | null;
+  card?: Card | null;
+}
+
+export interface GameLogEntry {
+  segments: GameLogSegment[];
+}
+
+export function logText(text: string): GameLogEntry {
+  return { segments: [{ type: 'text', text }] };
+}
+
 export interface Game {
   id: string;
   gameName: string;
   status: GameStatus;
   playerNames: string[];
   playerIds: string[];
-  gameLog: string[];
+  gameLog: GameLogEntry[];
   currentStep: TurnStep | null;
   activePlayerId: string | null;
   turnNumber: number;
@@ -363,7 +377,7 @@ export interface GameStateNotification {
   playableFlashbackIndices: number[];
   playableExileCards: Card[];
   playableLibraryTopCards: Card[];
-  newLogEntries: string[];
+  newLogEntries: GameLogEntry[];
   searchTaxCost: number;
   mindControlledPlayerId?: string | null;
   revealedLibraryTopCards: Card[][];

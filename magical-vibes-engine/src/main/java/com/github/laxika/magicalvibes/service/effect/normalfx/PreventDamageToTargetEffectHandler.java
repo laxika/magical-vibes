@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -35,7 +36,7 @@ public class PreventDamageToTargetEffectHandler implements NormalEffectHandlerBe
             target.setDamagePreventionShield(target.getDamagePreventionShield() + prevent.amount());
 
             String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + target.getCard().getName() + " is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Prevention shield {} added to permanent {}", gameData.id, prevent.amount(), target.getCard().getName());
             return;
         }
@@ -46,7 +47,7 @@ public class PreventDamageToTargetEffectHandler implements NormalEffectHandlerBe
 
             String playerName = gameData.playerIdToName.get(targetId);
             String logEntry = "The next " + prevent.amount() + " damage that would be dealt to " + playerName + " is prevented.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Prevention shield {} added to player {}", gameData.id, prevent.amount(), playerName);
         }
     }

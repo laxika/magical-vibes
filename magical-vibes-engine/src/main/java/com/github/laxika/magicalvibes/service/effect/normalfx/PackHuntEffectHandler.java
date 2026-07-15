@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PackHuntEffect;
@@ -52,8 +53,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                         && p.getCard().getSubtypes().contains(huntSubtype)) {
                     p.tap();
                     tappedHunters.add(p);
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            entry.getCard().getName() + " taps " + p.getCard().getName() + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " taps " + p.getCard().getName() + "."));
                 }
             }
         }
@@ -70,8 +70,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                     gameData.pendingLethalDamageDestructions.add(target);
                 }
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented."));
             }
         }
 
@@ -93,8 +92,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                             gameData.pendingLethalDamageDestructions.add(hunter);
                         }
                     } else {
-                        gameBroadcastService.logAndBroadcast(gameData,
-                                target.getCard().getName() + "'s damage to " + hunter.getCard().getName() + " is prevented.");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + hunter.getCard().getName() + " is prevented."));
                     }
                 }
             }

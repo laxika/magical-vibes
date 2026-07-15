@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,8 +34,8 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
                 // All players receive the reveal message
                 verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
                 verify(sessionManager).sendToPlayer(eq(player2Id), any(RevealHandMessage.class));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("reveals") && msg.contains("at random")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("reveals") && logEntry.plainText().contains("at random")));
             }
 
             @Test
@@ -47,7 +48,7 @@ class RevealRandomCardFromTargetPlayerHandEffectHandlerTest extends AbstractPlay
                 resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
                 verify(sessionManager, never()).sendToPlayer(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to reveal")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to reveal")));
             }
 }

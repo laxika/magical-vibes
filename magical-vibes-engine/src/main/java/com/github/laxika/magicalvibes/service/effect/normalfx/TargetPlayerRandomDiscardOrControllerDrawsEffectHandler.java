@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
@@ -35,7 +36,7 @@ public class TargetPlayerRandomDiscardOrControllerDrawsEffectHandler implements 
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = targetName + " has no cards to discard. " + gameData.playerIdToName.get(controllerId) + " draws a card.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             drawService.resolveDrawCard(gameData, controllerId);
         } else {
             gameData.discardCausedByOpponent = true;

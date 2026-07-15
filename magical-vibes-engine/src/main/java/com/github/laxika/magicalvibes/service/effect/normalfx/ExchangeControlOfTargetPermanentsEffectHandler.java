@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,14 +83,14 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
 
         String logEntry = entry.getCard().getName() + ": " + ownTarget.getCard().getName() + " and "
                 + opponentTarget.getCard().getName() + " exchange controllers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exchanges control of {} and {}", gameData.id, entry.getCard().getName(),
                 ownTarget.getCard().getName(), opponentTarget.getCard().getName());
     }
 
     private void logFizzle(GameData gameData, StackEntry entry) {
         String logEntry = entry.getCard().getName() + "'s exchange has no effect (a target is no longer legal).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exchange fizzles (illegal target)", gameData.id, entry.getCard().getName());
     }
 }

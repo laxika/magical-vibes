@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,27 +40,23 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield."));
             return;
         }
 
         permanentRemovalService.removePermanentToGraveyard(gameData, source);
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + " is sacrificed.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " is sacrificed."));
 
         int poisonCounters = gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0);
         if (poisonCounters <= 0) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no poison counters — no cards to discard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no poison counters — no cards to discard."));
             return;
         }
 
         String playerName = gameData.playerIdToName.get(targetPlayerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " must discard " + poisonCounters + " card" + (poisonCounters > 1 ? "s" : "")
-                        + " (" + entry.getCard().getName() + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " must discard " + poisonCounters + " card" + (poisonCounters > 1 ? "s" : "")
+                        + " (" + entry.getCard().getName() + ")."));
 
         playerInteractionSupport.resolveDiscardCards(gameData, targetPlayerId, poisonCounters);
     

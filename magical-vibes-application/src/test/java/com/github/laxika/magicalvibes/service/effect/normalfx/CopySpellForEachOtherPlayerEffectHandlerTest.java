@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 
@@ -166,7 +168,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
                 assertThat(gd.stack).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -185,8 +187,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("A copy of Syphon Mind is created for Player2."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("A copy of Syphon Mind is created for Player2.")));
             }
 
             @Test

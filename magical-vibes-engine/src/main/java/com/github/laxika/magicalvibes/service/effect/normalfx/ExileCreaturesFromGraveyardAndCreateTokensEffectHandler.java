@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,7 +52,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             if (card != null) {
                 graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
                 String exileLog = playerName + " exiles " + card.getName() + " from graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
                 tokensToCreate++;
             }
         }
@@ -73,7 +74,7 @@ public class ExileCreaturesFromGraveyardAndCreateTokensEffectHandler implements 
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             String tokenLog = "A 2/2 Zombie creature token enters the battlefield.";
-            gameBroadcastService.logAndBroadcast(gameData, tokenLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tokenLog));
 
             graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, tokenPermanent, tokenCard);
 

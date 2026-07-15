@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,13 +38,13 @@ public class TapOrUntapTargetPermanentEffectHandler implements NormalEffectHandl
             target.untap();
             triggerCollectionService.checkBecomesUntappedTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " untaps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} untaps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         } else {
             target.tap();
             triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, target);
             String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
         }
     }

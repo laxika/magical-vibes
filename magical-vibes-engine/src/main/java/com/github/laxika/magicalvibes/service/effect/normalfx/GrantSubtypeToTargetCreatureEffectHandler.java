@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,7 +33,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
                 if (!target.getGrantedSubtypes().contains(e.subtype())) {
                     target.getGrantedSubtypes().add(e.subtype());
                     String subtypeLog = target.getCard().getName() + " becomes a " + e.subtype().getDisplayName() + " in addition to its other types.";
-                    gameBroadcastService.logAndBroadcast(gameData, subtypeLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(subtypeLog));
                 }
     
     }

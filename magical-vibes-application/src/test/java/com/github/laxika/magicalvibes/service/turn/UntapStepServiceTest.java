@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -104,7 +105,7 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(perm.isTapped()).isFalse();
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player1 untaps their permanents.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 untaps their permanents."));
         }
 
         @Test
@@ -297,8 +298,7 @@ class UntapStepServiceTest {
             sut.untapPermanents(gd, player1Id);
 
             assertThat(tappedPerm.isTapped()).isFalse();
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Player2 untaps their permanents due to Seedborn Muse.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 untaps their permanents due to Seedborn Muse."));
         }
 
         @Test
@@ -326,8 +326,7 @@ class UntapStepServiceTest {
 
             assertThat(matchingPerm.isTapped()).isFalse();
             assertThat(nonMatchingPerm.isTapped()).isTrue();
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Player2 untaps some permanents during opponent's untap step.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 untaps some permanents during opponent's untap step."));
         }
 
         @Test

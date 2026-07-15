@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
@@ -35,13 +36,13 @@ public class TargetPlayerLosesLifeAndControllerGainsLifeEffectHandler implements
         // Target loses life
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, targetName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + "'s life total can't change."));
         } else {
             int targetCurrentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, targetCurrentLife - e.lifeLoss());
 
             String lossLog = targetName + " loses " + e.lifeLoss() + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, lossLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));
             log.info("Game {} - {} loses {} life from {}", gameData.id, targetName, e.lifeLoss(), entry.getCard().getName());
         }
 

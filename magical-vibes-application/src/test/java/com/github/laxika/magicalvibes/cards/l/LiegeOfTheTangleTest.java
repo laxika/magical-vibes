@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -139,7 +141,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isZero();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses not to put"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses not to put"));
     }
 
     @Test
@@ -169,7 +171,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("controls no lands"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("controls no lands"));
     }
 
     @Test

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -132,7 +133,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Leonin Scimitar is destroyed.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Leonin Scimitar is destroyed."));
         }
 
         @Test

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,7 +68,7 @@ public class SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler implements
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " controls no " + typeName
                         + "s. " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} sacrificed (no {}s to return)", gameData.id, sourceCard.getName(), typeName);
             }
             return;

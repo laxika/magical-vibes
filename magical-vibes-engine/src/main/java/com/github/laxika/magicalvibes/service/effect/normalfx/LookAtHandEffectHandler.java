@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
@@ -41,11 +42,11 @@ public class LookAtHandEffectHandler implements NormalEffectHandlerBean {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
             String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         }
 
         List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();

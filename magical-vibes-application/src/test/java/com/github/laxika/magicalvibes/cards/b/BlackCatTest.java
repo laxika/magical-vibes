@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -48,7 +50,7 @@ class BlackCatTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .filteredOn(c -> !c.getName().equals("Shock"))
                 .hasSize(1);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("at random"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("at random"));
     }
 
     @Test

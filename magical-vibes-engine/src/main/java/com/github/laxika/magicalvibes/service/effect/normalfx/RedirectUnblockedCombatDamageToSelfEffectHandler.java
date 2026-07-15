@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,7 +34,7 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
                         gameData.combatDamageRedirectTarget = p.getId();
 
                         String logEntry = p.getCard().getName() + "'s ability resolves — unblocked combat damage will be redirected to it this turn.";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - Combat damage redirect set to {}", gameData.id, p.getCard().getName());
                         return;
                     }

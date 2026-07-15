@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -74,9 +75,8 @@ public class KeepCardsInHandSupport {
         });
 
         if (toShuffle.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " keeps their hand (" + LibraryShuffleSupport.pluralCards(hand.size())
-                            + ") — nothing shuffled into their library (" + cardName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps their hand (" + LibraryShuffleSupport.pluralCards(hand.size())
+                            + ") — nothing shuffled into their library (" + cardName + ")."));
             return;
         }
 
@@ -84,9 +84,8 @@ public class KeepCardsInHandSupport {
         deck.addAll(toShuffle);
         LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " keeps " + LibraryShuffleSupport.pluralCards(hand.size()) + " and shuffles "
-                        + LibraryShuffleSupport.pluralCards(toShuffle.size()) + " into their library (" + cardName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " keeps " + LibraryShuffleSupport.pluralCards(hand.size()) + " and shuffles "
+                        + LibraryShuffleSupport.pluralCards(toShuffle.size()) + " into their library (" + cardName + ")."));
         log.info("Game {} - {} keeps {} and shuffles {} into library ({})",
                 gameData.id, playerName, hand.size(), toShuffle.size(), cardName);
     }

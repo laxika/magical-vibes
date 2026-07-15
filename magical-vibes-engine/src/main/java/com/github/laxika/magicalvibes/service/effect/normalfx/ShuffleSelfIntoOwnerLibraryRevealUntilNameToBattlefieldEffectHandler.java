@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -65,8 +66,7 @@ public class ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandle
         permanentRemovalService.removeOrphanedAuras(gameData);
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                ownerName + " shuffles " + cardName + " into their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(ownerName + " shuffles " + cardName + " into their library."));
 
         // Reveal cards from top of owner's library until finding the named card
         List<Card> deck = gameData.playerDecks.get(ownerId);
@@ -83,13 +83,12 @@ public class ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandle
         }
 
         if (revealedCards.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    ownerName + "'s library is empty — no cards are revealed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(ownerName + "'s library is empty — no cards are revealed."));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
-        gameBroadcastService.logAndBroadcast(gameData, ownerName + " reveals " + revealedNames + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(ownerName + " reveals " + revealedNames + "."));
 
         if (foundCard != null) {
             // Remove found card from the revealed list (it goes to battlefield, not graveyard)
@@ -99,8 +98,7 @@ public class ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandle
             Permanent perm = new Permanent(foundCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    foundCard.getName() + " enters the battlefield under " + ownerName + "'s control.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(foundCard, ownerName));
 
             if (foundCard.hasType(CardType.CREATURE)) {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, foundCard, null, false);
@@ -111,8 +109,7 @@ public class ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandle
                 perm.setSummoningSick(false);
             }
         } else {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    ownerName + " reveals their entire library — no card named " + e.cardName() + " was found.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(ownerName + " reveals their entire library — no card named " + e.cardName() + " was found."));
         }
 
         // All other revealed cards go to owner's graveyard

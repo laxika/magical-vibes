@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
@@ -38,8 +39,7 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (hand == null || hand.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " has no cards in hand to shuffle.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards in hand to shuffle."));
                 log.info("Game {} - {} has no cards in hand for {}", gameData.id, playerName, cardName);
                 continue;
             }
@@ -52,9 +52,8 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
             hand.clear();
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " shuffles " + handSize + " card" + (handSize != 1 ? "s" : "")
-                            + " from hand into their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles " + handSize + " card" + (handSize != 1 ? "s" : "")
+                            + " from hand into their library."));
             log.info("Game {} - {} shuffles {} cards from hand into library ({})",
                     gameData.id, playerName, handSize, cardName);
 
@@ -63,8 +62,7 @@ public class ShuffleHandIntoLibraryAndDrawEffectHandler implements NormalEffectH
                 drawService.resolveDrawCard(gameData, playerId);
             }
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + handSize + " card" + (handSize != 1 ? "s" : "") + "."));
             log.info("Game {} - {} draws {} cards ({})", gameData.id, playerName, handSize, cardName);
         }
     

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
@@ -29,7 +30,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Attach source aura fizzles, target creature left battlefield", gameData.id);
             return;
         }
@@ -37,7 +38,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (aura == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (Aura no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Attach source aura fizzles, Aura left battlefield", gameData.id);
             return;
         }
@@ -48,7 +49,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         aura.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 }

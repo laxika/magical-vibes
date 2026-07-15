@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.FieldMarshal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -125,7 +127,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Log mentions the reveal
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
     }
 
     @Test
@@ -175,7 +177,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions declining
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("chooses not to take a card"));
     }
 
     // ===== ETB: Decline may ability =====
@@ -192,7 +194,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("searches their library"));
     }
 
     // ===== ETB: No basic lands in library =====
@@ -213,7 +215,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
     @Test
@@ -230,7 +232,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
     // ===== Only basic lands are offered =====

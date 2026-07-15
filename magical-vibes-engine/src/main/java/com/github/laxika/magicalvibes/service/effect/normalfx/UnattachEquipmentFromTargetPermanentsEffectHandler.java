@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,7 +55,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
                     gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                     String unattachLog = entry.getCard().getName() + " unattaches " + p.getCard().getName()
                             + " from " + target.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
                     log.info("Game {} - {} unattaches {} from {}", gameData.id, entry.getCard().getName(),
                             p.getCard().getName(), target.getCard().getName());
 
@@ -72,7 +73,7 @@ public class UnattachEquipmentFromTargetPermanentsEffectHandler implements Norma
             Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
             if (creature != null) {
                 String sacrificeLog = creature.getCard().getName() + " is sacrificed (equipment with sacrifice-on-unattach became unattached).";
-                gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sacrificeLog));
                 log.info("Game {} - {} sacrificed due to equipment unattach", gameData.id, creature.getCard().getName());
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 permanentRemovalService.removeOrphanedAuras(gameData);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -87,7 +89,7 @@ class PraetorsGraspTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Log should mention shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
     }
 
     // ===== Empty library =====

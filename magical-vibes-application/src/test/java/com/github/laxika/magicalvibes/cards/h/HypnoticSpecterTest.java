@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,7 +48,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("at random"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("at random"));
     }
 
     @Test
@@ -77,7 +79,7 @@ class HypnoticSpecterTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
     }
 
     @Test
@@ -139,7 +141,7 @@ class HypnoticSpecterTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
     }
 }
 

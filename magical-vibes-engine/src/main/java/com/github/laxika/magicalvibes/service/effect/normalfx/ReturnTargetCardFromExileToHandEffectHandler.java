@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,7 +33,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         var e = (ReturnTargetCardFromExileToHandEffect) effect;
         if (entry.getTargetZone() != Zone.EXILE || entry.getTargetId() == null) {
             String fizzleLog = entry.getDescription() + " fizzles (no valid exile target).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             return;
         }
 
@@ -41,13 +42,13 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
 
         if (targetCard == null) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in exile).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             return;
         }
 
         if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String fizzleLog = entry.getDescription() + " fizzles (target is not a " + filterLabel + ").";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             return;
         }
 
@@ -60,6 +61,6 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
         gameData.playerHands.get(controllerId).add(targetCard);
 
         String logMsg = entry.getDescription() + " returns " + targetCard.getName() + " from exile to hand.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
     }
 }

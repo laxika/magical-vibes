@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -64,7 +66,7 @@ class DesperateRavingsTest extends BaseCardTest {
         // Random discard doesn't prompt
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Log should mention discard at random
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         assertThat(randomDiscardLogs).isEqualTo(1);

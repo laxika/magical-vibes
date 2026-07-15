@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -227,10 +228,10 @@ public class StackResolutionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.WISH) + " wish counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             logEnterBattlefield(gameData, enteredCard, controllerId);
         }
@@ -264,8 +265,10 @@ public class StackResolutionService {
         if (card.isAura() && card.isEnchantPlayer() && entry.getTargetId() != null) {
             UUID targetPlayerId = entry.getTargetId();
             if (!gameData.playerIds.contains(targetPlayerId)) {
-                String fizzleLog = card.getName() + " fizzles (enchanted player no longer in the game).";
-                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .card(card)
+                        .text(" fizzles (enchanted player no longer in the game).")
+                        .build());
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
                 log.info("Game {} - {} fizzles, target player {} no longer in game", gameData.id, card.getName(), targetPlayerId);
             } else {
@@ -275,16 +278,20 @@ public class StackResolutionService {
 
                 String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
                 String playerName = gameData.playerIdToName.get(controllerId);
-                String logEntry = card.getName() + " enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .card(card)
+                        .text(" enters the battlefield attached to " + targetPlayerName + " under " + playerName + "'s control.")
+                        .build());
                 log.info("Game {} - {} resolves, attached to player {} for {}", gameData.id, card.getName(), targetPlayerName, playerName);
             }
         // Aura fizzles if its target is no longer on the battlefield
         } else if (card.isAura() && entry.getTargetId() != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) {
-                String fizzleLog = card.getName() + " fizzles (enchanted creature no longer exists).";
-                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .card(card)
+                        .text(" fizzles (enchanted creature no longer exists).")
+                        .build());
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
 
                 log.info("Game {} - {} fizzles, target {} no longer exists", gameData.id, card.getName(), entry.getTargetId());
@@ -294,8 +301,12 @@ public class StackResolutionService {
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 String playerName = gameData.playerIdToName.get(controllerId);
-                String logEntry = card.getName() + " enters the battlefield attached to " + target.getCard().getName() + " under " + playerName + "'s control.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .card(card)
+                        .text(" enters the battlefield attached to ")
+                        .card(target.getCard())
+                        .text(" under " + playerName + "'s control.")
+                        .build());
                 log.info("Game {} - {} resolves, attached to {} for {}", gameData.id, card.getName(), target.getCard().getName(), playerName);
 
                 // Handle control-changing auras (e.g., Persuasion): a WHILE_ATTACHED floating
@@ -345,7 +356,7 @@ public class StackResolutionService {
             if (card.isSaga()) {
                 enchPerm.setCounterCount(CounterType.LORE, 1);
                 String counterLog = card.getName() + " gets a lore counter (1).";
-                gameBroadcastService.logAndBroadcast(gameData, counterLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(counterLog));
                 log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
                 triggerSagaChapter(gameData, enchPerm, card, controllerId, 1);
             }
@@ -426,17 +437,16 @@ public class StackResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         if (perm.getCounterCount(CounterType.CHARGE) > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.CHARGE) + " charge counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                    enteredCard, perm.getCounterCount(CounterType.CHARGE) + " charge counters", playerName));
         } else if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                    enteredCard, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters", playerName));
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.WISH) + " wish counters under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldWithUnder(
+                    enteredCard, perm.getCounterCount(CounterType.WISH) + " wish counters", playerName));
         } else {
-            String logEntry = enteredCard.getName() + " enters the battlefield under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
         }
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, enteredCard.getName(), playerName);
@@ -479,7 +489,7 @@ public class StackResolutionService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = card.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.LOYALTY) + " loyalty under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
         checkLegendRuleIfIdle(gameData, controllerId);
@@ -490,8 +500,10 @@ public class StackResolutionService {
         boolean targetFizzled = targetLegalityService.isTargetIllegalOnResolution(gameData, entry);
 
         if (targetFizzled) {
-            String fizzleLog = entry.getDescription() + " fizzles (illegal target).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(entry.getCard())
+                    .text(" fizzles (illegal target).")
+                    .build());
             log.info("Game {} - {} fizzles, target {} is illegal",
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
@@ -501,14 +513,14 @@ public class StackResolutionService {
                 if (entry.isCastWithFlashback()) {
                     exileService.exileCard(gameData, entry.getControllerId(), entry.getCard());
                     String exileLog = entry.getCard().getName() + " is exiled (flashback).";
-                    gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
                 } else {
                     graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
                 }
             }
         } else {
             String logEntry = entry.getDescription() + " resolves.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
@@ -573,11 +585,11 @@ public class StackResolutionService {
         if (entry.isCastWithFlashback()) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());
             String exileLog = entry.getCard().getName() + " is exiled (flashback).";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
         } else if (entry.isReturnToHandAfterResolving()) {
             gameData.addCardToHand(entry.getControllerId(), entry.getCard());
             String returnLog = entry.getCard().getName() + " is returned to its owner's hand.";
-            gameBroadcastService.logAndBroadcast(gameData, returnLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(returnLog));
         } else if (gameData.pendingReturnToHandOnDiscardType != null) {
             // Spell disposition deferred — will be resolved after the async discard
             // completes (e.g. Psychic Miasma: goes to hand if a land is discarded,
@@ -586,7 +598,7 @@ public class StackResolutionService {
                 .anyMatch(e -> e instanceof ExileSpellEffect)) {
             gameData.addToExile(entry.getControllerId(), entry.getCard());
             String exileLog = entry.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryEffect)) {
             // Ensure the card is shuffled into library even when an earlier effect
@@ -597,14 +609,14 @@ public class StackResolutionService {
                 deck.add(entry.getCard());
                 LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
                 String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-                gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
             }
         } else if (entry.getEffectsToResolve().stream()
                 .anyMatch(e -> e instanceof PutSelfOnBottomOfOwnersLibraryEffect)) {
             List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
             deck.add(entry.getCard());
             String bottomLog = entry.getCard().getName() + " is put on the bottom of its owner's library.";
-            gameBroadcastService.logAndBroadcast(gameData, bottomLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(bottomLog));
         } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
             paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
@@ -633,14 +645,13 @@ public class StackResolutionService {
 
         target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
         String logEntry = card.getName() + " puts a phylactery counter on " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());
     }
 
     private void logEnterBattlefield(GameData gameData, Card card, UUID controllerId) {
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = card.getName() + " enters the battlefield under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(card, playerName));
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
     }
 
@@ -676,7 +687,7 @@ public class StackResolutionService {
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
                             card.getSagaChapterTargetFilters(chapterSlot)));
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         } else if (needsGraveyardTarget) {
@@ -684,7 +695,7 @@ public class StackResolutionService {
                     new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         } else {
@@ -699,7 +710,7 @@ public class StackResolutionService {
             ));
 
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
         }
     }

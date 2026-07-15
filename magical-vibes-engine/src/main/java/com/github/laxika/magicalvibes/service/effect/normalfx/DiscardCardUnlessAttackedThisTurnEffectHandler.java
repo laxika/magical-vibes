@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
@@ -31,8 +32,7 @@ public class DiscardCardUnlessAttackedThisTurnEffectHandler implements NormalEff
         String cardName = entry.getCard().getName();
 
         if (gameData.playersDeclaredAttackersThisTurn.contains(controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " attacked this turn — no discard required (" + cardName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " attacked this turn — no discard required (" + cardName + ")."));
             log.info("Game {} - {} attacked this turn, skipping discard for {}", gameData.id, playerName, cardName);
             return;
         }

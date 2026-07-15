@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -437,7 +438,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Trigger Blade") && msg.contains("equipped creature died")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Trigger Blade") && logEntry.plainText().contains("equipped creature died")));
         }
     }
 
@@ -526,7 +527,7 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getCard()).isEqualTo(aura);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("enchanted permanent put into graveyard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent put into graveyard")));
         }
     }
 
@@ -600,7 +601,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleEnchantedPermanentLeavesDefault(match(auraPerm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("enchanted permanent left the battlefield")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent left the battlefield")));
         }
     }
 
@@ -954,7 +955,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleSelfLeavesDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Logged Leaver") && msg.contains("left the battlefield")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver") && logEntry.plainText().contains("left the battlefield")));
         }
     }
 
@@ -1007,7 +1008,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleRegisterDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("Tiana Ship's Caretaker") && msg.contains("Fallen Aura")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
         }
     }
 }

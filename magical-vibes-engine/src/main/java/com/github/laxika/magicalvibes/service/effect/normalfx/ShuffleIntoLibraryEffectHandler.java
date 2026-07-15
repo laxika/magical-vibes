@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
@@ -40,6 +41,6 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
 
         String shuffleLog = entry.getCard().getName() + " is shuffled into its owner's library.";
-        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
     }
 }

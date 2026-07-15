@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect;
@@ -51,8 +52,7 @@ public class DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffectHandle
                 boolean isPlaneswalker = permanent.getCard().hasType(CardType.PLANESWALKER);
                 if (!isCreature && !isPlaneswalker) continue;
                 if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard())) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            cardName + "'s damage to " + permanent.getCard().getName() + " is prevented.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + permanent.getCard().getName() + " is prevented."));
                     continue;
                 }
                 if (damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage)) {

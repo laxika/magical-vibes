@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,8 +52,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but it is empty. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -64,8 +64,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
 
         if (matching.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but finds no " + label + " cards. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no " + label + " cards. Library is shuffled."));
             log.info("Game {} - {} searches library, no {} cards found", gameData.id, playerName, label);
             return;
         }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -43,7 +44,7 @@ public class UntapEquippedCreatureEffectHandler implements NormalEffectHandlerBe
         tapUntapSupport.untapPermanent(gameData, equippedCreature);
 
         String logEntry = sourceName + " untaps " + equippedCreature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} untaps {}", gameData.id, sourceName, equippedCreature.getCard().getName());
     }
 }

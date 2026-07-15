@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
@@ -44,8 +45,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
 
         // Broadcast the reveal with all card names
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         // If the opponent doesn't have enough life to pay for even one card, all go to hand
         UUID opponentId = gameData.orderedPlayerIds.stream()
@@ -60,8 +60,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
                 gameData.addCardToHand(controllerId, card);
             }
             String handNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + handNames + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
             log.info("Game {} - {} resolving {} — all {} cards to hand (opponent can't afford to pay)",
                     gameData.id, playerName, cardName, topCards.size());
             return;

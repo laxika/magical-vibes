@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -52,8 +53,8 @@ class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandlerTest extends Ab
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
                 verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no poison counters")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no poison counters")));
             }
 
             @Test
@@ -69,8 +70,8 @@ class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandlerTest extends Ab
                 resolveEffect(gd, entry, effect);
 
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("fizzles")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("fizzles")));
             }
 
             @Test

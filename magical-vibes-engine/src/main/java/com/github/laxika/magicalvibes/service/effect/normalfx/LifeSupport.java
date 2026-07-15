@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -44,12 +45,12 @@ public class LifeSupport {
                               Card sourceCard, StackEntryType sourceEntryType) {
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
         if (!gameQueryService.canPlayerGainLife(gameData, controllerId)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't gain life."));
             return;
         }
         // Life-gain doublers (e.g. Boon Reflection) replace the amount before it is applied.
@@ -64,7 +65,7 @@ public class LifeSupport {
         String logEntry = source != null
                 ? playerName + " gains " + amount + " life from " + source + "."
                 : playerName + " gains " + amount + " life.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
 
@@ -80,7 +81,7 @@ public class LifeSupport {
     public boolean applySetLifeTotal(GameData gameData, UUID playerId, int newLife) {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             return false;
         }
 
@@ -90,7 +91,7 @@ public class LifeSupport {
         if (newLife > currentLife) {
             if (!gameQueryService.canPlayerGainLife(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData, playerName + " can't gain life.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " can't gain life."));
                 return false;
             }
             int gained = (newLife - currentLife) * gameQueryService.lifeGainMultiplier(gameData, playerId);
@@ -107,7 +108,7 @@ public class LifeSupport {
     public void applyLifeLoss(GameData gameData, UUID playerId, int amount, String sourceName) {
         if (!gameQueryService.canPlayerLifeChange(gameData, playerId)) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total can't change."));
             return;
         }
         int currentLife = gameData.getLife(playerId);
@@ -115,7 +116,7 @@ public class LifeSupport {
 
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " loses " + amount + " life (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
 
         triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
@@ -130,7 +131,7 @@ public class LifeSupport {
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " gets " + amount + " poison counter" + (amount > 1 ? "s" : "")
                 + " (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
     }

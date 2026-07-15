@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,7 +38,7 @@ public class ImprovisationCapstoneCastSupport {
 
         if (cardIds == null || cardIds.isEmpty()) {
             String logEntry = player.getUsername() + " casts no spells from Improvisation Capstone.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             gameBroadcastService.broadcastGameState(gameData);
             return;
         }
@@ -82,7 +83,7 @@ public class ImprovisationCapstoneCastSupport {
 
             if (!hasLegalTargets) {
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
-                gameBroadcastService.logAndBroadcast(gameData, card.getName() + " has no valid targets.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " has no valid targets."));
                 castNextFromQueue(gameData, playerId);
                 return;
             }
@@ -91,8 +92,7 @@ public class ImprovisationCapstoneCastSupport {
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " casts " + card.getName() + " without paying its mana cost — choosing target.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost — choosing target."));
             return;
         }
 
@@ -102,8 +102,7 @@ public class ImprovisationCapstoneCastSupport {
         ));
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " casts " + card.getName() + " without paying its mana cost (Improvisation Capstone).");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost (Improvisation Capstone)."));
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
     }

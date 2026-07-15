@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -61,7 +62,7 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
         if (counterName == null) return;
 
         String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
 
         if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {

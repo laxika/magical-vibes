@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaClashEffect;
@@ -48,9 +49,9 @@ public class ManaClashEffectHandler implements NormalEffectHandlerBean {
             boolean controllerHeads = ThreadLocalRandom.current().nextBoolean();
             boolean opponentHeads = ThreadLocalRandom.current().nextBoolean();
 
-            gameBroadcastService.logAndBroadcast(gameData, sourceName + ": "
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + ": "
                     + controllerName + " flips " + (controllerHeads ? "heads" : "tails") + ", "
-                    + opponentName + " flips " + (opponentHeads ? "heads" : "tails") + ".");
+                    + opponentName + " flips " + (opponentHeads ? "heads" : "tails") + "."));
 
             if (!controllerHeads) {
                 dealOneDamage(gameData, entry, controllerId);

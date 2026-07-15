@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -55,7 +56,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
 
         if (creatureCount == 0) {
             String noCreaturesLog = controllerName + " controls no creatures — no cards are exiled or revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, noCreaturesLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noCreaturesLog));
             return;
         }
 
@@ -64,7 +65,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
             String creatureName = creature.getCard().getName();
             permanentRemovalService.removePermanentToExile(gameData, creature);
             String exileLog = controllerName + " exiles " + creatureName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, exileLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
         }
 
         // Step 3: Reveal cards from the top of the library until finding that many creature cards
@@ -82,20 +83,20 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
 
         if (revealedCards.isEmpty()) {
             String emptyLog = controllerName + "'s library is empty — no cards are revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(emptyLog));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = controllerName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         if (foundCreatures.isEmpty()) {
             // No creature cards found — shuffle all revealed cards back into the library
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             String noMatchLog = controllerName + " reveals their entire library — no creature cards found. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatchLog));
             return;
         }
 
@@ -104,8 +105,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
             Permanent perm = new Permanent(creatureCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-            String enterLog = creatureCard.getName() + " enters the battlefield under " + controllerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, enterLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(creatureCard, controllerName));
 
             // Handle planeswalkers (e.g. artifact creatures that are also planeswalkers)
             if (creatureCard.hasType(CardType.PLANESWALKER) && creatureCard.getLoyalty() != null) {
@@ -126,7 +126,7 @@ public class ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHa
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         String shuffleLog = controllerName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
 
         // Step 6: Process ETB triggers after all creatures are on the battlefield and the
         // spell has finished resolving. All creatures enter at the same time, so triggers

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,7 +39,7 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         target.getMustBlockIds().add(e.sourcePermanentId());
 
         String logEntry = target.getCard().getName() + " must block " + sourceName + " this turn if able.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} must block {} this turn if able", gameData.id, target.getCard().getName(), sourceName);
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -84,7 +86,7 @@ class SoulSeizerTest extends BaseCardTest {
         assertThat(soulSeizer.isTransformed()).isFalse();
         assertThat(soulSeizer.getCard().getName()).isEqualTo("Soul Seizer");
         assertThat(soulSeizer.isAttached()).isFalse();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     @Test

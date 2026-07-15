@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
@@ -52,7 +53,7 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
 
         String logEntry = String.format("%s gets %+d/%+d until end of turn.",
                 equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {}/{} until end of turn", gameData.id,
                 equippedCreature.getCard().getName(), powerBoost, toughnessBoost);
     }

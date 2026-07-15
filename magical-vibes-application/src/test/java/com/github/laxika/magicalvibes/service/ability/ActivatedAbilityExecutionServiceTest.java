@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.ability;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -268,7 +269,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
-                    argThat(msg -> msg.contains("activates") && msg.contains("Test Mana Land")));
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("activates") && logEntry.plainText().contains("Test Mana Land")));
         }
 
         @Test
@@ -527,7 +528,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gameData),
-                    argThat(msg -> msg.contains("activates") && msg.contains("Blight Mamba")));
+                    argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("activates") && logEntry.plainText().contains("Blight Mamba")));
         }
 
         @Test

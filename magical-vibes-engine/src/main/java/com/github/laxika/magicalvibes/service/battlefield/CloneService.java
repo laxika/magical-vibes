@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -102,17 +103,25 @@ public class CloneService {
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String originalName = card.getName();
+        Card enteredCard = perm.getCard();
         if (targetId != null) {
             Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-            String targetName = targetPerm != null ? targetPerm.getCard().getName() : perm.getCard().getName();
-            String logEntry = originalName + " enters the battlefield as a copy of " + targetName + " under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} enters as copy of {} for {}", gameData.id, originalName, targetName, playerName);
+            if (targetPerm != null) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                        .card(enteredCard)
+                        .text(" enters the battlefield as a copy of ")
+                        .card(targetPerm.getCard())
+                        .text(" under " + playerName + "'s control.")
+                        .build());
+                log.info("Game {} - {} enters as copy of {} for {}", gameData.id, enteredCard.getName(),
+                        targetPerm.getCard().getName(), playerName);
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+                log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
+            }
         } else {
-            String logEntry = originalName + " enters the battlefield under " + playerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, originalName, playerName);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
+            log.info("Game {} - {} enters battlefield without copying for {}", gameData.id, enteredCard.getName(), playerName);
         }
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, perm.getCard(), etbTargetId, true);

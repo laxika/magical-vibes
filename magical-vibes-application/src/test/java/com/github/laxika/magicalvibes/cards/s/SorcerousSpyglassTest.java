@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -53,7 +55,7 @@ class SorcerousSpyglassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's hand should be revealed in game log
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("hand"));
 
         // Permanent should NOT be on the battlefield yet — name must be chosen first (Rule 614.1c)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -72,7 +74,7 @@ class SorcerousSpyglassTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at") && log.contains("empty"));
     }
 
     @Test

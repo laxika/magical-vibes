@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
@@ -33,17 +34,17 @@ public class GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect
                 ? entry.getTargetCardIds().getFirst()
                 : entry.getTargetId();
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
         if (!targetCard.hasType(CardType.CREATURE)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not a creature card).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not a creature card)."));
             return;
         }
 
@@ -52,7 +53,7 @@ public class GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect
 
         String logEntry = entry.getCard().getName() + " allows " + targetCard.getName()
                 + " to be cast from a graveyard this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} grants graveyard cast permission for {}", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 }

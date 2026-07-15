@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
@@ -200,7 +201,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
                 bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        argThat(msg -> msg.contains("controls no valid creatures")));
+                        argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("controls no valid creatures")));
                 verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
             }
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -113,7 +115,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         assertThat(phoenixPerm.isAttackedThisTurn()).isTrue();
 
         // Verify the game log recorded "tapped and attacking"
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Warcry Phoenix") && log.contains("tapped and attacking"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Warcry Phoenix") && log.contains("tapped and attacking"));
 
         // Phoenix should no longer be in the graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))

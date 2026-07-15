@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -50,8 +51,7 @@ public class TargetPlayerChoosesCreatureRestCantBlockEffectHandler implements No
         // With 0 or 1 creatures there are no "other" creatures to restrict — nothing happens.
         if (creatureIds.size() <= 1) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getCard().getName() + " resolves but " + playerName + " has no other creatures to restrict.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " resolves but " + playerName + " has no other creatures to restrict."));
             return;
         }
 

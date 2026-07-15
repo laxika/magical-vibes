@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
@@ -73,7 +74,7 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
                     int lifeTotal = gameData.playerLifeTotals.getOrDefault(controllerId, 0);
                     String logEntry = entry.getCard().getName() + " creates a " + lifeTotal + "/" + lifeTotal
                             + " white " + e.tokenName() + " creature token.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} creates a {}/{} {} token", gameData.id, entry.getCard().getName(),
                             lifeTotal, lifeTotal, e.tokenName());
                 }

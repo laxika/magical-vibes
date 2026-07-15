@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -132,7 +134,7 @@ class ArmWithAetherTest extends BaseCardTest {
         resolveCombat();
 
         // Should report no creatures (land is not a creature)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("has no creatures"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no creatures"));
     }
 
     @Test

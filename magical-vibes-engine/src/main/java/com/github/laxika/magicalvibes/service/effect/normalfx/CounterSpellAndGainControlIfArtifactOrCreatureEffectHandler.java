@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -52,8 +53,7 @@ public class CounterSpellAndGainControlIfArtifactOrCreatureEffectHandler impleme
         }
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, gained);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                gameData.playerIdToName.get(controllerId) + " puts " + gained.getName()
-                        + " onto the battlefield under their control.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + " puts " + gained.getName()
+                        + " onto the battlefield under their control."));
     }
 }

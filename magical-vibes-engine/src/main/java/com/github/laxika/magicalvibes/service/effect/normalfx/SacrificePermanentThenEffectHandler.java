@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,7 +53,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
 
         if (validIds.isEmpty()) {
             String logEntry = playerName + " has no " + e.permanentDescription() + " to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} to sacrifice for {}",
                     gameData.id, playerName, e.permanentDescription(), entry.getCard().getName());
             return;
@@ -65,7 +66,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
                 entry.getCard().getName() + " — Choose " + e.permanentDescription() + " to sacrifice.");
 
         String logEntry = playerName + " is choosing " + e.permanentDescription() + " to sacrifice.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing {} to sacrifice for {}",
                 gameData.id, playerName, e.permanentDescription(), entry.getCard().getName());
     

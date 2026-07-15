@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -101,7 +102,7 @@ public class TurnProgressionService {
                 gameData.skipNextCombatPhaseCount.remove(gameData.activePlayerId);
             }
             String skipLog = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their combat phase.";
-            gameBroadcastService.logAndBroadcast(gameData, skipLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(skipLog));
         }
 
         turnCleanupService.drainManaPools(gameData);
@@ -109,7 +110,7 @@ public class TurnProgressionService {
         if (next != null) {
             gameData.currentStep = next;
             String logEntry = "Step: " + next.getDisplayName();
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Step advanced to {}", gameData.id, next);
             gameBroadcastService.broadcastGameState(gameData);
 
@@ -181,7 +182,7 @@ public class TurnProgressionService {
             gameData.tauntedThisTurn.put(nextActive, taunter);
             String taunterName = gameData.playerIdToName.get(taunter);
             String tauntLog = "Creatures " + nextActiveName + " controls must attack " + taunterName + " this turn if able.";
-            gameBroadcastService.logAndBroadcast(gameData, tauntLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tauntLog));
             log.info("Game {} - {}'s creatures must attack {} this turn (Taunt)", gameData.id, nextActiveName, taunterName);
         }
 
@@ -192,7 +193,7 @@ public class TurnProgressionService {
             gameData.mindControllerPlayerId = pendingController;
             String controllerName = gameData.playerIdToName.get(pendingController);
             String controlLog = controllerName + " controls " + nextActiveName + " this turn (Mindslaver).";
-            gameBroadcastService.logAndBroadcast(gameData, controlLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controlLog));
             log.info("Game {} - {} controls {} this turn (Mindslaver)", gameData.id, controllerName, nextActiveName);
         }
         gameData.turnNumber++;
@@ -347,7 +348,7 @@ public class TurnProgressionService {
     public void completeTurnAdvance(GameData gameData) {
         String activeName = gameData.playerIdToName.get(gameData.activePlayerId);
         String logEntry = "Turn " + gameData.turnNumber + " begins. " + activeName + "'s turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Turn {} begins. Active player: {}", gameData.id, gameData.turnNumber, activeName);
         gameBroadcastService.broadcastGameState(gameData);
     }

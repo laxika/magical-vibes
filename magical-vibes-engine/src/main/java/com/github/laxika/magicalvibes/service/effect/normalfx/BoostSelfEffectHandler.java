@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -47,7 +48,7 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
 
         String logEntry = String.format("%s gets %+d/%+d until end of turn.",
                 self.getCard().getName(), powerBoost, toughnessBoost);
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {}/{}", gameData.id, self.getCard().getName(), powerBoost, toughnessBoost);
     }

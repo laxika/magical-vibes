@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -95,7 +97,7 @@ class PsychicMiasmaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Psychic Miasma") && log.contains("returned to its owner's hand"));
     }
 

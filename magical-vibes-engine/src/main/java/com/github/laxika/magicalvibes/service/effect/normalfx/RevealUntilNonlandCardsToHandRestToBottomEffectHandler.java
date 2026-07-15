@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardsToHandRestToBottomEffect;
@@ -52,22 +53,19 @@ public class RevealUntilNonlandCardsToHandRestToBottomEffectHandler implements N
         }
 
         if (revealed.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s library is empty — no cards are revealed with " + cardName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty — no cards are revealed with " + cardName + "."));
             return;
         }
 
         String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         for (Card card : toHand) {
             gameData.addCardToHand(controllerId, card);
         }
         if (!toHand.isEmpty()) {
             String handNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + handNames + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
         }
 
         log.info("Game {} - {} resolving {} — {} nonland to hand, {} lands to bottom",

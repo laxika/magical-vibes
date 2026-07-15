@@ -286,6 +286,19 @@
   border-bottom: none;
 }
 
+.log-card {
+  color: #5c3d1e;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(92, 61, 30, 0.35);
+  text-underline-offset: 2px;
+}
+
+.log-card:hover {
+  color: #3d2810;
+  text-decoration-color: rgba(61, 40, 16, 0.7);
+}
+
 .turn-info {
   display: flex;
   align-items: stretch;

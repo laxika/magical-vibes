@@ -67,6 +67,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.github.laxika.magicalvibes.model.GameLog;
 /**
  * Trigger collectors for spell-cast events (ON_ANY_PLAYER_CASTS_SPELL,
  * ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
@@ -454,7 +455,7 @@ public class SpellCastTriggerCollectorService {
             ));
             String logEntry = match.permanent().getCard().getName()
                     + "'s triggered ability triggers — choose a target.";
-            gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
         } else {
             match.gameData().stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -504,7 +505,7 @@ public class SpellCastTriggerCollectorService {
         ));
         String logEntry = match.permanent().getCard().getName()
                 + "'s triggered ability triggers — choose a target for " + manaValue + " damage.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
         log.info("Game {} - {} spell-cast mana-value trigger queued ({} damage)",
                 match.gameData().id, match.permanent().getCard().getName(), manaValue);
         return true;
@@ -524,7 +525,7 @@ public class SpellCastTriggerCollectorService {
         ));
         String logEntry = match.permanent().getCard().getName()
                 + "'s triggered ability triggers — choose target player for poison counter.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
         log.info("Game {} - {} spell-cast poison trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
@@ -729,7 +730,7 @@ public class SpellCastTriggerCollectorService {
             ));
             String logEntry = match.permanent().getCard().getName()
                     + "'s triggered ability triggers — choose a target.";
-            gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
+            gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
         } else {
             StackEntry entry;
             if (selfTarget) {

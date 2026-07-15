@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,20 +37,20 @@ public class CastTopOfLibraryWithoutPayingManaCostEffectHandler implements Norma
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.getFirst();
 
         String logEntry = playerName + " looks at the top card of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} looks at top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         boolean matches = e.castableTypes().contains(topCard.getType());
         if (!matches) {
             String noMatch = "The top card is not a castable type.";
-            gameBroadcastService.logAndBroadcast(gameData, noMatch);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatch));
             log.info("Game {} - Top card {} doesn't match castable types", gameData.id, topCard.getName());
             return;
         }

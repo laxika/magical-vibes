@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -46,7 +47,7 @@ public class LibraryRevealSupport {
         int actual = Math.min(count, deck.size());
         if (actual == 0) {
             String msg = entry.getCard().getName() + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, msg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(msg));
             return null;
         }
 
@@ -54,7 +55,7 @@ public class LibraryRevealSupport {
 
         if (broadcastLook) {
             String logMsg = playerName + " looks at the top " + pluralCards(actual) + " of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         }
 
         return new TopCardsResult(controllerId, topCards, playerName);

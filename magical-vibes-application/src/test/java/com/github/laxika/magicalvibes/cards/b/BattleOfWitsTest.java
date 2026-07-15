@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
@@ -29,7 +31,7 @@ class BattleOfWitsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve trigger
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("wins the game"));
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.FaerieHarbinger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -86,7 +88,7 @@ class SilvergillDouserTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     private Permanent addReadyDouser(Player player) {

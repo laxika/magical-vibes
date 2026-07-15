@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -112,7 +114,7 @@ class BirthingPodTest extends BaseCardTest {
                         || p.getCard().getName().equals("Benalish Knight")
                         || p.getCard().getName().equals("Hill Giant")
                         || p.getCard().getName().equals("Air Elemental"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("finds no"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("finds no"));
     }
 
     @Test

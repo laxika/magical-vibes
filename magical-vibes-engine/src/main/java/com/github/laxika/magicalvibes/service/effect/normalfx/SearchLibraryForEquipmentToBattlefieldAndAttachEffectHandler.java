@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -42,8 +43,7 @@ public class SearchLibraryForEquipmentToBattlefieldAndAttachEffectHandler implem
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but it is empty. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -53,8 +53,7 @@ public class SearchLibraryForEquipmentToBattlefieldAndAttachEffectHandler implem
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but finds no Equipment cards. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no Equipment cards. Library is shuffled."));
             log.info("Game {} - {} searches library, no Equipment cards found", gameData.id, playerName);
             return;
         }

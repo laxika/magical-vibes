@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -96,7 +98,7 @@ class PithingNeedleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "Prodigal Pyromancer");
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Prodigal Pyromancer") && log.contains("Pithing Needle"));
     }
 

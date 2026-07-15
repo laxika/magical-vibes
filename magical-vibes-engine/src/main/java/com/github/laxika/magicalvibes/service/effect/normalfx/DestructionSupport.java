@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
@@ -105,7 +106,7 @@ public class DestructionSupport {
         });
 
         if (toDestroy.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, sourceName + " resolves but no creatures are destroyed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " resolves but no creatures are destroyed."));
             return;
         }
 
@@ -129,7 +130,7 @@ public class DestructionSupport {
 
         if (toDestroy.isEmpty()) {
             String logEntry = cardName + " resolves but finds no nonland permanents with mana value " + targetManaValue + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} finds no nonland permanents with mana value {}", gameData.id, cardName, targetManaValue);
             return;
         }
@@ -148,14 +149,14 @@ public class DestructionSupport {
 
         for (Permanent perm : toDestroy) {
             if (indestructible.contains(perm)) {
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is indestructible."));
                 continue;
             }
             if (!cannotBeRegenerated && graveyardService.tryRegenerate(gameData, perm)) {
                 continue;
             }
             permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is destroyed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is destroyed."));
             log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
         }
     }
@@ -169,7 +170,7 @@ public class DestructionSupport {
             return false;
         }
         String logEntry = target.getCard().getName() + " is destroyed.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} is destroyed by {}", gameData.id, target.getCard().getName(), sourceName);
         return true;
     }
@@ -178,7 +179,7 @@ public class DestructionSupport {
         permanentRemovalService.removePermanentToGraveyard(gameData, creature);
         String playerName = gameData.playerIdToName.get(playerId);
         String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
     }
 
@@ -225,8 +226,7 @@ public class DestructionSupport {
 
         if (matching.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no matching permanents to destroy.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no matching permanents to destroy."));
             return false;
         }
 
@@ -252,8 +252,7 @@ public class DestructionSupport {
         if (gameQueryService.isDamagePreventable(gameData)
                 && (gameQueryService.isDamageFromSourcePrevented(gameData, sourceColor)
                     || damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor))) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
             return;
         }
 
@@ -265,15 +264,13 @@ public class DestructionSupport {
                 int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
                 gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
                 String playerName = gameData.playerIdToName.get(playerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
             }
             return;
         }
 
         if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(playerId) + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + "'s life total can't change."));
             return;
         }
 
@@ -282,8 +279,7 @@ public class DestructionSupport {
 
         if (effectiveDamage > 0) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + " deals " + effectiveDamage + " damage to " + playerName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + effectiveDamage + " damage to " + playerName + "."));
             log.info("Game {} - {} deals {} damage to {}", gameData.id, cardName, effectiveDamage, playerName);
         }
     }
@@ -346,7 +342,7 @@ public class DestructionSupport {
         if (creatureIds.isEmpty()) {
             String playerName = gameData.playerIdToName.get(targetPlayerId);
             String logEntry = playerName + " has no creatures to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures to sacrifice", gameData.id, playerName);
             return;
         }
@@ -414,7 +410,7 @@ public class DestructionSupport {
         }
         if (permanentRemovalService.removePermanentToGraveyard(gameData, self)) {
             triggerCollectionService.checkAllyPermanentSacrificedTriggers(gameData, entry.getControllerId(), self.getCard());
-            gameBroadcastService.logAndBroadcast(gameData, self.getCard().getName() + " is sacrificed.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(self.getCard().getName() + " is sacrificed."));
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
     }
@@ -424,7 +420,7 @@ public class DestructionSupport {
         if (sourcePermanent != null) {
             sourcePermanent.tap();
             String tapLog = sourcePermanent.getCard().getName() + " is tapped.";
-            gameBroadcastService.logAndBroadcast(gameData, tapLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
             log.info("Game {} - {} is tapped (no matching creature to sacrifice)",
                     gameData.id, sourcePermanent.getCard().getName());
         }
@@ -473,14 +469,14 @@ public class DestructionSupport {
             if (isCreature) {
                 String logEntry = playerName + " creates a " + token.power() + "/" + token.toughness()
                         + " " + colorName + token.tokenName() + " creature token.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} creates a {}/{} {} token for {}", gameData.id, sourceName,
                         token.power(), token.toughness(), token.tokenName(), playerName);
 
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
             } else {
                 String logEntry = playerName + " creates a " + colorName + token.tokenName() + " token.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} creates a {} token for {}", gameData.id, sourceName,
                         token.tokenName(), playerName);
             }
@@ -510,8 +506,7 @@ public class DestructionSupport {
         String pile2Desc = buildPileDescription(gameData, pile2);
 
         String controllerName = gameData.playerIdToName.get(state.controllerId());
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " separates permanents into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
 
         // Prompt target player to choose which pile to sacrifice
         String prompt = "Choose a pile to sacrifice. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
@@ -530,8 +525,7 @@ public class DestructionSupport {
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         String sacrificedDesc = buildPileDescription(gameData, pileToSacrifice);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " sacrifices " + pileName + ": " + sacrificedDesc + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " sacrifices " + pileName + ": " + sacrificedDesc + "."));
 
         // Sacrifice all permanents in the chosen pile
         for (UUID permId : pileToSacrifice) {

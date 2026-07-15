@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -222,7 +224,7 @@ class AdeptWatershaperTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Log should indicate indestructible
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("indestructible"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
     }
 
     @Test

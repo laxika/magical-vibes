@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -175,8 +176,8 @@ class ExileAllPermanentsEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToExile(gd, creature1);
                 verify(permanentRemovalService).removePermanentToExile(gd, creature2);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Bear is exiled."));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Elk is exiled."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Bear is exiled.")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Elk is exiled.")));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);
             }
 

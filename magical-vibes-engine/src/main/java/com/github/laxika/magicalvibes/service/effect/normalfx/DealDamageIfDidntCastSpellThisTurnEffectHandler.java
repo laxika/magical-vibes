@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
@@ -37,8 +38,7 @@ public class DealDamageIfDidntCastSpellThisTurnEffectHandler implements NormalEf
         // Intervening-if: re-check condition at resolution time. A countered spell still counts.
         if (gameData.getSpellsCastThisTurnCount(targetId) > 0) {
             String playerName = gameData.playerIdToName.get(targetId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s ability does nothing — " + playerName + " cast a spell this turn.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s ability does nothing — " + playerName + " cast a spell this turn."));
             return;
         }
 

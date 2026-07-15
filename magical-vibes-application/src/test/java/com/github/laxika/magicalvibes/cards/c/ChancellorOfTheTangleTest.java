@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -69,7 +71,7 @@ class ChancellorOfTheTangleTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chancellor of the Tangle");
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals Chancellor of the Tangle"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Chancellor of the Tangle"));
     }
 
     @Test

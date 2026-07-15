@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -76,7 +77,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
             UUID returnToId = previousOwnerId != null ? previousOwnerId : entry.getControllerId();
             graveyardService.addCardToGraveyard(gameData, returnToId, previouslyImprinted);
             String returnLog = previouslyImprinted.getName() + " returns to its owner's graveyard from exile.";
-            gameBroadcastService.logAndBroadcast(gameData, returnLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(returnLog));
             log.info("Game {} - Previously imprinted {} returned to graveyard", gameData.id, previouslyImprinted.getName());
         }
 
@@ -91,7 +92,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         gameData.setImprintedCard(sourcePermanent.getCard(), dyingCard);
 
         String logMsg = dyingCard.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} imprinted on {}", gameData.id, dyingCard.getName(), sourcePermanent.getCard().getName());
     }
 }

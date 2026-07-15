@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
@@ -34,15 +35,13 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
             targetCardId = entry.getTargetCardIds().getFirst();
         }
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " — no target selected.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
@@ -61,8 +60,7 @@ public class ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffectHandle
         gameData.exileInsteadOfGraveyard.add(targetCard.getId());
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " exiles " + targetCard.getName()
-                        + " from an opponent's graveyard (may cast it this turn).");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName()
+                        + " from an opponent's graveyard (may cast it this turn)."));
     }
 }

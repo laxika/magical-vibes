@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
 
         if (creatureIds.isEmpty()) {
             String logEntry = playerName + " controls no creatures to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures for sacrifice-then-search", gameData.id, playerName);
             return;
         }
@@ -65,7 +66,7 @@ public class SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler implem
             if (creature != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, creature);
                 String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 
                 librarySearchSupport.searchLibraryForCreatureToHand(gameData, controllerId);

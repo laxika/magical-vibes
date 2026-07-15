@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandThenSacrificeUnlessPayReducedEffect;
@@ -50,7 +51,7 @@ public class PutCreatureFromHandThenSacrificeUnlessPayReducedEffectHandler imple
 
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " has no creature cards in hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no creature cards in hand."));
             log.info("Game {} - {} has no creatures in hand for {}", gameData.id, playerName, entry.getCard().getName());
             return;
         }

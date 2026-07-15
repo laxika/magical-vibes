@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -42,15 +43,14 @@ public class LookAtTopCardsHandTopBottomEffectHandler implements NormalEffectHan
             // Only 1 card: it goes to hand
             gameData.addCardToHand(controllerId, topCards.getFirst());
             String logMsg = playerName + " looks at the top card of their library and puts it into their hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.HandTopBottomChoice(controllerId, topCards));
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     
     }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
@@ -64,7 +65,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
         String targetName = targetPerm.getCard().getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);
     }
 }

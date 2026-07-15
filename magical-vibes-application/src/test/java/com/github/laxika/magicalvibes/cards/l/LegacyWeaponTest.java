@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -293,7 +295,7 @@ class LegacyWeaponTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()))
                 .anyMatch(c -> c.getName().equals("Legacy Weapon"));
         // Log confirms replacement
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Legacy Weapon") && log.contains("shuffled into its owner's library instead"));
     }
 
@@ -330,7 +332,7 @@ class LegacyWeaponTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Grizzly Bears") && log.contains("exiled"));
     }
 

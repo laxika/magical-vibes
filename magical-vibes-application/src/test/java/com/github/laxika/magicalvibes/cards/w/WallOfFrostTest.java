@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -115,7 +117,7 @@ class WallOfFrostTest extends BaseCardTest {
 
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Wall of Frost") && log.contains("block") && log.contains("trigger"));
     }
 
@@ -128,7 +130,7 @@ class WallOfFrostTest extends BaseCardTest {
         declareBlockers(List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Grizzly Bears") && log.contains("untap"));
     }
 

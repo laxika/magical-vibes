@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -113,7 +114,7 @@ public class MayPenaltyChoiceHandlerService {
             if (cost.canPay(pool)) {
                 cost.pay(pool);
                 String logEntry = player.getUsername() + " pays {" + amount + "}. " + targetEntry.getCard().getName() + " is not countered.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} pays {} to avoid counter", gameData.id, player.getUsername(), amount);
             } else {
                 counterSpell(gameData, player, ability.sourceCard(), targetEntry, amount, exileIfCountered, onNotPaidEffects);
@@ -144,7 +145,7 @@ public class MayPenaltyChoiceHandlerService {
 
         String suffix = exileIfCountered ? " is countered and exiled." : " is countered.";
         String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + suffix;
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
 
         // Not paid: resolve any rider against the countered spell's controller (Power Sink).
@@ -204,7 +205,7 @@ public class MayPenaltyChoiceHandlerService {
                         "Choose a card to discard.", 1);
 
                 String logEntry = player.getUsername() + " discards a card. " + targetEntry.getCard().getName() + " is not countered.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts counter-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
                 return;
             }
@@ -230,7 +231,7 @@ public class MayPenaltyChoiceHandlerService {
         String logEntry = isAbility
                 ? targetEntry.getCard().getName() + "'s ability is countered. (" + sourceCard.getName() + ")"
                 : targetEntry.getCard().getName() + " is countered. (" + sourceCard.getName() + ")";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} counters {}", gameData.id, sourceCard.getName(), targetEntry.getCard().getName());
     }
 
@@ -284,7 +285,7 @@ public class MayPenaltyChoiceHandlerService {
                         "Choose a " + typeName + " to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;
             }
@@ -296,11 +297,11 @@ public class MayPenaltyChoiceHandlerService {
         if (sourcePermanent != null) {
             permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " declines to discard. " + sourceCard.getName() + " is sacrificed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             String logEntry = player.getUsername() + " declines to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
@@ -330,7 +331,7 @@ public class MayPenaltyChoiceHandlerService {
                         "Choose a card to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a card.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts lose-life-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
                 return;
             }
@@ -340,13 +341,13 @@ public class MayPenaltyChoiceHandlerService {
 
         // Declined or no cards — lose life
         if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
         } else {
             int currentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
 
             String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} loses {} life (declined discard, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
         }
 
@@ -367,29 +368,29 @@ public class MayPenaltyChoiceHandlerService {
             if (cost.canPay(pool)) {
                 cost.pay(pool);
                 String logEntry = player.getUsername() + " pays {" + effect.payAmount() + "}. (" + ability.sourceCard().getName() + ")";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} pays {} to avoid life loss ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
             } else {
                 // Can't pay — apply life loss
                 if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
                 } else {
                     int currentLife = gameData.getLife(targetPlayerId);
                     gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                     String logEntry = player.getUsername() + " can't pay {" + effect.payAmount() + "}. " + player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} can't pay {} — loses {} life ({})", gameData.id, player.getUsername(), effect.payAmount(), effect.lifeLoss(), ability.sourceCard().getName());
                 }
             }
         } else {
             // Declined — lose life
             if (!gameQueryService.canPlayerLifeChange(gameData, targetPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + "'s life total can't change.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(targetPlayerId);
                 gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeLoss());
                 String logEntry = player.getUsername() + " loses " + effect.lifeLoss() + " life. (" + ability.sourceCard().getName() + ")";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
             }
         }
@@ -413,7 +414,7 @@ public class MayPenaltyChoiceHandlerService {
             int currentLife = gameData.getLife(targetPlayerId);
             gameData.playerLifeTotals.put(targetPlayerId, currentLife - effect.lifeCost());
             String logEntry = player.getUsername() + " pays " + effect.lifeCost() + " life. (" + ability.sourceCard().getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} pays {} life to keep their hand ({})", gameData.id, player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
         } else {
             // Declined (or can no longer pay) — discard the whole hand.
@@ -456,7 +457,7 @@ public class MayPenaltyChoiceHandlerService {
             if (exiledCard != null) {
                 gameData.addCardToHand(controllerId, exiledCard);
                 String logEntry = opponentName + " allows it. " + controllerName + " puts " + exiledCard.getName() + " into their hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} allows exile return, {} gets {}", gameData.id, opponentName, controllerName, exiledCard.getName());
             }
         } else {
@@ -467,7 +468,7 @@ public class MayPenaltyChoiceHandlerService {
             }
 
             String logEntry = opponentName + " declines. " + controllerName + " draws " + drawCount + " cards.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines exile return, {} draws {}", gameData.id, opponentName, controllerName, drawCount);
         }
 
@@ -499,12 +500,12 @@ public class MayPenaltyChoiceHandlerService {
         if (accepted) {
             gameData.queueDelayedAction(
                     new com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep(controllerId, 3, ability.sourceCard()));
-            gameBroadcastService.logAndBroadcast(gameData, opponentName + " chooses: " + controllerName
-                    + " draws three cards at the beginning of the next turn's upkeep.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " draws three cards at the beginning of the next turn's upkeep."));
             log.info("Game {} - {} chooses draw-three for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
         } else {
-            gameBroadcastService.logAndBroadcast(gameData, opponentName + " chooses: " + controllerName
-                    + " searches their library for a card.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " chooses: " + controllerName
+                    + " searches their library for a card."));
             log.info("Game {} - {} chooses library search for {} (Library of Lat-Nam)", gameData.id, opponentName, controllerName);
             StackEntry searchEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
                     controllerId, ability.sourceCard().getName(),
@@ -555,7 +556,7 @@ public class MayPenaltyChoiceHandlerService {
                         "Choose an " + typeName + " to return to hand.");
 
                 String logEntry = player.getUsername() + " chooses to return an " + typeName + " to hand.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts sacrifice-unless-return for {}", gameData.id, player.getUsername(), sourceCard.getName());
                 return;
             }
@@ -567,11 +568,11 @@ public class MayPenaltyChoiceHandlerService {
         if (sourcePermanent != null) {
             permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " declines to return a permanent. " + sourceCard.getName() + " is sacrificed.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
         } else {
             String logEntry = player.getUsername() + " declines to return a permanent.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
         }
 
@@ -592,7 +593,7 @@ public class MayPenaltyChoiceHandlerService {
             if (cost.canPay(pool)) {
                 cost.pay(pool);
                 String logEntry = player.getUsername() + " pays " + payCost.manaCost() + ". (" + ability.sourceCard().getName() + ")";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), payCost.manaCost(), ability.sourceCard().getName());
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -682,7 +683,7 @@ public class MayPenaltyChoiceHandlerService {
 
                 String logEntry = player.getUsername() + " chooses to exile a " + filterLabel
                         + " from their graveyard. (" + ability.sourceCard().getName() + ")";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} accepts exile-from-graveyard for {}", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
                 return;
@@ -697,7 +698,7 @@ public class MayPenaltyChoiceHandlerService {
             playerInputService.beginDiscardChoice(gameData, controllerId, 1);
 
             String logEntry = player.getUsername() + " must discard a card. (" + ability.sourceCard().getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} declines exile, must discard for {}", gameData.id,
                     player.getUsername(), ability.sourceCard().getName());
             return;
@@ -705,7 +706,7 @@ public class MayPenaltyChoiceHandlerService {
 
         // No cards in hand either — nothing happens
         String logEntry = player.getUsername() + " has no cards to discard. (" + ability.sourceCard().getName() + ")";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} has no cards to discard for {}", gameData.id,
                 player.getUsername(), ability.sourceCard().getName());
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

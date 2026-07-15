@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -50,8 +51,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
                 .toList();
 
         if (matching.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " has no cards exiled with " + sourceName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no cards exiled with " + sourceName + "."));
             return;
         }
 
@@ -59,8 +59,7 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
             Card card = matching.getFirst();
             gameData.removeFromExile(card.getId());
             gameData.addCardToHand(controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " puts " + card.getName() + " from exile into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " puts " + card.getName() + " from exile into their hand."));
             log.info("Game {} - {} returns {} from exile ({}) to hand",
                     gameData.id, controllerName, card.getName(), sourceName);
             return;

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.a.AvenFisher;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,7 +43,7 @@ class LureTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)
         ));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declares 2 blockers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 2 blockers"));
     }
 
     @Test

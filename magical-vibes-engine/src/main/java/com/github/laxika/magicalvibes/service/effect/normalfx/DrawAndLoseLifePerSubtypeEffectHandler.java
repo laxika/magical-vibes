@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -48,7 +49,7 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
 
         if (count == 0) {
             String logEntry = playerName + " controls no " + e.subtype().getDisplayName() + "s — draws nothing and loses no life.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} controls no {}s for draw/life loss", gameData.id, playerName, e.subtype().getDisplayName());
             return;
         }
@@ -60,14 +61,14 @@ public class DrawAndLoseLifePerSubtypeEffectHandler implements NormalEffectHandl
         if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " (" + entry.getCard().getName() + "). " + playerName + "'s life total can't change.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             int currentLife = gameData.getLife(controllerId);
             gameData.playerLifeTotals.put(controllerId, currentLife - count);
 
             String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "")
                     + " and loses " + count + " life (" + entry.getCard().getName() + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} draws {} and loses {} life from {}", gameData.id, playerName, count, count, entry.getCard().getName());
         }
     

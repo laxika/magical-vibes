@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,7 +91,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         // No cards drawn
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     @Test

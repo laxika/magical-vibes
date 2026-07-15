@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -221,7 +223,7 @@ class NecropedeTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Necropede"));
 
         // No valid creature targets — trigger is skipped entirely (no stack entry, no may prompt)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
     }
 
     @Test

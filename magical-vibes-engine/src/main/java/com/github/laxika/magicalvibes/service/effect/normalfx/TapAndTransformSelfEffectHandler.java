@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +41,7 @@ public class TapAndTransformSelfEffectHandler implements NormalEffectHandlerBean
         // Tap
         self.tap();
         String tapLog = self.getCard().getName() + " is tapped.";
-        gameBroadcastService.logAndBroadcast(gameData, tapLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
         log.info("Game {} - {} is tapped", gameData.id, self.getCard().getName());
 
         // Transform
@@ -50,7 +51,7 @@ public class TapAndTransformSelfEffectHandler implements NormalEffectHandlerBean
             self.setCard(originalCard);
             self.setTransformed(false);
             String logEntry = backName + " transforms into " + originalCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
         } else {
             Card backFace = originalCard.getBackFaceCard();
@@ -62,7 +63,7 @@ public class TapAndTransformSelfEffectHandler implements NormalEffectHandlerBean
             self.setCard(backFace);
             self.setTransformed(true);
             String logEntry = frontName + " transforms into " + backFace.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
         }
     }

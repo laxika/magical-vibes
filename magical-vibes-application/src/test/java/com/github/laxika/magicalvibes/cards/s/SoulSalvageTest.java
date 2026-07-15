@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -74,7 +76,7 @@ class SoulSalvageTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Log should mention returning from graveyard
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("from graveyard to hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("from graveyard to hand"));
     }
 
     @Test

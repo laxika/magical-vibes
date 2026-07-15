@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -45,14 +46,12 @@ public class ImprovisationCapstoneEffectHandler implements NormalEffectHandlerBe
             gameData.addToExile(controllerId, card);
             exiledThisProcess.add(card.getId());
             totalManaValue += card.getManaValue();
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " exiles " + card.getName() + " (mana value " + card.getManaValue() + ") (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " (mana value " + card.getManaValue() + ") (" + sourceName + ")."));
         }
 
         if (deck.isEmpty() && totalManaValue < e.totalManaValueThreshold()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s library ran out before reaching total mana value "
-                            + e.totalManaValueThreshold() + " (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library ran out before reaching total mana value "
+                            + e.totalManaValueThreshold() + " (" + sourceName + ")."));
         }
 
         List<UUID> castableSpellIds = new ArrayList<>();

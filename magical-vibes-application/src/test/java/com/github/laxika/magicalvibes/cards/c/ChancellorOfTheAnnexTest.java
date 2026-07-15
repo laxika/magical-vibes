@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -243,7 +245,7 @@ class ChancellorOfTheAnnexTest extends BaseCardTest {
         assertThat(gameData.openingHandRevealTriggers.getFirst().revealingPlayerId()).isEqualTo(p1.getId());
         assertThat(gameData.openingHandRevealTriggers.getFirst().effect())
                 .isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(gameData.gameLog).anyMatch(log -> log.contains("reveals Chancellor of the Annex"));
+        assertThat(gameData.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals Chancellor of the Annex"));
     }
 
     @Test

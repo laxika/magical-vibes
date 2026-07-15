@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -117,8 +118,8 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
                 revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("reveals") && msg.contains("Grizzly Bears")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Grizzly Bears")));
             }
 
             @Test
@@ -131,7 +132,7 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
                 revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 }

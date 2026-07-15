@@ -1,7 +1,7 @@
 <div class="side-panel">
   <div class="card-preview-panel">
-    @if (hoveredCard) {
-      <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
+    @if (effectivePreviewCard()) {
+      <app-card-display [card]="effectivePreviewCard()!" [permanent]="effectivePreviewPermanent()" [preview]="true" class="preview-card" />
     } @else {
       <div class="card-preview-empty"></div>
     }
@@ -109,7 +109,17 @@
             <div class="log-entry empty">Waiting for game to start...</div>
           } @else {
             @for (entry of gameLog; track $index) {
-              <div class="log-entry">{{ entry }}</div>
+              <div class="log-entry">
+                @for (seg of entry.segments; track $index) {
+                  @if (seg.type === 'card' && seg.card) {
+                    <span class="log-card"
+                          (mouseenter)="onLogCardHover(seg.card!)"
+                          (mouseleave)="onLogCardHoverEnd()">{{ seg.card!.name }}</span>
+                  } @else {
+                    {{ seg.text }}
+                  }
+                }
+              </div>
             }
           }
         </div>

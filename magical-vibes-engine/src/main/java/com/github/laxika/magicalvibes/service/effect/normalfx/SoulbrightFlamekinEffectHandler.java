@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,7 +57,6 @@ public class SoulbrightFlamekinEffectHandler implements NormalEffectHandlerBean 
             pool.addCreatureMana(ManaColor.RED, MANA_AMOUNT);
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + " adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " adds " + MANA_AMOUNT + " " + ManaColor.RED.getCode() + "."));
     }
 }

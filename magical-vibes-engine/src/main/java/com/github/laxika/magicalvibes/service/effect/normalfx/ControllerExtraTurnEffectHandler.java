@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
@@ -34,7 +35,7 @@ public class ControllerExtraTurnEffectHandler implements NormalEffectHandlerBean
 
         String logEntry = playerName + " takes " + e.count() + " extra "
                 + TurnSupport.pluralize("turn", e.count()) + " after this one.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} granted {} extra turn(s)", gameData.id, playerName, e.count());
     }
 }

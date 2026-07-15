@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KumenasSpeaker;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -48,7 +50,7 @@ class HarpoonSniperTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getId().equals(attacker.getId()));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("deals 1 damage"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("deals 1 damage"));
     }
 
     @Test

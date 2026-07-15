@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -95,8 +96,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
             if (!topCards.isEmpty()) {
                 String names = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " puts " + names + " into their hand.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + names + " into their hand."));
             }
             return;
         }
@@ -128,8 +128,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
             if (!topCards.isEmpty()) {
                 String names = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " puts " + names + " into their hand.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + names + " into their hand."));
             }
             return;
         }
@@ -159,8 +158,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
 
         if (e.reveal()) {
             String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
         }
 
         if (handChoicePredicate == null) {
@@ -175,8 +173,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 gameData.playerGraveyards.get(controllerId).add(card);
             }
             String restNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + restNames + " into their graveyard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + restNames + " into their graveyard."));
             log.info("Game {} - {} resolving {} — 0 eligible, {} to graveyard",
                     gameData.id, playerName, cardName, topCards.size());
             return;
@@ -193,12 +190,10 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             }
 
             String handNames = eligibleCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + handNames + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
             if (!remainingCards.isEmpty()) {
                 String restNames = remainingCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " puts " + restNames + " into their graveyard.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + restNames + " into their graveyard."));
             }
             return;
         }
@@ -212,8 +207,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         + " into your hand. The rest are put into your graveyard."));
 
         if (!e.reveal()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         }
         log.info("Game {} - {} resolving {} with {} cards, {} eligible",
                 gameData.id, playerName, cardName, count, eligibleCards.size());
@@ -229,7 +223,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     ? playerName + " looks at the top card of their library and puts it into their hand."
                     : playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count)
                             + " of their library and puts them into their hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -240,8 +234,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 "Look at the top " + count + " cards of your library. Put " + handWord
                         + " into your hand. The rest are put into your graveyard."));
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library."));
         log.info("Game {} - {} resolving {} with {} cards", gameData.id, playerName, entry.getCard().getName(), count);
     }
 

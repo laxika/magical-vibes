@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,7 +55,7 @@ public class ExileTargetCreatureAndAllWithSameNameEffectHandler implements Norma
         for (Permanent perm : toExile) {
             permanentRemovalService.removePermanentToExile(gameData, perm);
             String logEntry = perm.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, perm.getCard().getName(), entry.getCard().getName());
         }

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.DraftStatus;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
@@ -637,16 +638,16 @@ public class DraftService {
 
         gameData.status = GameStatus.MULLIGAN;
 
-        gameData.gameLog.add("Tournament game started!");
-        gameData.gameLog.add(p1Name + " vs " + p2Name);
+        gameData.gameLog.add(GameLogEntry.text("Tournament game started!"));
+        gameData.gameLog.add(GameLogEntry.text(p1Name + " vs " + p2Name));
 
         // Randomly pick starting player
         UUID startingPlayerId = random.nextBoolean() ? p1Id : p2Id;
         String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
         gameData.startingPlayerId = startingPlayerId;
 
-        gameData.gameLog.add(startingPlayerName + " wins the coin toss and goes first!");
-        gameData.gameLog.add("Mulligan phase — decide to keep or mulligan.");
+        gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
+        gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
 
         gameRegistry.register(gameData);
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawTwoToTheXCardsForTargetPlayerEffect;
@@ -38,7 +39,7 @@ public class DrawTwoToTheXCardsForTargetPlayerEffectHandler implements NormalEff
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = playerName + " draws " + amount + " card" + (amount != 1 ? "s" : "")
                 + " (" + entry.getCard().getName() + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, amount, entry.getCard().getName());
     }
 }

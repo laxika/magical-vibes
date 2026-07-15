@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import com.github.laxika.magicalvibes.model.GameLog;
 /**
  * Trigger collectors for discard events (ON_OPPONENT_DISCARDS).
  */
@@ -32,7 +33,7 @@ public class DiscardTriggerCollectorService {
     private boolean handleDiscardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
         String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
         log.info("Game {} - {} triggers on discard (may ability)", match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
@@ -48,7 +49,7 @@ public class DiscardTriggerCollectorService {
 
         String logEntry = cardName + " triggers — deals " + damage + " damage to "
                 + gameData.playerIdToName.get(discardingPlayerId) + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} triggers on discard, dealing {} damage to {}",
                 gameData.id, cardName, damage, gameData.playerIdToName.get(discardingPlayerId));
 
@@ -63,12 +64,10 @@ public class DiscardTriggerCollectorService {
                 if (gameQueryService.canPlayerGetPoisonCounters(gameData, discardingPlayerId)) {
                     int currentPoison = gameData.playerPoisonCounters.getOrDefault(discardingPlayerId, 0);
                     gameData.playerPoisonCounters.put(discardingPlayerId, currentPoison + effectiveDamage);
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            gameData.playerIdToName.get(discardingPlayerId) + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + " gets " + effectiveDamage + " poison counters from " + cardName + "."));
                 }
             } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
             } else {
                 int currentLife = gameData.getLife(discardingPlayerId);
                 gameData.playerLifeTotals.put(discardingPlayerId, currentLife - effectiveDamage);
@@ -93,13 +92,12 @@ public class DiscardTriggerCollectorService {
 
         String logEntry = cardName + " triggers — " + gameData.playerIdToName.get(discardingPlayerId)
                 + " loses " + amount + " life.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} triggers on discard, {} loses {} life",
                 gameData.id, cardName, gameData.playerIdToName.get(discardingPlayerId), amount);
 
         if (!gameQueryService.canPlayerLifeChange(gameData, discardingPlayerId)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(discardingPlayerId) + "'s life total can't change."));
         } else {
             int currentLife = gameData.getLife(discardingPlayerId);
             gameData.playerLifeTotals.put(discardingPlayerId, currentLife - amount);

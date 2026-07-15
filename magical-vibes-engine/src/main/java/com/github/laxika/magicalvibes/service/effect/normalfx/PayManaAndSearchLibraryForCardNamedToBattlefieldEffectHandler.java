@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -37,7 +38,7 @@ public class PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler imple
         ManaCost cost = new ManaCost(effect.manaCost());
         if (!cost.canPay(gameData.playerManaPools.get(controllerId))) {
             String logMsg = playerName + " can't pay " + effect.manaCost() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 

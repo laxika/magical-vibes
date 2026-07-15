@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,8 +61,7 @@ public class DoomsdayEffectHandler implements NormalEffectHandlerBean {
         lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, cardName);
 
         if (pool.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " has no cards in their library or graveyard (" + cardName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " has no cards in their library or graveyard (" + cardName + ")."));
             return;
         }
 

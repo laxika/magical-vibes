@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -32,7 +33,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (target creature no longer exists).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Equip fizzles, target creature left battlefield", gameData.id);
             return;
         }
@@ -41,7 +42,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
 
         if (equipment == null) {
             String logEntry = entry.getCard().getName() + "'s equip ability fizzles (equipment no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Equip fizzles, equipment left battlefield", gameData.id);
             return;
         }
@@ -54,7 +55,7 @@ public class EquipEffectHandler implements NormalEffectHandlerBean {
         equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} equipped to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         equipSupport.applySacrificeOnUnattachIfNeeded(gameData, equipment, oldAttachedTo, target.getId());

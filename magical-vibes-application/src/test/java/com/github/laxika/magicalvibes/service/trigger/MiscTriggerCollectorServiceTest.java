@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -290,7 +292,7 @@ class MiscTriggerCollectorServiceTest {
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -315,7 +317,7 @@ class MiscTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
 
         @Test
@@ -347,7 +349,7 @@ class MiscTriggerCollectorServiceTest {
                     match(mindcrank, player1Id, effect),
                     EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Mindcrank triggers — Opponent mills 5 cards."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Mindcrank triggers — Opponent mills 5 cards.")));
         }
     }
 
@@ -402,7 +404,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -529,7 +531,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 
@@ -584,7 +586,7 @@ class MiscTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 }

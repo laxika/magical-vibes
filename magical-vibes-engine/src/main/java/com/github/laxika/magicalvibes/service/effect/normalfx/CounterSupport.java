@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -107,7 +108,7 @@ public class CounterSupport {
         String logMsg = isAbility
                 ? target.getCard().getName() + "'s ability is countered."
                 : target.getCard().getName() + " is countered.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
@@ -125,7 +126,7 @@ public class CounterSupport {
         }
 
         String logMsg = target.getCard().getName() + " is countered and put on top of its owner's library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} countered {} onto its owner's library", gameData.id,
                 source.getCard().getName(), target.getCard().getName());
     }
@@ -160,7 +161,7 @@ public class CounterSupport {
         }
 
         String logMsg = target.getCard().getName() + " is countered.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} countered {}", gameData.id, source.getCard().getName(), target.getCard().getName());
         return gained;
     }
@@ -179,7 +180,7 @@ public class CounterSupport {
         }
 
         String logMsg = target.getCard().getName() + " is countered and exiled.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
     }
 
@@ -213,7 +214,7 @@ public class CounterSupport {
         ));
 
         String logMsg = spell.getName() + " is exiled instead of countered (Guile).";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
                 source.getCard().getName(), spell.getName());
         return true;

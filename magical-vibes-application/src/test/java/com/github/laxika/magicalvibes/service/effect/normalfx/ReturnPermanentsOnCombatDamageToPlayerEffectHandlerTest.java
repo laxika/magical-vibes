@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -47,8 +48,8 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no permanents")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no permanents")));
             }
 
             @Test

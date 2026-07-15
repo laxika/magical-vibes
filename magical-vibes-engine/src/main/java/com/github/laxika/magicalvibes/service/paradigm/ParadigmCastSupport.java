@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -84,7 +85,7 @@ public class ParadigmCastSupport {
                     graveyardService.addCardToGraveyard(gameData, playerId, card);
                 }
                 String logEntry = card.getName() + " has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} paradigm copy has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -97,7 +98,7 @@ public class ParadigmCastSupport {
 
             String logEntry = playerName + " casts " + card.getName()
                     + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -113,7 +114,7 @@ public class ParadigmCastSupport {
         gameData.priorityPassedBy.clear();
 
         String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} casts {} paradigm copy without paying mana", gameData.id, playerName, card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);

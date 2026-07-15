@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -188,7 +190,7 @@ class HeadGamesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
 
         // Log should mention no cards in hand
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards in hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards in hand"));
     }
 
     // ===== Single card hand =====
@@ -320,7 +322,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("puts 2 cards from their hand on top of their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("puts 2 cards from their hand on top of their library"));
     }
 
     @Test
@@ -333,7 +335,7 @@ class HeadGamesTest extends BaseCardTest {
         castHeadGames();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("searches") && log.contains("library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("searches") && log.contains("library"));
     }
 
     @Test
@@ -348,7 +350,7 @@ class HeadGamesTest extends BaseCardTest {
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is shuffled"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is shuffled"));
     }
 
     // ===== Multi-pick search cards update between picks =====

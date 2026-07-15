@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.PrebuiltDeck;
 import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
@@ -143,7 +144,7 @@ public class GameSetupService {
 
         gameData.status = GameStatus.MULLIGAN;
 
-        gameData.gameLog.add("Game started!");
+        gameData.gameLog.add(GameLogEntry.text("Game started!"));
         for (UUID playerId : gameData.orderedPlayerIds) {
             String deckIdForLog = gameData.playerDeckChoices.get(playerId);
             String deckName;
@@ -155,7 +156,7 @@ public class GameSetupService {
                 deckName = PrebuiltDeck.findById(deckIdForLog).getDisplayName();
             }
             String playerName = gameData.playerIdToName.get(playerId);
-            gameData.gameLog.add(playerName + " is playing with " + deckName + ".");
+            gameData.gameLog.add(GameLogEntry.text(playerName + " is playing with " + deckName + "."));
         }
 
         List<UUID> ids = new ArrayList<>(gameData.orderedPlayerIds);
@@ -163,8 +164,8 @@ public class GameSetupService {
         String startingPlayerName = gameData.playerIdToName.get(startingPlayerId);
         gameData.startingPlayerId = startingPlayerId;
 
-        gameData.gameLog.add(startingPlayerName + " wins the coin toss and goes first!");
-        gameData.gameLog.add("Mulligan phase — decide to keep or mulligan.");
+        gameData.gameLog.add(GameLogEntry.text(startingPlayerName + " wins the coin toss and goes first!"));
+        gameData.gameLog.add(GameLogEntry.text("Mulligan phase — decide to keep or mulligan."));
 
         log.info("Game {} - Mulligan phase begins. Starting player: {}", gameData.id, startingPlayerName);
     }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.model.Card;
@@ -92,7 +94,7 @@ class GoblinRecruiterTest extends BaseCardTest {
         resolveEtb();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no Goblin cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no Goblin cards"));
     }
 
     private void setupAndCast() {

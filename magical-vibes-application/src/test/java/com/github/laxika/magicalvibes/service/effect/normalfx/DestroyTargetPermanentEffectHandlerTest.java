@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -152,7 +153,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
-                verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Grizzly Bears is destroyed."));
             }
 
             @Test
@@ -172,7 +173,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
-                verify(gameBroadcastService).logAndBroadcast(gd, "Spellbook is destroyed.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Spellbook is destroyed."));
             }
 
             @Test
@@ -207,7 +208,7 @@ class DestroyTargetPermanentEffectHandlerTest {
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, golem, false);
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), eq("Indestructible Golem is destroyed."));
+                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), eq(GameLog.text("Indestructible Golem is destroyed.")));
             }
 
             @Test
@@ -225,7 +226,7 @@ class DestroyTargetPermanentEffectHandlerTest {
 
                 destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Grizzly Bears is destroyed."));
             }
 
             @Test
@@ -251,6 +252,6 @@ class DestroyTargetPermanentEffectHandlerTest {
                 verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
                 verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player2Id), any(Card.class), eq(null), eq(false));
-                verify(gameBroadcastService).logAndBroadcast(gd, "Player2 creates a 3/3 green Beast creature token.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player2 creates a 3/3 green Beast creature token."));
             }
 }

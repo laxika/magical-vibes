@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,9 +53,9 @@ public class TapCreaturesGainLifePerCreatureEffectHandler implements NormalEffec
         }
 
         if (untappedCreatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName()
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
                     + " resolves, but " + gameData.playerIdToName.get(controllerId)
-                    + " controls no untapped creatures.");
+                    + " controls no untapped creatures."));
             return;
         }
 

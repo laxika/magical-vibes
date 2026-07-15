@@ -337,8 +337,12 @@ public class YourEnchantedCreatureEffectHandler implements NormalEffectHandlerBe
 
         // 3. Apply effect to enchantedCreature
 
-        String logMsg = entry.getCard().getName() + " affects " + enchantedCreature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(entry.getCard())
+                .text(" affects ")
+                .card(enchantedCreature.getCard())
+                .text(".")
+                .build());
     }
 }
 ```
@@ -366,8 +370,12 @@ public class YourTargetEffectHandler implements NormalEffectHandlerBean {
 
         // Apply effect to target
 
-        String logMsg = entry.getCard().getName() + " affects " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(entry.getCard())
+                .text(" affects ")
+                .card(target.getCard())
+                .text(".")
+                .build());
     }
 }
 ```

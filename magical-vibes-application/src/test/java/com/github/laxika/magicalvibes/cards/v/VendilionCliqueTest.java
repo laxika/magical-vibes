@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -83,7 +85,7 @@ class VendilionCliqueTest extends BaseCardTest {
         // Both lands remain; no draw happened.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no nonland"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no nonland"));
     }
 
     @Test
@@ -93,7 +95,7 @@ class VendilionCliqueTest extends BaseCardTest {
         resolveVendilionCliqueTargeting(player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
     @Test

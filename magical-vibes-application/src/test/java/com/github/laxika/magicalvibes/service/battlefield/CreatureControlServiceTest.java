@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -168,7 +170,7 @@ class CreatureControlServiceTest {
                     .anyMatch(p -> p.getId().equals(bear.getId()));
             assertThat(bear.isSummoningSick()).isFalse();
             assertThat(gd.stolenCreatures).isEmpty();
-            verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+            verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
         }
 
         @Test
@@ -178,8 +180,7 @@ class CreatureControlServiceTest {
 
             applySteal(player2Id, bear, EffectDuration.UNTIL_END_OF_TURN, null);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Player2 gains control of Grizzly Bears."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2 gains control of Grizzly Bears.")));
         }
 
         @Test
@@ -211,8 +212,7 @@ class CreatureControlServiceTest {
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
             assertThat(gd.stolenCreatures).doesNotContainKey(bear.getId());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Grizzly Bears returns to Player2's control."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears returns to Player2's control.")));
         }
 
         @Test

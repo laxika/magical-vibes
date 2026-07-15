@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Card, Permanent, StackEntry } from '../../../services/websocket.service';
+import { Card, GameLogEntry, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
 import { CardDisplayComponent } from '../card-display/card-display.component';
@@ -31,7 +31,7 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   @Input() myGraveyard: Card[] = [];
   @Input() opponentGraveyard: Card[] = [];
   @Input() opponentPlayerName = '';
-  @Input() gameLog: string[] = [];
+  @Input() gameLog: GameLogEntry[] = [];
   @Input() manaEntries: { color: string; count: number }[] = [];
   @Input() declaringAttackers = false;
   @Input() declaringBlockers = false;
@@ -78,6 +78,7 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   activeTab = signal<'log' | 'stack' | 'graveyard'>('log');
   showPlayerMenu = signal(false);
   logUnreadCount = signal(0);
+  previewOverride = signal<Card | null>(null);
 
   @ViewChild('logEntries') private logEntriesRef?: ElementRef<HTMLElement>;
   private logPinnedToBottom = true;
@@ -204,5 +205,21 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
 
   onCardHoverEnd(): void {
     this.cardHoverEnd.emit();
+  }
+
+  effectivePreviewCard(): Card | null {
+    return this.previewOverride() ?? this.hoveredCard;
+  }
+
+  effectivePreviewPermanent(): Permanent | null {
+    return this.previewOverride() ? null : this.hoveredPermanent;
+  }
+
+  onLogCardHover(card: Card): void {
+    this.previewOverride.set(card);
+  }
+
+  onLogCardHoverEnd(): void {
+    this.previewOverride.set(null);
   }
 }

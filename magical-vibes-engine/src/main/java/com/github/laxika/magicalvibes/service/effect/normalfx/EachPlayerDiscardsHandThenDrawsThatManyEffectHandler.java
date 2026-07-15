@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDrawsThatManyEffect;
@@ -57,7 +58,7 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
         int discardCount = hand == null ? 0 : hand.size();
         if (discardCount == 0) {
             String logEntry = playerName + " has no cards to discard (" + cardName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -72,12 +73,12 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
 
         String discardLog = playerName + " discards their hand (" + discardCount
                 + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, discardLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(discardLog));
 
         for (int i = 0; i < discardCount; i++) {
             drawService.resolveDrawCard(gameData, playerId);
         }
         String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, drawLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(drawLog));
     }
 }

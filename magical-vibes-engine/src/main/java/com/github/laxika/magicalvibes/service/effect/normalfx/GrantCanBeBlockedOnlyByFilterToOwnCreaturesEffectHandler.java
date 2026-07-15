@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -59,7 +60,7 @@ public class GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffectHandler implements
 
         String logEntry = entry.getCard().getName() + " makes " + count + " creature(s) unblockable except by "
                 + grant.allowedBlockersDescription() + " this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} restricts blockers of {} own creature(s) to {}",
                 gameData.id, entry.getCard().getName(), count, grant.allowedBlockersDescription());
     }

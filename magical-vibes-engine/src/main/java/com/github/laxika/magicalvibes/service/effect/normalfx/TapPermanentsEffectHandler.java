@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -74,7 +75,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         tapUntapSupport.tapPermanent(gameData, target);
 
         String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
@@ -89,7 +90,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         tapUntapSupport.tapPermanent(gameData, self);
 
         String logEntry = self.getCard().getName() + " taps itself.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} taps itself", gameData.id, self.getCard().getName());
     }
 
@@ -118,7 +119,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         tapUntapSupport.tapPermanent(gameData, enchantedCreature);
 
         String logMsg = entry.getCard().getName() + " taps " + enchantedCreature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} taps enchanted creature {}", gameData.id, entry.getCard().getName(), enchantedCreature.getCard().getName());
     }
 
@@ -145,7 +146,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = entry.getCard().getName() + " taps " + count + " permanent(s).";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} taps {} permanent(s) of target player", gameData.id, entry.getCard().getName(), count);
     }
 
@@ -166,7 +167,7 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         });
 
         String logMsg = entry.getCard().getName() + " taps " + count[0] + " creature(s).";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} taps {} creature(s) matching filter", gameData.id, entry.getCard().getName(), count[0]);
     }
 }

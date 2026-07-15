@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,7 +90,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (battlefield == null || battlefield.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no permanents to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents to sacrifice", gameData.id, playerName);
             return;
         }
@@ -101,7 +102,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
         if (matching.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no matching permanents to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
             return;
         }
@@ -159,7 +160,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
             if (matching.isEmpty()) {
                 String playerName = gameData.playerIdToName.get(playerId);
                 String logEntry = playerName + " has no matching permanents to sacrifice.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} has no matching permanents to sacrifice", gameData.id, playerName);
                 continue;
             }

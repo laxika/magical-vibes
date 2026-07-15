@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
@@ -42,7 +43,7 @@ public class RevealRandomCardFromTargetPlayerHandEffectHandler implements Normal
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = targetName + " has no cards to reveal.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} trigger: {} has no cards to reveal", gameData.id, sourceName, targetName);
             return;
         }
@@ -50,7 +51,7 @@ public class RevealRandomCardFromTargetPlayerHandEffectHandler implements Normal
         int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
         Card revealed = hand.get(randomIndex);
         String logEntry = targetName + " reveals " + revealed.getName() + " at random.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         List<CardView> cardViews = List.of(cardViewFactory.create(revealed));
         for (UUID playerId : gameData.orderedPlayerIds) {

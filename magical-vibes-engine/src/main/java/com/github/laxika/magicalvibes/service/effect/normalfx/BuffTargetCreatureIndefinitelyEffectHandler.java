@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class BuffTargetCreatureIndefinitelyEffectHandler implements NormalEffect
             String logEntry = String.format("%s gets %+d/%+d%s indefinitely.",
                     target.getCard().getName(), buff.powerBoost(), buff.toughnessBoost(),
                     buff.keywords().isEmpty() ? "" : " and gains " + formatKeywords(buff.keywords()));
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} gets {}/{} and {} indefinitely", gameData.id,
                     target.getCard().getName(), buff.powerBoost(), buff.toughnessBoost(), buff.keywords());
         }

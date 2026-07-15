@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -30,8 +31,8 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard1);
                 verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard2);
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("draws 2 cards")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("draws 2 cards")));
             }
 
             @Test
@@ -44,7 +45,7 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
 
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to discard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to discard")));
             }
 }

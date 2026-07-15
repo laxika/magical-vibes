@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,7 +57,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
         String controllerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -71,7 +72,7 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
         String logEntry = controllerName + " exiles "
                 + String.join(", ", exiledNames)
                 + " from the top of their library (may play until end of next turn).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} cards from library top (may play until end of next turn)",
                 gameData.id, controllerName, exiledNames.size());
     }

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.state;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -124,8 +125,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Scornful Egotist is put into the graveyard (0 toughness)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Scornful Egotist is put into the graveyard (0 toughness).")));
         }
 
         @Test
@@ -164,8 +164,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Grizzly Bears is destroyed (lethal damage)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is destroyed (lethal damage).")));
         }
 
         @Test
@@ -251,8 +250,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Enfeebled Creature is put into the graveyard (0 toughness)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Enfeebled Creature is put into the graveyard (0 toughness).")));
         }
     }
 
@@ -273,8 +271,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Jace Beleren has no loyalty counters and is put into the graveyard."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Jace Beleren has no loyalty counters and is put into the graveyard.")));
         }
 
         @Test
@@ -311,8 +308,7 @@ class StateBasedActionServiceTest {
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
             // Death reason is captured at collection time: creature checks fail (healthy toughness,
             // no lethal damage), but planeswalker check succeeds (0 loyalty)
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Gideon Jura has no loyalty counters and is put into the graveyard."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Gideon Jura has no loyalty counters and is put into the graveyard.")));
         }
 
         @Test
@@ -414,8 +410,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("The Eldest Reborn is sacrificed (final chapter reached)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("The Eldest Reborn is sacrificed (final chapter reached).")));
         }
 
         @Test
@@ -696,8 +691,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(gameOutcomeService).declareWinner(gd, player2Id);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Player1 attempted to draw from an empty library and loses the game."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 attempted to draw from an empty library and loses the game.")));
         }
 
         @Test

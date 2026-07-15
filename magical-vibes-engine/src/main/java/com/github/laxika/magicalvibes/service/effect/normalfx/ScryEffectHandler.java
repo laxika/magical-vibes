@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,7 +45,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         if (count == 0) {
             String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + e.count()
                     + " but their library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -54,7 +55,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.Scry(controllerId, topCards));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
     }
 }

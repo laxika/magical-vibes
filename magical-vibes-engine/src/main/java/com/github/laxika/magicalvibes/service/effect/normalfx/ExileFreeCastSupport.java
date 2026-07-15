@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -73,7 +74,7 @@ public class ExileFreeCastSupport {
             if (!hasLegalTargets) {
                 // Can't be legally cast — the card stays exiled (no second chance to play it).
                 String logEntry = card.getName() + " has no valid targets and stays exiled.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} exile free-cast has no valid targets", gameData.id, card.getName());
                 inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                 return;
@@ -88,7 +89,7 @@ public class ExileFreeCastSupport {
 
             String logEntry = playerName + " plays " + card.getName()
                     + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -102,7 +103,7 @@ public class ExileFreeCastSupport {
         gameData.priorityPassedBy.clear();
 
         String logEntry = playerName + " plays " + card.getName() + " without paying its mana cost.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);

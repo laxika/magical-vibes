@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +41,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
             if (target.getCounterCount(counterType) > 0) {
                 target.setCounterCount(counterType, target.getCounterCount(counterType) - 1);
                 String logEntry = "A " + counterType + " counter removed from " + target.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} counter removed from {}", gameData.id, counterType, target.getCard().getName());
                 return;
             }

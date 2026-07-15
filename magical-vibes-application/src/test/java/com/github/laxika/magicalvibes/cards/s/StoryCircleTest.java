@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -105,7 +107,7 @@ class StoryCircleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "BLACK");
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses black") && log.contains("Story Circle"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses black") && log.contains("Story Circle"));
     }
 
     // ===== Ability activation =====

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -68,14 +69,14 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
 
         if (exiledCards.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s " + entry.getCard().getName() + " fizzles — no valid targets.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s " + entry.getCard().getName() + " fizzles — no valid targets."));
             return;
         }
 
         // Log the exile
         String exiledNames = exiledCards.stream().map(Card::getName).collect(java.util.stream.Collectors.joining(", "));
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " exiles " + exiledNames + " from graveyards.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + exiledNames + " from graveyards."));
 
         // Determine opponent (in 2-player, it's the other player)
         UUID opponentId = gameData.orderedPlayerIds.stream()

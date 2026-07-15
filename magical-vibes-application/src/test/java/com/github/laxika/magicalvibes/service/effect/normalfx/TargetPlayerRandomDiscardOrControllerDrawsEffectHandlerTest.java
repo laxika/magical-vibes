@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -25,8 +26,8 @@ class TargetPlayerRandomDiscardOrControllerDrawsEffectHandlerTest extends Abstra
                 resolveEffect(gd, entry, new TargetPlayerRandomDiscardOrControllerDrawsEffect());
 
                 verify(drawService).resolveDrawCard(gd, player1Id);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to discard") && msg.contains("draws a card")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to discard") && logEntry.plainText().contains("draws a card")));
             }
 
             @Test

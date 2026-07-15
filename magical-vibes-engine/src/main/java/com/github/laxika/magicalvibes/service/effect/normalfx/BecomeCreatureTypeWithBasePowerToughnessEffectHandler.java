@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePowerToughnessEffect;
@@ -51,8 +52,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
             source.getGrantedSubtypes().add(e.addedSubtype());
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                source.getCard().getName() + " becomes a " + e.addedSubtype().getDisplayName()
-                        + " with base power and toughness " + e.power() + "/" + e.toughness() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " becomes a " + e.addedSubtype().getDisplayName()
+                        + " with base power and toughness " + e.power() + "/" + e.toughness() + "."));
     }
 }

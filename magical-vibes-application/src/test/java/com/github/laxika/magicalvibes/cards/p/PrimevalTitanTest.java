@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -169,7 +171,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             // No lands to search for, search fails
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-            assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no land cards"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("finds no land cards"));
         }
     }
 

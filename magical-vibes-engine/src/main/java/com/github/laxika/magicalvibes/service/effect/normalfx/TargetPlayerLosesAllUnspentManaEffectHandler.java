@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,7 +41,7 @@ public class TargetPlayerLosesAllUnspentManaEffectHandler implements NormalEffec
         manaPool.clearPersistentMana();
 
         String logMsg = entry.getCard().getName() + " empties the targeted player's mana pool.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} empties target player's mana pool", gameData.id, entry.getCard().getName());
     }
 }

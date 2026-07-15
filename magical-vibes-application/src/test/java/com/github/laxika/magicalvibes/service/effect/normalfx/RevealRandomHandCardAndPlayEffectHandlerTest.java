@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -28,8 +29,8 @@ class RevealRandomHandCardAndPlayEffectHandlerTest extends AbstractPlayerInterac
 
                 resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards in hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards in hand")));
             }
 
             @Test

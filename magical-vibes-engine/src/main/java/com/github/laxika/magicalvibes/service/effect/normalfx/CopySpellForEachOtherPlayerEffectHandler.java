@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -64,7 +65,7 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
 
             String logMsg = "A copy of " + spellCard.getName() + " is created for "
                     + gameData.playerIdToName.get(playerId) + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
 
             if (copyEntry.getTargetId() != null) {
                 PendingMayAbility retargetAbility = new PendingMayAbility(

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -27,7 +29,7 @@ class LaboratoryManiacTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains(gd.playerIdToName.get(player1.getId())) && l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains(gd.playerIdToName.get(player1.getId())) && l.contains("wins the game"));
     }
 
     @Test
@@ -43,7 +45,7 @@ class LaboratoryManiacTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
     }
 
     @Test
@@ -60,7 +62,7 @@ class LaboratoryManiacTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
     }
 
     @Test
@@ -114,6 +116,6 @@ class LaboratoryManiacTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
-        assertThat(gd.gameLog).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains(gd.playerIdToName.get(player2.getId())) && l.contains("wins the game"));
     }
 }

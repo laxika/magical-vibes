@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
@@ -51,14 +52,13 @@ public class DealDamageToAttackedTargetEffectHandler implements NormalEffectHand
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)
                 || damageSupport.isSourcePermanentPreventedFromDealingDamage(gameData, entry)
                 || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
-            gameBroadcastService.logAndBroadcast(gameData, source.getName() + "'s damage is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getName() + "'s damage is prevented."));
             return;
         }
 
         int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
         target.setCounterCount(CounterType.LOYALTY, newLoyalty);
-        gameBroadcastService.logAndBroadcast(gameData,
-                source.getName() + " deals " + rawDamage + " damage to " + target.getCard().getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getName() + " deals " + rawDamage + " damage to " + target.getCard().getName() + "."));
         gameOutcomeService.checkWinCondition(gameData);
     
     }

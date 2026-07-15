@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -99,7 +100,7 @@ public class CombatTriggerService {
                         trigger.setNonTargeting(true);
                         gameData.stack.add(trigger);
                         String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                         log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), creature.getCard().getName());
                     } else {
@@ -111,7 +112,7 @@ public class CombatTriggerService {
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
                             String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                             log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         } else {
@@ -125,7 +126,7 @@ public class CombatTriggerService {
                                     perm.getId()
                             ));
                             String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                             log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
                                     gameData.id, perm.getCard().getName(), creature.getCard().getName());
                         }
@@ -194,7 +195,7 @@ public class CombatTriggerService {
                         }
                         gameData.stack.add(trigger);
                         String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
                                 gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                     }

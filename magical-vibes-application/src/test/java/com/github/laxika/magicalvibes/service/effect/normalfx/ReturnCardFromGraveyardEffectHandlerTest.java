@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -217,8 +218,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
                 assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
                         .containsExactly("Grizzly Bears");
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("Grizzly Bears") && msg.contains("graveyard to hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Grizzly Bears") && logEntry.plainText().contains("graveyard to hand")));
             }
 
             @Test
@@ -262,8 +263,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("fizzles")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("fizzles")));
             }
 
 
@@ -315,8 +316,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no ") && msg.contains("in any graveyard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no ") && logEntry.plainText().contains("in any graveyard")));
                 // Shuffle effect should be removed when no valid targets
                 assertThat(entry.getEffectsToResolve()).noneMatch(e -> e instanceof ShuffleIntoLibraryEffect);
             }
@@ -341,7 +342,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
                 verify(interactionHandlerRegistry, never()).begin(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no ") && msg.contains("in any graveyard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no ") && logEntry.plainText().contains("in any graveyard")));
             }
 }

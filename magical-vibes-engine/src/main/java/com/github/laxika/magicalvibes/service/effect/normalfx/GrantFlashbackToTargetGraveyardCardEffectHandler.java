@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -36,7 +37,7 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             if (entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
                 targetCardId = entry.getTargetId();
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
                 return;
             }
         } else {
@@ -45,7 +46,7 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
 
@@ -58,14 +59,14 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             }
         }
         if (!matchesType) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not a valid card type).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not a valid card type)."));
             return;
         }
 
         gameData.cardsGrantedFlashbackUntilEndOfTurn.add(targetCard.getId());
 
         String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 }

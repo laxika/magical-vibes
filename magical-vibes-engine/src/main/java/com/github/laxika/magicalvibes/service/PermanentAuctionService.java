@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -54,12 +55,12 @@ public class PermanentAuctionService {
             Card card = perm.getOriginalCard();
             permanentRemovalService.removePermanentToExile(gameData, perm);
             pool.add(card);
-            gameBroadcastService.logAndBroadcast(gameData, card.getName() + " is exiled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " is exiled."));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
         if (pool.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, sourceName + " exiles no permanents.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " exiles no permanents."));
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -105,8 +106,7 @@ public class PermanentAuctionService {
         permanent.tap();
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, chooserId, permanent);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " puts " + chosen.getName() + " onto the battlefield tapped.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts " + chosen.getName() + " onto the battlefield tapped."));
 
         List<PendingInteraction.PermanentAuctionPlacement> placed = new ArrayList<>(choice.placed());
         placed.add(new PendingInteraction.PermanentAuctionPlacement(chooserId, chosen));

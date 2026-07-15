@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -58,8 +59,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
         });
 
         if (auras.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    target.getCard().getName() + " has no Auras to move.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " has no Auras to move."));
             return;
         }
 
@@ -77,8 +77,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
         });
 
         if (validRecipientIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    "No permanent can receive the Auras enchanting " + target.getCard().getName() + "; they stay attached.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("No permanent can receive the Auras enchanting " + target.getCard().getName() + "; they stay attached."));
             return;
         }
 

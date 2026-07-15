@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -284,7 +286,7 @@ class OliviaVoldarenTest extends BaseCardTest {
                     .noneMatch(p -> p.getId().equals(barony.getId()));
 
             // Log should mention no effect
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no effect"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no effect"));
         }
     }
 

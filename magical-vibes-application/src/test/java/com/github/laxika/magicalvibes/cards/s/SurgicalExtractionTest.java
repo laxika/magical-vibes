@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -220,7 +222,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
 
         // Log should mention shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Partial selection =====
@@ -265,7 +267,7 @@ class SurgicalExtractionTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears3.getId()));
 
         // Library still shuffled
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Zero selection =====
@@ -299,8 +301,8 @@ class SurgicalExtractionTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears2.getId()));
 
         // Log should mention 0 cards exiled and library shuffled
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 0 cards"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 0 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Targeting =====
@@ -380,7 +382,7 @@ class SurgicalExtractionTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         // Log should mention shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Logging =====
@@ -401,6 +403,6 @@ class SurgicalExtractionTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles 2 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 2 cards"));
     }
 }

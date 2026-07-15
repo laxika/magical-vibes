@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -112,8 +113,8 @@ class ExileGraveyardCardsEffectHandlerTest {
             assertThat(gd.getPlayerExiledCards(player2Id))
                     .extracting(Card::getName)
                     .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("exiled") && msg.contains("2 cards")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("exiled") && logEntry.plainText().contains("2 cards")));
             // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
             verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
         }
@@ -129,8 +130,8 @@ class ExileGraveyardCardsEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("already empty")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("already empty")));
             // No cards left the graveyard, so no trigger fires
             verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());
         }

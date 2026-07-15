@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EachPlayerRummageState;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -71,8 +72,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
             String playerName = gameData.playerIdToName.get(playerId);
 
             if (chosenCount <= 0) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " discards 0 cards for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards 0 cards for " + cardName + "."));
                 beginNextPlayer(gameData, cardName);
                 return;
             }
@@ -91,8 +91,8 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
         int drawCount = state.pendingDraw;
         state.pendingDraw = 0;
         playerInteractionSupport.applyDrawCards(gameData, playerId, drawCount);
-        gameBroadcastService.logAndBroadcast(gameData, gameData.playerIdToName.get(playerId)
-                + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "") + "."));
         beginNextPlayer(gameData, cardName);
     }
 
@@ -107,8 +107,7 @@ public class EachPlayerDiscardsAnyNumberThenDrawsThatManyEffectHandler implement
             UUID nextPlayerId = state.remaining.pollFirst();
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard for " + cardName + "."));
                 continue;
             }
             state.currentPlayerId = nextPlayerId;

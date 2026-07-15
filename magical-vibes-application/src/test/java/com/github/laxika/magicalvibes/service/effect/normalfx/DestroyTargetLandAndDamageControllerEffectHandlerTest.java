@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -202,7 +203,7 @@ class DestroyTargetLandAndDamageControllerEffectHandlerTest {
 
                 destroyLandAndDamageHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, "Mountain is destroyed.");
-                verify(gameBroadcastService).logAndBroadcast(gd, "Melt Terrain deals 2 damage to Player2.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Mountain is destroyed."));
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Melt Terrain deals 2 damage to Player2."));
             }
 }

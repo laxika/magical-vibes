@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
@@ -24,6 +25,6 @@ public class PreventAllCombatDamageEffectHandler implements NormalEffectHandlerB
         gameData.preventAllCombatDamage = true;
 
         String logEntry = "All combat damage will be prevented this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -28,7 +29,7 @@ class FlipTwoCoinsEffectHandlerTest extends AbstractPlayerInteractionHandlerTest
 
                 resolveEffect(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("flips two coins") && msg.contains("Player1")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("flips two coins") && logEntry.plainText().contains("Player1")));
             }
 }

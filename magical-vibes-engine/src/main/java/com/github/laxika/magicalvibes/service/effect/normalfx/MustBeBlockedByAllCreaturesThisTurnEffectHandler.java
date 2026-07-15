@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -34,7 +35,7 @@ public class MustBeBlockedByAllCreaturesThisTurnEffectHandler implements NormalE
         target.setMustBeBlockedByAllThisTurn(true);
 
         String logEntry = "All creatures able to block " + target.getCard().getName() + " this turn do so.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - all creatures able to block {} this turn do so", gameData.id, target.getCard().getName());
     }
 }

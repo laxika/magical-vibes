@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -61,7 +62,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             discardedCards.add(discarded);
             graveyardService.addCardToGraveyard(gameData, controllerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
         }
@@ -81,13 +82,13 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                     String logEntry = sourceName + " gets " + e.counterAmount()
                             + " +1/+1 counter" + (e.counterAmount() != 1 ? "s" : "")
                             + " (discarded cards share a card type).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} gets {} +1/+1 counters (shared card type)", gameData.id, sourceName, e.counterAmount());
                 }
             }
         } else if (discardedCards.size() >= 2) {
             String logEntry = sourceName + "'s discarded cards do not share a card type — no counters.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discarded cards do not share a card type", gameData.id, sourceName);
         }
     

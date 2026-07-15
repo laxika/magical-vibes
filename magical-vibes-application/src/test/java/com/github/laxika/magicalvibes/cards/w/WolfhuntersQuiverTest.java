@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RecklessWaif;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -135,8 +137,8 @@ class WolfhuntersQuiverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("damage from Grizzly Bears"));
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("damage from Wolfhunter's Quiver"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("damage from Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("damage from Wolfhunter's Quiver"));
     }
 
     private Permanent addQuiverReady(Player player) {

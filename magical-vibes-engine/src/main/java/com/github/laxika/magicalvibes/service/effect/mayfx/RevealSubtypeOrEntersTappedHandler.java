@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -46,8 +47,8 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                         .filter(c -> c.getSubtypes().contains(revealOrTapped.subtype()))
                         .findFirst().orElse(null);
                 String revealedName = revealed != null ? revealed.getName() : revealOrTapped.subtype().getDisplayName();
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
-                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " reveals "
+                        + revealedName + " — " + ability.sourceCard().getName() + " enters untapped."));
                 log.info("Game {} - {} reveals {} to keep {} untapped", gameData.id,
                         player.getUsername(), revealedName, ability.sourceCard().getName());
             } else {
@@ -56,8 +57,8 @@ public class RevealSubtypeOrEntersTappedHandler implements MayEffectHandlerBean 
                 if (source != null) {
                     source.tap();
                 }
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declines — "
-                        + ability.sourceCard().getName() + " enters tapped.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " declines — "
+                        + ability.sourceCard().getName() + " enters tapped."));
                 log.info("Game {} - {} declines to reveal; {} enters tapped", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

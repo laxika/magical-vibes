@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -385,8 +387,8 @@ class CombatServiceTest {
 
             combatService.processEndOfCombatSacrifices(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("Grizzly Bears"));
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), contains("sacrificed"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Grizzly Bears")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("sacrificed")));
         }
 
         @Test

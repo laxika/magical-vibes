@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
@@ -184,7 +186,7 @@ class ShuntTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(bears1PermId));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getId().equals(bears2PermId));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Cancel") && log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Cancel") && log.contains("fizzles"));
     }
 }
 

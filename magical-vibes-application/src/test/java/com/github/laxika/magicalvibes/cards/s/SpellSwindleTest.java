@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -164,7 +166,7 @@ class SpellSwindleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Entire spell fizzles — no counter, no treasures
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(findAllPermanents(player2, "Treasure")).isEmpty();
 
         // Spell Swindle still goes to caster's graveyard
@@ -213,8 +215,7 @@ class SpellSwindleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog)
-                .anyMatch(log -> log.contains("Grizzly Bears") && log.contains("countered"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("countered"));
     }
 
     // ===== Helpers =====

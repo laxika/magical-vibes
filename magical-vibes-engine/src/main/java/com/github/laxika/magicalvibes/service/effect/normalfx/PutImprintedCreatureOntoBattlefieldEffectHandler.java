@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,18 +39,18 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
 
         if (imprintedCard == null) {
             String logMsg = entry.getCard().getName() + "'s imprint ability resolves but no card was imprinted.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
         String revealLog = playerName + " turns the exiled card face up: " + imprintedCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         boolean isCreature = imprintedCard.hasType(CardType.CREATURE);
 
         if (!isCreature) {
             String notCreatureLog = imprintedCard.getName() + " is not a creature card. It remains in exile.";
-            gameBroadcastService.logAndBroadcast(gameData, notCreatureLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(notCreatureLog));
             return;
         }
 
@@ -60,8 +61,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
         Permanent perm = new Permanent(imprintedCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-        String enterLog = imprintedCard.getName() + " enters the battlefield under " + playerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(imprintedCard, playerName));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, perm, imprintedCard);
 

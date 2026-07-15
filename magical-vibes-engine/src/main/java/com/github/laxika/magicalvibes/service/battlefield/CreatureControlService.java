@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
@@ -95,7 +96,7 @@ public class CreatureControlService {
             permanent.setAttachedTo(null);
             gameData.expireFloatingEffectsForUnattachedSource(permanent.getId());
             String unattachLog = permanent.getCard().getName() + " becomes unattached.";
-            gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(unattachLog));
             log.info("Game {} - {} unattached on control change", gameData.id, permanent.getCard().getName());
         }
 
@@ -103,7 +104,7 @@ public class CreatureControlService {
         String logEntry = revertedToDefault
                 ? permanent.getCard().getName() + " returns to " + newControllerName + "'s control."
                 : newControllerName + " gains control of " + permanent.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} controls {}", gameData.id, newControllerName, permanent.getCard().getName());
 
         // "For as long as you control [source]" effects keyed to THIS permanent end when it

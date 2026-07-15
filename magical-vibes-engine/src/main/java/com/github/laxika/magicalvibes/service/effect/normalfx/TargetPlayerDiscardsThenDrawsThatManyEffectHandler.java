@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsThenDrawsThatManyEffect;
@@ -39,7 +40,7 @@ public class TargetPlayerDiscardsThenDrawsThatManyEffectHandler implements Norma
         int drawCount = Math.min(e.amount(), hand == null ? 0 : hand.size());
         if (drawCount <= 0) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 

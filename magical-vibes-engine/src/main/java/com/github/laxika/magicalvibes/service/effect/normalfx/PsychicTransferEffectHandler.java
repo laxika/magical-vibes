@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PsychicTransferEffect;
@@ -38,20 +39,17 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
 
         // "If the difference between your life total and target player's life total is 5 or less"
         if (Math.abs(controllerLife - targetLife) > 5) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    "Life totals differ by more than 5. Life totals aren't exchanged.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Life totals differ by more than 5. Life totals aren't exchanged."));
             return;
         }
 
         // CR 118.7: If either player's life total can't change, the exchange doesn't occur
         if (!gameQueryService.canPlayerLifeChange(gameData, controller)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(controller) + "'s life total can't change. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controller) + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
         if (!gameQueryService.canPlayerLifeChange(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(target) + "'s life total can't change. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(target) + "'s life total can't change. Exchange doesn't occur."));
             return;
         }
 
@@ -59,8 +57,7 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
         String targetName = gameData.playerIdToName.get(target);
 
         if (controllerLife == targetLife) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " and " + targetName + " exchange life totals (both at " + controllerLife + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " and " + targetName + " exchange life totals (both at " + controllerLife + ")."));
             return;
         }
 
@@ -72,8 +69,7 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
         boolean targetCantGain = targetWouldGain && !gameQueryService.canPlayerGainLife(gameData, target);
 
         if (controllerCantGain && targetCantGain) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " and " + targetName + " can't gain life. Exchange doesn't occur.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " and " + targetName + " can't gain life. Exchange doesn't occur."));
             return;
         }
 
@@ -81,16 +77,15 @@ public class PsychicTransferEffectHandler implements NormalEffectHandlerBean {
         int newTargetLife = targetCantGain ? targetLife : controllerLife;
 
         if (controllerCantGain) {
-            gameBroadcastService.logAndBroadcast(gameData, controllerName + " can't gain life.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " can't gain life."));
         }
         if (targetCantGain) {
-            gameBroadcastService.logAndBroadcast(gameData, targetName + " can't gain life.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " can't gain life."));
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " and " + targetName + " exchange life totals (" + controllerName + ": "
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " and " + targetName + " exchange life totals (" + controllerName + ": "
                         + controllerLife + " -> " + newControllerLife + ", " + targetName + ": "
-                        + targetLife + " -> " + newTargetLife + ").");
+                        + targetLife + " -> " + newTargetLife + ")."));
 
         gameData.playerLifeTotals.put(controller, newControllerLife);
         gameData.playerLifeTotals.put(target, newTargetLife);

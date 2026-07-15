@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
+
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
@@ -165,6 +167,6 @@ class ChoreographedSparksTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(se -> se.getDescription() != null
                 && se.getDescription().equals("Copy of Choreographed Sparks"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("can't be copied"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("can't be copied"));
     }
 }

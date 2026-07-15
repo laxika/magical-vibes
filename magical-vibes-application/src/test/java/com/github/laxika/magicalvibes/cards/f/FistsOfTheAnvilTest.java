@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -115,7 +117,7 @@ class FistsOfTheAnvilTest extends BaseCardTest {
 
         // Spell should fizzle — no crash, stack should be empty
         assertThat(harness.getGameData().stack).isEmpty();
-        assertThat(harness.getGameData().gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(harness.getGameData().gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     @Test

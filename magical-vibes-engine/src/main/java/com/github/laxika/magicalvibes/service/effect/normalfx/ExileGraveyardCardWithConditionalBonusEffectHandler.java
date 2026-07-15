@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,8 +40,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
@@ -53,8 +53,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
 
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName() + " from a graveyard."));
 
         boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
         if (isCreatureCard) {
@@ -73,7 +72,7 @@ public class ExileGraveyardCardWithConditionalBonusEffectHandler implements Norm
                     String boostLog = source.getCard().getName() + " gets +"
                             + e.noncreaturePowerBoost() + "/+" + e.noncreatureToughnessBoost()
                             + " until end of turn.";
-                    gameBroadcastService.logAndBroadcast(gameData, boostLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
                     log.info("Game {} - {} gets +{}/+{}", gameData.id, source.getCard().getName(),
                             e.noncreaturePowerBoost(), e.noncreatureToughnessBoost());
                 }

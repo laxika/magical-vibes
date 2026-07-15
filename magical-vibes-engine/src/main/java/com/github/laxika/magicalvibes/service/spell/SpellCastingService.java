@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -220,8 +221,7 @@ public class SpellCastingService {
         creature.setCounterCount(type, creature.getCounterCount(type) + cost.count());
         String counterName = type == CounterType.MINUS_ONE_MINUS_ONE ? "-1/-1" : type.name().toLowerCase();
         String counterText = cost.count() == 1 ? "a " + counterName + " counter" : cost.count() + " " + counterName + " counters";
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " puts " + counterText + " on " + creature.getCard().getName() + " for " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts " + counterText + " on " + creature.getCard().getName() + " for " + card.getName() + "."));
     }
 
     /**
@@ -244,8 +244,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Return target must be a creature");
         }
         permanentRemovalService.removePermanentToHand(gameData, toReturn);
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " returns " + toReturn.getCard().getName() + " to hand for " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " returns " + toReturn.getCard().getName() + " to hand for " + card.getName() + "."));
     }
 
     private DiscardCardTypeCost extractAndRemoveDiscardCost(List<CardEffect> effects) {
@@ -284,8 +283,7 @@ public class SpellCastingService {
         }
         hand.remove(effectiveIndex);
         graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " discards " + toDiscard.getName() + " to cast " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " discards " + toDiscard.getName() + " to cast " + card.getName() + "."));
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
     }
 
@@ -605,7 +603,7 @@ public class SpellCastingService {
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             String logEntry = player.getUsername() + " plays " + graveyardCard.getName() + " from graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
 
@@ -1058,7 +1056,7 @@ public class SpellCastingService {
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             String logEntry = player.getUsername() + " plays " + card.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
@@ -1583,9 +1581,8 @@ public class SpellCastingService {
         int power = gameQueryService.getEffectivePower(gameData, toSacrifice);
         int toughness = gameQueryService.getEffectiveToughness(gameData, toSacrifice);
         if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
-                            + " for " + sourceCard.getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                            + " for " + sourceCard.getName() + "."));
         }
         return new SacrificedCreatureStats(power, toughness);
     }
@@ -1606,7 +1603,7 @@ public class SpellCastingService {
             if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
                 String logEntry = player.getUsername() + " sacrifices " + creature.getCard().getName()
                         + " for " + sourceCard.getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             }
         }
         return Math.max(0, totalPower);
@@ -1637,9 +1634,8 @@ public class SpellCastingService {
                 throw new IllegalStateException("Can only sacrifice creatures for cost reduction");
             }
             if (permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
-                                + " to reduce the cost of " + card.getName() + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                                + " to reduce the cost of " + card.getName() + "."));
                 sacrificedCount++;
             }
         }
@@ -1667,8 +1663,7 @@ public class SpellCastingService {
         graveyard.remove((int) exileGraveyardCardIndex);
         graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
         gameData.addToExile(playerId, exiledCard);
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + "."));
         if (cost.trackExiledPower()) {
             resolvedXValue = exiledPower;
         }
@@ -1706,8 +1701,7 @@ public class SpellCastingService {
         }
         for (Card exiledCard : exiledCards) {
             gameData.addToExile(playerId, exiledCard);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + "."));
         }
         return exiledCards.size();
     }
@@ -1752,8 +1746,7 @@ public class SpellCastingService {
         }
         for (Card exiledCard : exiledCards) {
             gameData.addToExile(playerId, exiledCard);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " exiles " + exiledCard.getName() + " from graveyard for " + card.getName() + "."));
         }
     }
 
@@ -2111,7 +2104,7 @@ public class SpellCastingService {
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
             String logEntry = player.getUsername() + " plays " + card.getName() + " from exile.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);
@@ -2239,7 +2232,7 @@ public class SpellCastingService {
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + " from exile.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} casts {} from exile", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
@@ -2329,7 +2322,7 @@ public class SpellCastingService {
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + " from the top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} casts {} from library top", gameData.id, player.getUsername(), card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId);
@@ -2425,8 +2418,7 @@ public class SpellCastingService {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - phyrexianLifeCost);
             String playerName = gameData.playerIdToName.get(playerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana."));
         }
 
         int fromPool = before - pool.getTotalAllMana();
@@ -2553,8 +2545,7 @@ public class SpellCastingService {
         }
         hand.remove((int) discardHandCardIndex);
         graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " discards " + toDiscard.getName() + " to retrace " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " discards " + toDiscard.getName() + " to retrace " + card.getName() + "."));
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
     }
 
@@ -2630,9 +2621,8 @@ public class SpellCastingService {
                         throw new IllegalStateException("Tap target does not match the required filter");
                     }
                     toTap.tap();
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            player.getUsername() + " taps " + toTap.getCard().getName()
-                                    + " for " + card.getName() + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " taps " + toTap.getCard().getName()
+                                    + " for " + card.getName() + "."));
                 }
             } else if (manaCostOpt.isEmpty()) {
                 throw new IllegalStateException("Flashback has no cost");
@@ -2657,9 +2647,8 @@ public class SpellCastingService {
             for (UUID sacId : sacrificePermanentIds) {
                 Permanent toSacrifice = gameQueryService.findPermanentById(gameData, sacId);
                 if (toSacrifice != null && permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice)) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
-                                    + " for " + card.getName() + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " sacrifices " + toSacrifice.getCard().getName()
+                                    + " for " + card.getName() + "."));
                 }
             }
         }
@@ -2668,8 +2657,7 @@ public class SpellCastingService {
         altCast.getCost(LifeCastingCost.class).ifPresent(lifeCost -> {
             int currentLife = gameData.getLife(playerId);
             gameData.playerLifeTotals.put(playerId, currentLife - lifeCost.amount());
-            gameBroadcastService.logAndBroadcast(gameData,
-                    player.getUsername() + " pays " + lifeCost.amount() + " life for " + card.getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " pays " + lifeCost.amount() + " life for " + card.getName() + "."));
         });
 
         // Tap untapped permanents
@@ -2681,9 +2669,8 @@ public class SpellCastingService {
                 Permanent toTap = gameQueryService.findPermanentById(gameData, tapId);
                 if (toTap != null) {
                     toTap.tap();
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            player.getUsername() + " taps " + toTap.getCard().getName()
-                                    + " for " + card.getName() + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " taps " + toTap.getCard().getName()
+                                    + " for " + card.getName() + "."));
                 }
             }
         }
@@ -2698,8 +2685,7 @@ public class SpellCastingService {
         ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
         cost.pay(pool);
         int manaSpent = before - pool.getTotalAllMana();
-        gameBroadcastService.logAndBroadcast(gameData,
-                player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for " + card.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for " + card.getName() + "."));
         return manaSpent;
     }
 
@@ -2711,8 +2697,11 @@ public class SpellCastingService {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        String logEntry = player.getUsername() + " casts " + card.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .text(player.getUsername() + " casts ")
+                .card(card)
+                .text(".")
+                .build());
 
         log.info("Game {} - {} casts {}", gameData.id, player.getUsername(), card.getName());
 

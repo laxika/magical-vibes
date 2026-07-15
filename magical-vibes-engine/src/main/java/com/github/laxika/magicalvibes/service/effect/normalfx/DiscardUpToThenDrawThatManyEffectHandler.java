@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -43,14 +44,12 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
             gameData.chosenXValue = null;
 
             if (chosenCount == 0) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " chooses to discard 0 cards for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
                 log.info("Game {} - {} chooses to discard 0 for {}", gameData.id, playerName, cardName);
                 if (e.extraDraw() > 0) {
                     playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            playerName + " draws " + e.extraDraw() + " card"
-                                    + (e.extraDraw() != 1 ? "s" : "") + ".");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
+                                    + (e.extraDraw() != 1 ? "s" : "") + "."));
                 }
                 return;
             }
@@ -65,17 +64,14 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
             if (e.extraDraw() > 0) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " chooses to discard 0 cards for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses to discard 0 cards for " + cardName + "."));
                 playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " draws " + e.extraDraw() + " card"
-                                + (e.extraDraw() != 1 ? "s" : "") + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " draws " + e.extraDraw() + " card"
+                                + (e.extraDraw() != 1 ? "s" : "") + "."));
                 log.info("Game {} - {} discards 0 and draws {} for {}",
                         gameData.id, playerName, e.extraDraw(), cardName);
             } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " has no cards to discard for " + cardName + ".");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards to discard for " + cardName + "."));
                 log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
             }
             return;

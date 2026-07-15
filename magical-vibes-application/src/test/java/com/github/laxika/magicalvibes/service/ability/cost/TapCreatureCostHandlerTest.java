@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -298,8 +299,7 @@ class TapCreatureCostHandlerTest {
 
         assertThat(blueCreature.isTapped()).isTrue();
         verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, blueCreature);
-        verify(gameBroadcastService).logAndBroadcast(eq(gameData),
-                eq("TestPlayer taps Blue Wizard as a cost."));
+        verify(gameBroadcastService).logAndBroadcast(eq(gameData), eq(GameLog.text("TestPlayer taps Blue Wizard as a cost.")));
     }
 
     // =========================================================================

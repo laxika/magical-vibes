@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -48,8 +50,7 @@ class TwoHeadedGiantTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog)
-                .anyMatch(log -> log.contains("flips two coins for Two-Headed Giant"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("flips two coins for Two-Headed Giant"));
     }
 
     @Test
@@ -76,12 +77,12 @@ class TwoHeadedGiantTest extends BaseCardTest {
                 .isFalse();
 
         if (hasDoubleStrike) {
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("heads and heads"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("heads and heads"));
         } else if (hasMenace) {
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("tails and tails"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("tails and tails"));
         } else {
             // Mixed result — one heads, one tails
-            assertThat(gd.gameLog).anyMatch(log ->
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                     log.contains("heads and tails") || log.contains("tails and heads"));
         }
     }

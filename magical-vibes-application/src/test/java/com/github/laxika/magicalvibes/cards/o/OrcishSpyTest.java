@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -31,7 +33,7 @@ class OrcishSpyTest extends BaseCardTest {
         assertThat(deckAfter.stream().limit(3).map(Card::getId).toList()).isEqualTo(topBefore);
         // Non-blocking private reveal: no interaction is left pending and play proceeds.
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top 3 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top 3 cards"));
     }
 
     @Test
@@ -43,9 +45,9 @@ class OrcishSpyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("Grizzly Bears"));
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("Island"));
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("Forest"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Island"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Forest"));
     }
 
     @Test
@@ -68,7 +70,7 @@ class OrcishSpyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
     private List<UUID> setTopThreeCards(UUID playerId) {

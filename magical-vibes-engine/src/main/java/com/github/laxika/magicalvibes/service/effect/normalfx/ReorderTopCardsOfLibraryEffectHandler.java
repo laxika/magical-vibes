@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,13 +37,13 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         int count = Math.min(reorder.count(), deck.size());
         if (count == 0) {
             String logMsg = entry.getCard().getName() + ": library is empty, nothing to reorder.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
         if (count == 1) {
             String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top card of their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -54,7 +55,7 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
                 "Put these cards back on top of your library in any order (top to bottom)."));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} reordering top {} cards of library", gameData.id, gameData.playerIdToName.get(controllerId), count);
     
     }

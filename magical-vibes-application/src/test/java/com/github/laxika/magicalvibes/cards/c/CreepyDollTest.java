@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.m.MahamotiDjinn;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,8 +39,8 @@ class CreepyDollTest extends BaseCardTest {
         harness.passBothPriorities(); // combat damage
         harness.passBothPriorities(); // resolve triggered ability
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Creepy Doll's ability triggers"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("coin flip for Creepy Doll"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Creepy Doll's ability triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("coin flip for Creepy Doll"));
 
         boolean inGraveyard = gd.playerGraveyards.get(player2.getId()).stream()
                 .anyMatch(c -> c.getName().equals("Mahamoti Djinn"));
@@ -48,11 +50,11 @@ class CreepyDollTest extends BaseCardTest {
         if (inGraveyard) {
             // Won the flip: blocker destroyed
             assertThat(onBattlefield).isFalse();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("wins the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("wins the coin flip"));
         } else {
             // Lost the flip: blocker survives
             assertThat(onBattlefield).isTrue();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("loses the coin flip"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("loses the coin flip"));
         }
     }
 
@@ -90,7 +92,7 @@ class CreepyDollTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should deal 1 damage to player, no trigger
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("Creepy Doll's ability triggers"));
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("coin flip"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Creepy Doll's ability triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("coin flip"));
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetControllerLifeToSpecificValueEffect;
@@ -34,8 +35,7 @@ public class SetControllerLifeToSpecificValueEffectHandler implements NormalEffe
 
         if (lifeSupport.applySetLifeTotal(gameData, controllerId, newLife)) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s life total becomes " + newLife + " (was " + currentLife + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s life total becomes " + newLife + " (was " + currentLife + ")."));
             log.info("Game {} - {}'s life set to {} (was {})", gameData.id, playerName, newLife, currentLife);
         }
     }

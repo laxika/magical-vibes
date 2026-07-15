@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -58,7 +59,7 @@ public class SacrificeEnchantedCreatureAndCreateTokenEffectHandler implements No
                 // Sacrifice the enchanted creature (its controller sacrifices it)
                 String sacrificeLog = enchantedCreature.getCard().getName() + " is sacrificed ("
                         + entry.getCard().getName() + ").";
-                gameBroadcastService.logAndBroadcast(gameData, sacrificeLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sacrificeLog));
                 log.info("Game {} - {} sacrificed by {}", gameData.id,
                         enchantedCreature.getCard().getName(), entry.getCard().getName());
 

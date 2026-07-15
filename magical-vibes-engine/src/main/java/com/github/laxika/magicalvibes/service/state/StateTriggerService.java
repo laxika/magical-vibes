@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.state;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -71,8 +72,7 @@ public class StateTriggerService {
                         entry.setStateTriggerEffectIndex(i);
                         gameData.stack.add(entry);
 
-                        gameBroadcastService.logAndBroadcast(gameData,
-                                trigger.description() + " triggers.");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(trigger.description() + " triggers."));
                         log.info("Game {} - State trigger fires for {} (permanent {})",
                                 gameData.id, perm.getCard().getName(), perm.getId());
                     }

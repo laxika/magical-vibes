@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeRestOfGameEffect;
@@ -28,7 +29,6 @@ public class TargetPlayerCantGainLifeRestOfGameEffectHandler implements NormalEf
         if (playerId == null) return;
 
         gameData.playersWhoCantGainLifeRestOfGame.add(playerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                gameData.playerIdToName.get(playerId) + " can't gain life for the rest of the game.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " can't gain life for the rest of the game."));
     }
 }

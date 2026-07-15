@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
@@ -35,7 +36,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -53,7 +54,7 @@ public class ExileTopCardOfOwnLibraryEffectHandler implements NormalEffectHandle
         }
 
         String logEntry = controllerName + " exiles " + topCard.getName() + " from the top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} from library top", gameData.id, controllerName, topCard.getName());
     }
 }

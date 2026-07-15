@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -114,9 +116,9 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
                 assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
                         .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("Grizzly Bears") && msg.contains("Llanowar Elves")
-                                && msg.contains("graveyard to hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Grizzly Bears") && logEntry.plainText().contains("Llanowar Elves")
+                                && logEntry.plainText().contains("graveyard to hand")));
             }
 
             @Test
@@ -130,7 +132,7 @@ class ReturnTargetCardsFromGraveyardToHandEffectHandlerTest {
 
                 returnTargetCardsToHandHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GenesisWaveEffect;
@@ -44,7 +45,7 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
 
         if (xValue <= 0 || deck.isEmpty()) {
             String logMsg = playerName + " casts Genesis Wave with X=" + xValue + " — no cards revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -62,14 +63,14 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
         }
 
         String logMsg = playerName + " reveals the top " + count + " cards of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
 
         if (eligibleCards.isEmpty()) {
             for (Card card : revealedCards) {
                 graveyardService.addCardToGraveyard(gameData, controllerId, card);
             }
             String graveyardLog = playerName + " finds no eligible permanent cards. All revealed cards are put into their graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, graveyardLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(graveyardLog));
             return;
         }
 

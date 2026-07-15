@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -300,7 +302,7 @@ class LoxodonWarhammerTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gains") && log.contains("life") && log.contains("lifelink"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains") && log.contains("life") && log.contains("lifelink"));
     }
 
     // ===== Lifelink + Spirit Link stacking =====

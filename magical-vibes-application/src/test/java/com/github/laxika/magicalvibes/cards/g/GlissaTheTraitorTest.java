@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -123,7 +125,7 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → no artifacts
 
         // Should resolve with no effect (no graveyard choice prompt)
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no artifact cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no artifact cards in graveyard"));
     }
 
     // ===== Opponent creature killed by damage =====

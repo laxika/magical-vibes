@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -143,7 +146,7 @@ class ExtraTurnEffectHandlerTest {
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.extraTurns).isEmpty();
-                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -168,7 +171,7 @@ class ExtraTurnEffectHandlerTest {
 
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Player1 takes 1 extra turn after this one."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 takes 1 extra turn after this one.")));
             }
 
             @Test
@@ -180,6 +183,6 @@ class ExtraTurnEffectHandlerTest {
 
                 extraTurnEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Player2 takes 2 extra turns after this one."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2 takes 2 extra turns after this one.")));
             }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
@@ -53,10 +54,9 @@ public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implemen
 
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(handCount)
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(handCount)
                             + ") and graveyard (" + LibraryShuffleSupport.pluralCards(graveyardCount)
-                            + ") into their library (" + cardName + ").");
+                            + ") into their library (" + cardName + ")."));
             log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",
                     gameData.id, playerName, handCount, graveyardCount, cardName);
         }

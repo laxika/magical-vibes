@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -274,12 +276,12 @@ class LoyalSentryTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Loyal Sentry") && log.contains("block") && log.contains("trigger"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Loyal Sentry") && log.contains("block") && log.contains("trigger"));
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("destroyed"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Loyal Sentry") && log.contains("destroyed"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("destroyed"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Loyal Sentry") && log.contains("destroyed"));
     }
 
     // ===== Normal creatures don't trigger on block =====

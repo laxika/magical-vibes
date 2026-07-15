@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
@@ -35,15 +36,13 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
             targetCardId = entry.getTargetCardIds().getFirst();
         }
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " — no target selected.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in a graveyard)."));
             return;
         }
 
@@ -58,8 +57,7 @@ public class ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffectHandler imple
         exileSupport.grantPlayUntilOwnersNextTurn(gameData, targetCard.getId(), controllerId);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " exiles " + targetCard.getName()
-                        + " from a graveyard (may play until end of next turn).");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + targetCard.getName()
+                        + " from a graveyard (may play until end of next turn)."));
     }
 }

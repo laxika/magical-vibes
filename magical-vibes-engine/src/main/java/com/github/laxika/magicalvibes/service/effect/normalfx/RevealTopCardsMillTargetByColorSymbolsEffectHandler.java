@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -37,8 +38,7 @@ public class RevealTopCardsMillTargetByColorSymbolsEffectHandler implements Norm
                 .map(Card::getName)
                 .reduce((a, b) -> a + ", " + b)
                 .orElse("");
-        gameBroadcastService.logAndBroadcast(gameData,
-                result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(result.playerName() + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         int symbols = 0;
         for (Card card : result.topCards()) {

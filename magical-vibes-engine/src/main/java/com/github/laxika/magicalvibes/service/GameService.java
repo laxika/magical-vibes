@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -184,7 +185,7 @@ public class GameService {
             paidSet.addAll(unpaidArbiterIds);
 
             String logEntry = player.getUsername() + " pays {" + totalCost + "} for Leonin Arbiter search tax.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} pays {{}} for Leonin Arbiter search tax (special action)",
                     gameData.id, player.getUsername(), totalCost);
 
@@ -199,7 +200,7 @@ public class GameService {
             }
             UUID opponentId = gameQueryService.getOpponentId(gameData, player.getId());
             String logEntry = player.getUsername() + " surrenders!";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             gameOutcomeService.declareWinner(gameData, opponentId);
         }
     }

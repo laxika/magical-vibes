@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
@@ -41,8 +42,7 @@ public class DealDamageIfFewCardsInHandEffectHandler implements NormalEffectHand
         int handSize = hand != null ? hand.size() : 0;
         if (handSize > e.maxCards()) {
             String playerName = gameData.playerIdToName.get(targetId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s ability does nothing — " + playerName + " has more than " + e.maxCards() + " cards in hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s ability does nothing — " + playerName + " has more than " + e.maxCards() + " cards in hand."));
             return;
         }
 

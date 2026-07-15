@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -81,7 +82,7 @@ public class PermanentChoiceSpellHandlerService {
                     : targetSpell.getCard().getName();
             String targetName = getTargetDisplayName(gameData, permanentId);
             String logMsg = spellName + " now targets " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             log.info("Game {} - {} retargeted to {}", gameData.id, spellName, targetName);
 
             // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
@@ -124,7 +125,7 @@ public class PermanentChoiceSpellHandlerService {
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
             String logEntry = lct.cardToCast().getName() + " targets " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(), false);
@@ -132,7 +133,7 @@ public class PermanentChoiceSpellHandlerService {
         } else {
             graveyardService.addCardToGraveyard(gameData, lct.controllerId(), lct.cardToCast());
             String logEntry = lct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-library target no longer exists", gameData.id, lct.cardToCast().getName());
         }
 
@@ -178,7 +179,7 @@ public class PermanentChoiceSpellHandlerService {
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
             String logEntry = ect.cardToCast().getName() + " targets " + targetName + " (Knowledge Pool).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-exile targets {}", gameData.id, ect.cardToCast().getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, ect.cardToCast(), ect.controllerId(), false);
@@ -186,7 +187,7 @@ public class PermanentChoiceSpellHandlerService {
         } else {
             graveyardService.addCardToGraveyard(gameData, ect.controllerId(), ect.cardToCast());
             String logEntry = ect.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
         }
 
@@ -216,7 +217,7 @@ public class PermanentChoiceSpellHandlerService {
                     graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
                 }
                 String logEntry = card.getName() + "'s targets are no longer valid.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} multi-target cast-from-exile has no legal target for a remaining slot",
                         gameData.id, card.getName());
                 resumeAfterExileCast(gameData, ect.controllerId());
@@ -227,8 +228,7 @@ public class PermanentChoiceSpellHandlerService {
                     card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen));
             playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
                     "Choose a target for " + card.getName() + ".");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    card.getName() + " targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target."));
             return;
         }
 
@@ -250,7 +250,7 @@ public class PermanentChoiceSpellHandlerService {
 
         List<String> targetNames = chosen.stream().map(id -> getTargetDisplayName(gameData, id)).toList();
         String logEntry = card.getName() + " targets " + String.join(", ", targetNames) + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} multi-target cast-from-exile targets {}", gameData.id, card.getName(), targetNames);
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), false);
@@ -299,7 +299,7 @@ public class PermanentChoiceSpellHandlerService {
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
             String logEntry = gct.cardToCast().getName() + " targets " + targetName + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, gct.cardToCast().getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, gct.cardToCast(), gct.controllerId(), false);
@@ -307,7 +307,7 @@ public class PermanentChoiceSpellHandlerService {
         } else {
             graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
             String logEntry = gct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-graveyard target no longer exists", gameData.id, gct.cardToCast().getName());
         }
 
@@ -345,7 +345,7 @@ public class PermanentChoiceSpellHandlerService {
                     ? gameData.playerIdToName.get(permanentId)
                     : target.getCard().getName();
             String logEntry = hct.cardToCast().getName() + " targets " + targetName + " (Wild Evocation).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
             triggerCollectionService.checkSpellCastTriggers(gameData, hct.cardToCast(), hct.controllerId(), false);
@@ -353,7 +353,7 @@ public class PermanentChoiceSpellHandlerService {
         } else {
             graveyardService.addCardToGraveyard(gameData, hct.controllerId(), hct.cardToCast());
             String logEntry = hct.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} cast-from-hand target no longer exists", gameData.id, hct.cardToCast().getName());
         }
 

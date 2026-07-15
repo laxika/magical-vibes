@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -120,7 +121,7 @@ class LookAtTopCardsEffectHandlerTest {
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2));
             handler.resolve(gd, entryFor("Stress Dream", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("library is empty")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
         }
 
         @Test
@@ -182,7 +183,7 @@ class LookAtTopCardsEffectHandlerTest {
             LookAtTopCardsEffect effect = LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1);
             handler.resolve(gd, entryFor("Forbidden Alchemy", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("library is empty")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
         }
 
         @Test
@@ -232,7 +233,7 @@ class LookAtTopCardsEffectHandlerTest {
 
             assertThat(gd.playerGraveyards.get(player1Id)).contains(a, b);
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("into their graveyard")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("into their graveyard")));
         }
 
         @Test
@@ -247,8 +248,8 @@ class LookAtTopCardsEffectHandlerTest {
                     2, 1, new CardTypePredicate(CardType.CREATURE), true);
             handler.resolve(gd, entryFor("Tracker's Instincts", effect), effect);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("reveals") && msg.contains("Tracker's Instincts")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("reveals") && logEntry.plainText().contains("Tracker's Instincts")));
         }
     }
 }

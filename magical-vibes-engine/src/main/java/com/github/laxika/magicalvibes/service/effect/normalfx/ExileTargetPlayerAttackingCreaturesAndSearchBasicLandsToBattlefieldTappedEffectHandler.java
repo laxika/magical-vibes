@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -62,7 +63,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         for (Permanent creature : attackingCreatures) {
             permanentRemovalService.removePermanentToExile(gameData, creature);
             String logEntry = creature.getCard().getName() + " is exiled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, creature.getCard().getName(), entry.getCard().getName());
             exiledCount++;
@@ -82,7 +83,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
 
         if (deck == null || deck.isEmpty()) {
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -93,7 +94,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         if (basicLands.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 

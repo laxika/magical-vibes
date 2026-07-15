@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -779,7 +780,7 @@ public class BattlefieldEntryService {
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
                     }
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
                     log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
                             gameData.id, card.getName());
                 } else {
@@ -792,7 +793,7 @@ public class BattlefieldEntryService {
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
                     }
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
                     log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
                             gameData.id, card.getName());
                 }
@@ -819,7 +820,7 @@ public class BattlefieldEntryService {
                 }
                 gameData.stack.add(etbEntry);
                 String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
                 log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
                 // Naban: extra triggers for Wizard ETB
                 for (int i = 0; i < extraWizardTriggers; i++) {
@@ -841,7 +842,7 @@ public class BattlefieldEntryService {
                         extraEtbEntry.setTargetFilter(modeTargetFilter);
                     }
                     gameData.stack.add(extraEtbEntry);
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(etbLog));
                     log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                 }
             }

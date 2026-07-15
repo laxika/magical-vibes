@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,12 +40,12 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + "'s library is empty (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + ")."));
             return;
         }
 
         Card topCard = deck.getFirst();
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " looks at the top card of their library (" + sourceName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " looks at the top card of their library (" + sourceName + ")."));
         log.info("Game {} - {} looks at top card via Kinship: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
 
         Permanent source = entry.getSourcePermanentId() != null
@@ -54,8 +55,7 @@ public class KinshipEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (!sharesCreatureType(source, topCard)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    "The top card does not share a creature type with " + sourceName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The top card does not share a creature type with " + sourceName + "."));
             log.info("Game {} - top card {} shares no creature type with {}", gameData.id, topCard.getName(), sourceName);
             return;
         }

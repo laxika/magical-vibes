@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -101,7 +102,7 @@ public class GraveyardReturnSupport {
 
         if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             return;
         }
 
@@ -119,7 +120,7 @@ public class GraveyardReturnSupport {
 
             if (attachTargetIds.isEmpty()) {
                 String fizzleLog = entry.getDescription() + " fizzles (no creatures to attach Aura to).";
-                gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
                 return;
             }
 
@@ -191,7 +192,7 @@ public class GraveyardReturnSupport {
 
             if (graveyard == null || graveyard.isEmpty() || trackedIds.isEmpty()) {
                 String logEntry = entry.getDescription() + " - no cards were put into your graveyard " + sourceLabel + " this turn.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 return;
             }
 
@@ -206,7 +207,7 @@ public class GraveyardReturnSupport {
 
             if (toReturn.isEmpty()) {
                 String logEntry = entry.getDescription() + " - no cards were put into your graveyard " + sourceLabel + " this turn.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 return;
             }
 
@@ -227,7 +228,7 @@ public class GraveyardReturnSupport {
             String playerName = gameData.playerIdToName.get(controllerId);
             String logEntry = playerName + " returns " + String.join(", ", returnedNames)
                     + " from graveyard to hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returns {} card(s) from graveyard to hand",
                     gameData.id, playerName, returnedNames.size());
             return;
@@ -288,7 +289,7 @@ public class GraveyardReturnSupport {
         String destName = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
         String logEntry = playerName + " puts " + String.join(", ", returnedNames)
                 + " onto " + destName + " from " + (effect.source() == GraveyardSearchScope.ALL_GRAVEYARDS ? "all graveyards" : "graveyard") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} puts {} onto {} from graveyards", gameData.id, playerName,
                 String.join(", ", returnedNames), destName);
     }
@@ -310,14 +311,14 @@ public class GraveyardReturnSupport {
                 exileService.exileCard(gameData, controllerId, sourceCard);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String exileLog = playerName + " exiles " + sourceCard.getName() + " from graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, exileLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(exileLog));
                 log.info("Game {} - {} exiles {} from graveyard", gameData.id, playerName, sourceCard.getName());
             }
         }
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -330,7 +331,7 @@ public class GraveyardReturnSupport {
 
         if (matchingCards.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -358,7 +359,7 @@ public class GraveyardReturnSupport {
         String playerName = gameData.playerIdToName.get(controllerId);
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "hand" : "the battlefield";
         String logEntry = playerName + " returns " + String.join(", ", returnedNames) + " at random from graveyard to " + destText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} returns {} at random from graveyard to {}",
                 gameData.id, playerName, String.join(", ", returnedNames), destText);
     }
@@ -370,7 +371,7 @@ public class GraveyardReturnSupport {
 
         if (graveyard == null || graveyard.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -383,7 +384,7 @@ public class GraveyardReturnSupport {
 
         if (matchingIndices.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -451,7 +452,7 @@ public class GraveyardReturnSupport {
 
         if (cardPool.isEmpty()) {
             String logEntry = entry.getDescription() + " — no " + filterLabel + "s in any graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             entry.getEffectsToResolve().removeIf(e -> e instanceof ShuffleIntoLibraryEffect);
             return;
         }
@@ -522,7 +523,7 @@ public class GraveyardReturnSupport {
 
         if (!movedNames.isEmpty()) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData, playerName + logSuffix.apply(movedNames));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + logSuffix.apply(movedNames)));
             log.info("Game {} - {} moved {} card(s) from graveyard", gameData.id, playerName, movedNames.size());
         }
     }
@@ -535,15 +536,15 @@ public class GraveyardReturnSupport {
         if (destination == GraveyardChoiceDestination.HAND) {
             gameData.addCardToHand(playerId, card);
             String logEntry = playerName + " returns " + card.getName() + " from graveyard to hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else if (destination == GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addFirst(card);
             String logEntry = playerName + " puts " + card.getName() + " on top of their library from a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else if (destination == GraveyardChoiceDestination.BOTTOM_OF_OWNERS_LIBRARY) {
             gameData.playerDecks.get(playerId).addLast(card);
             String logEntry = playerName + " puts " + card.getName() + " on the bottom of their library from a graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         } else {
             putCardOntoBattlefield(gameData, playerId, card, grantColor, grantSubtype, enterTapped);
         }
@@ -584,7 +585,7 @@ public class GraveyardReturnSupport {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
             String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                     + " onto the battlefield from a graveyard; it stays in the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(blockedLog));
             log.info("Game {} - {} blocked from entering the battlefield from a graveyard", gameData.id, card.getName());
             return;
         }
@@ -610,7 +611,7 @@ public class GraveyardReturnSupport {
                 : enterAttacking ? " attacking"
                 : "";
         String logEntry = playerName + " puts " + card.getName() + " onto the battlefield" + stateText + " from a graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
     }
@@ -652,7 +653,7 @@ public class GraveyardReturnSupport {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
             String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                     + " onto the battlefield from a graveyard; it stays in the graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(blockedLog));
             log.info("Game {} - {} blocked from entering the battlefield from a graveyard", gameData.id, card.getName());
             return;
         }
@@ -671,7 +672,7 @@ public class GraveyardReturnSupport {
         String playerName = gameData.playerIdToName.get(controllerId);
         String hasteText = grantHaste ? " with haste" : "";
         String logEntry = playerName + " returns " + card.getName() + " to the battlefield" + hasteText + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
     }
@@ -727,13 +728,13 @@ public class GraveyardReturnSupport {
                 : (entry.getTargetCardIds().isEmpty() ? null : entry.getTargetCardIds().getFirst());
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return null;
         }
 
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (graveyardOwnerId == null || graveyardOwnerId.equals(controllerId)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in opponent's graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in opponent's graveyard)."));
             return null;
         }
 
@@ -862,7 +863,7 @@ public class GraveyardReturnSupport {
             String logMsg = grantHaste
                     ? "A token copy of " + sourceCard.getName() + " is created with haste."
                     : "A token copy of " + sourceCard.getName() + " is created.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
                     entry.getCard().getName());
 
@@ -1104,8 +1105,7 @@ public class GraveyardReturnSupport {
 
         UUID opponentId = state.targetPlayerId();
         String opponentName = gameData.playerIdToName.get(opponentId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                opponentName + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + "."));
 
         UUID controllerId = state.controllerId();
         String prompt = "Choose a pile to put onto the battlefield. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
@@ -1136,8 +1136,7 @@ public class GraveyardReturnSupport {
         String chosenDesc = buildCardPileDescription(allCards, chosenPileCardIds);
         String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " chooses " + chosenPileName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + chosenPileName + "."));
 
         // Chosen pile → battlefield under controller's control
         for (UUID cardId : chosenPileCardIds) {
@@ -1154,8 +1153,7 @@ public class GraveyardReturnSupport {
                 UUID ownerId = cardOwners.get(cardId);
                 gameData.playerGraveyards.get(ownerId).add(card);
                 String ownerName = gameData.playerIdToName.get(ownerId);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        card.getName() + " returns to " + ownerName + "'s graveyard.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + " returns to " + ownerName + "'s graveyard."));
             }
         }
     }
@@ -1167,7 +1165,7 @@ public class GraveyardReturnSupport {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " puts " + card.getName() + " onto the battlefield.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
     }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -71,7 +72,7 @@ public class SacrificeUnlessDiscardCardTypeEffectHandler implements NormalEffect
                 permanentRemovalService.removePermanentToGraveyard(gameData, sourcePermanent);
                 String logEntry = playerName + " has no " + typeName
                         + " to discard. " + sourceCard.getName() + " is sacrificed.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} sacrificed (no {} to discard)", gameData.id, sourceCard.getName(), typeName);
             } else {
                 // Permanent already gone and no valid cards — nothing to do

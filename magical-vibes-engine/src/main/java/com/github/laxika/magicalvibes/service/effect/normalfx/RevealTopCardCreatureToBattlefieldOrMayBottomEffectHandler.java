@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -39,7 +40,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
 
         if (deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -48,7 +49,7 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
         // Reveal the card to all players
         String revealLog = playerName + " reveals " + topCard.getName()
                 + " from the top of their library (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         boolean isCreature = topCard.hasType(CardType.CREATURE);
 
@@ -57,9 +58,10 @@ public class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler implemen
             Permanent perm = new Permanent(topCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
-            String enterLog = topCard.getName() + " enters the battlefield under "
-                    + playerName + "'s control (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, enterLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(topCard)
+                    .text(" enters the battlefield under " + playerName + "'s control (" + sourceName + ").")
+                    .build());
 
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, controllerId, topCard, null, false);

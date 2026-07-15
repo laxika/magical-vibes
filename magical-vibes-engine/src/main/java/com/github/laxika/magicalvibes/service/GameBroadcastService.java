@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ExileCast;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
@@ -14,7 +15,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -47,7 +50,9 @@ import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.PermanentView;
 import com.github.laxika.magicalvibes.networking.model.StackEntryView;
+import com.github.laxika.magicalvibes.networking.model.GameLogEntryView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +66,7 @@ public class GameBroadcastService {
 
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final GameLogViewFactory gameLogViewFactory;
     private final PermanentViewFactory permanentViewFactory;
     private final StackEntryViewFactory stackEntryViewFactory;
     private final GameQueryService gameQueryService;
@@ -73,10 +79,11 @@ public class GameBroadcastService {
         // Skip expensive view computation during MCTS simulation (headless session manager discards the result)
         if (gameData.simulation) return;
 
-        List<String> newLogEntries;
+        List<GameLogEntryView> newLogEntries;
         int logSize = gameData.gameLog.size();
         if (logSize > gameData.lastBroadcastedLogSize) {
-            newLogEntries = new ArrayList<>(gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize));
+            newLogEntries = gameLogViewFactory.createAll(
+                    gameData.gameLog.subList(gameData.lastBroadcastedLogSize, logSize));
         } else {
             newLogEntries = List.of();
         }
@@ -1001,7 +1008,7 @@ public class GameBroadcastService {
                 data.status,
                 new ArrayList<>(data.playerNames),
                 new ArrayList<>(data.orderedPlayerIds),
-                new ArrayList<>(data.gameLog),
+                gameLogViewFactory.createAll(data.gameLog),
                 data.currentStep,
                 data.activePlayerId,
                 data.turnNumber,
@@ -1039,7 +1046,7 @@ public class GameBroadcastService {
         return unpaidCount * 2;
     }
 
-    public void logAndBroadcast(GameData gameData, String logEntry) {
+    public void logAndBroadcast(GameData gameData, GameLogEntry logEntry) {
         gameData.gameLog.add(logEntry);
     }
 
@@ -1050,12 +1057,19 @@ public class GameBroadcastService {
         String opponentName = gameData.playerIdToName.get(opponentId);
 
         if (hand == null || hand.isEmpty()) {
-            String logEntry = controllerName + " looks at " + opponentName + "'s hand. It is empty.";
-            logAndBroadcast(gameData, logEntry);
+            logAndBroadcast(gameData, GameLog.builder()
+                    .text(controllerName + " looks at " + opponentName + "'s hand. It is empty.")
+                    .build());
         } else {
-            String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-            String logEntry = controllerName + " looks at " + opponentName + "'s hand: " + cardNames + ".";
-            logAndBroadcast(gameData, logEntry);
+            GameLog.Builder logBuilder = GameLog.builder()
+                    .text(controllerName + " looks at " + opponentName + "'s hand: ");
+            for (int i = 0; i < hand.size(); i++) {
+                if (i > 0) {
+                    logBuilder.text(", ");
+                }
+                logBuilder.card(hand.get(i));
+            }
+            logAndBroadcast(gameData, logBuilder.text(".").build());
         }
 
         List<CardView> cardViews = (hand == null ? List.<Card>of() : hand).stream().map(cardViewFactory::create).toList();

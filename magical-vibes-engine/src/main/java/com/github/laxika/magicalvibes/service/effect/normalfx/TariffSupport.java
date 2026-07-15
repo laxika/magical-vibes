@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -141,7 +142,7 @@ public class TariffSupport {
             cost.pay(pool);
             String logEntry = player.getUsername() + " pays " + ability.manaCost() + " and keeps "
                     + creature.getCard().getName() + ". (" + sourceCard.getName() + ")";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} pays {} to keep {} ({})", gameData.id, player.getUsername(),
                     ability.manaCost(), creature.getCard().getName(), sourceCard.getName());
         } else {

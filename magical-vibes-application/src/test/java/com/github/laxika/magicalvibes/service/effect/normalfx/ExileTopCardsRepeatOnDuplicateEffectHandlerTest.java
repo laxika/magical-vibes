@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -113,8 +114,8 @@ player1Id = UUID.randomUUID();
                 // Second round exiles "Unique1", "Unique2" (no duplicate â†’ stop)
                 assertThat(gd.getPlayerExiledCards(player2Id)).hasSize(4);
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("share the same name")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("share the same name")));
             }
 
             @Test
@@ -127,7 +128,7 @@ player1Id = UUID.randomUUID();
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 }

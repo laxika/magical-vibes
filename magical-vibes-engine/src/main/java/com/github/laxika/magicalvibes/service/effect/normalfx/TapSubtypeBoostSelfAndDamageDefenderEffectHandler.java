@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -56,7 +57,7 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
 
         if (eligibleIds.isEmpty()) {
             String logEntry = entry.getCard().getName() + "'s attack ability finds no untapped " + e.subtype().getDisplayName() + " to tap.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} attack trigger: no eligible {} to tap", gameData.id, entry.getCard().getName(), e.subtype().getDisplayName());
             return;
         }

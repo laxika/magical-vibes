@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
@@ -36,16 +37,14 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         if (deck.size() < 2) {
             // If fewer than 2 cards, reveal what's available
             if (deck.isEmpty()) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        controllerName + "'s library is empty — nothing to reveal.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + "'s library is empty — nothing to reveal."));
                 log.info("Game {} - {} has no cards to reveal for Karn Scion +1", gameData.id, controllerName);
                 return;
             }
             // Only 1 card: it goes to hand (no opponent choice needed), nothing to exile
             Card onlyCard = deck.removeFirst();
             gameData.addCardToHand(controllerId, onlyCard);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    controllerName + " reveals " + onlyCard.getName() + " and puts it into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " reveals " + onlyCard.getName() + " and puts it into their hand."));
             log.info("Game {} - {} reveals single card {} for Karn Scion +1", gameData.id, controllerName, onlyCard.getName());
             return;
         }
@@ -54,8 +53,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         Card card2 = deck.removeFirst();
         List<Card> revealedCards = List.of(card1, card2);
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                controllerName + " reveals " + card1.getName() + " and " + card2.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " reveals " + card1.getName() + " and " + card2.getName() + "."));
 
         // Determine opponent (in 2-player, the other player)
         UUID opponentId = gameData.orderedPlayerIds.stream()

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -163,7 +164,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Ghost Quarter is destroyed."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Ghost Quarter is destroyed.")));
             }
 
             @Test

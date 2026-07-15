@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -164,7 +166,7 @@ class LostInTheMistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell does NOT fizzle — permanent target is still legal
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("fizzles"));
 
         // Permanent was still bounced
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -198,7 +200,7 @@ class LostInTheMistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Spell does NOT fizzle — spell target is still legal
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("fizzles"));
 
         // Spell was still countered
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -235,7 +237,7 @@ class LostInTheMistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Entire spell fizzles
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
 
         // Lost in the Mist goes to graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))

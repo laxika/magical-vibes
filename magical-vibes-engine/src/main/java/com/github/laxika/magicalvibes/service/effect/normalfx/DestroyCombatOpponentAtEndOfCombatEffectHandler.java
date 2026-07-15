@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
@@ -51,6 +52,6 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
 
         gameData.queueDelayedAction(new DestroyPermanentAtEndOfCombat(targetId, destroyEffect.cannotBeRegenerated()));
         String logEntry = target.getCard().getName() + " will be destroyed at end of combat.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

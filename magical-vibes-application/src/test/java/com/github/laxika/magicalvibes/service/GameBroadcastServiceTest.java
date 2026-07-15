@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeE
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.networking.service.GameLogViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -47,6 +50,7 @@ class GameBroadcastServiceTest {
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
     @Mock private GameQueryService gameQueryService;
+    @Mock private GameLogViewFactory gameLogViewFactory;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
     @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
@@ -66,7 +70,7 @@ class GameBroadcastServiceTest {
                 support, gameQueryService, predicateEvaluationService);
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
-        svc = new GameBroadcastService(sessionManager, cardViewFactory, permanentViewFactory,
+        svc = new GameBroadcastService(sessionManager, cardViewFactory, gameLogViewFactory, permanentViewFactory,
                 stackEntryViewFactory, gameQueryService, validTargetService,
                 castingCostService, castingPermissionService,
                 new com.github.laxika.magicalvibes.service.cast.PotentialManaService(gameQueryService));
@@ -265,6 +269,36 @@ class GameBroadcastServiceTest {
             List<Integer> playable = svc.getPlayableCardIndices(gd, player1Id, 0);
 
             assertThat(playable).contains(0);
+        }
+    }
+
+    @Nested
+    @DisplayName("logAndBroadcast — structured game log entries")
+    class LogAndBroadcastTests {
+
+        @Test
+        @DisplayName("plain string logs as a single text segment")
+        void plainStringLog() {
+            svc.logAndBroadcast(gd, GameLog.text("Game started!"));
+
+            assertThat(gd.gameLog).containsExactly(GameLogEntry.text("Game started!"));
+        }
+
+        @Test
+        @DisplayName("structured entry preserves card segment")
+        void structuredCardLog() {
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+
+            svc.logAndBroadcast(gd, GameLog.builder()
+                    .text("Player1 casts ")
+                    .card(bolt)
+                    .text(".")
+                    .build());
+
+            assertThat(gd.gameLog).hasSize(1);
+            assertThat(gd.gameLog.getFirst().plainText()).isEqualTo("Player1 casts Lightning Bolt.");
+            assertThat(gd.gameLog.getFirst().segments()).hasSize(3);
         }
     }
 }

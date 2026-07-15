@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -48,7 +49,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         gameData.stack.add(copyEntry);
 
         String logMsg = "A copy of " + spellCard.getName() + " is created.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - copy of {} created for controller", gameData.id, spellCard.getName());
 
         if (copyEntry.getTargetId() != null) {

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -170,8 +171,7 @@ class MirrorOfFateEffectHandlerTest {
                 // Library exiled
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 assertThat(gd.getPlayerExiledCards(player1Id)).contains(libraryCard);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Player1 exiles 1 card from their library (Mirror of Fate)."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 exiles 1 card from their library (Mirror of Fate).")));
             }
 
             @Test

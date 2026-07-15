@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
 import com.github.laxika.magicalvibes.cards.b.BurningSunsAvatar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -135,7 +137,7 @@ class CacklingCounterpartTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
     // ===== Token copy ETB target selection (CR 603.3) =====

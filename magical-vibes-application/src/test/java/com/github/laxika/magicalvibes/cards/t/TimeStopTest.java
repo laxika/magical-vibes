@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
+
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -243,7 +245,7 @@ class TimeStopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("The turn ends"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("The turn ends"));
     }
 
     @Test
@@ -266,7 +268,7 @@ class TimeStopTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Grizzly Bears") && log.contains("exiled"));
     }
 

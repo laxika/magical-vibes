@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
@@ -41,8 +42,7 @@ public class DealDamageToTargetControllerIfTargetHasKeywordEffectHandler impleme
         String cardName = entry.getCard().getName();
 
         if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + gameData.playerIdToName.get(controllerId) + " is prevented."));
         } else {
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
             damageSupport.dealDamageToPlayer(gameData, entry, controllerId, rawDamage);

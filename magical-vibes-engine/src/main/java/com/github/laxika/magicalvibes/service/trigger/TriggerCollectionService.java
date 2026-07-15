@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -224,7 +225,7 @@ public class TriggerCollectionService {
                     gameData.pendingNextInstantSorceryCopyCount.put(castingPlayerId, remaining);
                 }
                 String logMsg = spellCard.getName() + " is copied (Primal Wellspring).";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                 log.info("Game {} - {} spell-copy trigger queued for {} (Primal Wellspring)",
                         gameData.id, spellCard.getName(), castingPlayerId);
             }
@@ -254,7 +255,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(copyEffect))
                 ));
                 String logMsg = spellCard.getName() + " is copied (The Mirari Conjecture).";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                 log.info("Game {} - {} spell-copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             }
@@ -283,7 +284,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(copyEffect))
                 ));
                 String logMsg = spellCard.getName() + " is copied (Conspire).";
-                gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                 log.info("Game {} - {} conspire copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             }
@@ -380,7 +381,7 @@ public class TriggerCollectionService {
                         discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
                 ));
                 String logEntry = discardedCard.getName() + " was discarded by an opponent's effect — its ability triggers!";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} self-discard trigger queued", gameData.id, discardedCard.getName());
             }
         }
@@ -477,7 +478,7 @@ public class TriggerCollectionService {
                 trigger.setNonTargeting(true);
                 gameData.stack.add(trigger);
 
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} permanent-returned-to-hand trigger pushed onto stack",
                         gameData.id, perm.getCard().getName());
             }
@@ -628,7 +629,7 @@ public class TriggerCollectionService {
         ));
 
         String logEntry = targetedCreature.getCard().getName() + "'s triggered ability triggers — choose a target for damage.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes-target-of-spell trigger queued", gameData.id, targetedCreature.getCard().getName());
     }
 
@@ -654,7 +655,7 @@ public class TriggerCollectionService {
         gameData.stack.add(entry);
 
         String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes-target-of-spell-or-ability trigger queued", gameData.id, source.getCard().getName());
     }
 
@@ -683,14 +684,14 @@ public class TriggerCollectionService {
 
                 switch (counterEffect.ransomKind()) {
                     case PAY_MANA -> {
-                        gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName()
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName()
                                 + "'s triggered ability triggers — counter unless controller pays {"
-                                + counterEffect.ransomMagnitude() + "}.");
+                                + counterEffect.ransomMagnitude() + "}."));
                         log.info("Game {} - {} becomes-target-of-opponent-spell counter trigger queued", gameData.id, source.getCard().getName());
                     }
                     case DISCARD_CARD -> {
-                        gameBroadcastService.logAndBroadcast(gameData, source.getCard().getName()
-                                + "'s triggered ability triggers — counter unless controller discards a card.");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName()
+                                + "'s triggered ability triggers — counter unless controller discards a card."));
                         log.info("Game {} - {} becomes-target-of-opponent-spell counter-unless-discard trigger queued", gameData.id, source.getCard().getName());
                     }
                 }
@@ -727,7 +728,7 @@ public class TriggerCollectionService {
         gameData.stack.add(entry);
 
         String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} becomes-target-of-opponent-spell-or-ability (non-counter) trigger queued",
                 gameData.id, source.getCard().getName());
     }
@@ -765,7 +766,7 @@ public class TriggerCollectionService {
             gameData.stack.add(entry);
 
             String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} ally-creature-becomes-target-of-opponent trigger queued",
                     gameData.id, source.getCard().getName());
         }
@@ -802,7 +803,7 @@ public class TriggerCollectionService {
                 gameData.stack.add(entry);
 
                 String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} any-creature-becomes-target trigger queued",
                         gameData.id, source.getCard().getName());
             }
@@ -879,7 +880,7 @@ public class TriggerCollectionService {
                         perm.getId()
                 ));
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} triggers (opponent creature dealt damage)", gameData.id, perm.getCard().getName());
             }
         });
@@ -923,7 +924,7 @@ public class TriggerCollectionService {
                     trigger.setNonTargeting(true);
                     gameData.stack.add(trigger);
 
-                    gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(watcher.getCard().getName() + "'s ability triggers."));
                     log.info("Game {} - {} reflects {} damage from {} to {}", gameData.id,
                             watcher.getCard().getName(), damage, damageSource.getCard().getName(),
                             gameData.playerIdToName.get(damagedCreatureControllerId));
@@ -946,7 +947,7 @@ public class TriggerCollectionService {
                     trigger.setNonTargeting(true);
                     gameData.stack.add(trigger);
 
-                    gameBroadcastService.logAndBroadcast(gameData, watcher.getCard().getName() + "'s ability triggers.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(watcher.getCard().getName() + "'s ability triggers."));
                     log.info("Game {} - {} deals {} to {} and {} to its controller", gameData.id,
                             watcher.getCard().getName(), punisher.amountToDamagedCreatureController(),
                             gameData.playerIdToName.get(damagedCreatureControllerId), punisher.amountToSelf());
@@ -982,7 +983,7 @@ public class TriggerCollectionService {
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} triggers (any creature dealt damage)", gameData.id, perm.getCard().getName());
             }
         });
@@ -1037,7 +1038,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on ally permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
             }
@@ -1066,7 +1067,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on opponent permanent tap ({})",
                         gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
             }
@@ -1102,7 +1103,7 @@ public class TriggerCollectionService {
                     null,
                     untappedPermanent.getId()
             ));
-            gameBroadcastService.logAndBroadcast(gameData, untappedPermanent.getCard().getName() + "'s ability triggers.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(untappedPermanent.getCard().getName() + "'s ability triggers."));
             log.info("Game {} - {} triggers on becoming untapped", gameData.id, untappedPermanent.getCard().getName());
         }
 
@@ -1130,7 +1131,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on ally permanent untap ({})",
                         gameData.id, perm.getCard().getName(), untappedPermanent.getCard().getName());
             }
@@ -1168,7 +1169,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on ability activation ({})",
                         gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
             }
@@ -1209,7 +1210,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers on non-mana ability activation ({})",
                         gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
             }
@@ -1437,8 +1438,8 @@ public class TriggerCollectionService {
 
         String clashingName = clashingCard != null ? clashingCard.getName() : "no card (empty library)";
         String opponentName = opponentCard != null ? opponentCard.getName() : "no card (empty library)";
-        gameBroadcastService.logAndBroadcast(gameData, gameData.playerIdToName.get(clashingPlayerId)
-                + " clashes: reveals " + clashingName + "; opponent reveals " + opponentName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(clashingPlayerId)
+                + " clashes: reveals " + clashingName + "; opponent reveals " + opponentName + "."));
 
         // 701.29c: win if your revealed card's mana value is higher than each other revealed card.
         boolean won = clashingCard != null
@@ -1447,7 +1448,7 @@ public class TriggerCollectionService {
         String outcome = won
                 ? gameData.playerIdToName.get(clashingPlayerId) + " won the clash."
                 : "No one won the clash.";
-        gameBroadcastService.logAndBroadcast(gameData, outcome);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(outcome));
         log.info("Game {} - {} clashes (won={})", gameData.id, clashingPlayerId, won);
 
         fireClashTriggers(gameData, clashingPlayerId, won);
@@ -1591,7 +1592,7 @@ public class TriggerCollectionService {
 
             if (anyEffectFired) {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
             }
         }
@@ -1850,7 +1851,7 @@ public class TriggerCollectionService {
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " gets " + poisonAmount + " poison counter"
                 + (poisonAmount > 1 ? "s" : "") + " (delayed trigger: creature died this turn).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {} poison counter(s) (delayed trigger: creature died this turn)",
                 gameData.id, playerName, poisonAmount);
     }
@@ -1874,7 +1875,7 @@ public class TriggerCollectionService {
         ));
 
         String triggerLog = graveyardCard.getName() + " will return to the battlefield (it died this turn).";
-        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
         log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
     }
 
@@ -2050,7 +2051,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
@@ -2081,7 +2082,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
                 log.info("Game {} - {} triggers for {} entering (ally equipment entered)",
                         gameData.id, perm.getCard().getName(), enteringCard.getName());
             }
@@ -2117,7 +2118,7 @@ public class TriggerCollectionService {
                     null,
                     perm.getId()
             ));
-            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
             log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
         }
 
@@ -2143,7 +2144,7 @@ public class TriggerCollectionService {
                                 new ArrayList<>(List.of(resolved))
                         ));
                     }
-                    gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(card.getName() + "'s ability triggers."));
                     log.info("Game {} - {} graveyard landfall trigger queued", gameData.id, card.getName());
                 }
             }
@@ -2184,8 +2185,8 @@ public class TriggerCollectionService {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
                                 perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers ("
-                        + enteringCreature.getName() + " entered from a graveyard).");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers ("
+                        + enteringCreature.getName() + " entered from a graveyard)."));
                 log.info("Game {} - {} triggers ({} entered from graveyard)",
                         gameData.id, perm.getCard().getName(), enteringCreature.getName());
             }
@@ -2225,8 +2226,8 @@ public class TriggerCollectionService {
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(effect))
                 ));
-                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers ("
-                        + enteringPermanentCard.getName() + " entered from a graveyard).");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers ("
+                        + enteringPermanentCard.getName() + " entered from a graveyard)."));
                 log.info("Game {} - {} triggers ({} entered from graveyard)",
                         gameData.id, perm.getCard().getName(), enteringPermanentCard.getName());
             }

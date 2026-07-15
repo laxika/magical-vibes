@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -166,7 +168,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -199,8 +201,7 @@ class CounterSpellEffectHandlerTest {
 
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Grizzly Bears is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is countered.")));
             }
 
             @Test
@@ -218,8 +219,7 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Grizzly Bears is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is countered.")));
             }
 
             @Test
@@ -231,7 +231,7 @@ class CounterSpellEffectHandlerTest {
                 counterSpellHandler.resolve(gd, cancelEntry, new CounterSpellEffect());
 
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -270,8 +270,7 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Fume Spitter"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Fume Spitter's ability is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Fume Spitter's ability is countered.")));
             }
 
             @Test
@@ -289,7 +288,6 @@ class CounterSpellEffectHandlerTest {
 
                 assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Some Creature"));
                 verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                        eq("Some Creature's ability is countered."));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Some Creature's ability is countered.")));
             }
 }

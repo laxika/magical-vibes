@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
@@ -150,7 +152,7 @@ class HauntingEchoesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
 
         // Log mentions shuffle
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     @Test
@@ -220,7 +222,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffles their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     // ===== Targeting =====
@@ -278,7 +280,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should log exile counts from graveyard and library
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("1 card from") && log.contains("graveyard")
                         && log.contains("1 card from") && log.contains("library"));
     }

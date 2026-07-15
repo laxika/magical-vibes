@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -56,7 +57,6 @@ public class InnerFlameIgniterEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        gameBroadcastService.logAndBroadcast(gameData,
-                entry.getCard().getName() + " gives first strike to " + count + " creature(s) until end of turn.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " gives first strike to " + count + " creature(s) until end of turn."));
     }
 }

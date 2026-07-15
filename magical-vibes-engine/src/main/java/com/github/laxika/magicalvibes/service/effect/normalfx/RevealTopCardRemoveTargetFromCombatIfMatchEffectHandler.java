@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,28 +41,25 @@ public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements 
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = playerName + "'s library is empty (" + sourceName + ").";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
         Card topCard = deck.removeFirst();
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ")."));
 
         if (predicateEvaluationService.matchesCardPredicate(topCard, e.matchPredicate(), null, gameData, controllerId)) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (attacker != null && attacker.isAttacking()) {
                 attacker.setAttacking(false);
                 attacker.setAttackTarget(null);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        sourceName + " removes " + attacker.getCard().getName() + " from combat.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " removes " + attacker.getCard().getName() + " from combat."));
                 log.info("Game {} - {} removes {} from combat", gameData.id, sourceName, attacker.getCard().getName());
             }
         }
 
         deck.add(topCard);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " puts " + topCard.getName() + " on the bottom of their library.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " on the bottom of their library."));
         log.info("Game {} - {} bottoms {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
     
     }

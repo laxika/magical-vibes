@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
@@ -37,7 +38,7 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
 
         if (graveyard.isEmpty()) {
             String logEntry = playerName + "'s graveyard is empty. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             return;
         }
@@ -49,7 +50,7 @@ public class ShuffleGraveyardIntoLibraryEffectHandler implements NormalEffectHan
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
 
         String logEntry = playerName + " shuffles their graveyard (" + LibraryShuffleSupport.pluralCards(count) + ") into their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} shuffles graveyard ({} cards) into library", gameData.id, playerName, count);
     }

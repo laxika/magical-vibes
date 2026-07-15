@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -183,7 +185,7 @@ class RiseFromTheGraveTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // Should not be awaiting graveyard choice since no creature cards
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no creature cards in any graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no creature cards in any graveyard"));
     }
 
     // ===== Stack is empty after resolution =====

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -86,7 +87,7 @@ public class PlayerInteractionSupport {
         if (validIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no " + effect.label() + " cards in hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no {} cards in hand for hand-to-battlefield effect", gameData.id, playerName, effect.label());
             return;
         }
@@ -117,7 +118,7 @@ public class PlayerInteractionSupport {
         if (creatureIndices.isEmpty()) {
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + " has no creature cards in hand.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures in hand for creature-choice effect", gameData.id, playerName);
             return;
         }
@@ -142,7 +143,7 @@ public class PlayerInteractionSupport {
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " has no cards to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -156,7 +157,7 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = playerName + " has no cards to discard.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -167,7 +168,7 @@ public class PlayerInteractionSupport {
             Card discarded = currentHand.remove(randomIndex);
             graveyardService.addCardToGraveyard(gameData, playerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
         }
@@ -190,12 +191,12 @@ public class PlayerInteractionSupport {
         String playerName = gameData.playerIdToName.get(playerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, playerName + " reveals their hand. It is empty.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
             return;
         }
 
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " reveals their hand: " + cardNames + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand: " + cardNames + "."));
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -205,15 +206,14 @@ public class PlayerInteractionSupport {
         }
 
         if (matchingIndices.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard."));
             return;
         }
 
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
         graveyardService.addCardToGraveyard(gameData, playerId, discarded);
-        gameBroadcastService.logAndBroadcast(gameData, playerName + " discards " + discarded.getName() + " at random.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + discarded.getName() + " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
 
@@ -235,7 +235,7 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
@@ -243,7 +243,7 @@ public class PlayerInteractionSupport {
         // Log and reveal hand to caster
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
         String logEntry = targetName + " reveals their hand: " + cardNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         // Build valid indices based on included or excluded types
         List<Integer> validIndices = new ArrayList<>();
@@ -263,7 +263,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String noValidEntry = casterName + " cannot choose a card (" + targetName + "'s hand contains no valid choices).";
-            gameBroadcastService.logAndBroadcast(gameData, noValidEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noValidEntry));
             log.info("Game {} - {}'s hand has no valid choices for {}", gameData.id, targetName, casterName);
             return;
         }
@@ -305,14 +305,14 @@ public class PlayerInteractionSupport {
 
         if (hand == null || hand.isEmpty()) {
             String logEntry = casterName + " looks at " + targetName + "'s hand. It is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} looks at {}'s empty hand", gameData.id, casterName, targetName);
             return;
         }
 
         String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
         String logEntry = casterName + " looks at " + targetName + "'s hand: " + cardNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
@@ -323,7 +323,7 @@ public class PlayerInteractionSupport {
 
         if (validIndices.isEmpty()) {
             String noValidEntry = casterName + " chooses no card (" + targetName + " has no nonland cards).";
-            gameBroadcastService.logAndBroadcast(gameData, noValidEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noValidEntry));
             log.info("Game {} - {}'s hand has no nonland cards for {}", gameData.id, targetName, casterName);
             return;
         }
@@ -351,7 +351,7 @@ public class PlayerInteractionSupport {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals their hand. It is empty.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals their hand. It is empty."));
             log.info("Game {} - {}'s hand is empty for reveal-and-discard", gameData.id, targetName);
             return;
         }
@@ -397,7 +397,7 @@ public class PlayerInteractionSupport {
                 .filter(java.util.Objects::nonNull)
                 .toList();
         String cardNames = String.join(", ", revealedCards.stream().map(Card::getName).toList());
-        gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals " + cardNames + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " reveals " + cardNames + "."));
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < revealedCardIds.size(); i++) {
@@ -471,7 +471,7 @@ public class PlayerInteractionSupport {
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 continue;
             }
             playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount,

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -105,7 +107,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         // No valid choices, effect completes without prompting
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid choices"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid choices"));
     }
 
     @Test
@@ -116,7 +118,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
     // ===== Return on source leave =====
@@ -234,7 +236,7 @@ class KitesailFreebooterTest extends BaseCardTest {
 
         castAndResolveETB();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals their hand"));
     }
 
     @Test
@@ -246,7 +248,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("exiles") && log.contains("Peek"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles") && log.contains("Peek"));
     }
 
     @Test
@@ -267,6 +269,6 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.castInstant(player2, 0, freebooterId);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("returns to") && log.contains("hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("returns to") && log.contains("hand"));
     }
 }

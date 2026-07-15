@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,7 +48,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
         gameData.stack.add(copyEntry);
 
         String logMsg = "A copy of " + snapshot.getCard().getName() + "'s ability is created.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - copy of {}'s ability created for controller", gameData.id, snapshot.getCard().getName());
 
         // "You may choose new targets for the copy." Only single-target abilities are retargetable here;

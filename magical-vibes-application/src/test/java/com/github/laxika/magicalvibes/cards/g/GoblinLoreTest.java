@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -65,7 +67,7 @@ class GoblinLoreTest extends BaseCardTest {
         // Should NOT be awaiting any input (random discard doesn't prompt)
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Log should mention discards at random
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         assertThat(randomDiscardLogs).isEqualTo(3);

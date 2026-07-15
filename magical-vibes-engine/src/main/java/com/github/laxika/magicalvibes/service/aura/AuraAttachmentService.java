@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import lombok.RequiredArgsConstructor;
@@ -66,14 +67,14 @@ public class AuraAttachmentService {
                         p.setAttachedTo(null);
                         gameData.expireFloatingEffectsForUnattachedSource(p.getId());
                         String logEntry = p.getCard().getName() + " becomes unattached (equipped creature left the battlefield).";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} unattached (equipped creature left)", gameData.id, p.getCard().getName());
                     } else {
                         it.remove();
                         gameData.expireFloatingEffectsForDepartedSource(p.getId());
                         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, playerId, p.getOriginalCard(), Zone.BATTLEFIELD);
                         String logEntry = p.getCard().getName() + " is put into the graveyard (enchanted creature left the battlefield).";
-                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId));

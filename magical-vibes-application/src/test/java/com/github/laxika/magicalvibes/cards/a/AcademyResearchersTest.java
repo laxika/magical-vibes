@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -186,7 +188,7 @@ class AcademyResearchersTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
     @Test
@@ -200,7 +202,7 @@ class AcademyResearchersTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("has no Aura cards in hand"));
     }
 
     // ===== Fizzle =====
@@ -221,7 +223,7 @@ class AcademyResearchersTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetedHandCardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("fizzles"));
     }
 
     // ===== Multiple Auras =====

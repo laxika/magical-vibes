@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,13 +39,13 @@ public class PlayTargetCardFromGraveyardWithoutPayingManaCostEffectHandler imple
             targetCardId = entry.getTargetCardIds().getFirst();
         }
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
 
@@ -52,7 +53,7 @@ public class PlayTargetCardFromGraveyardWithoutPayingManaCostEffectHandler imple
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (graveyardOwnerId == null || !graveyardOwnerId.equals(controllerId)
                 || !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (illegal target).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (illegal target)."));
             return;
         }
 

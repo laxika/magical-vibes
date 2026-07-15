@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -47,8 +48,8 @@ public class KinshipHandler implements MayEffectHandlerBean {
             if (accepted) {
                 List<Card> deck = gameData.playerDecks.get(ability.controllerId());
                 if (deck != null && !deck.isEmpty()) {
-                    gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " reveals "
-                            + deck.getFirst().getName() + " from the top of their library.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " reveals "
+                            + deck.getFirst().getName() + " from the top of their library."));
                 }
                 Permanent self = ability.sourcePermanentId() != null
                         ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;
@@ -60,7 +61,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
                     effectResolutionService.resolveEffects(gameData, kinshipEntry);
                 }
             } else {
-                gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " chooses not to reveal.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " chooses not to reveal."));
                 log.info("Game {} - {} declines to reveal top card ({})", gameData.id,
                         player.getUsername(), ability.sourceCard().getName());
             }

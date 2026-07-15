@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastNonlandThisTurnEffect;
@@ -35,7 +36,7 @@ public class ExileTopCardMayCastNonlandThisTurnEffectHandler implements NormalEf
 
         if (deck == null || deck.isEmpty()) {
             String logEntry = controllerName + "'s library is empty — nothing to exile.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -51,7 +52,7 @@ public class ExileTopCardMayCastNonlandThisTurnEffectHandler implements NormalEf
         String castNote = isNonland ? " (may cast this turn)" : "";
         String logEntry = controllerName + " exiles " + topCard.getName()
                 + " from the top of their library" + castNote + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} exiles {} from library top (nonland={})",
                 gameData.id, controllerName, topCard.getName(), isNonland);
     }

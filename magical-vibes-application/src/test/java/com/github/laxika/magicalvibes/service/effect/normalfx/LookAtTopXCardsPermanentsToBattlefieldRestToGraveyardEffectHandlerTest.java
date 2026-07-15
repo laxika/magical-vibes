@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -127,7 +128,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction()).isNull();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("library is empty")));
             }
 
             @Test
@@ -164,7 +165,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 assertThat(gd.interaction.activeInteraction()).isNull();
                 // Cards should be back on the bottom of the library
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("no eligible cards")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("no eligible cards")));
             }
 
             @Test

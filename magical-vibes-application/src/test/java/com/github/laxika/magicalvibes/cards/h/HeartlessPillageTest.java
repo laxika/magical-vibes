@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -85,7 +87,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
 
         // No treasure tokens without raid
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
@@ -129,7 +131,7 @@ class HeartlessPillageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No discard prompt
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
 
         // Treasure token still created because raid is met
         List<Permanent> treasures = gd.playerBattlefields.get(player1.getId()).stream()
@@ -182,7 +184,7 @@ class HeartlessPillageTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Treasure"))
                 .toList()).isEmpty();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("raid ability does nothing"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("raid ability does nothing"));
     }
 
     // ===== Opponent attacking does not enable raid =====

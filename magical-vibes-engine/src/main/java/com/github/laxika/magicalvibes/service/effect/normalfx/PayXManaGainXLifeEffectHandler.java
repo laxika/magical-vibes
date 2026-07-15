@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -41,8 +42,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             String playerName = gameData.playerIdToName.get(controllerId);
 
             if (chosenValue == 0) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " chooses X=0 for " + cardName + "'s ability.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " chooses X=0 for " + cardName + "'s ability."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
@@ -50,8 +50,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             new ManaCost("{0}").pay(pool, chosenValue);
 
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " pays {" + chosenValue + "} for " + cardName + ".");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays {" + chosenValue + "} for " + cardName + "."));
             log.info("Game {} - {} pays {} mana for {}", gameData.id, playerName, chosenValue, cardName);
             lifeSupport.applyGainLife(gameData, controllerId, chosenValue, cardName);
             return;
@@ -62,8 +61,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
         int maxX = pool.getTotal() + pool.getArtifactOnlyColorless() + pool.getMyrOnlyColorless();
         if (maxX <= 0) {
             String playerName = gameData.playerIdToName.get(controllerId);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no mana to pay for " + entry.getCard().getName() + "'s ability.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no mana to pay for " + entry.getCard().getName() + "'s ability."));
             log.info("Game {} - {} has no mana for {}'s pay-X ability", gameData.id,
                     gameData.playerIdToName.get(controllerId), entry.getCard().getName());
             return;

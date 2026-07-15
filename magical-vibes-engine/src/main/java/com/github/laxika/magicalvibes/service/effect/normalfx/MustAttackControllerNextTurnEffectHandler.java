@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackControllerNextTurnEffect;
@@ -37,7 +38,7 @@ public class MustAttackControllerNextTurnEffectHandler implements NormalEffectHa
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         String logEntry = "Creatures " + targetName + " controls will attack " + controllerName
                 + " if able during their next turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} taunts {} (must attack next turn)", gameData.id, controllerName, targetName);
     }
 }

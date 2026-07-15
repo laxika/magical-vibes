@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -48,7 +49,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
             librarySearchSupport.putHandOnTopOfLibrary(gameData, targetHand, targetDeck, targetName);
             Collections.shuffle(targetDeck);
             String shuffleLog = targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
             return;
         }
 
@@ -57,7 +58,7 @@ public class HeadGamesEffectHandler implements NormalEffectHandlerBean {
         // Step 1: Target opponent puts hand on top of library
         if (handSize == 0) {
             String logMsg = targetName + " has no cards in hand. " + targetName + "'s library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             Collections.shuffle(targetDeck);
             return;
         }

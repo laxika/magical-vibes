@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -73,7 +75,7 @@ class FranticSalvageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isNotEmpty();
 
         // Log should mention putting cards on top
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("on top of their library from graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("on top of their library from graveyard"));
     }
 
     @Test

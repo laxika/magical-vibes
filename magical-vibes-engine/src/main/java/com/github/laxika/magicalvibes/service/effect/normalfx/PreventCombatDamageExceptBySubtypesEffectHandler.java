@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageExceptBySubtypesEffect;
@@ -25,6 +26,6 @@ public class PreventCombatDamageExceptBySubtypesEffectHandler implements NormalE
         gameData.combatDamageExemptPredicate = e.exemptPredicate();
 
         String logEntry = "Combat damage from creatures that don't match the exemption will be prevented this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

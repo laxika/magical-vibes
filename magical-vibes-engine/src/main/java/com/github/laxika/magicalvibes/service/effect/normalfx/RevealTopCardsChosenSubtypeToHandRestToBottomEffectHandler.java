@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -51,8 +52,7 @@ public class RevealTopCardsChosenSubtypeToHandRestToBottomEffectHandler implemen
         String cardName = entry.getCard().getName();
 
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals " + revealedNames + " from the top of their library with " + cardName + "."));
 
         List<Card> toHand = new ArrayList<>();
         List<Card> toBottom = new ArrayList<>();
@@ -69,8 +69,7 @@ public class RevealTopCardsChosenSubtypeToHandRestToBottomEffectHandler implemen
         }
         if (!toHand.isEmpty()) {
             String handNames = toHand.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + handNames + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + handNames + " into their hand."));
         }
 
         log.info("Game {} - {} resolving {} — {} to hand, {} to bottom",

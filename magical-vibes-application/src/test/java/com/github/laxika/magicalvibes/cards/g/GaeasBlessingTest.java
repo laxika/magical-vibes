@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -170,7 +172,7 @@ class GaeasBlessingTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
 
         // Log confirms the self-mill trigger
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Gaea's Blessing") && log.contains("was milled") && log.contains("shuffles their graveyard"));
     }
 

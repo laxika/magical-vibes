@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
@@ -53,7 +54,7 @@ public class CanAttackAsThoughNoDefenderEffectHandler implements NormalEffectHan
                 sourceId, null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = source.getCard().getName() + " can attack this turn as though it didn't have defender.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} can attack despite defender until end of turn", gameData.id, source.getCard().getName());
     }
 }

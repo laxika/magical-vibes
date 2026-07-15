@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,7 +61,7 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
         boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, target, e.cannotBeRegenerated());
         if (destroyed) {
             String destroyLog = targetName + " is destroyed.";
-            gameBroadcastService.logAndBroadcast(gameData, destroyLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(destroyLog));
             log.info("Game {} - {} is destroyed by {}", gameData.id, targetName, entry.getCard().getName());
         }
 
@@ -81,20 +82,20 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
 
         if (revealedCards.isEmpty()) {
             String emptyLog = targetControllerName + "'s library is empty — no cards are revealed.";
-            gameBroadcastService.logAndBroadcast(gameData, emptyLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(emptyLog));
             return;
         }
 
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = targetControllerName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         if (foundCard == null) {
             // No matching card found — shuffle all revealed cards back into the library
             deck.addAll(revealedCards);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
             String noMatchLog = targetControllerName + " reveals their entire library — no matching card found. Library is shuffled.";
-            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatchLog));
             return;
         }
 
@@ -102,8 +103,7 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
         Permanent perm = new Permanent(foundCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetControllerId, perm);
 
-        String enterLog = foundCard.getName() + " enters the battlefield under " + targetControllerName + "'s control.";
-        gameBroadcastService.logAndBroadcast(gameData, enterLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.entersBattlefieldUnder(foundCard, targetControllerName));
 
         // Handle ETB effects for creatures
         boolean isCreature = foundCard.hasType(CardType.CREATURE);
@@ -125,7 +125,7 @@ public class DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler implemen
         LibraryShuffleHelper.shuffleLibrary(gameData, targetControllerId);
 
         String shuffleLog = targetControllerName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(shuffleLog));
 
         // Check legend rule
         if (!gameData.interaction.isAwaitingInput()) {

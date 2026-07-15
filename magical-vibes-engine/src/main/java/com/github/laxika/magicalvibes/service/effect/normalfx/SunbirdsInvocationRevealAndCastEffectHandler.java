@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -42,7 +43,7 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
             String logMsg = manaValue <= 0
                     ? sourceName + ": spell has mana value 0 — no cards revealed."
                     : sourceName + ": " + playerName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
@@ -52,7 +53,7 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
         // Reveal all cards
         String revealedNames = topCards.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
         String revealLog = playerName + " reveals " + revealedNames + " (" + sourceName + ").";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
         log.info("Game {} - {} reveals {} cards for Sunbird's Invocation (MV {})",
                 gameData.id, playerName, count, manaValue);
 
@@ -67,7 +68,7 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
             Collections.shuffle(topCards);
             deck.addAll(topCards);
             String noMatchLog = sourceName + " — no castable cards found. Cards are put on the bottom in a random order.";
-            gameBroadcastService.logAndBroadcast(gameData, noMatchLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(noMatchLog));
             log.info("Game {} - Sunbird's Invocation: no castable cards, {} to bottom", gameData.id, count);
             return;
         }

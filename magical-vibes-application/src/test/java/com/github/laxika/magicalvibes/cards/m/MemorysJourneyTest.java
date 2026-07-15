@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -338,7 +340,6 @@ class MemorysJourneyTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog)
-                .anyMatch(entry -> entry.contains("shuffles") && entry.contains("from graveyard into their library"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("shuffles") && entry.contains("from graveyard into their library"));
     }
 }

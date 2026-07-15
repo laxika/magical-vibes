@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -41,7 +42,7 @@ class TargetPlayerExilesFromHandEffectHandlerTest extends AbstractPlayerInteract
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginExileFromHandChoice(any(), any(), any(), any(), anyInt());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no cards to exile")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no cards to exile")));
             }
 }

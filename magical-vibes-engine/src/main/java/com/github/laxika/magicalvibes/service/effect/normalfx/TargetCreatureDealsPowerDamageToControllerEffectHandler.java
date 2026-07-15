@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -43,8 +44,7 @@ public class TargetCreatureDealsPowerDamageToControllerEffectHandler implements 
         // damage, nothing happens.
         if (gameQueryService.isDamagePreventable(gameData)
                 && gameQueryService.isPreventedFromDealingDamage(gameData, target)) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    target.getCard().getName() + "'s damage is prevented.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage is prevented."));
             return;
         }
 

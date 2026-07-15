@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -51,7 +52,7 @@ public class RegenerateAllOwnCreaturesEffectHandler implements NormalEffectHandl
 
                 if (count > 0) {
                     String logEntry = count + " creature(s) gain a regeneration shield.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} creature(s) gain regeneration shields", gameData.id, count);
                 }
     

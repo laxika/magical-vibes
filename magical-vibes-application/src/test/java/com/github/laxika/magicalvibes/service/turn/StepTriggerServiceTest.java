@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
@@ -179,7 +180,7 @@ class StepTriggerServiceTest {
             sut.handleDrawStep(gd);
 
             verify(drawService, never()).resolveDrawCard(gd, player1Id);
-            verify(gameBroadcastService).logAndBroadcast(gd, "Player1 skips the draw (first turn).");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Player1 skips the draw (first turn)."));
         }
 
         @Test
@@ -1454,10 +1455,8 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Chainer's Torment gets a lore counter (2).");
-            verify(gameBroadcastService).logAndBroadcast(gd,
-                    "Chainer's Torment's chapter II ability triggers.");
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment gets a lore counter (2)."));
+            verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Chainer's Torment's chapter II ability triggers."));
         }
     }
 

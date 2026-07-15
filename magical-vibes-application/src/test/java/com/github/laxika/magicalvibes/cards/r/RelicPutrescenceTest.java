@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -207,12 +209,12 @@ class RelicPutrescenceTest extends BaseCardTest {
 
         gs.activateAbility(gd, player1, 0, 0, null, null, null);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Relic Putrescence") && log.contains("triggers"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Relic Putrescence") && log.contains("triggers"));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("poison counter"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("poison counter"));
     }
 
     // ===== Helpers =====

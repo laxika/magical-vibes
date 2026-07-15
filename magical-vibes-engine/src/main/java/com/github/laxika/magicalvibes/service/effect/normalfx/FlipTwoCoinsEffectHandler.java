@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipTwoCoinsEffect;
@@ -40,8 +41,7 @@ public class FlipTwoCoinsEffectHandler implements NormalEffectHandlerBean {
 
         String firstResult = firstFlip ? "heads" : "tails";
         String secondResult = secondFlip ? "heads" : "tails";
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " flips two coins for " + sourceName + ": " + firstResult + " and " + secondResult + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " flips two coins for " + sourceName + ": " + firstResult + " and " + secondResult + "."));
 
         CardEffect chosen;
         if (firstFlip && secondFlip) {

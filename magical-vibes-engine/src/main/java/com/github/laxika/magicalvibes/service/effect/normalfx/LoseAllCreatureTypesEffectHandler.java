@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -46,8 +47,8 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
                     count++;
                 }
             }
-            gameBroadcastService.logAndBroadcast(gameData, entry.getCard().getName()
-                    + " makes " + count + " creature(s) lose all creature types until end of turn.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName()
+                    + " makes " + count + " creature(s) lose all creature types until end of turn."));
             return;
         }
 
@@ -56,7 +57,6 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
             return;
         }
         target.setLosesAllCreatureTypesUntilEndOfTurn(true);
-        gameBroadcastService.logAndBroadcast(gameData,
-                target.getCard().getName() + " loses all creature types until end of turn.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " loses all creature types until end of turn."));
     }
 }

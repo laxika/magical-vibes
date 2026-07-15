@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability.cost;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -64,7 +65,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
                 ? "a " + counterLabel() + " counter"
                 : cost.count() + " " + counterLabel() + " counters";
         String log = player.getUsername() + " puts " + counterWord + " on " + chosen.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, log);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(log));
     }
 
     @Override

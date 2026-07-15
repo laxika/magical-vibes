@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -37,7 +39,7 @@ class IlluminatedFolioTest extends BaseCardTest {
         assertThat(folio.isTapped()).isTrue();
         // Revealed cards stay in hand.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals") && log.contains("as a cost"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals") && log.contains("as a cost"));
     }
 
     @Test

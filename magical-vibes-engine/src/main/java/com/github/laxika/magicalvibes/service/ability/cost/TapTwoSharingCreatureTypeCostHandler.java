@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability.cost;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -102,7 +103,7 @@ public class TapTwoSharingCreatureTypeCostHandler implements PermanentChoiceCost
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
         alreadyChosen.add(chosen.getId());
         String tapLog = player.getUsername() + " taps " + chosen.getCard().getName() + " as a cost.";
-        gameBroadcastService.logAndBroadcast(gameData, tapLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(tapLog));
     }
 
     @Override

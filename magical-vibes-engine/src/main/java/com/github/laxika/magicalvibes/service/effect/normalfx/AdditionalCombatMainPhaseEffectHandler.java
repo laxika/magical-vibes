@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,7 +39,7 @@ public class AdditionalCombatMainPhaseEffectHandler implements NormalEffectHandl
                     + " additional combat " + TurnSupport.pluralize("phase", e.count())
                     + " followed by additional main " + TurnSupport.pluralize("phase", e.count()) + ".";
         }
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} queued {} additional combat/main phase pair(s)",
                 gameData.id, entry.getCard().getName(), e.count());
     }

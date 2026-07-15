@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
@@ -39,7 +40,7 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 723.1b)
         gameData.endTurnRequested = true;
 
-        gameBroadcastService.logAndBroadcast(gameData, "The turn ends.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The turn ends."));
         log.info("Game {} - End the turn effect resolved, skipping to cleanup", gameData.id);
     }
 }

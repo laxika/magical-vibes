@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,23 +42,20 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         String sourceName = entry.getCard().getName();
 
         if (deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + "'s library is empty (" + sourceName + " explores).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + " explores)."));
             return;
         }
 
         Card topCard = deck.getFirst();
 
         // Reveal the top card to all players
-        gameBroadcastService.logAndBroadcast(gameData,
-                sourceName + " explores — " + playerName + " reveals " + topCard.getName() + ".");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " explores — " + playerName + " reveals " + topCard.getName() + "."));
 
         if (topCard.hasType(CardType.LAND)) {
             // Land — put into controller's hand
             deck.removeFirst();
             gameData.addCardToHand(controllerId, topCard);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " puts " + topCard.getName() + " into their hand.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + topCard.getName() + " into their hand."));
             log.info("Game {} - {} explores, reveals land {} — to hand",
                     gameData.id, sourceName, topCard.getName());
             // Explore is complete — check for "whenever a creature you control explores" triggers
@@ -69,8 +67,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                     : null;
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
                 source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        source.getCard().getName() + " gets a +1/+1 counter.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(source.getCard().getName() + " gets a +1/+1 counter."));
             }
 
             // Ask: put the revealed card into your graveyard?

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,8 +41,8 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         resolveEffect(gd, entry, new DiscardHandEffect());
 
         verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                msg.contains("no cards to discard")));
+        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                logEntry.plainText().contains("no cards to discard")));
     }
 
     @Test
@@ -66,7 +67,7 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
         resolveEffect(gd, entry, new DiscardHandEffect());
 
-        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                msg.contains("discards their hand") && msg.contains("3 cards")));
+        verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                logEntry.plainText().contains("discards their hand") && logEntry.plainText().contains("3 cards")));
     }
 }

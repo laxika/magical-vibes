@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -51,13 +52,13 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
             case WHILE_SOURCE_ON_BATTLEFIELD -> {
                 target.getUntapPreventedWhileSourceOnBattlefieldIds().add(sourcePermanentId);
                 String logEntry = target.getCard().getName() + " won't untap as long as you control " + entry.getCard().getName() + ".";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} untap prevented while {} on battlefield", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
             case WHILE_SOURCE_TAPPED -> {
                 target.getUntapPreventedByPermanentIds().add(sourcePermanentId);
                 String logEntry = target.getCard().getName() + " won't untap as long as " + entry.getCard().getName() + " remains tapped.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} untap prevented while {} remains tapped", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
             case ALWAYS -> {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -41,14 +42,14 @@ public class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler implements No
         int actual = Math.min(e.count(), deck.size());
         if (actual == 0) {
             String logMsg = entry.getCard().getName() + ": " + targetName + "'s library is empty.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
             return;
         }
 
         List<Card> topCards = LibraryRevealSupport.takeTopCards(deck, actual);
 
         String logMsg = controllerName + " looks at the top " + LibraryRevealSupport.pluralCards(actual) + " of " + targetName + "'s library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
 
         List<Card> sourceCards = new ArrayList<>(topCards);
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -218,7 +219,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
             }
 
@@ -237,6 +238,6 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
                 verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -172,7 +174,7 @@ class DuressTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
 
         // Log should indicate no valid choices
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid choices"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid choices"));
     }
 
     @Test
@@ -186,7 +188,7 @@ class DuressTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
     }
 
     @Test
@@ -289,7 +291,7 @@ class DuressTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("reveals their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("reveals their hand"));
     }
 
     @Test
@@ -306,7 +308,7 @@ class DuressTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Peek"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses") && log.contains("Peek"));
     }
 
     @Test
@@ -323,6 +325,6 @@ class DuressTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
     }
 }

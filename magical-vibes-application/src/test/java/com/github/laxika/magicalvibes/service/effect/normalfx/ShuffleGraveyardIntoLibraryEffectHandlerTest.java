@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -101,8 +102,8 @@ player1Id = UUID.randomUUID();
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
                 assertThat(gd.playerGraveyards.get(player1Id))
                         .noneMatch(c -> c.getName().equals("Grizzly Bears"));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("shuffles their graveyard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("shuffles their graveyard")));
             }
 
             @Test
@@ -117,8 +118,8 @@ player1Id = UUID.randomUUID();
                 shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("graveyard is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("graveyard is empty")));
             }
 
             @Test
@@ -138,7 +139,7 @@ player1Id = UUID.randomUUID();
 
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
                 assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("shuffles their graveyard")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("shuffles their graveyard")));
             }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -228,8 +230,8 @@ class BlazingTorchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Damage log must attribute to "Blazing Torch" (the equipment), not "Grizzly Bears" (the creature)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("damage from Blazing Torch"));
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("damage from Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("damage from Blazing Torch"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("damage from Grizzly Bears"));
     }
 
     // ===== Non-Vampire non-Zombie can still block =====
@@ -250,7 +252,7 @@ class BlazingTorchTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declares 1 blocker"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
     // ===== Helpers =====

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
@@ -30,7 +31,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (target creature no longer exists).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Attach source equipment fizzles, target creature left battlefield", gameData.id);
             return;
         }
@@ -44,7 +45,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
         }
         if (equipment == null) {
             String logEntry = entry.getCard().getName() + "'s attach ability fizzles (equipment no longer on the battlefield).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Attach source equipment fizzles, equipment left battlefield", gameData.id);
             return;
         }
@@ -55,7 +56,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
         equipment.setTimestamp(gameData.nextTimestamp());
 
         String logEntry = entry.getCard().getName() + " is now attached to " + target.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
     }
 }

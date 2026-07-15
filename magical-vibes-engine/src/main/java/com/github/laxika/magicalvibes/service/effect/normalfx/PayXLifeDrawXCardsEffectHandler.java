@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -44,15 +45,13 @@ public class PayXLifeDrawXCardsEffectHandler implements NormalEffectHandlerBean 
             gameData.chosenXValue = null;
 
             if (chosenValue == 0) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        playerName + " pays 0 life for " + cardName + " and draws no cards.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays 0 life for " + cardName + " and draws no cards."));
                 log.info("Game {} - {} chooses X=0 for {}", gameData.id, playerName, cardName);
                 return;
             }
 
             lifeSupport.applyLifeLoss(gameData, controllerId, chosenValue, cardName);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " pays " + chosenValue + " life for " + cardName + " and draws " + chosenValue + " cards."));
             log.info("Game {} - {} pays {} life and draws {} for {}", gameData.id, playerName,
                     chosenValue, chosenValue, cardName);
             playerInteractionSupport.applyDrawCards(gameData, controllerId, chosenValue);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -45,7 +46,7 @@ public class RedirectNextDamageToTargetCreatureEffectHandler implements NormalEf
         String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "the creature";
         String logEntry = "The next " + e.amount() + " damage that would be dealt to " + protectedName
                 + " this turn is dealt to " + redirectTarget.getCard().getName() + " instead.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - registered next-{}-damage redirect from {} to {}", gameData.id, e.amount(),
                 protectedName, redirectTarget.getCard().getName());
     }

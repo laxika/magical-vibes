@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -188,7 +190,7 @@ class GravediggerTest extends BaseCardTest {
 
         // Inner effect resolved inline — no graveyard choice since graveyard is empty
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
     @Test
@@ -199,7 +201,7 @@ class GravediggerTest extends BaseCardTest {
 
         // Inner effect resolved inline — no graveyard choice since no creatures
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // Holy Day stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Holy Day"));

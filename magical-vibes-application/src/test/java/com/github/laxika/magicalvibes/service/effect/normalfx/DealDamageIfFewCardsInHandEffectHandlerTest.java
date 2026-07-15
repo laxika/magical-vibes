@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -82,8 +83,8 @@ class DealDamageIfFewCardsInHandEffectHandlerTest extends AbstractDamageHandlerT
                 dealDamageIfFewCardsInHandHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("does nothing")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("does nothing")));
                 verifyNoInteractions(triggerCollectionService);
             }
 }

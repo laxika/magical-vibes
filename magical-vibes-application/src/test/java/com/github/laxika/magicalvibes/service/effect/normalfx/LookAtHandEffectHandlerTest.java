@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,8 +32,8 @@ class LookAtHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 resolveEffect(gd, entry, new LookAtHandEffect());
 
                 verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("looks at") && msg.contains("Player2") && msg.contains("Mountain")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("looks at") && logEntry.plainText().contains("Player2") && logEntry.plainText().contains("Mountain")));
             }
 
             @Test
@@ -44,7 +45,7 @@ class LookAtHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
                 resolveEffect(gd, entry, new LookAtHandEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("looks at") && msg.contains("empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("looks at") && logEntry.plainText().contains("empty")));
             }
 }

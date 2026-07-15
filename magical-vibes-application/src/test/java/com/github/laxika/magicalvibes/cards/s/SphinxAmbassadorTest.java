@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -128,7 +130,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
     }
 
     // ===== Non-creature selected =====
@@ -162,10 +164,10 @@ class SphinxAmbassadorTest extends BaseCardTest {
         assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
 
         // Card name should NOT be revealed in the log (per ruling #3)
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("reveals") && log.contains("Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("reveals") && log.contains("Grizzly Bears"));
     }
 
     // ===== Non-creature card name not revealed =====
@@ -186,7 +188,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleListChoice(player2, "Grizzly Bears");
 
         // Card name should NOT appear in any "reveals" log entry
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("reveals") && log.contains("Shock"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("reveals") && log.contains("Shock"));
     }
 
     // ===== Controller declines to put creature =====
@@ -219,7 +221,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should mention decline
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declines"));
     }
 
     // ===== Library shuffled =====
@@ -241,7 +243,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // Log should mention shuffling
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled") || log.contains("library is shuffled"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("library is shuffled"));
     }
 
     // ===== Combat damage still dealt =====

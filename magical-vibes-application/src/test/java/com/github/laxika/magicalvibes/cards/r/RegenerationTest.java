@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -82,6 +84,6 @@ class RegenerationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(regenAura.getRegenerationShield()).isEqualTo(0);
-        assertThat(gd.gameLog).noneMatch(log -> log.contains("gains a regeneration shield"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(log -> log.contains("gains a regeneration shield"));
     }
 }

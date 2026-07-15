@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -41,7 +42,7 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
         self.setToughnessModifier(self.getToughnessModifier() + currentToughness);
 
         String logEntry = self.getCard().getName() + "'s power and toughness are doubled (+" + currentPower + "/+" + currentToughness + ").";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} power/toughness doubled (+{}/+{})", gameData.id, self.getCard().getName(), currentPower, currentToughness);
     }

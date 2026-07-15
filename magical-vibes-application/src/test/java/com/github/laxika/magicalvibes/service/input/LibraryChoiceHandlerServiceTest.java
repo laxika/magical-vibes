@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
@@ -235,8 +236,8 @@ class LibraryChoiceHandlerServiceTest {
 
             // Player2 was skipped (no basic lands), auto-pass called
             verify(turnProgressionService).resolveAutoPass(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Player2") && msg.contains("finds no basic land cards")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Player2") && logEntry.plainText().contains("finds no basic land cards")));
         }
 
         @Test
@@ -257,8 +258,8 @@ class LibraryChoiceHandlerServiceTest {
 
             // Player2 was skipped (empty library), auto-pass called
             verify(turnProgressionService).resolveAutoPass(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Player2") && msg.contains("it is empty")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Player2") && logEntry.plainText().contains("it is empty")));
         }
 
         @Test
@@ -359,8 +360,8 @@ class LibraryChoiceHandlerServiceTest {
             // All cards on bottom of library
             assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s ->
-                    s.contains("bottom of their library") && s.contains("random order")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("bottom of their library") && logEntry.plainText().contains("random order")));
         }
     }
 }

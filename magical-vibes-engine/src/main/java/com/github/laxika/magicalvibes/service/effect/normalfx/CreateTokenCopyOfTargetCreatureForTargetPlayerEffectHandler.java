@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -82,7 +83,7 @@ public class CreateTokenCopyOfTargetCreatureForTargetPlayerEffectHandler impleme
 
         String controllerName = gameData.playerIdToName.get(tokenControllerId);
         String logMsg = controllerName + " creates a token copy of " + sourceCard.getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} creates token copy of {} for {}", gameData.id, controllerName,
                 sourceCard.getName(), tokenControllerId);
 

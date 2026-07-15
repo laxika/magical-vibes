@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -137,8 +138,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, target);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Grizzly Bears is returned to its owner's hand."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Grizzly Bears is returned to its owner's hand.")));
         }
 
         @Test
@@ -199,8 +199,7 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Player2's life total can't change."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2's life total can't change.")));
         }
     }
 
@@ -224,8 +223,7 @@ class ReturnToHandEffectHandlerTest {
 
             verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Viashino Sandscout is returned to its owner's hand."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Viashino Sandscout is returned to its owner's hand.")));
         }
 
         @Test
@@ -242,8 +240,7 @@ class ReturnToHandEffectHandlerTest {
             handler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Viashino Sandscout is no longer on the battlefield."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Viashino Sandscout is no longer on the battlefield.")));
         }
     }
 

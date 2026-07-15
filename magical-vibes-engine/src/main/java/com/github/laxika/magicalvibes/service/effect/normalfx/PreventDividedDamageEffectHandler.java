@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -43,18 +44,16 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
                 target.setDamagePreventionShield(target.getDamagePreventionShield() + amount);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        "The next " + amount + " damage that would be dealt to "
-                                + target.getCard().getName() + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The next " + amount + " damage that would be dealt to "
+                                + target.getCard().getName() + " is prevented."));
                 continue;
             }
 
             if (gameData.playerIds.contains(targetId)) {
                 int current = gameData.playerDamagePreventionShields.getOrDefault(targetId, 0);
                 gameData.playerDamagePreventionShields.put(targetId, current + amount);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        "The next " + amount + " damage that would be dealt to "
-                                + gameData.playerIdToName.get(targetId) + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text("The next " + amount + " damage that would be dealt to "
+                                + gameData.playerIdToName.get(targetId) + " is prevented."));
             }
         }
     }

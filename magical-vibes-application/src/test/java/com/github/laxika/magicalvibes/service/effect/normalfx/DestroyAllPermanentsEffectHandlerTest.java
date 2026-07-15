@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -156,8 +157,8 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
                 verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
-                verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
-                verify(gameBroadcastService).logAndBroadcast(gd, "Serra Angel is destroyed.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Grizzly Bears is destroyed."));
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Serra Angel is destroyed."));
             }
 
             @Test
@@ -219,7 +220,7 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, "Indestructible Golem is indestructible.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Indestructible Golem is indestructible."));
             }
 
             @Test
@@ -305,7 +306,7 @@ class DestroyAllPermanentsEffectHandlerTest {
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
-                verify(gameBroadcastService).logAndBroadcast(gd, "Llanowar Elves is destroyed.");
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Grizzly Bears is destroyed."));
+                verify(gameBroadcastService).logAndBroadcast(gd, GameLog.text("Llanowar Elves is destroyed."));
             }
 }

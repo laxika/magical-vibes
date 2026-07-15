@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -213,7 +215,7 @@ class NavigatorsCompassTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "ISLAND");
 
-        assertThat(gd.gameLog).anyMatch(log ->
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("Forest") && log.contains("Island") && log.contains("until end of turn"));
     }
 

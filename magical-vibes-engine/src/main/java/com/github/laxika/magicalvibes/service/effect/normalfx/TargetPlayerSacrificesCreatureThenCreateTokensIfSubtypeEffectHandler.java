@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -71,7 +72,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
         String playerName = gameData.playerIdToName.get(targetPlayerId);
         if (creatureIds.isEmpty()) {
             String logEntry = playerName + " has no creatures to sacrifice.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no creatures to sacrifice for {}", gameData.id, playerName, entry.getCard().getName());
             return;
         }
@@ -107,7 +108,7 @@ public class TargetPlayerSacrificesCreatureThenCreateTokensIfSubtypeEffectHandle
 
         String playerName = gameData.playerIdToName.get(sacrificingPlayerId);
         String logEntry = playerName + " sacrifices " + creature.getCard().getName() + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, creature.getCard().getName());
 
         if (hadSubtype) {

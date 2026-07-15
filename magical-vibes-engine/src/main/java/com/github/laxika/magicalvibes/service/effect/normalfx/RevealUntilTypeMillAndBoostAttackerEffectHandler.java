@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -54,7 +55,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
         List<Card> deck = gameData.playerDecks.get(defenderId);
         if (deck.isEmpty()) {
             String logEntry = defenderName + "'s library is empty — " + sourceName + "'s ability does nothing.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             return;
         }
 
@@ -71,7 +72,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
         // Log revealed cards
         String revealedNames = revealedCards.stream().map(Card::getName).collect(Collectors.joining(", "));
         String revealLog = defenderName + " reveals " + revealedNames + ".";
-        gameBroadcastService.logAndBroadcast(gameData, revealLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(revealLog));
 
         // Boost the equipped creature
         int revealedCount = revealedCards.size();
@@ -84,7 +85,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
             String boostLog = equippedCreature.getCard().getName() + " gets +"
                     + powerBoost + "/+" + toughnessBoost + " until end of turn ("
                     + revealedCount + " " + (revealedCount != 1 ? "cards" : "card") + " revealed).";
-            gameBroadcastService.logAndBroadcast(gameData, boostLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(boostLog));
         }
 
         // Put all revealed cards into the graveyard
@@ -94,7 +95,7 @@ public class RevealUntilTypeMillAndBoostAttackerEffectHandler implements NormalE
 
         String millLog = defenderName + " puts " + revealedCount + " revealed "
                 + (revealedCount != 1 ? "cards" : "card") + " into their graveyard.";
-        gameBroadcastService.logAndBroadcast(gameData, millLog);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(millLog));
 
         log.info("Game {} - {} reveals {} cards from {}'s library, {} gets +{}/+{}",
                 gameData.id, sourceName, revealedCount, defenderName,

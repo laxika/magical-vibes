@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -53,8 +54,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
 
         // "If you do" — with no card to exile, the exile can't happen, so no damage.
         if (candidates.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no cards in graveyard to exile (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no cards in graveyard to exile (" + sourceName + ")."));
             return;
         }
 
@@ -65,8 +65,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
         if (target != null) {
             UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
             if (gameQueryService.isDamageFromSourcePrevented(gameData, entry.getCard().getColor())) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + "'s damage to " + gameData.playerIdToName.get(targetControllerId) + " is prevented."));
             } else {
                 int rawDamage = gameQueryService.applyDamageMultiplier(gameData, e.damage(), entry);
                 damageSupport.dealDamageToPlayer(gameData, entry, targetControllerId, rawDamage);
@@ -81,8 +80,7 @@ public class ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffectHandle
             graveyard.remove(card);
             graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
             exileService.exileCard(gameData, controllerId, card);
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " exiles " + card.getName() + " from their graveyard (" + sourceName + ").");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " exiles " + card.getName() + " from their graveyard (" + sourceName + ")."));
         } else {
             graveyardReturnSupport.beginGraveyardExileChoice(gameData, controllerId, 1, sourceCard);
         }

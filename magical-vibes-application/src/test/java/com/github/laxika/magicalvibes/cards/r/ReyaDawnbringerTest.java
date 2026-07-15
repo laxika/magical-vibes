@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -127,7 +129,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP — only checks player2's permanents
 
         // No trigger from player1's Reya
-        assertThat(gd.gameLog).noneMatch(s -> s.contains("Reya Dawnbringer"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(s -> s.contains("Reya Dawnbringer"));
     }
 
     // ===== Graveyard return =====
@@ -212,7 +214,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
         // Inner effects resolved inline — no graveyard choice since graveyard is empty
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
     @Test
@@ -227,7 +229,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         advanceToUpkeepAndTrigger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Holy Day"));

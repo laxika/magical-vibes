@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -53,7 +54,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
         if (auraCard == null) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (card not in graveyard).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());
             return;
@@ -75,7 +76,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
 
         if (validTargetIds.isEmpty()) {
             String fizzleLog = entry.getCard().getName() + "'s ability fizzles (no opponent creatures to attach to).";
-            gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(fizzleLog));
             log.info("Game {} - {} death trigger fizzles (no opponent creatures)",
                     gameData.id, entry.getCard().getName());
             return;
@@ -94,7 +95,7 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
             String ownerName = gameData.playerIdToName.get(auraOwnerId);
             String logEntry = auraCard.getName() + " returns to the battlefield attached to "
                     + target.getCard().getName() + " under " + ownerName + "'s control.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} returns attached to {} (auto-selected)",
                     gameData.id, auraCard.getName(), target.getCard().getName());
         } else {

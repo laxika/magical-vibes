@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -192,7 +194,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Entire spell fizzles — no counter, no library reorder
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.interaction.activeInteraction()).isNull();
         // Discombobulate still goes to graveyard when fizzling
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -254,7 +256,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top card"));
     }
 
     @Test
@@ -276,7 +278,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("library is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("library is empty"));
     }
 
     // ===== Library reorder validation =====
@@ -365,12 +367,12 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("countered"));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top") && log.contains("cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("countered"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("looks at the top") && log.contains("cards"));
 
         // Complete the reorder
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("puts") && log.contains("cards back on top"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("puts") && log.contains("cards back on top"));
     }
 }
 

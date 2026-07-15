@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardThenReturnFromGraveyardToHandEffect;
@@ -45,8 +46,7 @@ public class DiscardThenReturnFromGraveyardToHandEffectHandler implements Normal
         List<Card> hand = gameData.playerHands.get(playerId);
         int returnCount = Math.min(amount, hand == null ? 0 : hand.size());
         if (returnCount <= 0) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    gameData.playerIdToName.get(playerId) + " discards no cards.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " discards no cards."));
             return;
         }
 

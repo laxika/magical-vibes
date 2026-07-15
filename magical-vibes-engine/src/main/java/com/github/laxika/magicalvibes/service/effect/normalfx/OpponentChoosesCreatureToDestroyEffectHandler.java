@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,8 +67,7 @@ public class OpponentChoosesCreatureToDestroyEffectHandler implements NormalEffe
         }
 
         if (creatureIds.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    cardName + " resolves but there are no creatures to destroy.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " resolves but there are no creatures to destroy."));
             log.info("Game {} - {} resolves with no creatures to destroy", gameData.id, cardName);
             return;
         }

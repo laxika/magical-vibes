@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -115,16 +116,14 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented."));
             } else {
                 if (damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage)) {
                     destroyed.add(targetPermanent);
                 }
                 if (e.damagedCreaturesCantBlock() && rawDamage > 0) {
                     targetPermanent.setCantBlockThisTurn(true);
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            targetPermanent.getCard().getName() + " can't block this turn.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetPermanent.getCard().getName() + " can't block this turn."));
                 }
             }
         }

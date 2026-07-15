@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -114,7 +116,7 @@ class SparringConstructTest extends BaseCardTest {
 
             // No valid targets — trigger should be skipped
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
         }
 
         @Test
@@ -133,7 +135,7 @@ class SparringConstructTest extends BaseCardTest {
 
             // All creatures dead — no valid targets for "creature you control"
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-            assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+            assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no valid targets"));
         }
     }
 }

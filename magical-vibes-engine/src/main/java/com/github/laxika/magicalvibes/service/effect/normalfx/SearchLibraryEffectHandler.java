@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -78,8 +79,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but it is empty. Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
             return;
         }
 
@@ -96,8 +96,7 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
             // -> "cards named X") by promoting the first whole-word "card"; a mana-value-bound
             // description stays singular ("creature card with mana value N").
             String noMatchDesc = bound != null ? baseDesc : baseDesc.replaceFirst("\\bcard\\b", "cards");
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " searches their library but finds no " + noMatchDesc + ". Library is shuffled."));
             log.info("Game {} - {} searches library, no {} found", gameData.id, playerName, noMatchDesc);
             return;
         }

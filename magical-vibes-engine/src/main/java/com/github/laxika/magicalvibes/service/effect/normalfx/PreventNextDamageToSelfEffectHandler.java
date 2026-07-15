@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,7 +40,7 @@ public class PreventNextDamageToSelfEffectHandler implements NormalEffectHandler
 
         String logEntry = "The next " + prevent.amount() + " damage that would be dealt to "
                 + source.getCard().getName() + " this turn is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - Self prevention shield {} added to permanent {}", gameData.id, prevent.amount(),
                 source.getCard().getName());
     }

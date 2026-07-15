@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
@@ -49,8 +50,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
 
         String tappedText = e.tapped() ? " tapped" : "";
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " puts " + result.card().getName() + " onto the battlefield" + tappedText + " under their control.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " puts " + result.card().getName() + " onto the battlefield" + tappedText + " under their control."));
 
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, controllerId, result.permanent(), result.card());
 
@@ -66,8 +66,7 @@ public class PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler implements
             }
             if (cardsToMill > 0) {
                 String opponentName = gameData.playerIdToName.get(result.originalOwnerId());
-                gameBroadcastService.logAndBroadcast(gameData,
-                        opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ").");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " mills " + cardsToMill + " cards (" + String.join(", ", milledNames) + ")."));
             }
         }
     }

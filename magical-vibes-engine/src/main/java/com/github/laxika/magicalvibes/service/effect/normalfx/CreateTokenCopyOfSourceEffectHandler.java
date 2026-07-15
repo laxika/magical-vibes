@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -110,7 +111,7 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
                     String logMsg = e.removeLegendary()
                             ? "A non-legendary token copy of " + sourceCard.getName() + " is created."
                             : "A token copy of " + sourceCard.getName() + " is created.";
-                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
                     log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
 
                     // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted

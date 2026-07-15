@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -61,7 +62,7 @@ class SacrificeSelfAndDrawCardsEffectHandlerTest extends AbstractPlayerInteracti
 
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
                 verify(drawService, never()).resolveDrawCard(any(), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("fizzles")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("fizzles")));
             }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,7 +41,7 @@ public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements Nor
                 List<Permanent> permanents = gameData.playerBattlefields.get(targetPlayerId);
                 if (permanents == null || permanents.isEmpty()) {
                     String playerName = gameData.playerIdToName.get(targetPlayerId);
-                    gameBroadcastService.logAndBroadcast(gameData, playerName + " has no permanents to separate.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no permanents to separate."));
                     log.info("Game {} - {} has no permanents to separate", gameData.id, playerName);
                     return;
                 }

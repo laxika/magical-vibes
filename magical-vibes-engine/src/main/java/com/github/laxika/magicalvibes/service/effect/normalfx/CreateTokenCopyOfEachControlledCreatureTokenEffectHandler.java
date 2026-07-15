@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -90,7 +91,7 @@ public class CreateTokenCopyOfEachControlledCreatureTokenEffectHandler implement
         Permanent tokenPermanent = new Permanent(tokenCard);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
-        gameBroadcastService.logAndBroadcast(gameData, "A token copy of " + sourceCard.getName() + " is created.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text("A token copy of " + sourceCard.getName() + " is created."));
         log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
                 entry.getCard() != null ? entry.getCard().getName() : "ability");
 

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -180,7 +181,7 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
                 assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(5);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
                 assertThat(gd.playerDecks.get(player2Id)).isEmpty();
-                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), anyString());
+                verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             }
 
             @Test
@@ -225,6 +226,6 @@ class EachPlayerExilesTopCardsToSourceEffectHandlerTest {
 
                 assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
                 // Only one log message (player1 only)
-                verify(gameBroadcastService, times(1)).logAndBroadcast(eq(gd), anyString());
+                verify(gameBroadcastService, times(1)).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             }
 }

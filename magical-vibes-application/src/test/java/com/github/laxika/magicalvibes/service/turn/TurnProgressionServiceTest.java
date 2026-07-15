@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
@@ -36,6 +38,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -223,7 +226,7 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.advanceStep(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Step: Draw"));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Step: Draw")));
             verify(gameBroadcastService).broadcastGameState(gd);
         }
 
@@ -659,7 +662,7 @@ class TurnProgressionServiceTest {
 
             verify(playerInputService).processNextMayAbility(gd);
             // completeTurnAdvance should NOT be called — awaiting may ability
-            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.contains("Turn"));
+            verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Turn")));
         }
     }
 
@@ -681,8 +684,7 @@ class TurnProgressionServiceTest {
 
             assertThat(gd.mindControlledPlayerId).isEqualTo(player2Id);
             assertThat(gd.mindControllerPlayerId).isEqualTo(player1Id);
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Player1 controls Player2 this turn (Mindslaver)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player1 controls Player2 this turn (Mindslaver).")));
         }
 
         @Test
@@ -726,8 +728,7 @@ class TurnProgressionServiceTest {
 
             turnProgressionService.completeTurnAdvance(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Turn 3 begins. Player1's turn."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Turn 3 begins. Player1's turn.")));
         }
 
         @Test

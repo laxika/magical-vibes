@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -66,8 +67,8 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no creature cards in hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no creature cards in hand")));
             }
 
             @Test
@@ -81,7 +82,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
                 resolveEffect(gd, entry, effect);
 
                 verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(), any(), anyBoolean());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("no creature cards in hand")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("no creature cards in hand")));
             }
 }

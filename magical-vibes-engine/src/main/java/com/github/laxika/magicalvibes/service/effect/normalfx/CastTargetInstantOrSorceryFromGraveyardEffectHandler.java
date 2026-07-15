@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,19 +41,19 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
                 ? entry.getTargetCardIds().getFirst()
                 : entry.getTargetId();
         if (targetCardId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " — no target selected."));
             return;
         }
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
 
         // Verify target is still in a graveyard matching the scope
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
         if (graveyardOwnerId == null) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in any graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in any graveyard)."));
             return;
         }
         boolean validScope = switch (e.scope()) {
@@ -61,13 +62,13 @@ public class CastTargetInstantOrSorceryFromGraveyardEffectHandler implements Nor
             case ALL_GRAVEYARDS -> true;
         };
         if (!validScope) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target not in a valid graveyard).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target not in a valid graveyard)."));
             return;
         }
 
         // Verify target is still an instant or sorcery
         if (!targetCard.hasType(CardType.INSTANT) && !targetCard.hasType(CardType.SORCERY)) {
-            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not an instant or sorcery).");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getDescription() + " fizzles (target is not an instant or sorcery)."));
             return;
         }
 

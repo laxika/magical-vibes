@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -65,14 +66,14 @@ public class DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffectHandler im
                 String sourceName = entry.getCard().getName();
                 for (Permanent perm : toDestroy) {
                     if (indestructible.contains(perm)) {
-                        gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is indestructible.");
+                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is indestructible."));
                         continue;
                     }
                     if (graveyardService.tryRegenerate(gameData, perm)) {
                         continue;
                     }
                     permanentRemovalService.removePermanentToGraveyard(gameData, perm);
-                    gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + " is destroyed.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName() + " is destroyed."));
                     log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
                     destroyedCount++;
                 }
@@ -102,7 +103,7 @@ public class DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffectHandler im
 
                     String logEntry = "A " + destroyedCount + "/" + destroyedCount + " " + e.tokenName()
                             + " artifact creature token enters the battlefield.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     log.info("Game {} - {} creates a {}/{} {} artifact creature token",
                             gameData.id, sourceName, destroyedCount, destroyedCount, e.tokenName());
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -95,7 +97,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions casting
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("casts Midnight Ritual"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("casts Midnight Ritual"));
     }
 
     // ===== Resolution: exile + token creation =====
@@ -131,7 +133,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
 
         // Log mentions exile
-        assertThat(gd.gameLog).anyMatch(l -> l.contains("exiles") && l.contains("from graveyard"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("exiles") && l.contains("from graveyard"));
     }
 
     @Test

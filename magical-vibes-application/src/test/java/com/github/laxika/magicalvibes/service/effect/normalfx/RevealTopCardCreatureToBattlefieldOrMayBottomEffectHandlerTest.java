@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -116,8 +117,8 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
                 revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("library is empty")));
             }
 
             @Test
@@ -137,8 +138,8 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
                 verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
                 verify(battlefieldEntryService).handleCreatureEnteredBattlefield(
                         eq(gd), eq(player1Id), eq(creature), eq(null), eq(false));
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("enters the battlefield")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("enters the battlefield")));
             }
 
             @Test

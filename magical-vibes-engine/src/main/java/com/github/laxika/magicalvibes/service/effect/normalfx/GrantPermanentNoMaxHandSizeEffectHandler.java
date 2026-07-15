@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEffect;
@@ -29,8 +30,7 @@ public class GrantPermanentNoMaxHandSizeEffectHandler implements NormalEffectHan
         UUID controllerId = entry.getControllerId();
         gameData.playersWithNoMaximumHandSize.add(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        gameBroadcastService.logAndBroadcast(gameData,
-                playerName + " has no maximum hand size for the rest of the game.");
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " has no maximum hand size for the rest of the game."));
         log.info("Game {} - {} granted permanent no maximum hand size", gameData.id, playerName);
     
     }

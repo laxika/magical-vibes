@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.DraftData;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -83,7 +84,7 @@ public class GameOutcomeService {
                 } else {
                     logEntry = gameData.playerIdToName.get(playerId) + " has been defeated! " + winnerName + " wins!";
                 }
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
                 sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
 
@@ -112,7 +113,7 @@ public class GameOutcomeService {
         String winnerName = gameData.playerIdToName.get(winnerId);
 
         String logEntry = winnerName + " wins the game!";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         sessionManager.sendToPlayers(gameData.orderedPlayerIds, new GameOverMessage(winnerId, winnerName));
 
@@ -157,7 +158,7 @@ public class GameOutcomeService {
 
             String logEntry = perm.getCard().getName() + "'s triggered ability goes on the stack ("
                     + gameData.playerIdToName.get(losingPlayerId) + " loses the game).";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         });
     }
 

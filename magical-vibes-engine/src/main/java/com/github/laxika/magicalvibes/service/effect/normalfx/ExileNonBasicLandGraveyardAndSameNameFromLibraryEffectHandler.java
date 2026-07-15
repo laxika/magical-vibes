@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
@@ -64,7 +65,7 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
             java.util.Collections.shuffle(library);
             String logEntry = controllerName + " resolves Haunting Echoes — no non-basic-land cards in "
                     + targetName + "'s graveyard. " + targetName + " shuffles their library.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - Haunting Echoes: no non-basic-land cards in {}'s graveyard", gameData.id, targetName);
             return;
         }
@@ -103,7 +104,7 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
                 + "'s graveyard and " + libraryExiles.size() + " card"
                 + (libraryExiles.size() != 1 ? "s" : "") + " from their library ("
                 + totalExiled + " total). " + targetName + " shuffles their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - Haunting Echoes: exiled {} from graveyard, {} from library of {}",
                 gameData.id, toExile.size(), libraryExiles.size(), targetName);

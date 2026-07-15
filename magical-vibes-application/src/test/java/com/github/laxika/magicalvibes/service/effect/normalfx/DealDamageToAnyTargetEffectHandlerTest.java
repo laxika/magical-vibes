@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -172,7 +173,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("Shock") && msg.contains("2 damage") && msg.contains("Grizzly Bears")));
+                verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("Shock") && logEntry.plainText().contains("2 damage") && logEntry.plainText().contains("Grizzly Bears")));
             }
 }

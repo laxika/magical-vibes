@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -55,5 +56,13 @@ public abstract class BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(p -> p.getCard().getName().equals(name))
                 .findFirst().orElseThrow();
+    }
+
+    protected boolean gameLogContains(String substring) {
+        return gd.gameLog.stream().anyMatch(entry -> entry.plainText().contains(substring));
+    }
+
+    protected boolean gameLogContains(GameData data, String substring) {
+        return data.gameLog.stream().anyMatch(entry -> entry.plainText().contains(substring));
     }
 }

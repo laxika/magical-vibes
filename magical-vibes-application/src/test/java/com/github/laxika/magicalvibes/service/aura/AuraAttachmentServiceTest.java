@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.aura;
+import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -149,8 +150,7 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Holy Strength is put into the graveyard (enchanted creature left the battlefield)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Holy Strength is put into the graveyard (enchanted creature left the battlefield).")));
         }
 
         @Test
@@ -204,8 +204,7 @@ class AuraAttachmentServiceTest {
 
             service.removeOrphanedAuras(gd);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd),
-                    eq("Darksteel Axe becomes unattached (equipped creature left the battlefield)."));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Darksteel Axe becomes unattached (equipped creature left the battlefield).")));
         }
 
         @Test

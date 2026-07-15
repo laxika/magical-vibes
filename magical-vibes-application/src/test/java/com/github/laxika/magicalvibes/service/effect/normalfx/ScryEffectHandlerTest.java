@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
@@ -32,6 +33,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -125,7 +127,7 @@ class ScryEffectHandlerTest {
 
                 scryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test
@@ -137,8 +139,8 @@ class ScryEffectHandlerTest {
 
                 scryEffectHandler.resolve(gd, entry, effect);
 
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("scries") && msg.contains("library is empty")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("scries") && logEntry.plainText().contains("library is empty")));
             }
 
             @Test
@@ -155,8 +157,8 @@ class ScryEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("scries 1")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("scries 1")));
             }
 
             @Test
@@ -175,7 +177,7 @@ class ScryEffectHandlerTest {
 
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
-                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                        msg.contains("scries 3")));
+                verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                        logEntry.plainText().contains("scries 3")));
             }
 }

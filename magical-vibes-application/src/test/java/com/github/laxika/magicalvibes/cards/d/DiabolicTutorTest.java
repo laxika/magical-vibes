@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -121,9 +123,9 @@ class DiabolicTutorTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Log should NOT mention "reveals"
-        assertThat(gd.gameLog).noneMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).noneMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
         // Log should mention putting a card into hand
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("puts a card into their hand"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("puts a card into their hand"));
     }
 
     // ===== Cannot fail to find (unrestricted search per MTG rule 701.19b) =====
@@ -167,7 +169,7 @@ class DiabolicTutorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-        assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
     // ===== Sorcery goes to graveyard after resolution =====

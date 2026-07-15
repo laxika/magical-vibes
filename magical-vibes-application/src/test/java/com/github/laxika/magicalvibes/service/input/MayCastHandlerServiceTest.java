@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -292,7 +293,7 @@ class MayCastHandlerServiceTest {
 
             svc.handleCastFromLibraryChoice(gd, player1, false, ability);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
         }
 
@@ -558,7 +559,7 @@ class MayCastHandlerServiceTest {
 
             svc.handleCastFromGraveyardChoice(gd, player1, false, ability, opponentGraveyardFree());
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
             verify(inputCompletionService).processMayAbilitiesThenAutoPass(gd);
             verifyNoInteractions(permanentRemovalService);
         }

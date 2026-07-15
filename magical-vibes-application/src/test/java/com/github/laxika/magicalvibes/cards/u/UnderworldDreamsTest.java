@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pariah;
@@ -103,6 +105,6 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Underworld Dreams trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("redirected Underworld Dreams damage"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("redirected Underworld Dreams damage"));
     }
 }

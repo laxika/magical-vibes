@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -55,7 +57,7 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("Lord of the Pit deals 7 damage"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Lord of the Pit deals 7 damage"));
     }
 
     @Test
@@ -242,7 +244,7 @@ class LordOfThePitTest extends BaseCardTest {
 
         // Damage from black source is prevented
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("is prevented"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("is prevented"));
     }
 
     @Test

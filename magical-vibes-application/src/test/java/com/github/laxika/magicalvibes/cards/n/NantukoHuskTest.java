@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -343,7 +345,7 @@ class NantukoHuskTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("sacrifices Grizzly Bears"));
     }
 
     @Test
@@ -357,7 +359,7 @@ class NantukoHuskTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bearsId);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("activates Nantuko Husk's ability"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("activates Nantuko Husk's ability"));
     }
 
     @Test
@@ -372,7 +374,7 @@ class NantukoHuskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("gets +2/+2"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gets +2/+2"));
     }
 
     // ===== Helper methods =====

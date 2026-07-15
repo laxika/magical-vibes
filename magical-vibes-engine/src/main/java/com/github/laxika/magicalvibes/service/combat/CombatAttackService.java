@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
@@ -194,7 +195,7 @@ public class CombatAttackService {
         if (attackerIndices.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             log.info("Game {} - {} declares no attackers", gameData.id, player.getUsername());
-            gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " declares no attackers.");
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " declares no attackers."));
             return CombatResult.AUTO_PASS_ONLY;
         }
 
@@ -283,7 +284,7 @@ public class CombatAttackService {
 
         String logEntry = player.getUsername() + " declares " + attackerIndices.size() +
                 " attacker" + (attackerIndices.size() > 1 ? "s" : "") + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         // Collect all attack-step triggers, then reorder per APNAP (CR 603.3b)
         int stackSizeBeforeAttackTriggers = gameData.stack.size();
@@ -322,7 +323,8 @@ public class CombatAttackService {
                             gameData.queueMayAbility(attacker.getCard(), defendingPlayerId,
                                     new MayEffect(new DrawCardEffect(), "Draw a card?"));
                         }
-                        gameData.gameLog.add(attacker.getCard().getName() + "'s ability triggers.");
+                        gameBroadcastService.logAndBroadcast(gameData,
+                                GameLog.builder().card(attacker.getCard()).text("'s ability triggers.").build());
                     }
                 }
 
@@ -381,8 +383,8 @@ public class CombatAttackService {
                         }
                     }
 
-                    String triggerLog = attacker.getCard().getName() + "'s attack ability triggers.";
-                    gameData.gameLog.add(triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s attack ability triggers.").build());
                     log.info("Game {} - {} attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
                 }
             }
@@ -410,8 +412,8 @@ public class CombatAttackService {
                         null,
                         attacker.getId()
                 ));
-                String triggerLog = attacker.getCard().getName() + "'s battle cry triggers.";
-                gameData.gameLog.add(triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
                 log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
             }
         }
@@ -454,8 +456,8 @@ public class CombatAttackService {
                     null,
                     null
             ));
-            String triggerLog = perm.getCard().getName() + "'s attack ability triggers.";
-            gameData.gameLog.add(triggerLog);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
             log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                     gameData.id, perm.getCard().getName(), attackerIndices.size());
         }
@@ -525,8 +527,8 @@ public class CombatAttackService {
                     gameData.stack.add(attackTrigger);
                 }
 
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameData.gameLog.add(triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
@@ -570,8 +572,8 @@ public class CombatAttackService {
                             null,
                             null
                     ));
-                    String triggerLog = card.getName() + "'s graveyard attack ability triggers.";
-                    gameData.gameLog.add(triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
                     log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
                             gameData.id, card.getName(), attackerIndices.size());
                 }
@@ -616,8 +618,8 @@ public class CombatAttackService {
                 );
                 attackedTrigger.setNonTargeting(true);
                 gameData.stack.add(attackedTrigger);
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameData.gameLog.add(triggerLog);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                 log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
             }
@@ -646,8 +648,8 @@ public class CombatAttackService {
                     );
                     anyAttackTrigger.setNonTargeting(true);
                     gameData.stack.add(anyAttackTrigger);
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameData.gameLog.add(triggerLog);
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                     log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
                             gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                 }

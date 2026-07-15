@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -136,9 +137,9 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
         }
 
         private String captureLogMessage() {
-            ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+            ArgumentCaptor<GameLogEntry> captor = ArgumentCaptor.forClass(GameLogEntry.class);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), captor.capture());
-            return captor.getValue();
+            return captor.getValue().plainText();
         }
 
         // =========================================================================
@@ -155,7 +156,7 @@ class ChangeTargetOfTargetSpellWithSingleTargetEffectHandlerTest {
                 changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
                 verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
-                verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
+                verify(gameBroadcastService, never()).logAndBroadcast(any(), any(GameLogEntry.class));
             }
 
             @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -43,7 +45,7 @@ class ControlOfTheCourtTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
         // Random discard does not prompt the player
         assertThat(gd.interaction.activeInteraction()).isNull();
-        long randomDiscardLogs = gd.gameLog.stream()
+        long randomDiscardLogs = gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(log -> log.contains("discards") && log.contains("at random"))
                 .count();
         assertThat(randomDiscardLogs).isEqualTo(3);

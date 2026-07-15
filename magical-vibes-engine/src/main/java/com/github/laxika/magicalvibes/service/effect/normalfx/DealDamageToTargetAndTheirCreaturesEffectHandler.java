@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
@@ -54,8 +55,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
             if (affectedPlayerId == null) return;
 
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + "'s damage to " + targetPw.getCard().getName() + " is prevented.");
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPw.getCard().getName() + " is prevented."));
             } else {
                 if (damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage)) {
                     damageSupport.destroyPermanent(gameData, targetPw);
@@ -72,8 +72,7 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                 // Skip the planeswalker target (already dealt damage above)
                 if (!targetIsPlayer && creature.getId().equals(targetId)) continue;
                 if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            cardName + "'s damage to " + creature.getCard().getName() + " is prevented.");
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + creature.getCard().getName() + " is prevented."));
                     continue;
                 }
                 if (damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage)) {

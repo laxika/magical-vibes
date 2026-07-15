@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -39,7 +40,7 @@ public class SorinLordOfInnistradEmblemEffectHandler implements NormalEffectHand
         gameData.emblems.add(emblem);
 
         String logEntry = playerName + " gets an emblem with \"Creatures you control get +1/+0.\".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets Sorin, Lord of Innistrad emblem", gameData.id, playerName);
     }

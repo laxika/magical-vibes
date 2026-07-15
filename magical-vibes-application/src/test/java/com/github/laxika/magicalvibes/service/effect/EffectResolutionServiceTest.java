@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -153,9 +154,9 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Concussive Bolt") && msg.contains("does nothing")
-                            && msg.contains("fewer than three artifacts")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Concussive Bolt") && logEntry.plainText().contains("does nothing")
+                            && logEntry.plainText().contains("fewer than three artifacts")));
         }
 
         @Test
@@ -201,9 +202,9 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Concussive Bolt") && msg.contains("does nothing")
-                            && msg.contains("fewer than three artifacts")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Concussive Bolt") && logEntry.plainText().contains("does nothing")
+                            && logEntry.plainText().contains("fewer than three artifacts")));
         }
     }
 
@@ -461,8 +462,8 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Temporal Machinations") && msg.contains("does nothing")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Temporal Machinations") && logEntry.plainText().contains("does nothing")));
         }
     }
 
@@ -676,9 +677,9 @@ class EffectResolutionServiceTest {
 
             effectResolutionService.resolveEffects(gd, entry);
 
-            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
-                    msg.contains("Fathom Fleet Captain") && msg.contains("does nothing")
-                            && msg.contains("matching permanent")));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Fathom Fleet Captain") && logEntry.plainText().contains("does nothing")
+                            && logEntry.plainText().contains("matching permanent")));
         }
     }
 
