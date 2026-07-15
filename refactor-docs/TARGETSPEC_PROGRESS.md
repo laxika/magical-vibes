@@ -225,3 +225,129 @@ NOT touched — no instanceof-on-effect counts changed.
   `DealDamageToTargetPlayerOrPlaneswalkerEffect` → PLAYER_OR_PLANESWALKER,
   `AnimatePermanentsEffect` (conditional `scope==TARGET`) → PERMANENT flagged,
   `ReturnTargetCardFromExileToHandEffect` → EXILE_CARD. ✓
+
+---
+
+## Step 2 — TargetSpec + ratchet + 3 pilots  (2026-07-15)
+
+**Part A — domain machinery (`magical-vibes-domain/.../model/effect/`):**
+- `TargetCategory` enum — the confirmed 13 values, each carrying
+  `includesPermanents()` / `includesPlayers()` booleans so step 10 can retire
+  `canTargetPermanent` / `canTargetPlayer` through them. Mapping (perm, player):
+  NONE(f,f), PLAYER(f,t), PLAYER_OR_PERMANENT(t,t), PERMANENT(t,f), CREATURE(t,f),
+  LAND(t,f), CREATURE_OR_PLANESWALKER(t,f), PLAYER_OR_PLANESWALKER(t,t),
+  ANY_TARGET(t,t), SPELL_ON_STACK(f,f), GRAVEYARD_CARD(f,f), ANY_GRAVEYARD_CARD(f,f),
+  EXILE_CARD(f,f). These reproduce today's `canTarget*` booleans per bucket exactly.
+- `TargetSpec(category, harmful, predicate, selfTargeting, playerTargetCount)`
+  record — immutable, in the effect package. Factories: `TargetSpec.NONE`,
+  `harmful(cat)`, `benign(cat)`, `harmful(cat, predicate)`, `benign(cat, predicate)`
+  (the withPredicate variants). Defaults: harmful false, predicate null,
+  selfTargeting false, playerTargetCount 1.
+- `CardEffect.targetSpec()` added as a derived default (`TargetSpec.NONE`); the 11
+  legacy targeting defaults now DERIVE from it: canTargetPlayer →
+  `category().includesPlayers()`, canTargetPermanent → `...includesPermanents()`,
+  canTargetSpell → `category == SPELL_ON_STACK`, canTargetGraveyard →
+  `GRAVEYARD_CARD || ANY_GRAVEYARD_CARD`, canTargetAnyGraveyard →
+  `ANY_GRAVEYARD_CARD`, canTargetExile → `EXILE_CARD`, targetPredicate →
+  `predicate()`, isSelfTargeting → `selfTargeting()`, requiredPlayerTargetCount →
+  `playerTargetCount()`, isDamageOrDestruction → `harmful()`.
+  `isPowerToughnessDefining` untouched. For `TargetSpec.NONE` every derived value
+  equals the historical default, and a per-record override still wins over the
+  interface default, so nothing changes for unmigrated records.
+  - **Deviation (documented):** `targetsControllersGraveyardOnly` has NO
+    `TargetCategory` correlate — both controller-only and opponent-only "return a
+    card from a graveyard" effects are `GRAVEYARD_CARD`, and `TargetSpec` has no
+    field for it (the record signature is fixed). It is kept as a constant-`false`
+    default (still equals today's default for NONE). The only 2 effects that set it
+    true (`GrantFlashbackToTargetGraveyardCardEffect`,
+    `PlayTargetCardFromGraveyardWithoutPayingManaCostEffect`) keep their own
+    override; the graveyard bucket (step 8) must resolve how they express it before
+    step 10 deletes the method.
+
+**Part B — engine spec interpreter (`TargetValidationService`):**
+- Added a `PredicateEvaluationService` constructor dependency (Spring-injected
+  everywhere; `TargetValidationService` is never `new`-ed — the harness/AI get it
+  via `context.getBean`, so no manual wiring site needed updating; no dependency
+  cycle: `PredicateEvaluationService` depends only on `GameQueryService`).
+- `checkEffectTargets` (the Optional-returning core the throwing overload
+  delegates to) now, for the SAME effect the registry lookup selects (after the
+  existing `ConditionalReplacementEffect` unwrap): if
+  `effect.targetSpec().category() != NONE`, runs a new private `validateSpec(ctx,
+  spec)` FIRST, then the registered class validator (if any) SECOND. Both are in
+  one try/catch that maps `IllegalStateException` → `Optional.of(message)`. Living
+  in the service (not a scanned `@ValidatesTarget` bean) guarantees every context —
+  including the AI simulator that builds the registry via `scanBean` outside
+  Spring — gets the interpreter.
+- `validateSpec` semantics mirror the hand validators exactly: CREATURE =
+  requireBattlefieldTarget + requireCreature (layer-aware via
+  `gameQueryService.isCreature`); CREATURE_OR_PLANESWALKER / ANY_TARGET /
+  PLAYER_OR_PLANESWALKER copied from the corresponding `DamageTargetValidators`
+  bodies (including the `playerIds.contains` pre-check for the player-capable
+  ones); PERMANENT = requireBattlefieldTarget only; LAND = battlefield + hasType
+  LAND; PLAYER / PLAYER_OR_PERMANENT / SPELL_ON_STACK / graveyard / exile do no
+  permanent-type check (guarded by their own paths). Then, on a permanent target
+  only: if `predicate() != null`, require
+  `predicateEvaluationService.matchesPermanentPredicate`; if `harmful()`, run
+  `checkProtection`.
+
+**Part C — ratchet + lockstep:**
+- `TargetSpecRatchetTest` (application `architecture/`) re-implements the audit's
+  per-file legacy-override counting (same 11 methods, same
+  `public <boolean|int|PermanentPredicate> name()` regex, count = distinct
+  methods), parses `targetspec-baseline.txt`, and fails on any increase (names the
+  file + overrides present + "declare a TargetSpec instead") and any decrease
+  ("regenerate the baseline with python scripts/targetspec-audit.py"). Lockstep
+  contract comment added to BOTH the test and `scripts/targetspec-audit.py`.
+- `instanceof TargetSpec` WOULD count as a coupling violation (TargetSpec is a
+  record in the effect package, not a wrapper/interface), so `TargetSpec` and
+  `TargetCategory` were added to the structural-wrapper exemption list in BOTH
+  `scripts/effect-coupling-audit.py` and `EffectDispatchRatchetTest` (in lockstep).
+  No `instanceof TargetSpec`/`instanceof TargetCategory` exists in code, so
+  `effect-dispatch-baseline.txt` was NOT regenerated (instanceof-on-effect counts
+  unchanged).
+- Verified the ratchet passes clean, then verified it CATCHES a violation:
+  temporarily added `canTargetPermanent()` to `GainLifeEffect` (count 1→2) → test
+  failed with "Legacy targeting overrides grew in …/GainLifeEffect.java (was 1, now
+  2). Overrides present: canTargetPermanent, canTargetPlayer. … declare a
+  TargetSpec instead" → reverted (file clean).
+
+**Part D — 3 pilots migrated end to end** (all three verified purely structural
+by reading their validators first — requireBattlefieldTarget/requireCreature/
+checkProtection only, no opponent/controller/chosen-source/null-tolerance logic):
+- `DealDamageToTargetCreatureEffect` → `targetSpec() = harmful(CREATURE)`; deleted
+  `canTargetPermanent` + `isDamageOrDestruction` overrides and validator
+  `validateDealDamageToTargetCreature`.
+- `DealDamageToAnyTargetEffect` → `harmful(ANY_TARGET)`; deleted `canTargetPlayer`
+  + `canTargetPermanent` + `isDamageOrDestruction` and validator
+  `validateDealDamageToAnyTarget`.
+- `DestroyTargetPermanentEffect` → `harmful(PERMANENT)`; deleted
+  `canTargetPermanent` + `isDamageOrDestruction` and validator
+  `validateDestroyTargetPermanent`.
+- Unused effect imports pruned from `DamageTargetValidators` /
+  `DestructionTargetValidators`. The kept `validateDestroyTargetPermanentThen`
+  comment updated to note the unwrapped base now validates via its PERMANENT spec.
+
+**Audit re-run:** `python scripts/targetspec-audit.py` re-run to regenerate
+`targetspec-baseline.txt` + `TARGETSPEC_MATRIX.md`. Records in scope 277 → **274**;
+sum of baseline counts 385 → **378** (−7 = 2+3+2); canTargetPermanent overrides
+146 → 143; `@ValidatesTarget` methods 124 → **121**; escape-hatch count still 10.
+Category counts shifted CREATURE 41→40, ANY_TARGET 7→6, PERMANENT 68→67. The
+hardcoded "must equal 124" phrasing in the audit's generated matrix/print was
+relaxed to a moving-target note (validators shrink as structural ones retire).
+`effect-dispatch-baseline.txt` NOT touched.
+
+**Tests run** (via `./gradlew :magical-vibes-application:test --tests …`, all
+green): fixed regression set — `WrackWithMadnessTest`, `DarkNourishmentTest`,
+`FireballTest`, `EffectDispatchRatchetTest`, `TargetSpecRatchetTest`,
+`ValidTargetServiceTest`, `TargetLegalityServiceTest`; new
+`TargetValidationServiceSpecTest` (6 required cases: creature rejects land,
+ANY_TARGET accepts player+creature / rejects land, harmful runs protection,
+predicate narrowing both ways, NONE does nothing, spec + kept class validator both
+run); one card test per pilot effect — `SpittingEarthTest`
+(DealDamageToTargetCreatureEffect), `IncinerateTest` (DealDamageToAnyTargetEffect),
+`TerrorTest` (DestroyTargetPermanentEffect).
+
+**Oracle / judgment calls:** the 3 pilots' categories were confirmed against their
+kept validator bodies before deletion (CREATURE / ANY_TARGET / PERMANENT, all
+harmful because each validator called `checkProtection`). No card behavior narrowed;
+no web ruling needed (behavior-preserving structural migration).

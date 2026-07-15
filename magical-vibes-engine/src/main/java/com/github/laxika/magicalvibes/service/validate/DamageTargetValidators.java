@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -38,13 +36,6 @@ public class DamageTargetValidators {
 
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
-
-    @ValidatesTarget(DealDamageToTargetCreatureEffect.class)
-    public void validateDealDamageToTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
 
     @ValidatesTarget(DealDamageToTargetCreatureOrPlaneswalkerEffect.class)
     public void validateDealDamageToTargetCreatureOrPlaneswalker(TargetValidationContext ctx) {
@@ -85,21 +76,6 @@ public class DamageTargetValidators {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         if (!target.getCard().hasType(CardType.PLANESWALKER)) {
             throw new IllegalStateException("Target must be a player or planeswalker");
-        }
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DealDamageToAnyTargetEffect.class)
-    public void validateDealDamageToAnyTarget(TargetValidationContext ctx) {
-        tvs.requireTarget(ctx);
-        if (ctx.gameData().playerIds.contains(ctx.targetId())) {
-            return;
-        }
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        boolean validPermanentType = gameQueryService.isCreature(ctx.gameData(), target)
-                || target.getCard().hasType(CardType.PLANESWALKER);
-        if (!validPermanentType) {
-            throw new IllegalStateException("Target must be a creature, planeswalker, or player");
         }
         tvs.checkProtection(ctx, target);
     }

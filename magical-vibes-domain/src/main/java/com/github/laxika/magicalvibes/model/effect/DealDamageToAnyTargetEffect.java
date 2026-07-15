@@ -47,18 +47,8 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
     }
 
     @Override

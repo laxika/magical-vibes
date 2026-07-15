@@ -47,7 +47,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EffectDispatchRatchetTest {
 
-    /** Structural wrapper types any code may legitimately unwrap; exempt from violation counting. */
+    /**
+     * Structural wrapper types any code may legitimately unwrap; exempt from violation counting.
+     * TargetSpec / TargetCategory also live in the effect package but are targeting DESCRIPTORS,
+     * not dispatchable effects, so they are exempt too (kept in lockstep with
+     * {@code scripts/effect-coupling-audit.py}).
+     */
     private static final Set<String> STRUCTURAL_WRAPPERS = Set.of(
             "ConditionalEffect",
             "ConditionalReplacementEffect",
@@ -56,7 +61,9 @@ class EffectDispatchRatchetTest {
             "MayPayTapPermanentsEffect",
             "ChooseOneEffect",
             "CostEffect",
-            "CardEffect");
+            "CardEffect",
+            "TargetSpec",
+            "TargetCategory");
 
     private static final Pattern INSTANCEOF_RE = Pattern.compile("\\binstanceof\\s+([A-Za-z_][\\w.]*)");
     private static final Pattern KIND_RE = Pattern.compile("\\b(interface|record|enum|class)\\s+([A-Za-z_]\\w*)");

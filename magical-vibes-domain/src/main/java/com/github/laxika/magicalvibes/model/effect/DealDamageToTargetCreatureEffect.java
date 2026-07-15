@@ -26,13 +26,8 @@ public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unp
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.CREATURE);
     }
 
     @Override

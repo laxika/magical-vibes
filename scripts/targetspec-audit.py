@@ -26,6 +26,18 @@ own override of >=1 of these. The baseline count for a file is the number of
 DISTINCT legacy methods it overrides.
 
 ============================================================================
+LOCKSTEP CONTRACT with TargetSpecRatchetTest
+============================================================================
+The per-file legacy-override COUNTING RULES below (the LEGACY_METHODS set and
+the `method_override_re` regex that matches `public <boolean|int|
+PermanentPredicate> <name>()`) are DUPLICATED in the Java ratchet
+`magical-vibes-application/.../architecture/TargetSpecRatchetTest.java`, which
+parses the `targetspec-baseline.txt` this script writes and fails when any
+file's count drifts from its baseline. If you change how a file's count is
+computed here you MUST change it there in lockstep, or the freshly regenerated
+baseline and the ratchet will disagree and the ratchet becomes noise.
+
+============================================================================
 CONDITIONAL OVERRIDE
 ============================================================================
 An override body is CONSTANT when, after stripping comments and whitespace, it
@@ -404,7 +416,8 @@ def write_matrix(effects, validators_by_effect, all_validators):
     out.append(f"- **Total legacy method-overrides (== sum of baseline counts):** {total_overrides}")
     out.append(f"- **Records with >=1 CONDITIONAL override (need per-instance spec):** {len(cond_effects)}")
     out.append(f"- **Records with a @ValidatesTarget validator:** {len(with_validator)}")
-    out.append(f"- **@ValidatesTarget methods total (must equal 124):** {len(all_validators)}")
+    out.append(f"- **@ValidatesTarget methods total:** {len(all_validators)} "
+               f"(124 at the step-1 audit; shrinks as structural validators retire during migration)")
     out.append("")
     out.append("`*` after a legacy method name means the override body is CONDITIONAL "
                "(reads record components / branches) — its spec must be computed "
@@ -546,7 +559,7 @@ def main():
           f"(sum of baseline counts = {stats['total_overrides']} legacy overrides)")
     print(f"canTargetPermanent overrides: {perm} (sanity: baseline sum {stats['total_overrides']} >= 146)")
     print(f"conditional-override records: {stats['cond']}")
-    print(f"validators total: {len(all_validators)} (sanity: == 124); "
+    print(f"validators total: {len(all_validators)} (124 at step-1 audit); "
           f"records with a validator: {stats['with_validator']}")
     print(f"escape-hatch validators: {stats['escape']}")
     if stats["const_false"]:

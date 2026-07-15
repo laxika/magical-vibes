@@ -46,7 +46,6 @@ magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/C
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect.java=1
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAllCreaturesTargetControlsEffect.java=1
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAnyTargetAndGainLifeEffect.java=3
-magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAnyTargetEffect.java=3
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAnyTargetEqualToChosenTypeCountEffect.java=3
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect.java=3
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect.java=1
@@ -56,7 +55,6 @@ magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/D
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToPlayersEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetAndTheirCreaturesEffect.java=3
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetControllerIfTargetHasKeywordEffect.java=1
-magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetCreatureEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetCreatureEqualToChosenTypeCountEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetCreatureOrPlaneswalkerEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DealDamageToTargetOpponentOrPlaneswalkerEffect.java=3
@@ -74,7 +72,6 @@ magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/D
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetPermanentAndDamageControllerIfDestroyedEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetPermanentAtEndStepEffect.java=2
-magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetPermanentEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetPermanentThenEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyTargetThenRevealUntilTypeToBattlefieldEffect.java=2
 magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/DestroyUpToTargetsThenReturnFromGraveyardEffect.java=2

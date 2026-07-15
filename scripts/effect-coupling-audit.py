@@ -57,6 +57,10 @@ BASELINE_TXT = OUT_DIR / "effect-dispatch-baseline.txt"
 
 # Structural wrapper types any code may legitimately unwrap (mirrors how
 # EffectResolutionService.java treats them). Exempt from violation counting.
+# TargetSpec / TargetCategory live in the effect package (so CardEffect.targetSpec()
+# can reference them without a cross-package import) but are targeting DESCRIPTORS,
+# not dispatchable effects — `instanceof TargetSpec` is never effect-type dispatch, so
+# they are exempt here (kept in lockstep with EffectDispatchRatchetTest).
 STRUCTURAL_WRAPPERS = {
     "ConditionalEffect",
     "ConditionalReplacementEffect",
@@ -66,6 +70,8 @@ STRUCTURAL_WRAPPERS = {
     "ChooseOneEffect",
     "CostEffect",
     "CardEffect",
+    "TargetSpec",
+    "TargetCategory",
 }
 
 INSTANCEOF_RE = re.compile(r"\binstanceof\s+([A-Za-z_][\w.]*)")

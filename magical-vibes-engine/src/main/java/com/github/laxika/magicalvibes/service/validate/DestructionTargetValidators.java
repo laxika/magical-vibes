@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyAttachmentsOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
@@ -60,17 +59,12 @@ public class DestructionTargetValidators {
         tvs.checkProtection(ctx, target);
     }
 
-    @ValidatesTarget(DestroyTargetPermanentEffect.class)
-    public void validateDestroyTargetPermanent(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.checkProtection(ctx, target);
-    }
-
     // Covers the whole destroy-plus-value family (DestroyTargetPermanentThenEffect). All members are
     // single-battlefield-target with protection honoured; the type restriction is the card's own
     // target filter. FoolishFate wraps it in a ConditionalReplacementEffect, whose base effect
     // (DestroyTargetPermanentEffect) carries the validation instead — checkEffectTargets unwraps to
-    // the base — so this validator does not run for that card.
+    // the base, whose harmful PERMANENT TargetSpec is then interpreted — so this validator does not
+    // run for that card.
     @ValidatesTarget(DestroyTargetPermanentThenEffect.class)
     public void validateDestroyTargetPermanentThen(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
