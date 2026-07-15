@@ -1,25 +1,34 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,6 +47,8 @@ public class LandTapTriggerCollectorService {
     private final DamagePreventionService damagePreventionService;
     private final PermanentRemovalService permanentRemovalService;
     private final LifeSupport lifeSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final AmountEvaluationService amountEvaluationService;
 
     @CollectsTrigger(value = DealDamageOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
@@ -110,16 +121,42 @@ public class LandTapTriggerCollectorService {
             return false;
         }
 
-        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
-        for (int i = 0; i < trigger.amount(); i++) {
-            pool.add(trigger.color());
+        var gameData = match.gameData();
+        UUID tappingPlayerId = lt.tappingPlayerId();
+        String playerName = gameData.playerIdToName.get(tappingPlayerId);
+        String cardName = match.permanent().getCard().getName();
+        ManaProducingEffect mana = trigger.mana();
+
+        if (mana instanceof AwardAnyColorManaEffect anyColor) {
+            ChoiceContext.ManaColorChoice choiceContext =
+                    new ChoiceContext.ManaColorChoice(tappingPlayerId, false, anyColor.amount());
+            List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    tappingPlayerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+
+            String logEntry = cardName + " triggers — " + playerName + " chooses a color of mana to add.";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - Awaiting {} to choose a mana color from {}", gameData.id, playerName, cardName);
+            return true;
         }
 
-        String logEntry = match.permanent().getCard().getName() + " triggers - "
-                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
-                + " adds " + trigger.amount() + " " + trigger.color().name().toLowerCase() + " mana.";
-        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
-        return true;
+        if (mana instanceof AwardManaEffect award) {
+            int amount = amountEvaluationService.evaluate(gameData, award.amount(),
+                    new AmountContext(tappingPlayerId, null, null, 0, 0, false));
+            if (amount <= 0) {
+                return false;
+            }
+
+            gameData.playerManaPools.get(tappingPlayerId).add(award.color(), amount);
+
+            String logEntry = cardName + " triggers - " + playerName
+                    + " adds " + amount + " " + award.color().name().toLowerCase() + " mana.";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            return true;
+        }
+
+        log.warn("Unsupported mana effect in AddManaOnEnchantedLandTapEffect: {}", mana.getClass().getSimpleName());
+        return false;
     }
 
     @CollectsTrigger(value = AddExtraManaOfChosenColorOnLandTapEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)

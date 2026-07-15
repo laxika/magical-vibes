@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
@@ -20,6 +21,8 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,6 +54,12 @@ class LandTapTriggerCollectorServiceTest {
 
     @Mock
     private PermanentRemovalService permanentRemovalService;
+
+    @Mock
+    private InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @InjectMocks
     private LandTapTriggerCollectorService sut;
@@ -396,8 +405,10 @@ class LandTapTriggerCollectorServiceTest {
             Permanent overgrowth = createPermanent("Overgrowth");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             overgrowth.setAttachedTo(forest.getId());
-            var effect = new AddManaOnEnchantedLandTapEffect(ManaColor.GREEN, 2);
+            var effect = new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 2));
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
+
+            when(amountEvaluationService.evaluate(any(), any(), any())).thenReturn(2);
 
             int greenBefore = gd.playerManaPools.get(player1Id).get(ManaColor.GREEN);
 
@@ -417,7 +428,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent forest1 = createLandPermanent("Forest", ManaColor.GREEN);
             UUID differentLandId = UUID.randomUUID();
             overgrowth.setAttachedTo(forest1.getId());
-            var effect = new AddManaOnEnchantedLandTapEffect(ManaColor.GREEN, 2);
+            var effect = new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 2));
             var ctx = new TriggerContext.LandTap(player1Id, differentLandId);
 
             int greenBefore = gd.playerManaPools.get(player1Id).get(ManaColor.GREEN);
@@ -435,7 +446,7 @@ class LandTapTriggerCollectorServiceTest {
         void returnsFalseWhenNotAttached() {
             Permanent overgrowth = createPermanent("Overgrowth");
             UUID tappedLandId = UUID.randomUUID();
-            var effect = new AddManaOnEnchantedLandTapEffect(ManaColor.GREEN, 2);
+            var effect = new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 2));
             var ctx = new TriggerContext.LandTap(player1Id, tappedLandId);
 
             boolean result = registry.dispatch(
@@ -443,6 +454,25 @@ class LandTapTriggerCollectorServiceTest {
                     EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
             assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("begins color choice for any-color mana when enchanted land is tapped")
+        void beginsColorChoiceForAnyColorMana() {
+            Permanent fertileGround = createPermanent("Fertile Ground");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            fertileGround.setAttachedTo(forest.getId());
+            var effect = new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect());
+            var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
+
+            boolean result = registry.dispatch(
+                    match(fertileGround, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(interactionHandlerRegistry).begin(eq(gd),
+                    any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 

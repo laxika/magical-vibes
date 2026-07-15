@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -49,8 +50,8 @@ class FertileGroundTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Tapping enchanted Forest adds one extra mana in addition to normal land mana")
-    void enchantedLandAddsExtraMana() {
+    @DisplayName("Tapping enchanted Forest adds one extra mana of the chosen color")
+    void enchantedLandAddsExtraManaOfChosenColor() {
         harness.addToBattlefield(player1, new Forest());
         Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
         Permanent aura = new Permanent(new FertileGround());
@@ -58,8 +59,12 @@ class FertileGroundTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
     @Test
@@ -88,9 +93,11 @@ class FertileGroundTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).add(aura);
 
         harness.tapPermanent(player2, 0);
+        harness.handleListChoice(player2, "RED");
 
-        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(0);
     }
 
     @Test

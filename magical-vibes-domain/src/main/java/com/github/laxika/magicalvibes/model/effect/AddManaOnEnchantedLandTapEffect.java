@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
-
-public record AddManaOnEnchantedLandTapEffect(ManaColor color, int amount) implements CardEffect {
+/**
+ * When enchanted land is tapped for mana, its controller adds the mana described by
+ * {@code mana} (e.g. {@link AwardManaEffect}, {@link AwardAnyColorManaEffect}).
+ */
+public record AddManaOnEnchantedLandTapEffect(ManaProducingEffect mana) implements CardEffect {
 }

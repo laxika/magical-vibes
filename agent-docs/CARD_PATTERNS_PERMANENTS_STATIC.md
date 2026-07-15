@@ -135,7 +135,7 @@ All paths relative to `cards/`.
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |
 | Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |
 | Prevent X + redirect to player | `v/VengefulArchon.java` | Activated {X}: PreventXDamageToControllerAndRedirectToTargetPlayerEffect — prevent next X damage to you, source deals that much to target player |
-| Enchanted land mana | `o/Overgrowth.java` | ON_ANY_PLAYER_TAPS_LAND AddManaOnEnchantedLandTapEffect |
+| Enchanted land mana | `o/Overgrowth.java`, `f/FertileGround.java` | ON_ANY_PLAYER_TAPS_LAND `AddManaOnEnchantedLandTapEffect` + `AwardManaEffect` / `AwardAnyColorManaEffect` |
 | Enchanted land grant mana ability + ETB counter | `n/NewHorizons.java` | STATIC GrantActivatedAbilityEffect(AwardAnyColorManaEffect(2), ENCHANTED_PERMANENT) + ON_ENTER_BATTLEFIELD PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 1) — multi-target aura: first target is land (aura attachment), second is creature (ETB +1/+1 counter). Uses GrantScope.ENCHANTED_PERMANENT for non-creature aura targets |
 | Enchanted land becomes basic type | `e/EvilPresence.java` | STATIC EnchantedPermanentBecomesTypeEffect(SWAMP) — land loses all land types/abilities, becomes the new basic land type |
 | Aura animates enchanted land into a creature | `l/LivingTerrain.java` | STATIC EnchantedPermanentBecomesCreatureEffect(5, 6, GREEN, [TREEFOLK]) — "Enchanted land is a 5/6 green Treefolk creature that's still a land." Continuous static animation (isCreature via aura scan, layer-4 type + handler colour/base-P/T); reverts when the aura leaves. Freshly-controlled land is summoning sick as a creature |
