@@ -602,8 +602,8 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(graveyardCard));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            String logEntry = player.getUsername() + " plays " + graveyardCard.getName() + " from graveyard.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.playerPlays(player.getUsername(), graveyardCard, " from graveyard."));
 
             log.info("Game {} - {} plays {} from graveyard", gameData.id, player.getUsername(), graveyardCard.getName());
 
@@ -1055,8 +1055,7 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            String logEntry = player.getUsername() + " plays " + card.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(player.getUsername(), card));
 
             log.info("Game {} - {} plays {}", gameData.id, player.getUsername(), card.getName());
 
@@ -2103,8 +2102,8 @@ public class SpellCastingService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
             gameData.landsPlayedThisTurn.merge(playerId, 1, Integer::sum);
 
-            String logEntry = player.getUsername() + " plays " + card.getName() + " from exile.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.playerPlays(player.getUsername(), card, " from exile."));
             log.info("Game {} - {} plays {} from exile", gameData.id, player.getUsername(), card.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, playerId, card, null, false);

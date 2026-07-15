@@ -162,8 +162,8 @@ public class MayCastHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
 
-            String logEntry = playerName + " plays " + cardToPlay.getName() + " without paying its mana cost.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
             log.info("Game {} - {} plays {} (land) from library", gameData.id, playerName, cardToPlay.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
@@ -415,8 +415,8 @@ public class MayCastHandlerService {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
 
-            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, cardToPlay,
+                    " from their graveyard without paying its mana cost."));
             log.info("Game {} - {} plays {} (land) from graveyard", gameData.id, playerName, cardToPlay.getName());
 
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
@@ -461,8 +461,8 @@ public class MayCastHandlerService {
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToPlay.getName() + ".");
 
-            String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, cardToPlay,
+                    " from their graveyard without paying its mana cost — choosing target."));
             log.info("Game {} - {} casts {} from graveyard, choosing target", gameData.id, playerName, cardToPlay.getName());
             return; // Wait for target choice
         }
@@ -474,8 +474,8 @@ public class MayCastHandlerService {
         gameData.recordSpellCast(player.getId(), cardToPlay);
         gameData.priorityPassedBy.clear();
 
-        String logEntry = playerName + " plays " + cardToPlay.getName() + " from their graveyard without paying its mana cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, cardToPlay,
+                " from their graveyard without paying its mana cost."));
         log.info("Game {} - {} casts {} from graveyard without paying mana", gameData.id, playerName, cardToPlay.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, cardToPlay, player.getId(), false);
@@ -522,7 +522,8 @@ public class MayCastHandlerService {
             gameData.removeFromExile(cardToPlay.getId());
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), new Permanent(cardToPlay));
             gameData.landsPlayedThisTurn.merge(player.getId(), 1, Integer::sum);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " plays " + cardToPlay.getName() + " without paying its mana cost."));
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.playerPlays(playerName, cardToPlay, " without paying its mana cost."));
             battlefieldEntryService.processCreatureETBEffects(gameData, player.getId(), cardToPlay, null, false);
             log.info("Game {} - {} plays imprinted land {} from exile", gameData.id, playerName, cardToPlay.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

@@ -87,9 +87,8 @@ public class ExileFreeCastSupport {
             playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
 
-            String logEntry = playerName + " plays " + card.getName()
-                    + " without paying its mana cost — choosing target.";
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.playerPlays(playerName, card,
+                    " without paying its mana cost — choosing target."));
             return;
         }
 
@@ -102,8 +101,8 @@ public class ExileFreeCastSupport {
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
 
-        String logEntry = playerName + " plays " + card.getName() + " without paying its mana cost.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        gameBroadcastService.logAndBroadcast(gameData,
+                GameLog.playerPlays(playerName, card, " without paying its mana cost."));
         log.info("Game {} - {} plays {} from exile without paying mana", gameData.id, playerName, card.getName());
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);

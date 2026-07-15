@@ -27,6 +27,14 @@ public final class GameLog {
         return builder().text(playerName + " chooses ").text(choice).text(" for ").card(card).text(".").build();
     }
 
+    public static GameLogEntry playerPlays(String playerName, Card card) {
+        return playerPlays(playerName, card, ".");
+    }
+
+    public static GameLogEntry playerPlays(String playerName, Card card, String suffix) {
+        return builder().text(playerName + " plays ").card(card).text(suffix).build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }
