@@ -30,7 +30,7 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

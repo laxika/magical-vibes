@@ -33,7 +33,9 @@ public record SetBasePowerToughnessEffect(int power, int toughness, GrantScope s
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == GrantScope.TARGET;
+    public TargetSpec targetSpec() {
+        return scope == GrantScope.TARGET
+                ? TargetSpec.benign(TargetCategory.CREATURE)
+                : TargetSpec.NONE;
     }
 }

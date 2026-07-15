@@ -76,8 +76,11 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     }
 
     @Override
-    public boolean isSelfTargeting() { return scope == GrantScope.SELF; }
-
-    @Override
-    public boolean canTargetPermanent() { return scope == GrantScope.TARGET; }
+    public TargetSpec targetSpec() {
+        return switch (scope) {
+            case TARGET -> TargetSpec.benign(TargetCategory.PERMANENT);
+            case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            default -> TargetSpec.NONE;
+        };
+    }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 public record GrantProtectionFromCardTypeUntilEndOfTurnEffect(CardType cardType) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

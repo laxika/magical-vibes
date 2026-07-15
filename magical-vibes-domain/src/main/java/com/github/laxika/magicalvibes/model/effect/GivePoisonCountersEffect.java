@@ -36,7 +36,9 @@ public record GivePoisonCountersEffect(int amount, PoisonRecipient recipient,
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return recipient == PoisonRecipient.TARGET_PLAYER;
+    public TargetSpec targetSpec() {
+        return recipient == PoisonRecipient.TARGET_PLAYER
+                ? TargetSpec.benign(TargetCategory.PLAYER)
+                : TargetSpec.NONE;
     }
 }

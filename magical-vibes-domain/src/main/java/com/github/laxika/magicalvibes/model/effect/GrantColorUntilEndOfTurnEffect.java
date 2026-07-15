@@ -15,7 +15,8 @@ public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive) 
         this(color, false);
     }
 
-    public boolean canTargetPermanent() {
-        return true;
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

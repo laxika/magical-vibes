@@ -17,7 +17,7 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

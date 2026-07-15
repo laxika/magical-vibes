@@ -22,17 +22,14 @@ public record TapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == TapUntapScope.TARGET || scope == TapUntapScope.ALL_TARGETS;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS;
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return scope == TapUntapScope.SELF;
+    public TargetSpec targetSpec() {
+        return switch (scope) {
+            // TARGET taps a chosen permanent; ALL_TARGETS is unused by tap (dead path) but keeps
+            // canTargetPermanent=true exactly. The single-target validation runs requireBattlefieldTarget.
+            case TARGET, ALL_TARGETS -> TargetSpec.benign(TargetCategory.PERMANENT);
+            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetCategory.PLAYER);
+            case SELF -> new TargetSpec(TargetCategory.NONE, false, null, true, 1);
+            default -> TargetSpec.NONE;
+        };
     }
 }

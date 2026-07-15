@@ -17,7 +17,7 @@ public record AddCardTypeToTargetPermanentEffect(CardType cardType, boolean pers
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

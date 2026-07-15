@@ -32,7 +32,7 @@ public record GrantBasicLandTypeToTargetEffect(EffectDuration duration, CardSubt
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.LAND);
     }
 }

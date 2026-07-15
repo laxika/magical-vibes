@@ -20,7 +20,7 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
 ) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

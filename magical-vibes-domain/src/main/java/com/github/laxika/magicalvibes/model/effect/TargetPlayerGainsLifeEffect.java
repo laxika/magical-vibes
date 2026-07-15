@@ -13,5 +13,8 @@ public record TargetPlayerGainsLifeEffect(DynamicAmount amount) implements CardE
         this(new Fixed(amount));
     }
 
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
+    }
 }

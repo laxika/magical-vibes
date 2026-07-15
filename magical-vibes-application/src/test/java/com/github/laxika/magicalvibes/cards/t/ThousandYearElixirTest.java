@@ -42,9 +42,12 @@ class ThousandYearElixirTest extends BaseCardTest {
         UUID artifactId = harness.getPermanentId(player2, "Angel's Feather");
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
+        // The effect's PermanentIsCreaturePredicate (carried on its TargetSpec, and exposed via
+        // targetPredicate() for trigger-target collection) is enforced by the declarative spec
+        // interpreter, which rejects the non-creature with the engine-standard predicate message.
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifactId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Target does not match the required predicate");
     }
 
     // ===== Static: activate abilities as though creatures had haste =====

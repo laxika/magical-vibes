@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

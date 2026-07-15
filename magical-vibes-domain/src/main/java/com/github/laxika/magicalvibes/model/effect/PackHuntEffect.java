@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 public record PackHuntEffect(CardSubtype creatureSubtype) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.CREATURE);
     }
 }

@@ -26,7 +26,8 @@ public record BecomeChosenColorsUntilEndOfTurnEffect(Set<CardColor> colors) impl
         this(Set.of());
     }
 
-    public boolean canTargetPermanent() {
-        return true;
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PERMANENT);
     }
 }

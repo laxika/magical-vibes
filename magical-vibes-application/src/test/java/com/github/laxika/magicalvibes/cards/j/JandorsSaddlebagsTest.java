@@ -63,9 +63,12 @@ class JandorsSaddlebagsTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).add(otherSaddlebags);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
+        // The effect's PermanentIsCreaturePredicate (carried on its TargetSpec, and exposed via
+        // targetPredicate() for trigger-target collection) is enforced by the declarative spec
+        // interpreter, which rejects the non-creature with the engine-standard predicate message.
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, otherSaddlebags.getId()))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be a creature");
+                .hasMessageContaining("Target does not match the required predicate");
     }
 
     @Test

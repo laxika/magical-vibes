@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.UUID;
 
@@ -12,8 +11,12 @@ import java.util.UUID;
  * (see {@code CombatAttackService}).
  */
 public record MustBlockSourceEffect(UUID sourcePermanentId) implements CardEffect {
-    @Override public boolean canTargetPermanent() { return true; }
-
-    /** Only creatures can be forced to block, so restrict targeted-trigger candidates to creatures. */
-    @Override public PermanentPredicate targetPredicate() { return new PermanentIsCreaturePredicate(); }
+    /**
+     * Only creatures can be forced to block; the CREATURE category enforces that, and the predicate
+     * preserves the creature restriction on targeted-trigger candidates (exposed via targetPredicate()).
+     */
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE, new PermanentIsCreaturePredicate());
+    }
 }

@@ -7,5 +7,8 @@ import java.util.UUID;
  * The sourcePermanentId is null in the card definition and gets snapshot at activation time.
  */
 public record CantBlockSourceEffect(UUID sourcePermanentId) implements CardEffect {
-    @Override public boolean canTargetPermanent() { return true; }
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
+    }
 }

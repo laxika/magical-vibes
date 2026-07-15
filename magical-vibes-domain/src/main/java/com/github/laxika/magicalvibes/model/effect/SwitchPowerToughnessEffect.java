@@ -14,12 +14,9 @@ public record SwitchPowerToughnessEffect(boolean self) implements CardEffect {
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return !self;
-    }
-
-    @Override
-    public boolean isSelfTargeting() {
-        return self;
+    public TargetSpec targetSpec() {
+        return self
+                ? new TargetSpec(TargetCategory.NONE, false, null, true, 1)
+                : TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

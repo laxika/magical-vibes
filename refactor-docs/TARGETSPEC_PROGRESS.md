@@ -627,3 +627,142 @@ one card test per migrated effect (all 34 exist and pass) — `CruelEdictTest` (
 (PutTargetOnTopOfLibrary), `TeferiHeroOfDominariaTest` (PutTargetPermanentIntoLibraryNFromTop),
 `DeglamerTest` (ShuffleTargetPermanentIntoLibrary), `OliviaVoldarenTest` (GrantSubtypeToTargetCreature),
 `JinxedIdolTest` (TargetPlayerGainsControlOfSourceCreature).
+
+---
+
+## Step 5 — CreatureMod / Life / Library validators  (2026-07-15)
+
+Migrated every effect whose `@ValidatesTarget` method lives in `CreatureModTargetValidators` (39
+methods), `LifeTargetValidators` (5), or `LibraryTargetValidators` (4) — **46 effects total**. Each
+validator was read and classified STRUCTURAL (spec-reproducible → delete) vs NON-STRUCTURAL /
+no-op-player (keep whole) before touching the record.
+
+**CreatureMod — 37 records migrated, validator DELETED (structural, fully reproduced by the spec):**
+- `benign(PERMANENT)` (validator = `requireBattlefieldTarget` only): `TapOrUntapTargetPermanentEffect`,
+  `GrantColorUntilEndOfTurnEffect`, `BecomeChosenColorsUntilEndOfTurnEffect`,
+  `UnattachEquipmentFromTargetPermanentsEffect`, `AddCardTypeToTargetPermanentEffect`,
+  `GrantProtectionChoiceUntilEndOfTurnEffect`, `CreateTokenCopyOfTargetPermanentEffect`,
+  `SetChosenColorUntilEndOfTurnEffect`, `DoubleCountersOnTargetPermanentEffect`,
+  `RemoveChargeCountersFromTargetPermanentEffect`, `RemoveCountersFromTargetAndBoostSelfEffect`.
+- `benign(CREATURE)` (validator = `requireBattlefieldTarget` + `requireCreature`):
+  `BoostTargetCreatureEffect`, `BuffTargetCreatureIndefinitelyEffect`,
+  `GrantProtectionFromCardTypeUntilEndOfTurnEffect`, `BoostTargetCreaturePerChosenTypeCountEffect`,
+  `EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect`,
+  `GrantEffectToTargetUntilEndOfTurnEffect`, `GrantChosenKeywordToTargetEffect`,
+  `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect`, `MustAttackThisTurnEffect`,
+  `MustBeBlockedByAllCreaturesThisTurnEffect`, `MustBeBlockedIfAbleThisTurnEffect`,
+  `CantBlockSourceEffect`, `RemoveTargetFromCombatEffect`, `MakeTargetCreaturePreparedEffect`,
+  `RemoveCounterFromTargetAndGainLifeEffect`, `EquipEffect`.
+- `benign(CREATURE, PermanentIsCreaturePredicate)`: `MustBlockSourceEffect` — the predicate is KEPT on
+  the spec (deleting the old `targetPredicate()` override, whose value it reproduces) because
+  trigger-target collection (`TriggeredAbilityQueueService` / `TriggerTargetCollector`, filter
+  `canTargetPermanent() && targetPredicate() != null`) restricts the granted "must block" trigger's
+  candidates to creatures (Tower Above). CREATURE + creature-predicate is redundant but preserves the
+  exact `targetPredicate()` output.
+- `benign(LAND)` (validator = `requireBattlefieldTarget` + `hasType(LAND)`): `GrantBasicLandTypeToTargetEffect`.
+- `harmful(CREATURE)` (validator = `requireBattlefieldTarget` + `requireCreature` + `checkProtection`):
+  `MassFightTargetCreatureEffect` (already `isDamageOrDestruction=true`; kept),
+  `PackHuntEffect` (its validator called `checkProtection` but the record did NOT override
+  `isDamageOrDestruction` — per HARMFUL FLAG POLICY the spec is `harmful`, flipping the derived
+  `isDamageOrDestruction` false→true; step-3 precedent: the offering now also filters protected
+  creatures — stricter-and-more-correct).
+- Per-scope specs (conditional records; the switch reproduces the old conditional booleans exactly,
+  and the validator's scope-guarded `requireBattlefieldTarget`/`requireCreature`, so all are DELETED):
+  - `TapPermanentsEffect` — `TARGET`/`ALL_TARGETS` → `benign(PERMANENT)`,
+    `TARGET_PLAYERS_PERMANENTS` → `benign(PLAYER)` (no-op, matches the old validator's no-check),
+    `SELF` → self-targeting `NONE`, else `NONE`.
+  - `UntapPermanentsEffect` — `TARGET` → `benign(PERMANENT, filter)` (predicate carried for the
+    VoltaicServant end-step trigger, which untaps target artifact via `targetPredicate()`);
+    **`ALL_TARGETS` → `benign(PLAYER_OR_PERMANENT)`** — a no-op category, chosen because
+    `ALL_TARGETS` is a LIVE multi-target scope (Garruk Wildspeaker's "untap two target lands") whose
+    targets ride `entry.getTargetIds()` and are validated on the multi-target path; a non-no-op
+    `PERMANENT` would add a `requireBattlefieldTarget` on the null single-`targetId` and break Garruk.
+    This widens the derived `canTargetPlayer` false→true for `ALL_TARGETS`, inert per step-3's
+    documented precedent (multi-target selection goes through `multiTargetFilters`, not the boolean).
+    `SELF` → self-targeting `NONE`, else `NONE`. (Tap's `ALL_TARGETS` is unused → `PERMANENT`, exact
+    booleans, dead path.)
+  - `CantBlockThisTurnEffect` — `TARGET` → `benign(CREATURE)` (validator did `requireCreature` here,
+    so CREATURE, not the matrix's coarse `PLAYER_OR_PERMANENT`), `TARGET_PLAYERS_PERMANENTS` →
+    `benign(PLAYER)`, else `NONE`.
+  - `SwitchPowerToughnessEffect` — `self` → self-targeting `NONE`, else `benign(CREATURE)`.
+  - `SetBasePowerToughnessEffect` — `GrantScope.TARGET` → `benign(CREATURE)`, else `NONE`.
+  - `AnimatePermanentsEffect` — `GrantScope.TARGET` → `benign(PERMANENT)`, `SELF` → self-targeting
+    `NONE`, else `NONE`.
+  - Self-targeting `NONE` is written `new TargetSpec(TargetCategory.NONE, false, null, true, 1)` (no
+    factory; reproduces the old `isSelfTargeting()` true exactly).
+
+**CreatureMod — 2 validators KEPT (records override NO legacy method → not in scope, not migrated):**
+`validateStaticBoost` (`StaticBoostEffect`) and `validateAttachedBoost` (`AttachedBoostEffect`) target
+through the equip/attach mechanism (per the step-3/ETB-slot note: those slot usages bypass the
+single-target validator path), so their "the attached/boosted permanent must be a creature" check has
+no `targetSpec()` correlate and stays hand-written. `CreatureModTargetValidators` was rewritten down to
+just these two (all effect/`CardType`/`GrantScope`/`TapUntapScope` imports pruned; javadoc rewritten).
+
+**Life (5) + Library (4) — ALL 9 validators KEPT WHOLE (no-op-PLAYER escape hatch); records migrated:**
+Every validator here calls `requireTargetPlayer`, which the `PLAYER` category CANNOT reproduce (it is a
+no-op in the spec interpreter — same reason `DealDamageToPlayersEffect` (step 3) and
+`SacrificePermanentsEffect` (step 4) keep theirs). Deleting them would drop the player-target guard
+(less strict — forbidden). Each record gets a `benign(PLAYER)` spec (or per-recipient), deleting only
+its `canTargetPlayer` override; the validator is untouched, so `LifeTargetValidators` /
+`LibraryTargetValidators` are unchanged.
+- `benign(PLAYER)`: `TargetPlayerLosesLifeAndControllerGainsLifeEffect`, `TargetPlayerGainsLifeEffect`,
+  `DrainLifePerControlledPermanentEffect`, `RevealTopCardOfLibraryEffect`,
+  `ChooseCardNameAndExileFromZonesEffect`, `MillBottomOfTargetLibraryConditionalTokenEffect`.
+- per-recipient (`TARGET_PLAYER` → `benign(PLAYER)`, else `NONE`, reproducing the conditional
+  `canTargetPlayer`): `LoseLifeEffect`, `GivePoisonCountersEffect`, `MillEffect`.
+
+**Oracle / judgment calls:**
+- **Predicate enforcement is new for `Untap`/`MustBlockSource` and changed two error messages.** The old
+  `validateUntapPermanents` did `requireBattlefieldTarget` only; the effect's `filter` was exposed via
+  `targetPredicate()` for offering/trigger collection but was NOT a hard cast-time gate. Carrying it on
+  the spec (mandatory — `VoltaicServant`'s trigger needs `targetPredicate()`) means `validateSpec` now
+  enforces it at cast. For the two activated abilities that ALSO have an ability-level
+  `PermanentPredicateTargetFilter` (Jandor's Saddlebags, Thousand-Year Elixir), the spec's predicate
+  check now fires first and rejects a non-creature with the engine-standard "Target does not match the
+  required predicate" instead of the filter's "Target must be a creature". The legal target SET is
+  unchanged (non-creature still rejected) — only the message differs; the two card tests' message
+  assertions were updated (documented in-test).
+- **`CardEffectTargetingConsistencyTest` updated** to accept a `targetSpec()` override as "declares its
+  targeting" (the `canTarget*` booleans are derived from it). Step 5 is the first to migrate
+  `Target*`-prefixed effects (`TargetCreatureBecomesSubtypeUntilEndOfTurnEffect`,
+  `TargetPlayerGainsLifeEffect`, `TargetPlayerLosesLifeAndControllerGainsLifeEffect`); steps 3–4 only
+  touched `Deal*`/`Destroy*`/`Exile*` names, so this guard first tripped now. Not a weakening — a
+  `targetSpec()` override is a strictly-equivalent declaration.
+- No card behavior narrowed illegally; no web ruling needed (every choice is behavior-preserving, the
+  documented inert widening, or the stricter-and-more-correct predicate/protection enforcement).
+
+**Audit re-run:** `python scripts/targetspec-audit.py` regenerated `targetspec-baseline.txt` +
+`TARGETSPEC_MATRIX.md`. Records in scope 214 → **168** (−46); sum of baseline counts 283 → **228**
+(−55); `canTargetPermanent` overrides 86 → **49**; `@ValidatesTarget` methods 71 → **34** (−37 deleted
+from CreatureMod; the 9 Life/Library validators are kept but their records left scope, and the 2
+aura/attach validators were never in scope). `CREATURE` and `LAND` now have **0** in-scope records
+(fully migrated); `PERMANENT` 45 → 32, `PLAYER` 81 → 72, `PLAYER_OR_PERMANENT` 13 → 11. The
+auto-generated escape-hatch table still shows 7 (the graveyard controller/opponent set); the 11 kept
+validators this step (9 no-op-PLAYER Life/Library + 2 aura/attach) are kept by deliberate decision and
+enumerated above for step 10. `effect-dispatch-baseline.txt` NOT touched (no instanceof-on-effect
+counts changed).
+
+**Tests run** (fixed regression set via `scripts/run-card-test.ps1`, all green:
+`TargetSpecRatchetTest`, `EffectDispatchRatchetTest` — both ratchets pass, baseline shrank
+monotonically; `TargetValidationServiceSpecTest`, `ValidTargetServiceTest`, `TargetLegalityServiceTest`,
+`FireballTest`, `WrackWithMadnessTest`, `DarkNourishmentTest`). One card test per migrated effect plus
+the tricky cases (one targeted `:magical-vibes-application:test --tests …` invocation, `BUILD
+SUCCESSFUL`): `TwiddleTest`, `BlindingMageTest`/`ClaustrophobiaTest` (TapPermanents),
+`GarrukWildspeakerTest` (Untap ALL_TARGETS), `CaptivatingCrewTest`/`CeruleanWispsTest` (Untap TARGET),
+`VoltaicServantTest` (Untap TARGET artifact trigger — targetPredicate path),
+`JandorsSaddlebagsTest`/`ThousandYearElixirTest` (Untap creature-predicate, updated messages),
+`GiantGrowthTest` (BoostTargetCreature), `RidingTheDiluHorseTest`, `DuelTacticsTest` (CantBlockThisTurn),
+`TangleAnglerTest`/`TowerAboveTest` (MustBlockSource + granted-trigger predicate),
+`TwistedImageTest`/`TurtleshellChangelingTest` (SwitchPT), `DiminishTest` (SetBasePT),
+`GrandArchitectTest`, `PrismwakeMerrowTest`, `TelJiladDefianceTest`, `FulgentDistractionTest`,
+`LiquimetalCoatingTest`, `InkmothNexusTest` (Animate SELF), `PacksDisdainTest`, `MirrorweaveTest`,
+`VerdantRebirthTest`, `GolemArtisanTest`, `BoldwyrIntimidatorTest`, `InciteTest`, `AlluringScentTest`,
+`EmergentGrowthTest`, `DuctCrawlerTest`, `HollowhengeSpiritTest`, `SkycoachWaypointTest`,
+`WoeleecherTest`, `FlayerHuskTest` (Equip), `AlphaBrawlTest` (MassFight), `MasterOfTheWildHuntTest`
+(PackHunt), `ApostlesBlessingTest`, `MirrorworksTest`, `DistortingLensTest`, `GilderBairnTest`,
+`GremlinMineTest`, `HexParasiteTest`, `TideshaperMysticTest`; Life — `SyphonLifeTest`,
+`HarrowingJourneyTest` (LoseLife TARGET_PLAYER), `StreamOfLifeTest`, `CaressOfPhyrexiaTest` (GivePoison
+TARGET_PLAYER), `TezzeretAgentOfBolasTest` (DrainLifePerControlledPermanent); Library —
+`WeightOfMemoryTest` (Mill TARGET_PLAYER), `AvenWindreaderTest`, `MemoricideTest`, `CellarDoorTest`;
+plus `CardEffectTargetingConsistencyTest` (updated). (An accidental unfiltered run of the whole
+application suite during setup surfaced exactly the 3 failures fixed above and nothing else.)

@@ -26,12 +26,11 @@ public record CantBlockThisTurnEffect(TapUntapScope scope, PermanentPredicate fi
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return scope == TapUntapScope.TARGET;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS;
+    public TargetSpec targetSpec() {
+        return switch (scope) {
+            case TARGET -> TargetSpec.benign(TargetCategory.CREATURE);
+            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetCategory.PLAYER);
+            default -> TargetSpec.NONE;
+        };
     }
 }

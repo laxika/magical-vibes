@@ -27,5 +27,8 @@ public record MillBottomOfTargetLibraryConditionalTokenEffect(
         CardColor tokenColor,
         List<CardSubtype> tokenSubtypes
 ) implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
+    }
 }

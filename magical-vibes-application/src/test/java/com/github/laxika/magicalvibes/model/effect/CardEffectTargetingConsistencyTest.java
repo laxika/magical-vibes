@@ -15,8 +15,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Guards the invariant that every {@link CardEffect} implementation whose class name begins with
- * {@code Target} declares what it can target by overriding one of the {@code canTarget*} default
- * methods. The trigger-target collection code in {@code TriggeredAbilityQueueService} and
+ * {@code Target} declares what it can target — either by overriding the declarative
+ * {@link CardEffect#targetSpec()} method (the post-migration mechanism, from which the
+ * {@code canTarget*} booleans are derived) or by overriding one of the legacy {@code canTarget*}
+ * default methods directly. The trigger-target collection code in {@code TriggeredAbilityQueueService} and
  * {@code StepTriggerService} uses those overrides to decide which UUIDs are valid when a triggered
  * ability needs a target; an effect that silently inherits the {@code false} defaults will never be
  * offered any valid target (see Black Cat's death trigger fix).
@@ -86,7 +88,7 @@ class CardEffectTargetingConsistencyTest {
     );
 
     @Test
-    @DisplayName("Every Target*Effect overrides a canTarget* method or is documented as piggyback/pre-resolved")
+    @DisplayName("Every Target*Effect overrides targetSpec()/a canTarget* method or is documented as piggyback/pre-resolved")
     void everyTargetEffectDeclaresItsTargeting() {
         List<String> violations = new ArrayList<>();
 
@@ -111,8 +113,16 @@ class CardEffectTargetingConsistencyTest {
 
                 boolean declaresTargeting = false;
                 for (Method m : effectClass.getDeclaredMethods()) {
+                    if (m.getParameterCount() != 0) {
+                        continue;
+                    }
+                    // The declarative TargetSpec override is the post-migration way to declare
+                    // targeting; the legacy canTarget* booleans are derived from it.
+                    if (m.getName().equals("targetSpec") && m.getReturnType() == TargetSpec.class) {
+                        declaresTargeting = true;
+                        break;
+                    }
                     if (CAN_TARGET_METHOD_NAMES.contains(m.getName())
-                            && m.getParameterCount() == 0
                             && m.getReturnType() == boolean.class) {
                         declaresTargeting = true;
                         break;
@@ -126,7 +136,8 @@ class CardEffectTargetingConsistencyTest {
         }
 
         assertThat(violations)
-                .as("Effects named Target*Effect must override a canTarget* method or be added to "
+                .as("Effects named Target*Effect must override targetSpec() (or a legacy canTarget* "
+                        + "method) or be added to "
                         + "ALLOWLIST in CardEffectTargetingConsistencyTest with a comment explaining "
                         + "why (piggyback vs pre-resolved). Without an override, trigger-target "
                         + "collection in TriggeredAbilityQueueService / StepTriggerService will "

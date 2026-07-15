@@ -13,7 +13,7 @@ import java.util.List;
 public record GrantChosenKeywordToTargetEffect(List<Keyword> options) implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

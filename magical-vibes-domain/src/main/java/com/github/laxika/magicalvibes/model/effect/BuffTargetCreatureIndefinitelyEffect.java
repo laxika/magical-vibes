@@ -20,7 +20,7 @@ public record BuffTargetCreatureIndefinitelyEffect(int powerBoost, int toughness
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

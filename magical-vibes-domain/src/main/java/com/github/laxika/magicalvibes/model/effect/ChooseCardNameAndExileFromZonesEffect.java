@@ -14,7 +14,7 @@ import java.util.List;
 public record ChooseCardNameAndExileFromZonesEffect(List<CardType> excludedTypes) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

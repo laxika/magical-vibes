@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MustBeBlockedIfAbleThisTurnEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }
