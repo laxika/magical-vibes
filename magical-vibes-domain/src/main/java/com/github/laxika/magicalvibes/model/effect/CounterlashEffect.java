@@ -9,5 +9,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * a spell from hand that shares a card type.</p>
  */
 public record CounterlashEffect() implements CardEffect {
-    @Override public boolean canTargetSpell() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
 }

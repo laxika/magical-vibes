@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record MakeTargetSpellUncounterableEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetSpell() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
     }
 }

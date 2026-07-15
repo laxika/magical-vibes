@@ -10,5 +10,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Used by Spell Swindle.</p>
  */
 public record CounterSpellAndCreateTreasureTokensEffect() implements CardEffect {
-    @Override public boolean canTargetSpell() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
 }

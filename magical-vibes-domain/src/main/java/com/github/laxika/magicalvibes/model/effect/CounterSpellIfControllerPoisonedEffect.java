@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by Corrupted Resolve.
  */
 public record CounterSpellIfControllerPoisonedEffect() implements CardEffect {
-    @Override public boolean canTargetSpell() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.SPELL_ON_STACK); }
 }

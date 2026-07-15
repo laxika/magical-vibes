@@ -946,3 +946,130 @@ monotonically), `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `TargetVa
 (ExileTargetCardFromGraveyardMayPlay), `SurgicalExtractionTest` (ExileTargetGraveyardCardAndSameName),
 `NitaForumConciliatorTest` (ExileTargetInstantOrSorceryFromOpponentGraveyardMayCast),
 `HavengulLichTest` (GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilities).
+
+---
+
+## Step 7 — Spell-on-stack (canTargetSpell) + the ChangeColorText dual  (2026-07-15)
+
+Migrated the **16 leaf spell-targeting effects**: the 15 pure `canTargetSpell` records
+(counterspells, copy-spell, change-target) + `ChangeColorTextEffect` (the spell-OR-permanent dual).
+The 5 remaining `canTargetSpell` overrides are the **delegating wrappers** — deferred to step 9 with
+the safety rationale below. None of the 16 has a `@ValidatesTarget` validator: spell targets are
+validated on the stack path (`TargetLegalityService.checkSpellTargetOnStack` → the card's
+`StackEntryPredicateTargetFilter`), which this program does not touch. So the migration is purely
+declarative — no validator files were read/edited or deleted this step.
+
+### Interpreter is a total no-op for a spell target — verified before touching anything
+
+`TargetValidationService.validateSpec`: `SPELL_ON_STACK` sits in the no-op switch arm (no
+`requireBattlefieldTarget`), and the trailing predicate/`harmful` block resolves the target via
+`findPermanentById(targetId)` — which returns `null` for a spell on the stack (not a battlefield
+permanent) → early return. `benign(SPELL_ON_STACK)` also has predicate `null` + harmful `false`, so
+even the no-op block does nothing. The interpreter therefore validates NOTHING for a spell target; the
+stack path stays the sole enforcement, exactly as before migration (where these effects had
+`targetSpec() == NONE` and `validateSpec` never ran).
+
+### Migrated onto `targetSpec()`, `canTargetSpell` override DELETED — 15 pure, all `benign(SPELL_ON_STACK)`
+
+Every one overrode ONLY `canTargetSpell()` (no `isDamageOrDestruction`/other legacy override; all are
+countering/copying/retargeting, none deal damage or destroy → benign, never harmful):
+`ChangeTargetOfTargetSpellToSourceEffect`, `ChangeTargetOfTargetSpellWithSingleTargetEffect`,
+`ChooseNewTargetsForTargetSpellEffect`, `CopySpellEffect`, `CounterSpellAndCreateTreasureTokensEffect`,
+`CounterSpellAndExileAllWithSameNameEffect`, `CounterSpellAndExileEffect`,
+`CounterSpellAndGainControlIfArtifactOrCreatureEffect`, `CounterSpellAndPutOnTopOfLibraryEffect`,
+`CounterSpellEffect`, `CounterSpellIfControllerPoisonedEffect`, `CounterUnlessDiscardsEffect`,
+`CounterUnlessPaysEffect`, `CounterlashEffect`, `MakeTargetSpellUncounterableEffect`. Derived
+`canTargetSpell()` = `category()==SPELL_ON_STACK` = `true` (preserved exactly); `canTargetPlayer` /
+`canTargetPermanent` / `isDamageOrDestruction` all derive `false` from `SPELL_ON_STACK(f,f)` +
+benign, matching the old interface defaults exactly.
+
+### `ChangeColorTextEffect` → `benign(PERMANENT)`, keeping the `canTargetSpell` record COMPONENT (dual)
+
+`ChangeColorTextEffect(boolean landTypesAllowed, boolean canTargetSpell)` is the one dual case
+(Glamerdye targets a spell OR a permanent; Mind Bend targets a permanent only). It overrode
+`canTargetPermanent()` (hand-written) and additionally exposes `canTargetSpell()` **via its record
+component's auto-generated accessor** (the audit's `public boolean canTargetSpell()` regex does NOT
+match a record component, so the matrix counted only `canTargetPermanent` and bucketed it `PERMANENT`).
+Migration: deleted the `canTargetPermanent()` override, added `targetSpec() = benign(PERMANENT)`, and
+**kept the `canTargetSpell` component untouched** (it is data / wire-format, not a legacy method
+override — cannot be removed without changing the record signature + `equals()`). Result, both
+capabilities preserved EXACTLY:
+- `canTargetPermanent()` derives `PERMANENT.includesPermanents()` = `true` (was `true`).
+- `canTargetSpell()` — the component accessor overrides the interface default, returning the component
+  value (Glamerdye `true`, Mind Bend `false`), independent of the `PERMANENT` category.
+- `canTargetPlayer()` derives `PERMANENT.includesPlayers()` = `false` (unchanged).
+
+**Why `PERMANENT` is safe for the spell mode (the dual-category worry).** `PERMANENT` is NOT a no-op —
+it runs `requireBattlefieldTarget`. But it only ever runs on the PERMANENT validation path
+(`checkSpellTargeting` → `checkEffectTargets`), which is reached only when the actual target is a
+battlefield permanent; a spell target routes through the SEPARATE `checkSpellTargetOnStack` (which
+never calls `checkEffectTargets`). `SpellCastingService` (lines 677–683) resolves a "spell or
+permanent" chooser by the actual target's zone (`isSpellOnStack(targetId)`), keyed off `canTargetSpell`
+(component) + `canTargetPermanent` (derived) — both preserved — so Glamerdye's spell mode still uses
+the stack path and its permanent mode the permanent path. `validateSpec(PERMANENT)` thus fires only on
+a real permanent (inert re-check; the target was already found non-null at `checkSpellTargeting`
+line 348) and NEVER on a spell target. A no-op category (e.g. `PLAYER_OR_PERMANENT`) was rejected: it
+would widen the derived `canTargetPlayer` `false→true`, offering players Glamerdye/Mind Bend cannot
+target (single-target boolean path, not inert here). `benign` (not harmful): text change, no
+`checkProtection`, no prior `isDamageOrDestruction` override.
+
+### The 5 delegating wrappers are DEFERRED to step 9 (not migrated here) — safety rationale
+
+`ConditionalEffect`, `ConditionalReplacementEffect`, `MayEffect`, `TriggeringCardConditionalEffect`,
+`TriggeringPermanentConditionalEffect` each override `canTargetSpell()` by **delegating to
+`wrapped`** (e.g. `TriggeringCardConditionalEffect.canTargetSpell()` = `wrapped.canTargetSpell()`).
+The audit mis-bucketed the two `Triggering*` wrappers into `SPELL_ON_STACK` (its wrapper heuristic
+only matched the 3 `Conditional*`/`May` names), but functionally all 5 are identical delegating
+wrappers and belong with step 9's structural-wrapper family. They CANNOT take a static
+`benign(SPELL_ON_STACK)`: they wrap arbitrary effects (damage / destroy / …), so forcing
+`SPELL_ON_STACK` would erase every non-spell wrapped category. The correct migration is
+`targetSpec() = wrapped.targetSpec()`, but that is **unsafe until step 9**: an unmigrated wrapped leaf
+still returns `TargetSpec.NONE` from the default `targetSpec()` while its legacy `canTarget*` overrides
+return the real values, so a wrapper delegating through `targetSpec()` now would derive `false` where
+the leaf is `true`. Many leaves (all unvalidated permanent-only / player-only / metadata-only records)
+are still unmigrated, so delegation is only reliable once step 9 runs after every leaf. Left in the
+baseline: `SPELL_ON_STACK` in-scope count = **2** (the two `Triggering*`); the 3 `Conditional*`/`May`
+wrappers stay in the `(delegated)` bucket.
+
+### Step-10 note (recorded now, not acted on)
+
+Once step 10 deletes `canTargetSpell()` from `CardEffect`, `ChangeColorTextEffect`'s record-component
+accessor `canTargetSpell()` will no longer `@Override` an interface method, and the two consumers that
+read the spell capability polymorphically — `SpellCastingService` line 664 (`CardEffect::canTargetSpell`)
+and `EffectResolution.needsSpellTarget` — will no longer compile against a `CardEffect` reference.
+Step 10 must either keep a spell-capability reader for this one dual effect or route the two consumers
+through a `SPELL_ON_STACK`-aware helper. The `canTargetSpell` component itself must survive (wire
+format); only the interface method goes.
+
+### Oracle / judgment calls
+
+- No behavior narrowed or widened for any of the 16: pure spell effects reproduce the `canTargetSpell`
+  boolean exactly and the interpreter is a total no-op for spell targets; `ChangeColorTextEffect`
+  preserves all three targeting booleans and adds only an inert `requireBattlefieldTarget` on the
+  permanent path. No web ruling needed (behavior-preserving declarative migration).
+- All 16 are `benign` — no counter/copy/retarget/text-change effect calls `checkProtection`, and none
+  overrode `isDamageOrDestruction`.
+
+### Audit re-run + lockstep
+
+`python scripts/targetspec-audit.py` re-run (idempotent) to regenerate `targetspec-baseline.txt` +
+`TARGETSPEC_MATRIX.md`. Records in scope 154 → **138** (−16); sum of baseline counts 204 → **188**
+(−16, all single overrides: 15×`canTargetSpell` + 1×`canTargetPermanent` on `ChangeColorTextEffect`).
+`canTargetSpell` overrides 20 → **5** (the 5 delegating wrappers); `canTargetPermanent` overrides
+49 → **48**. `SPELL_ON_STACK` in-scope count → **2** (the `Triggering*` wrappers). `@ValidatesTarget`
+methods unchanged at **34** (no validators existed for these effects, none deleted). Category counts
+now: NONE 19, PERMANENT 31, PLAYER 72, PLAYER_OR_PERMANENT 11, SPELL_ON_STACK 2. Diff verified: exactly
+the 16 expected records left the baseline, no additions. `effect-dispatch-baseline.txt` NOT touched
+(no `instanceof`-on-effect counts changed).
+
+**Tests run** (one filtered `:magical-vibes-application:test` invocation, `-x
+:magical-vibes-frontend:buildAngular`, `BUILD SUCCESSFUL`): fixed regression set —
+`WrackWithMadnessTest`, `DarkNourishmentTest`, `FireballTest`, `EffectDispatchRatchetTest`,
+`TargetSpecRatchetTest` (both ratchets green — baseline shrank monotonically), `ValidTargetServiceTest`,
+`TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`; card tests covering the migrated
+effects — `CounterspellTest`/`CancelTest` (CounterSpell), `ManaLeakTest` (CounterUnlessPays),
+`CounterlashTest` (Counterlash), `SpellSwindleTest` (CounterSpellAndCreateTreasureTokens),
+`VexingShusherTest` (MakeTargetSpellUncounterable), `TwincastTest`/`NaruMehaMasterWizardTest`
+(CopySpell — plain + filtered), `DeflectionTest` (ChangeTargetOfTargetSpellWithSingleTarget),
+`RedirectTest`/`WildRicochetTest` (ChangeTargetOfTargetSpellToSource / ChooseNewTargetsForTargetSpell),
+`GlamerdyeTest` (ChangeColorText spell+permanent dual), `MindBendTest` (ChangeColorText permanent-only).

@@ -8,8 +8,8 @@ package com.github.laxika.magicalvibes.model.effect;
 public record CounterUnlessDiscardsEffect() implements CounterUnlessEffect {
 
     @Override
-    public boolean canTargetSpell() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.SPELL_ON_STACK);
     }
 
     @Override
