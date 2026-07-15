@@ -351,3 +351,134 @@ run); one card test per pilot effect — `SpittingEarthTest`
 kept validator bodies before deletion (CREATURE / ANY_TARGET / PERMANENT, all
 harmful because each validator called `checkProtection`). No card behavior narrowed;
 no web ruling needed (behavior-preserving structural migration).
+
+---
+
+## Step 3 — Damage + Prevention validators  (2026-07-15)
+
+Migrated every effect whose `@ValidatesTarget` method lives in
+`DamageTargetValidators` (the 20 remaining after step 2's 2 pilots) or
+`PreventionTargetValidators` (6) — 26 effects total. Each validator was read and
+classified STRUCTURAL vs NON-STRUCTURAL before touching the record.
+
+**Migrated onto `targetSpec()`, validator DELETED (22 structural):**
+- `harmful(CREATURE_OR_PLANESWALKER)`: `DealDamageToTargetCreatureOrPlaneswalkerEffect`.
+- `harmful(PLAYER_OR_PLANESWALKER)`: `DealDamageToTargetPlayerOrPlaneswalkerEffect`,
+  `DealDamageToTargetAndTheirCreaturesEffect` (its validator is byte-identical to the
+  player-or-planeswalker one: player accepted, else planeswalker + checkProtection).
+- `harmful(ANY_TARGET)`: `DealDamageToAnyTargetAndGainLifeEffect`,
+  `DealDamageToAnyTargetEqualToChosenTypeCountEffect`,
+  `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect`,
+  `DealXDamageToAnyTargetAndGainXLifeEffect`,
+  `MillControllerAndDealDamageByHighestManaValueEffect`.
+- `harmful(CREATURE)`: `DealDamageToTargetControllerIfTargetHasKeywordEffect`,
+  `DealDamageToTargetCreatureEqualToChosenTypeCountEffect`,
+  `PlaneswalkerDealDamageAndReceivePowerDamageEffect`,
+  `TargetCreatureDealsPowerDamageToSelfEffect`,
+  `TargetCreatureDealsPowerDamageToControllerEffect`, `SourceFightsTargetCreatureEffect`.
+- `benign(CREATURE)` (redirect validators explicitly do NOT call checkProtection):
+  `RedirectNextDamageToTargetCreatureEffect`,
+  `RedirectTargetCreatureDamageFromChosenSourceToSelfEffect`,
+  `RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffect`.
+- `benign(ANY_TARGET)`: `PreventDamageToTargetEffect`,
+  `PreventDamageToTargetFromChosenSourceEffect`.
+- `harmful(ANY_TARGET)`: `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect`
+  (Harm's Way — redirects the damage ONTO its target, so its validator calls
+  checkProtection).
+- `benign(CREATURE)`: `PreventAllDamageToTargetCreatureEffect`,
+  `PreventAllDamageByTargetCreatureEffect`.
+
+Deleted the two private helpers in each file once their callers were gone
+(`validateAnyDamageTarget` + `validateCreatureDamageTarget` in Damage;
+`validateAnyTargetType` + `requireCreatureOrPlaneswalker` in Prevention) and pruned the
+now-unused imports (17 effect imports from Damage; 5 effect imports + `CardType` from
+Prevention). Both class javadocs rewritten to describe the remaining escape hatches.
+
+**Escape hatch — spec carries the structural part, validator KEPT WHOLE (4):**
+- `DealDamageToTargetOpponentOrPlaneswalkerEffect` → `harmful(PLAYER_OR_PLANESWALKER)`.
+  Non-structural: opponent-relation + controller-compare (rejects the controller as a
+  player target). The `PLAYER_OR_PLANESWALKER` spec accepts any player + planeswalker +
+  checkProtection; the kept validator then narrows players to opponents. Not
+  null-tolerant, so the target-requiring spec category is safe.
+- `DealDividedDamageEffect` → `NONE` when `etbAssignments`, else
+  `harmful(PLAYER_OR_PERMANENT)`. Non-structural: null-`targetId` tolerance (CHOSEN-mode
+  targets ride `StackEntry.damageAssignments`). `PLAYER_OR_PERMANENT` is a **no-op** in the
+  spec interpreter, so it does NOT call `requireTarget` and the null tolerance survives;
+  the kept validator does the real per-target work. `etbAssignments` → `NONE` preserves
+  the "collects targets via `pendingETBDamageAssignments`, takes no pipeline target"
+  bypass (a non-`NONE` category would make ValidTargetService offer targets).
+- `DealDamageToPlayersEffect` → per-recipient switch: `benign(PLAYER)` for
+  `TARGET_PLAYER`, `benign(PERMANENT)` for `TARGET_PERMANENT_CONTROLLER`, `NONE`
+  otherwise. **Deviation from step 1's note** ("NOT an escape hatch"): with the actual
+  interpreter the `PLAYER` category is a no-op, so it cannot reproduce the validator's
+  `requireTargetPlayer` guard for `TARGET_PLAYER`; deleting the validator would drop that
+  guard (less strict — forbidden). So the validator is KEPT and the spec is computed
+  per-recipient to reproduce the old conditional `canTargetPlayer`/`canTargetPermanent`
+  booleans. Benign because the validator performs no checkProtection (the damage lands on
+  a player, not the permanent). The audit's escape-hatch heuristic does not auto-flag it;
+  it is an escape hatch by this deliberate decision.
+- `PreventDividedDamageEffect` → `benign(PLAYER_OR_PERMANENT)`. Null-`targetId`-tolerant
+  (Remedy, same CHOSEN pattern) → no-op category preserves the tolerance; validator kept.
+
+**Oracle / judgment calls:**
+- **HARMFUL FLAG applied by validator, not by pre-existing `isDamageOrDestruction`
+  override.** Five migrated effects called `checkProtection` in their validator but did
+  NOT override `isDamageOrDestruction` (it sat at the interface default `false`):
+  `DealXDamageToAnyTargetAndGainXLifeEffect`, `MillControllerAndDealDamageByHighestManaValueEffect`,
+  `DealDamageToTargetControllerIfTargetHasKeywordEffect`, `SourceFightsTargetCreatureEffect`,
+  `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect`. Per HARMFUL FLAG POLICY
+  (harmful iff the validator calls `checkProtection`) their spec is `harmful`, so the
+  derived `isDamageOrDestruction()` now returns `true`. Effect: ValidTargetService
+  (`dealsDamageOrDestroys` at line ~500) now also filters protection-having permanents
+  from the OFFERED target list. Final legality is unchanged (the kept-then-deleted
+  validator already rejected them at cast); this only makes the offering consistent with
+  the validator and is the more rules-correct behavior (a protected creature is not a
+  legal target). Stricter-or-equal, allowed.
+- **Prevention "any target" → `ANY_TARGET`, not the audit's coarse `PLAYER_OR_PERMANENT`
+  inference.** `validatePreventDamageToTarget` / `…FromChosenSource` /
+  `…AndRedirectToAnyTarget` enforce player OR (creature-or-planeswalker), which is exactly
+  the interpreter's `ANY_TARGET`. `PLAYER_OR_PERMANENT` (a no-op) would wrongly widen the
+  legal set to any permanent (artifact/enchantment), so category was read off the
+  enforced type check per the "category from the type check" rule.
+- **`DealDamageToPlayersEffect` `TARGET_PERMANENT_CONTROLLER` → `PERMANENT` adds a
+  `requireBattlefieldTarget`** the old validator did not run for that recipient (it only
+  branched on `TARGET_PLAYER`). Inert and stricter: all four cards using that recipient
+  (Chandra's Outrage, Gloomlance, Lash Out, Fodder Launch) pair it with a
+  target-creature damage effect, so the shared `targetId` is always a battlefield
+  creature. `PERMANENT` preserves the old `canTargetPermanent()==true` boolean exactly.
+- **`DealDividedDamageEffect` creature-only CHOSEN casts:** `canTargetPlayer()` derives
+  `true` under `PLAYER_OR_PERMANENT` where the old conditional returned `false`
+  (`canTargetPlayers==false`). Inert: those spells select targets through creature
+  `multiTargetFilters` (not the boolean single-target path), and the kept validator still
+  throws "cannot target players" for a player target. `canTargetPermanent` and
+  `isDamageOrDestruction` are preserved exactly, and `etbAssignments → NONE` keeps the
+  no-target bypass exact.
+- No card behavior narrowed illegally; no web ruling needed (all category choices are
+  either behavior-preserving or the documented stricter-and-more-correct offering filter).
+
+**Audit re-run:** `python scripts/targetspec-audit.py` regenerated
+`targetspec-baseline.txt` + `TARGETSPEC_MATRIX.md`. Records in scope 274 → **248**
+(−26); sum of baseline counts 378 → **326** (−52); `canTargetPermanent` overrides
+143 → 117; `@ValidatesTarget` methods 121 → **99** (−22 deleted: 17 Damage + 5
+Prevention). The `CREATURE_OR_PLANESWALKER`, `PLAYER_OR_PLANESWALKER`, and `ANY_TARGET`
+categories now have **0** in-scope records (fully migrated); CREATURE 40 → 29,
+PLAYER_OR_PERMANENT 19 → 14. The auto-generated escape-hatch table counts only in-scope
+records, so the 4 kept damage/prevention escape hatches dropped out of it (like step 2's
+pilots); they remain in the validator index flagged "In a bucket table? = no" and are
+enumerated above for step 10. `effect-dispatch-baseline.txt` NOT touched (no
+instanceof-on-effect counts changed).
+
+**Tests run** (via `./gradlew :magical-vibes-application:test --tests …`, all green,
+`BUILD SUCCESSFUL`): fixed regression set — `WrackWithMadnessTest`, `DarkNourishmentTest`,
+`FireballTest`, `EffectDispatchRatchetTest`, `TargetSpecRatchetTest` (both ratchets pass —
+baseline shrank monotonically), `ValidTargetServiceTest`, `TargetLegalityServiceTest`,
+plus `TargetValidationServiceSpecTest`; one card test per migrated effect —
+`ChandraBoldPyromancerTest`, `BoggartShenanigansTest`, `ChandraNalaarTest`, `CorruptTest`,
+`RoarOfTheCrowdTest`, `ConsumeSpiritTest`, `HereticsPunishmentTest`, `BurnTheImpureTest`,
+`CoordinatedBarrageTest`, `GarrukRelentlessTest`, `TraitorsRoarTest`,
+`DongZhouTheTyrantTest`, `CyclopsGladiatorTest`, `ZealousInquisitorTest`,
+`OraclesAttendantsTest`, `JadeMonolithTest`, `BandageTest`, `HealingGraceTest`,
+`HarmsWayTest`, `WellgabberApothecaryTest`, `SoulParryTest`, `BurningSunsAvatarTest`,
+`ChandrasOutrageTest` (DealDamageToPlayers), `RemedyTest` (PreventDividedDamage).
+FireballTest covers `DealDividedDamageEffect`; DarkNourishmentTest covers
+`DealDamageToAnyTargetAndGainLifeEffect`.

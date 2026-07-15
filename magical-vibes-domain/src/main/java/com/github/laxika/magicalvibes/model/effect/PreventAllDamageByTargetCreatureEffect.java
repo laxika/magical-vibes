@@ -12,7 +12,7 @@ public record PreventAllDamageByTargetCreatureEffect(boolean combatOnly) impleme
     }
 
     @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.CREATURE);
     }
 }

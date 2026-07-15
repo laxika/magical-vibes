@@ -10,17 +10,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 public record DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype subtype, boolean gainLife) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
     }
 }

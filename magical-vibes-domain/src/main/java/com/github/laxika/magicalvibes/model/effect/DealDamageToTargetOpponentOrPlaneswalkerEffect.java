@@ -18,18 +18,11 @@ public record DealDamageToTargetOpponentOrPlaneswalkerEffect(DynamicAmount amoun
         this(new Fixed(damage));
     }
 
+    // The spec supplies the structural PLAYER_OR_PLANESWALKER + harmful checks; the kept
+    // @ValidatesTarget validator (DamageTargetValidators) additionally enforces the opponent-only
+    // relation for player targets, which the declarative spec cannot express.
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PLANESWALKER);
     }
 }

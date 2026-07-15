@@ -35,14 +35,18 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
         return new DealDamageToPlayersEffect(new Fixed(0), DamageRecipient.ENCHANTED_PLAYER, predicate);
     }
 
+    // Per-recipient targeting: only TARGET_PLAYER chooses a player; TARGET_PERMANENT_CONTROLLER
+    // rides the shared permanent target of a companion effect (e.g. Chandra's Outrage), so it takes
+    // no independent target. The kept @ValidatesTarget validator (DamageTargetValidators) enforces
+    // "must be a player" for TARGET_PLAYER — a check the no-op PLAYER spec cannot express. Benign:
+    // the validator performs no protection check (the damage lands on a player, not the permanent).
     @Override
-    public boolean canTargetPlayer() {
-        return recipient == DamageRecipient.TARGET_PLAYER;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return recipient == DamageRecipient.TARGET_PERMANENT_CONTROLLER;
+    public TargetSpec targetSpec() {
+        return switch (recipient) {
+            case TARGET_PLAYER -> TargetSpec.benign(TargetCategory.PLAYER);
+            case TARGET_PERMANENT_CONTROLLER -> TargetSpec.benign(TargetCategory.PERMANENT);
+            default -> TargetSpec.NONE;
+        };
     }
 
     @Override

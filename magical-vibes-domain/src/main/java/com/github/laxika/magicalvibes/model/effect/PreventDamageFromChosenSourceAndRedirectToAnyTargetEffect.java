@@ -10,12 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect(int amount) implements CardEffect {
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.ANY_TARGET);
     }
 }

@@ -12,13 +12,11 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record PreventDividedDamageEffect(int amount) implements CardEffect {
 
+    // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, so it preserves this effect's
+    // null-targetId tolerance (CHOSEN-mode targets ride on StackEntry.damageAssignments). The kept
+    // @ValidatesTarget validator (PreventionTargetValidators) performs the real per-target checks.
     @Override
-    public boolean canTargetPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetPermanent() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }

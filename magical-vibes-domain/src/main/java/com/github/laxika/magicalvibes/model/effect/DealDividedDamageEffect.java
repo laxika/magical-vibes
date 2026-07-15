@@ -108,19 +108,16 @@ public record DealDividedDamageEffect(
     }
 
     @Override
-    public boolean canTargetPermanent() {
+    public TargetSpec targetSpec() {
         // ETB divided damage collects its targets through GameData.pendingETBDamageAssignments,
-        // bypassing the standard targeting system.
-        return !etbAssignments;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return canTargetPlayers && !etbAssignments;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+        // bypassing the standard targeting system — no spec-level targeting.
+        if (etbAssignments) {
+            return TargetSpec.NONE;
+        }
+        // PLAYER_OR_PERMANENT is a no-op in the spec interpreter, which preserves this effect's
+        // null-targetId tolerance (CHOSEN-mode targets ride on StackEntry.damageAssignments). The
+        // kept @ValidatesTarget validator (DamageTargetValidators) enforces the real per-target type
+        // rules, including rejecting player targets when this spell targets creatures only.
+        return TargetSpec.harmful(TargetCategory.PLAYER_OR_PERMANENT);
     }
 }
