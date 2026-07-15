@@ -172,7 +172,7 @@ public class ExampleCard extends Card {
 ## Targeting checklist
 
 - Targeting is computed automatically from effects — both for spells (`Card`) and activated abilities (`ActivatedAbility`).
-- Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
+- Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` — `TargetSpec.harmful(TargetCategory.CREATURE)`, `benign(PERMANENT)`, `harmful(ANY_TARGET)`, `benign(SPELL_ON_STACK)`, `benign(GRAVEYARD_CARD)`, etc. (`harmful` = damage/fight/destroy/exile/sacrifice; add a `PermanentPredicate` argument to narrow). This is the ONE targeting declaration; the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations" for the category table and a worked example.
 - `EffectResolution.needsTarget(card)`, `EffectResolution.needsSpellTarget(card)`, `EffectResolution.computeAllowedTargets(card)` compute targeting from effects. `ActivatedAbility.isNeedsTarget()` and `ActivatedAbility.isNeedsSpellTarget()` are derived getters on the ability.
 - For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` to get the resolved effect list before computing targets.
 - For non-battlefield targets on stack entries, use `Zone` (`Zone.GRAVEYARD`, `Zone.STACK`), not `TargetZone`.
@@ -226,7 +226,7 @@ Create a new `CardEffect` record only if both are true:
 
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
-  - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation and the `targetsPlayer` flag in `CardViewFactory`.
+  - If it targets, override `targetSpec()` to return a non-NONE `TargetSpec` (category + `harmful` flag + optional `PermanentPredicate`; see `EFFECTS_INDEX.md`). This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation, the cast-time type check, and the `targetsPlayer` flag in `CardViewFactory`.
 - Add a handler in `magical-vibes-engine/.../service/effect/normalfx/`:
   ```java
   @Component
@@ -249,7 +249,7 @@ Then do all of:
   Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
 - For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
 - For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameBroadcastService`/`SpellCastingService`.
-- If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
+- Structural targeting (category + predicate) needs NO validator — the `targetSpec()` interpreter handles it. Add a `@ValidatesTarget`-annotated method under `service/validate/` (see `EFFECTS_INDEX.md` target validator map) ONLY as an escape hatch for a non-structural rule the spec cannot express (opponent-relation, controller/owner compare, chosen-source, null-target tolerance) — and still declare the structural `targetSpec()`:
   ```java
   @ValidatesTarget(YourNewEffect.class)
   public void validateYourNewEffect(TargetValidationContext ctx) { ... }

@@ -19,7 +19,7 @@ Quick reference for building `ActivatedAbility` instances. Covers all constructo
 | `requiredControlledSubtype` | `CardSubtype` | Subtype you must control N+ of to activate (e.g. `CardSubtype.VAMPIRE`). `null` for no restriction |
 | `requiredControlledSubtypeCount` | `int` | Minimum count of `requiredControlledSubtype` permanents you must control. `0` when unused |
 
-**Targeting is computed from effects** — `ActivatedAbility.isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. For Cards, use `EffectResolution.needsTarget(card)` / `EffectResolution.needsSpellTarget(card)` instead. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`.
+**Targeting is computed from effects** — `ActivatedAbility.isNeedsTarget()` and `isNeedsSpellTarget()` are derived getters, never stored as fields. For Cards, use `EffectResolution.needsTarget(card)` / `EffectResolution.needsSpellTarget(card)` instead. Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` (category + `harmful` flag + optional predicate) — see `EFFECTS_INDEX.md`.
 
 ### ActivationTimingRestriction values
 
@@ -147,7 +147,7 @@ new ActivatedAbility(false, null,
 
 Cards: `SpawningPool` (ONLY_WHILE_CREATURE), `ThrullSurgeon` (SORCERY_SPEED), `ColossusOfSardia` (ONLY_DURING_YOUR_UPKEEP), `SkyshroudRanger` (SORCERY_SPEED), `VonaButcherOfMagan` (ONLY_DURING_YOUR_TURN)
 
-**Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.canTargetSpell()` returns `true`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
+**Note:** For abilities that target spells on the stack (e.g. activated counter ability), spell targeting is auto-derived from effects (e.g. `CounterUnlessPaysEffect.targetSpec()` returns `benign(SPELL_ON_STACK)`). Use a `StackEntryPredicateTargetFilter` if target legality is restricted.
 
 ---
 
@@ -518,7 +518,7 @@ Cards: `SiegeGangCommander`, `BottleGnomes`, `DoomedNecromancer`, `ThrullSurgeon
 
 ## Card-level targeting (for spells, not abilities)
 
-For spells (instants/sorceries) that need targets, targeting is auto-derived from effects. Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` on your effect record to return `true`. Then in the card constructor:
+For spells (instants/sorceries) that need targets, targeting is auto-derived from effects. Override `targetSpec()` on your effect record to return a non-NONE `TargetSpec` (category + `harmful` flag + optional predicate — see `EFFECTS_INDEX.md`). Then in the card constructor:
 
 ```java
 setTargetFilter(new SomeTargetFilter()); // restricts valid targets (optional)
@@ -536,7 +536,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_ENTER_BATTLEFIELD` | Permanent enters the battlefield (ETB) |
 | `ON_TAP` | Permanent is tapped for mana (lands) |
 | `STATIC` | Continuous effect, always active while on battlefield |
-| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/player) when an effect is true "any target" (`canTargetPlayer() && canTargetPermanent()`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `requiredPlayerTargetCount() >= 2`) |
+| `UPKEEP_TRIGGERED` | Controller's upkeep. Supports any-target routing (creature/planeswalker/player) when an effect is true "any target" (`targetSpec().category()` includes players AND permanents, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `targetSpec().playerTargetCount() >= 2`) |
 | `EACH_UPKEEP_TRIGGERED` | Each player's upkeep |
 | `OPPONENT_UPKEEP_TRIGGERED` | Each opponent's upkeep |
 | `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` | Upkeep of the enchanted permanent's controller (fires regardless of which player controls the aura). `affectedPlayerId` is baked in at trigger time for effects like `EnchantedCreatureControllerLosesLifeEffect` |

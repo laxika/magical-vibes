@@ -8,8 +8,8 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 2. Find each primitive below in the categorized sections and reuse existing effects.
 3. Only add new effect records when no existing effect can express the behavior.
 4. If you add a new effect record, create a `<EffectName>EffectHandler` `@Component` implementing `NormalEffectHandlerBean` in `service/effect/normalfx/`. `GameEngineConfig` auto-registers `@Component` handlers for production, card tests (`GameTestEngineContext`), and headless simulation (`HeadlessSimulationContext`). See provider map at bottom.
-5. If your new effect targets something, override the appropriate `canTarget*()` method(s) on `CardEffect` to return `true` (see targeting section below).
-6. If your new effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see target validator map at bottom).
+5. If your new effect targets something, override `targetSpec()` on the effect record to return a non-NONE `TargetSpec` (category + harmful flag + optional predicate — see targeting section below). The engine's declarative interpreter offers and type-checks the target from the spec; you do NOT add a validator for ordinary structural targeting.
+6. Only if legal targeting depends on a NON-structural rule the spec cannot express (opponent-relation, controller/owner compare, chosen-source, null-target tolerance) add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` — AND still declare the structural `targetSpec()` (see target validator map at bottom).
 
 ## Marker interfaces
 
@@ -45,19 +45,17 @@ that family (see `EFFECTS_QUICK_REFERENCE.md`). `CostEffect` is both a marker (c
 mana-ability exclusion) and a descriptive capability (its AI cost-valuation facets). `EffectDispatchRatchetTest` enforces that no new
 concrete-effect `instanceof` is added outside `service/effect/**` / `service/validate/**`.
 
-### `targetPredicate()` default method on `CardEffect`
+### Target predicate — the `TargetSpec.predicate()` field
 
-Effects that target permanents can optionally restrict valid targets by overriding `targetPredicate()` to return a `PermanentPredicate`. Used by saga chapter targeting in `TriggeredAbilityQueueService.collectSagaChapterTargets()` to filter valid choices. Returns `null` by default (no restriction).
+Effects that target permanents can optionally restrict valid targets by putting a `PermanentPredicate` in their `targetSpec()`'s `predicate` field (`benign(CREATURE, predicate)` / `harmful(PERMANENT, predicate)`). The declarative interpreter enforces it at cast, and saga-chapter / end-step targeting pipelines read it through `EffectResolution.targetPredicateOf(effect)`. Absent = `null` (no restriction).
 
-Effects supporting it: `PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType, int count, PermanentPredicate targetPredicate)`, `GrantKeywordEffect` (returns `filter` when `scope == TARGET`).
+Dual note: `PutCounterOnTargetPermanentEffect.withTargetRestriction(CounterType, int count, PermanentPredicate)` keeps the predicate on a dedicated record COMPONENT (its `targetSpec()` carries a `null` predicate, so there is no cast-time gate); it is honoured only by the saga/end-step pipelines via `EffectResolution.targetPredicateOf`. `GrantKeywordEffect` carries its `filter` in the spec's predicate when `scope == TARGET`.
 
-### `isSelfTargeting()` default method on `CardEffect`
+### Self-targeting — the `TargetSpec.selfTargeting()` field
 
-Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) override `isSelfTargeting()` to return `true`. This is used by `ActivatedAbilityExecutionService` to auto-assign the source as the target when no explicit target is provided.
+Effects that implicitly target their source permanent (boost-self, animate-self, regenerate-self, etc.) set `selfTargeting = true` in their `targetSpec()` — written `new TargetSpec(TargetCategory.NONE, false, null, true, 1)`. `ActivatedAbilityExecutionService` reads `targetSpec().selfTargeting()` to auto-assign the source as the target when no explicit target is provided.
 
-Effects returning `true`: `BoostSelfEffect`, `DoubleSelfPowerToughnessEffect`, `TapPermanentsEffect`/`UntapPermanentsEffect` (only when `scope == TapUntapScope.SELF`), `AnimatePermanentsEffect` (only when `scope == GrantScope.SELF`), `PutCountersOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`.
-
-Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` → `scope == SELF`.
+Effects doing so: `BoostSelfEffect`, `DoubleSelfPowerToughnessEffect`, `TapPermanentsEffect`/`UntapPermanentsEffect` (only when `scope == TapUntapScope.SELF`), `AnimatePermanentsEffect` (only when `scope == GrantScope.SELF`), `PutCountersOnSelfEffect`, `PutSlimeCounterAndCreateOozeTokenEffect`, `RegenerateEffect` (when `!targetsPermanent()`), `GrantKeywordEffect` (when `scope == SELF`).
 
 ### `isPowerToughnessDefining()` default method on `CardEffect`
 
@@ -69,19 +67,70 @@ Effects returning `true`: `SetPowerToughnessToAmountEffect` (the single CDA reco
 
 ## Effect targeting declarations
 
-Effects declare what they can target via default methods on `CardEffect`. Targeting is computed via `EffectResolution.needsTarget(card)` and `EffectResolution.needsSpellTarget(card)` — never call `setNeedsTarget`/`setNeedsSpellTarget`. For kicker/modal spells, use `EffectResolution.resolveEffects(effects, kicked, modeIndex)` first to get the resolved effect list.
+An effect declares what it targets by overriding the single `targetSpec()` method on `CardEffect` to
+return a `TargetSpec` (a `TargetCategory` + a `harmful` flag + an optional `PermanentPredicate` + the
+`selfTargeting` / `playerTargetCount` fields). The eleven legacy `canTarget*` / `isSelfTargeting` /
+`isDamageOrDestruction` / `targetPredicate` / `requiredPlayerTargetCount` booleans were DELETED
+(TargetSpec migration, July 2026) — `targetSpec()` is now the ONE source of truth, and everything
+(`EffectResolution.needsTarget(card)` / `needsSpellTarget(card)`, the AI, the trigger collectors, the
+`TargetValidationService` interpreter) derives from it. Never call
+`setNeedsTarget`/`setNeedsSpellTarget`. For kicker/modal spells use
+`EffectResolution.resolveEffects(effects, kicked, modeIndex)` first to get the resolved effect list.
 
-When creating a new effect, override the relevant method(s) to return `true`:
+**Factories** (all on `TargetSpec`): `harmful(cat)` / `benign(cat)` and the predicate-carrying
+`harmful(cat, predicate)` / `benign(cat, predicate)`; plus `TargetSpec.NONE` (targets nothing). Use
+the full canonical constructor for self-targeting or a two-player count:
+`new TargetSpec(TargetCategory.NONE, false, null, /*selfTargeting*/ true, 1)`,
+`new TargetSpec(TargetCategory.PLAYER, false, null, false, /*playerTargetCount*/ 2)`.
 
-| Method | Returns `true` on these effects |
-|--------|---------------------------------|
-| `canTargetPlayer()` | DealDamageToAnyTargetEffect, DealDamageToTargetAndTheirCreaturesEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToPlayersEffect (when recipient == TARGET_PLAYER), DealXDamageToAnyTargetAndGainXLifeEffect, DealDividedDamageEffect (when canTargetPlayers && !etbAssignments), DealDamageToEachTargetEffect, LoseLifeEffect (when recipient == TARGET_PLAYER), TargetPlayerLosesLifeEqualToPowerEffect, TargetPlayerLosesLifeAndControllerGainsLifeEffect, GainLifeEffect (when targetsPlayer — controller still gains; only establishes the target for a CountScope.TARGET_PLAYER amount, e.g. Renewing Dawn), TargetPlayerGainsLifeEffect, EachTargetPlayerGainsLifeEffect, DoubleTargetPlayerLifeEffect, DiscardEffect (when recipient == TARGET_PLAYER), TargetPlayerDiscardsReturnSelfIfCardTypeEffect, ChooseCardsFromTargetHandEffect, LookAtHandEffect, HeadGamesEffect, RedirectDrawsEffect, MillEffect (when recipient == TARGET_PLAYER), TargetPlayerDiscardsByChargeCountersEffect, MillHalfLibraryEffect, ExtraTurnEffect, SacrificePermanentsEffect (when recipient == TARGET_PLAYER), SacrificeAttackingCreaturesEffect, ShuffleGraveyardIntoLibraryEffect (when targetPlayer=true), RevealTopCardDealManaValueDamageEffect, RevealTopCardOfLibraryEffect, ReturnToHandEffect (when scope == TARGET_PLAYERS_PERMANENTS || scope == TARGET_PLAYERS_OWNED), TargetPlayerGainsControlOfSourceCreatureEffect, PutCounterOnEachMatchingPermanentEffect (when scope == TARGET_PLAYER), DealDamageToEachMatchingPermanentEffect (when scope == TARGET_PLAYER), GivePoisonCountersEffect (when recipient == TARGET_PLAYER), ExileGraveyardCardsEffect (when scope == TARGET_PLAYER_ENTIRE), SkipNextUntapEffect (when scope == TARGET_PLAYERS_PERMANENTS), CantBlockThisTurnEffect (when scope == TARGET_PLAYERS_PERMANENTS), DrawCardForTargetPlayerEffect (when targetsPlayer=true), PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect, MillBottomOfTargetLibraryConditionalTokenEffect, MillTargetPlayerAndBoostSelfByManaValueEffect, SeparatePermanentsIntoPilesAndSacrificeEffect, SetTargetPlayerLifeToHalfStartingEffect, SetTargetPlayerLifeToSpecificValueEffect, FlickerEffect (when scope == TARGET_PLAYERS_PERMANENTS) |
-| `canTargetPermanent()` | DealDamageToAnyTargetEffect, DealDamageToTargetAndTheirCreaturesEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDamageToTargetCreatureEffect, DealDamageToTargetCreatureOrPlaneswalkerEffect, DealDamageToPlayersEffect (when recipient == TARGET_PERMANENT_CONTROLLER), DealXDamageToAnyTargetAndGainXLifeEffect, DealDividedDamageEffect (unless etbAssignments), DealDamageToEachTargetEffect, TargetDealsPowerDamageToTargetEffect, TargetCreatureDealsPowerDamageToSelfEffect, FightTargetsEffect, DestroyTargetPermanentEffect, DestroyTargetPermanentThenEffect, DestroyTargetPermanentAtEndStepEffect, DestroyTargetLandAndDamageControllerEffect, DestroyCreatureBlockingThisEffect, ExileTargetPermanentEffect, ReturnToHandEffect (when scope == TARGET), ReturnTargetPermanentToHandWithManaValueConditionalEffect, PutTargetOnBottomOfLibraryEffect, PutTargetOnTopOfLibraryEffect, GainControlOfTargetCreatureUntilEndOfTurnEffect, GainControlOfTargetEquipmentUntilEndOfTurnEffect, GainControlOfTargetEffect, GainControlOfEnchantedTargetEffect, GainControlOfTargetAuraEffect, BoostTargetCreatureEffect, BuffTargetCreatureIndefinitelyEffect, BoostTargetCreaturePerControlledPermanentEffect, PreventDamageToTargetEffect, TapPermanentsEffect (scope TARGET), TapOrUntapTargetPermanentEffect, UntapPermanentsEffect (scope TARGET/ALL_TARGETS), SkipNextUntapEffect (scope TARGET), MakeCreatureUnblockableEffect, CantBlockThisTurnEffect (when scope == TARGET), ChangeColorTextEffect, EquipEffect, CantBlockSourceEffect, SacrificeCreatureCost, GrantKeywordEffect (when scope == Scope.TARGET), GrantChosenKeywordToTargetEffect, UnattachEquipmentFromTargetPermanentsEffect, FlickerEffect (when scope == TARGET), AddCardTypeToTargetPermanentEffect, GrantColorUntilEndOfTurnEffect, MustBlockSourceEffect, GrantProtectionFromCardTypeUntilEndOfTurnEffect, SwitchPowerToughnessEffect, SetBasePowerToughnessEffect (when scope == TARGET), RemoveChargeCountersFromTargetPermanentEffect, RemoveCountersFromTargetAndBoostSelfEffect, GrantSubtypeToTargetCreatureEffect, LoseAllCreatureTypesEffect, PutCounterOnTargetPermanentEffect, DoubleCountersOnTargetPermanentEffect |
-| `canTargetSpell()` | CounterSpellEffect, CounterSpellIfControllerPoisonedEffect, CounterUnlessPaysEffect, CopySpellEffect, ChangeTargetOfTargetSpellWithSingleTargetEffect, ChangeTargetOfTargetSpellToSourceEffect, ChooseNewTargetsForTargetSpellEffect, ChangeColorTextEffect (when `canTargetSpell` — Glamerdye; also `canTargetPermanent`, so it is a rare single target that may be either a spell or a permanent) |
-| `canTargetGraveyard()` | ReturnCardFromGraveyardEffect (when targetGraveyard=true), PutCardFromOpponentGraveyardOntoBattlefieldEffect, PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect, ExileGraveyardCardsEffect (when scope == TARGET_CARDS_ANY_GRAVEYARD [+ `canTargetAnyGraveyard()`] or TARGET_CARDS_OPPONENT_GRAVEYARD) |
-| `canTargetExile()` | ReturnTargetCardFromExileToHandEffect |
+**`harmful`** = true exactly when the effect damages / fights / destroys / exiles / sacrifices its
+target (i.e. the target must survive a `checkProtection` test — protection means "can't be
+targeted"). Counters, bounces, control-changes, boosts, taps, text changes are `benign`.
 
-Effects that target both players and permanents (any-target): DealDamageToAnyTargetEffect, DealDamageToAnyTargetAndGainLifeEffect, DealDividedDamageEffect, DealXDamageToAnyTargetAndGainXLifeEffect, DealDamageToEachTargetEffect, PreventDividedDamageEffect.
+`TargetCategory` values and what each offers/type-checks:
+
+| Category | Legal target |
+|----------|--------------|
+| `NONE` | nothing (default) |
+| `PLAYER` | a player |
+| `PLAYER_OR_PERMANENT` | a player or any permanent |
+| `PERMANENT` | any permanent |
+| `CREATURE` | a creature (layer-aware) |
+| `LAND` | a land |
+| `CREATURE_OR_PLANESWALKER` | a creature or planeswalker |
+| `PLAYER_OR_PLANESWALKER` | a player or planeswalker |
+| `ANY_TARGET` | any target (player / creature / planeswalker) |
+| `SPELL_ON_STACK` | a spell on the stack (validated on the stack path) |
+| `GRAVEYARD_CARD` | a card in a graveyard (opponent's, the default) |
+| `ANY_GRAVEYARD_CARD` | a card in any graveyard |
+| `CONTROLLERS_GRAVEYARD_CARD` | a card in the controller's own graveyard |
+| `EXILE_CARD` | a card in exile |
+
+Fine-grained narrowing (artifact-only, nonland, a subtype) is the spec's `PermanentPredicate` field,
+NOT a new category. Conditional effects (a `scope` / `recipient` that sometimes targets nothing)
+compute a per-instance spec, e.g. `recipient == TARGET_PLAYER ? benign(PLAYER) : NONE`.
+
+### Worked example — a new "deal N damage to target creature" effect
+
+```java
+public record ZapTargetCreatureEffect(int damage) implements CardEffect {
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetCategory.CREATURE); // damage → harmful; creature-only category
+    }
+}
+```
+
+That is the WHOLE targeting declaration: the interpreter in `TargetValidationService` offers only
+creatures, rejects a creature with protection from the source (because `harmful`), and needs no
+`@ValidatesTarget` validator (the category is purely structural). To restrict further — say "target
+artifact creature" — pass a predicate: `TargetSpec.harmful(TargetCategory.CREATURE, new
+PermanentIsArtifactPredicate())`.
+
+Add a `@ValidatesTarget` validator ONLY when legality depends on a rule the category + predicate
+cannot express (opponent-relation, controller/owner compare, chosen-source, null-target tolerance) —
+and such an effect STILL declares its structural `targetSpec()` (the `TargetSpecRatchetTest` guard
+enforces this). See the target validator map at the bottom.
 
 ### Multi-target group binding (spells with several distinct targets)
 
@@ -1649,21 +1698,30 @@ All stack-resolution ("normal") effects use one `@Component` handler class per e
 
 Orchestration (conditionals, `MayEffect`, stack dispatch) remains in `EffectResolutionService`.
 
-## Target validator map (where to add `@ValidatesTarget` methods)
+## Target validator map — the `@ValidatesTarget` ESCAPE HATCH (where to add one, rarely)
 
-Target validation is auto-registered via `@ValidatesTarget` annotations. Validator classes live in `service/validate/`.
+Structural targeting (category + predicate) is handled entirely by the declarative `TargetSpec`
+interpreter in `TargetValidationService` — you do NOT write a validator for it. A hand-written
+`@ValidatesTarget` method is now an ESCAPE HATCH, used ONLY when legal targeting turns on a rule the
+spec cannot express: opponent-relation, controller/owner compare ("from your graveyard"),
+chosen-source inspection, or null-target tolerance (divided-damage / ETB-assignment paths). Such an
+effect must STILL declare its structural `targetSpec()` (redundant with the validator's structural
+checks — harmless, and the `TargetSpecRatchetTest` guard requires it). Validator classes live in
+`service/validate/`, auto-registered via the annotation.
 
 | Category | Validator class | Dependencies |
 |----------|----------------|--------------|
-| Damage (any target, creature, player) | `DamageTargetValidators` | `TargetValidationService`, `GameQueryService` |
-| Creature mods (tap/untap/boost/block) | `CreatureModTargetValidators` | `TargetValidationService` |
-| Destruction (sacrifice, destroy) | `DestructionTargetValidators` | `TargetValidationService`, `GameQueryService` |
-| Graveyard (return, opponent graveyard) | `GraveyardTargetValidators` | `TargetValidationService`, `GameQueryService` |
-| Exile (return from exile) | `ExileTargetValidators` | `GameQueryService` |
-| Bounce (return to hand) | `BounceTargetValidators` | `TargetValidationService` |
-| Library (mill, reveal) | `LibraryTargetValidators` | `TargetValidationService` |
-| Permanent control (gain control, bottom of library) | `PermanentControlTargetValidators` | `TargetValidationService`, `GameQueryService` |
-| Life (drain, gain) | `LifeTargetValidators` | `TargetValidationService` |
+| Damage (opponent-or-planeswalker, divided-damage null tolerance, per-recipient player guard) | `DamageTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Creature mods (only the equip/attach boost validators — target outside the single-target pipeline) | `CreatureModTargetValidators` | `TargetValidationService` |
+| Destruction (per-recipient player guard, combat-state "creature blocking this") | `DestructionTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Graveyard (own/opponent graveyard controller-compare, card-zone/type checks) | `GraveyardTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Exile (return from exile — zone + card filter) | `ExileTargetValidators` | `GameQueryService` |
+| Library (no-op-PLAYER `requireTargetPlayer` guards) | `LibraryTargetValidators` | `TargetValidationService` |
+| Permanent control (aura attachment-state, no-op-PLAYER guard) | `PermanentControlTargetValidators` | `TargetValidationService`, `GameQueryService` |
+| Life (no-op-PLAYER `requireTargetPlayer` guards) | `LifeTargetValidators` | `TargetValidationService` |
+| Prevention (divided-prevention null tolerance) | `PreventionTargetValidators` | `TargetValidationService` |
+
+(There is no `BounceTargetValidators` — bounce targeting is fully declarative.)
 
 **Two method signatures supported:**
 - **Pattern A:** `void method(TargetValidationContext ctx)` — effect not needed

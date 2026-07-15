@@ -11,8 +11,8 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 ## Targeting rules (summary)
 
-- Effects in SPELL slot with `canTargetPlayer()=true` force player targeting at cast time.
-- Effects in SPELL slot with `canTargetPermanent()=true` force permanent targeting at cast time.
+- An effect declares targeting by overriding `targetSpec()` to a non-NONE `TargetSpec` (category + `harmful` flag + optional `PermanentPredicate`); the deleted legacy `canTarget*` booleans derived from it. See `EFFECTS_INDEX.md` § "Effect targeting declarations".
+- Effects in SPELL slot whose `targetSpec().category()` includes players force player targeting at cast time; those including permanents force permanent targeting (and the category/predicate type-check it).
 - ETB/triggered/saga slots: targeting declarations don't force spell-level targeting.
 - `CostEffect` subtypes are excluded from targeting computation.
 - Targeting is computed by `EffectResolution.needsTarget(card)` / `needsSpellCastTarget(card)`.

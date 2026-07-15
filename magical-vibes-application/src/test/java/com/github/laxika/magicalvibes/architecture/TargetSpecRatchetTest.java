@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -21,51 +20,81 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Ratchet for the TargetSpec migration (refactor step 2). It permanently prevents the number of
- * legacy per-effect targeting-method overrides from GROWING while later steps shrink it toward
- * zero: the test fails if any effect record file's legacy-override count exceeds its baseline
- * entry (a record must declare a {@link com.github.laxika.magicalvibes.model.effect.TargetSpec}
- * instead of adding a legacy override), and also fails — asking for a baseline regeneration — if
- * a file drops BELOW its baseline, so the baseline stays honest as records migrate.
+ * PERMANENT guard for the completed TargetSpec migration (refactor step 11 close-out).
  *
- * <p><b>COUNTING RULES ARE DUPLICATED</b> in {@code scripts/targetspec-audit.py} (the step-1
- * audit that generates {@code refactor-docs/targetspec-baseline.txt}, which this test parses).
- * The two implementations MUST be changed in lockstep — if they diverge, the freshly regenerated
- * baseline and this test will disagree and the ratchet becomes noise. The rules, mirrored from
- * that script:
- * <ul>
- *   <li>A record is "in scope" iff it provides its own override of >=1 of the eleven LEGACY
- *       targeting methods on {@code CardEffect} ({@code isPowerToughnessDefining} is NOT one of
- *       them and is kept).</li>
- *   <li>A method is "overridden" by a file when the file contains
- *       {@code public <boolean|int|PermanentPredicate> <name>()} — matched whole-file, regex only,
- *       ignoring the body (constant, conditional, and {@code return false} all count).</li>
- *   <li>The count for a file is the number of DISTINCT legacy methods it overrides; only files
- *       with count >= 1 appear in the baseline.</li>
- * </ul>
- * The scan is line-agnostic (whole-file regex), matching the audit script exactly.
+ * <p>The eleven legacy per-effect targeting methods on {@code CardEffect}
+ * ({@code canTargetPlayer}, {@code canTargetPermanent}, {@code canTargetSpell},
+ * {@code canTargetGraveyard}, {@code canTargetAnyGraveyard}, {@code targetsControllersGraveyardOnly},
+ * {@code canTargetExile}, {@code targetPredicate}, {@code isSelfTargeting},
+ * {@code requiredPlayerTargetCount}, {@code isDamageOrDestruction}) were DELETED in step 10; every
+ * effect now exposes its targeting through the single declarative {@code TargetSpec targetSpec()}.
+ * The migration is done, so this is no longer a shrinking ratchet against a baseline file — it is the
+ * permanent invariant guard that keeps the new mechanism from eroding. It enforces two cheap,
+ * statically-checkable invariants:
+ *
+ * <ol>
+ *   <li><b>No reintroduction of a legacy targeting method.</b> No file under
+ *       {@code model/effect/} may declare a method named {@code canTargetPlayer} /
+ *       {@code canTargetPermanent} / … (the eleven above). This prevents a future change from
+ *       quietly bringing back the per-effect targeting booleans the program deleted. (Record
+ *       COMPONENTS named {@code canTargetSpell} / {@code targetPredicate} are NOT method
+ *       declarations with a body and do not match — the two documented duals
+ *       {@code ChangeColorTextEffect} / {@code PutCounterOnTargetPermanentEffect} keep theirs.)</li>
+ *   <li><b>Every {@code @ValidatesTarget} effect declares a non-NONE {@code targetSpec()}.</b> A
+ *       hand-written {@code @ValidatesTarget} validator is now ONLY an escape hatch for
+ *       non-structural rules (opponent-relation, controller/owner compare, chosen-source,
+ *       null-target tolerance) — and such an effect must STILL declare its structural spec so the
+ *       declarative interpreter offers/type-checks it. This invariant forbids a validator-only
+ *       effect that bypasses {@code targetSpec()} entirely. The two documented equip/attach
+ *       validators ({@code StaticBoostEffect}, {@code AttachedBoostEffect}) are exempt: they target
+ *       through the equip/attach mechanism, not the single-target pipeline, so they carry no
+ *       {@code targetSpec()} category by design.</li>
+ * </ol>
+ *
+ * <p><b>LOCKSTEP:</b> both invariants are duplicated in {@code scripts/targetspec-audit.py}
+ * (same legacy-method set, same {@code public <boolean|int|PermanentPredicate> name()} override
+ * regex, same {@code targetSpec()} brace-matched non-NONE detection, same two exempt effects). If
+ * you change either invariant here you MUST change it there in lockstep, or the script and this test
+ * will disagree.
  */
 class TargetSpecRatchetTest {
 
-    /** The eleven legacy targeting methods this migration deletes (isPowerToughnessDefining is KEPT). */
+    /** The eleven legacy targeting methods the migration deleted (isPowerToughnessDefining is KEPT). */
     private static final List<String> LEGACY_METHODS = List.of(
             "canTargetPlayer", "canTargetPermanent", "canTargetSpell",
             "canTargetGraveyard", "canTargetAnyGraveyard", "targetsControllersGraveyardOnly",
             "canTargetExile", "targetPredicate", "isSelfTargeting",
             "requiredPlayerTargetCount", "isDamageOrDestruction");
 
+    /**
+     * Effects that carry a {@code @ValidatesTarget} validator but legitimately expose no
+     * {@code targetSpec()} category: they are targeted through the equip/attach mechanism, not the
+     * single-target pipeline the spec interpreter drives. Exempt from invariant 2.
+     */
+    private static final Set<String> EQUIP_ATTACH_VALIDATED_EFFECTS =
+            Set.of("StaticBoostEffect", "AttachedBoostEffect");
+
     private static final String EFFECT_PKG =
             "magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect";
-    private static final String BASELINE = "refactor-docs/targetspec-baseline.txt";
+    private static final String VALIDATE_DIR =
+            "magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/validate";
+
+    private static final Pattern VALIDATES_TARGET_RE =
+            Pattern.compile("@ValidatesTarget\\(\\s*([A-Za-z_]\\w*)\\.class");
+    private static final Pattern TARGET_SPEC_METHOD_RE =
+            Pattern.compile("TargetSpec\\s+targetSpec\\s*\\(\\s*\\)\\s*\\{");
+    private static final Pattern SPEC_FACTORY_RE =
+            Pattern.compile("\\b(?:benign|harmful)\\s*\\(");
+    private static final Pattern SPEC_CATEGORY_RE =
+            Pattern.compile("\\bTargetCategory\\.(\\w+)");
 
     @Test
-    @DisplayName("No effect file exceeds its legacy-targeting-override baseline (and none drops below it silently)")
-    void legacyTargetingOverrideCountsMatchBaseline() throws IOException {
+    @DisplayName("No effect file declares any of the eleven deleted legacy targeting methods")
+    void noEffectDeclaresALegacyTargetingMethod() throws IOException {
         Path repoRoot = locateRepoRoot();
         Path effectPkg = repoRoot.resolve(EFFECT_PKG);
 
-        Map<String, Integer> current = new TreeMap<>();
-        Map<String, Set<String>> currentMethods = new TreeMap<>();
+        List<String> messages = new ArrayList<>();
         try (Stream<Path> files = Files.list(effectPkg)) {
             for (Path path : (Iterable<Path>) files.sorted()::iterator) {
                 if (!fileNameOf(path).endsWith(".java")) {
@@ -74,53 +103,71 @@ class TargetSpecRatchetTest {
                 Set<String> overridden = overriddenLegacyMethods(readText(path));
                 if (!overridden.isEmpty()) {
                     String rel = repoRoot.relativize(path).toString().replace('\\', '/');
-                    current.put(rel, overridden.size());
-                    currentMethods.put(rel, overridden);
-                }
-            }
-        }
-
-        Map<String, Integer> baseline = loadBaseline(repoRoot.resolve(BASELINE));
-
-        List<String> messages = new ArrayList<>();
-        Set<String> allFiles = new TreeSet<>();
-        allFiles.addAll(current.keySet());
-        allFiles.addAll(baseline.keySet());
-
-        for (String file : allFiles) {
-            int now = current.getOrDefault(file, 0);
-            Integer wasBoxed = baseline.get(file);
-            int was = wasBoxed == null ? 0 : wasBoxed;
-
-            if (now > was) {
-                messages.add(String.format(
-                        "Legacy targeting overrides grew in %s (was %d, now %d). Overrides present: %s. "
-                                + "Do NOT add a canTarget*/isSelfTargeting/isDamageOrDestruction/targetPredicate/"
-                                + "requiredPlayerTargetCount override — declare a TargetSpec instead: override "
-                                + "targetSpec() to return TargetSpec.harmful(...)/benign(...) for the right "
-                                + "TargetCategory, and the legacy booleans derive from it automatically.",
-                        file, was, now, String.join(", ", currentMethods.getOrDefault(file, Set.of()))));
-            } else if (now < was) {
-                if (now == 0 && !Files.exists(repoRoot.resolve(file))) {
                     messages.add(String.format(
-                            "Baseline lists %s (=%d) but that file no longer exists. Regenerate the baseline "
-                                    + "with python scripts/targetspec-audit.py so the ratchet drops the stale entry.",
-                            file, was));
-                } else {
-                    messages.add(String.format(
-                            "Good news: %s dropped from %d to %d legacy overrides. Regenerate the baseline "
-                                    + "with python scripts/targetspec-audit.py so the ratchet locks in the improvement.",
-                            file, was, now));
+                            "%s declares deleted legacy targeting method(s): %s. These were removed in "
+                                    + "TargetSpec migration step 10 — do NOT reintroduce them. Declare targeting "
+                                    + "purely through targetSpec() (override it to return "
+                                    + "TargetSpec.harmful(...)/benign(...) for the right TargetCategory).",
+                            rel, String.join(", ", overridden)));
                 }
             }
         }
 
         assertThat(messages)
-                .withFailMessage(() -> "TargetSpec ratchet failed:\n  " + String.join("\n  ", messages))
+                .withFailMessage(() -> "TargetSpec guard (invariant 1 — no legacy method) failed:\n  "
+                        + String.join("\n  ", messages))
                 .isEmpty();
     }
 
-    /** Distinct legacy targeting methods the file overrides, per the audit's regex. */
+    @Test
+    @DisplayName("Every @ValidatesTarget effect (bar equip/attach) declares a non-NONE targetSpec()")
+    void everyValidatedEffectDeclaresANonNoneTargetSpec() throws IOException {
+        Path repoRoot = locateRepoRoot();
+        Path effectPkg = repoRoot.resolve(EFFECT_PKG);
+
+        // Which effect classes are named by a @ValidatesTarget annotation.
+        Set<String> validatedEffects = new TreeSet<>();
+        try (Stream<Path> files = Files.walk(repoRoot.resolve(VALIDATE_DIR))) {
+            for (Path path : (Iterable<Path>) files.filter(Files::isRegularFile)
+                    .filter(p -> fileNameOf(p).endsWith(".java")).sorted()::iterator) {
+                Matcher m = VALIDATES_TARGET_RE.matcher(readText(path));
+                while (m.find()) {
+                    validatedEffects.add(m.group(1));
+                }
+            }
+        }
+
+        List<String> messages = new ArrayList<>();
+        for (String effect : validatedEffects) {
+            if (EQUIP_ATTACH_VALIDATED_EFFECTS.contains(effect)) {
+                continue;
+            }
+            Path effectFile = effectPkg.resolve(effect + ".java");
+            if (!Files.exists(effectFile)) {
+                messages.add(String.format(
+                        "@ValidatesTarget names %s but %s/%s.java does not exist.",
+                        effect, EFFECT_PKG, effect));
+                continue;
+            }
+            if (!declaresNonNoneTargetSpec(readText(effectFile))) {
+                messages.add(String.format(
+                        "%s has a @ValidatesTarget validator but no non-NONE targetSpec(). A validator is now "
+                                + "only an escape hatch for non-structural rules; the effect must STILL declare its "
+                                + "structural spec (override targetSpec() to a benign(...)/harmful(...) category) so "
+                                + "the declarative interpreter offers and type-checks it. If it genuinely targets "
+                                + "outside the single-target pipeline (equip/attach), add it to "
+                                + "EQUIP_ATTACH_VALIDATED_EFFECTS here and in scripts/targetspec-audit.py.",
+                        effect));
+            }
+        }
+
+        assertThat(messages)
+                .withFailMessage(() -> "TargetSpec guard (invariant 2 — validator implies non-NONE spec) failed:\n  "
+                        + String.join("\n  ", messages))
+                .isEmpty();
+    }
+
+    /** Distinct legacy targeting methods the file declares as an override (regex, body required). */
     private static Set<String> overriddenLegacyMethods(String text) {
         Set<String> found = new TreeSet<>();
         for (String method : LEGACY_METHODS) {
@@ -133,6 +180,48 @@ class TargetSpecRatchetTest {
         return found;
     }
 
+    /**
+     * True iff the file overrides {@code targetSpec()} with a body that can return a non-NONE spec —
+     * i.e. it uses a {@code benign(} / {@code harmful(} factory (both take a non-NONE category) or
+     * names a {@code TargetCategory} value other than {@code NONE}. A conditional body with at least
+     * one non-NONE branch (per-recipient / per-scope specs) counts as declaring a structural spec.
+     * Mirrors {@code targetspec-audit.py}'s brace-matched detection exactly.
+     */
+    private static boolean declaresNonNoneTargetSpec(String text) {
+        Matcher m = TARGET_SPEC_METHOD_RE.matcher(text);
+        if (!m.find()) {
+            return false;
+        }
+        String body = braceMatchedBody(text, m.end() - 1);
+        if (SPEC_FACTORY_RE.matcher(body).find()) {
+            return true;
+        }
+        Matcher cat = SPEC_CATEGORY_RE.matcher(body);
+        while (cat.find()) {
+            if (!"NONE".equals(cat.group(1))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Body between the matching braces starting at {@code openBraceIdx} (excludes the outer braces). */
+    private static String braceMatchedBody(String text, int openBraceIdx) {
+        int depth = 0;
+        for (int i = openBraceIdx; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0) {
+                    return text.substring(openBraceIdx + 1, i);
+                }
+            }
+        }
+        return text.substring(openBraceIdx + 1);
+    }
+
     /** Walk up from the test working directory until a Gradle settings file is found. */
     private static Path locateRepoRoot() {
         Path dir = Path.of("").toAbsolutePath();
@@ -143,22 +232,6 @@ class TargetSpecRatchetTest {
         }
         throw new IllegalStateException(
                 "Could not locate repo root (no settings.gradle[.kts]) walking up from " + dir);
-    }
-
-    private static Map<String, Integer> loadBaseline(Path baseline) throws IOException {
-        Map<String, Integer> result = new TreeMap<>();
-        for (String line : Files.readAllLines(baseline, StandardCharsets.UTF_8)) {
-            String trimmed = line.strip();
-            if (trimmed.isEmpty()) {
-                continue;
-            }
-            int eq = trimmed.lastIndexOf('=');
-            if (eq < 0) {
-                throw new IllegalStateException("Malformed baseline line (expected path=count): " + line);
-            }
-            result.put(trimmed.substring(0, eq), Integer.parseInt(trimmed.substring(eq + 1).strip()));
-        }
-        return result;
     }
 
     private static String fileNameOf(Path path) {

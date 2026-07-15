@@ -27,38 +27,44 @@ Targeting for triggered abilities happens in two layers:
      bespoke — each supports a different subset of filters. See the table below before assuming any of them
      works the way the death/attack/end-step pipelines do.
 
-If `effect.canTargetPermanent() || effect.canTargetPlayer()` returns `true` on any effect, the collectors
-route the trigger into a pending queue. Otherwise the trigger goes directly onto the stack with no target
-choice. **An effect must override `canTargetPlayer` / `canTargetPermanent`** or it will silently skip
-target selection — this invariant is guarded by `CardEffectTargetingConsistencyTest`.
+If an effect's targeting (read from its `targetSpec()`: `category().includesPermanents()` or
+`includesPlayers()`) is true, the collectors route the trigger into a pending queue. Otherwise the
+trigger goes directly onto the stack with no target choice. **An effect must declare a non-NONE
+`targetSpec()`** or it will silently skip target selection — this invariant is guarded by
+`CardEffectTargetingConsistencyTest`. (The eleven legacy `canTarget*` booleans were deleted in the
+TargetSpec migration; the collectors now read the derived accessors on `targetSpec().category()`.)
 
 ---
 
 ## Spell / activated-ability target validation (a DIFFERENT mechanism)
 
 The pipelines above are for TRIGGERED abilities. A **spell** (SPELL slot) or **activated ability**
-that carries a single `targetId` is validated on a separate path, and a targeted effect there
-**REQUIRES a `@ValidatesTarget` validator** under `service/validate/` to narrow the legal permanent
-type (creature / land / any permanent / …). Without one, the single-`targetId` cast path does NO
-type checking on the effect — the Fireball-burns-a-Plains class of bug.
+that carries a single `targetId` is validated on a separate path, and it narrows the legal target type
+from the effect's **`targetSpec()`** — the category (`CREATURE` / `LAND` / `PERMANENT` / …) plus its
+optional `PermanentPredicate` — interpreted by `TargetValidationService`. Declare the spec and the
+cast path type-checks the target automatically; an effect that targets a permanent but leaves
+`targetSpec()` at `NONE` gets NO type checking — the Fireball-burns-a-Plains class of bug.
 
-- Register the validator as a `@Service` under `service/validate/` annotated
-  `@ValidatesTarget(YourEffect.class)`; it is auto-discovered (no manual wiring).
+- The declarative interpreter needs no per-effect wiring. Add a `@ValidatesTarget` validator (a
+  `@Service` under `service/validate/`, auto-discovered) ONLY as an escape hatch for a non-structural
+  rule the category/predicate cannot express (opponent-relation, controller/owner compare,
+  chosen-source, null-target tolerance) — and still declare the structural `targetSpec()`.
 - All **three** spell-target validation paths — UI/AI enumeration (`ValidTargetService`), multi-target
   cast, and single-`targetId` cast (`TargetLegalityService.checkSpellTargeting`) — share ONE structural
   core, `TargetLegalityService.checkSpellPermanentTargetableReason` (protection / shroud / hexproof /
-  cant-be-targeted); the single-target paths additionally run the per-effect validators via
-  `TargetValidationService.checkEffectTargets`. So a validator you add is honoured by cast-time AND by
-  what the UI/AI offers — you cannot narrow one without the other.
-- NOT every targeted effect needs one: spell-on-stack (`canTargetSpell`), player-only, and multi-target
-  effects are validated by other mechanisms (card / position `TargetFilter`), and trigger/ETB-slot
-  targets are chosen by the pipelines below.
+  cant-be-targeted); the single-target paths additionally run the spec interpreter (and any escape-hatch
+  validator) via `TargetValidationService.checkEffectTargets`. So the spec you declare is honoured by
+  cast-time AND by what the UI/AI offers — you cannot narrow one without the other.
+- Categories with no permanent-type gate are validated elsewhere: spell-on-stack (`SPELL_ON_STACK`,
+  validated on the stack path), player-only (`PLAYER`, the structural player/permanent pre-split), and
+  multi-target effects (card / position `TargetFilter`); trigger/ETB-slot targets are chosen by the
+  pipelines below.
 
 ---
 
 ## Pipeline capability matrix
 
-| Pipeline                   | `Options` constant | Player target | Permanent target | `PlayerRelationPredicate.OPPONENT` (via `PlayerPredicateTargetFilter`) | `PermanentPredicateTargetFilter` | `ControlledPermanentPredicateTargetFilter` | Effect-level `targetPredicate()` |
+| Pipeline                   | `Options` constant | Player target | Permanent target | `PlayerRelationPredicate.OPPONENT` (via `PlayerPredicateTargetFilter`) | `PermanentPredicateTargetFilter` | `ControlledPermanentPredicateTargetFilter` | Effect-level target predicate (`targetSpec().predicate()`, read via `EffectResolution.targetPredicateOf`) |
 |----------------------------|--------------------|:-------------:|:----------------:|:------:|:---:|:---:|:---:|
 | Death (`DeathTriggerTarget`)        | `Options.DEATH`    | ✅ | ✅ creatures only | ✅ | ✅ | ✅ | ❌ (ignored) |
 | Attack (`AttackTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
@@ -95,23 +101,23 @@ combat damage step is processed.
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (per-attacker mandatory triggers store the triggering attacker as a non-targeting `targetId`, and the attacked player/planeswalker as `attackedTargetId` — so effects can act on "that creature", e.g. Shared Animosity's boost) | Attack |
-| `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect `canTargetPermanent()` (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
+| `ON_BLOCK` (targeting variant only) | `CombatBlockService.declareBlockers` queues an `AttackTriggerTarget` when the blocker's **card carries a target filter** and a block effect's `targetSpec()` includes permanents (e.g. Elite Javelineer's "deals 1 damage to target attacking creature"); honours the card's `PermanentPredicateTargetFilter`. Block triggers with **no** card-level target filter (Ashmouth Hound, Inferno Elemental — "that creature") still push a non-targeting stack entry referencing the blocked attacker. | Attack |
 | `ON_ALLY_CREATURE_ATTACKS_UNBLOCKED` | `CombatBlockService` (declare-blockers step; unblocked creature stored as non-targeting `sourcePermanentId`) | Non-targeting |
 | `ON_CREATURE_ATTACKS_YOU` | `CombatAttackService.declareAttackers` (defender's permanents; attacking creature stored as non-targeting `targetId`) | Attack |
 | `ON_ANY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` (all battlefields, any controller; attacking creature stored as non-targeting `targetId`) | Non-targeting (Caltrops) |
 | `ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers`/`checkBecomesTargetOfAbilityTriggers` (all battlefields; targeted creature stored as non-targeting `targetId`) | Becomes-target |
-| `UPKEEP_TRIGGERED` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect is `canTargetPlayer() && canTargetPermanent()`, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
-| `UPKEEP_TRIGGERED` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect is `canTargetPermanent()`, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
+| `UPKEEP_TRIGGERED` (any-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepAnyTargetTrigger` (queued when an effect targets both — `targetSpec().category()` includes players AND permanents, e.g. Form of the Dragon's 5-damage) | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
+| `UPKEEP_TRIGGERED` (permanent-target effects) | `StepTriggerService.handleUpkeepTriggers` → `UpkeepPermanentTargetTrigger` (queued when a non–any-target, non–player-target effect's `targetSpec()` includes permanents, e.g. Weed-Pruner Poplar's "target creature other than this creature gets -1/-1"). Honours the card's `PermanentPredicateTargetFilter`; use `PermanentNotPredicate(PermanentIsSourceCardPredicate)` for "other than this creature". | End step (reuses `TriggerTargetCollector.Options.END_STEP` for the target list) |
 | `END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (non-kicked / morbid / default) | End step |
 | `CONTROLLER_END_STEP_TRIGGERED` | `StepTriggerService.handleEndOfTurnTriggers` (raid / default) | End step |
-| `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfLeavesTriggerTarget` (queued when an effect is `canTargetPlayer()`/`canTargetPermanent()`, e.g. Meadowboon, or `canTargetGraveyard()`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfLeavesTriggerTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
+| `ON_SELF_LEAVES_BATTLEFIELD` (targeting effects only) | `DeathTriggerCollectorService.handleSelfLeavesDefault` → `SelfLeavesTriggerTarget` (queued when an effect's `targetSpec()` includes players/permanents, e.g. Meadowboon, or is a graveyard category — `category().isGraveyard()`, e.g. Offalsnout). `TriggeredAbilityQueueService.processNextSelfLeavesTriggerTarget` routes graveyard-targeting effects (`ExileGraveyardCardsEffect(TARGET_CARDS_ANY_GRAVEYARD)`) to a `MultiGraveyardChoice` card choice instead of the permanent/player path. | End step (reuses `TriggerTargetCollector.Options.END_STEP`); non-targeting effects push straight to the stack |
 | `ON_SELF_DISCARDED_BY_OPPONENT` | `TriggerCollectionService.checkDiscardSelfTriggers` | Discard-self |
 | `ON_BECOMES_TARGET_OF_SPELL` / `…_OR_ABILITY` / `…_OF_OPPONENT_SPELL` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
-| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when `effect.canTargetPermanent()`, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — any permanent, honours the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`) |
+| `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — any permanent, honours the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | `ON_CONTROLLER_CLASHES` | `TriggerCollectionService.fireClashTriggers` | Clash — targeting triggers via `ClashTriggerTarget` (opponent-creature only); non-targeting triggers pushed straight to the stack |
 | `ON_CHAMPIONED` | `PermanentChoiceBattlefieldHandlerService.handleChampionCreature` | Player/permanent target via `ChampionedTriggerTarget` (collected with `Options.END_STEP`; Mistbind Clique taps target player's lands) |
@@ -228,7 +234,7 @@ filters candidates through `ValidTargetService.filterValidPlayerTargets` using t
 e.g. Nath of the Gilt-Leaf). Any other pipeline that offers the controller as a valid target too is **a
 bug** and must be fixed in the pipeline, not papered over at the card level.
 
-When used with an effect that also sets `canTargetPermanent()` to `true`, the opponent-only restriction
+When used with an effect whose `targetSpec()` also includes permanents, the opponent-only restriction
 applies **only** to the player branch of the target list; permanents are still filtered via
 `PermanentPredicateTargetFilter` (see below). If you need "target opponent OR a permanent an opponent
 controls", combine the two: `PlayerPredicateTargetFilter` for the player side and
@@ -250,12 +256,14 @@ such restriction.
 Honoured **only** by Death and Attack pipelines. End-step does not read this filter; use
 `PermanentPredicateTargetFilter` with `opponentControlled(...)` / `allied(...)` instead.
 
-### Effect-level `targetPredicate()`
+### Effect-level target predicate (`targetSpec().predicate()`)
 
-Honoured **only** by End-step (and Saga chapter) pipelines. Death and Attack ignore `targetPredicate()`
-entirely — put the predicate on the card's `TargetFilter` instead. The end-step pipeline will also
-unwrap `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before inspecting
-`canTargetPlayer`, `canTargetPermanent`, and `targetPredicate()`.
+The predicate an effect carries in its `targetSpec()` (read via `EffectResolution.targetPredicateOf`,
+which also honours the `PutCounterOnTargetPermanentEffect.targetPredicate` component dual) is honoured
+**only** by End-step (and Saga chapter) pipelines. Death and Attack ignore it entirely — put the
+predicate on the card's `TargetFilter` instead. The end-step pipeline will also unwrap
+`ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before inspecting the wrapped effect's
+targeting (`targetSpec()` category + predicate).
 
 ---
 
@@ -268,13 +276,13 @@ unwrap `ConditionalEffect` (morbid / metalcraft / raid / …) wrappers before in
 - **"My ON_DEATH trigger lets the controller pick themselves as the target."** You forgot the
   `PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT))` on the card — or
   you wired it on a pipeline that doesn't honour it (everything outside death / attack / end-step).
-- **"My end-step trigger ignores `targetPredicate()`."** It shouldn't, unless the effect is wrapped in a
+- **"My end-step trigger ignores its target predicate."** It shouldn't, unless the effect is wrapped in a
   `ConditionalEffect` subclass that `Options.END_STEP.unwrapConditional()` doesn't know about. Check
   `TriggerTargetCollector.collect` — it unwraps any `ConditionalEffect` generically.
-- **"My attack trigger uses `targetPredicate()` and it's ignored."** Move the predicate onto the card's
-  `TargetFilter` — attack (and death) read only the card-level filter.
+- **"My attack trigger uses a `targetSpec()` predicate and it's ignored."** Move the predicate onto the
+  card's `TargetFilter` — attack (and death) read only the card-level filter.
 - **"My effect gets no valid targets offered even though the filter matches."** The effect probably
-  doesn't override `canTargetPlayer` / `canTargetPermanent`. The `CardEffectTargetingConsistencyTest`
+  leaves `targetSpec()` at `NONE`. The `CardEffectTargetingConsistencyTest`
   catches this for effects named `Target*Effect`, but not for other naming conventions.
 
 ## Aura trigger slot selection
