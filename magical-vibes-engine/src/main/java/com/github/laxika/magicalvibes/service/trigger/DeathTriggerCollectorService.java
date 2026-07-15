@@ -271,7 +271,7 @@ public class DeathTriggerCollectorService {
             MayEffect may, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking
-        if (may.canTargetPermanent() || may.canTargetPlayer()) {
+        if (may.targetSpec().category().includesPermanents() || may.targetSpec().category().includesPlayers()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(may))
             ));
@@ -306,7 +306,7 @@ public class DeathTriggerCollectorService {
     boolean handleDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
-        if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -355,7 +355,7 @@ public class DeathTriggerCollectorService {
     boolean handleEquippedCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -749,7 +749,7 @@ public class DeathTriggerCollectorService {
     boolean handleAnyCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
-        if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
@@ -929,7 +929,8 @@ public class DeathTriggerCollectorService {
         TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
         // Graveyard-targeting self-leaves triggers (e.g. Offalsnout) also queue as a
         // SelfLeavesTriggerTarget; the queue processor routes them to a graveyard card choice.
-        if (effect.canTargetPermanent() || effect.canTargetPlayer() || effect.canTargetGraveyard()) {
+        if (effect.targetSpec().category().includesPermanents() || effect.targetSpec().category().includesPlayers()
+                || effect.targetSpec().category().isGraveyard()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfLeavesTriggerTarget(
                     match.permanent().getCard(), sl.controllerId(), new ArrayList<>(List.of(effect))
             ));

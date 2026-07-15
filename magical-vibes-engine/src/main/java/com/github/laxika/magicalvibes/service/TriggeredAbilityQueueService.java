@@ -13,7 +13,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -86,7 +88,7 @@ public class TriggeredAbilityQueueService {
             // Graveyard-targeting self-leaves trigger (e.g. Offalsnout): choose a target card in a
             // graveyard to exile, at the time the trigger is put on the stack.
             ExileGraveyardCardsEffect gyExile = pending.effects().stream()
-                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.canTargetGraveyard())
+                    .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().category().isGraveyard())
                     .map(e -> (ExileGraveyardCardsEffect) e)
                     .findFirst().orElse(null);
             if (gyExile != null) {
@@ -137,7 +139,7 @@ public class TriggeredAbilityQueueService {
     private boolean beginSelfLeavesGraveyardTarget(GameData gameData,
             PermanentChoiceContext.SelfLeavesTriggerTarget pending, ExileGraveyardCardsEffect gyExile) {
         CardPredicate filter = gyExile.filter();
-        boolean anyGraveyard = gyExile.canTargetAnyGraveyard();
+        boolean anyGraveyard = gyExile.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
 
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(pending.controllerId());
@@ -686,8 +688,9 @@ public class TriggeredAbilityQueueService {
                                                   PermanentChoiceContext.SagaChapterTarget pending) {
         // Extract target predicate from the first targeting effect that declares one
         PermanentPredicate targetPredicate = pending.effects().stream()
-                .filter(e -> e.canTargetPermanent() && e.targetPredicate() != null)
-                .map(CardEffect::targetPredicate)
+                .filter(e -> e.targetSpec().category().includesPermanents()
+                        && EffectResolution.targetPredicateOf(e) != null)
+                .map(EffectResolution::targetPredicateOf)
                 .findFirst().orElse(null);
 
         // Also check for chapter-level target filters (e.g. "creature an opponent controls")

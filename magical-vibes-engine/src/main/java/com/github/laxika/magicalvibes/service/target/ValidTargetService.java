@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -248,9 +249,9 @@ public class ValidTargetService {
             return new ValidTargetsResponse(validPermanentIds, validPlayerIds, ability.getMinTargets(), ability.getMaxTargets(), prompt);
         }
 
-        boolean targetsPlayer = ability.getEffects().stream().anyMatch(CardEffect::canTargetPlayer);
-        boolean targetsPermanent = ability.getEffects().stream().anyMatch(CardEffect::canTargetPermanent);
-        boolean targetsGraveyard = ability.getEffects().stream().anyMatch(CardEffect::canTargetGraveyard);
+        boolean targetsPlayer = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean targetsPermanent = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean targetsGraveyard = ability.getEffects().stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
         boolean targetsBlockingThis = ability.getEffects().stream()
                 .anyMatch(e -> e instanceof DestroyCreatureBlockingThisEffect);
 
@@ -365,10 +366,10 @@ public class ValidTargetService {
         // restrict valid permanent targets to creatures and planeswalkers.
         if (card.getTargetFilter() == null && positionFilter == null) {
             List<CardEffect> permanentEffects = spellEffects.stream()
-                    .filter(CardEffect::canTargetPermanent)
+                    .filter(e -> e.targetSpec().category().includesPermanents())
                     .toList();
             boolean allAnyTarget = !permanentEffects.isEmpty()
-                    && permanentEffects.stream().allMatch(CardEffect::canTargetPlayer);
+                    && permanentEffects.stream().allMatch(e -> e.targetSpec().category().includesPlayers());
             if (allAnyTarget) {
                 if (!gameQueryService.isCreature(gameData, perm) && !isPlaneswalker(perm)) {
                     return false;
@@ -497,7 +498,7 @@ public class ValidTargetService {
 
         // Protection from source color/type/subtype (for abilities that deal damage or destroy)
         boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
-                e.canTargetPermanent() && e.isDamageOrDestruction());
+                e.targetSpec().category().includesPermanents() && e.targetSpec().harmful());
         if (dealsDamageOrDestroys) {
             if (sourceCard.getColor() != null && gameQueryService.hasProtectionFrom(gameData, perm, sourceCard.getColor())) {
                 return false;
@@ -586,7 +587,7 @@ public class ValidTargetService {
         List<UUID> validIds = new ArrayList<>();
 
         for (CardEffect effect : spellEffects) {
-            if (!effect.canTargetGraveyard()) continue;
+            if (!effect.targetSpec().category().isGraveyard()) continue;
 
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
                 List<UUID> searchPlayerIds = switch (rge.source()) {
@@ -609,7 +610,7 @@ public class ValidTargetService {
                 }
             } else {
                 // Generic graveyard-targeting effects (e.g. PutCreatureFromOpponentGraveyard)
-                boolean anyGraveyard = effect.canTargetAnyGraveyard();
+                boolean anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 List<UUID> searchPlayerIds = anyGraveyard
                         ? gameData.orderedPlayerIds
                         : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();
@@ -646,8 +647,8 @@ public class ValidTargetService {
                 }
                 break;
             }
-            if (effect.canTargetGraveyard()) {
-                boolean anyGraveyard = effect.canTargetAnyGraveyard();
+            if (effect.targetSpec().category().isGraveyard()) {
+                boolean anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 List<UUID> searchPlayerIds = anyGraveyard
                         ? gameData.orderedPlayerIds
                         : gameData.orderedPlayerIds.stream().filter(id -> !id.equals(controllerId)).toList();

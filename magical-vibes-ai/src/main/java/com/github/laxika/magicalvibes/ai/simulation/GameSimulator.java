@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -1139,7 +1140,7 @@ public class GameSimulator {
 
     private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!effect.canTargetGraveyard()) continue;
+            if (!effect.targetSpec().category().isGraveyard()) continue;
 
             List<Card> candidates;
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
@@ -1150,7 +1151,7 @@ public class GameSimulator {
                             .toList();
                 }
             } else {
-                GraveyardSearchScope scope = effect.canTargetAnyGraveyard()
+                GraveyardSearchScope scope = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD
                         ? GraveyardSearchScope.ALL_GRAVEYARDS
                         : GraveyardSearchScope.OPPONENT_GRAVEYARD;
                 candidates = getSimGraveyardCandidates(gd, scope, playerId, opponentId);

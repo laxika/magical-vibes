@@ -465,7 +465,7 @@ public class Card {
             if (expandedPosition < cumulative) {
                 int groupIndex = st.getIndex();
                 for (Map.Entry<CardEffect, Integer> entry : effectTargetIndexMap.entrySet()) {
-                    if (entry.getValue() == groupIndex && entry.getKey().canTargetPlayer()) {
+                    if (entry.getValue() == groupIndex && entry.getKey().targetSpec().category().includesPlayers()) {
                         return true;
                     }
                 }

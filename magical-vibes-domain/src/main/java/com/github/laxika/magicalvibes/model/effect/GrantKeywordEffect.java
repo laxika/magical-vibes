@@ -14,7 +14,7 @@ import java.util.Set;
  * skipped. It is NOT a targeting restriction — the target stays legal either way; only the
  * grant is conditional (e.g. Vampire's Zeal: "target creature gets +2/+2; if it's a Vampire,
  * it also gains first strike"). This is intentionally distinct from {@code filter}: {@code filter}
- * feeds {@link #targetPredicate()} (targeting restriction) for the TARGET scope and selects the
+ * feeds the {@link #targetSpec()} predicate (targeting restriction) for the TARGET scope and selects the
  * eligible permanents for the multi-permanent scopes, whereas {@code grantCondition} only gates
  * the keyword grant. Use {@link #toTargetIf(Keyword, PermanentPredicate)} to build one.
  */

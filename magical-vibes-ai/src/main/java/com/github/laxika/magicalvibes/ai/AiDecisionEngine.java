@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -686,20 +687,20 @@ public abstract class AiDecisionEngine {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
             CardEffect effect = option.effect();
 
-            if (effect.canTargetSpell()) continue;
+            if (EffectResolution.targetsSpellOnStack(effect)) continue;
 
-            if (effect.canTargetPermanent()) {
+            if (effect.targetSpec().category().includesPermanents()) {
                 UUID target = findModalPermanentTarget(gameData, card, option);
                 if (target != null) return new ModalCastPlan(i, target);
                 continue;
             }
 
-            if (effect.canTargetPlayer()) {
+            if (effect.targetSpec().category().includesPlayers()) {
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
                 return new ModalCastPlan(i, opponentId);
             }
 
-            if (effect.canTargetGraveyard()) {
+            if (effect.targetSpec().category().isGraveyard()) {
                 List<Card> targets = targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId());
                 if (!targets.isEmpty()) return new ModalCastPlan(i, targets.getFirst().getId());
                 continue;
@@ -713,10 +714,10 @@ public abstract class AiDecisionEngine {
 
     private boolean isModalModeValid(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
         CardEffect effect = option.effect();
-        if (effect.canTargetSpell()) return false;
-        if (effect.canTargetPermanent()) return findModalPermanentTarget(gameData, card, option) != null;
-        if (effect.canTargetPlayer()) return true;
-        if (effect.canTargetGraveyard()) {
+        if (EffectResolution.targetsSpellOnStack(effect)) return false;
+        if (effect.targetSpec().category().includesPermanents()) return findModalPermanentTarget(gameData, card, option) != null;
+        if (effect.targetSpec().category().includesPlayers()) return true;
+        if (effect.targetSpec().category().isGraveyard()) {
             return !targetSelector.findValidGraveyardTargets(gameData, card, aiPlayer.getId()).isEmpty();
         }
         return true;

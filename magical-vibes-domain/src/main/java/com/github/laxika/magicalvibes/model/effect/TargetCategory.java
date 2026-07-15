@@ -79,4 +79,13 @@ public enum TargetCategory {
     public boolean includesPlayers() {
         return includesPlayers;
     }
+
+    /**
+     * Whether a card in a graveyard is a legal target for this category — true for any of the three
+     * mutually-exclusive graveyard states ({@link #GRAVEYARD_CARD}, {@link #ANY_GRAVEYARD_CARD},
+     * {@link #CONTROLLERS_GRAVEYARD_CARD}). Successor to the old {@code canTargetGraveyard()} boolean.
+     */
+    public boolean isGraveyard() {
+        return this == GRAVEYARD_CARD || this == ANY_GRAVEYARD_CARD || this == CONTROLLERS_GRAVEYARD_CARD;
+    }
 }

@@ -105,7 +105,7 @@ public class CombatTriggerService {
                     } else {
                         // Check if any effect needs a permanent target — queue for target selection
                         boolean needsTarget = effectsForStack.stream()
-                                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
+                                .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
                         if (needsTarget) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(

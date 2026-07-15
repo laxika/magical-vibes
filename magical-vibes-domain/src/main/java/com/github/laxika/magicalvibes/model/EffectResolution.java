@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -12,7 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -113,8 +117,9 @@ public final class EffectResolution {
             // (CR 603.3d) via the ETBTokenTargetTrigger path — and never chosen at all when
             // the gate isn't met.
             if (e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()) continue;
-            if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
-            if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
+            TargetCategory category = e.targetSpec().category();
+            if (category.includesPlayers()) result.add(TargetType.PLAYER);
+            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
         }
         return result;
     }
@@ -158,7 +163,35 @@ public final class EffectResolution {
      * Returns true if the given effects target a spell on the stack.
      */
     public static boolean needsSpellTarget(List<CardEffect> spellEffects) {
-        return spellEffects.stream().anyMatch(CardEffect::canTargetSpell);
+        return spellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
+    }
+
+    /**
+     * Whether the effect can target a spell on the stack — the successor to the deleted
+     * {@code CardEffect.canTargetSpell()}. Almost every effect answers this from its
+     * {@link CardEffect#targetSpec()} category ({@link TargetCategory#SPELL_ON_STACK}).
+     * {@link ChangeColorTextEffect} (Glamerdye) is the one dual case that ALSO targets a spell
+     * independently of its {@code PERMANENT} spec, exposing the capability through its
+     * {@code canTargetSpell} record component; spell targets are validated on the stack path,
+     * never by the spec interpreter.
+     */
+    public static boolean targetsSpellOnStack(CardEffect e) {
+        return e.targetSpec().category() == TargetCategory.SPELL_ON_STACK
+                || (e instanceof ChangeColorTextEffect c && c.canTargetSpell());
+    }
+
+    /**
+     * The permanent-target predicate for the effect — the successor to the deleted
+     * {@code CardEffect.targetPredicate()}. Almost every effect carries it on its
+     * {@link CardEffect#targetSpec()} predicate. {@link PutCounterOnTargetPermanentEffect} is the one
+     * case that keeps its targeting restriction on a dedicated {@code targetPredicate} record
+     * component (its spec predicate stays {@code null} to avoid a cast-time gate); the saga-chapter
+     * and end-step targeting pipelines read the restriction through this component.
+     */
+    public static PermanentPredicate targetPredicateOf(CardEffect e) {
+        return e instanceof PutCounterOnTargetPermanentEffect p
+                ? p.targetPredicate()
+                : e.targetSpec().predicate();
     }
 
     /**
@@ -268,10 +301,11 @@ public final class EffectResolution {
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {
-        if (e.canTargetPlayer()) out.add(TargetType.PLAYER);
-        if (e.canTargetPermanent()) out.add(TargetType.PERMANENT);
-        if (e.canTargetSpell()) out.add(TargetType.SPELL_ON_STACK);
-        if (e.canTargetGraveyard()) out.add(TargetType.GRAVEYARD);
-        if (e.canTargetExile()) out.add(TargetType.EXILE);
+        TargetCategory category = e.targetSpec().category();
+        if (category.includesPlayers()) out.add(TargetType.PLAYER);
+        if (category.includesPermanents()) out.add(TargetType.PERMANENT);
+        if (targetsSpellOnStack(e)) out.add(TargetType.SPELL_ON_STACK);
+        if (category.isGraveyard()) out.add(TargetType.GRAVEYARD);
+        if (category == TargetCategory.EXILE_CARD) out.add(TargetType.EXILE);
     }
 }

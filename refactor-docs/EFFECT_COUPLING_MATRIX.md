@@ -427,25 +427,36 @@ Only effect types with at least one out-of-zone `instanceof` are listed.
 
 ## Validator coverage gap
 
-Targeted effect types (they carry a target: override a `canTarget*()` to return true per `model/EffectResolution.java`, or are instanceof-checked in the targeting services) that have **no** `@ValidatesTarget` validator under `service/validate/`. On the single-`targetId` validation path (`TargetLegalityService.checkSpellTargeting`) these effects get NO type checking — this is the class of bug that let the AI cast Fireball at a Plains (July 2026, `DealDividedDamageEffect`). This list feeds refactor step 3.
+Targeted effect types (they carry a target: override `targetSpec()` to a non-NONE spec per `model/effect/CardEffect.java`, or are instanceof-checked in the targeting services) that have **no** `@ValidatesTarget` validator under `service/validate/`. On the single-`targetId` validation path (`TargetLegalityService.checkSpellTargeting`) these effects get NO type checking — this is the class of bug that let the AI cast Fireball at a Plains (July 2026, `DealDividedDamageEffect`). This list feeds refactor step 3.
 
-- **Targeted effect types:** 217
-- **With a validator:** 108
-- **Coverage gap (targeted, no validator):** 107
+- **Targeted effect types:** 255
+- **With a validator:** 32
+- **Coverage gap (targeted, no validator):** 221
 
 | Effect type | Dispatched outside zones? |
 |-------------|---------------------------|
+| `AddCardTypeToTargetPermanentEffect` |  |
+| `AnimatePermanentsEffect` | yes |
 | `AttachAllAurasToAnotherPermanentEffect` |  |
 | `AttachSourceAuraToTargetCreatureEffect` |  |
 | `AttachSourceEquipmentToTargetCreatureEffect` |  |
 | `AttachTargetEquipmentToTargetCreatureEffect` |  |
+| `AttachTargetToSourcePermanentEffect` |  |
+| `BecomeChosenColorsUntilEndOfTurnEffect` |  |
 | `BecomeCopyOfTargetCreatureEffect` | yes |
 | `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` | yes |
+| `BoostAllCreaturesEffect` |  |
+| `BoostTargetCreatureEffect` |  |
+| `BoostTargetCreaturePerChosenTypeCountEffect` |  |
+| `BuffTargetCreatureIndefinitelyEffect` | yes |
+| `CantBlockSourceEffect` | yes |
+| `CantBlockThisTurnEffect` |  |
 | `ChangeColorTextEffect` |  |
 | `ChangeTargetOfTargetSpellToSourceEffect` |  |
 | `ChangeTargetOfTargetSpellWithSingleTargetEffect` |  |
 | `ChooseCardsFromTargetHandEffect` |  |
 | `ChooseNewTargetsForTargetSpellEffect` | yes |
+| `ClashEffect` |  |
 | `ControlTargetPlayerNextTurnEffect` |  |
 | `CopySpellEffect` | yes |
 | `CounterSpellAndCreateTreasureTokensEffect` |  |
@@ -459,56 +470,139 @@ Targeted effect types (they carry a target: override a `canTarget*()` to return 
 | `CounterUnlessPaysEffect` |  |
 | `CounterlashEffect` |  |
 | `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect` |  |
+| `CreateTokenCopyOfTargetPermanentEffect` | yes |
 | `CreateTokenForTargetPlayerEffect` |  |
+| `DealDamageToAnyTargetAndGainLifeEffect` |  |
+| `DealDamageToAnyTargetEffect` | yes |
+| `DealDamageToAnyTargetEqualToChosenTypeCountEffect` |  |
+| `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect` |  |
+| `DealDamageToEachMatchingPermanentEffect` |  |
 | `DealDamageToEachTargetEffect` |  |
+| `DealDamageToTargetAndTheirCreaturesEffect` |  |
+| `DealDamageToTargetControllerIfTargetHasKeywordEffect` |  |
+| `DealDamageToTargetCreatureEffect` | yes |
+| `DealDamageToTargetCreatureEqualToChosenTypeCountEffect` |  |
+| `DealDamageToTargetCreatureOrPlaneswalkerEffect` | yes |
+| `DealDamageToTargetPlayerOrPlaneswalkerEffect` |  |
+| `DealXDamageToAnyTargetAndGainXLifeEffect` | yes |
+| `DestroyAttachmentsOnTargetCreatureEffect` |  |
 | `DestroyCombatOpponentAtEndOfCombatEffect` | yes |
 | `DestroyEachTargetPermanentEffect` |  |
 | `DestroySubtypeCombatOpponentEffect` | yes |
+| `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect` |  |
+| `DestroyTargetLandAndDamageControllerEffect` |  |
+| `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect` |  |
 | `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect` |  |
+| `DestroyTargetPermanentAtEndStepEffect` |  |
+| `DestroyTargetPermanentEffect` | yes |
+| `DestroyTargetPermanentThenEffect` | yes |
+| `DestroyTargetThenRevealUntilTypeToBattlefieldEffect` |  |
 | `DestroyUpToTargetsThenReturnFromGraveyardEffect` |  |
 | `DiscardAllCardsOfChosenColorEffect` |  |
+| `DiscardEffect` | yes |
 | `DiscardHandUnlessPaysLifeEffect` | yes |
+| `DiscardOwnHandThenDrawEffect` |  |
 | `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect` |  |
 | `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect` |  |
+| `DoubleCountersOnTargetPermanentEffect` |  |
 | `DoubleTargetPlayerLifeEffect` |  |
+| `DrawCardEffect` | yes |
+| `DrawCardForTargetPlayerEffect` | yes |
 | `DrawTwoToTheXCardsForTargetPlayerEffect` |  |
+| `EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect` |  |
 | `EachTargetPlayerGainsLifeEffect` |  |
+| `EquipEffect` |  |
 | `ExchangeTargetPlayersLifeTotalsEffect` |  |
 | `ExileCardsFromGraveyardEffect` | yes |
 | `ExileGraveyardCardWithConditionalBonusEffect` |  |
 | `ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect` |  |
+| `ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect` |  |
+| `ExileTargetCreatureAndAllWithSameNameEffect` |  |
 | `ExileTargetOnControllerSpellCastEffect` | yes |
 | `ExileTargetOpponentPermanentOnDrawEffect` | yes |
 | `ExileTargetPermanentAndImprintEffect` |  |
+| `ExileTargetPermanentAndTrackWithSourceEffect` |  |
+| `ExileTargetPermanentEffect` |  |
+| `ExileTargetPermanentMayPlayUntilNextTurnEffect` |  |
 | `ExileTargetPermanentUntilSourceLeavesEffect` |  |
 | `ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect` |  |
 | `ExileTopCardsOfTargetOpponentCreateTokenPerChosenColorEffect` |  |
 | `ExtraTurnEffect` |  |
 | `FightTargetsEffect` |  |
+| `FlickerEffect` |  |
 | `GainControlOfAllLandsTargetPlayerControlsEffect` |  |
+| `GainControlOfEnchantedTargetEffect` | yes |
+| `GainControlOfTargetEffect` |  |
 | `GainControlUntapAndHasteTargetEffect` |  |
+| `GainLifeEffect` | yes |
+| `GrantActivatedAbilityEffect` | yes |
+| `GrantBasicLandTypeToTargetEffect` |  |
+| `GrantChosenKeywordToTargetEffect` |  |
+| `GrantColorUntilEndOfTurnEffect` |  |
+| `GrantEffectToTargetUntilEndOfTurnEffect` |  |
+| `GrantKeywordEffect` | yes |
+| `GrantProtectionChoiceUntilEndOfTurnEffect` |  |
+| `GrantProtectionFromCardTypeUntilEndOfTurnEffect` |  |
+| `GrantSubtypeToTargetCreatureEffect` |  |
 | `HeadGamesEffect` |  |
+| `IllicitAuctionEffect` |  |
 | `JuxtaposeEffect` |  |
 | `LookAtHandChooseNonlandToBottomAndDrawEffect` |  |
 | `LookAtHandEffect` |  |
 | `LookAtTargetPlayerTopCardMayGraveyardEffect` |  |
+| `LoseAllCreatureTypesEffect` |  |
+| `LosesAllAbilitiesEffect` |  |
+| `MakeCreatureUnblockableEffect` |  |
 | `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect` | yes |
+| `MakeTargetCreaturePreparedEffect` |  |
 | `MakeTargetCreatureUnpreparedEffect` |  |
 | `MakeTargetSpellUncounterableEffect` |  |
 | `ManaClashEffect` |  |
+| `MarkTargetCreatureExileInsteadOfDieThisTurnEffect` |  |
+| `MassFightTargetCreatureEffect` |  |
+| `MillControllerAndDealDamageByHighestManaValueEffect` |  |
 | `MillHalfLibraryEffect` |  |
 | `MillTargetPlayerAndBoostSelfByManaValueEffect` |  |
 | `MoveCounterFromTargetCreatureToTargetCreatureEffect` |  |
 | `MoveDyingSourceCountersToTargetCreatureEffect` |  |
 | `MustAttackControllerNextTurnEffect` |  |
+| `MustAttackThisTurnEffect` |  |
+| `MustBeBlockedByAllCreaturesThisTurnEffect` |  |
+| `MustBeBlockedIfAbleThisTurnEffect` |  |
+| `MustBlockSourceEffect` | yes |
 | `MustBlockTargetCreatureEffect` |  |
 | `NameCardMillTargetGainLifeEffect` |  |
+| `PackHuntEffect` |  |
+| `PlaneswalkerDealDamageAndReceivePowerDamageEffect` |  |
+| `PlayerDestroysPermanentsEffect` |  |
+| `PreventAllDamageByTargetCreatureEffect` |  |
+| `PreventAllDamageToTargetCreatureEffect` |  |
+| `PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect` |  |
+| `PreventDamageToTargetEffect` |  |
+| `PreventDamageToTargetFromChosenSourceEffect` |  |
 | `PreventXDamageToControllerAndRedirectToTargetPlayerEffect` |  |
 | `PsychicTransferEffect` |  |
+| `PutCounterOnEachMatchingPermanentEffect` |  |
 | `PutCounterOnTargetForEachDyingSourceCounterEffect` |  |
+| `PutCounterOnTargetPermanentEffect` | yes |
 | `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect` |  |
+| `PutTargetOnBottomOfLibraryEffect` |  |
+| `PutTargetPermanentIntoLibraryNFromTopEffect` |  |
 | `RedirectDrawsEffect` |  |
+| `RedirectNextDamageToTargetCreatureEffect` |  |
+| `RedirectTargetCreatureDamageFromChosenSourceToSelfEffect` |  |
+| `RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffect` |  |
+| `RegenerateEffect` | yes |
+| `RemoveChargeCountersFromTargetPermanentEffect` |  |
+| `RemoveCounterFromTargetAndGainLifeEffect` |  |
 | `RemoveCounterFromTargetPermanentEffect` |  |
+| `RemoveCountersFromTargetAndBoostSelfEffect` |  |
+| `RemoveKeywordEffect` |  |
+| `RemoveTargetFromCombatEffect` |  |
+| `ReturnTargetPermanentToHandAtEndStepEffect` |  |
+| `ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect` |  |
+| `ReturnTargetPermanentToHandWithManaValueConditionalEffect` |  |
+| `ReturnToHandEffect` | yes |
 | `RevealCardsChooseOneToDiscardEffect` |  |
 | `RevealHandAndRandomDiscardCardTypeEffect` |  |
 | `RevealHandChooseCreatureGainLifeDiscardEffect` |  |
@@ -517,6 +611,10 @@ Targeted effect types (they carry a target: override a `canTarget*()` to return 
 | `RevealTopCardsBottomThenDamageIfCopyRevealedEffect` |  |
 | `RevealTopCardsMillTargetByColorSymbolsEffect` |  |
 | `SacrificeAttackingCreaturesEffect` |  |
+| `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect` |  |
+| `SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect` |  |
+| `SacrificeTargetPermanentAtEndStepEffect` |  |
+| `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect` |  |
 | `SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect` |  |
 | `SearchTargetLibraryForCardToBattlefieldUnderControlEffect` |  |
 | `SearchTargetLibraryForCardToExileWithPlayPermissionEffect` |  |
@@ -524,9 +622,23 @@ Targeted effect types (they carry a target: override a `canTarget*()` to return 
 | `SearchTargetLibraryForCardsToGraveyardEffect` |  |
 | `SearchTargetPlayerLibraryAndCastEffect` |  |
 | `SeparatePermanentsIntoPilesAndSacrificeEffect` |  |
+| `SetBasePowerToughnessEffect` |  |
+| `SetChosenColorUntilEndOfTurnEffect` |  |
 | `SetTargetPlayerLifeToHalfStartingEffect` |  |
 | `SetTargetPlayerLifeToSpecificValueEffect` |  |
+| `ShuffleGraveyardIntoLibraryEffect` | yes |
+| `ShuffleLibraryEffect` |  |
 | `ShuffleTargetCardsFromGraveyardIntoLibraryEffect` |  |
+| `ShuffleTargetPermanentIntoLibraryEffect` |  |
+| `SkipNextCombatPhaseEffect` |  |
+| `SkipNextUntapEffect` | yes |
+| `SourceFightsTargetCreatureEffect` |  |
+| `SwitchPowerToughnessEffect` |  |
+| `TapOrUntapTargetPermanentEffect` |  |
+| `TapPermanentsEffect` | yes |
+| `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect` |  |
+| `TargetCreatureDealsPowerDamageToControllerEffect` |  |
+| `TargetCreatureDealsPowerDamageToSelfEffect` |  |
 | `TargetDealsPowerDamageToTargetEffect` |  |
 | `TargetPlayerChoosesCreatureDestroyEffect` |  |
 | `TargetPlayerChoosesCreatureRestCantBlockEffect` |  |
@@ -542,4 +654,6 @@ Targeted effect types (they carry a target: override a `canTarget*()` to return 
 | `TargetPlayerSearchesLibraryForBasicLandToBattlefieldTappedEffect` |  |
 | `TargetRevealsCardsControllerChoosesDiscardEffect` |  |
 | `TargetingRestrictionEffect` | yes |
+| `UnattachEquipmentFromTargetPermanentsEffect` |  |
+| `UntapPermanentsEffect` |  |
 

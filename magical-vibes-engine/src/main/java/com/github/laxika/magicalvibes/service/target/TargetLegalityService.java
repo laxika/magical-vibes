@@ -449,7 +449,7 @@ public class TargetLegalityService {
      */
     public void validateGraveyardEffectTargetOnly(GameData gameData, Card card, UUID targetId) {
         List<CardEffect> graveyardEffects = card.getEffects(EffectSlot.SPELL).stream()
-                .filter(CardEffect::canTargetGraveyard)
+                .filter(e -> e.targetSpec().category().isGraveyard())
                 // Unwrap conditional reanimation (e.g. Torrent of Souls' "if {B} was spent") so the
                 // inner effect's card-type filter is enforced when the graveyard target is chosen.
                 .map(e -> e instanceof ConditionalEffect conditional ? conditional.wrapped() : e)

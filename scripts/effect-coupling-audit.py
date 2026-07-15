@@ -197,20 +197,50 @@ def load_validated_types():
     return validated
 
 
+def targetspec_body(text):
+    """Return the body of the effect's targetSpec() override, or None if it has none.
+
+    Brace-depth counting from the method's opening brace so nested switch/lambda braces
+    (per-scope / per-recipient specs) are handled correctly.
+    """
+    m = re.search(r"TargetSpec\s+targetSpec\s*\(\s*\)\s*\{", text)
+    if not m:
+        return None
+    depth = 0
+    start = m.end()
+    for j in range(m.end() - 1, len(text)):
+        c = text[j]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:j]
+    return text[start:]
+
+
 def load_targeted_types(all_types):
     """Effect types that carry a target.
 
-    Primary signal: the effect record overrides any canTarget*() to return
-    true (the target-carrying role, per model/EffectResolution.java). Secondary
-    signal: the type is instanceof-checked in the targeting services
+    Primary signal: the effect overrides targetSpec() to a NON-NONE spec — the target-carrying
+    role, per model/effect/CardEffect.java. This is the successor to the pre-step-10 detection
+    (a canTarget*() override returning true); the eleven legacy targeting methods were deleted in
+    TargetSpec migration step 10, so an effect now declares a target purely through its
+    targetSpec() category. A targetSpec() body counts as non-NONE iff it uses a benign(/harmful(
+    factory (both take a non-NONE category) or names a TargetCategory value other than NONE.
+    Secondary signal: the type is instanceof-checked in the targeting services
     (TargetLegalityService / ValidTargetService).
     """
     targeted = set()
-    can_target_re = re.compile(
-        r"canTarget\w+\s*\(\s*\)\s*\{[^}]*return\s+true", re.DOTALL)
+    non_none_cat_re = re.compile(r"\bTargetCategory\.(\w+)")
+    factory_re = re.compile(r"\b(?:benign|harmful)\s*\(")
     for path in sorted(EFFECT_PKG.glob("*.java")):
         text = path.read_text(encoding="utf-8", errors="replace")
-        if can_target_re.search(text):
+        body = targetspec_body(text)
+        if body is None:
+            continue
+        if factory_re.search(body) or any(
+                m.group(1) != "NONE" for m in non_none_cat_re.finditer(body)):
             targeted.add(path.stem)
 
     for fname in ("TargetLegalityService.java", "ValidTargetService.java"):
@@ -334,8 +364,8 @@ def write_matrix(violations, exempt_zone_hits, structural_hits,
     # Validator coverage gap
     out.append("## Validator coverage gap")
     out.append("")
-    out.append("Targeted effect types (they carry a target: override a "
-               "`canTarget*()` to return true per `model/EffectResolution.java`, "
+    out.append("Targeted effect types (they carry a target: override `targetSpec()` "
+               "to a non-NONE spec per `model/effect/CardEffect.java`, "
                "or are instanceof-checked in the targeting services) that have "
                "**no** `@ValidatesTarget` validator under `service/validate/`. "
                "On the single-`targetId` validation path "

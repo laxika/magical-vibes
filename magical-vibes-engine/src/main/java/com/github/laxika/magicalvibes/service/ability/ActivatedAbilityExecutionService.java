@@ -173,7 +173,7 @@ public class ActivatedAbilityExecutionService {
         UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null) {
             boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                    e.isSelfTargeting() && !(e instanceof RegenerateEffect && permanent.getCard().isAura()));
+                    e.targetSpec().selfTargeting() && !(e instanceof RegenerateEffect && permanent.getCard().isAura()));
             if (needsSelfTarget) {
                 effectiveTargetId = permanent.getId();
             }

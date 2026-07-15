@@ -248,7 +248,7 @@ public class MayCastHandlerService {
      */
     List<UUID> buildValidSpellTargets(GameData gameData, Card card, List<CardEffect> spellEffects) {
         List<UUID> validTargets = new ArrayList<>();
-        boolean canTargetPermanent = spellEffects.stream().anyMatch(CardEffect::canTargetPermanent)
+        boolean canTargetPermanent = spellEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents())
                 || card.getTargetFilter() instanceof PermanentPredicateTargetFilter;
         if (canTargetPermanent) {
             for (UUID pid : gameData.orderedPlayerIds) {
@@ -265,7 +265,7 @@ public class MayCastHandlerService {
                 }
             }
         }
-        boolean canTargetPlayer = spellEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+        boolean canTargetPlayer = spellEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
         if (canTargetPlayer) {
             validTargets.addAll(gameData.orderedPlayerIds);
         }

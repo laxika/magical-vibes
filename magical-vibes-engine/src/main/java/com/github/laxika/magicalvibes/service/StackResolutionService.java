@@ -668,8 +668,8 @@ public class StackResolutionService {
             default -> String.valueOf(loreCount);
         };
 
-        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
-        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
+        boolean needsPermanentTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
         if (needsPermanentTarget) {
             gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,

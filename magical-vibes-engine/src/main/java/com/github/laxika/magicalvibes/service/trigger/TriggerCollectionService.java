@@ -1387,7 +1387,7 @@ public class TriggerCollectionService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
             if (effects == null || effects.isEmpty()) continue;
 
-            boolean anyTargeting = effects.stream().anyMatch(CardEffect::canTargetPermanent);
+            boolean anyTargeting = effects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
             if (anyTargeting) {
                 gameData.queueInteraction(
                         new PermanentChoiceContext.ExploreTriggerTarget(
@@ -1483,7 +1483,7 @@ public class TriggerCollectionService {
             // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
             // Flamekin) go straight onto the stack as a triggered ability.
             boolean needsTarget = resolvedEffects.stream()
-                    .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
+                    .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
             if (needsTarget) {
                 gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
                         perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
@@ -1562,7 +1562,7 @@ public class TriggerCollectionService {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                     registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
-                } else if (resolvedEffect.canTargetPlayer() || resolvedEffect.canTargetPermanent()) {
+                } else if (resolvedEffect.targetSpec().category().includesPlayers() || resolvedEffect.targetSpec().category().includesPermanents()) {
                     // Targeted "another creature you control dies" trigger (e.g. Diregraf Captain):
                     // route through the death target pipeline so the controller picks a target as the
                     // ability is put on the stack (CR 603.3d). The source card here is the watching

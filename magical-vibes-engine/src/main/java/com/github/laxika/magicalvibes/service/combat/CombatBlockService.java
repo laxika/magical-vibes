@@ -332,7 +332,7 @@ public class CombatBlockService {
                 // route these through the shared attack-trigger targeting pipeline, which honours the
                 // card's PermanentPredicateTargetFilter and drains via the pending-interaction queue.
                 boolean targetsChosenPermanent = blocker.getCard().getTargetFilter() != null
-                        && blockEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+                        && blockEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
                 if (targetsChosenPermanent) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                             blocker.getCard(), defenderId, new ArrayList<>(blockEffects), blocker.getId()));

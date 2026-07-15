@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * Untaps permanent(s) as an effect. The {@link TapUntapScope} selects which permanent(s) are
  * affected; the optional {@link PermanentPredicate} narrows the scanned scopes
  * ({@link TapUntapScope#CONTROLLED}, {@link TapUntapScope#OTHER_CONTROLLED_CREATURES}) or, for
- * {@link TapUntapScope#TARGET}, restricts what can be targeted (exposed via
- * {@link #targetPredicate()}).
+ * {@link TapUntapScope#TARGET}, restricts what can be targeted (carried on the
+ * {@link #targetSpec()} predicate).
  *
  * <p>Replaces the former {@code UntapTargetPermanentEffect}, {@code UntapAllTargetPermanentsEffect},
  * {@code UntapSelfEffect}, {@code UntapAllControlledPermanentsEffect},

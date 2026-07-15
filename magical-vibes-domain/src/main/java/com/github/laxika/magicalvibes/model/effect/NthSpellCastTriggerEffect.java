@@ -22,6 +22,6 @@ public record NthSpellCastTriggerEffect(
     @Override
     public TargetSpec targetSpec() {
         return new TargetSpec(TargetCategory.NONE, false, null,
-                resolvedEffects.stream().anyMatch(CardEffect::isSelfTargeting), 1);
+                resolvedEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting()), 1);
     }
 }

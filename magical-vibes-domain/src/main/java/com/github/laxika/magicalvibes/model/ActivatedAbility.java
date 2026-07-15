@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import lombok.Getter;
 
 import java.util.List;
@@ -185,7 +186,10 @@ public class ActivatedAbility {
 
     public boolean isNeedsTarget() {
         return !multiTargetFilters.isEmpty()
-                || effects.stream().anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent() || e.canTargetGraveyard());
+                || effects.stream().anyMatch(e -> {
+                    TargetCategory category = e.targetSpec().category();
+                    return category.includesPlayers() || category.includesPermanents() || category.isGraveyard();
+                });
     }
 
     public boolean isMultiTarget() {
@@ -193,6 +197,6 @@ public class ActivatedAbility {
     }
 
     public boolean isNeedsSpellTarget() {
-        return effects.stream().anyMatch(CardEffect::canTargetSpell);
+        return effects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
     }
 }

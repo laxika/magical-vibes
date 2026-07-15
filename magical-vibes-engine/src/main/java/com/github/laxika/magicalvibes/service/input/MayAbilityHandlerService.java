@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
@@ -199,11 +200,11 @@ public class MayAbilityHandlerService {
 
         // Targeted may ability (e.g. "you may deal 3 damage to target creature", "you may destroy target Equipment")
         boolean isTargetedPermanentEffect = ability.effects().stream()
-                .anyMatch(CardEffect::canTargetPermanent);
+                .anyMatch(e -> e.targetSpec().category().includesPermanents());
         boolean isTargetedPlayerEffect = ability.effects().stream()
-                .anyMatch(CardEffect::canTargetPlayer);
+                .anyMatch(e -> e.targetSpec().category().includesPlayers());
         boolean isTargetedGraveyardEffect = ability.effects().stream()
-                .anyMatch(CardEffect::canTargetGraveyard);
+                .anyMatch(e -> e.targetSpec().category().isGraveyard());
         boolean isTargetedEffect = isTargetedPermanentEffect || isTargetedPlayerEffect || isTargetedGraveyardEffect;
 
         // Pre-targeted may ability — target was already chosen (e.g. "You may tap or untap that creature", "you may have that player lose 1 life")
@@ -337,7 +338,7 @@ public class MayAbilityHandlerService {
         // Collect valid permanent targets from all battlefields using card's target filter
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
-        boolean canTargetPermanent = ability.effects().stream().anyMatch(CardEffect::canTargetPermanent);
+        boolean canTargetPermanent = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
         if (canTargetPermanent) {
             FilterContext ctx = FilterContext.of(gameData)
                     .withSourceCardId(sourceCard.getId())
@@ -359,7 +360,7 @@ public class MayAbilityHandlerService {
 
         // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect),
         // honoring the card's player target filter (e.g. "target opponent") so the controller is excluded.
-        boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
+        boolean canTargetPlayer = ability.effects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
         if (canTargetPlayer) {
             validTargets.addAll(validTargetService.filterValidPlayerTargets(
                     gameData, sourceCard.getTargetFilter(), gameData.orderedPlayerIds, ability.controllerId()));
@@ -404,16 +405,16 @@ public class MayAbilityHandlerService {
         for (CardEffect effect : ability.effects()) {
             if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
                 filter = imprint.filter();
-                anyGraveyard = effect.canTargetAnyGraveyard();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
             if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
                 filter = exileCopy.filter();
-                anyGraveyard = effect.canTargetAnyGraveyard();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
-            if (effect.canTargetGraveyard()) {
-                anyGraveyard = effect.canTargetAnyGraveyard();
+            if (effect.targetSpec().category().isGraveyard()) {
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
         }
@@ -529,9 +530,9 @@ public class MayAbilityHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, player.getUsername() + " accepts — resolving " + ability.sourceCard().getName() + "'s ability.");
             CardEffect innerEffect = extractInnerEffect(ability);
             StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            boolean isTargetedPermanent = innerEffect != null && innerEffect.canTargetPermanent();
-            boolean isTargetedPlayer = innerEffect != null && innerEffect.canTargetPlayer();
-            boolean isTargetedGraveyard = innerEffect != null && innerEffect.canTargetGraveyard();
+            boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().category().includesPermanents();
+            boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().category().includesPlayers();
+            boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().category().isGraveyard();
             boolean targetAlreadySet = pendingEntry != null
                     && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty());
             if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
@@ -581,16 +582,16 @@ public class MayAbilityHandlerService {
         for (CardEffect effect : ability.effects()) {
             if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
                 filter = imprint.filter();
-                anyGraveyard = effect.canTargetAnyGraveyard();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
             if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
                 filter = exileCopy.filter();
-                anyGraveyard = effect.canTargetAnyGraveyard();
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
-            if (effect.canTargetGraveyard()) {
-                anyGraveyard = effect.canTargetAnyGraveyard();
+            if (effect.targetSpec().category().isGraveyard()) {
+                anyGraveyard = effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
                 break;
             }
         }

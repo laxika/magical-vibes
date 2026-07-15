@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -122,7 +123,7 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId,
             ExileGraveyardCardsEffect exileEffect) {
         CardPredicate filter = exileEffect.filter();
-        boolean anyGraveyard = exileEffect.canTargetAnyGraveyard();
+        boolean anyGraveyard = exileEffect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
 
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
@@ -219,7 +220,7 @@ public class GraveyardTargetingService {
                 .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
                 .findFirst().orElseThrow();
         CardPredicate filter = mayPlayEffect.filter();
-        boolean anyGraveyard = mayPlayEffect.canTargetAnyGraveyard();
+        boolean anyGraveyard = mayPlayEffect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD;
 
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);

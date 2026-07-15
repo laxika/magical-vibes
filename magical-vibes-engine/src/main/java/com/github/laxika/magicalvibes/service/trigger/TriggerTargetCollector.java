@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -72,8 +73,8 @@ public class TriggerTargetCollector {
      *                                 unwrapped before inspecting {@code canTarget*} /
      *                                 {@code targetPredicate}. End-step wraps effects in morbid /
      *                                 metalcraft / etc.
-     * @param useEffectTargetPredicate when {@code true}, effects' own
-     *                                 {@link CardEffect#targetPredicate()} values further filter
+     * @param useEffectTargetPredicate when {@code true}, effects' own targeting predicate (read via
+     *                                 {@code EffectResolution.targetPredicateOf}) further filters
      *                                 permanent candidates (in addition to the card-level target
      *                                 filter). Used by end-step triggers.
      */
@@ -107,10 +108,10 @@ public class TriggerTargetCollector {
 
         boolean canTargetPlayers = effects.stream()
                 .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                .anyMatch(CardEffect::canTargetPlayer);
+                .anyMatch(e -> e.targetSpec().category().includesPlayers());
         boolean canTargetPermanents = effects.stream()
                 .map(e -> options.unwrapConditional() && e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                .anyMatch(CardEffect::canTargetPermanent);
+                .anyMatch(e -> e.targetSpec().category().includesPermanents());
 
         boolean opponentOnly = targetFilter instanceof PlayerPredicateTargetFilter ppf
                 && ppf.predicate() instanceof PlayerRelationPredicate prp
@@ -140,8 +141,9 @@ public class TriggerTargetCollector {
             if (options.useEffectTargetPredicate()) {
                 effectPredicate = effects.stream()
                         .map(e -> e instanceof ConditionalEffect ce ? ce.wrapped() : e)
-                        .filter(e -> e.canTargetPermanent() && e.targetPredicate() != null)
-                        .map(CardEffect::targetPredicate)
+                        .filter(e -> e.targetSpec().category().includesPermanents()
+                                && EffectResolution.targetPredicateOf(e) != null)
+                        .map(EffectResolution::targetPredicateOf)
                         .findFirst().orElse(null);
                 if (effectPredicate != null) {
                     effectFilterCtx = new FilterContext(gameData, sourceCard.getId(), controllerId, null);

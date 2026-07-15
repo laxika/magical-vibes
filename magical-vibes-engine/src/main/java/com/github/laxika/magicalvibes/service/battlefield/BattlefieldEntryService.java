@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
@@ -662,7 +663,8 @@ public class BattlefieldEntryService {
     private boolean mayEtbTargetsPermanentButHasNoLegalTarget(GameData gameData, UUID controllerId,
                                                               Card card, MayEffect may) {
         CardEffect wrapped = may.wrapped();
-        if (!wrapped.canTargetPermanent() || wrapped.canTargetPlayer() || wrapped.canTargetGraveyard()) {
+        TargetCategory wrappedCategory = wrapped.targetSpec().category();
+        if (!wrappedCategory.includesPermanents() || wrappedCategory.includesPlayers() || wrappedCategory.isGraveyard()) {
             return false;
         }
         if (!(card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter)) {
@@ -723,10 +725,10 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
-                .filter(e -> !e.canTargetSpell()).toList();
+                .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
-                .filter(CardEffect::canTargetSpell).toList();
+                .filter(EffectResolution::targetsSpellOnStack).toList();
 
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty()) {
@@ -753,7 +755,7 @@ public class BattlefieldEntryService {
             // from the cast is deliberately ignored — the engine never asked for it.
             boolean gateConditionalNeedsTarget = otherEffects.stream()
                     .anyMatch(e -> e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()
-                            && (ce.canTargetPlayer() || ce.canTargetPermanent()));
+                            && (ce.targetSpec().category().includesPlayers() || ce.targetSpec().category().includesPermanents()));
 
             if (gateConditionalNeedsTarget
                     || (cardNeedsTarget && !hasTarget && choosesTargetAtTriggerTime)) {

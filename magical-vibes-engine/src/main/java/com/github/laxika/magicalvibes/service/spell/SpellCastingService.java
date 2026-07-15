@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
@@ -661,13 +662,16 @@ public class SpellCastingService {
         // For modal spells, derive targeting from the chosen mode's unwrapped effect;
         // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
         boolean unwrappedNeedsSpellTarget = wasModal
-                ? filteredSpellEffects.stream().anyMatch(CardEffect::canTargetSpell)
+                ? filteredSpellEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
                 : EffectResolution.needsSpellTarget(card);
         // Per MTG rule 601.2c, only the spell itself determines whether a target is required
         // at cast time. ETB triggered abilities choose targets when they go on the stack after
         // the permanent enters, so isNeedsSpellCastTarget() (which excludes ETB effects) is correct.
         boolean unwrappedNeedsTarget = wasModal
-                ? filteredSpellEffects.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard())
+                ? filteredSpellEffects.stream().anyMatch(e -> {
+                    TargetCategory category = e.targetSpec().category();
+                    return category.includesPermanents() || category.includesPlayers() || category.isGraveyard();
+                })
                 : EffectResolution.needsSpellCastTarget(card);
         // Modal mode that targets multiple distinct spells on the stack (e.g. Choreographed Sparks'
         // "both": one instant/sorcery spell + one creature spell). unwrapChooseOneEffect declared one
@@ -838,10 +842,11 @@ public class SpellCastingService {
 
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && graveyardTargetingSource.stream().anyMatch(e -> e.canTargetGraveyard());
-        boolean canTargetAnyGraveyard = graveyardTargetingSource.stream().anyMatch(e -> e.canTargetAnyGraveyard());
+                && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
+        boolean canTargetAnyGraveyard = graveyardTargetingSource.stream()
+                .anyMatch(e -> e.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD);
         boolean targetsControllersGraveyardOnly = graveyardTargetingSource.stream()
-                .anyMatch(e -> e.targetsControllersGraveyardOnly());
+                .anyMatch(e -> e.targetSpec().category() == TargetCategory.CONTROLLERS_GRAVEYARD_CARD);
 
         // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
         ReturnTargetCardFromExileToHandEffect exileReturnEffect = (ReturnTargetCardFromExileToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
@@ -2026,7 +2031,7 @@ public class SpellCastingService {
             );
         } else {
             // Single-target or no-target flashback spell
-            boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
+            boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
             if (targetId != null && EffectResolution.needsTarget(card) && needsGraveyardEffectTargeting) {
                 targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
             } else if (targetId != null && EffectResolution.needsTarget(card)) {
@@ -2150,7 +2155,7 @@ public class SpellCastingService {
                 .orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && effectsToResolve.stream().anyMatch(CardEffect::canTargetGraveyard);
+                && effectsToResolve.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
 
         ReturnTargetCardFromExileToHandEffect exileReturnEffect = effectsToResolve.stream()
                 .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)

@@ -331,7 +331,7 @@ class ReturnToHandEffectHandlerTest {
 
             ReturnToHandEffect effect = ReturnToHandEffect.permanentsTargetPlayerControls(
                     new PermanentNotPredicate(new PermanentIsLandPredicate()));
-            assertThat(effect.canTargetPlayer()).isTrue();
+            assertThat(effect.targetSpec().category().includesPlayers()).isTrue();
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 
@@ -376,7 +376,7 @@ class ReturnToHandEffectHandlerTest {
             gd.playerBattlefields.get(player2Id).add(creature);
 
             ReturnToHandEffect effect = ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate());
-            assertThat(effect.canTargetPlayer()).isTrue();
+            assertThat(effect.targetSpec().category().includesPlayers()).isTrue();
 
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), player2Id);
 

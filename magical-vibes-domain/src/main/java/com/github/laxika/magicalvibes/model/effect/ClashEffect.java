@@ -36,10 +36,10 @@ public record ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolea
 
     @Override
     public TargetSpec targetSpec() {
-        boolean perm = (onWin != null && onWin.canTargetPermanent())
-                || beforeClash.stream().anyMatch(CardEffect::canTargetPermanent);
-        boolean player = (onWin != null && onWin.canTargetPlayer())
-                || beforeClash.stream().anyMatch(CardEffect::canTargetPlayer);
+        boolean perm = (onWin != null && onWin.targetSpec().category().includesPermanents())
+                || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean player = (onWin != null && onWin.targetSpec().category().includesPlayers())
+                || beforeClash.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
         TargetCategory category = perm
                 ? (player ? TargetCategory.PLAYER_OR_PERMANENT : TargetCategory.PERMANENT)
                 : (player ? TargetCategory.PLAYER : TargetCategory.NONE);

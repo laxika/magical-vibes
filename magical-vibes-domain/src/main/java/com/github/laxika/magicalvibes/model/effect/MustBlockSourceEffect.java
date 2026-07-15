@@ -13,7 +13,7 @@ import java.util.UUID;
 public record MustBlockSourceEffect(UUID sourcePermanentId) implements CardEffect {
     /**
      * Only creatures can be forced to block; the CREATURE category enforces that, and the predicate
-     * preserves the creature restriction on targeted-trigger candidates (exposed via targetPredicate()).
+     * preserves the creature restriction on targeted-trigger candidates (carried on the spec predicate).
      */
     @Override
     public TargetSpec targetSpec() {

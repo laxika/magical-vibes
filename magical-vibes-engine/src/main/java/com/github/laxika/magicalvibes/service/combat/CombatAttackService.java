@@ -350,7 +350,7 @@ public class CombatAttackService {
                     // like Cyclops Gladiator's may-fight).
                     List<CardEffect> nonTargetingMayEffects = allEffects.stream()
                             .filter(e -> e instanceof com.github.laxika.magicalvibes.model.effect.MayEffect
-                                    && !e.canTargetPermanent() && !e.canTargetPlayer()).toList();
+                                    && !e.targetSpec().category().includesPermanents() && !e.targetSpec().category().includesPlayers()).toList();
                     List<CardEffect> otherEffects = allEffects.stream()
                             .filter(e -> !nonTargetingMayEffects.contains(e)).toList();
 
@@ -363,7 +363,7 @@ public class CombatAttackService {
 
                     if (!otherEffects.isEmpty()) {
                         boolean needsTarget = otherEffects.stream()
-                                .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
+                                .anyMatch(e -> e.targetSpec().category().includesPermanents() || e.targetSpec().category().includesPlayers());
                         if (needsTarget) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(

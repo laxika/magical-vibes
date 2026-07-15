@@ -1370,3 +1370,148 @@ family — `FistfulOfForceTest`/`GiltLeafAmbushTest`/`HoardersGreedTest` (Clash)
 `MirrorweaveTest`, `SentryOakTest` (Clash + BoostSelfAndLoseKeyword), `VancesBlastingCannonsTest`
 (NthSpellCast + MayEffect + transform). All green. Effects without a dedicated card test are covered by
 the family representative above and the AI simulator sweep.
+
+---
+
+## Step 10 — Delete the eleven legacy targeting methods from CardEffect  (2026-07-15)
+
+**The goal of the program.** `CardEffect` now declares ONLY `targetSpec()` and `isPowerToughnessDefining()`.
+The eleven legacy targeting methods — `canTargetPlayer`, `canTargetPermanent`, `canTargetSpell`,
+`canTargetGraveyard`, `canTargetAnyGraveyard`, `canTargetExile`, `targetsControllersGraveyardOnly`,
+`targetPredicate`, `isSelfTargeting`, `requiredPlayerTargetCount`, `isDamageOrDestruction` — are DELETED.
+Precondition verified first: `refactor-docs/targetspec-baseline.txt` was EMPTY (step 9 migrated all 277
+records). Every reader was repointed at `targetSpec()` BEFORE the deletion, then the compiler proved
+completeness (all modules — engine, ai, domain, application, testFixtures, tests — compile clean).
+**This step changes NO behavior — only the accessor** (except the two documented, inert widenings that the
+earlier steps' `harmful`/`PLAYER_OR_PERMANENT` choices already baked in). All tests green.
+
+### The accessor mapping every reader now uses
+
+| deleted method | spec accessor it became |
+|---|---|
+| `e.canTargetPlayer()` | `e.targetSpec().category().includesPlayers()` |
+| `e.canTargetPermanent()` | `e.targetSpec().category().includesPermanents()` |
+| `e.canTargetGraveyard()` | `e.targetSpec().category().isGraveyard()` (new `TargetCategory` helper) |
+| `e.canTargetAnyGraveyard()` | `e.targetSpec().category() == ANY_GRAVEYARD_CARD` |
+| `e.targetsControllersGraveyardOnly()` | `e.targetSpec().category() == CONTROLLERS_GRAVEYARD_CARD` |
+| `e.canTargetExile()` | `e.targetSpec().category() == EXILE_CARD` |
+| `e.canTargetSpell()` | `EffectResolution.targetsSpellOnStack(e)` (see dual note) |
+| `e.targetPredicate()` | `EffectResolution.targetPredicateOf(e)` (see dual note) |
+| `e.isSelfTargeting()` | `e.targetSpec().selfTargeting()` |
+| `e.requiredPlayerTargetCount()` | `e.targetSpec().playerTargetCount()` |
+| `e.isDamageOrDestruction()` | `e.targetSpec().harmful()` |
+
+`ValidTargetService`'s combined `canTargetPermanent() && isDamageOrDestruction()` became
+`includesPermanents() && harmful()` exactly as the brief specified.
+
+### Two record-component duals — the only non-mechanical part
+
+Two effects expose a targeting capability through a **record component** whose value DIVERGES from
+`targetSpec()`, so a naive `targetSpec()` read would silently drop it (a behavior change / bug):
+- **`ChangeColorTextEffect.canTargetSpell`** (Glamerdye): `targetSpec()` is `benign(PERMANENT)`, but the
+  effect also targets a spell via its `canTargetSpell` component (Mind Bend = false, Glamerdye = true).
+- **`PutCounterOnTargetPermanentEffect.targetPredicate`**: `targetSpec().predicate()` is always `null`
+  (the spec deliberately carries no predicate, to avoid a cast-time gate — step 9 bucket 3), but the
+  saga-chapter / end-step targeting pipelines honour a targeting restriction on the effect's dedicated
+  `targetPredicate` component (`withTargetRestriction`).
+
+Both were resolved with a **static helper in `EffectResolution` (domain)** that consults the component:
+- `EffectResolution.targetsSpellOnStack(e)` = `category()==SPELL_ON_STACK || (e instanceof
+  ChangeColorTextEffect c && c.canTargetSpell())`.
+- `EffectResolution.targetPredicateOf(e)` = `e instanceof PutCounterOnTargetPermanentEffect p ?
+  p.targetPredicate() : e.targetSpec().predicate()`.
+
+**Why the helpers live in `EffectResolution` (domain), not engine/ai.** They use `instanceof` on a concrete
+effect, which WOULD be an effect-dispatch coupling violation under `EffectDispatchRatchetTest` /
+`scripts/effect-coupling-audit.py` — but BOTH scanners only scan `magical-vibes-engine` and
+`magical-vibes-ai`, never `magical-vibes-domain`, and `EffectResolution` already `instanceof`-dispatches
+concrete effects freely. So the helpers are invisible to the dispatch ratchet, and every engine/ai spell /
+predicate reader routes through them (no new `instanceof` in engine/ai). **`effect-dispatch-baseline.txt`
+is byte-for-byte UNCHANGED** (verified by diff). All previously-polymorphic `canTargetSpell` /
+`targetPredicate` readers now call the helper, preserving the exact value for every effect.
+
+### New permanent API added (not bridge cruft — kept)
+
+- **`TargetCategory.isGraveyard()`** — `GRAVEYARD_CARD || ANY_GRAVEYARD_CARD || CONTROLLERS_GRAVEYARD_CARD`,
+  the successor to `canTargetGraveyard()` (the old boolean was exactly this three-state test; the redundant
+  `|| canTargetAnyGraveyard()` some readers appended was always subsumed and is now dropped). Sits beside
+  `includesPermanents()` / `includesPlayers()` as permanent category API.
+- **`EffectResolution.targetsSpellOnStack` / `targetPredicateOf`** — the two dual helpers above.
+
+### Files rewritten (the compiler-verified completeness list)
+
+- **domain** — `CardEffect.java` (deleted the 11 methods; kept `targetSpec()` + `isPowerToughnessDefining()`;
+  pruned the now-unused `PermanentPredicate` import); `TargetCategory.java` (+`isGraveyard()`);
+  `EffectResolution.java` (+two helpers; rewrote `collectTargetTypes`, the ETB branch of
+  `computeAllowedTargets`, `needsSpellTarget`); reader rewrites in `ActivatedAbility.java`, `Card.java`,
+  `ClashEffect.java`, `NthSpellCastTriggerEffect.java`; doc-only fixes to `ChangeColorTextEffect.java`,
+  `GrantKeywordEffect.java`, `UntapPermanentsEffect.java`, `MustBlockSourceEffect.java`, `TapUntapScope.java`
+  (stale `{@link #targetPredicate()}` / `canTargetSpell()` references).
+- **engine** — `ValidTargetService`, `TargetLegalityService`, `SpellCastingService`, `StepTriggerService`,
+  `StackResolutionService`, `TriggerCollectionService`, `TriggerTargetCollector`,
+  `SpellCastTriggerCollectorService`, `EnterTriggerCollectorService`, `DeathTriggerCollectorService`,
+  `CombatTriggerService`, `CombatAttackService`, `CombatBlockService`, `GraveyardTargetingService`,
+  `BattlefieldEntryService`, `ETBTokenTargetService`, `ActivatedAbilityExecutionService`,
+  `TriggeredAbilityQueueService`, `MayAbilityHandlerService`, `MayCastHandlerService`,
+  `PermanentControlTargetValidators`.
+- **ai** — `AiTargetSelector`, `AiDecisionEngine`, `simulation/GameSimulator`.
+- **test** — `MayCastHandlerServiceTest` + `ValidTargetServiceTest` (anonymous `CardEffect` stubs that
+  overrode `canTarget*` now override `targetSpec()`); `ReturnToHandEffectHandlerTest` (an
+  `effect.canTargetPlayer()` assertion → `targetSpec().category().includesPlayers()`).
+
+### `@ValidatesTarget` after step 10 — the escape hatch, unchanged at 34
+
+The prompt's step-10 clause "`@ValidatesTarget` survives only as the escape hatch" is already the state:
+the 34 kept validators are the step-2..8 escape hatches (opponent/controller-compare graveyard validators,
+null-tolerant divided-damage, no-op-PLAYER Life/Library guards, attachment/combat-state checks, the two
+aura/attach non-target validators). **`PermanentControlTargetValidators.validatePutTargetOnTopOfLibrary`**
+— kept in step 4 solely because it READ `effect.canTargetPermanent()` (the brief forbade touching that
+reader before step 10) — was repointed to `effect.targetSpec().category().includesPermanents()`. It is now
+redundant (its per-scope `PERMANENT` spec runs the same `requireBattlefieldTarget` in `validateSpec`), but
+KEEPT-VALIDATORS-ARE-KEPT-WHOLE: a redundant structural re-check is harmless, so it stays. No validator was
+deleted this step.
+
+### The OTHER audit (step 5 of the brief) — repointed, lockstep verified
+
+`scripts/effect-coupling-audit.py` detected an effect's "targeted role" via a `canTarget*(){return true}`
+regex over the effect files. Post-migration NO effect overrides `canTarget*` (all deleted), so that
+detection would collapse to near-empty. Repointed `load_targeted_types` to the successor signal: an effect
+overrides `targetSpec()` to a **non-NONE** spec — detected with a new brace-depth `targetspec_body()`
+extractor (handles nested switch/lambda braces) that is targeted iff the body uses a `benign(`/`harmful(`
+factory or names a `TargetCategory` other than `NONE`. Docstring + the matrix's generated
+"validator coverage gap" prose updated to say "override `targetSpec()` to a non-NONE spec".
+**Lockstep check:** `EffectDispatchRatchetTest`'s header only replicates the INSTANCEOF-counting rules
+(read both headers to confirm), NOT the coverage-gap / targeted-role rule — so per the brief only the
+script changed. Re-ran `python scripts/effect-coupling-audit.py`: the effect-dispatch baseline is UNCHANGED
+(diff empty — no `instanceof`-on-effect counts changed), and the coverage-gap now reads 221 targeted types
+without a hand validator (expected: the migration replaced per-effect validators with the declarative spec
+interpreter for the structural cases; the gap is informational matrix output, not a ratchet).
+
+### Tests run (all green, `BUILD SUCCESSFUL`)
+
+- **Compile proof:** `compileTestJava` across every module (main + testFixtures + test) clean.
+- **AI module** (one `:magical-vibes-ai:test` invocation): `AiTargetSelectorTest`, `AiDecisionEngineTest`,
+  `GameSimulatorTest`.
+- **Application module** (two filtered `:magical-vibes-application:test` invocations, `-x
+  :magical-vibes-frontend:buildAngular`): fixed regression set — `WrackWithMadnessTest`,
+  `DarkNourishmentTest`, `FireballTest`, `EffectDispatchRatchetTest`, `TargetSpecRatchetTest` (baseline
+  still empty — both ratchets green), `ValidTargetServiceTest`, `TargetLegalityServiceTest`,
+  `TargetValidationServiceSpecTest`; rewritten-service unit tests — `SpellCastingServiceTest`,
+  `StepTriggerServiceTest`, `AbilityActivationServiceTest`, `ETBTokenTargetServiceTest`,
+  `GameBroadcastServiceTest`, `MayCastHandlerServiceTest`, `TriggerTargetCollectorTest`,
+  `ReturnToHandEffectHandlerTest`, `CardEffectTargetingConsistencyTest` (still passes — it already accepted
+  a `targetSpec()` override as declaring targeting since step 5; the vestigial `canTarget*` name list is
+  now dead but harmless).
+- **One card test per earlier-step family** — step 2 `SpittingEarthTest`/`IncinerateTest`/`TerrorTest`;
+  step 3 `ChandrasOutrageTest`/`RemedyTest`/`HarmsWayTest`; step 4 `CruelEdictTest`/`ActOfAggressionTest`/
+  `AethertowTest` (the repointed `PutTargetOnTopOfLibrary` validator); step 5 `GiantGrowthTest`/
+  `GarrukWildspeakerTest` (multi-target untap)/`VoltaicServantTest`+`JandorsSaddlebagsTest`+`TowerAboveTest`
+  (the `targetPredicate` pipelines); step 6 `SnapcasterMageTest`/`DisentombTest`/`SurgicalExtractionTest`
+  (graveyard categories); step 7 `CounterspellTest`/`GlamerdyeTest`+`MindBendTest` (the `ChangeColorText`
+  spell dual — the `targetsSpellOnStack` helper); step 8 `MindRotTest`/`AxisOfMortalityTest`/`PonderTest`;
+  step 9 `BrimstoneVolleyTest`/`AncientAnimusTest` (`PutCounterOnTargetPermanent`)/`FistfulOfForceTest`
+  (Clash)/`GriefTyrantTest` (death-trigger predicate).
+
+`refactor-docs/effect-dispatch-baseline.txt` NOT regenerated with changes (diff-verified unchanged);
+`targetspec-baseline.txt` remains empty; the TargetSpec migration program is complete through its goal
+(step 11 close-out remaining: retire the ratchet + refresh `agent-docs/`).

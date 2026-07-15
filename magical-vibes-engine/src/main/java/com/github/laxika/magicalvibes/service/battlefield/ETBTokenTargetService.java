@@ -80,8 +80,8 @@ public class ETBTokenTargetService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
-            boolean canTargetPlayer = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
-            boolean canTargetPermanent = pending.effects().stream().anyMatch(CardEffect::canTargetPermanent);
+            boolean canTargetPlayer = pending.effects().stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+            boolean canTargetPermanent = pending.effects().stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {
@@ -164,8 +164,8 @@ public class ETBTokenTargetService {
                 continue;
             }
 
-            boolean canTargetPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-            boolean canTargetPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+            boolean canTargetPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+            boolean canTargetPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
 
             List<UUID> validPlayerTargets = new ArrayList<>();
             if (canTargetPlayer) {

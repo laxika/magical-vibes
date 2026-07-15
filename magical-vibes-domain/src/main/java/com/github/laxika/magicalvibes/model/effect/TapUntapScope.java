@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public enum TapUntapScope {
     /**
      * The effect's chosen target permanent. For untap the effect's predicate acts as a targeting
-     * restriction (exposed via {@code targetPredicate()}); tap chooses its target freely.
+     * restriction (carried on the effect's {@code targetSpec()} predicate); tap chooses its target freely.
      */
     TARGET,
     /** Every permanent in {@code entry.getTargetIds()} (multi-target). */

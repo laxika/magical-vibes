@@ -9,11 +9,12 @@ package com.github.laxika.magicalvibes.model.effect;
  *                         when false only color words may be swapped (Glamerdye)
  * @param canTargetSpell   when true the effect may also target a spell on the stack in addition to a
  *                         permanent (Glamerdye). A text change made to a permanent spell carries to
- *                         the permanent it becomes (CR 613.7). This record component's accessor
- *                         overrides {@code CardEffect.canTargetSpell()}, so the spell capability is
- *                         independent of {@link #targetSpec()} (which describes only the permanent
- *                         target). Spell targets are validated on the stack path
- *                         ({@code checkSpellTargetOnStack}), never by the spec interpreter.
+ *                         the permanent it becomes (CR 613.7). The spell capability is independent of
+ *                         {@link #targetSpec()} (which describes only the permanent target), so it is
+ *                         kept on this dedicated record component and read through
+ *                         {@code EffectResolution.targetsSpellOnStack(effect)}. Spell targets are
+ *                         validated on the stack path ({@code checkSpellTargetOnStack}), never by the
+ *                         spec interpreter.
  */
 public record ChangeColorTextEffect(boolean landTypesAllowed, boolean canTargetSpell) implements CardEffect {
 

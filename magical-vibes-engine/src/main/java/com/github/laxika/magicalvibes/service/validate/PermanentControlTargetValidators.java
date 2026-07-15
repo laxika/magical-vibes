@@ -42,7 +42,7 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(PutTargetOnTopOfLibraryEffect.class)
     public void validatePutTargetOnTopOfLibrary(TargetValidationContext ctx, PutTargetOnTopOfLibraryEffect effect) {
-        if (effect.canTargetPermanent()) {
+        if (effect.targetSpec().category().includesPermanents()) {
             tvs.requireBattlefieldTarget(ctx);
         }
     }

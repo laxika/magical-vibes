@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCre
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
@@ -64,7 +66,7 @@ public class EnterTriggerCollectorService {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         // A permanent-targeting effect (e.g. Reaper King's "destroy target permanent") can't be pushed
         // straight onto the stack with a pre-set target — queue a pending choice so the controller picks it.
-        if (effect.canTargetPermanent()) {
+        if (effect.targetSpec().category().includesPermanents()) {
             Card sourceCard = match.permanent().getCard();
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId()));
@@ -361,10 +363,10 @@ public class EnterTriggerCollectorService {
     }
 
     private static boolean isTargeting(CardEffect effect) {
-        return effect.canTargetPlayer()
-                || effect.canTargetPermanent()
-                || effect.canTargetSpell()
-                || effect.canTargetGraveyard()
-                || effect.canTargetAnyGraveyard();
+        TargetCategory category = effect.targetSpec().category();
+        return category.includesPlayers()
+                || category.includesPermanents()
+                || EffectResolution.targetsSpellOnStack(effect)
+                || category.isGraveyard();
     }
 }

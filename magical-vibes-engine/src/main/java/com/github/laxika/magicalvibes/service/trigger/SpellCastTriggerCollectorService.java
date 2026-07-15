@@ -386,7 +386,7 @@ public class SpellCastTriggerCollectorService {
         if (spellsCast != trigger.spellNumber()) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
-        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
+        boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
 
         if (match.rawEffect() instanceof MayEffect may) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(
@@ -446,7 +446,7 @@ public class SpellCastTriggerCollectorService {
         if (sc.castFromHand()) return false;
 
         boolean needsAnyTarget = trigger.resolvedEffects().stream()
-                .anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent());
+                .anyMatch(e -> e.targetSpec().category().includesPlayers() || e.targetSpec().category().includesPermanents());
 
         if (needsAnyTarget) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -697,10 +697,10 @@ public class SpellCastTriggerCollectorService {
         }
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
-        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
-        boolean needsPlayerTarget = resolved.stream().anyMatch(CardEffect::canTargetPlayer);
-        boolean needsPermanentTarget = resolved.stream().anyMatch(CardEffect::canTargetPermanent);
-        boolean needsGraveyardTarget = resolved.stream().anyMatch(CardEffect::canTargetGraveyard);
+        boolean selfTarget = resolved.stream().anyMatch(e -> e.targetSpec().selfTargeting());
+        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
+        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);

@@ -22,7 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticCreatureBoostEffect;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
@@ -281,8 +283,8 @@ class AiTargetSelector {
         for (SpellTarget st : spellTargets) {
             List<CardEffect> groupEffects = findEffectsForTargetGroup(card, st.getIndex());
 
-            boolean wantsPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-            boolean wantsPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent)
+            boolean wantsPlayer = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+            boolean wantsPermanent = groupEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents())
                     || st.getFilter() != null;
 
             UUID chosen = null;
@@ -408,15 +410,17 @@ class AiTargetSelector {
             if (e instanceof ConditionalReplacementEffect replacement) {
                 effectToCheck = replacement.baseEffect();
             }
-            if (effectToCheck.canTargetPlayer()) result.add(TargetType.PLAYER);
-            if (effectToCheck.canTargetPermanent()) result.add(TargetType.PERMANENT);
-            if (effectToCheck.canTargetSpell()) result.add(TargetType.SPELL_ON_STACK);
-            if (effectToCheck.canTargetGraveyard()) result.add(TargetType.GRAVEYARD);
-            if (effectToCheck.canTargetExile()) result.add(TargetType.EXILE);
+            TargetCategory category = effectToCheck.targetSpec().category();
+            if (category.includesPlayers()) result.add(TargetType.PLAYER);
+            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
+            if (EffectResolution.targetsSpellOnStack(effectToCheck)) result.add(TargetType.SPELL_ON_STACK);
+            if (category.isGraveyard()) result.add(TargetType.GRAVEYARD);
+            if (category == TargetCategory.EXILE_CARD) result.add(TargetType.EXILE);
         }
         for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
-            if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
+            TargetCategory category = e.targetSpec().category();
+            if (category.includesPlayers()) result.add(TargetType.PLAYER);
+            if (category.includesPermanents()) result.add(TargetType.PERMANENT);
         }
         return result;
     }
@@ -484,7 +488,7 @@ class AiTargetSelector {
     List<Card> findValidGraveyardTargets(GameData gameData, Card card, UUID aiPlayerId, int maxAffordableX) {
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (!effect.canTargetGraveyard()) continue;
+            if (!effect.targetSpec().category().isGraveyard()) continue;
 
             List<Card> candidates;
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {
@@ -502,9 +506,9 @@ class AiTargetSelector {
             } else {
                 // For non-return effects: controller-only → own graveyard,
                 // canTargetAnyGraveyard → all graveyards, otherwise → opponent's
-                GraveyardSearchScope scope = effect.targetsControllersGraveyardOnly()
+                GraveyardSearchScope scope = effect.targetSpec().category() == TargetCategory.CONTROLLERS_GRAVEYARD_CARD
                         ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
-                        : effect.canTargetAnyGraveyard()
+                        : effect.targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD
                                 ? GraveyardSearchScope.ALL_GRAVEYARDS
                                 : GraveyardSearchScope.OPPONENT_GRAVEYARD;
                 candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
@@ -740,8 +744,8 @@ class AiTargetSelector {
                 .filter(e -> !(e instanceof CostEffect))
                 .toList();
 
-        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+        boolean canTargetPlayer = nonCostEffects.stream().anyMatch(e -> e.targetSpec().category().includesPlayers());
+        boolean canTargetPermanent = nonCostEffects.stream().anyMatch(e -> e.targetSpec().category().includesPermanents());
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
