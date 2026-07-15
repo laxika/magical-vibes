@@ -310,7 +310,7 @@
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
-                @for (ip of item.lands; track ip.originalIndex) {
+                @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
                     <div class="permanent-stack">
                       @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
@@ -368,7 +368,7 @@
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of opponentCreatures(); track ip.originalIndex) {
+          @for (ip of opponentCreatures(); track ip.perm.id) {
             <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
@@ -447,7 +447,7 @@
 
       <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom">
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of myCreatures(); track ip.originalIndex) {
+          @for (ip of myCreatures(); track ip.perm.id) {
             <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
@@ -511,7 +511,7 @@
           @for (item of myLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
               <div class="land-stack" [attr.data-stack-size]="item.lands.length">
-                @for (ip of item.lands; track ip.originalIndex) {
+                @for (ip of item.lands; track ip.perm.id) {
                   <div class="land-stack-item">
                     <div class="permanent-stack">
                       @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
