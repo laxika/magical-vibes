@@ -20,7 +20,7 @@ public record ExileTopCardsOfTargetOpponentCreateTokenPerChosenColorEffect(
         DynamicAmount count, CreateTokenEffect tokenTemplate) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

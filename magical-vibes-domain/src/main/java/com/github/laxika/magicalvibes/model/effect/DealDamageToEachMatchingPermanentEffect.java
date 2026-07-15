@@ -23,12 +23,10 @@ public record DealDamageToEachMatchingPermanentEffect(DynamicAmount damage, Perm
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return scope == EachPermanentScope.TARGET_PLAYER;
-    }
-
-    @Override
-    public boolean isDamageOrDestruction() {
-        return true;
+    public TargetSpec targetSpec() {
+        // Always harmful (deals damage) — canTargetPlayer only for the TARGET_PLAYER scope.
+        return scope == EachPermanentScope.TARGET_PLAYER
+                ? TargetSpec.harmful(TargetCategory.PLAYER)
+                : new TargetSpec(TargetCategory.NONE, true, null, false, 1);
     }
 }

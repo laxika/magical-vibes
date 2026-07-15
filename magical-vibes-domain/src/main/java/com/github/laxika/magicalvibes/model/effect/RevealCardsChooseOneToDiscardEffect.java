@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record RevealCardsChooseOneToDiscardEffect(PermanentPredicate countFilter) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

@@ -1073,3 +1073,118 @@ effects — `CounterspellTest`/`CancelTest` (CounterSpell), `ManaLeakTest` (Coun
 (CopySpell — plain + filtered), `DeflectionTest` (ChangeTargetOfTargetSpellWithSingleTarget),
 `RedirectTest`/`WildRicochetTest` (ChangeTargetOfTargetSpellToSource / ChooseNewTargetsForTargetSpell),
 `GlamerdyeTest` (ChangeColorText spell+permanent dual), `MindBendTest` (ChangeColorText permanent-only).
+
+---
+
+## Step 8 — Player-only (canTargetPlayer, not canTargetPermanent)  (2026-07-15)
+
+Migrated the **72 player-only records** (the matrix's player-only bucket: every effect overriding
+`canTargetPlayer` but NOT `canTargetPermanent` — discard, mill, reveal-hand, search-library, life-set,
+extra-turn, shuffle-library, etc.). All map to category `PLAYER`. **No validator files were read,
+edited, or deleted this step: none of the 72 has a `@ValidatesTarget` method.** Player targeting is
+enforced structurally by the player/permanent pre-split in `computeAllowedTargets` (rejects permanents
+for a player-category effect) and each card's `PlayerPredicateTargetFilter` (opponent restrictions) —
+both **unchanged** by this program.
+
+### Interpreter is a total no-op for the PLAYER category — no new cast-time check added
+
+Confirmed from step 2/3: in `TargetValidationService.validateSpec` the `PLAYER` arm does NO
+`requireBattlefieldTarget`, and the trailing predicate/`harmful` block resolves the target via
+`findPermanentById(targetId)` — which returns `null` for a player → early return. `benign(PLAYER)` also
+has predicate `null` + harmful `false`, so even the no-op block does nothing. So migrating a player-only
+effect onto `benign(PLAYER)` adds NOTHING at cast time; the derived `canTargetPlayer()` =
+`PLAYER.includesPlayers()` = `true` reproduces the old boolean exactly, and every other derived legacy
+value is unchanged (`PLAYER(f,t)` + benign). Behavior-preserving-EXACTLY.
+
+### No OPPONENT category (per brief)
+
+Opponent-ness lives on each card's `PlayerPredicateTargetFilter` today; the spec must not duplicate it
+(invariant: no narrowing without an existing check). Every one of the 72 got `PLAYER`, never a narrower
+value.
+
+### 59 flat records → `benign(PLAYER)` (legacy override deleted)
+
+The 58 records whose `canTargetPlayer()` was an unconditional `return true;` → `benign(PLAYER)`. Plus
+**`ExchangeTargetPlayersLifeTotalsEffect`** → `new TargetSpec(TargetCategory.PLAYER, false, null,
+false, 2)`, deleting BOTH its `canTargetPlayer` and `requiredPlayerTargetCount` overrides in one edit;
+`playerTargetCount 2` reproduces the two-player requirement exactly (Axis of Mortality / Soul Conduit).
+It is the ONLY `requiredPlayerTargetCount` override in this bucket — the audit's step-1 count of 2
+included `MayEffect`'s delegating override, which is a step-9 wrapper, not a leaf.
+
+### 13 conditional (starred) records → per-instance specs — DEVIATION FROM THE BRIEF'S BLANKET `benign(PLAYER)`
+
+The brief said "targetSpec() = benign(PLAYER)" for the whole bucket, but 13 records override
+`canTargetPlayer` **conditionally** (the matrix flags them `canTargetPlayer*`), returning `false` in a
+branch where the effect targets nothing. A flat `benign(PLAYER)` would widen the derived
+`canTargetPlayer` `false→true` in that branch — offering/requiring a player target where the effect has
+none (the single-target boolean path, per step-3 precedent, is a live widening, not inert). Per
+BEHAVIOR-PRESERVING-OR-STRICTER (and CLAUDE.md's rules-accuracy-first rule) each got a per-instance spec
+reproducing its branch EXACTLY, mirroring the per-scope/per-recipient specs of steps 3–7:
+- `scope == EachPermanentScope.TARGET_PLAYER ? benign(PLAYER) : NONE`: `BoostAllCreaturesEffect`,
+  `PutCounterOnEachMatchingPermanentEffect`.
+- `recipient == …TARGET_PLAYER ? benign(PLAYER) : NONE`: `DiscardEffect` (DiscardRecipient),
+  `PlayerDestroysPermanentsEffect` (DestroyRecipient).
+- `targetsPlayer ? benign(PLAYER) : NONE`: `DrawCardForTargetPlayerEffect`, `GainLifeEffect`,
+  `SkipNextCombatPhaseEffect`.
+- `targetPlayer ? benign(PLAYER) : NONE`: `ShuffleGraveyardIntoLibraryEffect`, `ShuffleLibraryEffect`.
+- `!sacrificerIsController ? benign(PLAYER) : NONE`: `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect`.
+- amount-type-keyed: `DiscardOwnHandThenDrawEffect`
+  (`amount instanceof DamageDealtToTargetPlayerThisTurn`), `DrawCardEffect`
+  (`amount instanceof CardsDiscardedByTargetPlayerThisTurn`).
+- **`DealDamageToEachMatchingPermanentEffect`** — the one record that ALSO overrode
+  `isDamageOrDestruction()` (unconditionally `true`) while `canTargetPlayer` was conditional. A single
+  `TargetSpec` can carry both: `scope == TARGET_PLAYER ? harmful(PLAYER) : new TargetSpec(NONE, true,
+  null, false, 1)`. **Both branches keep `harmful=true`** so the derived `isDamageOrDestruction()` stays
+  `true` in every scope (preserved exactly). The `NONE` branch means `validateSpec` never runs (guarded
+  by `category() != NONE`), so no `checkProtection` is added; the `harmful(PLAYER)` branch runs the
+  no-op PLAYER arm and resolves the player target to `null` → no `checkProtection` either. So `harmful`
+  here is purely the `isDamageOrDestruction` carrier — inert in the interpreter (the effect damages
+  permanents, and only ever *targets* a player).
+
+### No escape hatches kept this step
+
+Unlike step 5's Life/Library records (which kept `requireTargetPlayer` validators because the no-op
+PLAYER category can't reproduce them), NONE of these 72 has a validator to keep — the player-target
+guard for them is the structural pre-split, not a `@ValidatesTarget` method. So `@ValidatesTarget`
+total is unchanged (34) and no validator file was touched.
+
+### Oracle / judgment calls
+
+- No behavior narrowed or widened for any of the 72: flat records reproduce the `canTargetPlayer`
+  boolean exactly, the 13 conditionals reproduce their branch exactly, and the PLAYER category is a
+  total interpreter no-op. No web ruling needed (behavior-preserving declarative migration).
+- All 72 are `benign` except the `harmful` branch of `DealDamageToEachMatchingPermanentEffect` (kept
+  solely to preserve its pre-existing `isDamageOrDestruction=true`); no player-only effect calls
+  `checkProtection` (the target is a player, not a battlefield permanent).
+- Non-bucket effects that also override `canTargetPlayer` were left untouched (verified by grep): the
+  interface default, the delegating wrappers (`ConditionalEffect`, `ConditionalReplacementEffect`,
+  `MayEffect`, `Triggering*ConditionalEffect`, the Clash wrappers), and the player+permanent /
+  player-or-planeswalker effects that also override `canTargetPermanent` (`FlickerEffect`,
+  `GrantKeywordEffect`, `LoseAllCreatureTypesEffect`, `SkipNextUntapEffect`, `DealDamageToEachTargetEffect`,
+  `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect`,
+  `DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffect`,
+  `RevealTopCardsBottomThenDamageIfCopyRevealedEffect`) — all belong to other buckets.
+
+### Audit re-run + lockstep
+
+`python scripts/targetspec-audit.py` re-run to regenerate `targetspec-baseline.txt` +
+`TARGETSPEC_MATRIX.md`. Records in scope 138 → **66** (−72); sum of baseline counts 188 → **114** (−74
+= 72×`canTargetPlayer` + 1×`requiredPlayerTargetCount` (Exchange) + 1×`isDamageOrDestruction`
+(DealDamageToEachMatchingPermanent)). `PLAYER` in-scope count → **0** (fully migrated).
+`canTargetPermanent` overrides unchanged at **48** (untouched this step); `@ValidatesTarget` methods
+unchanged at **34** (no validators existed for these effects). Remaining category counts: `NONE` 19,
+`PERMANENT` 31, `PLAYER_OR_PERMANENT` 11, `SPELL_ON_STACK` 2. The domain module was recompiled after
+every ~15 records (4 clean compiles). `effect-dispatch-baseline.txt` NOT touched (no
+`instanceof`-on-effect counts changed).
+
+**Tests run** (one filtered `:magical-vibes-application:test` invocation, `-x
+:magical-vibes-frontend:buildAngular`, `BUILD SUCCESSFUL`): fixed regression set —
+`WrackWithMadnessTest`, `DarkNourishmentTest`, `FireballTest`, `EffectDispatchRatchetTest`,
+`TargetSpecRatchetTest` (both ratchets green — baseline shrank monotonically), `ValidTargetServiceTest`,
+`TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`; one card test per family plus the tricky
+cases — `MindRotTest` (DiscardEffect TARGET_PLAYER — discard), `TraumatizeTest` (MillHalfLibraryEffect —
+mill), `JestersCapTest` (SearchTargetLibraryForCardsToExileEffect — search-library), `VraskaRelicSeekerTest`
+(SetTargetPlayerLifeToSpecificValueEffect — life-set), `AxisOfMortalityTest`
+(ExchangeTargetPlayersLifeTotalsEffect — the 2-player-target spec), `BoggartForagerTest`
+(ShuffleLibraryEffect `targetPlayer=true` → benign(PLAYER) branch), `PonderTest` (ShuffleLibraryEffect
+`targetPlayer=false` → NONE branch, non-targeting).

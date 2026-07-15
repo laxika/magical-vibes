@@ -6,5 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * When {@code targetPlayer} is true, the effect targets a player who shuffles their library (e.g. Boggart Forager).
  */
 public record ShuffleLibraryEffect(boolean targetPlayer) implements CardEffect {
-    @Override public boolean canTargetPlayer() { return targetPlayer; }
+    @Override public TargetSpec targetSpec() {
+        return targetPlayer ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+    }
 }

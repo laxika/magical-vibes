@@ -9,5 +9,5 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param requiredSubtype the subtype to filter for (e.g. CURSE)
  */
 public record SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect(CardSubtype requiredSubtype) implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }

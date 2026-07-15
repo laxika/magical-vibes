@@ -26,7 +26,7 @@ public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requir
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return targetsPlayer;
+    public TargetSpec targetSpec() {
+        return targetsPlayer ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 }

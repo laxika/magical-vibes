@@ -15,7 +15,7 @@ public record RevealTargetHandDrawPerMatchingCardEffect(List<CardSubtype> subtyp
                                                         List<CardColor> colors) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

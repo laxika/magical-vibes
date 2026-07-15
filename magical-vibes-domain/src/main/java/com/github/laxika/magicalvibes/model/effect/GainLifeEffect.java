@@ -34,7 +34,7 @@ public record GainLifeEffect(DynamicAmount amount, GainLifeRecipient recipient,
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return targetsPlayer;
+    public TargetSpec targetSpec() {
+        return targetsPlayer ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 }

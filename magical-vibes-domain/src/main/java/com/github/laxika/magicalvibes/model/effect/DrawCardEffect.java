@@ -24,9 +24,10 @@ public record DrawCardEffect(DynamicAmount amount) implements CardDrawingEffect 
     }
 
     @Override
-    public boolean canTargetPlayer() {
+    public TargetSpec targetSpec() {
         // Only target-relative amounts require a player target on the stack entry (e.g. Dream
         // Salvage draws equal to the number of cards target opponent discarded this turn).
-        return amount instanceof CardsDiscardedByTargetPlayerThisTurn;
+        return amount instanceof CardsDiscardedByTargetPlayerThisTurn
+                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 }

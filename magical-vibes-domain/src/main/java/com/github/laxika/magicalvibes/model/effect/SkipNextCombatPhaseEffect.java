@@ -23,8 +23,8 @@ public record SkipNextCombatPhaseEffect(boolean targetsPlayer)
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return targetsPlayer;
+    public TargetSpec targetSpec() {
+        return targetsPlayer ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 
     @Override

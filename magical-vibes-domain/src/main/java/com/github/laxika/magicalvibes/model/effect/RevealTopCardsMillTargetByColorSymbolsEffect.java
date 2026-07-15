@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 public record RevealTopCardsMillTargetByColorSymbolsEffect(int count, ManaColor color) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

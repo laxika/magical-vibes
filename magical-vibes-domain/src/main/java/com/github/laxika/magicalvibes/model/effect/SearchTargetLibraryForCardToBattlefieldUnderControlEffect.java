@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record SearchTargetLibraryForCardToBattlefieldUnderControlEffect(CardPredicate filter) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

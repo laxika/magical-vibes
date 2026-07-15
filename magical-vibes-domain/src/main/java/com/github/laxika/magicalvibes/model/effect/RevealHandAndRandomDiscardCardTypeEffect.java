@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 public record RevealHandAndRandomDiscardCardTypeEffect(CardType cardType) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

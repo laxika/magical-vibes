@@ -31,7 +31,7 @@ public record LookAtTargetPlayerTopCardMayGraveyardEffect(UUID libraryOwnerId, b
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

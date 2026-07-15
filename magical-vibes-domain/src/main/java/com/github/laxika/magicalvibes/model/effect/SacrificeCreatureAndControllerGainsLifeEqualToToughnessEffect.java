@@ -10,5 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect(boolean sacrificerIsController)
         implements CardEffect {
-    @Override public boolean canTargetPlayer() { return !sacrificerIsController; }
+    @Override public TargetSpec targetSpec() {
+        return !sacrificerIsController ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
+    }
 }

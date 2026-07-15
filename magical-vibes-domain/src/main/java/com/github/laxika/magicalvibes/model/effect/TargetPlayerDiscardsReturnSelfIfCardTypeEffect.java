@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 public record TargetPlayerDiscardsReturnSelfIfCardTypeEffect(int amount, CardType returnIfType) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

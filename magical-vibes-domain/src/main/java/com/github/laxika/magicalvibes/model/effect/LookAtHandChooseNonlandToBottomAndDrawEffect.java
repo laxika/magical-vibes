@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record LookAtHandChooseNonlandToBottomAndDrawEffect() implements CardEffect {
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

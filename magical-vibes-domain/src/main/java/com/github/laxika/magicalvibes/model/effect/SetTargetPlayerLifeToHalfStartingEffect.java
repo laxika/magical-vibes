@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * In a standard game (starting life = 20), this sets life to 10.
  */
 public record SetTargetPlayerLifeToHalfStartingEffect() implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }

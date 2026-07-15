@@ -8,5 +8,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link GainControlOfTargetEffect} floating effect per land).
  */
 public record GainControlOfAllLandsTargetPlayerControlsEffect() implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }

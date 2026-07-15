@@ -37,8 +37,8 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 
     @Override

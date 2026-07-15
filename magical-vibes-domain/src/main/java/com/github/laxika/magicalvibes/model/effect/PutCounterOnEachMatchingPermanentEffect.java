@@ -25,7 +25,8 @@ public record PutCounterOnEachMatchingPermanentEffect(CounterType counterType, D
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return scope == EachPermanentScope.TARGET_PLAYER;
+    public TargetSpec targetSpec() {
+        return scope == EachPermanentScope.TARGET_PLAYER
+                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 }

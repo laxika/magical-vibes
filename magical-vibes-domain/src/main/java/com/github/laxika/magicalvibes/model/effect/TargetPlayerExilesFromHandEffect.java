@@ -20,8 +20,8 @@ public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMay
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 
     @Override

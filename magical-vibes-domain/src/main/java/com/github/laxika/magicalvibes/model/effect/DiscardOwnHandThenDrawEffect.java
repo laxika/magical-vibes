@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record DiscardOwnHandThenDrawEffect(DynamicAmount amount) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
+    public TargetSpec targetSpec() {
         // Only target-relative amounts require a player target on the stack entry.
-        return amount instanceof DamageDealtToTargetPlayerThisTurn;
+        return amount instanceof DamageDealtToTargetPlayerThisTurn
+                ? TargetSpec.benign(TargetCategory.PLAYER) : TargetSpec.NONE;
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
 public record RevealHandChooseCreatureGainLifeDiscardEffect(List<CardColor> colors) implements CardEffect {
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

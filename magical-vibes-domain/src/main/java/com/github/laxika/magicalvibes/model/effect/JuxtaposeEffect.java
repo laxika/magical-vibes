@@ -12,5 +12,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * player choosing which tied permanent participates. Driven by {@code JuxtaposeSupport}.
  */
 public record JuxtaposeEffect() implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }

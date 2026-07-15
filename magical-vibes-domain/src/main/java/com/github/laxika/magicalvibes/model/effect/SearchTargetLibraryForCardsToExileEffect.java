@@ -19,7 +19,7 @@ public record SearchTargetLibraryForCardsToExileEffect(DynamicAmount count, bool
     }
 
     @Override
-    public boolean canTargetPlayer() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.PLAYER);
     }
 }

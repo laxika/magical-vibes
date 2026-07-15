@@ -11,5 +11,5 @@ public record ShuffleTargetCardsFromGraveyardIntoLibraryEffect(
         CardPredicate filter,
         int maxTargets
 ) implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }

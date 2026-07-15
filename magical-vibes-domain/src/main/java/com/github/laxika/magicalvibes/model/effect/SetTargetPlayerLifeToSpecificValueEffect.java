@@ -7,5 +7,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param targetLifeTotal the life total to set for the target player
  */
 public record SetTargetPlayerLifeToSpecificValueEffect(int targetLifeTotal) implements CardEffect {
-    @Override public boolean canTargetPlayer() { return true; }
+    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetCategory.PLAYER); }
 }
