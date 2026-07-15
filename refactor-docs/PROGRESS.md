@@ -2189,3 +2189,95 @@ those three dropped lines (no rises); `EFFECT_COUPLING_MATRIX.md` regenerated in
 
 **For the user:** run the full test suite and commit. Behaviour-preserving refactor — no game-rules change.
 
+## Step 19 — Engine mana-RESOLUTION site audit (Step-7 deferral revisited)  (2026-07-15)
+
+Phase 1 (step 7) migrated the AI's mana **estimation** to `ManaProducingEffect`'s descriptive
+facets but deliberately skipped the engine's mana **resolution/awarding** sites, noting they need a
+"resolution-shaped contract, not estimator facts." This step is the promised per-site audit of those
+skipped sites: enumerate every mana-effect `instanceof` in the three named services and classify each
+**(a) PURE DESCRIPTION** (branch only reads which mana the record produces, then awards/counts
+generically → migratable to a fact) vs **(b) FLOW** (drives a player choice, a board scan, a delayed
+trigger, a pool/context-dependent computation, or any non-uniform routing). Per the step's rule
+(highest-risk area — a wrong mana award breaks every game silently; "when in doubt, leave it"; "ANY
+ambiguity about a mana behavior → classify (b)"), a description-read only counts as a **clean (a)
+migration** when substituting a fact is byte-identical AND actually removes dispatch (doesn't leave a
+hybrid switch, doesn't leak the AI-estimator facets into rules-critical awarding).
+
+**Outcome: audit only — NO production change.** Fewer than ~8 *cleanly-migratable* (a) sites exist; the
+description-reads that do occur are all structurally entangled (mixed flow+description switches, a
+per-type creature-mana asymmetry, or ability-context/board/pool dependence). These are now recorded as
+**permanent survivors**, upgrading step 7's coarse "skipped, out of AI scope" note into an evidence-based
+per-site verdict. `EffectDispatchRatchetTest` stays green (unchanged); no baseline/matrix regen needed.
+
+### Audit table
+
+Site enumeration reconciles exactly with the ratchet baseline (`ActivatedAbilityExecutionService`=42 —
+29 mana + 13 non-mana; `PotentialManaService`=19 — 18 mana + 1 non-mana cost; `LandTapTrigger…`=2).
+
+| # | File · method | Effect(s) | Class | Verdict & reason |
+|---|---|---|---|---|
+| 1 | AAES · `doResolveManaAbility` (award switch) | `AwardManaEffect` | (a) | **LEAVE.** Reads `color()`+`amount()` and awards, but the award applies the Mana-Reflection multiplier, marks creature mana, evaluates a `DynamicAmount` via `AmountContext.forManaAbility`, and does `Fixed`-vs-dynamic conditional logging. It is 1 pure branch inside a **15-branch switch whose other 14 are flow** — a new exact-production facet removes **no** dispatch (hybrid switch remains) in the highest-risk code. |
+| 2 | AAES · same switch | `AwardManaToChosenPlayerEffect` | (b) | Inline **choose-a-player** interaction; routes mana to another player's pool. |
+| 3 | AAES · same switch | `DoubleManaPoolEffect` | (b) | Special op: doubles the **entire existing pool**, not a per-record production. |
+| 4 | AAES · same switch | `AwardAnyColorChosenSubtypeCreatureManaEffect` | (b) | Reads `permanent.getChosenSubtype()`, opens a **color-choice** interaction (spend-restricted). |
+| 5 | AAES · same switch | `AwardAnyColorSubtypeSpellOrAbilityManaEffect` | (b) | **Color-choice** interaction (spell/ability spend restriction). |
+| 6 | AAES · same switch | `AwardAnyColorManaWithInstantSorceryCopyEffect` | (b) | **Color-choice** + registers a delayed instant/sorcery-copy trigger. |
+| 7 | AAES · same switch | `AwardAnyColorManaEffect` | (b) | **Color-choice** interaction. |
+| 8 | AAES · same switch | `AwardXAnyColorManaEffect` | (b) | **Color-choice**; amount is the ability's `xValue` (activation context), not a record fact. |
+| 9 | AAES · same switch | `AwardManaOfColorsEffect` | (b) | Non-uniform: size==1 awards directly, else per-pick **color-choice** from a fixed set. |
+| 10 | AAES · same switch | `AwardAnyOneColorInstantSorceryOnlyManaEffect` | (b) | **Color-choice** (instant/sorcery-only restriction). |
+| 11 | AAES · same switch | `AwardFlashbackOnlyAnyColorManaEffect` | (b) | **Color-choice** (flashback-only restriction). |
+| 12 | AAES · same switch | `AwardRestrictedManaEffect` | (b) | Record-driven `applyTo(pool)` into a restricted bucket; special routing, multiplier deliberately not applied. |
+| 13 | AAES · same switch | `AwardManaOfColorsAmongControlledEffect` | (b) | **Board scan** of controlled colors → 0/1/choice. |
+| 14 | AAES · same switch | `AwardOneManaOfEachColorAmongControlledEffect` | (b) | **Board scan**; awards one mana per color found simultaneously. |
+| 15 | AAES · same switch | `AwardManaOfColorsLandsCouldProduceEffect` | (b) | **Board scan** of what lands could produce → 0/1/choice. |
+| 16–22 | AAES · `calculateTotalManaProduction` | `AwardManaEffect`, `AwardManaToChosenPlayerEffect`, `AwardAnyColorManaEffect`, `AwardManaOfColorsEffect`, `AwardRestrictedManaEffect`, `AwardFlashbackOnlyAnyColorManaEffect`, `AwardAnyColorSubtypeSpellOrAbilityManaEffect` | (a) | **LEAVE.** 7 amount-reads, **but the same method has 5 (b) branches** (#23–27) → any "count" facet leaves a hybrid switch. This method exists solely to compute Damping Sphere's rules-critical "≥2 mana" replacement total; mixing facet+concrete here is a clarity/safety regression. |
+| 23–26 | AAES · `calculateTotalManaProduction` | `AwardXAnyColorManaEffect` (→`xValue`), `AwardManaOfColorsAmongControlledEffect`, `AwardOneManaOfEachColorAmongControlledEffect`, `AwardManaOfColorsLandsCouldProduceEffect` | (b) | Ability-context (`xValue`) or **board-scan** dependent — not a static record fact. |
+| 27 | AAES · `calculateTotalManaProduction` | `DoubleManaPoolEffect` | (b) | Reads the **current pool total** — pool-state dependent. |
+| 28–29 | AAES · `collectManaColorsFromEffects` | `AwardManaEffect` (→its color, colorless excluded), `AwardAnyColorManaEffect` (→all 5) | (a) | **LEAVE.** Genuinely clean (2 branches, no flow), but only **2 sites** and would need a *new* `producedColors()` fact for a narrow rules concept (colors a land could produce, for Fellwar Stone / Star Compass). Below the threshold to justify new domain surface. |
+| 30–38 | PMS · `buildVirtualManaPool` / `buildLandOnlyVirtualManaPool` / `buildSafeVirtualManaPool` ON_TAP switch (×3) | `AwardManaEffect`, `AwardAnyColorManaEffect`, `AwardAnyColorChosenSubtypeCreatureManaEffect` | (a) | **LEAVE.** These are virtual-pool *estimation* — the exact use the step-7 facets were built for — and the `AwardMana`/`AwardAnyColor` branches map to `estimatedManaColor()`/`estimatedWildcardMana()` byte-identically. **But `AwardAnyColorChosenSubtype…` has a creature-mana asymmetry** (it alone does *not* call `addCreatureMana` even when the source is a creature). Collapsing the switch preserves this only via an awkward `estimatedCountsAllColors()`-gates-creature-mana coupling — a subtle mana-behavior wrinkle → the step's "ANY ambiguity → (b)/leave" rule applies. Migrating only the fixed-color branch leaves a hybrid switch mixing facets with `instanceof` in rules-adjacent code. |
+| 39–40 | PMS · `addActivatedManaAbilitiesToVirtualPool` | `AwardManaEffect`, `AwardAnyColorManaEffect` | (a) | **LEAVE.** Same estimation shape as #30–38; migrating only these two leaves the surrounding over-count bookkeeping and would be an isolated partial change with no net dispatch removal. |
+| 41 | PMS · `wouldManaAbilityTriggerChoice` | grouped `AwardAnyColorManaEffect` / `…ChosenSubtype…` / `…WithInstantSorceryCopy` / `AwardFlashbackOnlyAnyColor` | (b) | **Recognition-of-flow:** predicts whether resolution will open a color-choice interaction — a resolution-flow fact, not a production description. |
+| 42 | PMS · `hasOnTapManaEffects` | grouped `AwardManaEffect` / `AwardAnyColorManaEffect` / `…ChosenSubtype…` | (a) | **LEAVE (closest call).** This trio == exactly `modeledByManaEstimator()`, so `e instanceof ManaProducingEffect mp && mp.modeledByManaEstimator()` is byte-identical and self-contained. **But** step 7 explicitly considered *this exact check* and left it as engine mana logic; it feeds both AI planning and `GameBroadcastService`'s "castable" UI hints. Re-migrating one helper does not justify editing the highest-risk file, and it would route an AI-estimator facet through a shared engine/broadcast path. Left for consistency with step 7. |
+| 43–44 | `LandTapTriggerCollectorService` · `handleAddExtraManaOfChosenColor` / `handleAddOneOfEachManaType` | `AwardManaEffect` (of the **tapped land**) | (b) | Each reads a **different permanent's** (the tapped land's) fixed-color production to drive a trigger rider ("does the land produce the chosen color" / "what is its first produced color") — flow support inside a per-type trigger handler, order-dependent, not the effect's own production. |
+
+*(Out of scope — non-mana `instanceof` the ratchet also counts in these files but which are not mana
+producers: AAES's `RemoveAllCountersAsCostEffect`, `DestroyNonlandPermanents…`, `ExileSelfCost`,
+`SacrificeSelfCost`, `SacrificeSourceEquipmentCost`, `CantBlockSourceEffect`, `MustBlockSourceEffect`,
+`PreventNextColorDamageToControllerEffect`, `GrantKeywordToChosenCreature…`, `RegenerateEffect`,
+`ReplaceLandExcessManaWithColorlessEffect`, `GainLifeEffect`, `DealDamageToPlayersEffect`×2; PMS's
+`RemoveChargeCountersFromSourceCost`. Left untouched.)*
+
+### Why no new `exact-production` facet
+
+The prompt's suggested facet (per-option list of produced mana) is only useful where a switch's
+branches are **uniformly** "read production → award/count generically." No site here is: every
+resolution/total switch interleaves description-reads with player choices, board scans, `xValue`
+context, pool-state reads, or special routing, so the facet would cover a minority of branches and
+leave the concrete dispatch (and its risk) in place — the exact "resolution-shaped contract, not
+estimator facts" reason step 7 gave. Adding partial domain surface that removes no dispatch, in the
+one area where a silent bug corrupts every game, fails the reuse/altitude bar. The estimator facets
+already model the only clean, uniform sub-cases (PMS virtual pools), and even there a per-type
+creature-mana asymmetry blocks a byte-identical collapse.
+
+### Conclusion — permanent survivors
+
+All 44 mana-effect `instanceof` sites in `ActivatedAbilityExecutionService`,
+`PotentialManaService`, and `LandTapTriggerCollectorService` are **permanent survivors** of the
+effect-dispatch refactor. The (b) sites are genuine flow; the (a) description-reads are entangled such
+that no fact migration is behavior-preserving *and* dispatch-removing *and* clarity-neutral in this
+rules-critical, highest-risk code. Step 7's deferral is hereby confirmed as final for these sites, now
+backed by a per-site record so no future session needs to re-litigate them.
+
+### Tests run
+
+`EffectDispatchRatchetTest` — green, unchanged (no code touched, so no baseline/matrix regeneration).
+No card/AI tests were run because no production or test code changed.
+
+### Files changed
+
+- `refactor-docs/PROGRESS.md` (this audit entry). No source, no domain, no baseline, no docs change.
+
+**For the user:** this step is audit-only — behaviour is untouched, so a full-suite run is not strictly
+required, but run it if you want the safety confirmation before committing this doc-only change.
+
