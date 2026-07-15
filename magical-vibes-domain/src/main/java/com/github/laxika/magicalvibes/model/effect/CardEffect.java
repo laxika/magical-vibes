@@ -19,19 +19,24 @@ public interface CardEffect {
     default boolean canTargetSpell() { return targetSpec().category() == TargetCategory.SPELL_ON_STACK; }
     default boolean canTargetGraveyard() {
         TargetCategory category = targetSpec().category();
-        return category == TargetCategory.GRAVEYARD_CARD || category == TargetCategory.ANY_GRAVEYARD_CARD;
+        return category == TargetCategory.GRAVEYARD_CARD
+                || category == TargetCategory.ANY_GRAVEYARD_CARD
+                || category == TargetCategory.CONTROLLERS_GRAVEYARD_CARD;
     }
     default boolean canTargetAnyGraveyard() { return targetSpec().category() == TargetCategory.ANY_GRAVEYARD_CARD; }
     /**
      * When true, graveyard targeting is restricted to the controller's graveyard only.
      *
-     * <p>This orthogonal flag has NO {@link TargetCategory} correlate — both a
-     * controller-only and an opponent-only "return a card from a graveyard" effect are
-     * {@link TargetCategory#GRAVEYARD_CARD} — so it cannot be derived from {@code targetSpec()}
-     * and is not a {@link TargetSpec} component. It stays a constant-{@code false} default; the
-     * two effects that set it true keep their own override until the graveyard bucket migrates.</p>
+     * <p>Derived from the dedicated {@link TargetCategory#CONTROLLERS_GRAVEYARD_CARD} category.
+     * The three graveyard zone-states — opponent-only ({@code GRAVEYARD_CARD}), any
+     * ({@code ANY_GRAVEYARD_CARD}), and controller-only ({@code CONTROLLERS_GRAVEYARD_CARD}) —
+     * form one mutually-exclusive dimension, so each maps to exactly one category and back with no
+     * ambiguity (see the {@code SpellCastingService} / {@code AiTargetSelector} readers that branch
+     * on this boolean and {@code canTargetAnyGraveyard}).</p>
      */
-    default boolean targetsControllersGraveyardOnly() { return false; }
+    default boolean targetsControllersGraveyardOnly() {
+        return targetSpec().category() == TargetCategory.CONTROLLERS_GRAVEYARD_CARD;
+    }
     default boolean canTargetExile() { return targetSpec().category() == TargetCategory.EXILE_CARD; }
 
     /**

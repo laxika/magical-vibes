@@ -153,7 +153,12 @@ public record ReturnCardFromGraveyardEffect(
     }
 
     @Override
-    public boolean canTargetGraveyard() {
-        return targetGraveyard;
+    public TargetSpec targetSpec() {
+        // Only the targeted-graveyard variant participates in cast/activation-time targeting; the
+        // resolution-time variants pick their card later. Reproduces the old conditional
+        // canTargetGraveyard() exactly. The own/opponent/all scope narrowing lives on the kept
+        // validator (via source()), never in these booleans (canTargetAnyGraveyard stayed false
+        // for this effect regardless of source), so GRAVEYARD_CARD is correct for every source.
+        return targetGraveyard ? TargetSpec.benign(TargetCategory.GRAVEYARD_CARD) : TargetSpec.NONE;
     }
 }

@@ -766,3 +766,183 @@ TARGET_PLAYER), `TezzeretAgentOfBolasTest` (DrainLifePerControlledPermanent); Li
 `WeightOfMemoryTest` (Mill TARGET_PLAYER), `AvenWindreaderTest`, `MemoricideTest`, `CellarDoorTest`;
 plus `CardEffectTargetingConsistencyTest` (updated). (An accidental unfiltered run of the whole
 application suite during setup surfaced exactly the 3 failures fixed above and nothing else.)
+
+---
+
+## Step 6 — Graveyard / any-graveyard / controllers-only / exile  (2026-07-15)
+
+Migrated every effect overriding `canTargetGraveyard` (7 records), `canTargetAnyGraveyard` (7),
+and/or `targetsControllersGraveyardOnly` (2, both also `canTargetGraveyard`) — **14 records total**
+(the two controllers-only effects are inside the 7 graveyard records). The audit's step-1 counts
+(19 / 8 / 2 / 1) are the ORIGINAL brief numbers; by step 6 the remaining in-scope graveyard records
+are the 14 in the matrix's two graveyard bucket tables, the rest of the raw `canTargetGraveyard`
+overrides being the 5 delegating wrappers (`ConditionalEffect`, `ConditionalReplacementEffect`,
+`MayEffect`, `TriggeringCardConditionalEffect`, `TriggeringPermanentConditionalEffect` — steps 7/9).
+
+**EXILE_CARD — nothing to do.** The one `canTargetExile` effect
+(`ReturnTargetCardFromExileToHandEffect`) was already migrated to `benign(EXILE_CARD)` in step 4;
+the current audit shows `canTargetExile` overrides = **0**. Verified no effect record still overrides
+`canTargetExile` (only the `CardEffect` default remains). `EXILE_CARD` therefore has 0 in-scope
+records and needed no work this step.
+
+### How the three graveyard flags are read (checked before assigning categories)
+
+Read the three consumers named in the brief:
+- **`SpellCastingService`** (`needsGraveyardEffectTargeting` branch, ~lines 891–902): for a
+  graveyard-effect target it computes `inControllersGraveyard`, then — `targetsControllersGraveyardOnly`
+  → require controller's graveyard; else if `!canTargetAnyGraveyard && inControllersGraveyard` → reject
+  ("must be in an opponent's graveyard"); else (any) → accept. So the THREE zone-states are:
+  **controller-only** = `controllersOnly`; **opponent-only** = `!controllersOnly && !anyGraveyard`
+  (the default triple T/F/F); **any** = `!controllersOnly && anyGraveyard`.
+- **`AiTargetSelector`** (line ~505): identical precedence — `controllersOnly` → CONTROLLERS_GRAVEYARD,
+  else `canTargetAnyGraveyard` → ALL_GRAVEYARDS, else OPPONENT_GRAVEYARD.
+- **`TargetLegalityService.validateGraveyardEffectTargetOnly`** (line 452,
+  `.filter(CardEffect::canTargetGraveyard)` — the method-reference form): selects which SPELL-slot
+  effects to validate as graveyard targets; only requires the derived `canTargetGraveyard()` to stay
+  true for every migrated record.
+- **Multi-target graveyard path** (`TargetLegalityService.validateMultiTargetGraveyardAbility`,
+  line 160): does NOT read the three flags — it `instanceof`-dispatches and reads record components
+  (`ReturnCardFromGraveyardEffect.targetGraveyard()`/`source()`,
+  `ExileGraveyardCardsEffect.scope()`, `ExileCardsFromGraveyardEffect.maxTargets()`). Unaffected.
+- `GraveyardTargetingService` (ETB/begin-of-combat paths) reads `canTargetAnyGraveyard()` (lines 125,
+  222) to pick the search scope. Preserved by the exact-boolean derivation.
+
+### Category mapping chosen (recorded per the brief) — DEDICATED CATEGORY
+
+Added a new `TargetCategory.CONTROLLERS_GRAVEYARD_CARD(false,false)`, giving a **bijection** between the
+three graveyard zone-states and three categories:
+
+| (canTargetGraveyard, canTargetAnyGraveyard, targetsControllersGraveyardOnly) | Category |
+|---|---|
+| (T, F, F) — opponent-only (the default state) | `GRAVEYARD_CARD` |
+| (T, T, F) — any graveyard | `ANY_GRAVEYARD_CARD` |
+| (T, F, T) — controller's graveyard only | `CONTROLLERS_GRAVEYARD_CARD` |
+
+`CardEffect` derivations updated: `canTargetGraveyard()` now also true for
+`CONTROLLERS_GRAVEYARD_CARD`; `canTargetAnyGraveyard()` unchanged (`ANY_GRAVEYARD_CARD` only);
+`targetsControllersGraveyardOnly()` changed from constant-`false` to
+`category() == CONTROLLERS_GRAVEYARD_CARD` (retiring the step-2 "no correlate" deviation).
+
+**Dedicated category, NOT a spec field — justification.** The three zone-states are one
+mutually-exclusive dimension (an effect is opponent-only XOR any XOR controller-only), which an enum
+expresses exactly and unambiguously; each triple ↔ one category and back with zero ambiguity, matching
+both readers' precedence. A 6th `TargetSpec` boolean component would be meaningless for every
+non-graveyard category (a `controllersGraveyardOnly=true` `CREATURE` spec is nonsense), would force
+touching the record signature + all factories, and re-introduces the orthogonal-flag muddle the enum
+avoids. `GRAVEYARD_CARD` vs `ANY_GRAVEYARD_CARD` already encode the `anyGraveyard` bit in this same
+dimension; `CONTROLLERS_GRAVEYARD_CARD` is the natural third value.
+
+### Spec interpreter does NO zone re-check for graveyard categories — verified, no fix needed
+
+Confirmed from step 2: in `TargetValidationService.validateSpec`, `GRAVEYARD_CARD` /
+`ANY_GRAVEYARD_CARD` / `CONTROLLERS_GRAVEYARD_CARD` / `EXILE_CARD` are in the no-op switch arm, and the
+trailing predicate/`harmful` block resolves the target via `findPermanentById(targetId)` — which
+returns `null` for a graveyard card (not a battlefield permanent) → early return. So the interpreter
+validates NOTHING for a graveyard target. Added `CONTROLLERS_GRAVEYARD_CARD` to that no-op arm (the
+only `switch` over `TargetCategory` in the codebase; the AI-engine switches are on `InstantCategory`,
+not affected). The graveyard PATHS (`SpellCastingService` zone checks + the kept validators) remain the
+sole enforcement, exactly as before.
+
+### ALL 13 GraveyardTargetValidators KEPT WHOLE (deviation from the optimistic step-8 overview)
+
+The step-1/overview text ("most keep an escape-hatch validator") anticipated deleting the "structural"
+graveyard validators. **None were deletable.** Because the spec interpreter is a total no-op for
+graveyard categories, the spec's `predicate` field (which only evaluates against a *battlefield*
+permanent) **cannot** express any graveyard card-predicate/card-type/zone check. Per the brief's rule
+— "if the check is exactly a predicate the spec's predicate field can express … migrate; otherwise
+escape hatch" — every graveyard validator falls in *otherwise*: each enforces at minimum
+`targetZone==GRAVEYARD` + non-null + card-found (and usually a card-type/predicate and/or a
+controller/opponent compare), none of which the no-op spec reproduces. Deleting any would drop real
+validation (strictly less strict — forbidden). So `GraveyardTargetValidators` is **unchanged** (all 13
+`@ValidatesTarget` methods kept, no file/import churn). All are `benign` (no validator calls
+`checkProtection` — graveyard cards aren't battlefield permanents; the escape-hatch table's harmful=no
+for all 7 auto-flagged ones confirms it).
+
+Kept validators by effect (13): `validateReturnCardFromGraveyard`,
+`validatePutCreatureFromOpponentGraveyardWithExile`, `validateCastTargetInstantOrSorceryFromGraveyard`,
+`validateGrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilities`,
+`validateGrantFlashbackToTargetGraveyardCard`, `validateExileTargetCardFromGraveyardAndImprint`,
+`validateExileTargetCardFromGraveyardAndCreateTokenCopy`, `validateExileGraveyardCards`,
+`validateExileTargetCardFromGraveyardMayPlay`, `validatePlayTargetCardFromGraveyardWithoutPaying`,
+`validateExileTargetInstantOrSorceryFromOpponentGraveyardMayCast`,
+`validateExileTargetGraveyardCardAndSameName`, `validatePutCardFromOpponentGraveyard`.
+
+### Migrated onto `targetSpec()`, legacy overrides DELETED (14)
+
+- `benign(GRAVEYARD_CARD)`: `CastTargetInstantOrSorceryFromGraveyardEffect`,
+  `ExileTargetCardFromGraveyardAndImprintOnSourceEffect`,
+  `PutCardFromOpponentGraveyardOntoBattlefieldEffect`,
+  `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect`.
+- `benign(CONTROLLERS_GRAVEYARD_CARD)`: `GrantFlashbackToTargetGraveyardCardEffect`,
+  `PlayTargetCardFromGraveyardWithoutPayingManaCostEffect` (deleting BOTH the `canTargetGraveyard`
+  and `targetsControllersGraveyardOnly` overrides in one edit each).
+- `benign(ANY_GRAVEYARD_CARD)`: `ExileGraveyardCardWithConditionalBonusEffect` (no validator),
+  `ExileTargetGraveyardCardAndSameNameFromZonesEffect`,
+  `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect`,
+  `GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect`.
+- Per-instance (conditional) specs, reproducing the old conditional booleans exactly:
+  - `ReturnCardFromGraveyardEffect` — `targetGraveyard ? benign(GRAVEYARD_CARD) : NONE`. The
+    own/opponent/all narrowing rides `source()` on the kept validator + the
+    `needsSingleGraveyardTargeting` path; the legacy `canTargetAnyGraveyard` was ALWAYS false for this
+    effect regardless of `source`, so `GRAVEYARD_CARD` is correct for every source.
+  - `ExileGraveyardCardsEffect` — `switch(scope)`: `TARGET_CARDS_ANY_GRAVEYARD` → `ANY_GRAVEYARD_CARD`,
+    `TARGET_CARDS_OPPONENT_GRAVEYARD` → `GRAVEYARD_CARD`, `TARGET_PLAYER_ENTIRE` → `PLAYER`, else
+    `NONE`. Reproduces the three conditional booleans (`canTargetGraveyard`/`canTargetAnyGraveyard`/
+    `canTargetPlayer`) exactly.
+  - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`,
+    `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect` —
+    `ownGraveyardOnly ? benign(GRAVEYARD_CARD) : benign(ANY_GRAVEYARD_CARD)`.
+
+### Oracle / judgment calls
+
+- **`ownGraveyardOnly` is NOT `targetsControllersGraveyardOnly`.** Two effects
+  (`ExileTargetCardFromGraveyard{AndCreateTokenCopy,MayPlayUntilNextTurn}Effect`) have an
+  `ownGraveyardOnly` record component that, when true, sets `canTargetAnyGraveyard=false` but leaves
+  `targetsControllersGraveyardOnly=false` (they never overrode it) — the own-graveyard restriction is
+  enforced by their kept validator's controller-compare, not by the flag. So `ownGraveyardOnly=true`
+  reproduces the (T,F,F) triple = **`GRAVEYARD_CARD`**, NOT `CONTROLLERS_GRAVEYARD_CARD`. Only the two
+  effects that literally overrode `targetsControllersGraveyardOnly()` to true
+  (`GrantFlashback…`, `PlayTargetCardFromGraveyard…`) get `CONTROLLERS_GRAVEYARD_CARD`. This is the
+  BEHAVIOR-PRESERVING-EXACTLY reading of the readers' precedence (controllers-only wins over any-vs-
+  opponent), and it matters: mis-assigning `CONTROLLERS_GRAVEYARD_CARD` here would flip the derived
+  boolean and change the AI/SpellCasting search scope.
+- **`ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect` keeps `ANY_GRAVEYARD_CARD`** even
+  though it is "from an opponent's graveyard": its legacy booleans were (T,T,F), and the opponent
+  restriction lives in the kept validator's opponent-relation check (`graveyardOwnerId.equals` throw).
+  Reproducing booleans exactly forbids "narrowing" it to `GRAVEYARD_CARD`.
+- No behavior narrowed; no web ruling needed — every category reproduces the prior three-flag triple
+  exactly, and the spec interpreter adds no new check for any graveyard category (total no-op).
+
+### Audit re-run + lockstep
+
+`python scripts/targetspec-audit.py` re-run (idempotent — two runs byte-identical) to regenerate
+`targetspec-baseline.txt` + `TARGETSPEC_MATRIX.md`. Records in scope 168 → **154** (−14); sum of
+baseline counts 228 → **204** (−24 = the 24 deleted overrides: 14×`canTargetGraveyard` + 7×
+`canTargetAnyGraveyard` + 2×`targetsControllersGraveyardOnly` + 1×`canTargetPlayer` on
+`ExileGraveyardCardsEffect`). `canTargetGraveyard` overrides 19→**5**, `canTargetAnyGraveyard` 8→**1**,
+`targetsControllersGraveyardOnly` 2→**0** (the residue are the 5 delegating wrappers, steps 7/9).
+`GRAVEYARD_CARD`/`ANY_GRAVEYARD_CARD` in-scope counts → **0**; `CONTROLLERS_GRAVEYARD_CARD` added to the
+audit's confirmed-enum list (new `structural_flags`/`assign_category`/`bucket_of` branch keyed on
+`targetsControllersGraveyardOnly` — kept in lockstep with the enum) and shows 0 in-scope. The
+`@ValidatesTarget` total stays **34** (all 13 graveyard validators kept whole; they now show
+"In matrix? = no" as their effects left scope, and the auto escape-hatch table drops to 0 — the same
+in-scope-only artifact seen in steps 2–5; the 13 kept validators are enumerated above for step 10).
+`effect-dispatch-baseline.txt` NOT touched (no `instanceof`-on-effect counts changed; `TargetSpec`/
+`TargetCategory` were already on the coupling exemption from step 2, and adding an enum VALUE doesn't
+change that).
+
+**Tests run** (one filtered `:magical-vibes-application:test` invocation, `BUILD SUCCESSFUL`): fixed
+regression set — `WrackWithMadnessTest`, `DarkNourishmentTest`, `FireballTest`,
+`EffectDispatchRatchetTest`, `TargetSpecRatchetTest` (both ratchets green — baseline shrank
+monotonically), `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`,
+`CardEffectTargetingConsistencyTest`; one card test per migrated effect —
+`MemoryPlunderTest` (Cast…FromGraveyard), `MyrWelderTest` (ExileTargetCardFromGraveyardAndImprint),
+`SnapcasterMageTest` (GrantFlashback — CONTROLLERS_GRAVEYARD_CARD), `HordeOfNotionsTest`
+(PlayTargetCardFromGraveyard — CONTROLLERS_GRAVEYARD_CARD), `GethLordOfTheVaultTest`
+(PutCardFromOpponentGraveyard), `GruesomeEncoreTest` (PutCreatureFromOpponentGraveyardWithExile),
+`DisentombTest` (ReturnCardFromGraveyard, targetGraveyard=true), `DeathgorgeScavengerTest`
+(ExileGraveyardCardWithConditionalBonus), `BeckonApparitionTest` (ExileGraveyardCards),
+`SeanceTest` (ExileTargetCardFromGraveyardAndCreateTokenCopy), `PracticedScrollsmithTest`
+(ExileTargetCardFromGraveyardMayPlay), `SurgicalExtractionTest` (ExileTargetGraveyardCardAndSameName),
+`NitaForumConciliatorTest` (ExileTargetInstantOrSorceryFromOpponentGraveyardMayCast),
+`HavengulLichTest` (GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilities).

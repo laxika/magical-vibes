@@ -109,7 +109,7 @@ public class TargetValidationService {
             // validated on the player path, and spell/graveyard/exile targets are guarded by
             // their own zone paths.
             case PLAYER, PLAYER_OR_PERMANENT, SPELL_ON_STACK, GRAVEYARD_CARD,
-                 ANY_GRAVEYARD_CARD, EXILE_CARD, NONE -> { }
+                 ANY_GRAVEYARD_CARD, CONTROLLERS_GRAVEYARD_CARD, EXILE_CARD, NONE -> { }
         }
 
         // Predicate narrowing and the harmful protection check apply to a permanent target only.

@@ -12,12 +12,9 @@ package com.github.laxika.magicalvibes.model.effect;
 public record ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetGraveyard() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetAnyGraveyard() {
-        return true;
+    public TargetSpec targetSpec() {
+        // (graveyard=T, any=T): the opponent-graveyard restriction is enforced by the kept
+        // validator's opponent-relation check, not by these booleans.
+        return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
     }
 }

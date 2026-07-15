@@ -111,7 +111,8 @@ STRUCTURAL_WRAPPERS = {
 PROPOSED_CATEGORIES = [
     "NONE", "PLAYER", "PLAYER_OR_PERMANENT", "PERMANENT", "CREATURE", "LAND",
     "CREATURE_OR_PLANESWALKER", "PLAYER_OR_PLANESWALKER", "ANY_TARGET",
-    "SPELL_ON_STACK", "GRAVEYARD_CARD", "ANY_GRAVEYARD_CARD", "EXILE_CARD",
+    "SPELL_ON_STACK", "GRAVEYARD_CARD", "ANY_GRAVEYARD_CARD",
+    "CONTROLLERS_GRAVEYARD_CARD", "EXILE_CARD",
 ]
 
 
@@ -300,6 +301,7 @@ def structural_flags(overrides):
         "spell": on("canTargetSpell"),
         "graveyard": on("canTargetGraveyard"),
         "anyGraveyard": on("canTargetAnyGraveyard"),
+        "controllersGraveyard": on("targetsControllersGraveyardOnly"),
         "exile": on("canTargetExile"),
     }
 
@@ -307,7 +309,7 @@ def structural_flags(overrides):
 def bucket_of(flags):
     if flags["spell"]:
         return "spell"
-    if flags["graveyard"] or flags["anyGraveyard"]:
+    if flags["graveyard"] or flags["anyGraveyard"] or flags["controllersGraveyard"]:
         return "graveyard+any" if flags["anyGraveyard"] else "graveyard"
     if flags["exile"]:
         return "exile"
@@ -341,7 +343,11 @@ def assign_category(flags, validator):
         "creature": False, "planeswalker": False, "land": False, "player_split": False}
     if flags["spell"]:
         return "SPELL_ON_STACK"
-    if flags["graveyard"] or flags["anyGraveyard"]:
+    if flags["graveyard"] or flags["anyGraveyard"] or flags["controllersGraveyard"]:
+        # Three mutually-exclusive graveyard zone-states, each one category:
+        # controller-only wins first, then any-graveyard, else opponent-only (the default).
+        if flags["controllersGraveyard"]:
+            return "CONTROLLERS_GRAVEYARD_CARD"
         return "ANY_GRAVEYARD_CARD" if flags["anyGraveyard"] else "GRAVEYARD_CARD"
     if flags["exile"]:
         return "EXILE_CARD"

@@ -25,12 +25,13 @@ public record ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(
 ) implements CardEffect {
 
     @Override
-    public boolean canTargetGraveyard() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetAnyGraveyard() {
-        return !ownGraveyardOnly;
+    public TargetSpec targetSpec() {
+        // ownGraveyardOnly narrows the search but was NEVER expressed through
+        // targetsControllersGraveyardOnly (which stayed false) — it is the kept validator's
+        // controller-compare. So ownGraveyardOnly=true reproduces (graveyard=T, any=F) = GRAVEYARD_CARD,
+        // not CONTROLLERS_GRAVEYARD_CARD.
+        return ownGraveyardOnly
+                ? TargetSpec.benign(TargetCategory.GRAVEYARD_CARD)
+                : TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
     }
 }

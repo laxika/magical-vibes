@@ -39,10 +39,26 @@ public enum TargetCategory {
     ANY_TARGET(true, true),
     /** A spell on the stack (counter / redirect). */
     SPELL_ON_STACK(false, false),
-    /** A card in a graveyard (see {@code canTargetAnyGraveyard} for own vs. any). */
+    /**
+     * A card in a graveyard restricted to an opponent's graveyard — the default graveyard state
+     * ({@code canTargetGraveyard=true}, {@code canTargetAnyGraveyard=false},
+     * {@code targetsControllersGraveyardOnly=false}). "Opponent's graveyard only" because the
+     * graveyard readers (SpellCastingService / AiTargetSelector) treat a non-any, non-controllers
+     * graveyard effect as opponent-scoped; effects that actually allow the controller's own
+     * graveyard enforce that through their kept validator, not through these booleans.
+     */
     GRAVEYARD_CARD(false, false),
-    /** A card in any player's graveyard. */
+    /** A card in any player's graveyard ({@code canTargetAnyGraveyard=true}). */
     ANY_GRAVEYARD_CARD(false, false),
+    /**
+     * A card restricted to the controller's own graveyard
+     * ({@code targetsControllersGraveyardOnly=true}). The dedicated correlate of the orthogonal
+     * {@code targetsControllersGraveyardOnly} boolean: the three graveyard zone-states
+     * (opponent-only / any / controller-only) form one mutually-exclusive dimension, so each is one
+     * category. See {@code GrantFlashbackToTargetGraveyardCardEffect},
+     * {@code PlayTargetCardFromGraveyardWithoutPayingManaCostEffect}.
+     */
+    CONTROLLERS_GRAVEYARD_CARD(false, false),
     /** A card in exile. */
     EXILE_CARD(false, false);
 

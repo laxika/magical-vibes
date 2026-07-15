@@ -18,12 +18,12 @@ public record ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
 ) implements CardEffect {
 
     @Override
-    public boolean canTargetGraveyard() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetAnyGraveyard() {
-        return !ownGraveyardOnly;
+    public TargetSpec targetSpec() {
+        // ownGraveyardOnly is enforced by the kept validator's controller-compare, not by
+        // targetsControllersGraveyardOnly (which stayed false); so ownGraveyardOnly=true reproduces
+        // (graveyard=T, any=F) = GRAVEYARD_CARD, not CONTROLLERS_GRAVEYARD_CARD.
+        return ownGraveyardOnly
+                ? TargetSpec.benign(TargetCategory.GRAVEYARD_CARD)
+                : TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
     }
 }

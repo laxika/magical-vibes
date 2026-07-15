@@ -40,18 +40,17 @@ public record ExileGraveyardCardsEffect(
     }
 
     @Override
-    public boolean canTargetGraveyard() {
-        return scope == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
-                || scope == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD;
-    }
-
-    @Override
-    public boolean canTargetAnyGraveyard() {
-        return scope == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD;
-    }
-
-    @Override
-    public boolean canTargetPlayer() {
-        return scope == GraveyardExileScope.TARGET_PLAYER_ENTIRE;
+    public TargetSpec targetSpec() {
+        // Per-scope spec reproducing the old conditional booleans exactly:
+        //   TARGET_CARDS_ANY_GRAVEYARD      -> (graveyard=T, any=T)    -> ANY_GRAVEYARD_CARD
+        //   TARGET_CARDS_OPPONENT_GRAVEYARD -> (graveyard=T, any=F)    -> GRAVEYARD_CARD
+        //   TARGET_PLAYER_ENTIRE            -> (player=T)              -> PLAYER
+        //   OWN / ALL_PLAYERS / ALL_OPPONENTS -> no single validated target -> NONE
+        return switch (scope) {
+            case TARGET_CARDS_ANY_GRAVEYARD -> TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
+            case TARGET_CARDS_OPPONENT_GRAVEYARD -> TargetSpec.benign(TargetCategory.GRAVEYARD_CARD);
+            case TARGET_PLAYER_ENTIRE -> TargetSpec.benign(TargetCategory.PLAYER);
+            default -> TargetSpec.NONE;
+        };
     }
 }

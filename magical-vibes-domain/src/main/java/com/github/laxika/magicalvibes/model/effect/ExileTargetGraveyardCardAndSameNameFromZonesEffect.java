@@ -10,12 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record ExileTargetGraveyardCardAndSameNameFromZonesEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetGraveyard() {
-        return true;
-    }
-
-    @Override
-    public boolean canTargetAnyGraveyard() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.ANY_GRAVEYARD_CARD);
     }
 }

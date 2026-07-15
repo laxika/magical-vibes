@@ -13,7 +13,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect() implements CardEffect {
 
     @Override
-    public boolean canTargetGraveyard() {
-        return true;
+    public TargetSpec targetSpec() {
+        return TargetSpec.benign(TargetCategory.GRAVEYARD_CARD);
     }
 }
