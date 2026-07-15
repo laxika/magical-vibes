@@ -127,6 +127,19 @@ export class TargetingChoiceService {
     return g !== null && g.priorityPlayerId === this.websocketService.currentUser?.userId;
   }
 
+  /**
+   * True while the player is partway through picking the target(s) for a spell or
+   * ability they've started casting/activating. In the MTGO-style flow the mana is
+   * tapped only *after* the target is locked in (payingForCast), so during target
+   * selection the actionable, highlighted elements are the valid targets — not the
+   * player's lands. Tapping mana here would produce nothing usable for the pending
+   * cast and just muddies the board, so land tapping is suppressed until a target
+   * is chosen (e.g. Burning Fields shows no green lands until a target is picked).
+   */
+  get selectingCastTarget(): boolean {
+    return this.selectingTarget || this.targetingSpell || this.multiTargeting || this.targetingGraveyard;
+  }
+
   // --- Ability picker state ---
   choosingAbility = false;
   abilityChoicePermanentIndex = -1;
@@ -1582,6 +1595,8 @@ export class TargetingChoiceService {
   canTapPermanent(index: number): boolean {
     const perm = this.myBattlefieldFn()[index];
     if (perm == null || !this.hasPriority) return false;
+    // Mid-targeting: the player must lock in a target before they can tap mana.
+    if (this.selectingCastTarget) return false;
     const abilities = perm.card.activatedAbilities;
     // Check if any activated ability can be used right now
     if (abilities.some(a => this.canUseAbility(perm, a))) return true;
