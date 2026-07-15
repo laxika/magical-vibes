@@ -2281,3 +2281,175 @@ No card/AI tests were run because no production or test code changed.
 **For the user:** this step is audit-only — behaviour is untouched, so a full-suite run is not strictly
 required, but run it if you want the safety confirmation before committing this doc-only change.
 
+## Step 20 — Long-tail classification — definitive stays-list  (2026-07-15)
+
+Closing step of the effect-dispatch program. Every remaining violation file in
+`effect-dispatch-baseline.txt` is classified using the *cross-file* view of
+`EFFECT_COUPLING_MATRIX.md` (i.e. "is this effect type recognised in 2+ non-exempt files,
+and if so do those files answer the **same** question or do **different** flow work?"). The
+per-file cross/single split was computed mechanically from matrix section (ii); the FACT-vs-FLOW
+calls were verified by reading the actual dispatch sites. **Outcome: NO production change — zero
+clean cross-file FACT migrations exist.** The one real migration hotspot (`GameBroadcastService`,
+the UI-recompute layer paired with every casting service) was read in full and yields nothing:
+its `instanceof` are display/visibility reads that already delegate the rules logic to the partner
+service (`getCastableTypesFromTopOfLibrary`, `getCastCostModifier`, `getMaxSpellsPerTurn`, …). This
+table is the program's closing statement: **after it, only files it marks as a `candidate` should
+ever be revisited — and it marks none.** `EffectDispatchRatchetTest` stays green (unchanged; no
+baseline/matrix regen needed).
+
+### Cluster legend (the cross-file families, each a **CROSS-FILE FLOW → stays**)
+
+Every effect type that appears in 2+ non-exempt files falls into exactly one of these. None is a
+migratable FACT: each consumer does structurally different work, or the type is a single concrete
+record used as a bare marker (a one-implementor interface would remove no coupling — phase-1's
+"single type = no family = leave" rule).
+
+- **GY-TARGET** — the graveyard-targeting family (`ReturnCardFromGraveyardEffect`,
+  `ExileGraveyardCardsEffect`, `CastTargetInstantOrSorceryFromGraveyardEffect`,
+  `GrantFlashbackToTargetGraveyardCardEffect`, `ExileTargetCardFromGraveyardAndImprintOnSource/
+  AndCreateTokenCopy/MayPlayUntilNextTurn`, `PutCreature.../PutCard...FromOpponentGraveyard`,
+  `ExileTargetGraveyardCardAndSameNameFromZones`, `ExileCardsFromGraveyardEffect`). Consumers each
+  compute a **different** thing: `ValidTargetService` builds a per-type valid-target-ID **set**
+  (filter/zone/scope differ per record — lines 672–691), `GraveyardTargetingService` filters by
+  type to **find the source permanent**, `TargetLegalityService` **enforces** legality,
+  `BattlefieldEntryService`/`TriggeredAbilityQueueService`/`StepTriggerService`/`SpellCastingService`
+  **resolve/queue** them. Step 18 already ruled a `graveyardTargetFilter()` facet a **leaky
+  abstraction** (it would duplicate `GraveyardTargetValidators` onto ≥8 records); this step confirms
+  the engine side is the same leak from the other direction.
+- **MANA-AWARD** — the `Award*` mana family. Resolution/estimation sites settled in step 19
+  (permanent survivors). The remaining `AbilityActivationService` reads are mana-ability
+  **recognition** (activation gating: "is this a mana ability, so it doesn't use the stack") — a
+  different flow from awarding/estimating.
+- **COST-PAY** — activation costs (`SacrificePermanentCost`, `SacrificeMultiplePermanentsCost`,
+  `TapXPermanentsCost`, `RemoveChargeCountersFromSourceCost`, …). `AbilityActivationService`
+  **pays** them, `MayPenaltyChoiceHandlerService` drives the **penalty choice**, the AI **values**
+  them (via step-17 `CostEffect` facets / step-18). Three different flows on the same cost record.
+- **CAST-VIEW** — `GameBroadcastService` recomputes castability/cost/permission/visibility for the
+  client, reading `KickerEffect`, `AllowCastFromTopOfLibraryEffect`, `CantSearchLibrariesEffect`,
+  `ReduceOwnCastCostIfTargeting{ControlledPermanent,Permanent,StackEntry}Effect` — but as
+  **display/visibility** reads that mirror (and already delegate) the rules logic in
+  `CastingCostService`/`CastingPermissionService`/`SpellCastingService`/`GameService`. A shared
+  facet on the three `ReduceOwnCastCost*` types would still need a scope switch in each consumer
+  (`controlsPermanent` vs `battlefieldHasPermanentMatching` vs `stackHasMatchingSpell`) — not
+  "obviously clean", and in rules-critical cost math.
+- **TRIG-COND** — `TriggeringCardConditionalEffect` / `TriggeringPermanentConditionalEffect`:
+  per-site conditional-trigger evaluation in `CombatAttackService`/`CombatBlockService` (combat
+  context) vs `TriggerCollectionService` (general collection). Morally structural wrappers, but
+  reclassifying them into the exempt-wrapper set is a baseline change beyond this step's dispatch-only
+  remit; left as flow survivors.
+- **ENTER** — `EnterWithCountersEffect` / `ChooseSubtypeOnEnterEffect` (+ the `ChooseXOnEnter`
+  siblings that are single-file): `StackResolutionService` drives the enter-time **choice/prompt**,
+  `BattlefieldEntryService` **applies** counters / filters the choose-effect out of the normal enter
+  path. Different flow; both already handle the `ConditionalEffect.wrapped()` case inline, so a facet
+  removes nothing. Rules-critical ETB.
+- **CONTROL-AURA** — `ControlEnchantedCreatureEffect`, a single concrete record used as a bare
+  `anyMatch(... instanceof ...)` marker across `CreatureControlService` (apply control),
+  `WarpWorldService`, `PermanentChoiceBattlefieldHandlerService`, `StackResolutionService` (and the
+  exempt `AnimationSupport`). One-implementor marker interface ⇒ removes no coupling; distinct from
+  the existing `ControlStealingEffect` (targeted steal) on purpose.
+- **RESTRICT / QUERY-vs-ENFORCE** — `TargetingRestrictionEffect`,
+  `ActivatedAbilitiesOf{ChosenName,MatchingPermanents}CantBeActivatedEffect`, `AnimatePermanentsEffect`,
+  `EnchantedPermanentConditionalEffect`: `GameQueryService` is the continuous-state **registry** that
+  computes/aggregates these (e.g. `TargetingRestrictionEffect.mode()` read in 6 query methods), while
+  the partner (`TargetLegalityService`, `AbilityActivationService`, `MayAbilityHandlerService`,
+  `CombatDamageService`) **enforces/resolves** one facet. Compute-vs-enforce = different flow.
+- **MISC-PAIR** — single concrete types appearing in exactly two files doing different work
+  (`CantSearchLibrariesEffect`, `GainLifeEqualToToughnessEffect`, `LeylineStartOnBattlefieldEffect`,
+  `EnterBattlefieldOnDiscardEffect`, `DelayedPlusOnePlusOneCounterRegrowthEffect`,
+  `EnchantedCreatureControllerLosesLifeEffect`, `DealDamageToAnyTargetEffect`,
+  `DestroyTargetPermanentEffect`, `DiscardEffect`, `PutCountersOnSourceEffect`, `BoostSelfEffect`,
+  `MustBlockSourceEffect`, `ReplaceLandExcessManaWithColorlessEffect`, plus AI↔engine pairs
+  `DealDamageToPlayersEffect`, `MassDamageEffect`, `DealDamageToTargetCreatureOrPlaneswalkerEffect`).
+  Single type ⇒ no family ⇒ marker interface adds no value; the two sites are different flow (UI vs
+  logic, trigger vs resolution, mulligan vs step, AI vs engine).
+
+### Per-file classification table (all 52 baseline files)
+
+`SETTLED` = already dispositioned by the named prior step (not re-audited here, per the brief).
+`SINGLE-OWNER` = the file is the sole non-exempt registry for its effect types (stays).
+`CROSS-FILE FLOW` = has cross-file types but every one is a legend cluster above (stays).
+No file is a `candidate`.
+
+| File | Count | Verdict | Reason |
+|------|------:|---------|--------|
+| `ability/ActivatedAbilityExecutionService` | 42 | SETTLED (step 19) | Mana resolution/award switch — permanent survivors; non-mana costs left. |
+| `ability/AbilityActivationService` | 37 | SINGLE-OWNER + FLOW | Ability-activation registry (cost payment, mana-ability recognition, activation gating); 17 single-owner, 9 cross are MANA-AWARD/COST-PAY/RESTRICT flow. |
+| `battlefield/GameQueryService` | 32 | SINGLE-OWNER + FLOW | The CR-613 continuous-state query registry; 21 single-owner, 5 cross are RESTRICT (compute-vs-enforce). |
+| `battlefield/BattlefieldEntryService` | 29 | SINGLE-OWNER + FLOW | ETB-application registry; 11 single-owner, 7 cross are GY-TARGET / ENTER (apply vs choose). |
+| `combat/CombatDamageService` | 23 | SINGLE-OWNER + FLOW | Combat-damage resolution registry; 17 single-owner, 5 cross are MISC-PAIR / RESTRICT. |
+| `input/MayAbilityHandlerService` | 22 | SETTLED (steps 15–16) | `mayfx` may-effect handler registry. |
+| `cast/PotentialManaService` | 19 | SETTLED (step 19) | Virtual-pool mana estimation — permanent survivors. |
+| `combat/CombatBlockService` | 18 | SINGLE-OWNER + FLOW | Block-legality registry (steps 10–11 combat-restriction interfaces already extracted); 14 single-owner, 1 cross is TRIG-COND. |
+| `turn/StepTriggerService` | 18 | SINGLE-OWNER + FLOW | Turn-step trigger registry; 13 single-owner, 3 cross are GY-TARGET / MISC-PAIR. |
+| `cast/CastingPermissionService` | 17 | SINGLE-OWNER + FLOW | Casting-permission registry; 13 single-owner, 1 cross is CAST-VIEW. |
+| `ai/SpellEvaluator` | 16 | SETTLED (step 18) | AI survivor families collapsed; residuals are single-type bespoke scoring. |
+| `StackResolutionService` | 14 | SINGLE-OWNER + FLOW | Stack/permanent resolution registry; 8 single-owner, 3 cross are ENTER / CONTROL-AURA. |
+| `target/ValidTargetService` | 14 | SINGLE-OWNER + FLOW | Valid-target-set registry; 3 single-owner, 9 cross are GY-TARGET (per-type target-ID set = leaky facet). |
+| `trigger/TriggerCollectionService` | 14 | SINGLE-OWNER + FLOW | Trigger-collection registry; 6 single-owner, 3 cross are TRIG-COND / MISC-PAIR. |
+| `DamagePreventionService` | 13 | SINGLE-OWNER + FLOW | Damage-prevention registry (12 single-owner `Prevent*` types); 1 cross is MISC-PAIR (`DelayedPlusOne…Regrowth`). |
+| `combat/CombatAttackService` | 13 | SINGLE-OWNER + FLOW | Attack-legality registry; 10 single-owner, 3 cross are TRIG-COND / MISC-PAIR (`MustBlockSource`). |
+| `GameBroadcastService` | 11 | CROSS-FILE FLOW | UI-recompute layer; all 6 cross are CAST-VIEW (display/visibility reads that already delegate rules logic); 5 single-owner reveal/tax markers. Read in full — the migration hotspot, nothing clean. |
+| `ai/AiTargetSelector` | 10 | SETTLED (step 18) | GY-TARGET family left whole (leaky). |
+| `input/MayPenaltyChoiceHandlerService` | 10 | SETTLED (step 16) | Sibling may-service; 2 cross are COST-PAY. |
+| `DrawService` | 9 | SINGLE-OWNER | Sole registry for its 9 draw-replacement types. |
+| `spell/SpellCastingService` | 9 | SINGLE-OWNER + FLOW | Cast-time resolution registry; 3 single-owner, 3 cross are GY-TARGET / CAST-VIEW (`Kicker`) / MISC. |
+| `cast/CastingCostService` | 8 | SINGLE-OWNER + FLOW | Cost-modifier registry; 4 single-owner, 3 cross are CAST-VIEW (`ReduceOwnCastCost*`). |
+| `turn/UntapStepService` | 8 | SINGLE-OWNER | Sole registry for its 6 untap-restriction types. |
+| `graveyard/GraveyardService` | 6 | SINGLE-OWNER + FLOW | Dies-replacement registry; 4 single-owner, 1 cross is MISC-PAIR (`GainLifeEqualToToughness`). |
+| `target/TargetLegalityService` | 5 | CROSS-FILE FLOW | Target-legality enforcement; all cross are GY-TARGET (enforce) / RESTRICT — the enforce side of registries owned elsewhere. |
+| `ai/AiDecisionEngine` | 4 | SETTLED (step 18) | 1 cross is COST-PAY (`TapXPermanentsCost`). |
+| `ai/AiManaManager` | 3 | SETTLED (steps 7–8) | Cross are MANA / GY-TARGET / damage AI reads. |
+| `ai/HardAiDecisionEngine` | 3 | SETTLED (step 7) | Cross are `BoostSelf` / damage-classifier AI reads. |
+| `TriggeredAbilityQueueService` | 3 | CROSS-FILE FLOW | Trigger-queue; both cross are GY-TARGET (queue side). |
+| `battlefield/GraveyardTargetingService` | 3 | CROSS-FILE FLOW | Finds the graveyard-cast source permanent; all cross are GY-TARGET (find-source side). |
+| `combat/CombatTriggerService` | 3 | SINGLE-OWNER + FLOW | 1 single-owner, cross are MISC-PAIR (`EnchantedCreatureControllerLosesLife`, `DestroySubtypeCombatOpponent`). |
+| `ai/InstantCategoryClassifier` | 2 | SETTLED (step 6) | Damage-classifier AI reads. |
+| `ai/RaceEvaluator` | 2 | SETTLED (step 6) | Damage AI reads. |
+| `ai/simulation/GameSimulator` | 2 | SETTLED (step 7) | MANA / GY-TARGET drift-copy reads. |
+| `battlefield/CreatureControlService` | 2 | SINGLE-OWNER + FLOW | 1 single-owner; cross is CONTROL-AURA marker. |
+| `input/MayCastHandlerService` | 2 | SETTLED (step 16) | Both single-owner may-cast types. |
+| `trigger/LandTapTriggerCollectorService` | 2 | SETTLED (step 19) | Land-tap mana trigger riders — permanent survivors. |
+| `turn/TurnCleanupService` | 2 | SINGLE-OWNER | Sole registry for its 2 cleanup types. |
+| `ai/BoardEvaluator` | 1 | SETTLED (step 18) | Cross is MISC-PAIR (`PutCountersOnSource`). |
+| `ai/EasyAiDecisionEngine` | 1 | SETTLED (step 18/8) | Cross is MISC-PAIR (`MassDamage`). |
+| `GameService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`CantSearchLibraries`, actual search-prevention side). |
+| `MulliganService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`LeylineStart`, opening-hand side). |
+| `WarpWorldService` | 1 | CROSS-FILE FLOW | Cross is CONTROL-AURA marker. |
+| `battlefield/CloneService` | 1 | SINGLE-OWNER | Sole owner of `CopyPermanentOnEnterEffect`. |
+| `battlefield/PermanentRemovalService` | 1 | SINGLE-OWNER | Sole owner of `SacrificeOnUnattachEffect`. |
+| `input/CardChoiceHandlerService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`EnterBattlefieldOnDiscard`, discard-choice side). |
+| `input/PermanentChoiceBattlefieldHandlerService` | 1 | CROSS-FILE FLOW | Cross is CONTROL-AURA marker. |
+| `state/StateBasedActionService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`DelayedPlusOne…Regrowth`, SBA side). |
+| `trigger/DeathTriggerCollectorService` | 1 | SINGLE-OWNER | Sole owner of `ExileTriggeringCreatureAndTrackWithSource`. |
+| `trigger/EnterTriggerCollectorService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`GainLifeEqualToToughness`, enter side). |
+| `trigger/SpellCastTriggerCollectorService` | 1 | CROSS-FILE FLOW | Cross is MISC-PAIR (`BoostSelf`, spell-cast-trigger side). |
+| `turn/TurnProgressionService` | 1 | SINGLE-OWNER | Sole owner of `MakeTargetCopyOfTargetCreatureUntilNextTurn`. |
+
+### Migrations
+
+**None.** No cross-file cluster passes the "obviously clean, narrow capability interface covers every
+consumer without a leaky abstraction" bar. The GY-TARGET family is leaky (step-18 confirmed);
+MANA-AWARD/COST-PAY/RESTRICT/ENTER are compute-vs-enforce or pay-vs-choose-vs-value flows; CAST-VIEW
+is a display layer that already delegates; CONTROL-AURA and every MISC-PAIR is a single concrete type
+whose one-implementor interface would remove no coupling.
+
+### Violation drops
+
+None (no code changed). `effect-dispatch-baseline.txt` and `EFFECT_COUPLING_MATRIX.md` unchanged;
+program total stays **464**.
+
+### Tests run
+
+`EffectDispatchRatchetTest` — green (pre-flight and unchanged; no code touched, so no
+baseline/matrix regeneration and no card/layer tests required).
+
+### Files changed
+
+- `refactor-docs/PROGRESS.md` (this classification). No source, domain, baseline, or agent-docs change.
+
+**For the user:** this step is audit/classification-only — behaviour is untouched. A full-suite run
+is not strictly required, but run it if you want the safety confirmation before committing this
+doc-only change. **This table closes the effect-dispatch refactor program:** every remaining
+`instanceof <ConcreteEffect>` violation is now a documented permanent survivor (SINGLE-OWNER registry
+or CROSS-FILE FLOW), so no future session should re-audit them.
+
