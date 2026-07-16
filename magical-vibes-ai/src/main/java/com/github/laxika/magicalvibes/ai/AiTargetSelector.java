@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -127,6 +128,13 @@ class AiTargetSelector {
             }
         }
 
+        // Controller-beneficial land auras (mana ramp like Wild Growth / Fertile Ground) help
+        // whoever controls the enchanted land, so enchant one of the AI's own lands rather than
+        // handing the opponent extra mana.
+        if (isControllerBeneficialLandAura(card)) {
+            return chooseOwnLandAuraTarget(gameData, card, aiPlayerId);
+        }
+
         boolean isBeneficial = false;
         if (card.isAura()) {
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
@@ -199,6 +207,29 @@ class AiTargetSelector {
         }
 
         return null;
+    }
+
+    /**
+     * True for an aura whose only benefit accrues to the controller of the enchanted land — a
+     * mana-ramp land aura like Wild Growth, Fertile Ground, or Overgrowth (an
+     * {@link AddManaOnEnchantedLandTapEffect} in the land-tap slot). Such auras must be attached
+     * to one of the AI's own lands; enchanting the opponent's land would ramp the opponent.
+     */
+    private static boolean isControllerBeneficialLandAura(Card card) {
+        return card.isAura() && card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+                .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
+    }
+
+    /**
+     * Picks the AI's own best land for a controller-beneficial land aura, preferring an untapped
+     * land so the extra mana is usable this turn. Returns null if the AI controls no legal land.
+     */
+    private UUID chooseOwnLandAuraTarget(GameData gameData, Card card, UUID aiPlayerId) {
+        return gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()
+                .filter(p -> isValidPermanentTarget(gameData, card, p, aiPlayerId))
+                .max(Comparator.comparing((Permanent p) -> !p.isTapped()))
+                .map(Permanent::getId)
+                .orElse(null);
     }
 
     /**

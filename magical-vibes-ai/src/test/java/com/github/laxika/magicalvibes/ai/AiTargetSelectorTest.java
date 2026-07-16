@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.b.BenalishMarshal;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
+import com.github.laxika.magicalvibes.cards.f.FertileGround;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KarnsTemporalSundering;
@@ -98,6 +100,41 @@ class AiTargetSelectorTest {
 
         targetSelector = new AiTargetSelector(
                 harness.getGameQueryService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+    }
+
+    // ===== chooseTarget: mana-ramp land auras =====
+
+    @Test
+    @DisplayName("Mana-ramp land aura enchants the AI's own land, not the opponent's")
+    void manaRampLandAuraTargetsOwnLand() {
+        harness.addToBattlefield(human, new Forest());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+
+        UUID target = targetSelector.chooseTarget(gd, new FertileGround(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownLand.getId());
+    }
+
+    @Test
+    @DisplayName("Mana-ramp land aura prefers an untapped land so the ramp is usable this turn")
+    void manaRampLandAuraPrefersUntappedLand() {
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+        tappedLand.tap();
+        Permanent untappedLand = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+
+        UUID target = targetSelector.chooseTarget(gd, new FertileGround(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(untappedLand.getId());
+    }
+
+    @Test
+    @DisplayName("Mana-ramp land aura picks no target when the AI controls no land")
+    void manaRampLandAuraNoTargetWhenNoOwnLand() {
+        harness.addToBattlefield(human, new Forest());
+
+        UUID target = targetSelector.chooseTarget(gd, new FertileGround(), aiPlayer.getId());
+
+        assertThat(target).isNull();
     }
 
     // ===== findValidPermanentTargetsForManaValueX =====

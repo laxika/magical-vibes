@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -264,11 +265,11 @@ class AiVsAiStressTest {
                         System.err.println("  - " + entry.getCard().getName()));
             }
 
-            List<String> log = gd.gameLog;
+            List<GameLogEntry> log = gd.gameLog;
             int start = Math.max(0, log.size() - 30);
             System.err.println("Last " + (log.size() - start) + " log entries:");
             for (int i = start; i < log.size(); i++) {
-                System.err.println("  " + log.get(i));
+                System.err.println("  " + log.get(i).plainText());
             }
             System.err.println("=== END DUMP ===");
         }

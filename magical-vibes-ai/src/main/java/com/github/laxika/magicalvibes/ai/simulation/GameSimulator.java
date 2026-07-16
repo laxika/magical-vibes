@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
@@ -1085,6 +1086,17 @@ public class GameSimulator {
 
         // Handle auras — beneficial auras target own creatures, detrimental target opponent's
         if (card.isAura()) {
+            // Controller-beneficial land auras (mana ramp like Wild Growth / Fertile Ground) help
+            // whoever controls the enchanted land — enchant one of the AI's own lands, preferring
+            // untapped ones so the extra mana is usable this turn.
+            if (isControllerBeneficialLandAura(card)) {
+                return gd.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                        .filter(p -> passesTargetFilter(gd, card, p, playerId))
+                        .sorted(Comparator.comparing(Permanent::isTapped))
+                        .limit(Math.min(2, maxCandidates))
+                        .map(Permanent::getId)
+                        .toList();
+            }
             boolean isBeneficial = false;
             for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
                 if ((effect instanceof StaticCreatureBoostEffect boost
@@ -1136,6 +1148,17 @@ public class GameSimulator {
                     .ifPresent(candidates::add);
         }
         return candidates;
+    }
+
+    /**
+     * True for an aura whose only benefit accrues to the controller of the enchanted land — a
+     * mana-ramp land aura like Wild Growth, Fertile Ground, or Overgrowth (an
+     * {@link AddManaOnEnchantedLandTapEffect} in the land-tap slot). Such auras must be attached
+     * to one of the AI's own lands; enchanting the opponent's land would ramp the opponent.
+     */
+    private static boolean isControllerBeneficialLandAura(Card card) {
+        return card.isAura() && card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).stream()
+                .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 
     private UUID findBestGraveyardTarget(GameData gd, Card card, UUID playerId, UUID opponentId) {

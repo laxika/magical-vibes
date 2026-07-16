@@ -346,6 +346,24 @@ class GameSimulatorTest {
                 && pc.targetId().equals(opponentCreature.getId()));
     }
 
+    @Test
+    @DisplayName("Mana-ramp land aura enchants the AI's own land, never the opponent's")
+    void manaRampLandAuraTargetsOwnLand() {
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.setHand(player1, List.of(new com.github.laxika.magicalvibes.cards.f.FertileGround()));
+        harness.addMana(player1, ManaColor.GREEN, 2); // 1G
+        setUpMainPhase(player1);
+
+        List<SimulationAction> actions = simulator.getLegalActions(gd, player1.getId());
+
+        assertThat(actions).anyMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(ownLand.getId()));
+        assertThat(actions).noneMatch(a -> a instanceof SimulationAction.PlayCard pc
+                && pc.targetId().equals(opponentLand.getId()));
+    }
+
     // ===== Blocker declaration actions =====
 
     private static String canonicalAssignments(SimulationAction.DeclareBlockers db) {

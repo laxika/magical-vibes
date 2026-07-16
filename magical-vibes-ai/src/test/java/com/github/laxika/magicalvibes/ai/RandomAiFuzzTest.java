@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -423,11 +424,11 @@ class RandomAiFuzzTest {
                         System.err.println("  - " + entry.getCard().getName()));
             }
 
-            List<String> log = gd.gameLog;
+            List<GameLogEntry> log = gd.gameLog;
             int start = Math.max(0, log.size() - 30);
             System.err.println("Last " + (log.size() - start) + " log entries:");
             for (int i = start; i < log.size(); i++) {
-                System.err.println("  " + log.get(i));
+                System.err.println("  " + log.get(i).plainText());
             }
             System.err.println("=== END DUMP ===");
         }
