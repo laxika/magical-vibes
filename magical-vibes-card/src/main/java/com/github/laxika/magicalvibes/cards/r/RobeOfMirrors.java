@@ -5,12 +5,19 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "101")
 public class RobeOfMirrors extends Card {
 
     public RobeOfMirrors() {
+        // Enchant creature
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        ));
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE));
     }
 }

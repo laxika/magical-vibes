@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
 
@@ -15,6 +17,11 @@ import java.util.List;
 public class Regeneration extends Card {
 
     public Regeneration() {
+        // Enchant creature
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        ));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",

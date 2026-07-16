@@ -61,7 +61,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/SteelGolem.java`
 
 - Aura with static effect:
-  - Auras automatically derive targeting from `isAura()` — no `setNeedsTarget` call needed.
+  - Auras automatically derive that they NEED a target from `isAura()` — but NOT what they may target. Every aura MUST declare its oracle "Enchant X" line explicitly: `target(new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), "Target must be a creature"))` for "Enchant creature" (swap the predicate for other enchant types); "Enchant player" auras use the Curse subtype or `setEnchantPlayer(true)`; only "Enchant permanent" needs no filter. Without the filter, every validation path (UI and AI) will attach the aura to any permanent, including lands. Guarded by `AuraEnchantTargetInvariantTest` (magical-vibes-card-data), which cross-checks every registered aura class against its oracle text.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/p/Pacifism.java`
 
 - Aura with static + activated ability:

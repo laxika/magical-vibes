@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReflexesTest extends BaseCardTest {
 
@@ -108,5 +110,25 @@ class ReflexesTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Reflexes"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Reflexes"));
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Cannot enchant a land")
+    void cannotEnchantALand() {
+        // A creature must exist so the spell is playable; targeting the land is then rejected.
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new Reflexes()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mountain"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -208,6 +209,26 @@ class RobeOfMirrorsTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Robe of Mirrors")
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
+    }
+
+    // ===== Targeting restriction =====
+
+    @Test
+    @DisplayName("Cannot enchant a land")
+    void cannotEnchantALand() {
+        // A creature must exist so the spell is playable; targeting the land is then rejected.
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new RobeOfMirrors()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mountain"))
+                .findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, mountain.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
     }
 }
 
