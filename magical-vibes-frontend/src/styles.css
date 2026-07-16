@@ -4,6 +4,11 @@ html {
   overscroll-behavior: none;
 }
 
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 body {
   margin: 0;
   font-family: 'Crimson Text', Georgia, 'Times New Roman', serif;

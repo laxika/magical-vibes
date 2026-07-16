@@ -21,7 +21,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'battlefield',
     title: 'The Battlefield',
-    description: 'This is the battlefield where all permanents (creatures, lands, artifacts, enchantments) live. Your permanents are on the bottom half, your opponent\'s are on top.',
+    description: 'This is the battlefield where all permanents (creatures, lands, artifacts, enchantments) live. Your permanents are on the bottom half, your opponent\'s are on top. The board always fits your screen — cards shrink as more permanents enter play.',
     targetSelector: '.battlefield-area',
     tooltipPosition: 'bottom'
   },
@@ -35,22 +35,29 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'your-creatures',
     title: 'Your Creatures',
-    description: 'Your creatures sit above your lands. You can see their power/toughness on the card. Creatures with summoning sickness (just entered the battlefield) appear slightly faded and can\'t attack yet.',
+    description: 'Your creatures sit above your lands. You can see their power/toughness on the card. Creatures with summoning sickness (just entered the battlefield) appear slightly faded and can\'t attack yet. Hover any card to see a full-size preview in the side panel.',
     targetSelector: '.my-creatures-row',
     tooltipPosition: 'bottom'
   },
   {
     id: 'your-lands',
     title: 'Your Lands',
-    description: 'Your lands appear here at the bottom of the battlefield. Identical basic lands are stacked together to save space. Tapped lands appear rotated sideways.',
+    description: 'Your lands appear here at the bottom of the battlefield. Identical basic lands are fanned into a single stack to save space. Tapped lands appear rotated sideways.',
     targetSelector: '.my-lands-row',
     tooltipPosition: 'top'
   },
   {
     id: 'phase-tracker',
     title: 'Phase Tracker',
-    description: 'The phase tracker shows which step of the turn you\'re in. The highlighted step is the current one — hover a step to see its name. You can click steps to set auto-stops — the game will pause and give you priority at those steps. Main phases always auto-stop.',
+    description: 'This rail shows which step of the turn you\'re in. The highlighted step is the current one — hover a step to see its name. You can click steps to set auto-stops — the game will pause and give you priority at those steps. Main phases always auto-stop.',
     targetSelector: '.phase-tracker',
+    tooltipPosition: 'right'
+  },
+  {
+    id: 'shortcuts',
+    title: 'Keyboard Shortcuts',
+    description: 'The keyboard icon at the bottom of the phase rail lists the shortcuts: Space or Enter passes priority (and confirms attackers or blockers in combat), and Esc cancels targeting, mode, or ability choices.',
+    targetSelector: '.shortcuts-popup',
     tooltipPosition: 'right'
   },
   {
@@ -65,21 +72,21 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'mana-pool',
     title: 'Mana Pool',
-    description: 'Your mana pool appears here when you have floating mana. The colored circles show how much mana of each color you have available to spend on spells and abilities.',
-    targetSelector: '.mana-pool-bar',
-    tooltipPosition: 'bottom'
+    description: 'The mana strip in the side panel shows your floating mana. There\'s a socket for each color plus colorless — when you have mana of a color, its socket lights up with a count. The Forest you just tapped added one green mana.',
+    targetSelector: '.mana-strip',
+    tooltipPosition: 'left'
   },
   {
     id: 'hand',
     title: 'Your Hand',
-    description: 'These are the cards in your hand. Cards with a gold outline are playable right now — you have enough mana and it\'s the right phase. In a real game, clicking a playable card will cast it.',
+    description: 'These are the cards in your hand. Cards with a gold outline are castable right now. In a real game, clicking a castable card starts casting it — then you tap lands to pay its cost, and the spell fires once the mana is paid. You can cancel any time before that.',
     targetSelector: '.hand-area',
     tooltipPosition: 'top'
   },
   {
     id: 'side-panel',
     title: 'Side Panel',
-    description: 'The side panel shows detailed card info when you hover over any card. It also has tabs for the stack (spells waiting to resolve), graveyard, and game log.',
+    description: 'The side panel shows a full-size preview of whatever card you hover. Below it are tabs for the game log, the stack (spells waiting to resolve), and both graveyards.',
     targetSelector: 'app-side-panel',
     tooltipPosition: 'left'
   },
@@ -93,7 +100,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'action-bar',
     title: 'Pass Priority',
-    description: 'The action bar contains the "Pass Priority" button. When both players pass priority in succession, the top spell on the stack resolves (or the game moves to the next step if the stack is empty).',
+    description: 'The action bar contains the "Pass Priority" button. When both players pass priority in succession, the top spell on the stack resolves (or the game moves to the next step if the stack is empty). During combat this is where you confirm attackers and blockers.',
     targetSelector: '.action-bar',
     tooltipPosition: 'left'
   },
@@ -101,7 +108,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'surrender',
     title: 'Surrender',
     description: 'Click your own player name badge to open the player menu, where you can surrender the game. Use this if you want to concede a match.',
-    targetSelector: '.turn-info .player-badge-wrapper:first-child',
+    targetSelector: '.turn-info .player-badge-wrapper:last-child',
     tooltipPosition: 'left'
   },
   {

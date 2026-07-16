@@ -17,6 +17,31 @@
           }
         </div>
       }
+      <div class="shortcuts-anchor">
+        <button class="shortcuts-toggle" [class.open]="currentStep().id === 'shortcuts'" title="Keyboard shortcuts">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M9 13h6"/>
+          </svg>
+        </button>
+        @if (currentStep().id === 'shortcuts') {
+          <div class="shortcuts-popup">
+            <div class="shortcuts-title">Keyboard Shortcuts</div>
+            <div class="shortcut-row">
+              <span class="shortcut-keys"><kbd>Space</kbd> / <kbd>Enter</kbd></span>
+              <span class="shortcut-desc">Pass priority</span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-keys"><kbd>Space</kbd> / <kbd>Enter</kbd></span>
+              <span class="shortcut-desc">Confirm attackers / blockers</span>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-keys"><kbd>Esc</kbd></span>
+              <span class="shortcut-desc">Cancel targeting, mode or ability choice</span>
+            </div>
+          </div>
+        }
+      </div>
     </div>
 
     <div class="battlefield-area">
@@ -118,17 +143,6 @@
     </div>
     </div>
 
-    <!-- Mana pool -->
-    @if (totalMana > 0) {
-      <div class="mana-pool-bar">
-        <div class="mana-pool">
-          @for (entry of manaEntries; track entry.color) {
-            <div class="mana-pool-entry" [innerHTML]="formatManaEntry(entry)"></div>
-          }
-        </div>
-      </div>
-    }
-
     <!-- Hand -->
     <div class="hand-area">
       <div class="hand-cards">
@@ -161,6 +175,7 @@
       [opponentGraveyard]="[]"
       [opponentPlayerName]="game().playerNames[1]"
       [gameLog]="game().gameLog"
+      [manaEntries]="manaEntries"
       [declaringAttackers]="false"
       [declaringBlockers]="false"
       [hasPriority]="false"
