@@ -440,6 +440,8 @@ Sacrifice and discard costs go in the `effects` list BEFORE the actual effect. T
 
 All cost effects implement the `CostEffect` marker interface (which extends `CardEffect`). When creating a new cost effect, implement `CostEffect` instead of `CardEffect` — this ensures it is automatically filtered out during effect snapshotting and excluded from mana ability detection.
 
+**Cost-vs-effect sacrifice invariant (rules-critical).** A sacrifice written *before the colon* of an **activated ability** is a **cost** — it MUST use a `Sacrifice…Cost` record so it is paid at activation, before priority passes. Never model an activated ability's sacrifice cost as a `Sacrifice…Effect` on the stack: that would hand opponents a response window they should not get and snapshot the sacrificed permanent's characteristics at the wrong time. Conversely, a sacrifice that happens during **resolution** — a spell's effect, a triggered ability, a delayed sacrifice, or anything written *after* the colon ("…: create a token, **then** sacrifice a creature") — is genuinely part of the effect and MUST use a `Sacrifice…Effect`; there is no cost there to pay. For characteristic-dependent sacrifice costs (X = the sacrificed creature's power/toughness/mana value/color symbols), `SacrificeCreatureCost` snapshots those at payment time via its `trackSacrificed*` flags — no effect-time workaround is needed.
+
 | Cost effect | Constructor | Use when |
 |------------|-------------|----------|
 | `SacrificeSelfCost` | `()` | "Sacrifice this: ..." |
