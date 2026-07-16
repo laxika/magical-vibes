@@ -33,14 +33,23 @@
       <span class="rarity-diamond" [attr.data-rarity]="rarity">&#9670;</span>
     }
   </div>
-  <div class="text-box" #textBox>
+  <div class="text-box" [class.pw-text-box]="isPlaneswalker" [class.pw-has-loyalty]="isPlaneswalker && displayLoyalty != null" #textBox>
     @if (watermarkUrl()) {
       <img class="watermark" [src]="watermarkUrl()" alt="" />
     }
     @if (card.power != null && card.toughness != null || permanent?.animatedCreature) {
       <div class="card-pt" [class.buffed]="isBuffed" [class.debuffed]="isDebuffed" [class.damaged]="isDamaged">{{ displayPower }}<span class="pt-slash">/</span>{{ displayToughness }}</div>
     }
-    @if (card.cardText) {
+    @if (isPlaneswalker && planeswalkerAbilities.length > 0) {
+      @for (ability of planeswalkerAbilities; track $index) {
+        <div class="pw-ability" [class.pw-band-alt]="$index % 2 === 1">
+          @if (ability.cost !== null) {
+            <span class="pw-loyalty-badge" [attr.data-dir]="ability.dir">{{ ability.cost }}</span>
+          }
+          <span class="pw-ability-text" [innerHTML]="ability.html"></span>
+        </div>
+      }
+    } @else if (card.cardText) {
       <div class="card-text" [innerHTML]="formattedCardText"></div>
     }
     @if (effectiveKeywords.length > 0) {
@@ -50,10 +59,10 @@
       <div class="flavor-separator"></div>
       <div class="card-flavor-text">{{ flavorText }}</div>
     }
-    @if (displayLoyalty != null) {
-      <div class="card-loyalty">{{ displayLoyalty }}</div>
-    }
   </div>
+  @if (displayLoyalty != null) {
+    <div class="card-loyalty">{{ displayLoyalty }}</div>
+  }
   <div class="info-line">
     @if (artist) {
       <span class="card-artist">{{ artist }}</span>

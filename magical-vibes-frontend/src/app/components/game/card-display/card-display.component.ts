@@ -8,6 +8,13 @@ import { SetSymbolService } from '../../../services/set-symbol.service';
 import { WatermarkService } from '../../../services/watermark.service';
 import { formatEnumName, formatKeywords, formatTypeLine } from '../../../utils/format-utils';
 
+export interface PlaneswalkerAbilityLine {
+  /** Display cost, e.g. "+1", "−2", "0"; null for static ability lines. */
+  cost: string | null;
+  dir: 'up' | 'down' | 'zero' | null;
+  html: SafeHtml;
+}
+
 @Component({
   selector: 'app-card-display',
   standalone: true,
@@ -29,6 +36,8 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
 
   private static readonly MAX_FONT_SIZE = 11;
   private static readonly MIN_FONT_SIZE = 7;
+  /** Planeswalker ability text may shrink further, like the denser print on real walker frames. */
+  private static readonly PW_MIN_FONT_SIZE = 6;
   private static readonly FONT_STEP = 0.5;
   private static readonly FLAVOR_REDUCTION = 2;
   private lastTextFingerprint = '';
@@ -194,6 +203,40 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
     return formatTypeLine(this.card);
   }
 
+  @HostBinding('class.planeswalker-card')
+  get isPlaneswalker(): boolean {
+    return this.card.type === 'PLANESWALKER' || (this.card.additionalTypes ?? []).includes('PLANESWALKER');
+  }
+
+  /** Printed planeswalker frames only enlarge the ability box (type line riding
+   *  up over the art) when there are four or more ability lines. */
+  @HostBinding('class.pw-tall-box')
+  get hasTallAbilityBox(): boolean {
+    return this.isPlaneswalker && this.planeswalkerAbilities.length >= 4;
+  }
+
+  /** Loyalty costs in oracle text: "+1:", "0:", "−2:", "−X:" (Scryfall uses U+2212 minus). */
+  private static readonly LOYALTY_COST_PATTERN = /^([+−–-]?)(\d+|X):\s*(.*)$/;
+
+  get planeswalkerAbilities(): PlaneswalkerAbilityLine[] {
+    if (!this.card.cardText) return [];
+    return this.card.cardText.split('\n')
+      .filter(line => line.trim().length > 0)
+      .map(line => {
+        const match = line.match(CardDisplayComponent.LOYALTY_COST_PATTERN);
+        if (!match) {
+          return { cost: null, dir: null, html: this.toSymbolHtml(line) };
+        }
+        const dir = match[1] === '+' ? 'up' as const : match[1] ? 'down' as const : 'zero' as const;
+        const cost = (dir === 'up' ? '+' : dir === 'down' ? '−' : '') + match[2];
+        return { cost, dir, html: this.toSymbolHtml(match[3]) };
+      });
+  }
+
+  private toSymbolHtml(text: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(this.manaSymbolService.replaceSymbols(text));
+  }
+
   get scryfallData() {
     if (!this.card.setCode || !this.card.collectorNumber) return null;
     return this.scryfallCardDataService.getCardData(this.card.setCode, this.card.collectorNumber);
@@ -226,9 +269,12 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
     this.lastTextFingerprint = fp;
 
     const flavorEl = el.querySelector('.card-flavor-text') as HTMLElement | null;
+    const minSize = this.isPlaneswalker
+      ? CardDisplayComponent.PW_MIN_FONT_SIZE
+      : CardDisplayComponent.MIN_FONT_SIZE;
     let size = CardDisplayComponent.MAX_FONT_SIZE;
 
-    while (size >= CardDisplayComponent.MIN_FONT_SIZE) {
+    while (size >= minSize) {
       el.style.fontSize = size + 'px';
       if (flavorEl) flavorEl.style.fontSize = (size - CardDisplayComponent.FLAVOR_REDUCTION) + 'px';
 

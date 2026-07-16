@@ -322,19 +322,131 @@ img.card-art {
   color: #b35a10;
 }
 
-/* Loyalty box */
+/* ── Planeswalker layout ── */
+
+/* Planeswalkers with four or more ability lines need more text room, like
+   the printed frame: rather than shrinking the art window (which would make
+   planeswalker art a different size from every other card), the type line
+   and text box ride up over the bottom of the art. Three-ability walkers
+   keep the normal frame proportions. No bottom margin: the ability box
+   butts directly against the type plate, so no sliver of artwork shows
+   between them. */
+:host(.pw-tall-box) .type-line {
+  position: relative;
+  margin: -20px 3px 0;
+}
+
+/* Ability bands span the full text box width, so padding lives on the rows.
+   Flex column so the bands share any leftover height, centering each
+   ability's text between the hairlines like the printed frame. */
+.text-box.pw-text-box {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The base .text-box::before is a float spacer for the P/T plate; in a flex
+   container it would become a phantom full-height flex item. */
+.text-box.pw-text-box::before {
+  content: none;
+}
+
+.pw-ability {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  /* Vertical padding in em so the bands tighten as the fitter shrinks the text */
+  padding: 0.18em 4px 0.18em 3px;
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
+  /* Grow to share leftover height; never shrink, so overflowing text stays
+     measurable by the font fitter instead of being silently squished */
+  flex: 1 0 auto;
+}
+
+/* Alternating shaded bands with hairline separators, like the printed frame */
+.pw-ability + .pw-ability {
+  border-top: 1px solid rgba(26, 20, 16, 0.25);
+}
+
+.pw-ability.pw-band-alt {
+  background: rgba(101, 88, 63, 0.16);
+}
+
+.pw-ability-text {
+  min-width: 0;
+  opacity: 0.9;
+  font-size: inherit;
+}
+
+/* Loyalty cost badge: up-pointing shield for +N, down-pointing for −N,
+   flat hexagon for 0 — matching the printed loyalty symbols */
+.pw-loyalty-badge {
+  flex-shrink: 0;
+  width: 18px;
+  padding: 2px 0;
+  text-align: center;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 8px;
+  line-height: 1;
+  color: #fff;
+  background: linear-gradient(180deg, #3a3a3e 0%, #1b1a1e 100%);
+}
+
+.pw-loyalty-badge[data-dir="up"] {
+  clip-path: polygon(50% 0%, 100% 32%, 100% 100%, 0% 100%, 0% 32%);
+  padding-top: 4px;
+}
+
+.pw-loyalty-badge[data-dir="down"] {
+  clip-path: polygon(0% 0%, 100% 0%, 100% 68%, 50% 100%, 0% 68%);
+  padding-bottom: 4px;
+}
+
+.pw-loyalty-badge[data-dir="zero"] {
+  clip-path: polygon(0% 50%, 12% 0%, 88% 0%, 100% 50%, 88% 100%, 12% 100%);
+}
+
+/* Keep the last ability's text clear of the loyalty shield overlapping
+   the bottom-right corner */
+.pw-has-loyalty .pw-ability:last-child {
+  padding-right: 24px;
+}
+
+.pw-text-box .card-keywords {
+  padding: 0 4px;
+}
+
+.pw-text-box .card-flavor-text {
+  padding: 0 4px 2px;
+}
+
+/* Loyalty shield — black crest with a pointed bottom, sitting in the
+   bottom-right corner of the ability box like the printed loyalty box.
+   Lives outside .text-box (which clips overflow) and stays above the
+   info line so the artist/set id remain readable. */
 .card-loyalty {
   position: absolute;
-  bottom: 2px;
-  right: 2px;
-  font-size: 15px;
+  bottom: 14px;
+  right: 7px;
+  width: 24px;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding-bottom: 3px;
+  font-size: 12px;
   font-weight: 700;
   font-family: 'Cinzel', Georgia, serif;
-  background: linear-gradient(180deg, #55346e 0%, #3c2352 100%);
-  color: #f0e6f8;
-  padding: 1px 5px;
-  border-radius: 3px;
-  border: 1px solid rgba(20, 15, 10, 0.6);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  background: linear-gradient(180deg, #4a4a50 0%, #17161a 65%);
+  clip-path: polygon(0% 8%, 50% 0%, 100% 8%, 100% 60%, 50% 100%, 0% 60%);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  z-index: 2;
 }
 
 /* Info line */
