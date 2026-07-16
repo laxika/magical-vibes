@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
@@ -405,6 +406,13 @@ public class DrawService {
             if (drawEffects == null || drawEffects.isEmpty()) continue;
 
             for (CardEffect effect : drawEffects) {
+                // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the
+                // equipped creature, so an unattached Equipment has no such ability — no trigger.
+                if (effect instanceof BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect
+                        && perm.getAttachedTo() == null) {
+                    continue;
+                }
+
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
                 } else if (effect.targetSpec().category() == TargetCategory.ANY_TARGET) {

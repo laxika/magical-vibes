@@ -76,7 +76,7 @@ class DivinersWandTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Draw trigger does not boost anything while the Wand is unattached")
+    @DisplayName("Draw trigger does not fire at all while the Wand is unattached")
     void unattachedDrawTriggerDoesNothing() {
         Permanent creature = addReadyCreature(player1);
         addWandReady(player1); // left unattached
@@ -88,10 +88,10 @@ class DivinersWandTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
         harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passBothPriorities(); // resolve Counsel (draws 2)
 
+        // An unattached Equipment grants the draw ability to no creature — nothing triggers.
+        assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
     }
