@@ -1659,6 +1659,13 @@ declarative interpreter cannot express; every one also declares its structural `
 
 - **Catalog descriptive tags** (above): ~100+ per-effect `canTarget*` annotations in the effect-catalog
   docs remain as legacy shorthand. Non-urgent (descriptive, not instructional) — clean up opportunistically.
+  **RESOLVED 2026-07-16:** all 141 descriptive tags rewritten to TargetSpec wording ("player-targeting
+  spec", exact categories like `ANY_GRAVEYARD_CARD`/`EXILE_CARD`/`SPELL_ON_STACK`/`ANY_TARGET` where
+  mechanically derivable or confirmed by this log, `targetSpec().selfTargeting()`/`playerTargetCount()`
+  for the field duals). The only remaining legacy-name mentions are deliberate: the historical
+  "were DELETED" teaching notes, the two record-component duals (`DealDividedDamageEffect.canTargetPlayers`,
+  `ChangeColorTextEffect.canTargetSpell`), the `PutCounterOnTargetPermanentEffect.targetPredicate`
+  component, and `EffectResolution.targetPredicateOf` API references.
 - **`PutTargetOnTopOfLibraryEffect` validator is redundant** (its per-scope PERMANENT spec runs the same
   `requireBattlefieldTarget`) but kept whole. A future pass could delete it if desired — it is the one
   escape hatch that no longer encodes anything the spec doesn't.
