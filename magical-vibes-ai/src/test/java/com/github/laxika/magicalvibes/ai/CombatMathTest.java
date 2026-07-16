@@ -273,6 +273,78 @@ class CombatMathTest {
         assertThat(CombatMath.evaluateTrampleBlock(attacker, blocker)).isEqualTo(4 * 0.8 - 1.0);
     }
 
+    // ===== isFreeKillFor =====
+
+    @Test
+    @DisplayName("isFreeKillFor: high-toughness blocker that kills the attacker is a free kill")
+    void freeKillHighToughnessBlocker() {
+        // 3/1 into a 1/4: the wall survives (4 > 3) and kills the attacker (1 >= 1) — the
+        // exact Kessig Wolf / Horned Turtle giveaway.
+        CreatureInfo attacker = creature(0, 3, 1, 3.0);
+        CreatureInfo blocker = creature(0, 1, 4, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: even trade is not a free kill")
+    void freeKillEvenTradeIsNotFree() {
+        // Both die (2 >= 2 each way) — a trade, not a giveaway.
+        CreatureInfo attacker = creature(0, 2, 2, 2.0);
+        CreatureInfo blocker = creature(0, 2, 2, 2.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: attacker that kills the blocker is not a free kill")
+    void freeKillWhenAttackerKillsBlocker() {
+        // 2/2 into 1/1: attacker kills the blocker and survives — favorable, not a giveaway.
+        CreatureInfo attacker = creature(0, 2, 2, 2.0);
+        CreatureInfo blocker = creature(0, 1, 1, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: blocker that cannot kill the attacker is not a free kill")
+    void freeKillWhenBlockerCannotKill() {
+        // 2/3 into a 0/4 wall: neither dies — the attack is chip-less but not a giveaway.
+        CreatureInfo attacker = creature(0, 2, 3, 2.0);
+        CreatureInfo blocker = creature(0, 0, 4, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: indestructible attacker cannot be free-killed")
+    void freeKillIndestructibleAttacker() {
+        CreatureInfo attacker = creature(0, 3, 1, 3.0, Keyword.INDESTRUCTIBLE);
+        CreatureInfo blocker = creature(0, 1, 4, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: lethal trample block leaks damage, so it is not free")
+    void freeKillTrampleLeaksDamage() {
+        // 5/1 trample into a 1/4: the blocker kills it but 5 - 4 = 1 damage tramples over.
+        CreatureInfo attacker = creature(0, 5, 1, 3.0, Keyword.TRAMPLE);
+        CreatureInfo blocker = creature(0, 1, 4, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isFreeKillFor: trample attacker fully absorbed is still a free kill")
+    void freeKillTrampleFullyAbsorbed() {
+        // 3/1 trample into a 1/4: power 3 < toughness 4, no damage leaks — still a giveaway.
+        CreatureInfo attacker = creature(0, 3, 1, 3.0, Keyword.TRAMPLE);
+        CreatureInfo blocker = creature(0, 1, 4, 1.0);
+
+        assertThat(CombatMath.isFreeKillFor(attacker, blocker)).isTrue();
+    }
+
     // ===== findBestBlockerPairForMenace =====
 
     @Test

@@ -2089,12 +2089,15 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Evaluate race state to adjust aggression
         RaceEvaluator.RaceState raceState = evaluateRace(gameData);
 
-        // If winning the race, attack with all available creatures — trading is fine
-        // because we'll kill the opponent first. Skip MCTS overhead in this case.
+        // If winning the race, attack aggressively — trading is fine because we'll kill the
+        // opponent first, so skip MCTS overhead. But a creature that just dies to a superior
+        // blocker for zero value isn't a trade, it's a giveaway: filter those out while keeping
+        // every attacker that deals damage or trades.
         if (raceState.aiWinningRace() && !raceState.aiLosingRace()) {
             log.info("AI (Hard): Winning the race (AI clock={}, opp clock={}), attacking aggressively in game {}",
                     raceState.aiClock(), raceState.opponentClock(), gameId);
-            List<Integer> attackerIndices = new ArrayList<>(allInIndices);
+            List<Integer> attackerIndices = combatSimulator.filterFreeGiveawayAttackers(
+                    gameData, aiPlayer.getId(), allInIndices, mustAttackIndices);
             attackerIndices = enforceMustAttackWithAtLeastOne(gameData, attackerIndices, availableIndices);
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);

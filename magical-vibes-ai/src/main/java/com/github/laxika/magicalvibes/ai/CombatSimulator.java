@@ -132,6 +132,87 @@ public class CombatSimulator {
         return filtered;
     }
 
+    /**
+     * From an all-in aggressive attacker list (already {@link #filterZeroPowerAttackers
+     * zero-power-filtered}), drops attackers the opponent could block and kill for free — a
+     * legal untapped blocker that survives the attacker's damage, kills it, and lets no damage
+     * through (see {@link CombatMath#isFreeKillFor}). Even when winning a race, handing a
+     * creature to a superior blocker for zero value (no damage dealt, no blocker traded) is
+     * strictly wrong; genuine trades and chip damage are preserved, so the AI stays aggressive.
+     *
+     * <p>Kept regardless: must-attack creatures and creatures with their own attack trigger
+     * (attacking has value even into a bad block). Evasive attackers no current blocker can
+     * legally block are kept — they connect. This is a conservative, per-attacker check: it
+     * assumes each free-killing blocker is available, so a lone blocker able to free-kill
+     * several attackers holds all of them back. That over-caution is acceptable, since the
+     * alternative is giving a creature away. Menace attackers are never dropped (a single
+     * blocker can't block them), and combat tricks are out of scope.
+     */
+    public List<Integer> filterFreeGiveawayAttackers(GameData gameData, UUID aiPlayerId,
+                                                     List<Integer> attackerIndices,
+                                                     List<Integer> mustAttackIndices) {
+        if (attackerIndices.isEmpty()) return attackerIndices;
+        return gameQueryService.withQueryScope(gameData, () -> doFilterFreeGiveawayAttackers(
+                gameData, aiPlayerId, attackerIndices, mustAttackIndices));
+    }
+
+    private List<Integer> doFilterFreeGiveawayAttackers(GameData gameData, UUID aiPlayerId,
+                                                        List<Integer> attackerIndices,
+                                                        List<Integer> mustAttackIndices) {
+        UUID opponentId = getOpponentId(gameData, aiPlayerId);
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
+        List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+
+        // Only untapped opponent creatures can block.
+        List<CreatureInfo> blockerInfos = new ArrayList<>();
+        for (int i = 0; i < oppBattlefield.size(); i++) {
+            Permanent perm = oppBattlefield.get(i);
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            if (perm.isTapped()) continue;
+            blockerInfos.add(buildCreatureInfo(gameData, perm, i, opponentId, aiPlayerId));
+        }
+        // No blockers: nothing can be given away, keep the whole aggressive list.
+        if (blockerInfos.isEmpty()) return attackerIndices;
+
+        Set<Integer> mustAttack = new HashSet<>(mustAttackIndices);
+        List<CreatureInfo> attackerInfos = new ArrayList<>(attackerIndices.size());
+        for (int idx : attackerIndices) {
+            attackerInfos.add(buildCreatureInfo(gameData, aiBattlefield.get(idx), idx,
+                    aiPlayerId, opponentId, oppBattlefield));
+        }
+        // Reuse the main search's block-legality rows so evasion (flying/cantBeBlocked/landwalk/…)
+        // is honoured exactly as in findBestAttackers.
+        List<CombatMath.Attacker> attackers = buildAttackers(gameData, attackerInfos, blockerInfos, false);
+
+        List<Integer> kept = new ArrayList<>(attackers.size());
+        for (CombatMath.Attacker attacker : attackers) {
+            int idx = attacker.info().index();
+            if (mustAttack.contains(idx)
+                    || hasOwnAttackTrigger(gameData, attacker.info().perm())
+                    || !isFreeGiveaway(attacker, blockerInfos)) {
+                kept.add(idx);
+            }
+        }
+        return kept;
+    }
+
+    /**
+     * True when some legal, untapped blocker can kill this attacker for free (see
+     * {@link CombatMath#isFreeKillFor}). Menace attackers are exempt — a single blocker can't
+     * block them, and modelling a free-killing pair is out of scope — so they're never
+     * treated as giveaways.
+     */
+    private boolean isFreeGiveaway(CombatMath.Attacker attacker, List<CreatureInfo> blockers) {
+        if (attacker.info().menace()) return false;
+        boolean[] canBeBlockedBy = attacker.canBeBlockedBy();
+        for (int j = 0; j < blockers.size(); j++) {
+            if (canBeBlockedBy[j] && CombatMath.isFreeKillFor(attacker.info(), blockers.get(j))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private boolean hasPerAttackerAllyTrigger(GameData gameData, UUID playerId, List<Permanent> battlefield) {
         for (Permanent perm : battlefield) {
             if (!perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).isEmpty()) return true;

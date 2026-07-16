@@ -407,6 +407,27 @@ final class CombatMath {
         return score;
     }
 
+    /**
+     * True when {@code blocker} can block {@code attacker}, kill it, survive the exchange, and
+     * let no damage through — a "free" block that costs the defending player nothing and gains
+     * a creature. Mirrors the power-vs-toughness kill logic used elsewhere in this class
+     * (indestructible respected; deathtouch and first strike are not modelled, matching
+     * {@link #evaluateBlock}). Trample is honoured: if the attacker's power exceeds the
+     * blocker's toughness the excess still lands, so a lethal trample block is not "free".
+     *
+     * <p>Block legality (evasion, menace, etc.) is <em>not</em> checked here — callers must
+     * confirm the pairing is legal first.
+     */
+    static boolean isFreeKillFor(CreatureInfo attacker, CreatureInfo blocker) {
+        boolean blockerKillsAttacker = blocker.power() >= attacker.toughness() && !attacker.indestructible();
+        boolean attackerKillsBlocker = attacker.power() >= blocker.toughness() && !blocker.indestructible();
+        if (!blockerKillsAttacker || attackerKillsBlocker) {
+            return false;
+        }
+        // Trample pushes excess power past the blocker even on a lethal block, so it isn't free.
+        return !(attacker.trample() && damage(attacker) > blocker.toughness());
+    }
+
     static double evaluateBlock(CreatureInfo attacker, CreatureInfo blocker) {
         boolean attackerKillsBlocker = attacker.power() >= blocker.toughness() && !blocker.indestructible();
 

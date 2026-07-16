@@ -2074,6 +2074,154 @@ class CombatSimulatorTest {
         assertThat(filtered).containsExactly(0, 1);
     }
 
+    // ===== Free-giveaway attackers (die to a superior blocker for zero value) =====
+
+    @Test
+    @DisplayName("Giveaway filter: drops a creature that dies to a superior blocker for free")
+    void filterFreeGiveawayDropsDoomedAttacker() {
+        // 2/2 into a 6/4: the Craw Wurm survives and kills the bears — a free block.
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: keeps an evasive attacker no blocker can block")
+    void filterFreeGiveawayKeepsEvasiveAttacker() {
+        // 4/4 flyer into a 6/4 ground blocker — the flyer connects, not a giveaway.
+        Permanent flyer = new Permanent(new AirElemental());
+        flyer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: keeps an attacker that trades evenly (aggression preserved)")
+    void filterFreeGiveawayKeepsEvenTrade() {
+        // 2/2 into 2/2: both die — a trade, not a giveaway.
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: keeps a must-attack creature even when it dies for free")
+    void filterFreeGiveawayKeepsMustAttack() {
+        // Berserkers (attacks each combat if able) into a 6/6 that free-kills it.
+        Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
+        berserkers.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(berserkers);
+
+        Permanent dreadmaw = new Permanent(new ColossalDreadmaw());
+        dreadmaw.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(dreadmaw);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: keeps an attacker with its own attack trigger")
+    void filterFreeGiveawayKeepsAttackTrigger() {
+        // Hollow Dogs shows as a base 2/2 (its +2/+0 only applies on attack), so a 6/4 would
+        // free-kill the snapshot — but attacking triggers value, so it must be kept.
+        Permanent dogs = new Permanent(new HollowDogs());
+        dogs.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(dogs);
+
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: a tapped free-killer can't block, so the attacker is kept")
+    void filterFreeGiveawayIgnoresTappedBlocker() {
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        wurm.tap();
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: a menace attacker is never treated as a giveaway")
+    void filterFreeGiveawayExemptsMenace() {
+        // A 2/2 menace into a lone 6/4: a single blocker can't block menace at all, and we
+        // don't model a free-killing pair — so it stays aggressive.
+        Permanent menacer = new Permanent(new GrizzlyBears());
+        TestCards.mutableCard(menacer).setKeywords(EnumSet.of(Keyword.MENACE));
+        menacer.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(menacer);
+
+        Permanent wurm = new Permanent(new CrawWurm());
+        wurm.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(wurm);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0), List.of());
+
+        assertThat(filtered).containsExactly(0);
+    }
+
+    @Test
+    @DisplayName("Giveaway filter: no opponent blockers leaves the aggressive list unchanged")
+    void filterFreeGiveawayNoBlockersKeepsAll() {
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<Integer> filtered = simulator.filterFreeGiveawayAttackers(
+                gd, player1.getId(), List.of(0, 1), List.of());
+
+        assertThat(filtered).containsExactly(0, 1);
+    }
+
     @Test
     @DisplayName("Negative-power creature is not worth attacking with even when unblocked")
     void findBestAttackersSkipsNegativePowerCreature() {

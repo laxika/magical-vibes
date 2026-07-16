@@ -2830,6 +2830,71 @@ class HardAiDecisionEngineTest {
         }
 
         @Test
+        @DisplayName("Hard AI holds back a creature that would die to a superior blocker for free")
+        void holdsBackFreeGiveawayCreatureWhenWinningRace() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            harness.beginAttackerDeclarationInput();
+
+            // AI has a 4/4 flyer — evasive, comfortably winning the race.
+            Permanent flyer = new Permanent(new AirElemental());
+            flyer.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(flyer);
+
+            // Plus a 2/2 ground creature — the Kessig Wolf in the reported game.
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+
+            // Opponent has a 2/3 wall: it survives the 2/2 and kills it — a free block.
+            // Summoning sick so it contributes nothing to the opponent's clock (AI still winning),
+            // but it can still block. This is the Horned Turtle from the reported game.
+            Permanent wall = new Permanent(new GrizzlyBears());
+            TestCards.mutableCard(wall).setToughness(3);
+            gd.playerBattlefields.get(player2.getId()).add(wall);
+
+            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+            // The flyer connects, so it attacks; the 2/2 would just be given away, so it stays home.
+            assertThat(flyer.isAttacking()).isTrue();
+            assertThat(bears.isAttacking())
+                    .withFailMessage("AI attacked with a 2/2 into a 2/3 wall that kills it for free")
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("Hard AI still attacks into an even trade when winning the race")
+        void attacksIntoEvenTradeWhenWinningRace() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            gd.status = GameStatus.RUNNING;
+            harness.beginAttackerDeclarationInput();
+
+            // AI has a 2/2 — winning the race (opponent has only a summoning-sick blocker).
+            Permanent bears = new Permanent(new GrizzlyBears());
+            bears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(bears);
+
+            // Opponent has a 2/2: blocking is an even trade, not a free kill. Aggression is
+            // preserved — trades are fine when we win the race first.
+            Permanent oppBears = new Permanent(new GrizzlyBears());
+            gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+            ai.handleMessage("AVAILABLE_ATTACKERS", "");
+
+            assertThat(bears.isAttacking())
+                    .withFailMessage("AI held back a 2/2 from an even trade while winning the race")
+                    .isTrue();
+        }
+
+        @Test
         @DisplayName("Attacks with a negative-power creature and pumps it for the kill")
         void attacksWithNegativePowerCreatureWhenPumpIsLethal() {
             HardAiDecisionEngine ai = createHardAi(player1);
