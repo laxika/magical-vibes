@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.b.BloodcrazedNeonate;
 import com.github.laxika.magicalvibes.cards.p.Pounce;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Skulduggery;
+import com.github.laxika.magicalvibes.cards.w.WildGrowth;
 import com.github.laxika.magicalvibes.cards.w.WizardsLightning;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -111,6 +112,17 @@ class AiTargetSelectorTest {
         Permanent ownLand = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
 
         UUID target = targetSelector.chooseTarget(gd, new FertileGround(), aiPlayer.getId());
+
+        assertThat(target).isEqualTo(ownLand.getId());
+    }
+
+    @Test
+    @DisplayName("Wild Growth also enchants the AI's own land, not the opponent's")
+    void wildGrowthTargetsOwnLand() {
+        harness.addToBattlefield(human, new Forest());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(aiPlayer, new Forest());
+
+        UUID target = targetSelector.chooseTarget(gd, new WildGrowth(), aiPlayer.getId());
 
         assertThat(target).isEqualTo(ownLand.getId());
     }
