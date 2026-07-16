@@ -719,6 +719,20 @@ public class BattlefieldEntryService {
         // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
         List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
+        // Separate targeted graveyard-return effects (e.g. Bladewing the Risen: "return target Dragon
+        // permanent card from your graveyard to the battlefield"): any remaining graveyard-target effect
+        // not covered by the specialized paths above. Its target is chosen as the trigger goes on the
+        // stack via the shared SpellGraveyardTargetTrigger flow (identified by target category, not type,
+        // so the dispatch ratchet stays flat).
+        List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
+                .filter(e -> e.targetSpec().category().isGraveyard())
+                .filter(e -> !graveyardExileEffects.contains(e))
+                .filter(e -> !graveyardCastEffects.contains(e))
+                .filter(e -> !graveyardFlashbackEffects.contains(e))
+                .filter(e -> !graveyardMayPlayEffects.contains(e))
+                .filter(e -> !graveyardStealEffects.contains(e))
+                .filter(e -> !graveyardReturnToHandEffects.contains(e))
+                .toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
@@ -726,6 +740,7 @@ public class BattlefieldEntryService {
                 .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !(e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect))
                 .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
+                .filter(e -> !graveyardTargetReturnEffects.contains(e))
                 .filter(e -> !EffectResolution.targetsSpellOnStack(e)).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -890,6 +905,20 @@ public class BattlefieldEntryService {
                 graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
                         List.of(effect), (ReturnTargetCardsFromGraveyardToHandEffect) effect);
             }
+        }
+
+        // Handle targeted graveyard-return effects (return target card from your graveyard to the
+        // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
+        // shared SpellGraveyardTargetTrigger flow. "may return target" reads as up-to-one selection.
+        for (CardEffect effect : graveyardTargetReturnEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, controllerId, List.of(effect)));
+            }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
 
         // Handle spell-targeting ETB effects: target must be chosen from spells on the stack

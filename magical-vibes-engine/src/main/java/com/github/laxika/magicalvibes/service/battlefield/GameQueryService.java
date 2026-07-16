@@ -373,6 +373,36 @@ public class GameQueryService {
         return computeGrantedSubtypesForOwnedCreatureCard(gameData, cardOwnerId).contains(subtype);
     }
 
+    private static final Set<CardSubtype> BASIC_LAND_SUBTYPES = EnumSet.of(
+            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+            CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+
+    /**
+     * The effective basic land types (Plains/Island/Swamp/Mountain/Forest) of a permanent,
+     * respecting CR 305.7 land-type overrides (Blood Moon, Tideshaper Mystic) — when a land-type
+     * setter is active the printed and one-shot-granted types are replaced by the setter's types.
+     * Used for Domain counting.
+     */
+    public Set<CardSubtype> effectiveBasicLandTypes(GameData gameData, Permanent permanent) {
+        Set<CardSubtype> result = EnumSet.noneOf(CardSubtype.class);
+        StaticBonus bonus = computeStaticBonus(gameData, permanent);
+        if (!bonus.landSubtypeOverriding()) {
+            for (CardSubtype st : permanent.getCard().getSubtypes()) {
+                if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
+            }
+            for (CardSubtype st : permanent.getGrantedSubtypes()) {
+                if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
+            }
+        }
+        for (CardSubtype st : bonus.grantedSubtypes()) {
+            if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
+        }
+        for (CardSubtype st : permanent.getTransientSubtypes()) {
+            if (BASIC_LAND_SUBTYPES.contains(st)) result.add(st);
+        }
+        return result;
+    }
+
     /**
      * Returns all subtypes of a creature card, including those granted by Arcane Adaptation-style effects.
      */

@@ -909,6 +909,38 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleDrawTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.DrawTriggerAnyTarget dt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                dt.sourceCard(),
+                dt.controllerId(),
+                dt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(dt.effects()),
+                null,
+                dt.sourcePermanentId()
+        );
+        entry.setTargetId(targetId);
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        String logEntry = dt.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} draw trigger targets {}", gameData.id, dt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDrawTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleEntersFromGraveyardTrigger(GameData gameData, UUID targetId,
                                                  PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
         StackEntry entry = new StackEntry(

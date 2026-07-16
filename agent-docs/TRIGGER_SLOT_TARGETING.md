@@ -116,6 +116,7 @@ combat damage step is processed.
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
+| `ON_CONTROLLER_DRAWS` (any-target effects) | `DrawService.checkControllerDrawTriggers` → `DrawTriggerAnyTarget` (queued when the effect's `targetSpec().category() == ANY_TARGET`, e.g. Niv-Mizzet, the Firemind's "deals 1 damage to any target"). Processed by `TriggeredAbilityQueueService.processNextDrawTriggerTarget` (creature/player any-target choice). Non–any-target draw triggers (Psychosis Crawler) still push a non-targeting entry straight to the stack. | Draw (any target) |
 | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `TriggerCollectionService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `ON_ALLY_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD` / `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` / `ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD` (permanent-targeting effects only) | `EnterTriggerCollectorService.handleEnterDefault` → `EntersTriggerTarget` (queued when the effect's `targetSpec()` includes permanents, e.g. Reaper King's "destroy target permanent"). Player-targeting effects still push straight to the stack with the pre-set `defaultTargetPlayerId`. | Enters (reuses `TriggerTargetCollector.Options.ATTACK` for the target list — any permanent, honours the card's `PermanentPredicateTargetFilter` / `ControlledPermanentPredicateTargetFilter`) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
@@ -131,7 +132,8 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
 `ON_COMBAT_DAMAGE_TO_PLAYER`, `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
 `ON_DEALT_DAMAGE`, `ON_BECOMES_BLOCKED`, `DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,
-`ON_CONTROLLER_DRAWS`, `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
+`ON_CONTROLLER_DRAWS` (only the non–any-target flavour; the any-target variant is routed through the
+`DrawTriggerAnyTarget` pipeline — see the mapping table above), `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_BECOMES_TAPPED`, `ON_OPPONENT_PERMANENT_BECOMES_TAPPED`,
 `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
@@ -207,6 +209,18 @@ deferred path prompts for the target as the trigger goes on the stack (CR 603.3d
 `ConditionalEffect` stays on the stack entry and the gate is re-checked at resolution. When adding
 a new intervening-if condition that gates a **targeted** ETB, override `isEtbTriggerGate()` on the
 condition — both the cast-time exclusion and the `EtbEffectResolver` gate key off it.
+
+**Graveyard-targeting ETBs** ("When ~ enters, return/exile/… target card from a graveyard") never
+target at cast time. `BattlefieldEntryService.queueMandatoryETBEffects` partitions these by kind and
+routes each to its trigger-time graveyard selector: exile → `handleGraveyardExileETBTargeting`,
+cast/flashback/may-play/opponent-steal → their dedicated handlers, return-to-hand →
+`handleReturnToHandETBTargeting`. Any remaining `targetSpec().category().isGraveyard()` effect (i.e. a
+`targetGraveyard(true)` `ReturnCardFromGraveyardEffect`, e.g. Bladewing the Risen reanimating to the
+battlefield) is routed through the shared `SpellGraveyardTargetTrigger` flow, which prompts the
+controller with a `MultiGraveyardChoice` (maxCount 1) as the trigger goes on the stack; the chosen id
+lands on the entry's `targetCardIds` and the effect handler's pre-targeted path resolves it. Because
+the trigger path allows an empty selection, a "you may return target …" reads correctly as up-to-one
+(choose 0 to decline) with no `MayEffect` wrapper.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
 or permanent), **that is an engine change**. The work required is:

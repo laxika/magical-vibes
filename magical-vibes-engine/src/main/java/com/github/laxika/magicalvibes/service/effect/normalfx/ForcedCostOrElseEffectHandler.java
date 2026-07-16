@@ -26,6 +26,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,10 +40,19 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
         if (e.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
             // "You may pay {cost}; if you don't, [penalty]" — paying mana is always a choice, so
             // ask the controller unconditionally (the accept handler charges mana / checks canPay).
+            // A dynamic reduction (Draco's Domain) is resolved now so the prompt and the accept
+            // handler both use the already-reduced cost carried on the PendingMayAbility.
+            String effectiveCost = payCost.manaCost();
+            if (payCost.genericReduction() != null) {
+                Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                int reduction = amountEvaluationService.evaluate(gameData, payCost.genericReduction(),
+                        com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(entry, source));
+                effectiveCost = reduceGenericManaCost(payCost.manaCost(), reduction);
+            }
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
                     entry.getCard(), entry.getControllerId(), List.of(e),
-                    entry.getCard().getName() + " - Pay " + payCost.manaCost() + "?",
-                    null, payCost.manaCost(), entry.getSourcePermanentId()));
+                    entry.getCard().getName() + " - Pay " + effectiveCost + "?",
+                    null, effectiveCost, entry.getSourcePermanentId()));
             return;
         }
 
@@ -92,6 +102,27 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                                 controllerId, entry.getSourcePermanentId(), entry.getCard(), e));
                 playerInputService.beginPermanentChoice(gameData, controllerId, matchingPermanentIds,
                         "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
+    }
+
+    /**
+     * Subtracts {@code reduction} from the generic portion of a mana cost string (floored at 0),
+     * preserving any colored symbols — "this cost is reduced by {N}" (Draco).
+     */
+    private String reduceGenericManaCost(String costString, int reduction) {
+        com.github.laxika.magicalvibes.model.ManaCost cost =
+                new com.github.laxika.magicalvibes.model.ManaCost(costString);
+        int generic = Math.max(0, cost.getGenericCost() - reduction);
+        StringBuilder sb = new StringBuilder();
+        var colored = cost.getColoredCosts();
+        if (generic > 0 || colored.isEmpty()) {
+            sb.append("{").append(generic).append("}");
+        }
+        colored.forEach((color, count) -> {
+            for (int i = 0; i < count; i++) {
+                sb.append("{").append(color.getCode()).append("}");
+            }
+        });
+        return sb.toString();
     }
 
     /**

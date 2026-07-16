@@ -149,6 +149,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handlePucasMischiefOpponentTarget(gameData, permanentId, pmot);
         } else if (context instanceof PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
+        } else if (context instanceof PermanentChoiceContext.DrawTriggerAnyTarget dt) {
+            triggerHandler.handleDrawTrigger(gameData, permanentId, dt);
         } else if (context instanceof PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
             triggerHandler.handleEntersFromGraveyardTrigger(gameData, permanentId, efg);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {

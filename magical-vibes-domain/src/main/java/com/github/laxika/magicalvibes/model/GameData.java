@@ -1031,6 +1031,13 @@ public class GameData {
     }
 
     /**
+     * Returns the total number of spells cast by all players this turn (used by the Storm keyword).
+     */
+    public int getTotalSpellsCastThisTurnCount() {
+        return spellsCastThisTurn.values().stream().mapToInt(List::size).sum();
+    }
+
+    /**
      * Total lands the given player may play this turn: the normal one, plus any additional grants
      * ({@code additionalLandsThisTurn}), plus one for each {@link EachPlayerPlaysAdditionalLandEffect}
      * static permanent on any battlefield (Storm Cauldron — symmetric, benefits every player).

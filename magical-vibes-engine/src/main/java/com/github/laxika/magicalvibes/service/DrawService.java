@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCategory;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
@@ -406,6 +407,20 @@ public class DrawService {
             for (CardEffect effect : drawEffects) {
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may);
+                } else if (effect.targetSpec().category() == TargetCategory.ANY_TARGET) {
+                    // Any-target draw trigger (Niv-Mizzet, the Firemind): the controller must choose a
+                    // target before the ability goes on the stack.
+                    gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
+                            perm.getCard(),
+                            drawingPlayerId,
+                            new ArrayList<>(List.of(effect)),
+                            perm.getId()
+                    ));
+
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+                    log.info("Game {} - {} controller-draw any-target trigger queued",
+                            gameData.id, perm.getCard().getName());
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -417,7 +432,7 @@ public class DrawService {
                             perm.getId()
                     ));
 
-                    String triggerLog = perm.getCard().getName() + " triggers — each opponent loses life.";
+                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                     log.info("Game {} - {} controller-draw trigger pushed onto stack",
                             gameData.id, perm.getCard().getName());

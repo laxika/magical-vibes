@@ -376,6 +376,38 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextDrawTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+            PermanentChoiceContext.DrawTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class);
+
+            // "Any target" — every creature on every battlefield, plus every player.
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)) {
+                        validPermanentTargets.add(p.getId());
+                    }
+                }
+            }
+
+            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+            // There are always valid targets (at least the players)
+            gameData.pollPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability - Choose target creature or player.");
+
+            String logEntry = pending.sourceCard().getName() + "'s draw trigger - choose a target.";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} draw trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             PermanentChoiceContext.EntersFromGraveyardTriggerTarget pending =

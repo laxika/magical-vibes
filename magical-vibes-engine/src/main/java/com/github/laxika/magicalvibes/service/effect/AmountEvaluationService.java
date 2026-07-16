@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
@@ -97,6 +98,8 @@ public class AmountEvaluationService {
                     s.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).sum();
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
+            case BasicLandTypesAmongControlledLands ignored ->
+                    countBasicLandTypesAmongControlledLands(gameData, ctx);
             case CardsInGraveyard c ->
                     countGraveyardCards(gameData, c, ctx);
             case CardsInHand c ->
@@ -253,6 +256,32 @@ public class AmountEvaluationService {
             }
         }
         return matches;
+    }
+
+    private static final java.util.Set<CardSubtype> BASIC_LAND_SUBTYPES = java.util.EnumSet.of(
+            CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+            CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+
+    /**
+     * Domain (CR 702.42): the number of distinct basic land types among lands the controller
+     * controls. During static evaluation only intrinsic printed types are read (no
+     * {@code computeStaticBonus}, avoiding recursion); otherwise CR 305.7 land-type overrides count.
+     */
+    private int countBasicLandTypesAmongControlledLands(GameData gameData, AmountContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        java.util.Set<CardSubtype> found = java.util.EnumSet.noneOf(CardSubtype.class);
+        for (Permanent permanent : battlefield) {
+            if (!permanent.getCard().hasType(CardType.LAND)) continue;
+            if (ctx.staticEvaluation()) {
+                for (CardSubtype st : permanent.getCard().getSubtypes()) {
+                    if (BASIC_LAND_SUBTYPES.contains(st)) found.add(st);
+                }
+            } else {
+                found.addAll(gameQueryService.effectiveBasicLandTypes(gameData, permanent));
+            }
+        }
+        return found.size();
     }
 
     private int countColorManaSymbolsAmongControlledPermanents(

@@ -8,10 +8,16 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param recipient who discards their hand
  */
-public record DiscardHandEffect(DiscardRecipient recipient) implements CardEffect {
+public record DiscardHandEffect(DiscardRecipient recipient)
+        implements CardEffect, CombatDamageTriggerContextEffect {
 
     /** Discards the controller's own hand. */
     public DiscardHandEffect() {
         this(DiscardRecipient.CONTROLLER);
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

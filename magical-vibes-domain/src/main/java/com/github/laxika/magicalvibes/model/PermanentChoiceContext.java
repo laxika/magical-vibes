@@ -201,6 +201,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** "Whenever you draw a card, [source] deals damage to any target." Queued when a controller-draw
+     *  trigger carries an any-target effect (e.g. Niv-Mizzet, the Firemind); the controller chooses a
+     *  creature or player before the triggered ability goes on the stack. */
+    record DrawTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
     /** "Whenever a creature enters from your graveyard, that creature deals damage equal to its power to
      *  any target." The {@code sourcePermanentId} points at the creature that entered (the damage source);
      *  {@code sourceCard} is the permanent whose ability triggered (e.g. Flayer of the Hatebound). */

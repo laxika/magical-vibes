@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetControllerLifeToSpecificVa
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "187")
+@CardRegistration(set = "DRB", collectorNumber = "7")
 public class FormOfTheDragon extends Card {
 
     public FormOfTheDragon() {

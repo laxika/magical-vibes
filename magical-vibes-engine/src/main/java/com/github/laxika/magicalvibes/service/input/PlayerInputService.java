@@ -162,6 +162,19 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (Oona-style exile/token)", gameData.id, playerName);
     }
 
+    public void beginCreateTokensPerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
+            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate, String sourceSetCode) {
+        ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx =
+                new ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice(controllerId, tokenTemplate, sourceSetCode);
+
+        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, ctx, colors, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
+    }
+
     public void beginProtectionColorChoice(GameData gameData, UUID playerId, UUID targetId, boolean includeArtifacts) {
         ChoiceContext.ProtectionColorChoice ctx = new ChoiceContext.ProtectionColorChoice(targetId, includeArtifacts);
 

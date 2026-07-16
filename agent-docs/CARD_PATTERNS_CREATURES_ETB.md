@@ -29,6 +29,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
 | ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |
+| ETB reanimate target from your graveyard | `b/BladewingTheRisen.java` | ON_ENTER_BATTLEFIELD `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardSubtypePredicate(DRAGON)).targetGraveyard(true).build()` — "you may return target Dragon permanent card from your graveyard to the battlefield". Any `targetGraveyard(true)` `ReturnCardFromGraveyardEffect` on an ETB slot has its graveyard target chosen as the trigger goes on the stack via the shared `SpellGraveyardTargetTrigger` flow (`BattlefieldEntryService`); up-to-one selection covers the "may" (choose 0 to decline). Also has a `{B}{R}` BoostAllCreaturesEffect(1, 1, PermanentHasSubtypePredicate(DRAGON)) activated ability |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB destroy (conditional, dealt damage) | `f/FathomFleetCutthroat.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect + PermanentAllOfPredicate(IsCreature, NotControlledBySource, DealtDamageThisTurn) |

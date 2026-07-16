@@ -30,6 +30,8 @@ import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilit
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.StormCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.StormEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -319,6 +321,29 @@ public class TriggerCollectionService {
                 ));
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
+            } else if (effect instanceof StormEffect) {
+                StackEntry spellEntry = null;
+                for (StackEntry se : gameData.stack) {
+                    if (se.getCard().getId().equals(spellCard.getId())) {
+                        spellEntry = se;
+                        break;
+                    }
+                }
+                if (spellEntry == null) continue;
+
+                // "for each spell cast before it this turn" — this spell is already recorded, so
+                // subtract it out. Count is fixed here (spells cast after can't precede this one).
+                int copies = gameData.getTotalSpellsCastThisTurnCount() - 1;
+                StackEntry snapshot = new StackEntry(spellEntry);
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        spellCard,
+                        castingPlayerId,
+                        spellCard.getName() + "'s ability",
+                        new ArrayList<>(List.of(new StormCopyEffect(snapshot, castingPlayerId, copies)))
+                ));
+                log.info("Game {} - {} Storm trigger queued ({} copies) for {}",
+                        gameData.id, spellCard.getName(), copies, castingPlayerId);
             } else {
                 selfCastTriggeredEffects.add(effect);
             }
@@ -1358,6 +1383,10 @@ public class TriggerCollectionService {
 
     public void processNextLifeGainTriggerTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextLifeGainTriggerTarget(gameData);
+    }
+
+    public void processNextDrawTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextDrawTriggerTarget(gameData);
     }
 
     public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {

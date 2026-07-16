@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "229")
+@CardRegistration(set = "DRB", collectorNumber = "15")
 public class TwoHeadedDragon extends Card {
 
     public TwoHeadedDragon() {

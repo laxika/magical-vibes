@@ -587,14 +587,17 @@ public class MayPenaltyChoiceHandlerService {
 
         UUID controllerId = ability.controllerId();
 
-        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost payCost) {
-            ManaCost cost = new ManaCost(payCost.manaCost());
+        if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PayManaCost) {
+            // Use the cost stored on the pending ability — it already reflects any dynamic
+            // reduction (Draco's Domain) resolved when the prompt was created.
+            String costString = ability.manaCost();
+            ManaCost cost = new ManaCost(costString);
             ManaPool pool = gameData.playerManaPools.get(controllerId);
             if (cost.canPay(pool)) {
                 cost.pay(pool);
-                String logEntry = player.getUsername() + " pays " + payCost.manaCost() + ". (" + ability.sourceCard().getName() + ")";
+                String logEntry = player.getUsername() + " pays " + costString + ". (" + ability.sourceCard().getName() + ")";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), payCost.manaCost(), ability.sourceCard().getName());
+                log.info("Game {} - {} pays {} to avoid penalty ({})", gameData.id, player.getUsername(), costString, ability.sourceCard().getName());
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }

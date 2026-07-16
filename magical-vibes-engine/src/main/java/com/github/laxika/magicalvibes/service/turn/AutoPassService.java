@@ -132,6 +132,11 @@ public class AutoPassService {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
         }
 
+        // Process any pending draw targeted triggers (Niv-Mizzet, the Firemind)
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDrawTriggerTarget(gameData);
+        }
+
         // Process any pending enters-from-graveyard targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
