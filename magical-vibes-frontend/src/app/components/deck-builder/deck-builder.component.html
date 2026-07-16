@@ -108,7 +108,10 @@
               [class.clickable-card]="card.implemented"
               (click)="addCardToDeck(card)"
             >
-              <app-card-display [card]="toCard(card)" [preview]="true" />
+              <app-card-display [card]="toCard(displayInfo(card))" [artFace]="isFlipped(card) ? 'back' : 'front'" [preview]="true" />
+              @if (card.backFace) {
+                <button class="flip-face-btn" (click)="toggleFlip(card, $event)" title="Switch face">&#10561;</button>
+              }
               @if (!card.implemented) {
                 <div class="not-implemented-overlay">
                   <span>Not Implemented</span>
@@ -139,7 +142,10 @@
         <div class="deck-card-view">
           @for (entry of deckEntries(); track entry.cardInfo.setCode + entry.cardInfo.collectorNumber) {
             <div class="deck-card-item" (click)="removeCardFromDeck($index)">
-              <app-card-display [card]="toCard(entry.cardInfo)" [preview]="true" />
+              <app-card-display [card]="toCard(displayInfo(entry.cardInfo))" [artFace]="isFlipped(entry.cardInfo) ? 'back' : 'front'" [preview]="true" />
+              @if (entry.cardInfo.backFace) {
+                <button class="flip-face-btn" (click)="toggleFlip(entry.cardInfo, $event)" title="Switch face">&#10561;</button>
+              }
               @if (entry.count > 1) {
                 <div class="deck-count-badge">{{ entry.count }}x</div>
               }

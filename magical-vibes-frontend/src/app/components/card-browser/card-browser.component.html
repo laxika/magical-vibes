@@ -98,7 +98,10 @@
       <div class="card-view">
         @for (card of filteredCards(); track card.collectorNumber) {
           <div class="card-item" [class.not-implemented-card]="!card.implemented">
-            <app-card-display [card]="toCard(card)" [preview]="true" />
+            <app-card-display [card]="toCard(displayInfo(card))" [artFace]="isFlipped(card) ? 'back' : 'front'" [preview]="true" />
+            @if (card.backFace) {
+              <button class="flip-face-btn" (click)="toggleFlip(card, $event)" title="Switch face">&#10561;</button>
+            }
             @if (!card.implemented) {
               <div class="not-implemented-overlay">
                 <span>Not Implemented</span>

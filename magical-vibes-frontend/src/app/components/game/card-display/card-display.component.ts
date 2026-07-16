@@ -26,6 +26,8 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
   @Input({ required: true }) card!: Card;
   @Input() permanent: Permanent | null = null;
   @Input() preview = false;
+  /** Which face's art to show — the card browser/deck builder pass 'back' for flipped double-faced cards. */
+  @Input() artFace: 'front' | 'back' = 'front';
 
   formatKeywords = formatKeywords;
   formatEnumName = formatEnumName;
@@ -55,9 +57,9 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['card'] && !changes['card'].firstChange) {
+    if ((changes['card'] && !changes['card'].firstChange) || (changes['artFace'] && !changes['artFace'].firstChange)) {
       if (this.card.setCode && this.card.collectorNumber) {
-        const cached = this.scryfallImageService.getCachedArtCropUrl(this.card.setCode, this.card.collectorNumber);
+        const cached = this.scryfallImageService.getCachedArtCropUrl(this.card.setCode, this.card.collectorNumber, this.artFace);
         if (cached) {
           this.artUrl.set(cached);
         } else {
@@ -92,7 +94,7 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
 
   private fetchCardArt(): void {
     if (this.card.setCode && this.card.collectorNumber) {
-      this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber)
+      this.scryfallImageService.getArtCropUrl(this.card.setCode, this.card.collectorNumber, this.artFace)
         .then(url => this.artUrl.set(url))
         .catch(() => { this.artUrl.set(null); });
     }

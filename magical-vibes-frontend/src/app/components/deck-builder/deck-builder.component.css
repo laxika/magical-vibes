@@ -347,6 +347,31 @@ tbody tr.clickable:hover {
   transform: translateY(-4px);
 }
 
+/* Switch button for double-faced cards — browser/builder only, never in game */
+.flip-face-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #c4a882;
+  background: rgba(20, 16, 12, 0.85);
+  color: #e8d5a3;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-face-btn:hover {
+  background: rgba(60, 46, 26, 0.95);
+  color: #fff;
+}
+
 .clickable-card {
   cursor: pointer;
 }

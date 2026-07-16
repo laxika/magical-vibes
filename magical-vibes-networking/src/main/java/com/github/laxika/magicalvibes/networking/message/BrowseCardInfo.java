@@ -12,6 +12,7 @@ public record BrowseCardInfo(
         String power,
         String toughness,
         String color,
+        List<String> colors,
         boolean implemented,
         String cardText,
         List<String> keywords,
@@ -19,6 +20,7 @@ public record BrowseCardInfo(
         List<String> additionalTypes,
         List<String> supertypes,
         List<String> subtypes,
-        Integer loyalty
+        Integer loyalty,
+        BrowseCardInfo backFace
 ) {
 }

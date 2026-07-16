@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { WebsocketService, MessageType, BrowseCardInfo, CardListResponse, SetInfo, Card } from '../../services/websocket.service';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
+import { browseInfoToCard } from '../../utils/browse-card-utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -23,6 +24,8 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
   loading = signal(false);
   sortColumn = signal<'number' | 'name' | 'implemented' | null>('number');
   sortDirection = signal<'asc' | 'desc'>('asc');
+  /** set:collectorNumber keys of double-faced cards currently showing their back face */
+  flippedCards = signal<Set<string>>(new Set());
   private subscriptions: Subscription[] = [];
 
   filteredCards = computed(() => {
@@ -145,47 +148,32 @@ export class CardBrowserComponent implements OnInit, OnDestroy {
   }
 
   toCard(info: BrowseCardInfo): Card {
-    const powerNum = info.power != null ? (parseInt(info.power, 10) || 0) : null;
-    const toughnessNum = info.toughness != null ? (parseInt(info.toughness, 10) || 0) : null;
+    return browseInfoToCard(info);
+  }
 
-    return {
-      id: null,
-      name: info.name,
-      type: info.type,
-      additionalTypes: info.additionalTypes ?? [],
-      supertypes: info.supertypes ?? [],
-      subtypes: info.subtypes ?? [],
-      cardText: info.cardText,
-      manaCost: info.manaCost,
-      power: powerNum,
-      toughness: toughnessNum,
-      keywords: info.keywords ?? [],
-      hasTapAbility: false,
-      setCode: info.setCode,
-      collectorNumber: info.collectorNumber,
-      color: info.color,
-      needsTarget: false,
-      needsSpellTarget: false,
-      activatedAbilities: [],
-      loyalty: info.loyalty,
-      hasConvoke: false,
-      colors: info.color ? [info.color] : [],
-      hasPhyrexianMana: (info.manaCost ?? '').includes('/P'),
-      phyrexianManaCount: ((info.manaCost ?? '').match(/\/P/g) || []).length,
-      token: false,
-      watermark: null,
-      hasAlternateCastingCost: false,
-      alternateCostLifePayment: 0,
-      alternateCostSacrificeCount: 0,
-      alternateCostTapCount: 0,
-      alternateCostManaCost: null,
-      graveyardActivatedAbilities: [],
-      transformable: false,
-      kickerCost: null,
-      modalChoicesRequired: 0,
-      modalOptional: false,
-      modalOptions: null
-    };
+  private flipKey(info: BrowseCardInfo): string {
+    return `${info.setCode}:${info.collectorNumber}`;
+  }
+
+  isFlipped(info: BrowseCardInfo): boolean {
+    return info.backFace != null && this.flippedCards().has(this.flipKey(info));
+  }
+
+  toggleFlip(info: BrowseCardInfo, event: Event): void {
+    event.stopPropagation();
+    const flipped = new Set(this.flippedCards());
+    const key = this.flipKey(info);
+    if (flipped.has(key)) {
+      flipped.delete(key);
+    } else {
+      flipped.add(key);
+    }
+    this.flippedCards.set(flipped);
+  }
+
+  /** The face to render: the back face when this double-faced card is flipped. */
+  displayInfo(info: BrowseCardInfo): BrowseCardInfo {
+    return this.isFlipped(info) ? info.backFace! : info;
   }
 
   renderManaCost(manaCost: string | null): string {

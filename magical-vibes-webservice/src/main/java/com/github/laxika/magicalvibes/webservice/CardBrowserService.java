@@ -93,48 +93,12 @@ public class CardBrowserService {
                     continue;
                 }
 
-                String name = card.get("name").asText();
-                if (name.contains(" // ")) {
-                    name = name.substring(0, name.indexOf(" // "));
-                }
-
-                String manaCost = card.has("mana_cost") ? card.get("mana_cost").asText() : null;
-                if (manaCost != null && manaCost.isEmpty()) {
-                    manaCost = null;
-                }
-                if (manaCost != null && manaCost.contains(" // ")) {
-                    manaCost = manaCost.substring(0, manaCost.indexOf(" // "));
-                }
-
-                String typeLine = card.has("type_line") ? card.get("type_line").asText() : "";
-                if (typeLine.contains(" // ")) {
-                    typeLine = typeLine.substring(0, typeLine.indexOf(" // "));
-                }
-
                 String rarity = ScryfallOracleLoader.getRarity(setCode, collectorNumber);
                 if (rarity == null) {
                     rarity = card.has("rarity") ? card.get("rarity").asText() : "common";
                 }
 
-                String power = card.has("power") ? card.get("power").asText() : null;
-                String toughness = card.has("toughness") ? card.get("toughness").asText() : null;
-
-                // Convert Scryfall color to our enum name (single-color only)
-                String color = parseColor(card);
-
-                // Oracle text (strip reminder text)
-                String cardText = null;
-                if (card.has("oracle_text") && !card.get("oracle_text").asText().isEmpty()) {
-                    String rawText = card.get("oracle_text").asText()
-                            .replaceAll(" *\\([^)]*\\)", "")
-                            .replaceAll(" +\n", "\n")
-                            .strip();
-                    if (!rawText.isEmpty()) {
-                        cardText = rawText;
-                    }
-                }
-
-                // Keywords
+                // Keywords are only present at the top level (combined for both faces)
                 List<String> keywords = new ArrayList<>();
                 if (card.has("keywords")) {
                     for (JsonNode kw : card.get("keywords")) {
@@ -142,37 +106,108 @@ public class CardBrowserService {
                     }
                 }
 
-                // Parse type line into components
-                String type = null;
-                List<String> additionalTypes = new ArrayList<>();
-                List<String> supertypes = new ArrayList<>();
-                List<String> subtypes = new ArrayList<>();
-                parseTypeLine(typeLine, type, additionalTypes, supertypes, subtypes);
-                type = extractPrimaryType(typeLine);
-
-                // Loyalty
-                Integer loyalty = null;
-                if (card.has("loyalty")) {
-                    try {
-                        loyalty = Integer.parseInt(card.get("loyalty").asText());
-                    } catch (NumberFormatException e) {
-                        loyalty = 0;
-                    }
-                }
-
                 boolean implemented = implementedNumbers.contains(collectorNumber);
 
-                cards.add(new BrowseCardInfo(
-                        name, collectorNumber, setCode, manaCost, typeLine,
-                        rarity, power, toughness, color, implemented,
-                        cardText, keywords, type, additionalTypes, supertypes, subtypes, loyalty
-                ));
+                // For double-faced cards the face-specific fields (mana cost, oracle
+                // text, P/T, loyalty, colors) live in card_faces, not at the top level.
+                JsonNode faces = card.get("card_faces");
+                boolean doubleFaced = !card.has("oracle_text")
+                        && faces != null && faces.isArray() && faces.size() >= 2;
+
+                BrowseCardInfo backFace = null;
+                if (doubleFaced) {
+                    backFace = buildFaceInfo(faces.get(1), collectorNumber, setCode,
+                            rarity, keywords, implemented, null);
+                }
+                JsonNode front = doubleFaced ? faces.get(0) : card;
+                cards.add(buildFaceInfo(front, collectorNumber, setCode,
+                        rarity, keywords, implemented, backFace));
             }
 
             return cards;
         } catch (Exception e) {
             return List.of();
         }
+    }
+
+    /** Builds card info from either a top-level card node or one entry of card_faces. */
+    private BrowseCardInfo buildFaceInfo(JsonNode node, String collectorNumber, String setCode,
+                                         String rarity, List<String> keywords, boolean implemented,
+                                         BrowseCardInfo backFace) {
+        String name = node.get("name").asText();
+        if (name.contains(" // ")) {
+            name = name.substring(0, name.indexOf(" // "));
+        }
+
+        String manaCost = node.has("mana_cost") ? node.get("mana_cost").asText() : null;
+        if (manaCost != null && manaCost.isEmpty()) {
+            manaCost = null;
+        }
+        if (manaCost != null && manaCost.contains(" // ")) {
+            manaCost = manaCost.substring(0, manaCost.indexOf(" // "));
+        }
+
+        String typeLine = node.has("type_line") ? node.get("type_line").asText() : "";
+        if (typeLine.contains(" // ")) {
+            typeLine = typeLine.substring(0, typeLine.indexOf(" // "));
+        }
+
+        String power = node.has("power") ? node.get("power").asText() : null;
+        String toughness = node.has("toughness") ? node.get("toughness").asText() : null;
+
+        // Convert Scryfall color to our enum name (single-color only)
+        String color = parseColor(node);
+        List<String> colors = parseColors(node);
+
+        // Oracle text (strip reminder text)
+        String cardText = null;
+        if (node.has("oracle_text") && !node.get("oracle_text").asText().isEmpty()) {
+            String rawText = node.get("oracle_text").asText()
+                    .replaceAll(" *\\([^)]*\\)", "")
+                    .replaceAll(" +\n", "\n")
+                    .strip();
+            if (!rawText.isEmpty()) {
+                cardText = rawText;
+            }
+        }
+
+        // Parse type line into components
+        String type = null;
+        List<String> additionalTypes = new ArrayList<>();
+        List<String> supertypes = new ArrayList<>();
+        List<String> subtypes = new ArrayList<>();
+        parseTypeLine(typeLine, type, additionalTypes, supertypes, subtypes);
+        type = extractPrimaryType(typeLine);
+
+        // Loyalty
+        Integer loyalty = null;
+        if (node.has("loyalty")) {
+            try {
+                loyalty = Integer.parseInt(node.get("loyalty").asText());
+            } catch (NumberFormatException e) {
+                loyalty = 0;
+            }
+        }
+
+        return new BrowseCardInfo(
+                name, collectorNumber, setCode, manaCost, typeLine,
+                rarity, power, toughness, color, colors, implemented,
+                cardText, keywords, type, additionalTypes, supertypes, subtypes, loyalty,
+                backFace
+        );
+    }
+
+    private List<String> parseColors(JsonNode card) {
+        List<String> result = new ArrayList<>();
+        if (card.has("colors") && card.get("colors").isArray()) {
+            for (JsonNode c : card.get("colors")) {
+                String mapped = COLOR_CODE_TO_NAME.get(c.asText());
+                if (mapped != null) {
+                    result.add(mapped);
+                }
+            }
+        }
+        return result;
     }
 
     private String parseColor(JsonNode card) {

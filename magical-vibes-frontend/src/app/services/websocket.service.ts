@@ -618,6 +618,7 @@ export interface BrowseCardInfo {
   power: string | null;
   toughness: string | null;
   color: string | null;
+  colors: string[];
   implemented: boolean;
   cardText: string | null;
   keywords: string[];
@@ -626,6 +627,7 @@ export interface BrowseCardInfo {
   supertypes: string[];
   subtypes: string[];
   loyalty: number | null;
+  backFace: BrowseCardInfo | null;
 }
 
 export interface CardListResponse {
