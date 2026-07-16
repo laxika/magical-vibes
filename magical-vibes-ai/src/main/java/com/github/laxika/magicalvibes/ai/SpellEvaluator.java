@@ -481,14 +481,22 @@ public class SpellEvaluator {
         }
 
         // Bounce (single-target bounce is handled by the removal branch above; this is the
-        // mass "return every matching permanent" board sweep)
+        // mass "return every matching permanent" board sweep). Only permanents matching the
+        // effect's filter are actually bounced (a null filter matches everything), so a
+        // colour/type-restricted sweep like Hibernation must not be scored as if it returns
+        // every creature — that made the AI cast it with nothing matching on board.
         if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING) {
+            FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+            java.util.function.Predicate<Permanent> bounced = p ->
+                    gameQueryService.isCreature(gameData, p)
+                    && (bounce.filter() == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, bounce.filter(), filterContext));
             double oppValue = oppBattlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .filter(bounced)
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId))
                     .sum();
             double aiValue = aiBattlefield.stream()
-                    .filter(p -> gameQueryService.isCreature(gameData, p))
+                    .filter(bounced)
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, aiPlayerId, opponentId))
                     .sum();
             return (oppValue - aiValue) * 0.6;

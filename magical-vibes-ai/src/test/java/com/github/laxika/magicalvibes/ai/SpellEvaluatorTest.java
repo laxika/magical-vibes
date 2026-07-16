@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingGrace;
+import com.github.laxika.magicalvibes.cards.h.Hibernation;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -1071,6 +1072,56 @@ class SpellEvaluatorTest {
 
         // Safe value should be much lower
         assertThat(safeValue).isLessThan(dangerValue);
+    }
+
+    // ===== Filtered mass bounce (Hibernation) =====
+
+    @Test
+    @DisplayName("Filtered mass bounce scores zero when no permanent matches the filter")
+    void filteredMassBounceZeroWhenNothingMatches() {
+        // Hibernation returns only GREEN permanents. Opponent has a white Serra Angel and
+        // the AI a white Serra Angel — nothing green on either board.
+        Permanent oppAngel = new Permanent(new SerraAngel());
+        oppAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAngel);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new Hibernation(), player1.getId());
+
+        // Nothing matches the green filter, so the sweep is worth nothing.
+        assertThat(value).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("Filtered mass bounce has positive value when opponent has matching creatures")
+    void filteredMassBouncePositiveWhenOpponentMatches() {
+        // Opponent has a green Grizzly Bears (matches Hibernation), AI has none.
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        double value = spellEvaluator.estimateSpellValue(gd, new Hibernation(), player1.getId());
+
+        assertThat(value).isGreaterThan(0.0);
+    }
+
+    @Test
+    @DisplayName("Filtered mass bounce ignores non-matching creatures on both boards")
+    void filteredMassBounceIgnoresNonMatchingCreatures() {
+        // Opponent has one green Grizzly Bears (matches) plus a white Serra Angel (does not).
+        Permanent oppBears = new Permanent(new GrizzlyBears());
+        oppBears.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppBears);
+
+        double withMatchingOnly = spellEvaluator.estimateSpellValue(gd, new Hibernation(), player1.getId());
+
+        Permanent oppAngel = new Permanent(new SerraAngel());
+        oppAngel.setSummoningSick(false);
+        gd.playerBattlefields.get(player2.getId()).add(oppAngel);
+
+        double withNonMatchingToo = spellEvaluator.estimateSpellValue(gd, new Hibernation(), player1.getId());
+
+        // The white Serra Angel doesn't get bounced, so it must not change the score.
+        assertThat(withNonMatchingToo).isEqualTo(withMatchingOnly);
     }
 
     // ===== Board wipe survival urgency =====
