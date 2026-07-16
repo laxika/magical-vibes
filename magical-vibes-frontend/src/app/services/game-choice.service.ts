@@ -1,4 +1,4 @@
-import { inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import {
   WebsocketService, Game, MessageType, Card, Permanent,
   ChooseCardFromHandNotification, ChooseFromListNotification, MayAbilityNotification,
@@ -47,8 +47,10 @@ export class GameChoiceService {
     this.handChoiceCanDecline = false;
     // List choice
     this.choosingFromList = false;
-    this.listChoices = [];
+    this.listChoices.set([]);
     this.listChoicePrompt = '';
+    this.listChoiceSearchable = false;
+    this.listChoiceSearchQuery.set('');
     // May ability
     this.awaitingMayAbility = false;
     this.mayAbilityPrompt = '';
@@ -109,8 +111,21 @@ export class GameChoiceService {
 
   // --- List choice state ---
   choosingFromList = false;
-  listChoices: string[] = [];
+  listChoices = signal<string[]>([]);
   listChoicePrompt = '';
+  // When true the options are a large card-name list; render an autocomplete search box.
+  listChoiceSearchable = false;
+  listChoiceSearchQuery = signal('');
+
+  // Options shown under the search box: filtered by the query (case-insensitive substring),
+  // capped so a full deck's worth of names never floods the panel. Empty until the player types.
+  filteredListChoices = computed<string[]>(() => {
+    const query = this.listChoiceSearchQuery().trim().toLowerCase();
+    if (!query) return [];
+    return this.listChoices()
+      .filter(option => option.toLowerCase().includes(query))
+      .slice(0, 50);
+  });
 
   // --- May ability state ---
   awaitingMayAbility = false;
@@ -178,8 +193,10 @@ export class GameChoiceService {
 
   handleChooseFromList(msg: ChooseFromListNotification): void {
     this.choosingFromList = true;
-    this.listChoices = msg.options;
+    this.listChoices.set(msg.options);
     this.listChoicePrompt = msg.prompt;
+    this.listChoiceSearchable = msg.searchable ?? false;
+    this.listChoiceSearchQuery.set('');
   }
 
   handleMayAbilityChoice(msg: MayAbilityNotification): void {
@@ -302,6 +319,10 @@ export class GameChoiceService {
     this.handChoicePrompt = '';
   }
 
+  updateListChoiceSearch(query: string): void {
+    this.listChoiceSearchQuery.set(query);
+  }
+
   chooseFromList(choice: string): void {
     if (!this.choosingFromList) return;
     this.websocketService.send({
@@ -309,8 +330,10 @@ export class GameChoiceService {
       choice: choice
     });
     this.choosingFromList = false;
-    this.listChoices = [];
+    this.listChoices.set([]);
     this.listChoicePrompt = '';
+    this.listChoiceSearchable = false;
+    this.listChoiceSearchQuery.set('');
   }
 
   acceptMayAbility(): void {

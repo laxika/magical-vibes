@@ -334,11 +334,36 @@
     @if (choice.choosingFromList) {
       <div class="side-prompt prompt-list-choice">
         <span class="side-prompt-text">{{ choice.listChoicePrompt }}</span>
-        <div class="color-choice-buttons">
-          @for (option of choice.listChoices; track option) {
-            <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
-          }
-        </div>
+        @if (choice.listChoiceSearchable) {
+          <div class="name-search">
+            <input
+              #nameSearchInput
+              type="text"
+              class="name-search-input"
+              placeholder="Search card names…"
+              [value]="choice.listChoiceSearchQuery()"
+              (input)="choice.updateListChoiceSearch(nameSearchInput.value)"
+              autocomplete="off"
+            />
+            @if (choice.listChoiceSearchQuery().trim()) {
+              @if (choice.filteredListChoices().length > 0) {
+                <div class="name-search-results">
+                  @for (option of choice.filteredListChoices(); track option) {
+                    <button class="btn-name-choice" (click)="choice.chooseFromList(option)">{{ option }}</button>
+                  }
+                </div>
+              } @else {
+                <span class="name-search-empty">No matching card names.</span>
+              }
+            }
+          </div>
+        } @else {
+          <div class="color-choice-buttons">
+            @for (option of choice.listChoices(); track option) {
+              <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
+            }
+          </div>
+        }
       </div>
     }
 

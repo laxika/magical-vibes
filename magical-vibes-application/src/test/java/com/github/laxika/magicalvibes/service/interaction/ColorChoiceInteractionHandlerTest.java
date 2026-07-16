@@ -67,6 +67,21 @@ class ColorChoiceInteractionHandlerTest {
         ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
         assertThat(msg.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         assertThat(msg.prompt()).isEqualTo("Choose a color of mana to add.");
+        assertThat(msg.searchable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("card-name choice is flagged searchable so the client renders an autocomplete box")
+    void cardNameChoiceIsSearchable() {
+        PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
+                PLAYER1_ID, null, null, new ChoiceContext.CardNameChoice(null, PLAYER1_ID, List.of()),
+                List.of("Grizzly Bears", "Llanowar Elves"), "Choose a nonland creature name.");
+
+        registry.begin(gd, choice);
+
+        verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
+        ChooseFromListMessage msg = (ChooseFromListMessage) messageCaptor.getValue();
+        assertThat(msg.searchable()).isTrue();
     }
 
     @Test

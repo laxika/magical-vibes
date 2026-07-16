@@ -437,6 +437,7 @@ export interface ChooseFromListNotification {
   type: MessageType;
   options: string[];
   prompt: string;
+  searchable: boolean;
 }
 
 export interface MayAbilityNotification {
