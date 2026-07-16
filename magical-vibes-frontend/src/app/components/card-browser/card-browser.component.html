@@ -1,59 +1,60 @@
-<div class="browser-container">
-  <div class="browser-content">
-    <header>
-      <div class="header-left">
-        <button class="btn-back" (click)="goBack()">Back to Lobby</button>
-        <h1>Card Browser</h1>
-      </div>
-    </header>
-
-    <div class="controls-bar">
-      <div class="control-group">
-        <label for="setSelect">Set</label>
-        <select id="setSelect" [ngModel]="selectedSetCode()" (ngModelChange)="onSetChange($event)">
-          @for (set of availableSets; track set.code) {
-            <option [value]="set.code">{{ set.name }}</option>
-          }
-        </select>
-      </div>
-
-      <div class="control-group search-group">
-        <label for="searchInput">Search</label>
-        <input
-          type="text"
-          id="searchInput"
-          [(ngModel)]="searchQuery"
-          placeholder="Search by name..."
-        />
-      </div>
-
-      <div class="control-group">
-        <label for="statusFilter">Status</label>
-        <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
-          <option value="all">All Cards</option>
-          <option value="implemented">Implemented</option>
-          <option value="not-implemented">Not Implemented</option>
-        </select>
-      </div>
-
-      <div class="control-group view-toggle">
-        <button
-          class="toggle-btn"
-          [class.active]="viewMode() === 'list'"
-          (click)="viewMode.set('list')"
-        >List</button>
-        <button
-          class="toggle-btn"
-          [class.active]="viewMode() === 'card'"
-          (click)="viewMode.set('card')"
-        >Cards</button>
-      </div>
+<div class="browser">
+  <header class="browser-header">
+    <h1>Card Browser</h1>
+    <nav class="header-nav">
+      <button class="btn-nav" (click)="goBack()">Back to Lobby</button>
+    </nav>
+    <div class="header-stats">
+      Implemented: {{ implementedCount() }} / {{ totalCount() }} ({{ implementedPercent() }}%)
     </div>
+  </header>
 
-    <div class="stats-bar">
-      <span>Total: {{ totalCount() }}</span>
-      <span>Implemented: {{ implementedCount() }} / {{ totalCount() }} ({{ implementedPercent() }}%)</span>
-      <span>Showing: {{ filteredCount() }}</span>
+  <section class="cards-panel">
+    <div class="panel-toolbar">
+      <h2 class="panel-title">Cards</h2>
+      <span class="showing-count">Showing {{ filteredCount() }} of {{ totalCount() }}</span>
+      <div class="toolbar-controls">
+        <div class="control-group">
+          <label for="setSelect">Set</label>
+          <select id="setSelect" [ngModel]="selectedSetCode()" (ngModelChange)="onSetChange($event)">
+            @for (set of availableSets; track set.code) {
+              <option [value]="set.code">{{ set.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="statusFilter">Status</label>
+          <select id="statusFilter" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+            <option value="all">All Cards</option>
+            <option value="implemented">Implemented</option>
+            <option value="not-implemented">Not Implemented</option>
+          </select>
+        </div>
+
+        <div class="control-group search-group">
+          <label for="searchInput">Search</label>
+          <input
+            type="text"
+            id="searchInput"
+            [(ngModel)]="searchQuery"
+            placeholder="Search by name..."
+          />
+        </div>
+
+        <div class="view-toggle">
+          <button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'list'"
+            (click)="viewMode.set('list')"
+          >List</button>
+          <button
+            class="toggle-btn"
+            [class.active]="viewMode() === 'card'"
+            (click)="viewMode.set('card')"
+          >Cards</button>
+        </div>
+      </div>
     </div>
 
     @if (loading()) {
@@ -62,37 +63,34 @@
         <span>Loading cards...</span>
       </div>
     } @else if (viewMode() === 'list') {
-      <div class="list-view">
-        <table>
-          <thead>
-            <tr>
-              <th class="col-number sortable" (click)="toggleSort('number')">#{{ sortIndicator('number') }}</th>
-              <th class="col-name sortable" (click)="toggleSort('name')">Name{{ sortIndicator('name') }}</th>
-              <th class="col-cost">Cost</th>
-              <th class="col-type">Type</th>
-              <th class="col-rarity">Rarity</th>
-              <th class="col-status sortable" (click)="toggleSort('implemented')">Implemented{{ sortIndicator('implemented') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (card of filteredCards(); track card.collectorNumber) {
-              <tr [class.implemented]="card.implemented" [class.not-implemented]="!card.implemented">
-                <td class="col-number">#{{ card.collectorNumber }}</td>
-                <td class="col-name">{{ card.name }}</td>
-                <td class="col-cost" [innerHTML]="renderManaCost(card.manaCost)"></td>
-                <td class="col-type">{{ card.typeLine }}</td>
-                <td class="col-rarity" [class]="'rarity-' + card.rarity">{{ capitalizeRarity(card.rarity) }}</td>
-                <td class="col-status">
-                  @if (card.implemented) {
-                    <span class="status-yes">Yes</span>
-                  } @else {
-                    <span class="status-no">No</span>
-                  }
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+      <div class="cards-table">
+        <div class="cards-table-head">
+          <span class="sortable" (click)="toggleSort('number')">#{{ sortIndicator('number') }}</span>
+          <span class="sortable" (click)="toggleSort('name')">Name{{ sortIndicator('name') }}</span>
+          <span>Cost</span>
+          <span>Type</span>
+          <span>Rarity</span>
+          <span class="sortable" (click)="toggleSort('implemented')">Implemented{{ sortIndicator('implemented') }}</span>
+        </div>
+        <div class="cards-table-body">
+          @for (card of filteredCards(); track card.collectorNumber) {
+            <div class="card-row" [class.not-implemented]="!card.implemented">
+              <span class="cell-number">#{{ card.collectorNumber }}</span>
+              <span class="cell-name">{{ card.name }}</span>
+              <span class="cell-cost" [innerHTML]="renderManaCost(card.manaCost)"></span>
+              <span class="cell-type">{{ card.typeLine }}</span>
+              <span class="cell-rarity" [class]="'cell-rarity rarity-' + card.rarity">{{ capitalizeRarity(card.rarity) }}</span>
+              <span class="cell-status">
+                <span class="status-gem" [class.open]="card.implemented"></span>
+                @if (card.implemented) {
+                  Yes
+                } @else {
+                  No
+                }
+              </span>
+            </div>
+          }
+        </div>
       </div>
     } @else {
       <div class="card-view">
@@ -111,5 +109,5 @@
         }
       </div>
     }
-  </div>
+  </section>
 </div>
