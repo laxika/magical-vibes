@@ -332,6 +332,67 @@
   margin-bottom: 24px;
 }
 
+/* Match the card size used in the player's own hand. */
+.reveal-hand-cards .card {
+  --card-zoom: var(--density-zoom, 1);
+}
+
+/* Floating, draggable revealed-hand window (MTGO-style). */
+.reveal-hand-layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  /* View-only: let the board stay interactive; the window opts back in below. */
+  pointer-events: none;
+}
+
+/* A forced choice (e.g. Thoughtseize) dims and blocks the board. */
+.reveal-hand-layer.reveal-hand-modal {
+  background: rgba(0, 0, 0, 0.75);
+  pointer-events: auto;
+}
+
+.reveal-hand-window {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 90vw;
+  max-height: 85vh;
+  background: var(--gradient-parchment);
+  border-radius: 4px;
+  border: 3px solid var(--color-blue-primary);
+  box-shadow: 0 0 30px rgba(44, 94, 162, 0.3), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Once dragged, the window is pinned by fixed left/top instead of flex-centered. */
+.reveal-hand-window.reveal-hand-positioned {
+  position: fixed;
+}
+
+.reveal-hand-titlebar {
+  flex: 0 0 auto;
+  padding: 10px 20px;
+  background: var(--color-blue-primary);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  text-align: center;
+  border-radius: 1px 1px 0 0;
+  cursor: move;
+  user-select: none;
+}
+
+.reveal-hand-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 20px 32px;
+  text-align: center;
+}
+
 .library-search-card {
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;

@@ -150,6 +150,7 @@ export class GameComponent implements OnInit, OnDestroy {
       clearTimeout(this.modifierTooltipTimer);
     }
     this.battlefieldAreaObserver?.disconnect();
+    this.onRevealHandDragEnd();
     if (this.combatShiftFrame != null) {
       cancelAnimationFrame(this.combatShiftFrame);
     }
@@ -241,6 +242,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     if (message.type === MessageType.REVEAL_HAND) {
+      this.revealHandPos.set(null);
       this.choice.handleRevealHand(message as RevealHandNotification);
     }
 
@@ -249,6 +251,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
 
     if (message.type === MessageType.CHOOSE_FROM_REVEALED_HAND) {
+      this.revealHandPos.set(null);
       this.choice.handleChooseFromRevealedHand(message as ChooseFromRevealedHandNotification);
     }
 
@@ -1500,6 +1503,40 @@ export class GameComponent implements OnInit, OnDestroy {
   onDocumentClick(): void {
     this.showShortcutsPopup.set(false);
   }
+
+  // Position of the draggable revealed-hand window; null keeps it default-centered.
+  readonly revealHandPos = signal<{ x: number; y: number } | null>(null);
+  private revealHandDragOffset: { x: number; y: number } | null = null;
+
+  /** Begin dragging the revealed-hand window from its title bar. */
+  startRevealHandDrag(event: MouseEvent): void {
+    event.preventDefault();
+    const window = (event.currentTarget as HTMLElement).closest('.reveal-hand-window') as HTMLElement | null;
+    if (!window) return;
+    // Seed from the current on-screen rect so the first drag doesn't jump.
+    if (!this.revealHandPos()) {
+      const rect = window.getBoundingClientRect();
+      this.revealHandPos.set({ x: rect.left, y: rect.top });
+    }
+    const pos = this.revealHandPos()!;
+    this.revealHandDragOffset = { x: event.clientX - pos.x, y: event.clientY - pos.y };
+    document.addEventListener('mousemove', this.onRevealHandDragMove);
+    document.addEventListener('mouseup', this.onRevealHandDragEnd);
+  }
+
+  private onRevealHandDragMove = (event: MouseEvent): void => {
+    if (!this.revealHandDragOffset) return;
+    this.revealHandPos.set({
+      x: event.clientX - this.revealHandDragOffset.x,
+      y: event.clientY - this.revealHandDragOffset.y
+    });
+  };
+
+  private onRevealHandDragEnd = (): void => {
+    this.revealHandDragOffset = null;
+    document.removeEventListener('mousemove', this.onRevealHandDragMove);
+    document.removeEventListener('mouseup', this.onRevealHandDragEnd);
+  };
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent): void {

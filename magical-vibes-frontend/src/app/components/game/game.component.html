@@ -720,32 +720,39 @@
   }
 
   @if (choice.revealingHand) {
-    <div class="reveal-hand-overlay">
-      <div class="reveal-hand-card">
-        @if (choice.choosingFromRevealedHand) {
-          <h2>{{ choice.revealedHandChoicePrompt }}</h2>
-        } @else {
-          <h2>{{ choice.revealedHandPlayerName }}'s Hand</h2>
-        }
-        @if (choice.revealedHandCards.length === 0) {
-          <p class="reveal-hand-empty">Hand is empty.</p>
-        } @else {
-          <div class="reveal-hand-cards">
-            @for (card of choice.revealedHandCards; track $index) {
-              <app-card-display [card]="card"
-                [class.choosable-card]="choice.isRevealedHandCardChoosable($index)"
-                (click)="choice.choosingFromRevealedHand ? choice.chooseFromRevealedHand($index) : null"
-                (mouseenter)="onCardHover(card)"
-                (mouseleave)="onCardHoverEnd()" />
-            }
-          </div>
-        }
-        @if (!choice.choosingFromRevealedHand) {
-          <button class="btn-keep" (click)="choice.closeRevealHand()">Close</button>
-        }
-        @if (choice.choosingFromRevealedHand && choice.revealedHandChoiceOptional) {
-          <button class="btn-keep" (click)="choice.declineFromRevealedHand()">Choose none</button>
-        }
+    <div class="reveal-hand-layer" [class.reveal-hand-modal]="choice.choosingFromRevealedHand">
+      <div class="reveal-hand-window"
+        [class.reveal-hand-positioned]="revealHandPos() !== null"
+        [style.left.px]="revealHandPos()?.x"
+        [style.top.px]="revealHandPos()?.y">
+        <div class="reveal-hand-titlebar" (mousedown)="startRevealHandDrag($event)">
+          @if (choice.choosingFromRevealedHand) {
+            {{ choice.revealedHandChoicePrompt }}
+          } @else {
+            {{ choice.revealedHandPlayerName }}'s Hand
+          }
+        </div>
+        <div class="reveal-hand-body">
+          @if (choice.revealedHandCards.length === 0) {
+            <p class="reveal-hand-empty">Hand is empty.</p>
+          } @else {
+            <div class="reveal-hand-cards" [style.--density-zoom]="handZoom">
+              @for (card of choice.revealedHandCards; track $index) {
+                <app-card-display [card]="card"
+                  [class.choosable-card]="choice.isRevealedHandCardChoosable($index)"
+                  (click)="choice.choosingFromRevealedHand ? choice.chooseFromRevealedHand($index) : null"
+                  (mouseenter)="onCardHover(card)"
+                  (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          }
+          @if (!choice.choosingFromRevealedHand) {
+            <button class="btn-keep" (click)="choice.closeRevealHand()">Close</button>
+          }
+          @if (choice.choosingFromRevealedHand && choice.revealedHandChoiceOptional) {
+            <button class="btn-keep" (click)="choice.declineFromRevealedHand()">Choose none</button>
+          }
+        </div>
       </div>
     </div>
   }
