@@ -795,6 +795,24 @@ class StateBasedActionServiceTest {
         }
 
         @Test
+        @DisplayName("Attachment legality is enforced as part of every SBA check")
+        void attachmentLegalityEnforcedEachCheck() {
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService).enforceAttachmentLegality(gd);
+        }
+
+        @Test
+        @DisplayName("An attachment change triggers another SBA pass")
+        void attachmentChangeTriggersAnotherPass() {
+            when(permanentRemovalService.enforceAttachmentLegality(gd)).thenReturn(true, false);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, times(2)).enforceAttachmentLegality(gd);
+        }
+
+        @Test
         @DisplayName("Permanent that stays on the battlefield after removal is not processed twice")
         void deadPermanentNotProcessedTwice() {
             Card card = createCreatureCard("Stubborn Creature");

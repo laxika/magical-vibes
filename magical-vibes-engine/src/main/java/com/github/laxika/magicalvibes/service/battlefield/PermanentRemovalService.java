@@ -337,6 +337,20 @@ public class PermanentRemovalService {
     }
 
     /**
+     * State-based attachment legality (CR 704.5n/704.5q): puts illegally attached auras into
+     * their owners' graveyards and unattaches illegally attached equipment.
+     *
+     * @return {@code true} if any attachment changed (the SBA loop must re-check)
+     */
+    public boolean enforceAttachmentLegality(GameData gameData) {
+        var result = auraAttachmentService.enforceAttachmentLegality(gameData);
+        for (var removal : result.removals()) {
+            triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, removal.card(), removal.controllerId());
+        }
+        return result.anyChange();
+    }
+
+    /**
      * Attempts to destroy a permanent, respecting indestructible and regeneration.
      * If destroyed, the permanent is sent to the graveyard and orphaned auras are cleaned up.
      *

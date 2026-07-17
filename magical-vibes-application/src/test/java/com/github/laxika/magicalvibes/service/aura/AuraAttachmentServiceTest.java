@@ -2,14 +2,18 @@ package com.github.laxika.magicalvibes.service.aura;
 import com.github.laxika.magicalvibes.model.GameLog;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +27,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +45,7 @@ class AuraAttachmentServiceTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GraveyardService graveyardService;
     @Mock private CreatureControlService creatureControlService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
 
     @InjectMocks private AuraAttachmentService service;
 
@@ -251,6 +258,178 @@ class AuraAttachmentServiceTest {
         }
     }
 
+    // ===== enforceAttachmentLegality — CR 704.5n / 704.5q =====
+
+    @Nested
+    @DisplayName("enforceAttachmentLegality - Aura legality (CR 704.5n)")
+    class AuraAttachmentLegality {
+
+        @Test
+        @DisplayName("Aura is put into the graveyard when the enchanted permanent has protection from it")
+        void auraEvictedWhenHostGainsProtection() {
+            Permanent host = createCreature("White Knight");
+            Permanent aura = createAura("Unholy Strength");
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, aura)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(host);
+            assertThat(result.anyChange()).isTrue();
+            assertThat(result.removals()).hasSize(1);
+            assertThat(result.removals().get(0).controllerId()).isEqualTo(player1Id);
+            verify(creatureControlService).reconcileControl(gd);
+        }
+
+        @Test
+        @DisplayName("Aura is put into the graveyard when its enchant restriction no longer matches")
+        void auraEvictedWhenEnchantRestrictionFails() {
+            Permanent host = createCreature("Formerly Animated Land");
+            var filter = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature");
+            Permanent aura = createAuraWithEnchantRestriction("Spirit Link", filter);
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, aura)).thenReturn(false);
+            when(predicateEvaluationService.checkTargetFilter(eq(filter), eq(host), any()))
+                    .thenReturn(Optional.of("Target must be a creature"));
+            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(host);
+            assertThat(result.removals()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Legally attached aura stays put")
+        void legalAuraStaysAttached() {
+            Permanent host = createCreature("Grizzly Bears");
+            var filter = new PermanentPredicateTargetFilter(
+                    new PermanentIsCreaturePredicate(), "Target must be a creature");
+            Permanent aura = createAuraWithEnchantRestriction("Spirit Link", filter);
+            aura.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, aura)).thenReturn(false);
+            when(predicateEvaluationService.checkTargetFilter(eq(filter), eq(host), any()))
+                    .thenReturn(Optional.empty());
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(host, aura);
+            assertThat(result.anyChange()).isFalse();
+            verify(creatureControlService, never()).reconcileControl(gd);
+        }
+
+        @Test
+        @DisplayName("Aura whose host already left the battlefield is left to the orphan cleanup")
+        void auraOnDepartedHostIgnored() {
+            UUID departedHostId = UUID.randomUUID();
+            Permanent aura = createAura("Spirit Link");
+            aura.setAttachedTo(departedHostId);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.findPermanentById(gd, departedHostId)).thenReturn(null);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(aura);
+            assertThat(result.anyChange()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Aura enchanting a player with protection from its color is put into the graveyard")
+        void auraOnProtectedPlayerEvicted() {
+            Permanent aura = createAura("Curse of Thirst");
+            aura.setAttachedTo(player2Id);
+            gd.playerBattlefields.get(player1Id).add(aura);
+
+            when(gameQueryService.getEffectiveColors(gd, aura)).thenReturn(Set.of(CardColor.BLACK));
+            when(gameQueryService.playerHasProtectionFromColor(gd, player2Id, CardColor.BLACK)).thenReturn(true);
+            when(graveyardService.addCardToGraveyard(gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).isEmpty();
+            assertThat(result.removals()).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("enforceAttachmentLegality - Equipment legality (CR 704.5q)")
+    class EquipmentAttachmentLegality {
+
+        @Test
+        @DisplayName("Equipment becomes unattached when the equipped permanent stops being a creature")
+        void equipmentUnattachesWhenHostNotACreature() {
+            Permanent host = createCreature("Formerly Animated Land");
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, host)).thenReturn(false);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(host, equipment);
+            assertThat(equipment.getAttachedTo()).isNull();
+            assertThat(result.anyChange()).isTrue();
+            assertThat(result.removals()).isEmpty();
+            verify(creatureControlService).reconcileControl(gd);
+        }
+
+        @Test
+        @DisplayName("Equipment becomes unattached when the equipped creature has protection from it")
+        void equipmentUnattachesWhenHostHasProtection() {
+            Permanent host = createCreature("Pro-Artifacts Creature");
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(equipment.getAttachedTo()).isNull();
+            assertThat(result.anyChange()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Legally equipped equipment stays attached")
+        void legalEquipmentStaysAttached() {
+            Permanent host = createCreature("Grizzly Bears");
+            Permanent equipment = createEquipment("Darksteel Axe");
+            equipment.setAttachedTo(host.getId());
+            gd.playerBattlefields.get(player1Id).add(host);
+            gd.playerBattlefields.get(player1Id).add(equipment);
+
+            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(gameQueryService.hasProtectionFromSource(gd, host, equipment)).thenReturn(false);
+            when(gameQueryService.isCreature(gd, host)).thenReturn(true);
+
+            var result = service.enforceAttachmentLegality(gd);
+
+            assertThat(equipment.getAttachedTo()).isEqualTo(host.getId());
+            assertThat(result.anyChange()).isFalse();
+        }
+    }
+
     // ===== Edge cases =====
 
     @Nested
@@ -296,6 +475,15 @@ class AuraAttachmentServiceTest {
         Card card = createCard(name);
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.AURA));
+        return new Permanent(card);
+    }
+
+    // The enchant restriction must be declared before Permanent creation freezes the card
+    private Permanent createAuraWithEnchantRestriction(String name, PermanentPredicateTargetFilter filter) {
+        Card card = createCard(name);
+        card.setType(CardType.ENCHANTMENT);
+        card.setSubtypes(List.of(CardSubtype.AURA));
+        card.target(filter);
         return new Permanent(card);
     }
 

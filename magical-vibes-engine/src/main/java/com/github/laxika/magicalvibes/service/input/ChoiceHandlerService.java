@@ -590,6 +590,9 @@ public class ChoiceHandlerService {
             }
         }
 
+        // CR 704.5n/704.5q — the new protection can make an attached aura or equipment illegal
+        stateBasedActionService.performStateBasedActions(gameData);
+
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         resumeAndAutoPass(gameData);
@@ -621,6 +624,9 @@ public class ChoiceHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} and their permanents gain protection from {} until end of turn",
                 gameData.id, playerName, colorName.toLowerCase());
+
+        // CR 704.5n/704.5q — the new protection can make attached auras or equipment illegal
+        stateBasedActionService.performStateBasedActions(gameData);
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);

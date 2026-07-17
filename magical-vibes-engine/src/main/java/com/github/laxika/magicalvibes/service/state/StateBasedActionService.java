@@ -68,6 +68,9 @@ public class StateBasedActionService {
 
             anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
             anyPerformed |= cancelCounters(gameData);
+
+            // CR 704.5n / 704.5q — illegally attached auras die, illegal equipment unattaches
+            anyPerformed |= permanentRemovalService.enforceAttachmentLegality(gameData);
         } while (anyPerformed && ++passes < MAX_SBA_PASSES);
 
         if (passes >= MAX_SBA_PASSES) {
