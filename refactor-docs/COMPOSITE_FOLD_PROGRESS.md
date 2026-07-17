@@ -797,3 +797,63 @@ uses distinct `DrawCardEffect(1..4)` steps so identity-keyed handler stubs stay 
 - Reminder for those sessions: `SequenceEffect` is do-all-of with NO if-you-do contingency. Records whose second step
   is conditional on the first *actually happening* ("draw only if you discarded") still need their own primitive or a
   count-carried rider — a sequence alone does not express that.
+
+## Batch 3 Session 2 — GainControlUntapAndHasteTargetEffect folded (MayEffect(SequenceEffect) proven)
+
+First real fold onto the Session-1 `SequenceEffect` primitive. Deleted the composite record
+`GainControlUntapAndHasteTargetEffect` and its handler, decomposing Dominus of Fealty onto the three existing
+Threaten primitives wrapped in a `SequenceEffect` inside its `MayEffect`.
+
+### Why a plain (non-contingent) sequence is rules-correct
+Dominus oracle: "you MAY gain control of target permanent until end of turn. IF YOU DO, untap it and it gains haste
+until end of turn." The may-gate is what blocked decomposition before — `MayEffect(CardEffect wrapped, String prompt)`
+holds exactly one effect. But accepting the may is what makes the gain-control happen, so once accepted the untap +
+haste are unconditional. There is no *inner* "if you do" between the three steps → a plain `SequenceEffect` (no
+contingency) is exactly right.
+
+### What changed
+- **`DominusOfFealty.java`** — inside its unchanged `MayEffect(..., "Gain control of target permanent until end of
+  turn?")` on `UPKEEP_TRIGGERED`, replaced `new GainControlUntapAndHasteTargetEffect()` with
+  `SequenceEffect.of(GainControlOfTargetEffect(END_OF_TURN), UntapPermanentsEffect(TARGET), GrantKeywordEffect(HASTE, TARGET))`.
+  The `target(PermanentPredicateTargetFilter(PermanentTruePredicate(), ...))` clause and slot are byte-identical; only
+  imports changed.
+- **Step order = the deleted handler's order** (gain control → untap → haste), which is also Dominus's oracle order.
+  Note Act of Treason lists the same three constructions in a different order (untap → control → haste); per the fold
+  brief the HANDLER is source of truth, so I mirrored the handler, not Act of Treason. (Order is functionally
+  irrelevant here — untap/haste don't depend on who controls the permanent — but mirroring the handler keeps it
+  provably behavior-preserving.)
+- **Deleted** `magical-vibes-domain/.../model/effect/GainControlUntapAndHasteTargetEffect.java` and
+  `magical-vibes-engine/.../service/effect/normalfx/GainControlUntapAndHasteTargetEffectHandler.java`.
+- **`MayAbilityHandlerService`** — NOT touched. The known-risk `extractInnerEffect` / `setUpSelfTargetIfNeeded`
+  helpers did not need to learn about `SequenceEffect`: Dominus targets via the card's explicit `target(...)` clause
+  (entry carries the `targetId`), and every spliced step reads that shared `targetId`, so the may flow worked
+  unchanged.
+
+### Greps run (whole-repo *.java, build/ excluded)
+- `GainControlUntapAndHasteTargetEffect` in `*.java` → zero (all references gone).
+- `magical-vibes-engine/**/validate/` → no `@ValidatesTarget` for the record (its checks flow through the primitives'
+  own validators; nothing to delete).
+- `magical-vibes-ai` → zero (no bespoke scoring; the deleted composite was never AI-scored, and the decomposed
+  primitives already score individually via the Session-1 `SpellEvaluator` `SequenceEffect` sum branch).
+- `GainControlUntapAndHasteTargetEffectHandlerTest` → does not exist (nothing to port/delete).
+- Remaining `.md` hits: `agent-docs/` rewritten (below); `refactor-docs/` history untouched
+  (`PROGRESS.md`, `TARGETSPEC_PROGRESS.md` deletion lists, `EFFECT_COUPLING_MATRIX.md` row) — the matrix is a
+  generated audit artifact and its stale row will clear on the next `effect-coupling-audit.py` refresh.
+
+### Docs
+- `agent-docs/EFFECTS_INDEX.md` — deleted the `GainControlUntapAndHasteTargetEffect` row.
+- `agent-docs/EFFECTS_QUICK_REFERENCE.md` — Control/steal bullet rewritten to the "no dedicated effect; compose
+  `MayEffect(SequenceEffect.of(...))`" pattern.
+- `agent-docs/ORACLE_TEXT_EFFECT_MAP.md` — both rows rewritten: the Threaten rider row → flat three effects
+  (Act of Treason); the Dominus row → `MayEffect(SequenceEffect.of(...))`.
+- `agent-docs/CARD_PATTERNS_CREATURES_TRIGGERED.md` — no Dominus row existed; nothing to change.
+
+### Tests
+- `DominusOfFealtyTest` — PASS (4 tests; baseline green before the change, still green after: accept → control
+  stolen + untapped + haste until EOT; decline → nothing; control reverts at end of turn).
+- `ActOfTreasonTest` — PASS (7 tests) as a control that the shared primitives are unharmed.
+- Full suite not run (per CLAUDE.md — user runs it).
+
+### Traps hit
+- None. `MayAbilityHandlerService` known risk did not materialize (targeting via explicit `target(...)`, not the
+  inner-effect self-target inference).

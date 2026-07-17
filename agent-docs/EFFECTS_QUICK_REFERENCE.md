@@ -784,7 +784,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `GainControlOfTargetEffect(ControlDuration.PERMANENT[, CardSubtype])` — gain control permanently
 - `GainControlOfTargetEffect(ControlDuration.END_OF_TURN)` — gain control until EOT
-- `GainControlUntapAndHasteTargetEffect()` — Threaten bundle in one effect (gain control until EOT + untap + haste); use when it must be gated by a single `MayEffect` (Dominus of Fealty)
+- Threaten bundle gated by one `MayEffect` — no dedicated effect; compose `MayEffect(SequenceEffect.of(GainControlOfTargetEffect(END_OF_TURN), UntapPermanentsEffect(TARGET), GrantKeywordEffect(HASTE, TARGET)), prompt)` (Dominus of Fealty). `SequenceEffect` gates the three primitives as one unit inside the single-effect `MayEffect`
 - `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` — control while source on battlefield
 - `GainControlOfAllLandsTargetPlayerControlsEffect()` — gain permanent control of every land the target player controls (player-targeting spec, Gilt-Leaf Archdruid)
 - `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_TAPPED)` — control while source stays on battlefield, its creator still controls it, AND it remains tapped; ends (and does not resume) the moment the source untaps (Seasinger). Untap hook lives in `TapUntapSupport.untapPermanent` / `MayMiscHandlerService.handleMayNotUntapChoice` → `CreatureControlService.onSourceUntapped`

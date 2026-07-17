@@ -3,8 +3,15 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.GainControlUntapAndHasteTargetEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -18,7 +25,11 @@ public class DominusOfFealty extends Card {
                 new PermanentTruePredicate(),
                 "Target must be a permanent"
         )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new GainControlUntapAndHasteTargetEffect(),
+                SequenceEffect.of(
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                ),
                 "Gain control of target permanent until end of turn?"
         ));
     }
