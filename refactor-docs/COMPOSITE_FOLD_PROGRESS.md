@@ -331,3 +331,133 @@ is pinned by `CounterSpellEffectHandlerTest.countersCreatureSpellAndPutsInGravey
   `CounterSpellIfControllerPoisonedEffect`, `CounterSpellsNamedLikeCardsExiledWithSourceEffect` — each
   couples extra behavior (search+exile, treasures, gain-control, poison condition, name-matching).
 - Nothing deferred. Full suite not run (per CLAUDE.md — user runs it).
+
+---
+
+## Session 4 — three "independent-pair" candidates: ALL THREE DEFERRED (no folds)
+
+This session investigated three composites slated for decompose-onto-card. **All three turned out to
+be legitimate bundles that the engine requires to stay a single effect-object**, for reasons that only
+show up in the *composition context* (not in the handler body). Each handler is a clean "do A, then B
+(, then C)" with no data flow and no extra branches — so by the handler-only DEFER criterion they look
+foldable — but decomposing each onto the card breaks rules-correct behavior. **No card, record, handler,
+agent-doc, or test was changed.** Working tree left clean. Detail + evidence below so future sessions
+don't re-attempt these.
+
+### ⭐ Load-bearing verdict for future batches: the ASYNC-RESUME (interaction-then-rider) machinery WORKS
+
+Confirmed by code reading (no fold needed to establish it):
+- **Pause side** — `EffectResolutionService.resolveEffectsLoop` (magical-vibes-engine): after each effect
+  it checks `gameData.interaction.isAwaitingInput() || !pendingMayAbilities.isEmpty()`; if paused it
+  stores `pendingEffectResolutionEntry = entry` and `pendingEffectResolutionIndex = i + 1` (the *next*
+  effect, unless the effect is a re-run kind — X-value / stack-may / `rerunCurrentEffectAfterInteraction`)
+  and returns.
+- **Resume side** — the interaction-completion handlers re-enter `effectResolutionService.resolveEffectsFrom(
+  gameData, pendingEffectResolutionEntry, pendingEffectResolutionIndex)`. For a **discard** specifically this
+  is `CardChoiceHandlerService` (~line 270, comment: *"Resume resolving remaining effects on the same
+  spell/ability (e.g. 'Target player discards a card, then mills a card.')"*). Same pattern in
+  `ChoiceHandlerService`, `GraveyardChoiceHandlerService`, `LibraryChoiceHandlerService`,
+  `InputCompletionService`, etc.
+
+**So a plain "discard/other-interaction, then [rider]" (no `MayEffect`, no "if you do" contingency) IS
+foldable into `DiscardEffect` + rider — the rider runs after the choice is answered.** The blockers below
+are NOT the async machinery.
+
+### Record 1 — GainControlUntapAndHasteTargetEffect (Dominus of Fealty) → DEFER
+
+- Handler (`GainControlUntapAndHasteTargetEffectHandler`) is exactly `GainControlOfTargetEffect(END_OF_TURN)`
+  → `UntapPermanentsEffect(TARGET)` → `GrantKeywordEffect(HASTE, TARGET)` on `entry.getTargetId()`. Clean.
+- **Blocker — single `MayEffect` gate.** The card is
+  `target(...).addEffect(UPKEEP_TRIGGERED, new MayEffect(new GainControlUntapAndHasteTargetEffect(), "…"))`.
+  Oracle: *"you **may** gain control of target permanent until end of turn. **If you do**, untap it and it
+  gains haste until end of turn."* `MayEffect(CardEffect wrapped, String)` wraps **exactly one** effect
+  (verified: `MayEffectHandler` queues `List.of(e.wrapped())`; `EffectResolutionService` unwraps only that
+  one on accept, or `continue`s on decline). The composite's own javadoc states this is *why* it exists.
+  - Mirroring Act of Treason (three flat `addEffect`s, no may) would make the ability **mandatory** — drops
+    "you may" — rules-wrong.
+  - Wrapping only gain-control in the may and adding untap+haste as flat effects would **untap and haste a
+    permanent you declined to steal** on a "no" — rules-wrong.
+  - There is **no generic sequence/bundle effect** for a `MayEffect` to gate (searched: no
+    `SequenceEffect`/`CompositeEffect`/`MultiEffect`/`AllOfEffect`; the `List<CardEffect>`-holding effects —
+    `ChooseOneEffect`, `ClashEffect`, `KinshipEffect`, … — are all specialized, not a plain "do all of
+    these").
+  - The task's Record-1 description omitted the "you may … if you do" wording (called it just "gain control
+    …, untap it, it gains haste"); the real card and oracle have the may. Rules accuracy (CLAUDE.md #1)
+    wins → **left untouched.**
+
+### Record 2 — DiscardCardAndUntapSelfEffect (Elaborate Firecannon) → DEFER
+
+- Handler (`DiscardCardAndUntapSelfEffectHandler`): empty hand → log "has no cards to discard" and
+  **return without untapping**; else `resolveDiscardCards(…, DiscardFollowUp.untap(sourcePermanentId))` — the
+  untap rides the discard follow-up so it fires only **after** a card is actually discarded.
+- Async machinery is fine (see verdict above), **but two independent blockers remain**:
+  1. **Single `MayEffect` gate** — card is
+     `addEffect(UPKEEP_TRIGGERED, new MayEffect(new DiscardCardAndUntapSelfEffect(), "Discard a card to
+     untap …?"))`. Oracle: *"you **may** discard a card. **If you do**, untap …"*. Same one-effect-wrap
+     problem as Record 1: the given decomposition (`DiscardEffect` + `UntapPermanentsEffect`, no may) makes
+     the discard **mandatory** every upkeep — rules-wrong.
+  2. **"If you do" empty-hand contingency** — the old handler does **not** untap when the hand is empty
+     (and, via the follow-up, only untaps once a card is genuinely discarded). Two flat effects would run
+     `UntapPermanentsEffect(SELF)` **unconditionally**, so Elaborate Firecannon would untap on an empty hand
+     — rules-wrong (CR "if you do" is unsatisfied when nothing was discarded).
+- Both blockers are on the *card-composition* side; the handler body itself is clean. No engine primitive
+  today expresses "may-gate a discard **and** a contingent untap as one object" other than this composite →
+  **left untouched.**
+
+### Record 3 — ReturnSelfToHandAndCreateTokensEffect (Thopter Assembly) → DEFER
+
+- **Rules first (web-verified):** Thopter Assembly's ability is a **single linked effect** —
+  *"…return this creature to its owner's hand **and** create five 1/1 … Thopters."* The tokens are **NOT**
+  contingent on the return ("if it leaves the battlefield you **still** get the five Thopters"). So the
+  current handler (bounce if present, then **always** create tokens) is rules-correct; there is no "if you
+  do" here. (Gatherer/Salvation rulings.)
+- Handler is a clean "return self (or no-op if gone), then create tokens" — looked foldable into
+  `ConditionalEffect(NoOtherPermanent(THOPTER), ReturnToHandEffect.self())` +
+  `ConditionalEffect(NoOtherPermanent(THOPTER), CreateTokenEffect(5, "Thopter", …))`. **It is not.**
+- **Blocker — the upkeep-trigger collector pushes ONE stack entry per `ConditionalEffect`.**
+  `StepTriggerService.handleUpkeepTriggers` groups multiple slot effects into a single entry **only** for
+  the targeting paths (any-target / player-target / exchange-control). Everything else falls into a
+  `for (CardEffect effect : upkeepEffects)` loop where each `ConditionalEffect(NoOtherPermanent)` (and the
+  other intervening-if variants) is pushed as its **own** `StackEntry` with a one-effect list. Two such
+  effects ⇒ **two separate triggered abilities**, not one atomic ability.
+  - `GameData.stack` resolves **LIFO** (`StackResolutionService` does `stack.removeLast()`). The
+    token-creation entry (pushed last) resolves **first**, putting 5 Thopters onto the battlefield; then the
+    bounce entry resolves and its `NoOtherPermanent(THOPTER)` intervening-if now sees those 5 Thopters →
+    condition **fails** → the bounce is **skipped**. Net result: Assembly never returns to hand and the
+    self-recycling loop is dead. Also breaks CR 603 atomicity (players would get priority between the two
+    halves).
+- **Empirically confirmed** this session: temporarily rewrote the card to the two-`ConditionalEffect`
+  decomposition and ran `ThopterAssemblyTest` → **4 of 7 failed** — `doesNothingIfConditionFailsAtResolution`
+  and `stillCreatesTokensIfDestroyedBeforeResolution` saw `stack size 2 (expected 1)`, and
+  `triggersWhenNoOtherThopters` / `triggersWhenOpponentHasThopters` found **Thopter Assembly still on the
+  battlefield** (bounce skipped) exactly as predicted. Card was then reverted via `git checkout --`; tree is
+  clean.
+- The composite bundles both halves into one effect so the single upkeep trigger stays one atomic entry →
+  **left untouched.**
+
+### Common theme / guidance for future sessions
+These three are **not redundant composites**. Each exists to keep multiple sub-effects inside one
+effect-object because a *wrapper the card must use* only accepts one effect:
+- `MayEffect` / `ConditionalEffect` wrap exactly one `CardEffect` (Records 1, 2, and the *card-level* wrapper
+  of 3).
+- The upkeep-trigger collector emits one stack entry per intervening-if `ConditionalEffect` (Record 3).
+
+Decomposing any of them onto the card is only possible with an **engine change** (a generic sequential
+"do-all-of" bundle effect that `MayEffect`/`ConditionalEffect` could wrap, and/or batching same-condition
+intervening-if effects into one upkeep entry) — out of scope for a decompose-onto-card fold, and none is
+needed for correctness today. Before folding any future `FooAndBar` composite, check whether the *user card*
+wraps it in `MayEffect`/`ConditionalEffect` or registers it on a per-effect trigger slot (`UPKEEP_TRIGGERED`
+et al.); if so, the composite is load-bearing.
+
+### Tests run
+- `cards.t.ThopterAssemblyTest` — run once against a temporary decomposition to prove the split (4/7 failed
+  as documented), then the card was reverted; **no committed test changes**. On the unchanged repo the suite
+  is the pre-existing 7-test green baseline.
+- No handler unit tests deleted (Record 2's `DiscardCardAndUntapSelfEffectHandlerTest` and the Record 1/3
+  handlers all remain in place, since nothing was folded).
+
+### Notes
+- No agent-docs touched (`CARD_PATTERNS_CREATURES_TRIGGERED.md`, `EFFECTS_INDEX.md`,
+  `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` still reference all three records — correct, they
+  still exist).
+- Nothing deleted. Full suite not run (per CLAUDE.md — user runs it).
