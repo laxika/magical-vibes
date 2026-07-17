@@ -996,3 +996,63 @@ next session to delete once the two wrapper-blocked users and the dynamic site a
 - None. The gain-trigger-context nuance above was investigated to ground (traced `checkLifeGainTriggers` →
   `TriggerContext.LifeGain` → sole `DealDamageOnSpellLifeGainEffect` consumer = Firesong/WHITE) and found
   unobservable + more-correct, so not a stop-condition. Loss side byte-identical; no collector changed.
+
+## Batch 3 Session 5 — drain composite deleted (wrapper users + collector site migrated)
+
+Folded the **three remaining construction sites** of `TargetPlayerLosesLifeAndControllerGainsLifeEffect(lifeLoss,
+lifeGain)` onto the decomposed pair `LoseLifeEffect(N, TARGET_PLAYER)` + `GainLifeEffect(M)` (gain omitted when M = 0),
+then **deleted the record, its handler, and its `@ValidatesTarget` registration**. The record is now gone repo-wide
+(only refactor-docs history retains the name).
+
+### The three sites
+- **`b/BleakCovenVampires`** (ETB, `ConditionalEffect` wrapper) — `ConditionalEffect(new Metalcraft(),
+  SequenceEffect.of(new LoseLifeEffect(4, TARGET_PLAYER), new GainLifeEffect(4)))`. At resolution
+  `EffectResolutionService` re-checks the intervening-if, unwraps the `ConditionalEffect` to the `SequenceEffect`,
+  which splices its two steps into the entry's live effect list; the entry's cast-time PLAYER target (spec unchanged —
+  `ConditionalEffect.targetSpec()` → `SequenceEffect.targetSpec()` → first non-NONE = the `TARGET_PLAYER` loss = benign
+  PLAYER) feeds `entry.getTargetId()` for the loss, controller gains the fixed 4.
+- **`a/ArnynDeathbloomBotanist`** (two death slots, `TriggeringPermanentConditionalEffect` wrapper) — `DRAIN` static
+  field is now `SequenceEffect.of(new LoseLifeEffect(2, TARGET_PLAYER), new GainLifeEffect(2))`, still wrapped in
+  `TriggeringPermanentConditionalEffect(power/toughness≤1, DRAIN)` on `ON_ALLY_CREATURE_DIES` + `ON_DEATH`. Verified the
+  unwrap path: `unwrapCreatureDeathConditional` evaluates the predicate against the dying permanent and returns
+  `conditional.wrapped()` (the `SequenceEffect`); because that effect's `targetSpec()` includes players, the death
+  pipeline routes it through `PermanentChoiceContext.DeathTriggerTarget`. `TriggerTargetCollector.collect` derives
+  `opponentOnly` from the **card-level** `dyingCard.getTargetFilter()` (Arnyn's opponent-only `PlayerRelationPredicate`),
+  independent of the wrapped effect object — so the "target opponent" restriction is preserved (the pre-existing code
+  already passed a distinct unwrapped object, proving identity-independence). Chosen opponent → `entry.getTargetId()` →
+  loss; controller gains 2.
+- **`SpellCastTriggerCollectorService.handleOpponentSpellCastDrain`** (dynamic, Yawgmoth's Edict via
+  `SpellCastLifeDrainEffect`) — the built effect fed a **single stack entry's `List<CardEffect>`**, so replaced with the
+  two flat effects added to that same list: `LoseLifeEffect(trigger.lifeLoss(), TARGET_PLAYER)` always, plus
+  `GainLifeEffect(trigger.lifeGain())` guarded on `lifeGain() > 0`. Entry still `setTargetId(castingPlayerId)` +
+  `setNonTargeting(true)`, so the loss lands on the casting opponent with no target choice.
+
+### Deletions + doc
+- Deleted `model/effect/TargetPlayerLosesLifeAndControllerGainsLifeEffect.java` and
+  `service/effect/normalfx/TargetPlayerLosesLifeAndControllerGainsLifeEffectHandler.java`.
+- Removed `validateTargetPlayerLosesLifeAndControllerGainsLife` (+ import) from `LifeTargetValidators`; the existing
+  `@ValidatesTarget(LoseLifeEffect.class)` guard (gated on `recipient == TARGET_PLAYER`) already covers the decomposed
+  users.
+- Rewrote `SpellCastLifeDrainEffect`'s javadoc to describe the decomposed build instead of the deleted resolver.
+- Semantics unchanged from Session 4: the `TARGET_PLAYER` loss is applied inline via `loseTargetPlayerLife` (respects
+  `canPlayerLifeChange`, **does not fire "loses life" triggers** — pre-existing quirk, preserved); the `GainLifeEffect`
+  gains the nominal fixed amount for the controller.
+
+### Traps checklist
+- Whole-repo grep for the record name: hits only in `refactor-docs/*.md` (history) — zero `.java`, zero `magical-vibes-ai`.
+- No `TargetPlayerLosesLifeAndControllerGainsLifeEffectHandlerTest` existed (nothing to port/delete).
+- No card-test white-box references (imports/instanceof) existed.
+- `agent-docs` rewritten to the composed pattern: `EFFECTS_INDEX.md` (new `_compose, no dedicated effect_` row + the
+  `SpellCastLifeDrainEffect` row), `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` (trigger row + a new direct
+  spell-form "loses N life and you gain N life" row), `CARD_PATTERNS_CREATURES_ETB.md` (Bleak Coven),
+  `CARD_PATTERNS_PERMANENTS_ARTIFACTS.md` (Necrogen Censer, loss-only).
+
+### Tests run (per CLAUDE.md, full suite not run)
+`BleakCovenVampiresTest` (10), `ArnynDeathbloomBotanistTest` (3), `YawgmothsEdictTest` (collector site card),
+and regression `SyphonLifeTest`, `FalkenrathNobleTest`, `NecrogenCenserTest` (three Session-4 users covering all three
+shapes) — all green.
+
+### Traps hit
+- None. Both wrappers unwrap to their inner effect **before** resolution, so once unwrapped the `SequenceEffect`
+  resolves identically to the Session-4 flat-list users; targeting is driven by the card-level filter + the effect's
+  (unchanged) `targetSpec()`, not the wrapped object's identity.

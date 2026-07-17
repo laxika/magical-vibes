@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -23,8 +26,10 @@ public class ArnynDeathbloomBotanist extends Card {
             new PermanentToughnessAtMostPredicate(1)
     ));
 
-    private static final TargetPlayerLosesLifeAndControllerGainsLifeEffect DRAIN =
-            new TargetPlayerLosesLifeAndControllerGainsLifeEffect(2, 2);
+    private static final SequenceEffect DRAIN =
+            SequenceEffect.of(
+                    new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
+                    new GainLifeEffect(2));
 
     private static final TriggeringPermanentConditionalEffect CONDITIONAL_DRAIN =
             new TriggeringPermanentConditionalEffect(POWER_OR_TOUGHNESS_ONE_OR_LESS, DRAIN);

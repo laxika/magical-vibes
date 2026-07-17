@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * loses {@code lifeLoss} life and you gain {@code lifeGain} life." Used by Yawgmoth's Edict.
  * <p>
  * Placed in the {@code ON_OPPONENT_CASTS_SPELL} slot; the collector stamps the casting opponent as
- * the acting player and delegates the actual life change to
- * {@link TargetPlayerLosesLifeAndControllerGainsLifeEffect}, so no dedicated resolver is needed.
+ * the acting player (targetId) and builds the life change from the shared primitives — a
+ * {@link LoseLifeEffect} with {@link LoseLifeRecipient#TARGET_PLAYER} plus a {@link GainLifeEffect}
+ * for the controller (omitted when {@code lifeGain} is 0) — so no dedicated resolver is needed.
  *
  * @param lifeLoss    life the casting opponent loses
  * @param lifeGain    life the source's controller gains

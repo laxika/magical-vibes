@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -18,11 +17,6 @@ import org.springframework.stereotype.Service;
 public class LifeTargetValidators {
 
     private final TargetValidationService tvs;
-
-    @ValidatesTarget(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class)
-    public void validateTargetPlayerLosesLifeAndControllerGainsLife(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
 
     @ValidatesTarget(LoseLifeEffect.class)
     public void validateLoseLife(TargetValidationContext ctx, LoseLifeEffect effect) {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -48,7 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastLifeDrainEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -714,15 +714,20 @@ public class SpellCastTriggerCollectorService {
                         match.gameData(), sc.castingPlayerId())) {
             return false;
         }
-        // "That player loses N life and you gain M life" — carry the casting opponent on targetId and
-        // reuse the existing drain resolver; the casting player is not a chosen target.
+        // "That player loses N life and you gain M life" — carry the casting opponent on targetId so the
+        // TARGET_PLAYER life loss lands on them (the casting player is not a chosen target), then the
+        // controller gains the fixed amount. Omit the gain step when the card only drains life.
+        List<CardEffect> drainEffects = new ArrayList<>();
+        drainEffects.add(new LoseLifeEffect(trigger.lifeLoss(), LoseLifeRecipient.TARGET_PLAYER));
+        if (trigger.lifeGain() > 0) {
+            drainEffects.add(new GainLifeEffect(trigger.lifeGain()));
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new TargetPlayerLosesLifeAndControllerGainsLifeEffect(
-                        trigger.lifeLoss(), trigger.lifeGain())))
+                drainEffects
         );
         entry.setTargetId(sc.castingPlayerId());
         entry.setNonTargeting(true);
