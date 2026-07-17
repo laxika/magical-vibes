@@ -26,8 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -1302,7 +1302,8 @@ public class CombatDamageService {
                         loot.sourceCard(),
                         loot.controllerId(),
                         loot.sourceCard().getName() + "'s delayed trigger",
-                        List.of(new DrawAndDiscardCardEffect(loot.drawAmount(), loot.discardAmount()))
+                        List.of(new DrawCardEffect(loot.drawAmount()),
+                                new DiscardEffect(loot.discardAmount(), DiscardRecipient.CONTROLLER))
                 );
                 se.setNonTargeting(true);
                 gameData.stack.add(se);

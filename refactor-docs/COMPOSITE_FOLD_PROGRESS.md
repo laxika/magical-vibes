@@ -1132,3 +1132,110 @@ dedicated test** — its loot ability is covered by `ConquerorsGalleonTest` (fro
   six may-wrapped loot cards, so its doc rows stay accurate until part 2 deletes the record.
 - `SequenceEffect` prerequisite confirmed present (record + `EffectResolutionService.resolveEffectsLoop` splice
   branch). Full suite not run (per CLAUDE.md — user runs it). Nothing committed.
+
+---
+
+## Batch 3 Session 7 — DrawAndDiscardCardEffect deleted
+
+Part 2 of 2. Migrated the six remaining wrapped users + the `CombatDamageService` dynamic construction site
+onto the decomposed loot pair, then **deleted the record `DrawAndDiscardCardEffect`, its handler
+`DrawAndDiscardCardEffectHandler`, and the handler unit test `DrawAndDiscardCardEffectHandlerTest`.** The
+composite is gone from the codebase (only `refactor-docs/*.md` history references the name now).
+
+### Prerequisite check (part-1 completeness)
+Confirmed part 1 (Session 6) left exactly the recorded targets: the record, its handler,
+`DrawAndDiscardCardEffectHandlerTest`, `CombatDamageService.java`, and the six wrapped users
+(StadiumTidalmage ×2, DaringSaboteur, MurderOfCrows, ShipwreckLooter, MaraudingLooter, MuseSeeker). Extra grep
+hits were benign: `StadiumTidalmageTest` (a white-box wiring test) and a `{@link}` in `DiscardAndDrawCardEffect`
+javadoc. **No unrecorded unwrapped user remained** → part 1 was complete.
+
+### Rules basis for the fold (same as Session 6)
+The five "you may draw a card. If you do, discard a card." users read as: accepting the may IS the draw, so once
+accepted the discard is unconditional — a plain `SequenceEffect` (do-all-of, no inner "if you do") inside the
+existing `MayEffect` is exact. This is the Session-2 `MayEffect(SequenceEffect)` pattern. MuseSeeker is **not** a
+may (see below).
+
+### Cards migrated (one at a time, test run after each — all PASS)
+| Card | Slot / wrapper | Counts | Shape | Test |
+|------|----------------|--------|-------|------|
+| `s/StadiumTidalmage` ×2 | `MayEffect` on ON_ENTER_BATTLEFIELD + ON_ATTACK | 1/1 | `MayEffect(SequenceEffect.of(DrawCardEffect(1), DiscardEffect(1, CONTROLLER)), prompt)` | 3 (was 4 — deleted wiring test, below) |
+| `d/DaringSaboteur` | `MayEffect` on ON_COMBAT_DAMAGE_TO_PLAYER | 1/1 | same | 8 |
+| `m/MurderOfCrows` | `MayEffect` on ON_ANY_CREATURE_DIES | 1/1 | same | 4 |
+| `s/ShipwreckLooter` | `ConditionalEffect(Raid, MayEffect(…))` on ON_ENTER_BATTLEFIELD | 1/1 | inner `MayEffect` wraps the sequence; Raid wrapper byte-identical | 6 |
+| `m/MaraudingLooter` | `ConditionalEffect(Raid, MayEffect(…))` on CONTROLLER_END_STEP_TRIGGERED | 1/1 | same | 4 |
+| `m/MuseSeeker` | `ConditionalReplacementEffect(SpellManaSpentAtLeast(5), base, DrawCardEffect())` on ON_CONTROLLER_CASTS_SPELL | 1/1 | **bare** `SequenceEffect.of(DrawCardEffect(1), DiscardEffect(1, CONTROLLER))` as the `baseEffect` — **NO MayEffect** | 3 |
+
+**MuseSeeker is special.** Its loot is the *mandatory* base branch of a `ConditionalReplacementEffect`
+("draw a card. Then discard a card **unless** five or more mana was spent") — no "may", no "if you do" — so it
+decomposes to a **bare** `SequenceEffect`, not `MayEffect(SequenceEffect)`. Verified in `EffectResolutionService`
+that `ConditionalReplacementEffect` sets `effectToResolve = base/upgraded` (line ~140) and **falls through** to
+the `SequenceEffect` splice branch (line ~193) — so the chosen `SequenceEffect` splices inline and never reaches
+`registry.getHandler` (which would throw, as `SequenceEffect` has no handler). This is a new wrapper combination
+(`ConditionalReplacementEffect(SequenceEffect)`) not previously exercised; confirmed correct by reading the loop
+and by `MuseSeekerTest.cheapSpellDrawsThenDiscards` (the <5-mana branch: draws then discards end-to-end) +
+`fiveManaSpellDrawsOnly` (the ≥5-mana plain-draw branch).
+
+### CombatDamageService dynamic site (`processDelayedCombatDamageLootTriggers`, ~line 1305)
+The old code put a single `new DrawAndDiscardCardEffect(loot.drawAmount(), loot.discardAmount())` **alone in one
+`StackEntry`'s effect list**. Per the fold rule that is the flat-pair case → replaced with
+`List.of(new DrawCardEffect(loot.drawAmount()), new DiscardEffect(loot.discardAmount(), DiscardRecipient.CONTROLLER))`
+(two effects, one entry, resolve in order = behavior-identical to the composite handler). Added the
+`DiscardRecipient` import (`DrawCardEffect`/`DiscardEffect` were already imported); removed `DrawAndDiscardCardEffect`.
+This site serves **Jace, Cunning Castaway's +1** (`RegisterDelayedCombatDamageLootEffect(1,1)`, a mandatory loot,
+no may). `JaceCunningCastawayTest` (10) + `CombatDamageServiceTest` PASS. (The delayed-loot **resolution** path has
+no dedicated end-to-end card test — `JaceCunningCastawayTest` covers registration, `TurnProgressionServiceTest`
+covers only end-of-turn cleanup of the queued action — but the change is behavior-preserving per Session-6 Step-0
+semantics and compiles/passes.)
+
+### Deletions
+- `magical-vibes-domain/.../model/effect/DrawAndDiscardCardEffect.java` (record)
+- `magical-vibes-engine/.../service/effect/normalfx/DrawAndDiscardCardEffectHandler.java` (handler)
+- `magical-vibes-application/.../service/effect/normalfx/DrawAndDiscardCardEffectHandlerTest.java` (handler test)
+
+**Handler-test coverage before deletion:** its single scenario `drawsThenDiscards` — `DrawAndDiscardCardEffect(2,1)`
+draws 2, sets `discardCausedByOpponent=false`, begins the discard choice — is fully covered behaviorally by
+`CatalogTest.drawsTwoThenDiscardsOne` (**draw 2, discard 1** — the exact counts) and `FaithlessLootingTest`
+(draw 2, discard 2). Self-discard (controller chooses, goes to own graveyard) is what those tests exercise via
+`handleCardChosen`. No empty/short-library scenario existed in the handler test. **Nothing new needed to be added.**
+
+### Trap checklist
+- **(a)** Whole-repo grep `DrawAndDiscardCardEffect` → only `refactor-docs/*.md` (this file). No `.java`, no
+  `agent-docs`.
+- **(b)** `service/validate/` grep → **no `@ValidatesTarget`** for the record (never had one).
+- **(c)** `magical-vibes-ai` grep → **zero references** (record was never AI-scored — it implemented only
+  `CardEffect`, no marker, so `SpellEvaluator` scored it 0). No rewire needed. The six part-2 users are triggered/
+  replacement/combat effects, **not spells**, so `SpellEvaluator` never scored them anyway (the spell-slot loot
+  cards — Faithless Looting/Catalog/Ghastly Discovery — were part-1). Ran `SpellEvaluatorTest` → **BUILD
+  SUCCESSFUL** (AI module compiles against the deleted domain record; no calibrated flip). Did not need
+  Hard/Easy AI runs (source never mentioned the record).
+- **(d)** White-box card test trimmed: deleted `StadiumTidalmageTest.hasCorrectEffects` (asserted
+  `may.wrapped() instanceof DrawAndDiscardCardEffect` — the `hasCorrectProperties` shape CLAUDE.md forbids; the
+  same deletion part 1 did to `FaithlessLootingTest`). Removed its now-unused imports (`EffectSlot`, `MayEffect`,
+  `DrawAndDiscardCardEffect`). Behavior stays covered by `entersAndLoots`/`entersDeclineLoot`/`attacksAndLoots`.
+- Also fixed the dead `{@link DrawAndDiscardCardEffect}` in `DiscardAndDrawCardEffect.java` javadoc → rewrote it
+  to explain (per DOCS below) why rummage is **not** foldable.
+
+### Docs
+- `EFFECTS_INDEX.md` — two rows rewritten: the `DrawAndDiscardCardEffect` entry → `_compose, no dedicated effect_`
+  (`DrawCardEffect(N)` + `DiscardEffect(M, CONTROLLER)`, flat pair or `SequenceEffect`-bundled under a wrapper);
+  and the `ConditionalEffect(Raid, …)` row's Marauding Looter example.
+- `EFFECTS_QUICK_REFERENCE.md` — loot bullet → compose pattern.
+- `ORACLE_TEXT_EFFECT_MAP.md` — "draw N, then discard M" row → compose pattern.
+- `CARD_PATTERNS_CREATURES_TRIGGERED.md` — Murder of Crows + Marauding Looter rows.
+- **NOTED in all of the above (and in `DiscardAndDrawCardEffect` javadoc):** "discard, then draw" (rummage,
+  `DiscardAndDrawCardEffect`) is **NOT foldable** this way — its draw is contingent on an *actual* discard
+  ("if you do", a failable first step), which `SequenceEffect` (no data flow between steps) deliberately does not
+  express. `DiscardAndDrawCardEffect` stays.
+
+### Tests run (all PASS)
+Migrated cards: `StadiumTidalmageTest` (3), `DaringSaboteurTest` (8), `MurderOfCrowsTest` (4),
+`ShipwreckLooterTest` (6), `MaraudingLooterTest` (4), `MuseSeekerTest` (3). Combat site: `JaceCunningCastawayTest`
+(10), `service.combat.CombatDamageServiceTest`. Part-1 regression trio: `FaithlessLootingTest` (4 — also the
+post-deletion whole-module compile gate), `CatalogTest` (1), `JalumTomeTest` (2). AI: `SpellEvaluatorTest`
+(BUILD SUCCESSFUL). Full suite not run (per CLAUDE.md — user runs it). Nothing committed.
+
+### Notes
+- Spotless: no-op (no unused imports introduced beyond those removed); not run, per prior-session policy.
+- `EFFECT_COUPLING_MATRIX.md` left as-is (script-generated baseline, refreshed separately).
+- **Batch 3 loot fold complete:** `DrawAndDiscardCardEffect` fully deleted across parts 1–2 (11 flat users +
+  6 wrapped users + 1 engine site migrated; record + handler + handler test removed).
