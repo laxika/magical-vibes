@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -17,7 +19,7 @@ public class GrixisBattlemage extends Card {
     public GrixisBattlemage() {
         // {U}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(true, "{U}",
-                List.of(new DrawAndDiscardCardEffect()),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "{U}, {T}: Draw a card, then discard a card."));
 
         // {R}, {T}: Target creature can't block this turn.

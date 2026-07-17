@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
@@ -29,7 +30,7 @@ public class ConquerorsFoothold extends Card {
         // {2}, {T}: Draw a card, then discard a card.
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}",
-                List.of(new DrawAndDiscardCardEffect()),
+                List.of(new DrawCardEffect(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "{2}, {T}: Draw a card, then discard a card."
         ));
 

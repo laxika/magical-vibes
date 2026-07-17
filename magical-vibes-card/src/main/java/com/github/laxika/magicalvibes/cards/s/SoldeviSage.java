@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -18,7 +20,8 @@ public class SoldeviSage extends Card {
                 true,
                 null,
                 List.of(new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate()),
-                        new DrawAndDiscardCardEffect(3, 1)),
+                        new DrawCardEffect(3),
+                        new DiscardEffect(1, DiscardRecipient.CONTROLLER)),
                 "{T}, Sacrifice two lands: Draw three cards, then discard one of them."
         ));
     }

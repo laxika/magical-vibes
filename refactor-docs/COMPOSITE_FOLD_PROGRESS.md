@@ -1056,3 +1056,79 @@ shapes) — all green.
 - None. Both wrappers unwrap to their inner effect **before** resolution, so once unwrapped the `SequenceEffect`
   resolves identically to the Session-4 flat-list users; targeting is driven by the card-level filter + the effect's
   (unchanged) `targetSpec()`, not the wrapped object's identity.
+
+---
+
+## Batch 3 Session 6 — loot composite part 1: flat users migrated
+
+Migrated the **eleven genuinely-unwrapped users** of `DrawAndDiscardCardEffect` onto the decomposed pair
+`DrawCardEffect(n)` + `DiscardEffect(m, DiscardRecipient.CONTROLLER)`. **The record, its handler,
+`DrawAndDiscardCardEffectHandlerTest`, the six `MayEffect`-wrapped users, and the
+`CombatDamageService` dynamic construction site were left untouched — they are part 2.** Nothing deleted
+this session; no card was skipped (all eleven targets were genuinely unwrapped).
+
+### Semantics verified first (Step 0)
+`DrawAndDiscardCardEffectHandler.resolve` = `applyDrawCards(controllerId, drawAmount)` → set
+`gameData.discardCausedByOpponent = false` → `resolveDiscardCards(controllerId, discardAmount)`. The
+decomposed pair reproduces this exactly:
+- `DrawCardEffect(int)` → `DrawCardEffectHandler` calls the **same** `applyDrawCards(controllerId, amount)`
+  (the `Fixed` amount evaluates to the constant; source-relative branch is irrelevant here).
+- `DiscardEffect(m, CONTROLLER)` → `DiscardEffectHandler`'s `resolveSinglePlayer` default (CONTROLLER) branch
+  sets `discardCausedByOpponent = false` (self-discard, no flag) then calls the **same**
+  `resolveDiscardCards(controllerId, amount)` (non-random chosen discard).
+- Only difference: `DiscardEffectHandler` has an `amount <= 0` short-circuit that logs "discards 0 cards".
+  **Non-issue** — every user's discard count is a positive constant (1 or 2), so that branch is never reached;
+  no empty-hand special branch and no extra flag exist that the `DiscardEffect` path lacks. Draw-first ordering
+  is preserved because both halves sit on one stack entry and resolve strictly in list order (the discard's
+  choice interaction pauses/resumes that same entry via the async-resume machinery — Session-4 verdict).
+
+### Slot rule applied
+- SPELL slots + activated-ability effect lists → **flat pair** (two `addEffect`/two `List.of` entries; Drain
+  Life precedent — they resolve as one entry).
+- ETB trigger slots (`ON_ENTER_BATTLEFIELD`) → **one `SequenceEffect.of(draw, discard)`** (trigger collector
+  pushes one entry per slot effect; a flat pair would split the loot into two abilities).
+
+### Per-card (draw / discard counts preserved; import swap `DrawAndDiscardCardEffect` → `DrawCardEffect`,`DiscardEffect`,`DiscardRecipient`)
+| # | Card | Slot | Counts | Shape |
+|---|------|------|--------|-------|
+| 1 | `f/FaithlessLooting` | SPELL (has Flashback — wiring untouched) | 2 / 2 | flat pair |
+| 2 | `c/Catalog` | SPELL | 2 / 1 | flat pair |
+| 3 | `g/GhastlyDiscovery` | SPELL (Conspire keyword untouched) | 2 / 1 | flat pair |
+| 4 | `k/KrovikanSorcerer` | activated (after `DiscardCardTypeCost` black) | 2 / 1 | flat pair in `List.of` |
+| 5 | `j/JalumTome` | activated `{2},{T}` | 1 / 1 | flat pair |
+| 6 | `g/GrixisBattlemage` | activated `{U},{T}` | 1 / 1 | flat pair |
+| 7 | `s/SoldeviSage` | activated (after `SacrificeMultiplePermanentsCost`) | 3 / 1 | flat pair in `List.of` |
+| 8 | `i/InspiredSprite` | activated `{T}` | 1 / 1 | flat pair (separate `ON_CONTROLLER_CASTS_SPELL` `MayEffect` untap trigger untouched) |
+| 9 | `s/ScreechingDrake` | `ON_ENTER_BATTLEFIELD` | 1 / 1 | `SequenceEffect.of` |
+| 10 | `o/OwlFamiliar` | `ON_ENTER_BATTLEFIELD` | 1 / 1 | `SequenceEffect.of` |
+| 11 | `c/ConquerorsFoothold` | activated `{2},{T}` (land back face) | 1 / 1 | flat pair |
+
+**Skips: none.** SoldeviSage / InspiredSprite / ScreechingDrake / OwlFamiliar / ConquerorsFoothold were all
+checked per the general rule — none wraps the loot in a `MayEffect`/single-effect wrapper (InspiredSprite's
+`MayEffect` gates an unrelated untap trigger), so all migrated.
+
+### Test fix — deleted one white-box wiring test
+`FaithlessLootingTest.hasCorrectProperties` asserted `getEffects(SPELL)` was a single
+`DrawAndDiscardCardEffect(2,2)` — exactly the `hasCorrectProperties` white-box test CLAUDE.md forbids. Since
+the effect shape changed and the behavior is already fully covered by the four engine-resolving tests
+(`drawsTwoThenDiscardsTwo`, `normalCastGoesToGraveyard`, `flashbackCastsThenExiles`,
+`flashbackFailsWithoutMana`), I **deleted** the wiring test and its now-unused imports (`EffectSlot`,
+`FlashbackCast`, `ManaCastingCost`, `DrawAndDiscardCardEffect`). No other card had a wiring test on this effect.
+
+### Tests run (all PASS)
+`FaithlessLootingTest` (4, after wiring-test deletion), `CatalogTest` (1), `GhastlyDiscoveryTest` (3),
+`KrovikanSorcererTest` (4), `JalumTomeTest` (2), `GrixisBattlemageTest` (4), `SoldeviSageTest` (6),
+`InspiredSpriteTest` (4), `ScreechingDrakeTest` (1), `OwlFamiliarTest` (2). Conqueror's Foothold has **no
+dedicated test** — its loot ability is covered by `ConquerorsGalleonTest` (front+back face, **PASS**).
+
+### End-of-session grep
+`new DrawAndDiscardCardEffect` now remains **only** in: the six `MayEffect`-wrapped users
+(`s/StadiumTidalmage` ×2, `d/DaringSaboteur`, `m/MurderOfCrows`, `s/ShipwreckLooter`, `m/MaraudingLooter`,
+`m/MuseSeeker`), `service/combat/CombatDamageService.java:1305` (dynamic site), and
+`DrawAndDiscardCardEffectHandlerTest`. No stray imports left in the eleven migrated files. All part-2 targets.
+
+### Notes
+- agent-docs **not** touched — `DrawAndDiscardCardEffect` still exists and is still the correct effect for the
+  six may-wrapped loot cards, so its doc rows stay accurate until part 2 deletes the record.
+- `SequenceEffect` prerequisite confirmed present (record + `EffectResolutionService.resolveEffectsLoop` splice
+  branch). Full suite not run (per CLAUDE.md — user runs it). Nothing committed.
