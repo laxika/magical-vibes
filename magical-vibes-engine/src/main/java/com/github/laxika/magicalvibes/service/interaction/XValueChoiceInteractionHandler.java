@@ -45,11 +45,6 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.XValueChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.XValueChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
                 new XValueChoiceMessage(interaction.prompt(), interaction.maxValue(), interaction.cardName()));

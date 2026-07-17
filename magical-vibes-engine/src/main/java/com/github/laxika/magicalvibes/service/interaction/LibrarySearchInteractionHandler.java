@@ -41,11 +41,6 @@ public class LibrarySearchInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.LibrarySearch interaction) {
-        return interaction.params().playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.LibrarySearch interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.params().cards().stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(recipientId, new ChooseCardFromLibraryMessage(

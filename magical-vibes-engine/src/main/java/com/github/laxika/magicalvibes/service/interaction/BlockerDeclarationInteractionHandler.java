@@ -40,11 +40,6 @@ public class BlockerDeclarationInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.BlockerDeclaration interaction) {
-        return interaction.defenderId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.BlockerDeclaration interaction, UUID recipientId) {
         UUID activeId = gameData.activePlayerId;
         UUID defenderId = interaction.defenderId();

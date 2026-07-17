@@ -46,11 +46,6 @@ public class LibraryRevealChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.LibraryRevealChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.LibraryRevealChoice interaction, UUID recipientId) {
         if (interaction.prompt() == null) {
             return;

@@ -48,11 +48,6 @@ public class IllicitAuctionBidChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.IllicitAuctionBidChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
                 new XValueChoiceMessage(interaction.prompt(), interaction.maxBid(), interaction.cardName()));

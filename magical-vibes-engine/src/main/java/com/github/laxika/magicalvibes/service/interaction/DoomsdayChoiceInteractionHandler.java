@@ -51,11 +51,6 @@ public class DoomsdayChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.DoomsdayChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.DoomsdayChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.pool().stream().map(cardViewFactory::create).toList();
 

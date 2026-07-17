@@ -52,11 +52,6 @@ public class LibraryReorderInteractionHandler implements InteractionHandler<Pend
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.LibraryReorder interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.LibraryReorder interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(recipientId, new ReorderLibraryCardsMessage(cardViews, interaction.prompt()));

@@ -50,6 +50,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.AttackerDeclaration,
         PendingInteraction.BlockerDeclaration {
 
+    /**
+     * The player whose decision this is. Every kind that can become the active interaction
+     * (i.e. has a registered {@code InteractionHandler}) overrides this; it stays {@code null}
+     * only for the queue-only carrier records ({@link PermanentChoiceContext} and the
+     * standalone {@code Pending*} state records), which are serviced by beginning one of the
+     * promptable kinds below. Guarded by {@code PendingInteractionContractTest}.
+     */
+    default UUID decidingPlayerId() {
+        return null;
+    }
+
+    /**
+     * The legal answer space of this interaction, as a derived view over the record's own
+     * components (see {@link InteractionOptions} for the shape ↔ answer-payload mapping).
+     * Same override contract as {@link #decidingPlayerId()}: non-null for every promptable
+     * kind, {@code null} for queue-only carriers. (Named {@code legalOptions} rather than
+     * {@code options} because {@link ColorChoice} carries an {@code options} component.)
+     */
+    default InteractionOptions legalOptions() {
+        return null;
+    }
+
     // ------------------------------------------------------------------
     // Generic interaction kinds. Each record carries everything needed to
     // prompt the deciding player and apply the answer (dispatched via the
@@ -59,14 +81,44 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count). */
     record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.NumberPick(0, maxValue);
+        }
     }
 
     /** Scry N: {@code cards} are held out of the library while the player splits them top/bottom. */
     record Scry(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 
     /** "Look at the top N cards: one to hand, one on top, rest on the bottom" (e.g. Anticipate-style picks). */
     record HandTopBottomChoice(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 
     /**
@@ -76,6 +128,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                           UUID deckOwnerId, String prompt) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 
     /**
@@ -85,6 +147,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MayAbilityChoice(UUID playerId, String description, String manaCost)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
     }
 
     /**
@@ -95,6 +167,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record KnowledgePoolCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -102,6 +184,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -122,6 +214,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MirrorOfFateChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -140,6 +242,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public int maxCount() {
             return Math.min(keepCount, validCardIds.size());
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount());
+        }
     }
 
     /**
@@ -154,6 +266,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         /** The selectable card IDs, in begin-time pool order. */
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, maxCount);
         }
     }
 
@@ -170,6 +292,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         /** The selectable card IDs, in begin-time pool order. */
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, pool.size());
         }
     }
 
@@ -190,6 +322,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public java.util.List<UUID> validCardIds() {
             return pool.stream().map(Card::getId).toList();
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
+        }
     }
 
     /** One card picked during a permanent auction, held for deferred enter-the-battlefield processing. */
@@ -207,6 +349,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record IllicitAuctionBidChoice(UUID playerId, int highBid, int maxBid, String cardName, String prompt)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            // Any value <= highBid is a pass, so 0 (pass) through maxBid are all legal.
+            return new InteractionOptions.NumberPick(0, maxBid);
+        }
     }
 
     /**
@@ -218,6 +371,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -232,6 +395,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds, int maxCount,
                                 MultiPermanentChoiceContext context, String prompt)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiPermanentPick(validIds, 0, maxCount);
+        }
     }
 
     /**
@@ -247,6 +420,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public java.util.List<UUID> validCardIds() {
             return cards.stream().map(Card::getId).toList();
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, maxCount);
+        }
     }
 
     /**
@@ -261,6 +444,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
                        java.util.List<String> options, String prompt) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(options);
+        }
     }
 
     /**
@@ -296,6 +489,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false);
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, optional);
+        }
     }
 
     /**
@@ -310,6 +513,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                      java.util.List<Integer> validIndices, int remainingCount,
                                      java.util.List<Card> revealedCards, String prompt)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -321,6 +534,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record ChooseRevealedCardToDiscardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                              java.util.List<Card> revealedCards, String prompt)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return choosingPlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(
+                    java.util.stream.IntStream.range(0, revealedCards.size()).boxed().toList(), false);
+        }
     }
 
     /**
@@ -339,6 +563,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                     boolean revealStage, java.util.List<Integer> validIndices,
                                     int remainingCount, java.util.List<UUID> revealedCardIds,
                                     String prompt, int discardCount) implements PendingInteraction {
+        // The decidingPlayerId component accessor doubles as the interface override.
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -365,6 +595,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
                                       GraveyardChoiceDestination destination, String prompt) {
             return new Builder(playerId, validIndices, destination, prompt);
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            // Mirrors the answer handler's decline rule: exile and may-ability targeting are
+            // forced, as is anything explicitly marked mandatory.
+            boolean declinable = destination != GraveyardChoiceDestination.EXILE
+                    && destination != GraveyardChoiceDestination.MAY_ABILITY_TARGET
+                    && !mandatory;
+            return new InteractionOptions.GraveyardIndexPick(validIndices, declinable);
         }
 
         /** Staged construction mirroring the legacy pre-seed setters. */
@@ -479,6 +724,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record GraveyardExileCostChoice(UUID playerId, java.util.List<Integer> validIndices,
                                     String prompt) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.GraveyardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -537,6 +792,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               Integer sacrificeUnlessPayGenericReduction) {
             this(playerId, validIndices, prompt, false, false, false, null, false, sacrificeUnlessPayGenericReduction);
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, true);
+        }
     }
 
     /**
@@ -552,6 +817,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                       UUID targetId, String prompt) {
             this(playerId, validIndices, targetId, prompt, null);
         }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, true);
+        }
     }
 
     /**
@@ -563,6 +838,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
                                                java.util.List<Card> cards, int maxCount)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -572,6 +857,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record PutCardsFromHandOnLibraryDestinationChoice(UUID playerId, java.util.List<UUID> chosenCardIds)
             implements PendingInteraction {
+
+        /** The exact option strings the handler's prompt offers and its answer parser matches. */
+        public static final java.util.List<String> OPTIONS = java.util.List.of("Top", "Bottom");
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.ListPick(OPTIONS);
+        }
     }
 
     /**
@@ -584,6 +882,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
                          int remainingCount, DiscardFollowUp followUp, String prompt)
             implements PendingInteraction, HandChoice {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -596,12 +904,32 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                UUID sourcePermanentId, UUID playPermissionControllerId,
                                int remainingCount, String prompt)
             implements PendingInteraction, HandChoice {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /** Exile a card from hand and imprint it on {@code sourcePermanentId} (IMPRINT_FROM_HAND_CHOICE). */
     record ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
                                  UUID sourcePermanentId, String prompt)
             implements PendingInteraction, HandChoice {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -610,6 +938,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record DiscardCostChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
             implements PendingInteraction, HandChoice {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.CardIndexPick(validIndices, false);
+        }
     }
 
     /**
@@ -630,6 +968,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -643,6 +991,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record LibrarySearch(LibrarySearchParams params, String messagePrompt,
                          boolean messageCanFailToFind) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return params.playerId();
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            // The answer handler's decline rule reads params.canFailToFind(), not the message flag.
+            return new InteractionOptions.LibraryIndexPick(
+                    params.cards() != null ? params.cards().size() : 0, params.canFailToFind());
+        }
     }
 
     /**
@@ -665,6 +1025,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             java.util.Set<UUID> all = new java.util.LinkedHashSet<>(validPermanentIds);
             all.addAll(validPlayerIds);
             return all;
+        }
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.PermanentPick(java.util.List.copyOf(validIds()));
         }
     }
 
@@ -692,6 +1062,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<CombatDamageTarget> validTargets,
                                   boolean isTrample, boolean isDeathtouch, boolean singleRecipient)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 
     /**
@@ -700,6 +1080,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * replay both did the same re-derivation), so the record carries only the decider.
      */
     record AttackerDeclaration(UUID activePlayerId) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return activePlayerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 
     /**
@@ -707,5 +1097,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * re-derived from live combat state at prompt time, so the record carries only the decider.
      */
     record BlockerDeclaration(UUID defenderId) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return defenderId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.UNENUMERATED;
+        }
     }
 }

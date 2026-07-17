@@ -43,11 +43,6 @@ public class RevealCardsFromHandChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.RevealCardsFromHandChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.RevealCardsFromHandChoice interaction, UUID recipientId) {
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
         List<CardView> cardViews = hand.stream().map(cardViewFactory::create).toList();

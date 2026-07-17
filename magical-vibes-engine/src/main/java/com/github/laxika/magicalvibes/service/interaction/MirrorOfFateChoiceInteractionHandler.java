@@ -44,11 +44,6 @@ public class MirrorOfFateChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.MirrorOfFateChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.MirrorOfFateChoice interaction, UUID recipientId) {
         List<Card> exiledCards = gameData.getPlayerExiledCards(interaction.playerId());
         List<CardView> cardViews = exiledCards.stream()

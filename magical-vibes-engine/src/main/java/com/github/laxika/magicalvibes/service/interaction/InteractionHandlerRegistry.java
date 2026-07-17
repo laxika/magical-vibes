@@ -42,7 +42,7 @@ public class InteractionHandlerRegistry {
             throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
         }
         gameData.interaction.beginInteraction(interaction);
-        UUID decider = handler.decidingPlayerId(interaction);
+        UUID decider = interaction.decidingPlayerId();
         handler.prompt(gameData, interaction, resolveMessageRecipient(gameData, decider));
     }
 
@@ -69,7 +69,7 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             return;
         }
-        UUID decider = handler.decidingPlayerId(active);
+        UUID decider = active.decidingPlayerId();
         handler.prompt(gameData, active, resolveMessageRecipient(gameData, decider));
     }
 
@@ -105,7 +105,7 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             return false;
         }
-        if (reconnectingPlayerId.equals(handler.decidingPlayerId(active))) {
+        if (reconnectingPlayerId.equals(active.decidingPlayerId())) {
             handler.prompt(gameData, active, reconnectingPlayerId);
         }
         return true;
@@ -117,11 +117,7 @@ public class InteractionHandlerRegistry {
      */
     public UUID activeDecidingPlayerId(GameData gameData) {
         PendingInteraction active = gameData.interaction.activeInteraction();
-        if (active == null) {
-            return null;
-        }
-        InteractionHandler<PendingInteraction> handler = handlerFor(active);
-        return handler != null ? handler.decidingPlayerId(active) : null;
+        return active != null ? active.decidingPlayerId() : null;
     }
 
     /**

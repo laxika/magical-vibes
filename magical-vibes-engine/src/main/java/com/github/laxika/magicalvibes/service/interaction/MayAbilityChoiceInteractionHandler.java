@@ -39,11 +39,6 @@ public class MayAbilityChoiceInteractionHandler implements InteractionHandler<Pe
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.MayAbilityChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.MayAbilityChoice interaction, UUID recipientId) {
         boolean canPay = true;
         if (interaction.manaCost() != null) {

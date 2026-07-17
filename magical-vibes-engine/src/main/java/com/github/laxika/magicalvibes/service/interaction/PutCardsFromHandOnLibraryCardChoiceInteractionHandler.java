@@ -42,11 +42,6 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction,
                        UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();

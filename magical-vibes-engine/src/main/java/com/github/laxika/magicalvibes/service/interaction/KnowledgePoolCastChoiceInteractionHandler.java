@@ -46,11 +46,6 @@ public class KnowledgePoolCastChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.KnowledgePoolCastChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.KnowledgePoolCastChoice interaction, UUID recipientId) {
         List<CardView> cardViews = new ArrayList<>();
         PendingKnowledgePoolCast pendingCast = gameData.peekPendingInteraction(PendingKnowledgePoolCast.class);

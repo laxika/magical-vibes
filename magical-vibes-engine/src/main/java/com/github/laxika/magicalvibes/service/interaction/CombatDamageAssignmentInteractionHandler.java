@@ -46,11 +46,6 @@ public class CombatDamageAssignmentInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.CombatDamageAssignment interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.CombatDamageAssignment interaction, UUID recipientId) {
         List<CombatDamageTargetView> targetViews = interaction.validTargets().stream()
                 .map(t -> new CombatDamageTargetView(

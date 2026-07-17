@@ -42,11 +42,6 @@ public class MultiGraveyardChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.MultiGraveyardChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.MultiGraveyardChoice interaction, UUID recipientId) {
         List<UUID> validCardIds = interaction.validCardIds();
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();

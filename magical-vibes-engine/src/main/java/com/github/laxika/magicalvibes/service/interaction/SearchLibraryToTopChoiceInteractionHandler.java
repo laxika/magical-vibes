@@ -53,11 +53,6 @@ public class SearchLibraryToTopChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.SearchLibraryToTopChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.SearchLibraryToTopChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.pool().stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(

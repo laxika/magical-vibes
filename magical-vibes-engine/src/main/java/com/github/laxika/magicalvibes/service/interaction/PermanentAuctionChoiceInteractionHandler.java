@@ -42,11 +42,6 @@ public class PermanentAuctionChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.PermanentAuctionChoice interaction) {
-        return interaction.choosingPlayerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.PermanentAuctionChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.pool().stream()
                 .map(cardViewFactory::create)

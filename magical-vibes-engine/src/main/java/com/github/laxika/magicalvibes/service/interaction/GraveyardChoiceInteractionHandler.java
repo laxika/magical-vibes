@@ -39,11 +39,6 @@ public class GraveyardChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.GraveyardChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.GraveyardChoice interaction, UUID recipientId) {
         boolean allGraveyards = interaction.cardPool() != null;
         sessionManager.sendToPlayer(recipientId, new ChooseCardFromGraveyardMessage(

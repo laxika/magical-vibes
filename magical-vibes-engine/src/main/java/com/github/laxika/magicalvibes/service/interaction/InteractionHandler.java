@@ -12,6 +12,10 @@ import java.util.UUID;
  * applying the player's answer. Implementations are Spring beans auto-registered into the
  * {@link InteractionHandlerRegistry} by {@code GameEngineConfig} (same discovery pattern as
  * the effect handler registries).
+ *
+ * <p>The deciding player and the legal answer space live on the interaction record itself
+ * ({@link PendingInteraction#decidingPlayerId()} / {@link PendingInteraction#legalOptions()}),
+ * not on the handler.
  */
 public interface InteractionHandler<T extends PendingInteraction> {
 
@@ -20,9 +24,6 @@ public interface InteractionHandler<T extends PendingInteraction> {
 
     /** The wire-payload shape this handler accepts; other shapes fall through to legacy dispatch. */
     Class<? extends InteractionAnswer> answerType();
-
-    /** The player whose decision this is. */
-    UUID decidingPlayerId(T interaction);
 
     /**
      * Sends the prompt message for this interaction to {@code recipientId}. Called with the

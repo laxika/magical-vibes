@@ -45,11 +45,6 @@ public class HandTopBottomChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.HandTopBottomChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.HandTopBottomChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
         sessionManager.sendToPlayer(recipientId, new ChooseHandTopBottomMessage(

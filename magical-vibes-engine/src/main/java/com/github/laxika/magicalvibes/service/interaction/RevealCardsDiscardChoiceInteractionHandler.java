@@ -45,11 +45,6 @@ public class RevealCardsDiscardChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.RevealCardsDiscardChoice interaction) {
-        return interaction.decidingPlayerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.RevealCardsDiscardChoice interaction, UUID recipientId) {
         List<Card> targetHand = gameData.playerHands.get(interaction.targetPlayerId());
         List<CardView> cardViews;

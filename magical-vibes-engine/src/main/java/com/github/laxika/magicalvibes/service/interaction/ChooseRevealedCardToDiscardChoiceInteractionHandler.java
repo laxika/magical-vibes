@@ -42,11 +42,6 @@ public class ChooseRevealedCardToDiscardChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.ChooseRevealedCardToDiscardChoice interaction) {
-        return interaction.choosingPlayerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.ChooseRevealedCardToDiscardChoice interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.revealedCards().stream().map(cardViewFactory::create).toList();
         List<Integer> validIndices = new ArrayList<>();

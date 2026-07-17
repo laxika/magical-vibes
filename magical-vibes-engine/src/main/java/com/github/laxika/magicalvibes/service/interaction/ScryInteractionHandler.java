@@ -49,11 +49,6 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.Scry interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.Scry interaction, UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
         String prompt = interaction.cards().size() == 1

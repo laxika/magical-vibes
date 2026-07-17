@@ -45,11 +45,6 @@ public class ColorChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.ColorChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.ColorChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId,
                 new ChooseFromListMessage(interaction.options(), interaction.prompt(), isCardNameChoice(interaction.context())));

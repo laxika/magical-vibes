@@ -37,11 +37,6 @@ public class GraveyardExileCostChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.GraveyardExileCostChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.GraveyardExileCostChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId, new ChooseCardFromGraveyardMessage(
                 interaction.validIndices(), interaction.prompt(), false));

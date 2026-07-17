@@ -44,11 +44,6 @@ public class MultiZoneExileChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.MultiZoneExileChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.MultiZoneExileChoice interaction, UUID recipientId) {
         List<CardView> cardViews = new ArrayList<>();
         UUID targetPid = interaction.targetPlayerId();

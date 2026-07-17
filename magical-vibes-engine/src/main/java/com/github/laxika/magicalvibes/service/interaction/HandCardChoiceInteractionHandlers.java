@@ -46,11 +46,6 @@ public final class HandCardChoiceInteractionHandlers {
         }
 
         @Override
-        public UUID decidingPlayerId(T interaction) {
-            return interaction.playerId();
-        }
-
-        @Override
         public void prompt(GameData gameData, T interaction, UUID recipientId) {
             sessionManager.sendToPlayer(recipientId, new ChooseCardFromHandMessage(
                     interaction.validIndices(), interaction.prompt(), canDecline));

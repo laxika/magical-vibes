@@ -1121,3 +1121,87 @@ creature when opponent has a blocker" failure, which reproduces identically on a
 `HardAiDecisionEngineTest`, `MediumAiDecisionEngineTest`, `EasyAiDecisionEngineTest`,
 `AiDecisionEngineTest`, `CombatSimulatorTest`, `GameSimulatorTest`, and the 20-game
 `RandomAiFuzzTest` batch.
+
+## Stage 9 — DONE: interaction records carry their decider and legal options
+
+Goal: the last unrealized piece of the original pitch — a uniform "who chooses, what are the
+legal answers" surface on the interaction itself, so the AI simulator (and eventually a generic
+frontend renderer) stops needing per-kind knowledge.
+
+**New domain type `model/InteractionOptions`** (sealed): shapes mirror the `InteractionAnswer`
+wire payloads 1:1 so a generic consumer can build a concrete legal answer from the shape alone —
+`CardIndexPick(validIndices, declinable)` → `CardIndexChosen` (decline = −1),
+`GraveyardIndexPick` → `GraveyardCardChosen`, `LibraryIndexPick(cardCount, declinable)` →
+`LibraryCardChosen`, `PermanentPick(validIds)` → `PermanentChosen`,
+`MultiCardPick(validCardIds, min, max)` → `CardsChosen`, `MultiPermanentPick` →
+`PermanentsChosen`, `ListPick(options)` → `ListChoiceMade`, `AcceptDecline` →
+`MayAbilityChosen`, `NumberPick(min, max)` → `NumberChosen`, and `Unenumerated` for the
+combinatorial kinds (scry splits, reorders, hand-top-bottom, combat declarations, damage
+assignment) whose answer-space enumeration is policy, not legality. The shapes are descriptive
+derived views — answer handlers remain the validation authority (`minCount` 0 is best-effort).
+
+**`PendingInteraction` gained two default-null methods** — `decidingPlayerId()` and
+`legalOptions()` (named to dodge `ColorChoice`'s `options` component accessor) — overridden by
+all 36 promptable kinds as derived views over existing components (no new state, so
+`simulationCopy` / `copyInteractionInto` are untouched). Decliner-rule fidelity worth noting:
+`GraveyardChoice.legalOptions()` mirrors the handler's decline rule (EXILE / MAY_ABILITY_TARGET
+/ `mandatory` are forced); `LibrarySearch` reads `params.canFailToFind()` (the flag the answer
+path checks), not `messageCanFailToFind`; `HandCardChoice`/`TargetedHandCardChoice` are the two
+declinable hand kinds (`cardIndex == -1` paths in `CardChoiceHandlerService`);
+`RevealedHandChoice` declinability is its `optional` component. The queue-only carrier records
+(`PermanentChoiceContext`, `PendingSphinxAmbassadorChoice`, `PendingCapriciousEfreetState`,
+`PendingKarnScion*`, `PendingReturnExiledWithSourceCard`, `PendingKarnRestart`,
+`PendingKnowledgePoolCast`, `PendingPileSeparation`) keep the null defaults — guarded by the new
+`PendingInteractionContractTest` (reflection: every non-carrier permitted subclass must override
+both; plus value assertions for the divergent deciders and representative option shapes).
+`PutCardsFromHandOnLibraryDestinationChoice` now owns its `OPTIONS = ["Top", "Bottom"]` constant
+and the handler prompts from it, so the record's options can't drift from the prompt.
+
+**`InteractionHandler.decidingPlayerId(T)` deleted** (interface + all ~28 per-handler overrides,
+mechanical perl): the record is now the single authority; `InteractionHandlerRegistry`
+(begin / promptActive / replayPrompt / activeDecidingPlayerId) reads
+`interaction.decidingPlayerId()` directly. `activeDecidingPlayerId` also dropped its
+handler-null guard (every active kind has had a handler since stage 3; `begin` throws otherwise).
+
+**`GameSimulator` consumes the options generically:**
+- `getInteractionPlayer`: the 25-case record switch → `active.decidingPlayerId()`. Kinds that
+  previously fell to `default -> null` (KeepCardsInHand, PermanentAuction, PutCardsFromHandOn*,
+  RevealCardsFromHand, ChooseRevealedCardToDiscard, …) now report their decider, so rollouts can
+  answer them instead of bailing.
+- `getLegalActions`: the six per-kind enumeration cases (HandCardChoice, DiscardChoice,
+  RevealedHandChoice, PermanentChoice, ColorChoice, MayAbilityChoice) → one shape-driven
+  `addOptionsActions` in the `default` arm; the combat declaration cases stay bespoke (candidate
+  generation is policy). Byte-identical actions for the previously-enumerated kinds, with these
+  deliberate deltas: all `CardIndexPick`/`PermanentPick`/`ListPick`/`AcceptDecline` kinds now
+  enumerate (answer routing is correct by construction since shape ↔ wire entry is 1:1);
+  `ColorChoice` enumerates its real begin-time options instead of hardcoded color lists (fixes
+  the bogus 5-color actions offered to card-name/subtype/parity variants; StorageMatrix set
+  unchanged but record order ARTIFACT/CREATURE/LAND), capped at new `MAX_LIST_OPTIONS = 8` so
+  card-name lists don't blow up the tree. Multi-pick / numeric / graveyard / library shapes still
+  fall to PassPriority (no `SimulationAction` mapping yet) and get resolved in rollout.
+- `resolveInteraction`: 13 mechanical cases (PermanentChoice, MayAbilityChoice, GraveyardChoice,
+  GraveyardExileCost, MultiPermanent, MultiGraveyard, MultiZoneExile (single begin site has
+  `maxCount == size`, so the limit is a no-op), MirrorOfFate, Doomsday, SearchLibraryToTop,
+  LibrarySearch, RevealedHand, RevealCardsDiscard, IllicitAuctionBid) deleted — the new
+  `resolveWithOptions` default produces the identical answer (first index/ID, up-to-max cards,
+  min number = the old bid-0, accept). Policy cases stay: hand-value picks (`resolveHandCardChoice`),
+  ColorChoice keyword/StorageMatrix/RED heuristics, punisher-reveal decline, damage-assignment
+  math, scry/reorder/hand-top-bottom orderings, combat. Net new rollout coverage: kinds that
+  previously hit `default -> skip` (XValueChoice answers min=0, KnowledgePool/Improvisation
+  casts, KeepCardsInHand, PermanentAuction, PutCardsFromHandOn* answers "Top", two-stage reveal
+  flows) now answer mechanically instead of wedging the rollout; empty multi-pick lists now
+  answer an empty selection rather than silently spinning.
+
+**Tests run green** (targeted): the full `service.interaction.*` package (incl. the new contract
+test), `service.input.*`, `GameSimulatorTest`, `CombatSimulatorTest`, `AiManaManagerTest`,
+`AiDecisionEngineTest`, `Easy/Medium/HardAiDecisionEngineTest`, and `MCTSEngineTest` (all green —
+including the historically flaky removal-vs-creature case). Two `RandomAiFuzzTest` failures
+observed during the run **reproduce identically on a clean checkout** (verified by stash + same
+seed): seed 1377827188029200 — Cryptic Command "PlayCard failed silently" (virtual pool
+overestimates W: actual `{W=1,U=3}` vs virtual `{W=4,U=3}`); seed 1378005439426800 — stuck-state
+(same state 30×, PRECOMBAT_MAIN). Both are pre-existing outer-AI drift, logged for the fuzzer
+roadmap.
+
+**Note on Spotless:** a repo-wide `spotlessApply` reformats ~800 untouched files (the baseline
+isn't applied repo-wide) — it was reverted for everything outside this change's file set; don't
+run it blanket-style.

@@ -47,11 +47,6 @@ public class KeepCardsInHandChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.KeepCardsInHandChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.KeepCardsInHandChoice interaction, UUID recipientId) {
         List<Card> hand = gameData.playerHands.get(interaction.playerId());
         List<CardView> cardViews = hand == null ? List.of()

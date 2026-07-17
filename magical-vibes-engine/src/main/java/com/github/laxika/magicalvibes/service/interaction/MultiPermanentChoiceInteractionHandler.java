@@ -40,11 +40,6 @@ public class MultiPermanentChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.MultiPermanentChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.MultiPermanentChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId, new ChooseMultiplePermanentsMessage(
                 new ArrayList<>(interaction.validIds()), interaction.maxCount(), interaction.prompt()));

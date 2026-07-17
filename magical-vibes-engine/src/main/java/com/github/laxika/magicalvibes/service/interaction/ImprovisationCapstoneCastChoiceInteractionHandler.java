@@ -38,11 +38,6 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.ImprovisationCapstoneCastChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.ImprovisationCapstoneCastChoice interaction,
                        UUID recipientId) {
         List<CardView> cardViews = new ArrayList<>();

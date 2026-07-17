@@ -27,8 +27,8 @@ import org.springframework.stereotype.Component;
 public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice> {
 
-    private static final String TOP = "Top";
-    private static final String BOTTOM = "Bottom";
+    // The option strings live on the record so its legalOptions() stays in sync with the prompt.
+    private static final String TOP = PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS.get(0);
 
     private final SessionManager sessionManager;
     private final GameBroadcastService gameBroadcastService;
@@ -45,15 +45,10 @@ public class PutCardsFromHandOnLibraryDestinationChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice interaction,
                        UUID recipientId) {
         sessionManager.sendToPlayer(recipientId, new ChooseFromListMessage(
-                List.of(TOP, BOTTOM),
+                PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice.OPTIONS,
                 "Put the chosen cards on the top or bottom of your library?"));
     }
 

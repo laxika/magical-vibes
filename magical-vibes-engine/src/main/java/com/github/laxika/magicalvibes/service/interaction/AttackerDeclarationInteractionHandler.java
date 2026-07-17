@@ -45,11 +45,6 @@ public class AttackerDeclarationInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.AttackerDeclaration interaction) {
-        return interaction.activePlayerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.AttackerDeclaration interaction, UUID recipientId) {
         UUID activeId = interaction.activePlayerId();
         List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, activeId);
