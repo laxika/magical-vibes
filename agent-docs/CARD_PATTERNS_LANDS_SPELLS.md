@@ -84,7 +84,7 @@ All paths relative to `cards/`.
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |
 | Counter on ETB (mana value ≤ tribe count) | `s/SpellstutterSprite.java` | ON_ENTER_BATTLEFIELD CounterSpellEffect + card `target(StackEntryPredicateTargetFilter(StackEntryManaValueAtMostControlledCountPredicate(PermanentHasAnySubtypePredicate(FAERIE))))`. ETB spell-target pipeline restricts by the card's target filter; counts itself |
-| Counter (filtered by subtype) + exile | `f/FaerieTrickery.java` | StackEntryPredicateTargetFilter + StackEntryNotPredicate(StackEntrySubtypeInPredicate(FAERIE)) + CounterSpellAndExileEffect — counter target non-Faerie spell, exile it instead |
+| Counter (filtered by subtype) + exile | `f/FaerieTrickery.java` | StackEntryPredicateTargetFilter + StackEntryNotPredicate(StackEntrySubtypeInPredicate(FAERIE)) + CounterSpellEffect(CounteredSpellDestination.EXILE) — counter target non-Faerie spell, exile it instead |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
 | Counter + bounce | `l/LostInTheMist.java` | CounterSpellEffect + ReturnToHandEffect.target() — targets both a spell and a permanent. Uses `targetId` (spell, Zone.STACK) + `targetIds` (permanent). Multi-zone fizzle: only fizzles if ALL targets become illegal |
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |

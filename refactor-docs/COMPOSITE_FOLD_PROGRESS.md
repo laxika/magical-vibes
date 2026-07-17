@@ -223,3 +223,111 @@ Note Consume Spirit does **not** share this bug — its oracle is "gain X life",
   touched files introduce no unused imports, so it would be a no-op (and repo-wide/module-wide runs
   risk unrelated churn per prior sessions).
 - Nothing deferred; neither record hit a stop-rule. Full suite not run (per CLAUDE.md — user runs it).
+
+---
+
+## Session 3 — countered-spell-destination variants → `CounterSpellEffect(destination)`
+
+Unlike Sessions 1–2 (decompose-onto-card), this session **parameterizes the base effect** with an enum,
+the same style as the other enum-collapses in the codebase. Two composites folded into `CounterSpellEffect`.
+
+### Enum added
+- `model/effect/CounteredSpellDestination { GRAVEYARD, EXILE, LIBRARY_TOP }`.
+- `CounterSpellEffect` gained a `destination` field. Added a **no-arg sugar ctor** defaulting to
+  `GRAVEYARD` so all ~50 existing `new CounterSpellEffect()` users (Counterspell, Cancel, Negate,
+  Spellstutter Sprite, activated-ability counters, modal charms, …) compile unchanged. Verified there
+  are **no record-deconstruction patterns** (`case CounterSpellEffect(...)`) anywhere — every use is
+  `new CounterSpellEffect()` or `instanceof CounterSpellEffect`, so the added component is safe.
+
+### Records deleted (+ handlers + tests)
+- `CounterSpellAndExileEffect` (record) + `CounterSpellAndExileEffectHandler` + `CounterSpellAndExileEffectHandlerTest`.
+- `CounterSpellAndPutOnTopOfLibraryEffect` (record) + `CounterSpellAndPutOnTopOfLibraryEffectHandler`
+  (no handler unit test existed for this one — nothing to port).
+
+### Handler fold
+`CounterSpellEffectHandler.resolve` now switches on `((CounterSpellEffect) effect).destination()` and
+dispatches to the **existing, unchanged** `CounterSupport` methods:
+`GRAVEYARD → counterSpell`, `EXILE → counterSpellAndExile`, `LIBRARY_TOP → counterSpellAndPutOnTopOfLibrary`.
+The three composite handlers were byte-identical modulo which `CounterSupport` method they called
+(all did `getTargetId()` null-guard → `findCounterTarget` → dispose), so this dispatch is behavior-preserving.
+`CounterSupport` was **not touched** — disposal calls, logs (`" is countered."` /
+`" is countered and exiled."` / `" is countered and put on top of its owner's library."`), Guile
+replacement, copy/ability handling, and `stateTriggerService` cleanup all stay exactly as before.
+
+**Copies / uncounterable / abilities (COUNTER-TRAP):** `findCounterTarget` (shared) still enforces
+uncounterable + protection-from-counter-by-color; the destination only applies where a real card would
+have gone to the graveyard. The graveyard path (`counterSpell`) keeps its `isAbility` guard + ability
+log wording; the exile/library-top paths keep their `!isCopy()`-only guard exactly as the old composite
+handlers had them (the folded cards target `SPELL_ON_STACK` and can't hit abilities, so that asymmetry
+is unobservable but preserved). No stop-rule hit.
+
+### Cards edited
+- `d/Dissipate.java` → `new CounterSpellEffect(CounteredSpellDestination.EXILE)`.
+- `f/FaerieTrickery.java` → `...EXILE` (its `target(StackEntryPredicateTargetFilter(non-Faerie))` chain
+  is on the card class and untouched — target filtering preserved).
+- `m/MemoryLapse.java` → `new CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP)`.
+
+Oracle wording verified: Dissipate/Faerie Trickery = "exile it instead of … graveyard"; Memory Lapse =
+"put it on **top** of its owner's library" (no top-or-bottom / shuffle variant among the users). None of
+these is an X/shuffle Memory Lapse variant, so `LIBRARY_TOP` (index-0 insert) is exact.
+
+### AI fidelity (recorded — consistency change, verified green)
+Two AI-facing consequences of folding, both **making the variants consistent with the base counter**,
+neither flipping a calibrated test (Session-2 precedent):
+- **`SpellEvaluator`** scores `instanceof CounterSpellEffect` at `manaValue*5`. The two variant records
+  were separate types → previously fell through to `0`. After the fold they flow through that one
+  branch and are scored like any counterspell. No `SpellEvaluator` edit needed (it never imported the
+  variants); did **not** add any exile/library-top special-casing ("do not improve").
+- **`InstantCategoryClassifier`** keys off the `CounterSpellingEffect` marker. `CounterSpellAndExileEffect`
+  already implemented it (Dissipate/Faerie Trickery unchanged: still `COUNTERSPELL`). But
+  `CounterSpellAndPutOnTopOfLibraryEffect` implemented **plain `CardEffect`** — an oversight — so Memory
+  Lapse classified as `OTHER`. Folding onto `CounterSpellEffect` (a `CounterSpellingEffect`) now
+  correctly classifies Memory Lapse as `COUNTERSPELL`. This is more rules-correct (it *is* a counterspell)
+  and aligns with the task's "scored the same by whatever branch handles CounterSpellEffect."
+
+### Trap checklist
+- Whole-repo grep after edits: **no tracked `.java`** references `CounterSpellAndExileEffect` /
+  `CounterSpellAndPutOnTopOfLibraryEffect` (only stale `build/` spotless-clean copies, gitignored,
+  regenerated on next build; and historical `refactor-docs/` logs).
+- `@ValidatesTarget` validators: **none** existed for any of the three (base or variants) —
+  `service/validate/` grep clean; target legality flows through `TargetSpec.benign(SPELL_ON_STACK)` +
+  Faerie Trickery's card-class `target(...)` filter.
+- Stale test helpers: three surviving handler tests (`CounterSpellEffectHandlerTest`,
+  `CounterUnlessPaysEffectHandlerTest`, `CounterSpellIfControllerPoisonedEffectHandlerTest`) each carried
+  a **copy-pasted, unused** `counterAndExileEntry` helper + `CounterSpellAndExileEffect` import →
+  removed from all three so they still compile.
+- Engine `instanceof` sites: only the three handlers named the records (deleted two, folded one). No
+  "spell-was-countered trigger" or copy-disposal code branched on the effect subtype (all in
+  `CounterSupport`, untouched).
+
+### Ported coverage
+Behavioral card tests already asserted the final zones: `DissipateTest`/`FaerieTrickeryTest` (exiled, not
+graveyard/battlefield) and `MemoryLapseTest` (asserts `playerDecks.get(owner).getFirst()` == countered
+card, i.e. **library-top order**; not graveyard/exile/battlefield). The only handler-test scenario not
+already covered behaviorally — "countered **copy** ceases to exist and is not exiled" — was ported into
+`DissipateTest.counteredCopyCeasesToExistNotExiled` (mark the stacked creature spell `setCopy(true)`,
+resolve Dissipate, assert it's in no zone). A normal `CounterSpellEffect` user still sending to graveyard
+is pinned by `CounterSpellEffectHandlerTest.countersCreatureSpellAndPutsInGraveyard`.
+
+### Tests run (all PASS)
+- `cards.d.DissipateTest` (6 — incl. new copy test), `cards.m.MemoryLapseTest` (4), `cards.f.FaerieTrickeryTest` (4).
+- `service.effect.normalfx.CounterSpellEffectHandlerTest` (10), `CounterUnlessPaysEffectHandlerTest` (8),
+  `CounterSpellIfControllerPoisonedEffectHandlerTest` (confirms compile after helper removal).
+- AI regression (`:magical-vibes-ai:test`, run via gradle — not `run-card-test.ps1`, which only targets
+  `:magical-vibes-application`): `SpellEvaluatorTest` (66), `HardAiDecisionEngineTest` (77),
+  `MediumAiDecisionEngineTest` (26), `EasyAiDecisionEngineTest` (31), `AiDecisionEngineTest` (117) —
+  **0 failures/errors**, so the scoring `0→manaValue*5` and Memory Lapse `OTHER→COUNTERSPELL` changes
+  flipped nothing.
+
+### Notes
+- Spotless: no-op (no unused imports introduced); not run, per prior-session policy.
+- agent-docs updated: `EFFECTS_INDEX.md` (marker impl list + collapsed the two rows into the
+  `CounterSpellEffect` row with the `CounteredSpellDestination` param), `EFFECTS_QUICK_REFERENCE.md`
+  (marker + counter-spell section), `ORACLE_TEXT_EFFECT_MAP.md` (Memory Lapse row + new Dissipate/exile
+  row), `CARD_PATTERNS_LANDS_SPELLS.md` (Faerie Trickery row). `EFFECT_COUPLING_MATRIX.md` left as-is
+  (script-generated baseline, refreshed separately).
+- **Do-not-touch composites left intact** as instructed: `CounterSpellAndExileAllWithSameNameEffect`,
+  `CounterSpellAndCreateTreasureTokensEffect`, `CounterSpellAndGainControlIfArtifactOrCreatureEffect`,
+  `CounterSpellIfControllerPoisonedEffect`, `CounterSpellsNamedLikeCardsExiledWithSourceEffect` — each
+  couples extra behavior (search+exile, treasures, gain-control, poison condition, name-matching).
+- Nothing deferred. Full suite not run (per CLAUDE.md — user runs it).

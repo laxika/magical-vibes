@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -100,11 +99,6 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
         private StackEntry counterSpellEntry(Card card, UUID controllerId, UUID targetCardId) {
             return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
                     card.getName(), List.of(new CounterSpellEffect()), 0, targetCardId, null);
-        }
-
-        private StackEntry counterAndExileEntry(Card card, UUID controllerId, UUID targetCardId) {
-            return new StackEntry(StackEntryType.INSTANT_SPELL, card, controllerId,
-                    card.getName(), List.of(new CounterSpellAndExileEffect()), 0, targetCardId, null);
         }
 
         private StackEntry counterUnlessPaysEntry(Card card, UUID controllerId, UUID targetCardId, int amount) {

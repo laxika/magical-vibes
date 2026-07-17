@@ -79,7 +79,7 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
   `null`). Impl `GrantKeywordEffect`
 - `ControlStealingEffect` — `controlDuration()`. Impl `GainControlOfTargetEffect`, `StealDyingOpponentPermanentUnlessPaysLifeEffect`
 - `CounterSpellingEffect` — marker for "counter target spell". Impl `CounterSpellEffect`,
-  `CounterSpellAndExileEffect`, `CounterUnlessPaysEffect`
+  `CounterUnlessPaysEffect`
 - `CounterUnlessEffect` — "counter unless controller pays a ransom" family; `ransomKind()`
   (`PAY_MANA`/`DISCARD_CARD`) + `ransomMagnitude()` (mana amount, or 1 for a discard). Lets the
   trigger-collection and may-ability choice-flow services recognise the family and route on kind
@@ -409,9 +409,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Counter spells
 
-- `CounterSpellEffect()` — counter target spell
+- `CounterSpellEffect()` — counter target spell (countered card → graveyard)
+- `CounterSpellEffect(CounteredSpellDestination.EXILE)` — counter + exile instead of graveyard (Dissipate, Faerie Trickery)
+- `CounterSpellEffect(CounteredSpellDestination.LIBRARY_TOP)` — counter + put on top of owner's library instead of graveyard (Memory Lapse)
 - `CounterSpellAndCreateTreasureTokensEffect()` — counter + treasures
-- `CounterSpellAndExileEffect()` — counter + exile
 - `CounterSpellAndExileAllWithSameNameEffect()` — counter + exile all same-name cards from controller's graveyard/hand/library, then shuffle (Counterbore)
 - `CounterSpellIfControllerPoisonedEffect()` — counter if poisoned
 - `TargetSpellControllerLosesLifeEffect(int)` — target spell controller loses life
@@ -420,7 +421,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterUnlessPaysEffect(int)` or `(int, boolean useX, boolean exileIfCountered)` or `(DynamicAmount)` — counter unless pays (`DynamicAmount` scales the cost, e.g. `PermanentCount(PermanentColorInPredicate(BLUE), CONTROLLER)` = "{1} for each blue permanent you control", Spell Syphon)
 - `CounterUnlessDiscardsEffect()` — counter unless controller discards a card (Ward—Discard a card)
 - `CounterSpellsNamedLikeCardsExiledWithSourceEffect()` — non-targeting: counter all stack spells named like a card exiled with the source (Grimoire Thief; pair with `SacrificeSelfCost`)
-- `CounterSpellAndPutOnTopOfLibraryEffect()` — counter target spell, put it on top of its owner's library instead of the graveyard (Memory Lapse)
 - `CounterSpellAndGainControlIfArtifactOrCreatureEffect()` — counter target spell; if it was an artifact or creature spell, put that card onto the battlefield under your control instead of the graveyard (Desertion)
 - `CounterlashEffect()` — counter target spell, then may cast from hand sharing a card type without paying mana cost
 - `RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor)` — Scattering Stroke clash reward: wrap in `ClashEffect` before the counter; may add {C} equal to the countered spell's mana value at your next main phase

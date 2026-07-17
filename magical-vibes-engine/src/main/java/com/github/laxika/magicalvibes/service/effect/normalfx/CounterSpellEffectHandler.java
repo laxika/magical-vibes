@@ -27,6 +27,10 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (targetEntry == null) return;
 
-        counterSupport.counterSpell(gameData, entry, targetEntry);
+        switch (((CounterSpellEffect) effect).destination()) {
+            case GRAVEYARD -> counterSupport.counterSpell(gameData, entry, targetEntry);
+            case EXILE -> counterSupport.counterSpellAndExile(gameData, entry, targetEntry);
+            case LIBRARY_TOP -> counterSupport.counterSpellAndPutOnTopOfLibrary(gameData, entry, targetEntry);
+        }
     }
 }

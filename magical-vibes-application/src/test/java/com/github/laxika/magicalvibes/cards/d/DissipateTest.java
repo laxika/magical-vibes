@@ -119,6 +119,38 @@ class DissipateTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("A countered copy ceases to exist and is not exiled")
+    void counteredCopyCeasesToExistNotExiled() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.setHand(player2, List.of(new Dissipate()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        // Mark the creature spell on the stack as a copy: countering it must make it cease to exist,
+        // not move it to any zone (CR 707.10 / 701.5g).
+        GameData gd = harness.getGameData();
+        gd.stack.stream()
+                .filter(se -> se.getCard().getName().equals("Grizzly Bears"))
+                .forEach(se -> se.setCopy(true));
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+    }
+
     // ===== Fizzle =====
 
     @Test
