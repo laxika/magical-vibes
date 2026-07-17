@@ -447,9 +447,9 @@ Only effect types with at least one out-of-zone `instanceof` are listed.
 
 Targeted effect types (they carry a target: override `targetSpec()` to a non-NONE spec per `model/effect/CardEffect.java`, or are instanceof-checked in the targeting services) that have **no** `@ValidatesTarget` validator under `service/validate/`. On the single-`targetId` validation path (`TargetLegalityService.checkSpellTargeting`) these effects get NO type checking — this is the class of bug that let the AI cast Fireball at a Plains (July 2026, `DealDividedDamageEffect`). This list feeds refactor step 3.
 
-- **Targeted effect types:** 271
+- **Targeted effect types:** 269
 - **With a validator:** 32
-- **Coverage gap (targeted, no validator):** 237
+- **Coverage gap (targeted, no validator):** 235
 
 | Effect type | Dispatched outside zones? |
 |-------------|---------------------------|
@@ -481,9 +481,7 @@ Targeted effect types (they carry a target: override `targetSpec()` to a non-NON
 | `CopySpellEffect` | yes |
 | `CounterSpellAndCreateTreasureTokensEffect` |  |
 | `CounterSpellAndExileAllWithSameNameEffect` |  |
-| `CounterSpellAndExileEffect` |  |
 | `CounterSpellAndGainControlIfArtifactOrCreatureEffect` |  |
-| `CounterSpellAndPutOnTopOfLibraryEffect` |  |
 | `CounterSpellEffect` | yes |
 | `CounterSpellIfControllerPoisonedEffect` |  |
 | `CounterUnlessDiscardsEffect` |  |

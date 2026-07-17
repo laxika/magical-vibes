@@ -601,3 +601,126 @@ The wrapper set to check before any future fold is now: `MayEffect`, `FlipCoinWi
   `CARD_PATTERNS_CREATURES_TRIGGERED.md`, `CARD_PATTERNS_PERMANENTS_ARTIFACTS.md`, `CARD_PATTERNS_CREATURES_ETB.md`
   still reference all four records, correctly (they all still exist).
 - Nothing deleted. Full suite not run (per CLAUDE.md — user runs it).
+
+---
+
+## Session 6 — batch-1 closeout: verify + metrics + batch-2 scope (docs only, NO functional change)
+
+Verification/metrics session. No card, record, handler, or agent-doc changed. Only this file updated
+(+ `EFFECT_COUPLING_MATRIX.md`/`effect-dispatch-baseline.txt`, which the audit script regenerated).
+
+### Deletion verification (Sessions 1–3, five records)
+Whole-repo grep for each of the five deleted records —
+`DealDamageToAnyTargetAndGainLifeEffect`, `DealXDamageToAnyTargetAndGainXLifeEffect`,
+`DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect`, `CounterSpellAndExileEffect`,
+`CounterSpellAndPutOnTopOfLibraryEffect` — hits **only** in `refactor-docs/` historical logs (this file,
+`TARGETSPEC_PROGRESS.md`, `PROGRESS.md`). **No `.java` references** (production or test). **No agent-docs
+straggler**: none of EFFECTS_INDEX / EFFECTS_QUICK_REFERENCE / ORACLE_TEXT_EFFECT_MAP presents any of the
+five as available. The script-generated `EFFECT_COUPLING_MATRIX.md` (which Session 3 had left listing the
+two counter records) was refreshed by this session's audit run and now lists **none** of the five.
+
+### Build (touched modules only)
+`.\gradlew :magical-vibes-domain:compileJava :magical-vibes-engine:compileJava :magical-vibes-card:compileJava
+:magical-vibes-ai:compileJava` → **BUILD SUCCESSFUL** (all up-to-date/from-cache, no errors). Tests not run.
+
+### Metrics (2026-07-17)
+- Effect types: **1102 → 1098** (−4). Violations: **483 → 482** (−1). (`scripts/effect-coupling-audit.py`.)
+  Net −4 vs. five records deleted — the 1102/483 baseline was most likely snapshotted after Session 1's
+  deletion (or reflects unrelated repo churn); recorded as-measured, not reconciled.
+- `And[A-Z]`/`Then[A-Z]` files in `model/effect/`: **137** (case-SENSITIVE; a case-insensitive match reports
+  an inflated 234 by catching `Land`/`Hand`/`Random`/… + capital). Of the 137: 1 is the `ThenEffectRecipient`
+  enum; 2 are the rider-infra precedents (`DestroyTargetPermanentThenEffect`, `SacrificePermanentThenEffect`);
+  7 are still-present Session 4/5 deferrals. ⇒ **~127 genuine unfolded composite records remain.**
+
+### KEY SCOPING FINDING
+Batch 1 essentially **exhausted the pure decompose-onto-card seam** (category a). Almost every remaining
+And/Then composite is either (i) wrapped by its card in a single-effect wrapper (`MayEffect` /
+`ConditionalEffect` / `FlipCoinWinEffect` / …) — the Session 4/5 blocker — or (ii) **event-coupled** ("if you
+do", "for each destroyed/discarded", "equal to toughness"). Continuing past batch 1 means committing to the
+**`StackEntry.eventValue` rider channel** (categories b/c); the two `...ThenEffect` precedents are the template.
+Batch 2 is a **decision point**, not more of the same.
+
+---
+
+## Batch 2 candidates (proposed, NOT implemented)
+
+Each record read (record only, per task); user wiring verified by usage grep (Session 4/5 rule). Ranked by
+value = deletability (all users migratable) × tractability. Classification: (a) pure decomposition,
+(b) event-coupled (needs `eventValue`; precedents `DestroyTargetPermanentThenEffect`/`SacrificePermanentThenEffect`),
+(c) interaction-coupled (async-resume works — Session 4 verdict), (d) leave alone.
+
+### Tier 1 — event-coupled "per-destroyed / per-sacrificed count" cluster  ⟶ highest value
+One shared piece of infra — capture the count/stat of the destroyed-or-sacrificed permanents onto `eventValue`,
+then run a rider (the `DestroyTargetPermanentThenEffect` pattern generalized to destroy-all / edict) — folds
+this whole family. `DestroyAllPermanentsEffect` primitive already exists.
+
+1. **DestroyAllPermanentsAndGainLifePerDestroyedEffect** — (b). Users: Fracturing Gust, Righteous Fury,
+   Paraselene (all SPELL, flat, unwrapped). Replace: `DestroyAllPermanentsEffect(filter)` + gain-life rider
+   reading count-destroyed `eventValue`. **HIGH.**
+2. **DestroyCreaturesTargetPlayerControlsAndLoseLifePerDestroyedEffect** — (b). User: Rain of Daggers (SPELL).
+   Same infra, lose-life rider. **HIGH.**
+3. **DestroyCreaturesTargetPlayerControlsAndDrawPerDestroyedEffect** — (b). User: Overwhelming Forces (SPELL).
+   Same infra, draw rider. **HIGH.**
+4. **DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect** — (b), *already a composite in the tree*.
+   User: Phyrexian Rebirth (SPELL). Fold into the same generalized rider (token rider) so the family collapses
+   to one mechanism instead of four. **MED** (include to unify).
+5. **SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect** — (b), stat = toughness (not a count).
+   Users: Tribute to Hunger (edict, targets opponent, SPELL) + Doomgape (self-sac, UPKEEP_TRIGGERED). Needs
+   toughness-of-sacrificed snapshot on `eventValue` (`SacrificePermanentThenEffect` precedent) + an edict
+   (target-player-sacrifices) variant + **Doomgape trigger-slot-split check** (Session-4 Record-3). **MED.**
+
+### Tier 2 — count-after-interaction (b + c)
+6. **TargetPlayerDiscardsThenDrawsThatManyEffect** — (b)+(c). User: Forget (SPELL). Draw count = cards actually
+   discarded; draw rides after the discard interaction (async-resume). **MED.**
+7. **RemoveCounterFromTargetAndGainLifeEffect** — (b) "if you do". Users: Woeleecher (gain 2 if removed),
+   Chainbreaker (lifeGain 0 → no gain). Blocker: **no standalone remove-counter primitive exists** — a
+   `RemoveCounterFromTargetEffect` primitive **and** a "then gain life if removed" rider must both be built;
+   Chainbreaker collapses trivially to the bare primitive. **MED-LOW.**
+
+### Tier 3 — decomposition with a slot/companion caveat
+8. **DrawAndLoseLifePerSubtypeEffect** — (a) dynamic-count decomposition: `DrawCardEffect(PermanentCount(ZOMBIE))`
+   + `LoseLifeEffect(PermanentCount(ZOMBIE), CONTROLLER)` (Corrupt precedent, Session 2). User: Graveborn Muse,
+   **UPKEEP_TRIGGERED** → must verify the upkeep collector doesn't split the two effects into separate LIFO
+   entries (Session-4 Record-3 trap). Order-independent here (draw N / lose N, N = Zombie count, stable), so a
+   split is functionally benign but a CR-603 atomicity deviation — verify collector first. **LOW-MED.**
+9. **DealDamageToTargetAndTheirCreaturesEffect** — (a)/(b) via targeting-companion (shared `targetId`, not a
+   computed value). Users: Chandra Nalaar −8 (loyalty), Flame Wave (SPELL). The decomposed pattern already
+   ships on `ChandraBoldPyromancer` (`DealDamageToPlayersEffect(TARGET_PLAYER)` +
+   `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect`), but this record's semantics differ
+   (target = PLAYER_OR_PLANESWALKER, damages that player/pw-controller's **creatures only**) → needs a companion
+   matching those exact semantics. **MED.**
+
+### Tier 4 — harder / low payoff
+10. **DiscardThenReturnFromGraveyardToHandEffect** — (c)+(b). User: Recall (SPELL, XValue). Two interactions
+    (discard, then graveyard-returns) + returns = actual discarded count. **HARDER**, 1 user.
+
+### Leave alone (d) — recorded so future sessions don't re-attempt
+- **DrawAndDiscardCardEffect** — DEFER (mixed): ~19 users, several `MayEffect`/`ConditionalEffect`-wrapped
+  (Stadium Tidalmage, Daring Saboteur, Murder of Crows, Shipwreck Looter, Marauding Looter, Muse Seeker). Flat
+  users (Faithless Looting, Catalog, Jalum Tome, Owl Familiar, …) would fold to `DrawCardEffect(N)` +
+  `DiscardEffect(N)` (draw first, discard terminal — no rider), but wrapped users can't → **all-or-nothing;
+  record survives → no payoff.** Unblocks only with a generic do-all-of `SequenceEffect` bundle (engine change,
+  which would also unlock most Session 4/5 deferrals).
+- **DiscardAndDrawCardEffect** — DEFER: all users `MayEffect`-wrapped (Keldon Raider, Rubble Rouser, Pursue the
+  Past) + "draw only if actually discarded" if-you-do contingency.
+- **RemoveCounterFromSourceAndGainLifeEffect** — DEFER: Living Artifact wraps it in `MayEffect` + if-you-do
+  (Session-5 shape).
+- **MillControllerAndDealDamageByHighestManaValueEffect** — leave alone: bespoke (damage = greatest mana value
+  among milled cards, not a count); 1 user (Heretic's Punishment).
+- **PutHandOnBottomOfLibraryAndDrawEffect** / **ShuffleHandIntoLibraryAndDrawEffect** — leave alone: single
+  linked reshuffle-then-draw-that-many; bespoke.
+- **RemoveCountersFromTargetAndBoostSelfEffect** — leave alone: "up to X" counter choice (interaction) + boost =
+  removed count; bespoke (Hex Parasite).
+- **Prevent…And…Effect** family (14 records) + replacement effects — out of scope per program charter.
+
+### Cross-cutting recommendation
+Highest-leverage batch-2 move: build the **generalized destroy/sacrifice-count → rider** infra (folds Tier-1
+items 1–5 and unifies the already-present token-count composite). It is the natural extension of the
+`DestroyTargetPermanentThenEffect` / `SacrificePermanentThenEffect` precedents to the destroy-all / edict case.
+Everything else is lower-yield or blocked on a `SequenceEffect` do-all-of bundle (which, if built, would in turn
+unlock the wrapper-blocked Session 4/5 records and the loot/rummage records — a possible batch 3 theme).
+
+### Notes
+- Docs-only session. No production/test code touched; working tree change is limited to this file plus the
+  audit script's regenerated `EFFECT_COUPLING_MATRIX.md` / `effect-dispatch-baseline.txt`.
+- Full suite not run (per CLAUDE.md — user runs it before committing).
