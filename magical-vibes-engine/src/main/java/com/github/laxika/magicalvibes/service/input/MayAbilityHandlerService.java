@@ -68,6 +68,7 @@ public class MayAbilityHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final ValidTargetService validTargetService;
@@ -85,6 +86,7 @@ public class MayAbilityHandlerService {
                                     EffectResolutionService effectResolutionService,
                                     DestructionSupport destructionSupport,
                                     GraveyardReturnSupport graveyardReturnSupport,
+                                    com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                                     ValidTargetService validTargetService,
@@ -101,6 +103,7 @@ public class MayAbilityHandlerService {
         this.effectResolutionService = effectResolutionService;
         this.destructionSupport = destructionSupport;
         this.graveyardReturnSupport = graveyardReturnSupport;
+        this.brilliantUltimatumSupport = brilliantUltimatumSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.validTargetService = validTargetService;
@@ -120,10 +123,12 @@ public class MayAbilityHandlerService {
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
 
-        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
+        // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley, Brilliant Ultimatum)
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null) {
-            if (pileSeparation.cardPileMode()) {
+            if (pileSeparation.playFromExile()) {
+                brilliantUltimatumSupport.completePileSeparationStep2(gameData, accepted);
+            } else if (pileSeparation.cardPileMode()) {
                 graveyardReturnSupport.completeCardPileSeparationStep2(gameData, accepted);
             } else {
                 destructionSupport.completePileSeparationStep2(gameData, accepted);

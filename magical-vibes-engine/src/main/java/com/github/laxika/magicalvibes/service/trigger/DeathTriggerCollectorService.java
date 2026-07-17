@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -33,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
@@ -42,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToSharedTypeCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
@@ -424,6 +427,19 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
+    boolean handleEnchantedCreatureControllerLosesLife(TriggerMatchContext match,
+            EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
+        // Banewasp Affliction: the dying creature's controller loses life equal to its toughness.
+        // Snapshot the last-known toughness and controller at trigger time (the creature has already
+        // left the battlefield); life loss can't be negative.
+        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
+        CardEffect baked = new EnchantedCreatureControllerLosesLifeEffect(
+                Math.max(0, epd.dyingCreatureToughness()), epd.dyingPermanentControllerId());
+        addEnchantedPermanentDeathEntry(match, baked);
+        return true;
+    }
+
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedPermanentDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -651,6 +667,32 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
+    // ── ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──────
+
+    @CollectsTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
+            slot = EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    boolean handleOpponentPermanentGraveyardSteal(TriggerMatchContext match,
+            StealDyingOpponentPermanentUnlessPaysLifeEffect effect, TriggerContext ctx) {
+        TriggerContext.OpponentPermanentGraveyard opg = (TriggerContext.OpponentPermanentGraveyard) ctx;
+        // Bake the dying card id and the opponent who may pay the life. The "unless pays" branch is a
+        // resolution-time choice made by that opponent, so this stacks as a plain triggered ability.
+        StealDyingOpponentPermanentUnlessPaysLifeEffect baked =
+                new StealDyingOpponentPermanentUnlessPaysLifeEffect(
+                        effect.lifeCost(), opg.dyingCard().getId(), opg.dyingControllerId());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(baked))
+        ));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers (opponent permanent put into graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
     // ── ON_ANY_CREATURE_DIES ───────────────────────────────────────────
 
     @CollectsTrigger(value = PutCountersOnSourceEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
@@ -665,6 +707,33 @@ public class DeathTriggerCollectorService {
                 null,
                 match.permanent().getId()
         ));
+        logAnyCreatureDeath(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceEqualToDyingPowerEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
+    boolean handleAnyCreatureDeathPutCountersEqualToPower(TriggerMatchContext match,
+            PutCountersOnSourceEqualToDyingPowerEffect effect, TriggerContext ctx) {
+        // Kresh the Bloodbraided: "you may put X +1/+1 counters on this creature, where X is that
+        // creature's power." The dying creature's last-known power is snapshotted into the context;
+        // bake it into a concrete PutCountersOnSourceEffect that resolves onto this permanent.
+        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
+        int power = Math.max(0, cd.dyingCreaturePower());
+        var counters = new PutCountersOnSourceEffect(effect.powerModifier(), effect.toughnessModifier(), power);
+        if (effect.optional()) {
+            var may = new MayEffect(counters, "Put " + power + " +1/+1 counter(s) on this creature?");
+            match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                    null, match.permanent().getId());
+        } else {
+            match.gameData().stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    match.permanent().getCard(),
+                    match.controllerId(),
+                    match.permanent().getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(counters)),
+                    null,
+                    match.permanent().getId()));
+        }
         logAnyCreatureDeath(match);
         return true;
     }
@@ -689,7 +758,18 @@ public class DeathTriggerCollectorService {
     @CollectsTrigger(value = MayEffect.class, slot = EffectSlot.ON_ANY_CREATURE_DIES)
     boolean handleAnyCreatureDeathMay(TriggerMatchContext match,
             MayEffect may, TriggerContext ctx) {
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may);
+        // CR 603.3d: a targeted "may" ability (e.g. Vicious Shadows' "you may have this deal damage
+        // to target player") needs its target chosen when the trigger is put on the stack.
+        if (may.targetSpec().category().includesPermanents() || may.targetSpec().category().includesPlayers()) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(may))
+            ));
+        } else {
+            // Pass the source permanent id so wrapped source-referencing effects (e.g.
+            // PutCountersOnSourceEffect for Scavenger Drake's optional +1/+1 counter) can resolve.
+            match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                    null, match.permanent().getId());
+        }
         logAnyCreatureDeath(match);
         return true;
     }

@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffe
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnLandControlledByPlayerToHandEffect;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -511,6 +513,28 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
+    @CollectsTrigger(value = BoostSelfByCastSpellManaValueEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleManaValueSelfBoost(TriggerMatchContext match,
+            BoostSelfByCastSpellManaValueEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) return false;
+
+        int manaValue = sc.spellCard().getManaValue();
+        List<CardEffect> resolved = new ArrayList<>(List.of(new BoostSelfEffect(manaValue, manaValue)));
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                resolved,
+                null,
+                match.permanent().getId()));
+        log.info("Game {} - {} spell-cast mana-value self-boost trigger queued (+{}/+{})",
+                match.gameData().id, match.permanent().getCard().getName(), manaValue, manaValue);
+        return true;
+    }
+
     @CollectsTrigger(value = GivePoisonCountersEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
     private boolean handlePoisonOnSpellCast(TriggerMatchContext match,
             GivePoisonCountersEffect trigger, TriggerContext ctx) {
@@ -575,6 +599,24 @@ public class SpellCastTriggerCollectorService {
     private boolean handleCastingOpponentDraws(TriggerMatchContext match,
             DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger))
+        );
+        entry.setTargetId(sc.castingPlayerId());
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = MillEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleCastingOpponentMills(TriggerMatchContext match,
+            MillEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        // "That player mills N cards" — carry the casting opponent on targetId so the
+        // TARGET_PLAYER mill lands on them (not a chosen target). Memory Erosion.
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),

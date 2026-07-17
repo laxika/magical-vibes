@@ -139,6 +139,8 @@ public class GameData {
     public final Map<UUID, Integer> creatureGivingControllerPoisonOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Delayed trigger: creature card IDs to return to the battlefield under their owner's control if they die this turn (Graceful Reprieve). */
     public final Set<UUID> creaturesReturnedToBattlefieldOnDeathThisTurn = ConcurrentHashMap.newKeySet();
+    /** Delayed trigger: creature card ID → token registrations to resolve if it dies this turn (Skeletonize). */
+    public final Map<UUID, List<DelayedTokenOnDeath>> creatureCreatingTokenOnDeathThisTurn = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -246,9 +248,10 @@ public class GameData {
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     /** Tracks exile-until-source-leaves connections (O-ring style).
-     *  Maps source permanent UUID to the exiled card + owner info.
-     *  When the source permanent leaves the battlefield, the exiled card returns. */
-    public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
+     *  Maps source permanent UUID to the exiled cards + owner info.
+     *  When the source permanent leaves the battlefield, the exiled cards return.
+     *  A source may hold more than one pending return (e.g. Realm Razer exiles all lands). */
+    public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
     public final List<PlayerSourceNextDamageShield> playerSourceNextDamageShields = Collections.synchronizedList(new ArrayList<>());
@@ -260,6 +263,8 @@ public class GameData {
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Players for whom damage dealt by attacking creatures is prevented this turn (Deep Wood). */
     public final Set<UUID> playersWithDamageFromAttackersPrevented = ConcurrentHashMap.newKeySet();
+    /** Players who, this turn, gain control of creatures that would enter under an opponent's control (Gather Specimens). */
+    public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
@@ -1181,6 +1186,12 @@ public class GameData {
         exiledCards.add(new ExiledCardEntry(card, ownerId, sourcePermanentId));
     }
 
+    /** Registers a pending exile-return linked to a source permanent (O-ring style).
+     *  When the source leaves the battlefield, all pending returns for it are processed. */
+    public void addExileReturnOnPermanentLeave(UUID sourcePermanentId, PendingExileReturn pending) {
+        exileReturnOnPermanentLeave.computeIfAbsent(sourcePermanentId, k -> new ArrayList<>()).add(pending);
+    }
+
     /** Removes an exiled card by card ID. Returns true if found and removed. */
     public boolean removeFromExile(UUID cardId) {
         return exiledCards.removeIf(e -> e.card().getId().equals(cardId));
@@ -1371,6 +1382,7 @@ public class GameData {
         copy.playersAttemptedDrawFromEmptyLibrary.addAll(this.playersAttemptedDrawFromEmptyLibrary);
         copy.playersWithAllDamagePrevented.addAll(this.playersWithAllDamagePrevented);
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
+        copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
@@ -1462,6 +1474,8 @@ public class GameData {
                 copy.creatureCardsDamagedThisTurnBySourcePermanent.put(k, new HashSet<>(v)));
         copy.creatureGivingControllerPoisonOnDeathThisTurn.putAll(this.creatureGivingControllerPoisonOnDeathThisTurn);
         copy.creaturesReturnedToBattlefieldOnDeathThisTurn.addAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
+        this.creatureCreatingTokenOnDeathThisTurn.forEach((k, v) ->
+                copy.creatureCreatingTokenOnDeathThisTurn.put(k, new ArrayList<>(v)));
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->
@@ -1476,7 +1490,8 @@ public class GameData {
         copy.delayedActions.addAll(this.delayedActions);
 
         // --- Exile-until-source-leaves map (O-ring style) ---
-        copy.exileReturnOnPermanentLeave.putAll(this.exileReturnOnPermanentLeave);
+        this.exileReturnOnPermanentLeave.forEach((k, v) ->
+                copy.exileReturnOnPermanentLeave.put(k, new ArrayList<>(v)));
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) ->

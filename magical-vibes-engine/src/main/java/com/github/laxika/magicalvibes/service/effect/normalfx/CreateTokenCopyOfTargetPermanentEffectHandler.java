@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -124,6 +125,9 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
             if (e.exileAtEndStep()) {
                 gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
+            }
+            if (e.sacrificeAtEndStep()) {
+                gameData.queueDelayedAction(new SacrificeAtEndStep(tokenPermanent.getId()));
             }
 
             String logMsg = "A token copy of " + sourceCard.getName() + " is created.";

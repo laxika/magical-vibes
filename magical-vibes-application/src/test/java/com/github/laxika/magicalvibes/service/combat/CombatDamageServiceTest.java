@@ -94,7 +94,8 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
                 gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
-                lifeSupport, combatAttackService, combatTriggerService);
+                lifeSupport, combatAttackService, combatTriggerService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class));
 
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();

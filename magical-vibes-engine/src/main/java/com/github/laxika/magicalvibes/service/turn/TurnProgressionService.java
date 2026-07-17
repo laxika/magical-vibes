@@ -231,6 +231,7 @@ public class TurnProgressionService {
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();
         gameData.creaturesReturnedToBattlefieldOnDeathThisTurn.clear();
+        gameData.creatureCreatingTokenOnDeathThisTurn.clear();
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.cleanupDiscardPending = false;
         gameData.paidSearchTaxPermanentIds.clear();
@@ -273,11 +274,16 @@ public class TurnProgressionService {
                 return;
             }
 
-            // Static Orb: pause the untap step so the active player chooses up to two permanents to
-            // untap. The choice handler resumes via resumeStaticOrbUntap.
-            if (untapStepService.staticOrbRestrictionApplies(gameData, nextActive)) {
+            // Static Orb / Stoic Angel: pause the untap step so the active player chooses up to the
+            // cap of the matching permanents to untap. The choice handler resumes via
+            // resumeStaticOrbUntap.
+            java.util.Optional<com.github.laxika.magicalvibes.model.effect.StaticOrbEffect> untapRestriction =
+                    untapStepService.bindingUntapRestriction(gameData, nextActive);
+            if (untapRestriction.isPresent()) {
+                com.github.laxika.magicalvibes.model.effect.StaticOrbEffect effect = untapRestriction.get();
                 playerInputService.beginStaticOrbUntapChoice(gameData, nextActive,
-                        untapStepService.staticOrbUntapCandidates(gameData, nextActive));
+                        untapStepService.staticOrbUntapCandidates(gameData, nextActive, effect),
+                        effect.maxUntap(), effect.filter());
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
             }
@@ -317,8 +323,9 @@ public class TurnProgressionService {
      * bookkeeping and turn advance then proceed exactly as {@link #advanceTurn} would have.
      */
     public void resumeStaticOrbUntap(GameData gameData, UUID activePlayerId,
-                                     java.util.Set<UUID> chosenUntapIds) {
-        untapStepService.untapChosenPermanents(gameData, activePlayerId, chosenUntapIds);
+                                     java.util.Set<UUID> chosenUntapIds,
+                                     com.github.laxika.magicalvibes.model.filter.PermanentPredicate staticOrbFilter) {
+        untapStepService.untapChosenPermanents(gameData, activePlayerId, chosenUntapIds, staticOrbFilter);
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

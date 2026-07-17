@@ -24,6 +24,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.ImprovisationCapstoneCastChoice,
+        PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.DoomsdayChoice,
         PendingInteraction.SearchLibraryToTopChoice,
@@ -44,6 +45,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.PermanentChoice,
+        PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.CombatDamageAssignment,
         PendingInteraction.AttackerDeclaration,
         PendingInteraction.BlockerDeclaration {
@@ -99,6 +101,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
      */
     record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Brilliant Ultimatum: after an opponent has separated the exiled cards into two piles and the
+     * controller has chosen one, {@code playerId} chooses any number of the chosen pile's cards
+     * ({@code validCardIds}, in pile order) to play — lands are put onto the battlefield (subject
+     * to the one-land-per-turn limit) and spells are cast without paying their mana costs. Cards
+     * not chosen remain exiled. Card views are re-derived from the exile zone at prompt time.
+     */
+    record BrilliantUltimatumPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
     }
 
@@ -653,6 +666,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             all.addAll(validPlayerIds);
             return all;
         }
+    }
+
+    /**
+     * Ad Nauseam: after each mandatory reveal, {@code playerId} decides whether to repeat the
+     * process (reveal the next top card, put it into hand, lose life equal to its mana value).
+     * {@code sourceName} is the spell's name (for the life-loss source / log text). Accepting
+     * performs another iteration and re-prompts (while the library is non-empty); declining ends
+     * the resolution. Answered via the shared may-ability accept/decline wire payload.
+     */
+    record AdNauseamRepeatChoice(UUID playerId, String sourceName) implements PendingInteraction {
     }
 
     /**

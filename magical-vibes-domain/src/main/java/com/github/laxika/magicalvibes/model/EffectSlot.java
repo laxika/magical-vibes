@@ -5,6 +5,13 @@ public enum EffectSlot {
     ON_ENTER_BATTLEFIELD,
     SPELL,
 ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+    /** "Whenever a nontoken creature enters under your control" (excludes this permanent and tokens).
+     *  Like {@link #ON_ALLY_CREATURE_ENTERS_BATTLEFIELD} but the entering permanent's id is preserved on
+     *  any queued may-pay ability (mirrors {@link #ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD}), so a
+     *  "you may pay {N}. If you do, create a token that's a copy of that creature" effect
+     *  ({@code CreateTokenCopyOfTargetPermanentEffect}) knows which creature to copy. Checked in
+     *  {@code TriggerCollectionService.checkAllyNontokenCreatureEntersTriggers}. Used by Minion Reflector. */
+    ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
     ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD,
@@ -51,6 +58,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers whenever a permanent (of any type) an opponent of the controller controls is put into
+     *  a graveyard from the battlefield. Fires on permanents controlled by an opponent of the dying
+     *  permanent's controller. Checked in {@code PermanentRemovalService.processGraveyardAndTriggers}
+     *  via {@code TriggerCollectionService.checkOpponentPermanentPutIntoGraveyardTriggers}. Used by
+     *  Prince of Thralls. */
+    ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     /** Triggers when a land the controller owns is put into their graveyard from the battlefield
      *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
      *  the graveyard owner controls. */

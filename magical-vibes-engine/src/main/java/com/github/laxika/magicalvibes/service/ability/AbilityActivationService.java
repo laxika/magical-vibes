@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.ability.cost.ArtifactSacrificeCost
 import com.github.laxika.magicalvibes.service.ability.cost.CreatureSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentReturnToHandCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentSacrificeCostHandler;
+import com.github.laxika.magicalvibes.service.ability.cost.SequencePermanentSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentUntapCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
@@ -63,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
@@ -79,6 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsSequenceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
@@ -559,7 +562,7 @@ public class AbilityActivationService {
         }
 
         Card card = graveyard.get(graveyardCardIndex);
-        List<ActivatedAbility> abilities = card.getGraveyardActivatedAbilities();
+        List<ActivatedAbility> abilities = effectiveGraveyardAbilities(gameData, card, playerId);
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Card has no graveyard activated ability");
         }
@@ -597,10 +600,31 @@ public class AbilityActivationService {
             handler.validateCanPay(gameData, playerId);
         }
 
+        // Exile-N-cards-from-graveyard cost (Salvage Titan: "Exile three artifact cards from your
+        // graveyard"). Validate up front that enough matching cards other than the source exist —
+        // the source card must remain in the graveyard for the ability's own return effect.
+        ExileNCardsFromGraveyardCost exileNGraveyardCost = ability.getEffects().stream()
+                .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                .map(ExileNCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileNGraveyardCost != null
+                && matchingGraveyardExileCandidates(graveyard, exileNGraveyardCost.requiredType(), card).size()
+                        < exileNGraveyardCost.count()) {
+            String typeName = graveyardExileFilterLabel(exileNGraveyardCost.requiredType(), null);
+            throw new IllegalStateException("Not enough " + typeName + "cards in graveyard to exile (need "
+                    + exileNGraveyardCost.count() + ")");
+        }
+
         // Pay mana cost
         String abilityCost = ability.getManaCost();
         if (abilityCost != null) {
             payManaCost(gameData, playerId, abilityCost, xValue, false, false);
+        }
+
+        // Pay the exile-N-cards-from-graveyard cost
+        if (exileNGraveyardCost != null) {
+            payGraveyardExileNCost(gameData, player, exileNGraveyardCost, card);
         }
 
         // Pay permanent-choice costs (auto-pay or enter interactive mode)
@@ -611,6 +635,20 @@ public class AbilityActivationService {
         }
 
         completeGraveyardAbilityActivation(gameData, player, card, ability, xValue);
+    }
+
+    /**
+     * The graveyard-activated abilities a card offers from the given owner's graveyard: its own
+     * printed graveyard abilities plus any granted to owned creature cards by static effects on the
+     * battlefield (e.g. Sedris, the Traitor King grants unearth {2}{B}). Granted abilities are
+     * appended after the card's own so indices stay aligned with the client's card view.
+     */
+    private List<ActivatedAbility> effectiveGraveyardAbilities(GameData gameData, Card card, UUID ownerId) {
+        List<ActivatedAbility> abilities = new ArrayList<>(card.getGraveyardActivatedAbilities());
+        if (card.hasType(CardType.CREATURE)) {
+            abilities.addAll(gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(gameData, ownerId));
+        }
+        return abilities;
     }
 
     private boolean handleGraveyardPermanentChoiceCost(GameData gameData, Player player, Card card,
@@ -649,7 +687,7 @@ public class AbilityActivationService {
         UUID playerId = player.getId();
         Card card = context.graveyardCard();
         int idx = context.abilityIndex() != null ? context.abilityIndex() : 0;
-        ActivatedAbility ability = card.getGraveyardActivatedAbilities().get(idx);
+        ActivatedAbility ability = effectiveGraveyardAbilities(gameData, card, playerId).get(idx);
 
         PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(context.costEffect(), null, 0);
         if (handler == null) {
@@ -1169,6 +1207,16 @@ public class AbilityActivationService {
                     exileGraveyardCost.requiredSubtype(), exileGraveyardCardIndex);
         }
 
+        // Pay exile-N-cards-from-graveyard cost by exiling the front N cards (Immortal Coil).
+        ExileNCardsFromGraveyardCost exileNGraveyardCostToPay = abilityEffects.stream()
+                .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                .map(ExileNCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileNGraveyardCostToPay != null) {
+            graveyardService.exileCardsFromGraveyard(gameData, playerId, exileNGraveyardCostToPay.count());
+        }
+
         // Pay remove-counter cost: remove counters respecting counter type
         if (removeCounterCost.isPresent()) {
             int count = removeCounterCost.get().count();
@@ -1334,6 +1382,7 @@ public class AbilityActivationService {
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
+        if (effect instanceof SacrificePermanentsSequenceCost c) return new SequencePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, chosenSoFar);
         if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
         if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
@@ -1661,6 +1710,21 @@ public class AbilityActivationService {
                         exileGraveyardCost.requiredSubtype()).isEmpty()) {
             String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(), exileGraveyardCost.requiredSubtype());
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
+        }
+
+        // Exile-N-cards-from-graveyard cost (e.g. Immortal Coil "Exile two cards from your graveyard")
+        // needs at least N cards in the graveyard.
+        ExileNCardsFromGraveyardCost exileNGraveyardCost = abilityEffects.stream()
+                .filter(ExileNCardsFromGraveyardCost.class::isInstance)
+                .map(ExileNCardsFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileNGraveyardCost != null) {
+            List<Card> gy = gameData.playerGraveyards.get(playerId);
+            if (gy == null || gy.size() < exileNGraveyardCost.count()) {
+                throw new IllegalStateException("Not enough cards in graveyard to exile (need "
+                        + exileNGraveyardCost.count() + ")");
+            }
         }
 
         // Discard cost needs at least one valid card in hand
@@ -2171,6 +2235,49 @@ public class AbilityActivationService {
             }
         }
         return validIndices;
+    }
+
+    /**
+     * Collects the cards in {@code graveyard} that can pay an {@link ExileNCardsFromGraveyardCost} of
+     * {@code requiredType} (null = any type), excluding {@code sourceCard}. Uses {@code hasType} so an
+     * artifact creature counts as an artifact card. The source is excluded so a graveyard-activated
+     * ability that returns itself (Salvage Titan) never exiles the very card it means to bring back.
+     */
+    private List<Card> matchingGraveyardExileCandidates(List<Card> graveyard, CardType requiredType, Card sourceCard) {
+        List<Card> candidates = new ArrayList<>();
+        if (graveyard == null) {
+            return candidates;
+        }
+        for (Card card : graveyard) {
+            if (card == sourceCard) {
+                continue;
+            }
+            if (requiredType == null || card.hasType(requiredType)) {
+                candidates.add(card);
+            }
+        }
+        return candidates;
+    }
+
+    private void payGraveyardExileNCost(GameData gameData, Player player, ExileNCardsFromGraveyardCost cost, Card sourceCard) {
+        UUID playerId = player.getId();
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        List<Card> candidates = matchingGraveyardExileCandidates(graveyard, cost.requiredType(), sourceCard);
+        if (candidates.size() < cost.count()) {
+            throw new IllegalStateException("Not enough cards in graveyard to exile");
+        }
+        List<Card> toExile = new ArrayList<>(candidates.subList(0, cost.count()));
+        graveyard.removeAll(toExile);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+        for (Card exiled : toExile) {
+            exileService.exileCard(gameData, playerId, exiled);
+        }
+        String typeName = graveyardExileFilterLabel(cost.requiredType(), null);
+        String logEntry = player.getUsername() + " exiles " + toExile.size() + " " + typeName
+                + "card" + (toExile.size() != 1 ? "s" : "") + " from graveyard as an activation cost.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} exiles {} {}cards from graveyard as activation cost",
+                gameData.id, player.getUsername(), toExile.size(), typeName);
     }
 
     private String graveyardExileFilterLabel(CardType requiredType, CardSubtype requiredSubtype) {

@@ -27,6 +27,7 @@ public enum CardSet {
     SET_NPH("NPH"),
     SET_ISD("ISD"),
     SET_DKA("DKA"),
+    SET_ALA("ALA"),
     SET_XLN("XLN"),
     SET_DOM("DOM"),
     SET_SOS("SOS"),

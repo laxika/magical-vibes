@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M10", collectorNumber = "178")
+@CardRegistration(set = "ALA", collectorNumber = "130")
 public class ElvishVisionary extends Card {
 
     public ElvishVisionary() {

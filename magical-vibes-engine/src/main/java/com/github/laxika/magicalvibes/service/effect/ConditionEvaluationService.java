@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CreatureAttackingController;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -66,6 +68,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
@@ -106,6 +109,10 @@ public class ConditionEvaluationService {
         return switch (condition) {
             case NotCondition c ->
                     !isMet(gameData, c.inner(), ctx);
+            case AllConditions c ->
+                    c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx));
+            case CreatureAttackingController ignored ->
+                    ctx.controllerId() != null && creatureAttackingPlayer(gameData, ctx.controllerId());
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
             case Morbid ignored ->
@@ -238,6 +245,10 @@ public class ConditionEvaluationService {
             case SourceCounterThreshold c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.getCounterCount(c.counterType()) >= c.threshold();
+            }
+            case SourceUntapped ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && !source.isTapped();
             }
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
@@ -494,6 +505,23 @@ public class ConditionEvaluationService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
         return battlefield.stream().filter(Permanent::isAttacking).count();
+    }
+
+    /**
+     * True if any creature is attacking {@code playerId} themselves (the attack target is the
+     * player, not a planeswalker they control). Qasali Ambusher's "a creature is attacking you".
+     */
+    private boolean creatureAttackingPlayer(GameData gameData, UUID playerId) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent perm : battlefield) {
+                if (perm.isAttacking() && playerId.equals(perm.getAttackTarget())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean hasMatchingAttacker(GameData gameData, ConditionContext ctx, PermanentPredicate predicate) {

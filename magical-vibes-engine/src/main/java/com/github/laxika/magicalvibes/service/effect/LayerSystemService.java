@@ -398,6 +398,11 @@ public class LayerSystemService {
             }
             List<Card> hand = gameData.playerHands.get(playerId);
             h = mix(h, hand == null ? -1 : hand.size());
+            // Top-of-library identity: a managed static (Skill Borrower) grants the top card's
+            // activated abilities, so a change of top card must invalidate the memoized board.
+            // (Conditional wrappers reading the top card stay unmanaged and are unaffected.)
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            h = mix(h, deck == null || deck.isEmpty() ? 0 : System.identityHashCode(deck.getFirst()));
         }
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : gameData.floatingEffects) {

@@ -59,6 +59,7 @@ class CastingCostServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     private CastingCostService svc;
     private GameData gd;
@@ -70,7 +71,7 @@ class CastingCostServiceTest {
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
         svc = new CastingCostService(
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
-                support, gameQueryService, predicateEvaluationService);
+                support, gameQueryService, predicateEvaluationService, conditionEvaluationService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

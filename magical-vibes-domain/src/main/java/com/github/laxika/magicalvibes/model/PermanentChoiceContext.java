@@ -199,7 +199,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
 
-    record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                    UUID sourcePermanentId, boolean creaturesOnly) implements PermanentChoiceContext {
+        /** Any-target (creature or player) life-gain trigger — the historical Firesong/Sunspeaker form. */
+        public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, false);
+        }
+    }
 
     /** "Whenever you draw a card, [source] deals damage to any target." Queued when a controller-draw
      *  trigger carries an any-target effect (e.g. Niv-Mizzet, the Firemind); the controller chooses a
@@ -268,6 +274,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */
     record SacrificeCreatureCreateTokensEqualToToughness(UUID controllerId, Card sourceCard,
+                                                         com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
+
+    /** "Sacrifice a creature. If you do, create one token whose power and toughness are each equal to
+     *  the sacrificed creature's power." (e.g. Ooze Garden). */
+    record SacrificeCreatureCreateSizedTokenEqualToPower(UUID controllerId, Card sourceCard,
                                                          com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
 
     /** "Target player sacrifices a creature of their choice. If a [subtype] is sacrificed this way,

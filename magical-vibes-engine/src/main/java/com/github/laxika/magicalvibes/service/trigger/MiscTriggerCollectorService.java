@@ -8,8 +8,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CradleOfVitalityLifeGainEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -373,6 +377,45 @@ public class MiscTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
         log.info("Game {} - {} triggers on spell life gain (source: {})",
                 gameData.id, cardName, lg.sourceCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = CradleOfVitalityLifeGainEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPayForCounters(TriggerMatchContext match,
+            CradleOfVitalityLifeGainEffect effect, TriggerContext ctx) {
+        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        int lifeGained = lg.lifeGainedAmount();
+        if (lifeGained <= 0) return false;
+
+        // "Target creature" — if no creature is on any battlefield the ability has no legal target
+        // and never goes on the stack.
+        boolean anyCreature = gameData.orderedPlayerIds.stream()
+                .map(gameData.playerBattlefields::get)
+                .filter(java.util.Objects::nonNull)
+                .flatMap(List::stream)
+                .anyMatch(p -> gameQueryService.isCreature(gameData, p));
+        if (!anyCreature) return false;
+
+        // The counter count is locked in at trigger time (life gained by this event). The "you may pay"
+        // choice happens at resolution via MayPayManaEffect; the +1/+1 counters go on the chosen creature.
+        CardEffect payAndCounter = new MayPayManaEffect(effect.manaCost(),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(lifeGained)),
+                "Pay " + effect.manaCost() + " to put " + lifeGained + " +1/+1 counter(s) on target creature?");
+
+        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                match.permanent().getCard(),
+                match.controllerId(),
+                List.of(payAndCounter),
+                match.permanent().getId(),
+                true));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
+        log.info("Game {} - {} triggers on life gain ({} life), pay for +1/+1 counters on target creature",
+                gameData.id, cardName, lifeGained);
         return true;
     }
 

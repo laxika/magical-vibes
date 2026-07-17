@@ -186,7 +186,8 @@ public class GameBroadcastService {
         for (UUID pid : data.orderedPlayerIds) {
             List<Card> gy = data.playerGraveyards.get(pid);
             List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(data, pid);
-            graveyards.add(gy != null ? gy.stream().map(c -> cardViewFactory.create(c, granted)).toList() : new ArrayList<>());
+            List<ActivatedAbility> grantedGraveyardAbilities = gameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard(data, pid);
+            graveyards.add(gy != null ? gy.stream().map(c -> cardViewFactory.create(c, granted, grantedGraveyardAbilities)).toList() : new ArrayList<>());
         }
         return graveyards;
     }
@@ -496,6 +497,9 @@ public class GameBroadcastService {
             return false;
         }
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) {
+            return false;
+        }
+        if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) {
             return false;
         }
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, card,
@@ -880,6 +884,7 @@ public class GameBroadcastService {
             if (card.getManaCost() == null || spellLimitReached || cantCastDueToAttackExile) continue;
             if (castingPermissionService.isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames)) continue;
             if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, card)) continue;
+            if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) continue;
 
             if (castingPermissionService.canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty)) {
                 if (castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
@@ -964,6 +969,7 @@ public class GameBroadcastService {
         if (spellLimitReached || cantCastDueToAttack) return playable;
         if (castingPermissionService.isSpellRestricted(topCard, restrictedSpellTypes, forbiddenCardNames)) return playable;
         if (castingPermissionService.isNoncreatureSpellCastRestricted(gameData, topCard)) return playable;
+        if (castingPermissionService.isAdditionalNonartifactSpellRestricted(gameData, playerId, topCard)) return playable;
 
         if (!castingPermissionService.canCastWithTiming(gameData, playerId, topCard, isActivePlayer, isMainPhase, stackEmpty)) return playable;
 
@@ -1035,7 +1041,7 @@ public class GameBroadcastService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CantSearchLibrariesEffect) {
+                    if (effect instanceof CantSearchLibrariesEffect restriction && restriction.payableToIgnore()) {
                         if (paidSet == null || !paidSet.contains(perm.getId())) {
                             unpaidCount++;
                         }

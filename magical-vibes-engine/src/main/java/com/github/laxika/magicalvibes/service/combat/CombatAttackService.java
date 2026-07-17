@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpel
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -490,6 +491,21 @@ public class CombatAttackService {
                         matchingEffects.add(effect);
                     }
                 }
+
+                // Filter out attacks-alone conditionals (e.g. Exalted) when the creature isn't
+                // attacking alone (CR 702.83a) — the ability doesn't trigger at all, so no
+                // do-nothing entry goes on the stack.
+                matchingEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksAlone
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
+
+                // The surviving attacks-alone conditionals are already satisfied, so unwrap them to
+                // their inner effect. This lets a wrapped "you may" (e.g. Angelic Benediction's
+                // "you may tap target creature") route through the may/mandatory split below.
+                matchingEffects.replaceAll(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksAlone ? ce.wrapped() : e);
+
                 if (matchingEffects.isEmpty()) continue;
 
                 // Optional ("you may") per-creature attack triggers go on the stack as CR 603.5
@@ -822,6 +838,12 @@ public class CombatAttackService {
                                 && mae.scope() == GrantScope.ENCHANTED_PLAYER_CREATURES)
                         .count();
             }
+            // Global "matching creatures attack each combat if able" (e.g. Goblin Assault)
+            count[0] += (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(MatchingCreaturesMustAttackEffect.class::isInstance)
+                    .map(MatchingCreaturesMustAttackEffect.class::cast)
+                    .filter(e -> predicateEvaluationService.matchesPermanentPredicate(gameData, creature, e.matcher()))
+                    .count();
         });
 
         return count[0];

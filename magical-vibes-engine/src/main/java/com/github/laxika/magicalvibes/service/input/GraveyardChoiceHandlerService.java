@@ -55,6 +55,7 @@ public class GraveyardChoiceHandlerService {
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -377,11 +378,15 @@ public class GraveyardChoiceHandlerService {
             }
         }
 
-        // Card pile separation (Boneyard Parley): opponent assigns exiled cards to piles
+        // Card pile separation (Boneyard Parley, Brilliant Ultimatum): opponent assigns exiled cards to piles
         PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
         if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();
-            graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
+            if (pileSeparation.playFromExile()) {
+                brilliantUltimatumSupport.completePileSeparationStep1(gameData, cardIds);
+            } else {
+                graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
+            }
             return;
         }
 

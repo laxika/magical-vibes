@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -192,6 +193,8 @@ public class PredicateEvaluationService {
                     card.getManaValue() <= p.maxManaValue();
             case CardMinManaValuePredicate p ->
                     card.getManaValue() >= p.minManaValue();
+            case CardPowerAtLeastPredicate p ->
+                    card.getPower() != null && card.getPower() >= p.minPower();
             case CardPowerAtMostPredicate p ->
                     card.getPower() != null && card.getPower() <= p.maxPower();
             case CardNamedPredicate p ->

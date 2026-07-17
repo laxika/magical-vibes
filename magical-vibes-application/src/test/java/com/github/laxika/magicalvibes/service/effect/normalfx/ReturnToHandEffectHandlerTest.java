@@ -49,6 +49,7 @@ class ReturnToHandEffectHandlerTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
+    @Mock private PlayerInteractionSupport playerInteractionSupport;
 
     private BounceSupport bounceSupport;
     private ReturnToHandEffectHandler handler;
@@ -72,7 +73,7 @@ class ReturnToHandEffectHandlerTest {
 
         bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
         handler = new ReturnToHandEffectHandler(gameQueryService, gameBroadcastService, gameOutcomeService,
-                permanentRemovalService, predicateEvaluationService, bounceSupport);
+                permanentRemovalService, predicateEvaluationService, bounceSupport, playerInteractionSupport);
     }
 
     // ===== Helper methods =====
@@ -200,6 +201,25 @@ class ReturnToHandEffectHandlerTest {
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq(GameLog.text("Player2's life total can't change.")));
+        }
+
+        @Test
+        @DisplayName("Controller draws when drawCount is set (Call to Heel)")
+        void controllerDrawsWhenDrawCountSet() {
+            Card card = createCard("Call to Heel");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+
+            ReturnToHandEffect effect = ReturnToHandEffect.targetAndControllerDraws(1);
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(playerInteractionSupport).applyDrawCards(gd, player2Id, 1);
         }
     }
 

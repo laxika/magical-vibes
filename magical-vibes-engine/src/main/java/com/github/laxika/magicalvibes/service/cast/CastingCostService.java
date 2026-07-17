@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -62,6 +64,7 @@ public class CastingCostService {
     private final CostModificationSupport support;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final ConditionEvaluationService conditionEvaluationService;
 
     /**
      * All cost-modifying static effects currently on the battlefield that could affect spells
@@ -213,6 +216,14 @@ public class CastingCostService {
         // Prowl: the alternate cost is only available if the caster dealt combat damage to a
         // player this turn with a creature of the required subtype.
         if (!altCast.prowlDamageSubtypes().isEmpty() && !prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
+            return false;
+        }
+
+        // General availability gate (e.g. Qasali Ambusher's "if a creature is attacking you and you
+        // control a Forest and a Plains").
+        if (altCast.availabilityCondition() != null
+                && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId))) {
             return false;
         }
 

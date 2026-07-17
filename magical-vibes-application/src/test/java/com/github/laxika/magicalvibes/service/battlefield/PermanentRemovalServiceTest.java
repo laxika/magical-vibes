@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -296,7 +297,7 @@ class PermanentRemovalServiceTest {
 
             Card exiledCard = createCreature("Grizzly Bears");
             gd.addToExile(player2Id, exiledCard);
-            gd.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(exiledCard, player2Id));
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(exiledCard, player2Id));
 
             prs.removePermanentToGraveyard(gd, source);
 
@@ -317,7 +318,7 @@ class PermanentRemovalServiceTest {
             exiledCard.setName("Cancel");
             exiledCard.setType(CardType.INSTANT);
             gd.addToExile(player2Id, exiledCard);
-            gd.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(exiledCard, player2Id, false, true));
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(exiledCard, player2Id, false, true));
 
             prs.removePermanentToGraveyard(gd, source);
 
@@ -327,6 +328,44 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerHands.get(player2Id))
                     .anyMatch(c -> c.getName().equals("Cancel"));
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
+        }
+
+        @Test
+        @DisplayName("Exiled card returns tapped when returnTapped is true (Realm Razer)")
+        void exileReturnTappedOnLeave() {
+            Permanent source = addPermanent(player1Id, createCreature("Realm Razer"));
+            stubGraveyardForCreature(source, player1Id);
+
+            Card exiledCard = createCreature("Grizzly Bears");
+            gd.addToExile(player2Id, exiledCard);
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(exiledCard, player2Id, true));
+
+            prs.removePermanentToGraveyard(gd, source);
+
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id),
+                    argThat(Permanent::isTapped));
+        }
+
+        @Test
+        @DisplayName("Every pending return for a source is processed when it leaves (Realm Razer mass exile)")
+        void multipleExileReturnsOnLeave() {
+            Permanent source = addPermanent(player1Id, createCreature("Realm Razer"));
+            stubGraveyardForCreature(source, player1Id);
+
+            Card land1 = createCreature("Forest");
+            Card land2 = createCreature("Mountain");
+            gd.addToExile(player1Id, land1);
+            gd.addToExile(player2Id, land2);
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(land1, player1Id, true));
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(land2, player2Id, true));
+
+            prs.removePermanentToGraveyard(gd, source);
+
+            assertThat(gd.exileReturnOnPermanentLeave).doesNotContainKey(source.getId());
+            assertThat(gd.getPlayerExiledCards(player1Id)).noneMatch(c -> c.getName().equals("Forest"));
+            assertThat(gd.getPlayerExiledCards(player2Id)).noneMatch(c -> c.getName().equals("Mountain"));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
+            verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
         }
 
         @Test
@@ -437,7 +476,7 @@ class PermanentRemovalServiceTest {
 
             Card exiledCard = createCreature("Grizzly Bears");
             gd.addToExile(player2Id, exiledCard);
-            gd.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(exiledCard, player2Id));
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(exiledCard, player2Id));
 
             prs.removePermanentToHand(gd, source);
 
@@ -518,7 +557,7 @@ class PermanentRemovalServiceTest {
 
             Card exiledCard = createCreature("Grizzly Bears");
             gd.addToExile(player2Id, exiledCard);
-            gd.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(exiledCard, player2Id));
+            gd.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(exiledCard, player2Id));
 
             prs.removePermanentToExile(gd, source);
 
@@ -750,6 +789,24 @@ class PermanentRemovalServiceTest {
             assertThat(gd.playerBattlefields.get(player1Id)).contains(creature);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                     logEntry.plainText().contains("indestructible")));
+        }
+
+        @Test
+        @DisplayName("Redirects damage to a self-redirecting permanent when no aura is present")
+        void redirectsDamageToSelfRedirectingPermanent() {
+            Permanent creature = addPermanent(player1Id, createCreature("Empyrial Archangel"));
+            when(gameQueryService.findEnchantedCreatureByAuraEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToEnchantedCreatureEffect.class)))
+                    .thenReturn(null);
+            when(gameQueryService.findControlledPermanentWithStaticEffect(eq(gd), eq(player1Id), eq(RedirectPlayerDamageToSelfEffect.class)))
+                    .thenReturn(creature);
+            when(damagePreventionService.applyCreaturePreventionShield(gd, creature, 3, false)).thenReturn(3);
+            when(gameQueryService.getEffectiveToughness(gd, creature)).thenReturn(8);
+
+            int result = prs.redirectPlayerDamageToEnchantedCreature(gd, player1Id, 3, "Lightning Bolt");
+
+            assertThat(result).isEqualTo(0);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
+                    logEntry.plainText().contains("Empyrial Archangel") && logEntry.plainText().contains("absorbs")));
         }
     }
 }

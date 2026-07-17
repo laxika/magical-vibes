@@ -157,7 +157,7 @@ public class GameService {
             List<UUID> unpaidArbiterIds = new java.util.ArrayList<>();
             gameData.forEachPermanent((playerId, permanent) -> {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CantSearchLibrariesEffect) {
+                    if (effect instanceof CantSearchLibrariesEffect restriction && restriction.payableToIgnore()) {
                         Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(player.getId());
                         if (paidSet == null || !paidSet.contains(permanent.getId())) {
                             unpaidArbiterIds.add(permanent.getId());

@@ -474,7 +474,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} champions {} (exiled until source leaves)",
                 gameData.id, source.getCard().getName(), card.getName());
 
-        gameData.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(card, ownerId));
+        gameData.addExileReturnOnPermanentLeave(source.getId(), new PendingExileReturn(card, ownerId));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
@@ -814,6 +814,58 @@ public class PermanentChoiceBattlefieldHandlerService {
                     new ArrayList<>(List.of(sized))
             ));
         }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureCreateSizedTokenEqualToPower(GameData gameData, UUID permanentId,
+                                                                    PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower ctx) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        // Capture effective power before removing from battlefield (static bonuses still apply)
+        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, target));
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                target.getCard().getName(), ctx.sourceCard().getName());
+
+        // Create one token whose power and toughness are each equal to the sacrificed creature's power
+        CreateTokenEffect t = ctx.tokenTemplate();
+        CreateTokenEffect sized = new CreateTokenEffect(
+                t.primaryType(), 1, t.tokenName(), power, power,
+                t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
+                t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
+                t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
+                t.grantedKeywordsUntilEndOfTurn());
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctx.sourceCard(),
+                ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s effect",
+                new ArrayList<>(List.of(sized))
+        ));
 
         stateBasedActionService.performStateBasedActions(gameData);
 

@@ -176,6 +176,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
                 assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
                 assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
                         .isNotNull()
+                        .singleElement()
                         .satisfies(per -> {
                             assertThat(per.card().getName()).isEqualTo("Spellbook");
                             assertThat(per.controllerId()).isEqualTo(player2Id);
@@ -237,6 +238,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
 
                 assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
                         .isNotNull()
+                        .singleElement()
                         .satisfies(per -> {
                             assertThat(per.card().getName()).isEqualTo("Spellbook");
                             assertThat(per.controllerId()).isEqualTo(player2Id);

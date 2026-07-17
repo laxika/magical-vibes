@@ -21,6 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEqualToEntering
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPutOneOnTopRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -62,6 +65,7 @@ public class EnterTriggerCollectorService {
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -125,6 +129,7 @@ public class EnterTriggerCollectorService {
     @CollectsTriggers({
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD),
             @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = MayPayManaEffect.class, slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD),
     })
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -251,6 +256,35 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (put {} +1/+1 counter(s))",
                 match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
+        return true;
+    }
+
+    /**
+     * "Whenever a creature you control [with power N or greater] enters, you may put M +1/+1 counters
+     * on it" (Mighty Emergence). The power gate is applied upstream by
+     * {@code EnteringCreatureMinPowerConditionalEffect}; here we resolve the entering permanent and
+     * queue a "you may" whose {@code targetId} is that creature, resolved via
+     * {@link PutCounterOnTargetPermanentEffect}.
+     */
+    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAllyPutCountersOnEntering(TriggerMatchContext match,
+            PutCountersOnEnteringCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        Card sourceCard = match.permanent().getCard();
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        if (enteringPermanentId == null) {
+            // The creature already left the battlefield; nothing to add counters to.
+            return true;
+        }
+        var may = new MayEffect(
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, effect.count()),
+                "Put " + effect.count() + " +1/+1 counter(s) on " + pe.enteringCard().getName() + "?");
+        match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
+                enteringPermanentId, match.permanent().getId());
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (may put {} +1/+1 counter(s) on it)",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), effect.count());
         return true;
     }
 

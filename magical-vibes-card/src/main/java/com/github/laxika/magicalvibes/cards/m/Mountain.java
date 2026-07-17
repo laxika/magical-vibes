@@ -74,6 +74,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "344")
 @CardRegistration(set = "6ED", collectorNumber = "345")
 @CardRegistration(set = "6ED", collectorNumber = "346")
+@CardRegistration(set = "ALA", collectorNumber = "242")
+@CardRegistration(set = "ALA", collectorNumber = "243")
+@CardRegistration(set = "ALA", collectorNumber = "244")
+@CardRegistration(set = "ALA", collectorNumber = "245")
 public class Mountain extends Card {
 
     public Mountain() {

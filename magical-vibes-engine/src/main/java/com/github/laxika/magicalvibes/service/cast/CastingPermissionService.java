@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.CantCastAdditionalNonartifactSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -76,6 +78,7 @@ public class CastingPermissionService {
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (forbidden.contains(card.getName())) return false;
         if (isNoncreatureSpellCastRestricted(gameData, card)) return false;
+        if (isAdditionalNonartifactSpellRestricted(gameData, playerId, card)) return false;
         // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
@@ -227,6 +230,32 @@ public class CastingPermissionService {
         return false;
     }
 
+    /**
+     * Ethersworn Canonist: "Each player who has cast a nonartifact spell this turn can't cast
+     * additional nonartifact spells." Returns true if {@code card} is a nonartifact spell, some
+     * permanent carries the effect, and {@code playerId} has already cast a nonartifact spell this
+     * turn. Artifact spells and each player's first nonartifact spell are never restricted; symmetric.
+     */
+    public boolean isAdditionalNonartifactSpellRestricted(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.ARTIFACT)) return false;
+        if (!anyPlayerControlsEtherswornCanonist(gameData)) return false;
+        return gameData.getSpellsCastThisTurn(playerId).stream()
+                .anyMatch(cast -> !cast.hasType(CardType.ARTIFACT));
+    }
+
+    private boolean anyPlayerControlsEtherswornCanonist(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantCastAdditionalNonartifactSpellsEffect) return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public Set<String> getForbiddenCardNames(GameData gameData, UUID castingPlayerId) {
         Set<String> forbidden = new HashSet<>();
         for (UUID pid : gameData.orderedPlayerIds) {
@@ -285,8 +314,23 @@ public class CastingPermissionService {
                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || card.getKeywords().contains(Keyword.FLASH)
-                || hasFlashGrantForCard(gameData, playerId, card);
+                || hasFlashGrantForCard(gameData, playerId, card)
+                || hasAvailableFlashAlternateCast(gameData, playerId, card);
         return isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
+    }
+
+    /**
+     * True if the card carries an {@link AlternateHandCast} that grants flash and whose availability
+     * condition is currently met (e.g. Qasali Ambusher's "you may cast this creature … as though it
+     * had flash" while a creature is attacking you and you control a Forest and a Plains). This makes
+     * the free flash cast castable any time the player has priority.
+     */
+    private boolean hasAvailableFlashAlternateCast(GameData gameData, UUID playerId, Card card) {
+        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class).orElse(null);
+        if (altCast == null || !altCast.grantsFlash()) return false;
+        return altCast.availabilityCondition() == null
+                || conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                        ConditionContext.forCasting(playerId));
     }
 
     /**

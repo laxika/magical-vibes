@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLa
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -206,6 +207,37 @@ public class LandTapTriggerCollectorService {
         }
         if (producedColor == null) return false;
 
+        ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
+        pool.add(producedColor);
+
+        String logEntry = match.permanent().getCard().getName() + " triggers — "
+                + match.gameData().playerIdToName.get(lt.tappingPlayerId())
+                + " adds 1 additional " + producedColor.name().toLowerCase() + " mana.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), GameLog.text(logEntry));
+        return true;
+    }
+
+    @CollectsTrigger(value = AddProducedManaWhenLandOfSubtypeTappedEffect.class, slot = EffectSlot.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleAddProducedManaWhenSubtypeLandTapped(TriggerMatchContext match,
+            AddProducedManaWhenLandOfSubtypeTappedEffect trigger, TriggerContext ctx) {
+        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
+
+        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
+        if (tappedLand == null) return false;
+        boolean subtypeMatches = trigger.subtypes().stream()
+                .anyMatch(tappedLand.getCard().getSubtypes()::contains);
+        if (!subtypeMatches) return false;
+
+        ManaColor producedColor = null;
+        for (CardEffect tapEffect : tappedLand.getCard().getEffects(EffectSlot.ON_TAP)) {
+            if (tapEffect instanceof AwardManaEffect awardMana) {
+                producedColor = awardMana.color();
+                break;
+            }
+        }
+        if (producedColor == null) return false;
+
+        // "That player adds..." — the tapping player is the land's controller.
         ManaPool pool = match.gameData().playerManaPools.get(lt.tappingPlayerId());
         pool.add(producedColor);
 

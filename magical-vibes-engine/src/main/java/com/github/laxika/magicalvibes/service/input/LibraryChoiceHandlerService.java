@@ -215,7 +215,7 @@ public class LibraryChoiceHandlerService {
                             : player.getUsername() + " puts a card on top of their library.";
                 } else {
                     logEntry = chosenCard == null
-                            ? player.getUsername() + " does not reveal a creature card."
+                            ? player.getUsername() + " does not reveal a card."
                             : player.getUsername() + " reveals " + chosenCard.getName() + " and puts it into their hand.";
                 }
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
@@ -227,6 +227,12 @@ public class LibraryChoiceHandlerService {
                     gameData.pendingLibraryBottomReorders.addLast(
                             new LibraryBottomReorderRequest(deckOwnerId, new ArrayList<>(sourceCards)));
                 }
+                return;
+            }
+
+            // Gift of the Gargantuan: after the creature pick, run the land pick over the same
+            // looked-at cards before bottoming the rest.
+            if (followUp.giftLandPick() && startGiftLandPick(gameData, deckOwnerId, sourceCards)) {
                 return;
             }
 
@@ -282,6 +288,7 @@ public class LibraryChoiceHandlerService {
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+            if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -704,6 +711,7 @@ public class LibraryChoiceHandlerService {
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToHandSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
+        if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**
@@ -799,6 +807,29 @@ public class LibraryChoiceHandlerService {
                 .followUp(followUp.clearBasicLandToHand())
                 .build();
 
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
+        return true;
+    }
+
+    /**
+     * If any land remains among the Gift of the Gargantuan looked-at cards, begins the second pick
+     * (may reveal a land card to hand, then bottom the rest) and returns true. Otherwise returns
+     * false so the caller bottoms the remaining cards immediately.
+     */
+    private boolean startGiftLandPick(GameData gameData, UUID controllerId, List<Card> lookedAtCards) {
+        List<Card> lands = lookedAtCards.stream().filter(card -> card.hasType(CardType.LAND)).toList();
+        if (lands.isEmpty()) {
+            return false;
+        }
+        String prompt = "You may reveal a land card from among them and put it into your hand.";
+        LibrarySearchParams params = LibrarySearchParams.builder(controllerId, new ArrayList<>(lands))
+                .reveals(true)
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.HAND)
+                .sourceCards(new ArrayList<>(lookedAtCards))
+                .reorderRemainingToBottom(true)
+                .shuffleAfterSelection(false)
+                .build();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
     }

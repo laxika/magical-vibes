@@ -111,6 +111,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleSacrificePermanentThen(gameData, permanentId, spt);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct) {
             battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
+        } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower scsp) {
+            battlefieldHandler.handleSacrificeCreatureCreateSizedTokenEqualToPower(gameData, permanentId, scsp);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensIfSubtype scts) {
             battlefieldHandler.handleSacrificeCreatureCreateTokensIfSubtype(gameData, permanentId, scts);
         } else if (context instanceof PermanentChoiceContext.SacrificeArtifactForDividedDamage sadd) {

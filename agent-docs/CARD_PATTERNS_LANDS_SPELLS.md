@@ -93,6 +93,7 @@ All paths relative to `cards/`.
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
 | Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
 | Bounce target + life loss | `v/VaporSnag.java` | ReturnToHandEffect.targetAndControllerLosesLife(1) — bounce creature, its controller loses life |
+| Bounce target + controller draws | `c/CallToHeel.java` | ReturnToHandEffect.targetAndControllerDraws(1) — bounce creature, its controller draws a card |
 | Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnToHandEffect.target() + SPELL ConditionalEffect(new ControlsPermanent(PermanentIsArtifactPredicate()), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ConditionalEffect(new ControlsPermanent(filter), wrapped) for "if you control a [type]" conditions |
 | Bounce mass | `e/Evacuation.java` | ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()) — all creatures (ALL_MATCHING is permanent-general; put the type in the filter) |
 | Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnToHandEffect.permanentsTargetPlayerControls(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls (TARGET_PLAYERS_PERMANENTS scope — player-targeting spec) |

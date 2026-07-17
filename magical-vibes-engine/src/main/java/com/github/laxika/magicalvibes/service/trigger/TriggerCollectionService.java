@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.DelayedTokenOnDeath;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -1574,7 +1575,7 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         Card dyingCard = dyingPermanent.getCard();
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId, dyingPermanent.getEffectivePower());
 
         for (Permanent perm : battlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_DIES);
@@ -1650,16 +1651,18 @@ public class TriggerCollectionService {
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null);
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, null, null, 0);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId, UUID dyingPermanentControllerId) {
-        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null);
+        checkEnchantedPermanentDeathTriggers(gameData, dyingPermanentId, dyingPermanentControllerId, null, 0);
     }
 
     public void checkEnchantedPermanentDeathTriggers(GameData gameData, UUID dyingPermanentId,
-                                                      UUID dyingPermanentControllerId, UUID dyingCreatureCardId) {
-        var ctx = new TriggerContext.EnchantedPermanentDeath(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId);
+                                                      UUID dyingPermanentControllerId, UUID dyingCreatureCardId,
+                                                      int dyingCreatureToughness) {
+        var ctx = new TriggerContext.EnchantedPermanentDeath(dyingPermanentId, dyingPermanentControllerId,
+                dyingCreatureCardId, dyingCreatureToughness);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!dyingPermanentId.equals(perm.getAttachedTo())) return;
@@ -1760,9 +1763,24 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * Fires ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Prince of Thralls)
+     * whenever a permanent of any type is put into a graveyard from the battlefield. Fires on
+     * permanents controlled by an opponent of the dying permanent's controller.
+     */
+    public void checkOpponentPermanentPutIntoGraveyardTriggers(GameData gameData, Card dyingCard,
+                                                               UUID dyingControllerId, UUID graveyardOwnerId) {
+        var ctx = new TriggerContext.OpponentPermanentGraveyard(dyingCard, dyingControllerId, graveyardOwnerId);
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (playerId.equals(dyingControllerId)) return;
+            dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, ctx);
+        });
+    }
+
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         Card dyingCard = dyingPermanent.getCard();
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId, dyingPermanent.getEffectivePower());
 
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DIES);
@@ -1787,7 +1805,8 @@ public class TriggerCollectionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
+                dyingCard.getPower() != null ? dyingCard.getPower() : 0);
 
         for (Permanent perm : battlefield) {
             dispatchSlot(gameData, perm, dyingCreatureControllerId, EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES, ctx);
@@ -1797,7 +1816,8 @@ public class TriggerCollectionService {
     public void checkAnyNontokenCreatureDeathTriggers(GameData gameData, Card dyingCard) {
         if (dyingCard.isToken()) return;
 
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, null);
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, null,
+                dyingCard.getPower() != null ? dyingCard.getPower() : 0);
 
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES);
@@ -1812,7 +1832,7 @@ public class TriggerCollectionService {
 
     public void checkOpponentCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         Card dyingCard = dyingPermanent.getCard();
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
+        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId, dyingPermanent.getEffectivePower());
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(dyingCreatureControllerId)) return;
@@ -1906,6 +1926,31 @@ public class TriggerCollectionService {
         String triggerLog = graveyardCard.getName() + " will return to the battlefield (it died this turn).";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
         log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
+    }
+
+    /**
+     * Delayed "create token(s) when a creature dealt damage this way dies this turn" (Skeletonize): if
+     * the dying creature's card was registered, push one triggered ability per registration that creates
+     * the token(s) under the recorded controller's control. Fires at most once per registration.
+     */
+    public void triggerDelayedCreateTokenOnDeath(GameData gameData, UUID dyingCreatureCardId) {
+        List<DelayedTokenOnDeath> registrations = gameData.creatureCreatingTokenOnDeathThisTurn.remove(dyingCreatureCardId);
+        if (registrations == null) {
+            return;
+        }
+
+        for (DelayedTokenOnDeath registration : registrations) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    registration.sourceCard(),
+                    registration.controllerId(),
+                    "Create token (a creature dealt damage this way died)",
+                    new ArrayList<>(List.of(registration.tokenEffect()))
+            ));
+
+            log.info("Game {} - Delayed token trigger: {} creates a token (a creature it damaged died this turn)",
+                    gameData.id, registration.sourceCard().getName());
+        }
     }
 
     // ── Enter-the-battlefield triggers ─────────────────────────────────
@@ -2052,6 +2097,41 @@ public class TriggerCollectionService {
                 CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
                 if (resolved == null) continue;
                 dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, resolved, ctx);
+            }
+        }
+    }
+
+    /**
+     * "Whenever a nontoken creature enters under your control" (ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD).
+     * The entering permanent's id is preserved on any queued may-pay ability (e.g. Minion Reflector), so a
+     * token-copy effect knows which creature to copy.
+     */
+    public void checkAllyNontokenCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (enteringCard.getToughness() == null) return;
+        if (enteringCard.isToken()) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+
+        UUID enteringPermanentId = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard() == enteringCard) {
+                enteringPermanentId = p.getId();
+                break;
+            }
+        }
+
+        var ctx = new TriggerContext.PermanentEnters(enteringCard, controllerId, null, 1, enteringPermanentId);
+
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
+                if (resolved == null) continue;
+                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
             }
         }
     }

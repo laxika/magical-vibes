@@ -37,6 +37,14 @@ public sealed interface MultiPermanentChoiceContext {
     record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
 
+    /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
+    record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
+    }
+
+    /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
+    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
+    }
+
     /**
      * Forced sacrifice pick ("target player sacrifices N" / "each player sacrifices N").
      * {@code sacrificingPlayerId} is the current chooser. For the each-player flow (CR 101.4:
@@ -131,10 +139,35 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /**
-     * Static Orb: the active player chose up to two of the permanents that would otherwise untap;
-     * only those untap this step. The untap-step bookkeeping and turn advance then resume exactly
-     * as they would have without the restriction.
+     * Clarion Ultimatum: the controller chose up to five different permanents they control. For
+     * each chosen permanent, the controller may then search their library for a card with the same
+     * name and put it onto the battlefield tapped; the same-name searches run one per chosen
+     * permanent (queued via {@link LibrarySearchFollowUp#remainingSameNamePicks()}), then shuffle.
      */
-    record StaticOrbUntap(UUID activePlayerId) implements MultiPermanentChoiceContext {
+    record ChooseFivePermanentsSearchSameNameToBattlefieldTapped() implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Devour (CR 702.82): the entering creature's controller chose which of their other creatures to
+     * sacrifice as it enters. The chosen creatures are sacrificed, the entering permanent receives
+     * {@code multiplier} times that many +1/+1 counters and records the devoured count, then the
+     * creature's ETB triggers proceed. Carries the entry context needed to resume
+     * {@code processCreatureETBEffects} for the discard trigger.
+     */
+    record DevourSacrifice(UUID enteringPermanentId, int multiplier, UUID controllerId, Card card,
+                           UUID targetId, boolean wasCastFromHand, int etbMode, boolean kicked)
+            implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * Static Orb / Stoic Angel: the active player chose up to the cap of the permanents matching
+     * {@code filter} that would otherwise untap; only those (plus any permanents the filter excludes)
+     * untap this step. A {@code null} filter means all permanents count against the cap (Static Orb).
+     * The untap-step bookkeeping and turn advance then resume exactly as they would have without the
+     * restriction.
+     */
+    record StaticOrbUntap(UUID activePlayerId,
+                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter)
+            implements MultiPermanentChoiceContext {
     }
 }

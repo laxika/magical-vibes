@@ -108,6 +108,7 @@ public class SpellCastingService {
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+    private final com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
 
     // --- Helper records ---
 
@@ -697,6 +698,14 @@ public class SpellCastingService {
             if (!altCast.prowlDamageSubtypes().isEmpty()
                     && !castingCostService.prowlConditionMet(gameData, playerId, altCast.prowlDamageSubtypes())) {
                 throw new IllegalStateException("Prowl cost is not available — no combat damage dealt with the required creature type this turn");
+            }
+
+            // General availability gate (e.g. Qasali Ambusher's "if a creature is attacking you and
+            // you control a Forest and a Plains").
+            if (altCast.availabilityCondition() != null
+                    && !conditionEvaluationService.isMet(gameData, altCast.availabilityCondition(),
+                            com.github.laxika.magicalvibes.service.effect.ConditionContext.forCasting(playerId))) {
+                throw new IllegalStateException("Alternate casting cost is not available — its condition is not met");
             }
 
             var sacCost = altCast.getCost(SacrificePermanentsCost.class);

@@ -67,7 +67,7 @@ class GameBroadcastServiceTest {
         CostModificationSupport support = new CostModificationSupport(gameQueryService, predicateEvaluationService);
         CastingCostService castingCostService = new CastingCostService(
                 CostModificationTestRegistry.build(gameQueryService, predicateEvaluationService, support),
-                support, gameQueryService, predicateEvaluationService);
+                support, gameQueryService, predicateEvaluationService, conditionEvaluationService);
         CastingPermissionService castingPermissionService =
                 new CastingPermissionService(gameQueryService, predicateEvaluationService, conditionEvaluationService);
         svc = new GameBroadcastService(sessionManager, cardViewFactory, gameLogViewFactory, permanentViewFactory,

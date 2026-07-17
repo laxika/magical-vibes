@@ -102,7 +102,7 @@ public class ImprovisationCapstoneCastSupport {
         ));
         gameData.recordSpellCast(playerId, card);
         gameData.priorityPassedBy.clear();
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost (Improvisation Capstone)."));
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " casts " + card.getName() + " without paying its mana cost."));
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
     }

@@ -81,7 +81,7 @@ public class UntapStepService {
      * @param restrictPredicate only permanents matching this untap; {@code null} = untap all
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate) {
-        untapPermanents(gameData, activePlayerId, restrictPredicate, false, null);
+        untapPermanents(gameData, activePlayerId, restrictPredicate, false, null, null);
     }
 
     /**
@@ -95,21 +95,24 @@ public class UntapStepService {
      */
     public void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
                                 boolean skipUntapStep) {
-        untapPermanents(gameData, activePlayerId, restrictPredicate, skipUntapStep, null);
+        untapPermanents(gameData, activePlayerId, restrictPredicate, skipUntapStep, null, null);
     }
 
     /**
-     * Performs the untap step, restricting the active player's untaps to the explicitly chosen
-     * {@code chosenUntapIds} (Static Orb: the player picked up to two permanents to untap). Any of
-     * the active player's permanents not in the set stays tapped this step; all other untap-step
-     * bookkeeping (summoning sickness, skip counters, Seedborn Muse) proceeds normally.
+     * Performs the untap step, restricting the active player's untaps under a Static-Orb-style lock:
+     * of the permanents matching {@code staticOrbFilter}, only the explicitly chosen
+     * {@code chosenUntapIds} untap (Static Orb: the player picked up to two; Stoic Angel: up to one
+     * creature). A {@code null} filter means every permanent counts against the cap (Static Orb);
+     * permanents the filter excludes untap normally. All other untap-step bookkeeping (summoning
+     * sickness, skip counters, Seedborn Muse) proceeds normally.
      */
-    public void untapChosenPermanents(GameData gameData, UUID activePlayerId, Set<UUID> chosenUntapIds) {
-        untapPermanents(gameData, activePlayerId, null, false, chosenUntapIds);
+    public void untapChosenPermanents(GameData gameData, UUID activePlayerId, Set<UUID> chosenUntapIds,
+                                      PermanentPredicate staticOrbFilter) {
+        untapPermanents(gameData, activePlayerId, null, false, chosenUntapIds, staticOrbFilter);
     }
 
     private void untapPermanents(GameData gameData, UUID activePlayerId, PermanentPredicate restrictPredicate,
-                                 boolean skipUntapStep, Set<UUID> chosenUntapIds) {
+                                 boolean skipUntapStep, Set<UUID> chosenUntapIds, PermanentPredicate staticOrbFilter) {
         String activePlayerName = gameData.playerIdToName.get(activePlayerId);
 
         if (skipUntapStep) {
@@ -168,8 +171,13 @@ public class UntapStepService {
 
                 boolean blockedByStorageMatrix = restrictPredicate != null
                         && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, restrictPredicate);
-                // Static Orb: only the permanents the active player chose untap this step.
-                boolean blockedByStaticOrb = chosenUntapIds != null && !chosenUntapIds.contains(p.getId());
+                // Static Orb / Stoic Angel: only the permanents the active player chose untap this
+                // step. When a filter is present (Stoic Angel: creatures), permanents the filter
+                // excludes are not subject to the cap and untap normally.
+                boolean subjectToStaticOrb = staticOrbFilter == null
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, staticOrbFilter);
+                boolean blockedByStaticOrb = chosenUntapIds != null && subjectToStaticOrb
+                        && !chosenUntapIds.contains(p.getId());
 
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
@@ -250,30 +258,45 @@ public class UntapStepService {
     }
 
     /**
-     * Returns {@code true} if a Static Orb untap restriction is in force for the given active
-     * player: some untapped permanent (any controller) carries a {@link StaticOrbEffect} and the
-     * active player has more than two permanents that would otherwise untap this step. With two or
-     * fewer such permanents the "no more than two" cap can never bite, so the choice is skipped and
-     * everything untaps normally.
+     * Returns the currently-binding Static-Orb-style untap restriction for the given active player,
+     * if any: an active {@link StaticOrbEffect} (its source untapped when the effect requires it)
+     * whose filtered untap-candidate pool exceeds its {@code maxUntap} cap, so the active player must
+     * choose. When the pool is at or below the cap the choice would have no observable effect and is
+     * skipped. When several restrictions are active the first that binds is returned.
+     */
+    public java.util.Optional<StaticOrbEffect> bindingUntapRestriction(GameData gameData, UUID activePlayerId) {
+        List<StaticOrbEffect> active = new ArrayList<>();
+        gameData.forEachPermanent((pid, p) -> {
+            for (CardEffect e : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (e instanceof StaticOrbEffect orb && (!orb.requiresUntappedSource() || !p.isTapped())) {
+                    active.add(orb);
+                }
+            }
+        });
+        for (StaticOrbEffect effect : active) {
+            if (staticOrbUntapCandidates(gameData, activePlayerId, effect).size() > effect.maxUntap()) {
+                return java.util.Optional.of(effect);
+            }
+        }
+        return java.util.Optional.empty();
+    }
+
+    /**
+     * Returns {@code true} if a Static-Orb-style untap restriction is currently in force for the
+     * given active player (see {@link #bindingUntapRestriction}).
      */
     public boolean staticOrbRestrictionApplies(GameData gameData, UUID activePlayerId) {
-        boolean untappedOrbPresent = gameData.anyPermanentMatches(p -> !p.isTapped()
-                && p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof StaticOrbEffect));
-        if (!untappedOrbPresent) {
-            return false;
-        }
-        return staticOrbUntapCandidates(gameData, activePlayerId).size() > 2;
+        return bindingUntapRestriction(gameData, activePlayerId).isPresent();
     }
 
     /**
      * Returns the ids of the active player's permanents that would untap during a normal untap step
-     * — the pool the player picks up to two from when a Static Orb restriction applies. Permanents
-     * that would not untap anyway (self/attached "doesn't untap", untap locks, a pending skip, a
-     * global "doesn't untap" lock, or a "may not untap" choice) are excluded, since they never count
-     * against the two-permanent cap.
+     * and that match the given restriction's {@code filter} — the pool the player picks up to the
+     * cap from when the restriction applies. Permanents that would not untap anyway (self/attached
+     * "doesn't untap", untap locks, a pending skip, a global "doesn't untap" lock, or a "may not
+     * untap" choice), or that the filter excludes, never count against the cap and are omitted.
      */
-    public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId) {
+    public List<UUID> staticOrbUntapCandidates(GameData gameData, UUID activePlayerId, StaticOrbEffect effect) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield == null) {
             return List.of();
@@ -281,6 +304,10 @@ public class UntapStepService {
         List<UUID> candidates = new ArrayList<>();
         for (Permanent p : battlefield) {
             if (!p.isTapped() || p.getSkipUntapCount() > 0) {
+                continue;
+            }
+            if (effect.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.filter())) {
                 continue;
             }
             boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -30,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
@@ -151,6 +153,7 @@ public class BattlefieldEntryService {
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent,
                                              Set<CardType> enterTappedTypes, List<Permanent> simultaneouslyEntered,
                                              int xValue, boolean kicked) {
+        controllerId = resolveEnteringController(gameData, controllerId, permanent);
         carrySpellTextReplacements(gameData, permanent);
         applyCreaturesEnterAsCopyReplacementEffect(gameData, controllerId, permanent);
         applyEnterTappedEffects(permanent, enterTappedTypes);
@@ -179,6 +182,26 @@ public class BattlefieldEntryService {
         // "As this enters, you may reveal a [subtype] card from your hand; if you don't, it enters
         // tapped." Must run after the permanent is on the battlefield so we can reference/tap it.
         applyRevealSubtypeOrEntersTapped(gameData, controllerId, permanent);
+    }
+
+    /**
+     * Gather Specimens control-changing replacement effect (CR 614.1): "If a creature would enter the
+     * battlefield under an opponent's control this turn, it enters under your control instead." Returns
+     * the effective controller for the entering permanent — the gatherer when a creature would enter
+     * under one of their opponents' control, otherwise the intended controller unchanged. Idempotent:
+     * once a permanent is already assigned to the gatherer, they are not their own opponent.
+     */
+    public UUID resolveEnteringController(GameData gameData, UUID controllerId, Permanent permanent) {
+        if (gameData.playersGatheringSpecimensThisTurn.isEmpty()
+                || !permanent.getCard().hasType(CardType.CREATURE)) {
+            return controllerId;
+        }
+        for (UUID gatherer : gameData.orderedPlayerIds) {
+            if (!gatherer.equals(controllerId) && gameData.playersGatheringSpecimensThisTurn.contains(gatherer)) {
+                return gatherer;
+            }
+        }
+        return controllerId;
     }
 
     /**
@@ -543,6 +566,31 @@ public class BattlefieldEntryService {
             return;
         }
 
+        // Devour (CR 702.82): "As this creature enters, you may sacrifice any number of creatures.
+        // It enters with N times that many +1/+1 counters on it." As-enters replacement, resolved
+        // before ETB triggers. Prompt the controller to sacrifice any of their other creatures.
+        DevourEffect devour = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof DevourEffect)
+                .map(e -> (DevourEffect) e)
+                .findFirst().orElse(null);
+        if (devour != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            List<UUID> sacrificeable = bf.stream()
+                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+                    .map(Permanent::getId)
+                    .toList();
+            if (!sacrificeable.isEmpty()) {
+                playerInputService.beginMultiPermanentChoice(gameData, controllerId,
+                        new ArrayList<>(sacrificeable), sacrificeable.size(),
+                        new MultiPermanentChoiceContext.DevourSacrifice(justEntered.getId(), devour.multiplier(),
+                                controllerId, card, targetId, wasCastFromHand, etbMode, kicked),
+                        card.getName() + " — Devour: sacrifice any number of creatures.");
+                return;
+            }
+            // No other creatures — devours nothing; ETB triggers proceed with devouredCount 0.
+        }
+
         processCreatureETBEffects(gameData, controllerId, card, targetId, wasCastFromHand, etbMode, kicked, targetIds);
     }
 
@@ -637,6 +685,7 @@ public class BattlefieldEntryService {
         }
 
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
+        triggerCollectionService.checkAllyNontokenCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);

@@ -99,6 +99,7 @@ public class CombatDamageService {
     private final LifeSupport lifeSupport;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
     /**
      * Resolves combat damage for the current combat phase.
@@ -1498,6 +1499,11 @@ public class CombatDamageService {
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);
+        // Immortal Coil: prevent all combat damage to its controller and exile a card from their
+        // graveyard for each 1 damage prevented (before any infect conversion, so it never becomes poison).
+        if (state.damageToDefendingPlayer > 0) {
+            state.damageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.damageToDefendingPlayer);
+        }
         // Phyrexian Unlife: convert normal combat damage to poison when at 0 or less life.
         // Uses pre-lifelink snapshot (CR 510.1: all combat damage is simultaneous).
         if (state.damageToDefendingPlayer > 0 && state.defenderDamageAsInfect) {
@@ -1527,6 +1533,10 @@ public class CombatDamageService {
         }
 
         state.poisonDamageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        // Immortal Coil also prevents infect combat damage (still damage), exiling per point prevented.
+        if (state.poisonDamageToDefendingPlayer > 0) {
+            state.poisonDamageToDefendingPlayer -= damageSupport.applyImmortalCoilPrevention(gameData, defenderId, state.poisonDamageToDefendingPlayer);
+        }
         if (state.poisonDamageToDefendingPlayer > 0 && gameQueryService.canPlayerGetPoisonCounters(gameData, defenderId)) {
             int currentPoison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
             gameData.playerPoisonCounters.put(defenderId, currentPoison + state.poisonDamageToDefendingPlayer);

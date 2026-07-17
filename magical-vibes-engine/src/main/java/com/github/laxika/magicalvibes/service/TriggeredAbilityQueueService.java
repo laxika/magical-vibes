@@ -360,14 +360,28 @@ public class TriggeredAbilityQueueService {
                 }
             }
 
-            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+            // "Target creature" abilities (Cradle of Vitality) offer no player targets; if no creature
+            // is a legal target the ability has no legal target and is removed without going on the stack.
+            if (pending.creaturesOnly() && validPermanentTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
+                log.info("Game {} - {} life gain trigger skipped (no legal creature target)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
 
-            // There are always valid targets (at least the players)
+            List<UUID> validPlayerTargets = pending.creaturesOnly()
+                    ? List.of()
+                    : new ArrayList<>(gameData.orderedPlayerIds);
+
+            String prompt = pending.creaturesOnly()
+                    ? pending.sourceCard().getName() + "'s ability - Choose target creature."
+                    : pending.sourceCard().getName() + "'s ability - Choose target creature or player.";
+
+            // There are always valid targets (at least the players, or the checked creatures)
             gameData.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets,
-                    pending.sourceCard().getName() + "'s ability - Choose target creature or player.");
+                    validPermanentTargets, validPlayerTargets, prompt);
 
             String logEntry = pending.sourceCard().getName() + "'s life gain trigger - choose a target.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));

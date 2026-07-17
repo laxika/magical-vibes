@@ -75,8 +75,10 @@ import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatD
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
@@ -433,6 +435,26 @@ public class GameQueryService {
                         result.add(chosen);
                     }
                     break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Computes the graveyard-activated abilities granted to creature cards owned by the given player
+     * by static effects on that player's battlefield (e.g. Sedris, the Traitor King grants unearth
+     * {2}{B} to each creature card in its controller's graveyard). Scans the owner's battlefield for
+     * permanents carrying {@link GrantGraveyardAbilityToCreatureCardsEffect}.
+     */
+    public List<ActivatedAbility> computeGrantedGraveyardAbilitiesForOwnedCreatureCard(GameData gameData, UUID ownerId) {
+        List<ActivatedAbility> result = new ArrayList<>();
+        List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+        if (bf == null) return result;
+        for (Permanent perm : bf) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof GraveyardAbilityGrantingEffect g) {
+                    result.add(g.grantedGraveyardAbility());
                 }
             }
         }
@@ -1481,6 +1503,13 @@ public class GameQueryService {
                     accumulator.addPower(boost.powerBoost());
                     accumulator.addToughness(boost.toughnessBoost());
                     accumulator.addKeywords(boost.grantedKeywords());
+                } else if (effect instanceof GrantKeywordEffect grant
+                        && grant.scope() == GrantScope.OWN_PERMANENTS
+                        // Evaluate the filter with a null GameData so type predicates read the
+                        // permanent's printed/granted types directly instead of re-entering
+                        // computeStaticBonus for this same target (which would recurse forever).
+                        && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(null, target, grant.filter()))) {
+                    accumulator.addKeywords(grant.keywords());
                 }
             }
             if (beforeEmblem != null) {
@@ -2799,6 +2828,24 @@ public class GameQueryService {
                     if (effectClass.isInstance(effect)) {
                         return findPermanentById(gameData, p.getAttachedTo());
                     }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds a permanent on the given player's battlefield that itself carries the given static
+     * effect type, returning that permanent (e.g. Empyrial Archangel redirecting damage to itself),
+     * or {@code null} if none is found.
+     */
+    public Permanent findControlledPermanentWithStaticEffect(GameData gameData, UUID playerId, Class<? extends CardEffect> effectClass) {
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return null;
+        for (Permanent p : bf) {
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effectClass.isInstance(effect)) {
+                    return p;
                 }
             }
         }

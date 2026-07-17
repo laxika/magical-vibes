@@ -86,7 +86,8 @@ public class DrawService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null || graveyard.isEmpty()) {
                 // Can't return a card — the player loses the game (CR 104.3a, replacement wording).
-                if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+                if (gameQueryService.canPlayerLoseGame(gameData, playerId)
+                        && !gameOutcomeService.replaceLossWithGameReset(gameData, playerId)) {
                     UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                     String lossLog = gameData.playerIdToName.get(playerId)
                             + " can't return a card from their graveyard and loses the game.";
@@ -294,7 +295,8 @@ public class DrawService {
             }
 
             // CR 704.5b — player who attempted to draw from an empty library loses the game
-            if (gameQueryService.canPlayerLoseGame(gameData, playerId)) {
+            if (gameQueryService.canPlayerLoseGame(gameData, playerId)
+                    && !gameOutcomeService.replaceLossWithGameReset(gameData, playerId)) {
                 UUID winnerId = gameQueryService.getOpponentId(gameData, playerId);
                 String lossLog = gameData.playerIdToName.get(playerId) + " attempted to draw from an empty library and loses the game.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(lossLog));

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTopLibraryCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -232,6 +233,8 @@ public final class LayerClassifier {
         map.put(GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfExiledCardsEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainActivatedAbilitiesOfTopLibraryCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
 
         // Sublayers 7a/7b — P/T setting. A "P/T equal to [amount]" static in the creature's

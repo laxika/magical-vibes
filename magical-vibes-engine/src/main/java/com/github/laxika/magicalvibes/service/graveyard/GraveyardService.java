@@ -218,6 +218,31 @@ public class GraveyardService {
     }
 
     /**
+     * Exiles up to {@code count} cards from the given player's graveyard (from the front of the
+     * list) and returns the number actually exiled. Used by prevention effects that exile a card
+     * from the graveyard for each 1 damage prevented (Immortal Coil). Exiling from one's own
+     * graveyard is a shortcut choice, so the front cards are taken deterministically.
+     */
+    public int exileCardsFromGraveyard(GameData gameData, UUID playerId, int count) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null || graveyard.isEmpty() || count <= 0) {
+            return 0;
+        }
+        int toExile = Math.min(count, graveyard.size());
+        List<Card> exiled = new ArrayList<>(graveyard.subList(0, toExile));
+        graveyard.subList(0, toExile).clear();
+        for (Card card : exiled) {
+            exileService.exileCard(gameData, playerId, card);
+        }
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = playerName + " exiles " + toExile + " card" + (toExile != 1 ? "s" : "")
+                + " from their graveyard.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} exiles {} cards from graveyard", gameData.id, playerName, toExile);
+        return toExile;
+    }
+
+    /**
      * Fires "when this card is put into a graveyard from anywhere" triggered abilities
      * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, e.g. Purity). The card has already
      * entered the graveyard; the trigger goes on the stack under its owner's control.

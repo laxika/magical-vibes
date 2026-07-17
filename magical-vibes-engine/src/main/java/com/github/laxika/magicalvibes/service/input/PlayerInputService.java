@@ -363,13 +363,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a permanent type to untap (Storage Matrix)", gameData.id, playerName);
     }
 
-    public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds) {
-        beginMultiPermanentChoice(gameData, playerId, candidateIds, 2,
-                new MultiPermanentChoiceContext.StaticOrbUntap(playerId),
-                "Choose up to two permanents to untap (Static Orb).");
+    public void beginStaticOrbUntapChoice(GameData gameData, UUID playerId, List<UUID> candidateIds,
+                                          int maxUntap,
+                                          com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter) {
+        String prompt = "Choose up to " + maxUntap + " permanent" + (maxUntap == 1 ? "" : "s") + " to untap.";
+        beginMultiPermanentChoice(gameData, playerId, candidateIds, maxUntap,
+                new MultiPermanentChoiceContext.StaticOrbUntap(playerId, filter),
+                prompt);
 
         String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to two permanents to untap (Static Orb)", gameData.id, playerName);
+        log.info("Game {} - Awaiting {} to choose up to {} permanent(s) to untap (untap lock)",
+                gameData.id, playerName, maxUntap);
     }
 
     private static List<Integer> allHandIndices(List<Card> hand) {

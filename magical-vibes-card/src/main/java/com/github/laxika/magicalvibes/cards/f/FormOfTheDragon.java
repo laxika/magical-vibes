@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SetControllerLifeToSpecificValueEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.SetControllerLifeToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "9ED", collectorNumber = "187")
@@ -18,7 +19,7 @@ public class FormOfTheDragon extends Card {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToAnyTargetEffect(5));
 
         // At the beginning of each end step, your life total becomes 5.
-        addEffect(EffectSlot.END_STEP_TRIGGERED, new SetControllerLifeToSpecificValueEffect(5));
+        addEffect(EffectSlot.END_STEP_TRIGGERED, new SetControllerLifeToAmountEffect(new Fixed(5)));
 
         // Creatures without flying can't attack you.
         addEffect(EffectSlot.STATIC, new CreaturesCantAttackControllerUnlessPredicateEffect(

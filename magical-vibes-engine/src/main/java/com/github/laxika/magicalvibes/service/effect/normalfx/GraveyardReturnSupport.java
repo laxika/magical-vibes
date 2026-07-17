@@ -270,6 +270,9 @@ public class GraveyardReturnSupport {
                             ? gyEntry.getKey() : controllerId;
                     if (effect.destination() == GraveyardChoiceDestination.HAND) {
                         gameData.addCardToHand(targetPlayerId, card);
+                    } else if (effect.grantHaste() || effect.exileAtEndStep()) {
+                        putCardOntoBattlefieldWithHasteAndExile(gameData, targetPlayerId, card,
+                                effect.grantHaste(), effect.exileAtEndStep());
                     } else {
                         putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
                                 effect.enterTapped(), effect.enterAttacking());

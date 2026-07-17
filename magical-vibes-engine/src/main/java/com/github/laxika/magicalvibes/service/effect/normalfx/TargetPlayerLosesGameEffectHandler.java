@@ -45,6 +45,11 @@ public class TargetPlayerLosesGameEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
+        // Lich's Mirror: replace the loss with a full reset instead of finishing the game.
+        if (gameOutcomeService.replaceLossWithGameReset(gameData, losingPlayerId)) {
+            return;
+        }
+
         UUID winnerId = gameQueryService.getOpponentId(gameData, losingPlayerId);
         String loserName = gameData.playerIdToName.get(losingPlayerId);
         String winnerName = gameData.playerIdToName.get(winnerId);

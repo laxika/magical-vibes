@@ -106,9 +106,10 @@ public sealed interface TriggerContext {
     /**
      * Context for creature-death triggers that reference the dying creature's card and controller.
      * Shared by ON_ALLY_CREATURE_DIES, ON_ANY_CREATURE_DIES, ON_ALLY_NONTOKEN_CREATURE_DIES,
-     * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES.
+     * ON_ANY_NONTOKEN_CREATURE_DIES, and ON_OPPONENT_CREATURE_DIES. {@code dyingCreaturePower} is the
+     * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided).
      */
-    record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId) implements TriggerContext {}
+    record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower) implements TriggerContext {}
 
     /**
      * Context for ON_EQUIPPED_CREATURE_DIES triggers.
@@ -120,7 +121,7 @@ public sealed interface TriggerContext {
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
-                                   UUID dyingCreatureCardId) implements TriggerContext {}
+                                   UUID dyingCreatureCardId, int dyingCreatureToughness) implements TriggerContext {}
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
@@ -145,6 +146,17 @@ public sealed interface TriggerContext {
      */
     record BlackCardOpponentGraveyard(UUID graveyardOwnerId,
                                       Card card) implements TriggerContext {}
+
+    /**
+     * Context for ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Prince of
+     * Thralls).
+     *
+     * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
+     * @param dyingControllerId  the player who controlled the permanent on the battlefield ("that opponent")
+     * @param graveyardOwnerId   the owner of the graveyard the card was put into
+     */
+    record OpponentPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
+                                      UUID graveyardOwnerId) implements TriggerContext {}
 
     /**
      * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).

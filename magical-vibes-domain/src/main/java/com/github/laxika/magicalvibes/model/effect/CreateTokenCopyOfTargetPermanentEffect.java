@@ -24,16 +24,26 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         Integer toughnessOverride,
         Map<CounterType, Integer> initialCounters,
         boolean grantHaste,
-        boolean exileAtEndStep
+        boolean exileAtEndStep,
+        boolean sacrificeAtEndStep
 ) implements CardEffect {
 
     public CreateTokenCopyOfTargetPermanentEffect() {
-        this(List.of(), Set.of(), null, null, Map.of(), false, false);
+        this(List.of(), Set.of(), null, null, Map.of(), false, false, false);
     }
 
     /** "except it has haste and 'At the beginning of the end step, exile this token.'" (Heat Shimmer). */
     public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep) {
-        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep);
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, false);
+    }
+
+    /**
+     * "except it has haste and 'At the beginning of the end step, sacrifice this permanent.'" (Minion Reflector).
+     * The sacrifice route (as opposed to {@code exileAtEndStep}) puts the token into the graveyard, so its own
+     * dies-triggers and other players' "whenever a creature dies" abilities fire.
+     */
+    public CreateTokenCopyOfTargetPermanentEffect(boolean grantHaste, boolean exileAtEndStep, boolean sacrificeAtEndStep) {
+        this(List.of(), Set.of(), null, null, Map.of(), grantHaste, exileAtEndStep, sacrificeAtEndStep);
     }
 
     public CreateTokenCopyOfTargetPermanentEffect(
@@ -42,7 +52,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             Integer powerOverride,
             Integer toughnessOverride,
             Map<CounterType, Integer> initialCounters) {
-        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, false, false);
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters, false, false, false);
     }
 
     @Override

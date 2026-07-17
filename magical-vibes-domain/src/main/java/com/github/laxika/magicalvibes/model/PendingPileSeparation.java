@@ -15,11 +15,17 @@ import java.util.UUID;
  * {@code cardOwners} maps card UUID → original owner UUID (for returning the unchosen pile to
  * owners' graveyards). Otherwise the pile IDs refer to permanent UUIDs drawn from
  * {@code allPermanentIds}.
+ *
+ * <p>{@code playFromExile} distinguishes the two card-pile dispositions: the default (Boneyard
+ * Parley) puts the chosen pile onto the battlefield and returns the rest to owners' graveyards;
+ * when {@code true} (Brilliant Ultimatum) the chosen pile is offered to be played/cast for free
+ * from exile and everything else stays exiled.
  */
 public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
                                     List<UUID> allPermanentIds,
                                     List<Card> cards, Map<UUID, UUID> cardOwners,
-                                    List<UUID> pile1Ids, List<UUID> pile2Ids)
+                                    List<UUID> pile1Ids, List<UUID> pile2Ids,
+                                    boolean playFromExile)
         implements PendingInteraction {
 
     public PendingPileSeparation {
@@ -30,7 +36,15 @@ public record PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
         pile2Ids = List.copyOf(pile2Ids);
     }
 
-    /** Card-pile mode (Boneyard Parley) when the held-out card list is non-empty. */
+    /** Battlefield-disposition card-pile / permanent-pile variant (the pre-existing call sites). */
+    public PendingPileSeparation(UUID controllerId, UUID targetPlayerId,
+                                 List<UUID> allPermanentIds,
+                                 List<Card> cards, Map<UUID, UUID> cardOwners,
+                                 List<UUID> pile1Ids, List<UUID> pile2Ids) {
+        this(controllerId, targetPlayerId, allPermanentIds, cards, cardOwners, pile1Ids, pile2Ids, false);
+    }
+
+    /** Card-pile mode (Boneyard Parley, Brilliant Ultimatum) when the held-out card list is non-empty. */
     public boolean cardPileMode() {
         return !cards.isEmpty();
     }

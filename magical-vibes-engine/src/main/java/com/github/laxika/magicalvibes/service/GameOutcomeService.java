@@ -31,6 +31,7 @@ public class GameOutcomeService {
     private final DraftRegistry draftRegistry;
     private final ObjectProvider<TournamentResultHandler> tournamentResultHandler;
     private final GameTimeoutService gameTimeoutService;
+    private final LichsMirrorResetService lichsMirrorResetService;
 
     public GameOutcomeService(GameQueryService gameQueryService,
                               GameBroadcastService gameBroadcastService,
@@ -38,7 +39,8 @@ public class GameOutcomeService {
                               GameRegistry gameRegistry,
                               DraftRegistry draftRegistry,
                               ObjectProvider<TournamentResultHandler> tournamentResultHandler,
-                              @Lazy GameTimeoutService gameTimeoutService) {
+                              @Lazy GameTimeoutService gameTimeoutService,
+                              @Lazy LichsMirrorResetService lichsMirrorResetService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.sessionManager = sessionManager;
@@ -46,6 +48,17 @@ public class GameOutcomeService {
         this.draftRegistry = draftRegistry;
         this.tournamentResultHandler = tournamentResultHandler;
         this.gameTimeoutService = gameTimeoutService;
+        this.lichsMirrorResetService = lichsMirrorResetService;
+    }
+
+    /**
+     * Lich's Mirror hook: if {@code losingPlayerId} controls a permanent that replaces their loss
+     * with a game reset, performs the reset and returns {@code true}. Callers about to finish the
+     * game because this player lost a rules-based loss (life/poison, empty library, a "you lose the
+     * game" effect) must consult this first and skip the loss when it returns {@code true}.
+     */
+    public boolean replaceLossWithGameReset(GameData gameData, UUID losingPlayerId) {
+        return lichsMirrorResetService.tryReplaceLoss(gameData, losingPlayerId);
     }
 
     public boolean checkWinCondition(GameData gameData) {
@@ -62,6 +75,11 @@ public class GameOutcomeService {
                 boolean loseFromLife = life <= 0 && gameQueryService.canPlayerLoseFromLife(gameData, playerId);
                 boolean loseFromPoison = poison >= 10;
                 if (!loseFromLife && !loseFromPoison) {
+                    continue;
+                }
+
+                // Lich's Mirror: replace the loss with a full reset instead of finishing the game.
+                if (replaceLossWithGameReset(gameData, playerId)) {
                     continue;
                 }
 

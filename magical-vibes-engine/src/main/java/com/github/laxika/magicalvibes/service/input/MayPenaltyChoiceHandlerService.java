@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -66,6 +67,7 @@ public class MayPenaltyChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final DestructionSupport destructionSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandUnlessPaysLifeEffectHandler discardHandUnlessPaysLifeEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -424,6 +426,35 @@ public class MayPenaltyChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleStealDyingPermanentUnlessPaysLifeChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        StealDyingOpponentPermanentUnlessPaysLifeEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof StealDyingOpponentPermanentUnlessPaysLifeEffect)
+                .map(e -> (StealDyingOpponentPermanentUnlessPaysLifeEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID payingPlayerId = ability.controllerId(); // "that opponent" — the decision maker
+        UUID thiefId = ability.targetCardId();        // the ability controller who steals it
+
+        boolean canPay = gameQueryService.canPlayerLifeChange(gameData, payingPlayerId)
+                && gameData.getLife(payingPlayerId) >= effect.lifeCost();
+
+        if (accepted && canPay) {
+            int currentLife = gameData.getLife(payingPlayerId);
+            gameData.playerLifeTotals.put(payingPlayerId, currentLife - effect.lifeCost());
+            String logEntry = player.getUsername() + " pays " + effect.lifeCost() + " life. ("
+                    + ability.sourceCard().getName() + ")";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} pays {} life to keep their permanent ({})", gameData.id,
+                    player.getUsername(), effect.lifeCost(), ability.sourceCard().getName());
+        } else {
+            // Declined (or can no longer pay) — the thief puts that card onto the battlefield.
+            stealDyingOpponentPermanentUnlessPaysLifeEffectHandler.stealPermanent(
+                    gameData, thiefId, effect.dyingCardId(), ability.sourceCard());
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleOpponentExileChoice(GameData gameData, Player player, boolean accepted,
                                            PendingMayAbility ability, OpponentMayReturnExiledCardOrDrawEffect effect) {
         UUID opponentId = ability.controllerId(); // opponent is the decision maker
@@ -511,6 +542,59 @@ public class MayPenaltyChoiceHandlerService {
                     controllerId, ability.sourceCard().getName(),
                     new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect())), 0);
             gameData.stack.add(searchEntry);
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Covenant of Minds: the targeted opponent ({@code player}) decides for the spell's controller.
+     * The revealed cards are still on top of the controller's library. Accept puts those cards into
+     * the controller's hand; decline puts them into the controller's graveyard and the controller
+     * draws five cards. The opponent is the decision maker, so the controller is the other player.
+     */
+    public void handleCovenantOfMindsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UUID opponentId = ability.controllerId(); // opponent is the decision maker
+        UUID controllerId = null;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (!pid.equals(opponentId)) {
+                controllerId = pid;
+                break;
+            }
+        }
+        if (controllerId == null) {
+            throw new IllegalStateException("Cannot find Covenant of Minds controller");
+        }
+
+        String controllerName = gameData.playerIdToName.get(controllerId);
+        String opponentName = gameData.playerIdToName.get(opponentId);
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        int count = deck == null ? 0 : Math.min(3, deck.size());
+        List<Card> revealed = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            revealed.add(deck.removeFirst());
+        }
+
+        if (accepted) {
+            for (Card card : revealed) {
+                gameData.addCardToHand(controllerId, card);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " chooses: "
+                    + controllerName + " puts the " + revealed.size() + " revealed card(s) into their hand."));
+            log.info("Game {} - {} lets {} keep {} revealed card(s) (Covenant of Minds)",
+                    gameData.id, opponentName, controllerName, revealed.size());
+        } else {
+            for (Card card : revealed) {
+                graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            }
+            for (int i = 0; i < 5; i++) {
+                drawService.resolveDrawCard(gameData, controllerId);
+            }
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(opponentName + " declines: the "
+                    + revealed.size() + " revealed card(s) go to " + controllerName + "'s graveyard and they draw five cards."));
+            log.info("Game {} - {} declines; {} mills {} and draws five (Covenant of Minds)",
+                    gameData.id, opponentName, controllerName, revealed.size());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

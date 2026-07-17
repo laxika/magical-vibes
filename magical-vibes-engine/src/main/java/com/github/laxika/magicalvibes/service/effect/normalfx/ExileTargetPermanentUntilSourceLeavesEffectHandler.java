@@ -77,7 +77,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
                 gameData.id, entry.getCard().getName(), card.getName());
 
         if (sourcePermanentId != null) {
-            gameData.exileReturnOnPermanentLeave.put(sourcePermanentId, new PendingExileReturn(card, ownerId));
+            gameData.addExileReturnOnPermanentLeave(sourcePermanentId, new PendingExileReturn(card, ownerId));
 
             // Also add source tracking so AllowCastFromCardsExiledWithSourceEffect can find it
             var exiledEntry = gameData.findExiledCard(card.getId());

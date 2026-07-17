@@ -39,6 +39,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BounceSupport bounceSupport;
+    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -69,7 +70,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
 
-            UUID controllerId = e.lifeLoss() > 0
+            UUID controllerId = (e.lifeLoss() > 0 || e.drawCount() > 0)
                     ? gameQueryService.findPermanentController(gameData, target.getId())
                     : null;
 
@@ -79,7 +80,11 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 log.info("Game {} - {} returned to owner's hand by {}", gameData.id, target.getCard().getName(), entry.getCard().getName());
             }
 
-            if (controllerId != null) {
+            if (controllerId != null && e.drawCount() > 0) {
+                playerInteractionSupport.applyDrawCards(gameData, controllerId, e.drawCount());
+            }
+
+            if (controllerId != null && e.lifeLoss() > 0) {
                 if (!gameQueryService.canPlayerLifeChange(gameData, controllerId)) {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(gameData.playerIdToName.get(controllerId) + "'s life total can't change."));
                 } else {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 @CardRegistration(set = "M10", collectorNumber = "10")
 @CardRegistration(set = "M11", collectorNumber = "14")
+@CardRegistration(set = "ALA", collectorNumber = "11")
 public class Excommunicate extends Card {
 
     public Excommunicate() {

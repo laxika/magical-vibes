@@ -27,6 +27,7 @@ All paths relative to `cards/`.
 | Chroma anthem (own creatures) | `l/LightFromWithin.java` | STATIC BoostOwnCreaturesByManaSymbolEffect(ManaColor.WHITE, 1, 1) — each creature you control gets +1/+1 per white mana symbol in its own cost; hybrid/Phyrexian symbols of that color count |
 | Can't block | `s/SpinelessThug.java` | STATIC CantBlockEffect |
 | Must attack | `b/BloodrockCyclops.java` | STATIC MustAttackEffect |
+| Subtype-wide must attack + upkeep token | `g/GoblinAssault.java` | EACH_UPKEEP_TRIGGERED CreateTokenEffect(1/1 red Goblin, HASTE) + STATIC MatchingCreaturesMustAttackEffect(PermanentHasSubtypePredicate(GOBLIN)) — all Goblins (any controller) attack each combat if able |
 | Evasion (blocked only by) | `e/ElvenRiders.java` | STATIC CanBeBlockedOnlyByFilterEffect |
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |
 | Block limit (team-wide) | `y/YuanShaoTheIndecisive.java` | STATIC EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect — each creature you control can't be blocked by more than N |
@@ -51,6 +52,7 @@ All paths relative to `cards/`.
 | Prevent fixed damage per source to you | `u/UrzasArmor.java` | STATIC PreventFixedDamagePerSourceToControllerEffect(N) — "If a source would deal damage to you, prevent N of that damage", per source, combat + noncombat; hooked in DamageSupport (noncombat) + CombatDamageService.accumulatePlayerDamage (combat) |
 | Can't lose game | `p/PlatinumAngel.java` | STATIC CantLoseGameEffect |
 | Can't lose from life + damage as infect | `p/PhyrexianUnlife.java` | STATIC CantLoseGameFromLifeEffect + DamageDealtAsInfectBelowZeroLifeEffect |
+| Replace own loss with game reset | `l/LichsMirror.java` | STATIC ReplaceControllerLossWithGameResetEffect — "If you would lose, instead shuffle hand/graveyard/owned permanents into library, draw 7, life becomes 20." Handled by `LichsMirrorResetService`, consulted at every rules-loss source (life/poison in `GameOutcomeService.checkWinCondition`, empty-library/Forbidden-Crypt in `DrawService`, `ControllerLosesGameEffectHandler`, `TargetPlayerLosesGameEffectHandler`) via `GameOutcomeService.replaceLossWithGameReset`. Poison is NOT reset (one-shot: the Mirror shuffles itself away). |
 | Damage can't reduce life below 1 (if control creature) | `w/Worship.java` | STATIC DamageCantReduceLifeBelowOneEffect |
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
@@ -73,6 +75,8 @@ All paths relative to `cards/`.
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInHand(CONTROLLER) + ON_CONTROLLER_DRAWS LoseLifeEffect(1, EACH_OPPONENT) |
 | Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfEffect(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same) + BoostSelfEffect(CardsInGraveyard(CardTypePredicate(LAND), CONTROLLER), same) — +1/+1 per land you control and per land card in your graveyard |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
+| Grant unearth to GY creatures | `s/SedrisTheTraitorKing.java` | STATIC GrantGraveyardAbilityToCreatureCardsEffect(unearth {2}{B} ActivatedAbility) — each creature card in your graveyard gains the given graveyard-activated ability. The ability is the Fatestitcher unearth (ReturnCardFromGraveyardEffect self→BATTLEFIELD, returnAll, grantHaste, exileAtEndStep, SORCERY_SPEED). Scanned via the `GraveyardAbilityGrantingEffect` capability by `GameQueryService.computeGrantedGraveyardAbilitiesForOwnedCreatureCard` |
+| Gain top-library-card abilities | `s/SkillBorrower.java` | STATIC PlayWithTopCardRevealedEffect + GainActivatedAbilitiesOfTopLibraryCardEffect — selfOnly, gains the top library card's activated abilities while it's an artifact or creature |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
 | +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfEffect(PermanentCount(PermanentHasSubtypePredicate(RAT), CONTROLLER, excludeSource=true), Fixed(0)) |
 | Cost reduction if opponent has more creatures | `a/AvatarOfMight.java` | STATIC ConditionalEffect(OpponentControlsMoreCreatures(4), ReduceOwnCastCostEffect(Fixed(6))) — costs {6} less if an opponent controls 4+ more creatures than you |
@@ -134,6 +138,7 @@ All paths relative to `cards/`.
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |
 | Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |
+| Redirect all your damage to self | `e/EmpyrialArchangel.java` | STATIC RedirectPlayerDamageToSelfEffect — "All damage that would be dealt to you is dealt to this creature instead." Flying/Shroud auto-loaded; queried in the same redirect path as Pariah (falls back when no aura variant present) |
 | Prevent X + redirect to player | `v/VengefulArchon.java` | Activated {X}: PreventXDamageToControllerAndRedirectToTargetPlayerEffect — prevent next X damage to you, source deals that much to target player |
 | Enchanted land mana | `o/Overgrowth.java`, `f/FertileGround.java` | ON_ANY_PLAYER_TAPS_LAND `AddManaOnEnchantedLandTapEffect` + `AwardManaEffect` / `AwardAnyColorManaEffect` |
 | Enchanted land grant mana ability + ETB counter | `n/NewHorizons.java` | STATIC GrantActivatedAbilityEffect(AwardAnyColorManaEffect(2), ENCHANTED_PERMANENT) + ON_ENTER_BATTLEFIELD PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 1) — multi-target aura: first target is land (aura attachment), second is creature (ETB +1/+1 counter). Uses GrantScope.ENCHANTED_PERMANENT for non-creature aura targets |

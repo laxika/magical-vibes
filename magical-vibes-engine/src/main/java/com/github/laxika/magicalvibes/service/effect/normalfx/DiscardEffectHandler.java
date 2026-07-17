@@ -59,7 +59,8 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, source));
 
         switch (e.recipient()) {
-            case CONTROLLER, TARGET_PLAYER, TARGET_PERMANENT_CONTROLLER ->
+            case CONTROLLER, TARGET_PLAYER, TARGET_PERMANENT_CONTROLLER,
+                    TARGET_PLAYER_OR_PERMANENT_CONTROLLER ->
                     resolveSinglePlayer(gameData, entry, e, amount);
             case EACH_PLAYER, EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, amount);
         }
@@ -81,6 +82,20 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
                 playerId = gameQueryService.findPermanentController(gameData, target.getId());
+                opponentCaused = true;
+            }
+            case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> {
+                // targetId is either a player or a planeswalker; the discarder is that player or the
+                // planeswalker's controller (piggybacks on a companion player-or-planeswalker effect).
+                UUID targetId = entry.getTargetId();
+                if (gameData.playerIds.contains(targetId)) {
+                    playerId = targetId;
+                } else {
+                    playerId = gameQueryService.findPermanentController(gameData, targetId);
+                    if (playerId == null) {
+                        return;
+                    }
+                }
                 opponentCaused = true;
             }
             default -> {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
+import com.github.laxika.magicalvibes.model.amount.CreaturesDevoured;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
@@ -31,10 +33,12 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfControlMoreCreaturesTh
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.FixedIfControlsAllNamed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
+import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
+import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -42,6 +46,7 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -104,6 +109,10 @@ public class AmountEvaluationService {
                     countGraveyardCards(gameData, c, ctx);
             case CardsInHand c ->
                     countHandCards(gameData, c, ctx);
+            case MatchingCardsInHand c ->
+                    countMatchingHandCards(gameData, c, ctx);
+            case CardsInLibrary c ->
+                    countLibraryCards(gameData, c, ctx);
             case ColorManaSymbolsAmongControlledPermanents c ->
                     countColorManaSymbolsAmongControlledPermanents(gameData, c, ctx);
             case ColorManaSymbolsInGraveyard c ->
@@ -112,10 +121,17 @@ public class AmountEvaluationService {
                     countColorManaSymbolsInHand(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case CreaturesDevoured ignored ->
+                    ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getDevouredCount();
             case CountersOnLinkedPermanent c ->
                     countCountersOnLinkedPermanent(gameData, c);
             case ControllerLifeTotal ignored ->
                     gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
+            case TargetPlayerLifeTotal ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
+            case HalvedRoundedUp h ->
+                    Math.floorDiv(evaluate(gameData, h.amount(), ctx) + 1, 2);
             case GreatestPowerAmongControlled ignored ->
                     greatestPowerAmongControlled(gameData, ctx);
             case AttachmentsOnSource a ->
@@ -205,6 +221,7 @@ public class AmountEvaluationService {
             case ManaSpentToCast ignored -> true;
             case Scaled s -> referencesXValue(s.amount());
             case Divided d -> referencesXValue(d.amount());
+            case HalvedRoundedUp h -> referencesXValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesXValue);
             default -> false;
         };
@@ -220,6 +237,7 @@ public class AmountEvaluationService {
             case EventValue ignored -> true;
             case Scaled s -> referencesEventValue(s.amount());
             case Divided d -> referencesEventValue(d.amount());
+            case HalvedRoundedUp h -> referencesEventValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesEventValue);
             default -> false;
         };
@@ -358,6 +376,34 @@ public class AmountEvaluationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand != null) {
                 total += hand.size();
+            }
+        }
+        return total;
+    }
+
+    private int countMatchingHandCards(GameData gameData, MatchingCardsInHand count, AmountContext ctx) {
+        UUID sourceCardId = ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard().getId() : null;
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null) continue;
+            for (Card card : hand) {
+                if (predicateEvaluationService.matchesCardPredicate(card, count.predicate(), sourceCardId)) {
+                    total++;
+                }
+            }
+        }
+        return total;
+    }
+
+    private int countLibraryCards(GameData gameData, CardsInLibrary count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck != null) {
+                total += deck.size();
             }
         }
         return total;

@@ -222,6 +222,24 @@ public class PlayerInteractionSupport {
         }
     }
 
+    /**
+     * "Target player reveals their hand." The whole hand is revealed to all players via the game
+     * log; nothing further happens (Thoughtcutter Agent).
+     */
+    public void resolveRevealHand(GameData gameData, UUID playerId) {
+
+        List<Card> hand = gameData.playerHands.get(playerId);
+        String playerName = gameData.playerIdToName.get(playerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
+            return;
+        }
+
+        String cardNames = String.join(", ", hand.stream().map(Card::getName).toList());
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " reveals their hand: " + cardNames + "."));
+    }
+
     public void resolveHandRevealAndChoose(GameData gameData, StackEntry entry,
                                              int count, List<CardType> excludedTypes, List<CardType> includedTypes,
                                              boolean discardMode, boolean exileMode, UUID sourcePermanentId) {

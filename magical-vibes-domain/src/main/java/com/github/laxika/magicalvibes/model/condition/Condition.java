@@ -9,6 +9,7 @@ package com.github.laxika.magicalvibes.model.condition;
 public sealed interface Condition permits
         ActivePlayerHandEmpty,
         ActivationCount,
+        AllConditions,
         AnOpponentHandEmpty,
         AnyLibraryAtMost,
         AnyPlayerControlsPermanent,
@@ -35,6 +36,7 @@ public sealed interface Condition permits
         ControlsPermanentCount,
         ControlsPermanentCountAtMost,
         ControlledCreaturesTotalPowerAtLeast,
+        CreatureAttackingController,
         CreatureDiedUnderYourControlThisTurn,
         DefendingPlayerControlsPermanent,
         DefendingPlayerPoisoned,
@@ -68,6 +70,7 @@ public sealed interface Condition permits
         SelfHasKeyword,
         SourceCounterThreshold,
         SourceHasSubtype,
+        SourceUntapped,
         SpellManaSpentAtLeast,
         TargetPermanentMatches,
         TopCardOfLibraryColor,

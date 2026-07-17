@@ -9,9 +9,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * with a private constructor).
  *
  * <ul>
- *   <li>{@link #target()} / {@link #targetAndControllerLosesLife(int)} — bounce the chosen target
- *       permanent(s); the life-loss variant makes each bounced permanent's controller lose life
- *       (Vapor Snag), the controller being snapshotted before the bounce.</li>
+ *   <li>{@link #target()} / {@link #targetAndControllerLosesLife(int)} /
+ *       {@link #targetAndControllerDraws(int)} — bounce the chosen target permanent(s); the life-loss
+ *       variant makes each bounced permanent's controller lose life (Vapor Snag) and the draw variant
+ *       makes each bounced permanent's controller draw (Call to Heel), the controller being
+ *       snapshotted before the bounce.</li>
  *   <li>{@link #self()} — bounce the source permanent.</li>
  *   <li>{@link #allPermanentsMatching(PermanentPredicate)} — bounce every permanent matching the
  *       filter across all battlefields (null filter = every permanent).</li>
@@ -26,23 +28,29 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
     private final BounceScope scope;
     private final PermanentPredicate filter;
     private final int lifeLoss;
+    private final int drawCount;
 
-    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss) {
+    private ReturnToHandEffect(BounceScope scope, PermanentPredicate filter, int lifeLoss, int drawCount) {
         this.scope = scope;
         this.filter = filter;
         this.lifeLoss = lifeLoss;
+        this.drawCount = drawCount;
     }
 
     public static ReturnToHandEffect target() {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, 0);
+        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, 0);
     }
 
     public static ReturnToHandEffect targetAndControllerLosesLife(int lifeLoss) {
-        return new ReturnToHandEffect(BounceScope.TARGET, null, lifeLoss);
+        return new ReturnToHandEffect(BounceScope.TARGET, null, lifeLoss, 0);
+    }
+
+    public static ReturnToHandEffect targetAndControllerDraws(int drawCount) {
+        return new ReturnToHandEffect(BounceScope.TARGET, null, 0, drawCount);
     }
 
     public static ReturnToHandEffect self() {
-        return new ReturnToHandEffect(BounceScope.SELF, null, 0);
+        return new ReturnToHandEffect(BounceScope.SELF, null, 0, 0);
     }
 
     /**
@@ -50,19 +58,19 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
      * (instants/sorceries that bounce themselves off the stack — Redeem the Lost's won-clash reward).
      */
     public static ReturnToHandEffect selfSpell() {
-        return new ReturnToHandEffect(BounceScope.SELF_SPELL, null, 0);
+        return new ReturnToHandEffect(BounceScope.SELF_SPELL, null, 0, 0);
     }
 
     public static ReturnToHandEffect allPermanentsMatching(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0);
+        return new ReturnToHandEffect(BounceScope.ALL_MATCHING, filter, 0, 0);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerControls(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_PERMANENTS, filter, 0);
+        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_PERMANENTS, filter, 0, 0);
     }
 
     public static ReturnToHandEffect permanentsTargetPlayerOwns(PermanentPredicate filter) {
-        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_OWNED, filter, 0);
+        return new ReturnToHandEffect(BounceScope.TARGET_PLAYERS_OWNED, filter, 0, 0);
     }
 
     public BounceScope scope() {
@@ -75,6 +83,10 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect 
 
     public int lifeLoss() {
         return lifeLoss;
+    }
+
+    public int drawCount() {
+        return drawCount;
     }
 
     @Override

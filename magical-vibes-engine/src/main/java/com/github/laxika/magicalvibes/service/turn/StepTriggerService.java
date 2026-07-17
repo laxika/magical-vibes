@@ -1995,19 +1995,31 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
                             continue;
                         }
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                activePlayerId,
-                                perm.getCard().getName() + "'s end step ability",
-                                new ArrayList<>(List.of(effect)),
-                                null,
-                                perm.getId()
-                        ));
+                        CardEffect countWrapped = conditional.wrapped();
+                        if (countWrapped.targetSpec().category().includesPermanents()
+                                || countWrapped.targetSpec().category().includesPlayers()) {
+                            // Condition met and the inner effect targets (e.g. Exuberant Firestoker's
+                            // "deal 2 damage to target player or planeswalker") — queue for target selection.
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(countWrapped)), perm.getId()));
+                            String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(countLogEntry));
+                            log.info("Game {} - {} controller end-step targeting trigger queued", gameData.id, perm.getCard().getName());
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    activePlayerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(effect)),
+                                    null,
+                                    perm.getId()
+                            ));
 
-                        String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(countLogEntry));
-                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                            String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(countLogEntry));
+                            log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof DidntAttack) {
                         // Intervening-if: only trigger if the creature didn't attack this turn

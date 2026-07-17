@@ -218,6 +218,11 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
+        // Gather Specimens (CR 614.1): if this creature would enter under an opponent's control, it
+        // enters under the gatherer's control instead. Resolve up front so the log, ETB triggers, and
+        // legend check below all attribute to the effective controller.
+        controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
+
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
@@ -427,6 +432,11 @@ public class StackResolutionService {
         }
 
         Permanent perm = new Permanent(card);
+
+        // Gather Specimens (CR 614.1): an artifact creature that would enter under an opponent's
+        // control instead enters under the gatherer's control. Resolve up front so the log, ETB
+        // triggers, and legend check below all attribute to the effective controller.
+        controllerId = battlefieldEntryService.resolveEnteringController(gameData, controllerId, perm);
 
         // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.

@@ -22,6 +22,7 @@ public sealed interface CardPredicate permits
         CardMinManaValuePredicate,
         CardNamedPredicate,
         CardNotPredicate,
+        CardPowerAtLeastPredicate,
         CardPowerAtMostPredicate,
         CardSubtypePredicate,
         CardSupertypePredicate,

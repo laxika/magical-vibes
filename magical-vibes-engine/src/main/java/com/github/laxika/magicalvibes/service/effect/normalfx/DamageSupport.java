@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -451,6 +453,14 @@ public class DamageSupport {
                         hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
             }
 
+            // Immortal Coil: prevent all remaining damage to the controller and exile a card from
+            // their graveyard for each 1 damage prevented this way.
+            int coilPrevented = applyImmortalCoilPrevention(gameData, playerId, effectiveDamage);
+            if (coilPrevented > 0) {
+                effectiveDamage -= coilPrevented;
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s " + coilPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            }
+
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 
@@ -650,6 +660,31 @@ public class DamageSupport {
         gameOutcomeService.checkWinCondition(gameData);
     }
 
+
+    /**
+     * Immortal Coil: "If damage would be dealt to you, prevent that damage. Exile a card from your
+     * graveyard for each 1 damage prevented this way." If {@code playerId} controls a permanent with
+     * {@link PreventAllDamageToControllerAndExileFromGraveyardEffect}, all of the {@code damage} is
+     * prevented and up to that many cards are exiled from their graveyard. Returns the amount
+     * prevented (the caller subtracts it); 0 when damage can't be prevented or no such permanent is
+     * present. Shared by the noncombat ({@link #dealDamageToPlayer}) and combat
+     * ({@code CombatDamageService.applyPlayerDamage}) paths.
+     */
+    public int applyImmortalCoilPrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        boolean hasEffect = battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PreventAllDamageToControllerAndExileFromGraveyardEffect));
+        if (!hasEffect) return 0;
+
+        graveyardService.exileCardsFromGraveyard(gameData, playerId, damage);
+        return damage;
+    }
 
     /**
      * Counts the permanents currently attached to the given player that match the predicate

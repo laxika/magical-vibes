@@ -192,6 +192,9 @@ public class Permanent {
     @Setter private boolean evoked;
     /** Whether this permanent was cast for its prowl cost (gates "if its prowl cost was paid" ETB triggers). */
     @Setter private boolean prowl;
+    /** Number of creatures sacrificed to this permanent's devour ability as it entered (CR 702.82),
+     *  read by {@code CreaturesDevoured} for "for each creature it devoured" ETB effects (Tar Fiend). */
+    @Setter private int devouredCount;
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -350,6 +353,7 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.prowl = source.prowl;
+        this.devouredCount = source.devouredCount;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;

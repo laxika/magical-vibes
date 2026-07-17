@@ -463,7 +463,7 @@ public class CardChoiceHandlerService {
                 UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
                 if (sourcePermanentId != null) {
                     for (Card exiled : chosenCards) {
-                        gameData.exileReturnOnPermanentLeave.put(sourcePermanentId,
+                        gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
                                 new PendingExileReturn(exiled, targetPlayerId, false, true));
                     }
                 }

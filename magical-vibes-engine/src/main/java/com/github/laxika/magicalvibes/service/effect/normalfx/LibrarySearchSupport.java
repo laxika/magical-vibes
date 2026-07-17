@@ -161,6 +161,41 @@ public class LibrarySearchSupport {
     }
 
     /**
+     * Starts the next pending "search for a card with the same name and put it onto the battlefield
+     * tapped" pick from the follow-up's same-name queue (Clarion Ultimatum). Each queue entry is one
+     * chosen permanent's name; the advanced remainder rides the begun search. Names with no matching
+     * card in the library are skipped. Returns true if a search was initiated, false if the queue is
+     * exhausted, search is prevented, or the library is empty.
+     */
+    public boolean startNextSameNamePick(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        if (isSearchPrevented(gameData, playerId)) return false;
+
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        List<String> remaining = new ArrayList<>(followUp.remainingSameNamePicks());
+        while (!remaining.isEmpty()) {
+            String name = remaining.remove(0);
+            if (deck == null || deck.isEmpty()) {
+                return false;
+            }
+            List<Card> matches = deck.stream().filter(card -> name.equals(card.getName())).toList();
+            if (matches.isEmpty()) {
+                continue;
+            }
+            String prompt = "You may search your library for a card named " + name
+                    + " and put it onto the battlefield tapped.";
+            sendLibrarySearchToPlayer(gameData, playerId,
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                            .canFailToFind(true)
+                            .filterCardName(name)
+                            .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
+                            .followUp(followUp.withRemainingSameNamePicks(remaining))
+                            .build(), prompt, true);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Searches the controller's library for a creature card, reveals it, and puts it into their hand.
      * Called after the sacrifice portion of SacrificeCreatureSearchLibraryForCreatureToHandEffect completes.
      */
@@ -248,14 +283,19 @@ public class LibrarySearchSupport {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof CantSearchLibrariesEffect) {
-                        Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
-                        if (paidSet == null || !paidSet.contains(perm.getId())) {
+                    if (effect instanceof CantSearchLibrariesEffect restriction) {
+                        boolean paid = false;
+                        if (restriction.payableToIgnore()) {
+                            Set<UUID> paidSet = gameData.paidSearchTaxPermanentIds.get(searchingPlayerId);
+                            paid = paidSet != null && paidSet.contains(perm.getId());
+                        }
+                        if (!paid) {
                             String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                            String logMsg = playerName + "'s library search is prevented by Leonin Arbiter.";
+                            String sourceName = perm.getCard().getName();
+                            String logMsg = playerName + "'s library search is prevented by " + sourceName + ".";
                             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
-                            log.info("Game {} - {} has unpaid Leonin Arbiter search tax, search prevented",
-                                    gameData.id, playerName);
+                            log.info("Game {} - {} search prevented by {}",
+                                    gameData.id, playerName, sourceName);
                             return false;
                         }
                     }

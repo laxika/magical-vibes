@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 
 @CardRegistration(set = "DRB", collectorNumber = "8")
+@CardRegistration(set = "ALA", collectorNumber = "172")
 public class HellkiteOverlord extends Card {
 
     public HellkiteOverlord() {

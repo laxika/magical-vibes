@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "34")
+@CardRegistration(set = "ALA", collectorNumber = "20")
 public class OblivionRing extends Card {
 
     public OblivionRing() {

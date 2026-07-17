@@ -54,6 +54,32 @@ public class CardViewFactory {
                 base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
     }
 
+    /**
+     * Creates a CardView with granted subtypes merged in and additional graveyard-activated abilities
+     * appended (e.g. unearth granted by Sedris, the Traitor King). Granted graveyard abilities are only
+     * merged for creature cards and are appended after the card's own so indices stay aligned with the
+     * server-side graveyard ability list.
+     */
+    public CardView create(Card card, List<CardSubtype> grantedSubtypes, List<ActivatedAbility> grantedGraveyardAbilities) {
+        CardView base = create(card, grantedSubtypes);
+        if (grantedGraveyardAbilities.isEmpty() || !card.hasType(CardType.CREATURE)) return base;
+        List<ActivatedAbilityView> mergedGraveyard = new ArrayList<>(base.graveyardActivatedAbilities());
+        for (ActivatedAbility ability : grantedGraveyardAbilities) {
+            mergedGraveyard.add(createAbilityView(ability));
+        }
+        return new CardView(
+                base.id(), base.name(), base.type(), base.additionalTypes(), base.supertypes(),
+                base.subtypes(), base.cardText(), base.manaCost(), base.power(), base.toughness(),
+                base.keywords(), base.hasTapAbility(), base.setCode(), base.collectorNumber(),
+                base.color(), base.colors(), base.needsTarget(), base.needsSpellTarget(),
+                base.activatedAbilities(), base.loyalty(), base.hasConvoke(), base.hasPhyrexianMana(),
+                base.phyrexianManaCount(), base.token(), base.watermark(), base.hasAlternateCastingCost(),
+                base.alternateCostLifePayment(), base.alternateCostSacrificeCount(),
+                base.alternateCostTapCount(), base.alternateCostManaCost(),
+                mergedGraveyard, base.handActivatedAbilities(), base.transformable(), base.kickerCost(),
+                base.modalChoicesRequired(), base.modalOptional(), base.modalOptions());
+    }
+
     public CardView create(Card card) {
         boolean hasTapAbility = !card.getEffects(EffectSlot.ON_TAP).isEmpty();
 

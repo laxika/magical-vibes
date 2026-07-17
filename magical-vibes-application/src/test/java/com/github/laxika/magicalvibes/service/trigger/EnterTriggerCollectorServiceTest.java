@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -149,6 +152,24 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(4, 4), 1);
 
         assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Ally-creature power gate queues a may-put-counters on the entering creature (Mighty Emergence)")
+    void allyCreaturePutCountersOnEntering() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+                new EnteringCreatureMinPowerConditionalEffect(5, new PutCountersOnEnteringCreatureEffect(2)));
+
+        Card entering = enteringCreature(8, 8);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+        assertThat(may.wrapped()).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
     }
 
     @Test
