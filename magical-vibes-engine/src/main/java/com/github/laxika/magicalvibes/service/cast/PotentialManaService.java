@@ -326,6 +326,7 @@ public class PotentialManaService {
             case ONLY_DURING_YOUR_TURN -> playerId.equals(gameData.activePlayerId);
             case ONLY_DURING_YOUR_UPKEEP -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep == TurnStep.UPKEEP;
+            case ONLY_DURING_ANY_UPKEEP -> gameData.currentStep == TurnStep.UPKEEP;
             case ONLY_WHILE_ATTACKING -> permanent != null && permanent.isAttacking();
             case ONLY_BEFORE_ATTACKERS_DECLARED -> playerId.equals(gameData.activePlayerId)
                     && gameData.currentStep.isBeforeAttackersDeclared();

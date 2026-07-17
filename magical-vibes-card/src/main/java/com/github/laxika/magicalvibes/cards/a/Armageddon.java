@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "POR", collectorNumber = "5")
 @CardRegistration(set = "P02", collectorNumber = "12")
 @CardRegistration(set = "6ED", collectorNumber = "4")
+@CardRegistration(set = "5ED", collectorNumber = "7")
 public class Armageddon extends Card {
 
     public Armageddon() {

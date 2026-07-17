@@ -109,7 +109,7 @@ public class PermanentRemovalService {
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
 
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, hadUndying, hadPersist, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -143,7 +143,7 @@ public class PermanentRemovalService {
         boolean hadPersist = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.PERSIST);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
         processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, hadUndying, hadPersist, info.controllerId(), info.ownerId());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -171,7 +171,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.addCardToHand(ownerId, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
@@ -198,7 +198,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         exileService.exileCard(gameData, ownerId, target.getOriginalCard());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
@@ -227,7 +227,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.playerDecks.get(ownerId).add(0, target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
@@ -255,7 +255,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.playerDecks.get(ownerId).add(target.getOriginalCard());
         handleExileReturnOnLeave(gameData, target);
@@ -286,7 +286,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         List<Card> library = gameData.playerDecks.get(ownerId);
         int insertIndex = Math.min(position, library.size());
@@ -316,7 +316,7 @@ public class PermanentRemovalService {
         }
         UUID controllerId = removed.get().controllerId();
         UUID ownerId = removed.get().ownerId();
-        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
+        triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target, controllerId);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
         gameData.playerDecks.get(ownerId).add(target.getOriginalCard());
         LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);

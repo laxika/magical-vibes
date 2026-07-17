@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "6ED", collectorNumber = "171")
+@CardRegistration(set = "5ED", collectorNumber = "216")
 public class Conquer extends Card {
 
     public Conquer() {

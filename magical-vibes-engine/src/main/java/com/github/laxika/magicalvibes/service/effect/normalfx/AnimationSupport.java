@@ -85,8 +85,42 @@ public class AnimationSupport {
             return;
         }
         for (UUID targetId : targetIds) {
-            animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+            if (effect.duration() == EffectDuration.UNTIL_YOUR_NEXT_TURN) {
+                animateOneUntilNextTurn(gameData, entry, effect, targetId);
+            } else {
+                animateOneUntilEndOfTurn(gameData, entry, effect, targetId);
+            }
         }
+    }
+
+    /**
+     * SELF/TARGET scope, until your next turn — the target permanent becomes a creature with the
+     * given power/toughness until the controller's next turn (Xenic Poltergeist animates a
+     * noncreature artifact into an artifact creature with P/T equal to its mana value). The
+     * animation flag alone grants creature-ness (see {@code GameQueryService.isCreature}); the
+     * layered base P/T comes from the floating 7b entry.
+     */
+    private void animateOneUntilNextTurn(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect, UUID targetId) {
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null) {
+            return;
+        }
+
+        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
+        int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
+
+        target.setAnimatedUntilNextTurn(true);
+        target.setUntilNextTurnAnimatedPower(power);
+        target.setUntilNextTurnAnimatedToughness(toughness);
+        target.getUntilNextTurnSubtypes().addAll(effect.grantedSubtypes());
+        target.getUntilNextTurnKeywords().addAll(effect.grantedKeywords());
+        addAnimationBasePtFloatingEffect(gameData, entry, target, power, toughness, EffectDuration.UNTIL_YOUR_NEXT_TURN);
+
+        String logEntry = target.getCard().getName() + " becomes a " + power + "/" + toughness + " creature until your next turn.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+
+        log.info("Game {} - {} becomes a {}/{} creature until next turn", gameData.id, target.getCard().getName(), power, toughness);
     }
 
     private void animateOneUntilEndOfTurn(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect, UUID targetId) {

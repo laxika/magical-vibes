@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
+@CardRegistration(set = "5ED", collectorNumber = "81")
 @CardRegistration(set = "8ED", collectorNumber = "74")
 @CardRegistration(set = "7ED", collectorNumber = "69")
 @CardRegistration(set = "6ED", collectorNumber = "63")

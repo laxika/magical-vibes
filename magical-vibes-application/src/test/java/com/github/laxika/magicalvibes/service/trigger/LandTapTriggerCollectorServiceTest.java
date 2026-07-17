@@ -584,7 +584,7 @@ class LandTapTriggerCollectorServiceTest {
         void addsOneAdditionalMana() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
-            var effect = new AddOneOfEachManaTypeProducedByLandEffect();
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
             var ctx = new TriggerContext.LandTap(player1Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
@@ -605,7 +605,7 @@ class LandTapTriggerCollectorServiceTest {
         void returnsFalseForOpponent() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             UUID tappedLandId = UUID.randomUUID();
-            var effect = new AddOneOfEachManaTypeProducedByLandEffect();
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
             var ctx = new TriggerContext.LandTap(player2Id, tappedLandId);
 
             boolean result = registry.dispatch(
@@ -616,11 +616,31 @@ class LandTapTriggerCollectorServiceTest {
         }
 
         @Test
+        @DisplayName("symmetric (controllerOnly=false): opponent's land tap adds mana to that player")
+        void symmetricAddsManaForOpponent() {
+            Permanent triggerPerm = createPermanent("Mana Flare");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(false);
+            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
+
+            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
+
+            int greenBefore = gd.playerManaPools.get(player2Id).get(ManaColor.GREEN);
+
+            boolean result = registry.dispatch(
+                    match(triggerPerm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
+        }
+
+        @Test
         @DisplayName("returns false when tapped land is gone")
         void returnsFalseWhenLandGone() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             UUID missingLandId = UUID.randomUUID();
-            var effect = new AddOneOfEachManaTypeProducedByLandEffect();
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
             var ctx = new TriggerContext.LandTap(player1Id, missingLandId);
 
             when(gameQueryService.findPermanentById(gd, missingLandId)).thenReturn(null);
@@ -637,7 +657,7 @@ class LandTapTriggerCollectorServiceTest {
         void returnsFalseWhenLandHasNoManaEffect() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             Permanent land = new Permanent(createLandCard("Maze of Ith"));
-            var effect = new AddOneOfEachManaTypeProducedByLandEffect();
+            var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
             var ctx = new TriggerContext.LandTap(player1Id, land.getId());
 
             when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);

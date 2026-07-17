@@ -273,12 +273,17 @@ public class CombatDamageService {
         // Process combat damage reflection triggers (e.g. Harsh Justice)
         processCombatDamageReflectionTriggers(gameData, state.combatDamageDealtToPlayer, activeId, defenderId);
 
-        // Process defender-side damage triggers (e.g. Dissipation Field)
+        // Process defender-side damage triggers (e.g. Dissipation Field, Living Artifact)
         for (var dmgEntry : state.combatDamageDealtToPlayer.entrySet()) {
             if (dmgEntry.getValue() > 0) {
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, defenderId, dmgEntry.getKey().getId(), true);
+                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, defenderId, dmgEntry.getValue());
             }
         }
+
+        // Process ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (e.g. Justice). combatDamageDealt is
+        // already summed per source for this step, matching the "add up all the damage" ruling.
+        processSourceDealsDamageReflectionTriggers(gameData, state);
 
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeDamageTriggers, activeId);
         if (gameData.interaction.isAwaitingInput()) {
@@ -797,6 +802,26 @@ public class CombatDamageService {
                     }
                 }
             });
+        }
+    }
+
+    /**
+     * Queues ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (Justice) for each creature that dealt
+     * combat damage this step. {@code combatDamageDealt} is keyed by the damage-source creature and
+     * already sums the damage it dealt to every recipient (creatures and players), matching the
+     * "add up all the damage done and deal it at one time" ruling.
+     */
+    private void processSourceDealsDamageReflectionTriggers(GameData gameData, CombatDamageState state) {
+        for (var entry : state.combatDamageDealt.entrySet()) {
+            Permanent source = entry.getKey();
+            int damageDealt = entry.getValue();
+            if (damageDealt <= 0) continue;
+            // Prefer the controller captured while the source was alive (it may have died dealing
+            // damage to a blocker); fall back to a live lookup for still-present sources.
+            UUID controllerId = state.combatDamageDealerControllers.get(source);
+            if (controllerId == null) controllerId = CombatHelper.findControllerOf(gameData, source);
+            if (controllerId == null) continue;
+            triggerCollectionService.queueSourceDealsDamageReflections(gameData, source.getCard(), controllerId, damageDealt);
         }
     }
 
@@ -1648,6 +1673,37 @@ public class CombatDamageService {
     }
 
 
+    /**
+     * Processes pending Eye for an Eye reflected damage during combat: deals the reflected amount to
+     * the chosen source's controller (a player). Mirrors {@link #processSourceRedirectDamage}'s direct
+     * life handling to avoid re-entering combat damage accumulation.
+     */
+    private void processEyeForAnEyeReflections(GameData gameData) {
+        if (gameData.pendingEyeForAnEyeReflections.isEmpty()) return;
+
+        List<com.github.laxika.magicalvibes.model.EyeForAnEyeReflection> toProcess =
+                new ArrayList<>(gameData.pendingEyeForAnEyeReflections);
+        gameData.pendingEyeForAnEyeReflections.clear();
+
+        for (var reflection : toProcess) {
+            UUID targetId = reflection.targetPlayerId();
+            String targetName = gameData.playerIdToName.get(targetId);
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(reflection.eyeCard().getName()
+                    + " deals " + reflection.amount() + " damage to " + targetName + "."));
+
+            int effective = damagePreventionService.applyPlayerPreventionShield(gameData, targetId, reflection.amount());
+            processPendingRedirectDamage(gameData);
+
+            if (effective > 0) {
+                if (gameQueryService.canPlayerLifeChange(gameData, targetId)) {
+                    int currentLife = gameData.getLife(targetId);
+                    gameData.playerLifeTotals.put(targetId, currentLife - effective);
+                }
+                gameData.recordDamageToPlayer(targetId, effective);
+            }
+        }
+    }
+
     private void determineCasualties(GameData gameData, List<Integer> indices,
                                       List<Permanent> battlefield, Map<Integer, Integer> damageTaken,
                                       Set<Integer> deathtouchSet, Set<Integer> deadSet,
@@ -1737,6 +1793,9 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
                 // Apply target+source-specific prevention shields (e.g. Healing Grace)
                 damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, defenderId, atk.getId(), damage);
+                // Eye for an Eye: reflect this attacker's damage to the player back at its controller.
+                damagePreventionService.applyEyeForAnEyeReflection(gameData, defenderId, atk.getId(), damage);
+                processEyeForAnEyeReflections(gameData);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
                 // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
@@ -1808,6 +1867,11 @@ public class CombatDamageService {
         // Swans of Bryn Argoll: prevent all combat damage to this creature; the source's controller draws that many cards.
         UUID swansSourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, damage, swansSourceControllerId)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Combat damage to " + target.getCard().getName() + " is prevented."));
+            return;
+        }
+        // Prismatic Ward: prevent all combat damage to the enchanted creature from sources of the chosen colour.
+        if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, gameQueryService.getEffectiveColors(gameData, source))) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Combat damage to " + target.getCard().getName() + " is prevented."));
             return;
         }

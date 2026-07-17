@@ -176,7 +176,7 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield", gameData.id, player.getUsername(), card.getName());
             replacedByBattlefield = true;
         } else {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            graveyardService.discardCard(gameData, playerId, card);
             String logEntry = player.getUsername() + " discards " + card.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {}", gameData.id, player.getUsername(), card.getName());
@@ -425,7 +425,7 @@ public class CardChoiceHandlerService {
                         log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
                                 gameData.id, targetName, discarded.getName());
                     } else {
-                        graveyardService.addCardToGraveyard(gameData, targetPlayerId, discarded);
+                        graveyardService.discardCard(gameData, targetPlayerId, discarded);
                     }
                 }
 
@@ -650,7 +650,7 @@ public class CardChoiceHandlerService {
             }
             return;
         }
-        graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+        graveyardService.discardCard(gameData, targetPlayerId, card);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(targetName + " discards " + card.getName() + "."));
         log.info("Game {} - {} discards {}", gameData.id, targetName, card.getName());
         triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
@@ -743,7 +743,7 @@ public class CardChoiceHandlerService {
                     battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
                 }
             } else {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+                graveyardService.discardCard(gameData, targetPlayerId, card);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(controllerName + " chooses " + card.getName() + "; " + targetName + " discards it."));
                 log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
                 triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);

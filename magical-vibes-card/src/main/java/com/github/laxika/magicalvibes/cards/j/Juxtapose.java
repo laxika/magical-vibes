@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.JuxtaposeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "77")
+@CardRegistration(set = "5ED", collectorNumber = "95")
 public class Juxtapose extends Card {
 
     public Juxtapose() {

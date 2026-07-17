@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "88")
+@CardRegistration(set = "5ED", collectorNumber = "93")
 public class HurkylsRecall extends Card {
 
     public HurkylsRecall() {

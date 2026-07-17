@@ -12,7 +12,7 @@ public class Glamerdye extends Card {
     public Glamerdye() {
         // Change the text of target spell or permanent by replacing all instances of one color word
         // with another (color words only — no basic land types; targets a spell or a permanent).
-        addEffect(EffectSlot.SPELL, new ChangeColorTextEffect(false, true));
+        addEffect(EffectSlot.SPELL, new ChangeColorTextEffect(true, false, true));
         addCastingOption(new Retrace());
     }
 }

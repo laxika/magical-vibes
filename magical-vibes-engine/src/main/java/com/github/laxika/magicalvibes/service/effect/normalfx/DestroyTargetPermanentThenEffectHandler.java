@@ -64,7 +64,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
         // The then-effect happens regardless of whether destruction succeeds (indestructible / regeneration).
-        destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());
+        destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), e.cannotBeRegenerated());
 
         if (!thenApplies) {
             return;

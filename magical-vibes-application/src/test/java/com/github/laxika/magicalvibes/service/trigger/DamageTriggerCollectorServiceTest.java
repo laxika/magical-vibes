@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -364,6 +367,35 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack).hasSize(1);
             var resolvedEffect = (DamageSourceControllerGetsPoisonCounterEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(resolvedEffect.damageSourceControllerId()).isEqualTo(player1Id);
+        }
+    }
+
+    // ===== ON_CONTROLLER_DEALT_DAMAGE — PutCountersOnSelfEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DEALT_DAMAGE — PutCountersOnSelfEffect")
+    class ControllerDealtDamagePutCounters {
+
+        @Test
+        @DisplayName("enqueues a triggered ability that snapshots the damage amount as eventValue")
+        void enqueuesTriggerWithDamageAmount() {
+            Permanent aura = createPermanent("Living Artifact");
+            var effect = new PutCountersOnSelfEffect(CounterType.VITALITY, new EventValue());
+            var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(aura, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getFirst();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(stackEntry.getEventValue()).isEqualTo(3);
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
         }
     }
 

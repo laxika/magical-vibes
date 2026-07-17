@@ -33,6 +33,12 @@ public sealed interface TriggerContext {
     record DamageToController(UUID damagedPlayerId, UUID sourcePermanentId, boolean isCombatDamage) implements TriggerContext {}
 
     /**
+     * Context for damage-dealt-to-controller triggers that only care about the amount
+     * (ON_CONTROLLER_DEALT_DAMAGE, e.g. Living Artifact). Fired once per damage source.
+     */
+    record DamageToControllerAmount(UUID damagedPlayerId, int amount) implements TriggerContext {}
+
+    /**
      * Context for ally-permanent-sacrificed triggers (ON_ALLY_PERMANENT_SACRIFICED).
      */
     record AllySacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
@@ -125,8 +131,11 @@ public sealed interface TriggerContext {
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD triggers.
+     *
+     * @param leavingPermanent   the permanent that left the battlefield
+     * @param leavingControllerId the player who controlled it as it left (last-known information)
      */
-    record EnchantedPermanentLeaves(Permanent leavingPermanent) implements TriggerContext {}
+    record EnchantedPermanentLeaves(Permanent leavingPermanent, UUID leavingControllerId) implements TriggerContext {}
 
     /**
      * Context for ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD and
@@ -183,4 +192,11 @@ public sealed interface TriggerContext {
      * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
      */
     record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_ANY_SOURCE_DEALS_DAMAGE triggers (Justice). Carries the damage source object,
+     * its controller (the reflection recipient), and the total damage the source dealt in this
+     * event (already summed across every simultaneous target).
+     */
+    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) implements TriggerContext {}
 }

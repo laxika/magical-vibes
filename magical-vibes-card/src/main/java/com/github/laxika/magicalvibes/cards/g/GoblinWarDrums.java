@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "7ED", collectorNumber = "194")
+@CardRegistration(set = "5ED", collectorNumber = "237")
 public class GoblinWarDrums extends Card {
 
     public GoblinWarDrums() {

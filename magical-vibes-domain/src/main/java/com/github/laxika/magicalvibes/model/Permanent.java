@@ -33,11 +33,19 @@ public class Permanent {
     @Setter private int powerModifier;
     @Setter private int toughnessModifier;
     @Setter private int damagePreventionShield;
+    /** Sacred Boon-style shield: damage prevented by this shield is converted into +0/+1 counters on
+     *  this permanent at the beginning of the next end step. Consumed alongside {@link #damagePreventionShield}
+     *  in {@code DamagePreventionService.applyCreaturePreventionShield}; reset at turn cleanup. */
+    @Setter private int damageToCounterPreventionShield;
     @Setter private int regenerationShield;
     @Setter private UUID attachedTo;
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
     @Setter private CardSubtype chosenSubtype;
+    /** The number last chosen for this permanent by a "choose a number between X and Y" effect
+     *  (e.g. Shapeshifter). Read by {@link com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource}
+     *  to drive a characteristic-defining P/T. Defaults to 0 until a number is chosen. */
+    @Setter private int chosenNumber;
     @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     @Setter private boolean cantBeBlocked;
@@ -110,6 +118,12 @@ public class Permanent {
      *  replacing its other land types and mana ability (e.g. Tideshaper Mystic). Distinct from
      *  {@link #transientSubtypes}, which is additive. Cleared every turn by {@link #resetModifiers()}. */
     @Setter private CardSubtype transientLandTypeOverride;
+    /** When non-null, this land "becomes" the given basic land type until its controller's next
+     *  untap step (e.g. Orcish Farmer), replacing its other land types and mana ability per rule
+     *  305.7. Like {@link #transientLandTypeOverride} but longer-lived: NOT cleared by
+     *  {@link #resetModifiers()} — it survives end-of-turn cleanup and is cleared at the beginning
+     *  of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
+    @Setter private CardSubtype untilNextTurnLandTypeOverride;
     /** When non-null, this creature "becomes a [creature type]" until end of turn, replacing all its
      *  other creature types (e.g. Boldwyr Intimidator: "target creature becomes a Coward"). Read by the
      *  layered pass, which strips every creature subtype and adds this one. Distinct from
@@ -284,11 +298,13 @@ public class Permanent {
         this.powerModifier = source.powerModifier;
         this.toughnessModifier = source.toughnessModifier;
         this.damagePreventionShield = source.damagePreventionShield;
+        this.damageToCounterPreventionShield = source.damageToCounterPreventionShield;
         this.regenerationShield = source.regenerationShield;
         this.attachedTo = source.attachedTo;
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.chosenNumber = source.chosenNumber;
         this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.cantBeBlocked = source.cantBeBlocked;
@@ -364,6 +380,7 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = source.untilNextTurnAnimatedToughness;
         this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
         this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
+        this.untilNextTurnLandTypeOverride = source.untilNextTurnLandTypeOverride;
         this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
         this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
         this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
@@ -491,7 +508,8 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getPowerModifiers() {
-        return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
     }
 
     /**
@@ -500,7 +518,8 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getToughnessModifiers() {
-        return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
     }
 
     /**
@@ -511,12 +530,14 @@ public class Permanent {
      * readers (views' raw term, last-known-information reads, predicate leaves).
      */
     public int getEffectivePower() {
-        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        return getBasePower() + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ONE_PLUS_ZERO);
     }
 
     /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+        return getBaseToughness() + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)
+                + getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) - 2 * getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO);
     }
 
     /**
@@ -696,6 +717,16 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = 0;
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
+        this.untilNextTurnLandTypeOverride = null;
+    }
+
+    /**
+     * The active "becomes a basic land type" replacement override (rule 305.7), if any. Prefers the
+     * until-end-of-turn {@link #transientLandTypeOverride} (Tideshaper Mystic) over the longer-lived
+     * {@link #untilNextTurnLandTypeOverride} (Orcish Farmer); either wins over the land's printed types.
+     */
+    public CardSubtype getEffectiveLandTypeOverride() {
+        return transientLandTypeOverride != null ? transientLandTypeOverride : untilNextTurnLandTypeOverride;
     }
 
     /**

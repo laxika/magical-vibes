@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenSourceEffect;
 
 @CardRegistration(set = "9ED", collectorNumber = "35")
+@CardRegistration(set = "5ED", collectorNumber = "55")
 @CardRegistration(set = "7ED", collectorNumber = "34")
 @CardRegistration(set = "6ED", collectorNumber = "39")
 public class ReverseDamage extends Card {

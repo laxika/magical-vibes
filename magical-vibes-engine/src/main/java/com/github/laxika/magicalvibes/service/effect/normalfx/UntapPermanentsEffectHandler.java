@@ -39,6 +39,7 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
             case TARGET -> resolveTarget(gameData, entry);
             case ALL_TARGETS -> resolveAllTargets(gameData, entry);
             case SELF -> resolveSelf(gameData, entry);
+            case ENCHANTED -> resolveEnchanted(gameData, entry);
             case CONTROLLED -> resolveControlled(gameData, entry, e);
             case OTHER_CONTROLLED_CREATURES -> resolveOtherControlledCreatures(gameData, entry, e);
             case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
@@ -94,6 +95,34 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} untaps", gameData.id, entry.getCard().getName());
+    }
+
+    private void resolveEnchanted(GameData gameData, StackEntry entry) {
+        Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (auraPerm == null) {
+            log.info("Game {} - Aura {} no longer on battlefield, skipping untap enchanted creature",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        UUID enchantedId = auraPerm.getAttachedTo();
+        if (enchantedId == null) {
+            log.info("Game {} - {} is not attached to anything, skipping untap enchanted creature",
+                    gameData.id, entry.getCard().getName());
+            return;
+        }
+
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchantedCreature == null) {
+            log.info("Game {} - Enchanted creature no longer on battlefield, skipping untap", gameData.id);
+            return;
+        }
+
+        tapUntapSupport.untapPermanent(gameData, enchantedCreature);
+
+        String logMsg = entry.getCard().getName() + " untaps " + enchantedCreature.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logMsg));
+        log.info("Game {} - {} untaps enchanted creature {}", gameData.id, entry.getCard().getName(), enchantedCreature.getCard().getName());
     }
 
     private void resolveControlled(GameData gameData, StackEntry entry, UntapPermanentsEffect e) {

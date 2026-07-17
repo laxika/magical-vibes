@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackOrBlockRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,9 +41,12 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackController
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesWithPowerGreaterThanAmountCantAttackEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsThoughHasteEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -86,6 +90,7 @@ public class CombatAttackService {
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final com.github.laxika.magicalvibes.service.effect.AttackSacrificeCostService attackSacrificeCostService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -181,8 +186,15 @@ public class CombatAttackService {
         // there must be at least 2 total attackers
         validateCantAttackAlone(battlefield, attackerIndices);
 
+        // Errantry: "can only attack alone" — an enchanted attacker with this restriction
+        // may only be declared if it is the sole attacker
+        validateCanOnlyAttackAlone(gameData, battlefield, attackerIndices);
+
         // Okk: "can't attack unless a creature with greater power also attacks"
         validateGreaterPowerAlsoAttacks(gameData, battlefield, attackerIndices);
+
+        // Orcish Conscripts: "can't attack unless at least N other creatures also attack"
+        validateCountAlsoAttacks(battlefield, attackerIndices);
 
         // Validate attack requirements (CR 508.1d: satisfy as many as possible)
         validateMaximumAttackRequirements(gameData, playerId, attackable, uniqueIndices);
@@ -200,10 +212,15 @@ public class CombatAttackService {
             return CombatResult.AUTO_PASS_ONLY;
         }
 
-        // Validate attack tax (e.g. Windborn Muse / Ghostly Prison)
+        // Validate attack tax (e.g. Windborn Muse / Ghostly Prison — uniform per-attacker tax from the
+        // defender's side; plus per-attacker aura taxes scoped to a single creature, e.g. Brainwash {3})
         int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
-        if (taxPerCreature > 0) {
-            int totalTax = taxPerCreature * attackerIndices.size();
+        int selfTaxTotal = 0;
+        for (int idx : attackerIndices) {
+            selfTaxTotal += gameQueryService.getEnchantedCreatureAttackTax(gameData, battlefield.get(idx));
+        }
+        int totalTax = taxPerCreature * attackerIndices.size() + selfTaxTotal;
+        if (totalTax > 0) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             if (pool.getTotal() < totalTax) {
                 throw new IllegalStateException("Not enough mana to pay attack tax (" + totalTax + " required)");
@@ -243,9 +260,9 @@ public class CombatAttackService {
         // --- All validation passed — commit state changes ---
         gameData.interaction.clearAwaitingInput();
 
-        // Pay attack tax
-        if (taxPerCreature > 0) {
-            payGenericMana(gameData.playerManaPools.get(playerId), taxPerCreature * attackerIndices.size());
+        // Pay attack tax (uniform per-attacker + per-creature aura taxes)
+        if (totalTax > 0) {
+            payGenericMana(gameData.playerManaPools.get(playerId), totalTax);
         }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
@@ -690,6 +707,11 @@ public class CombatAttackService {
                     attacker.getCard().getName(), p, t, kws.isEmpty() ? "" : " (" + String.join(", ", kws) + ")");
         }
 
+        // Pay "can't attack unless you sacrifice N [permanents]" additional attack costs (Leviathan).
+        // Done last so removing sacrificed permanents from the battlefield can't shift the indices
+        // used above; the paired CantAttackUnlessEffect gate guarantees the cost is payable.
+        attackSacrificeCostService.paySacrificeAttackCosts(gameData, playerId, attackerIndices);
+
         return CombatResult.AUTO_PASS_ONLY;
     }
 
@@ -712,7 +734,8 @@ public class CombatAttackService {
     private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
-        if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)) return false;
+        if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)
+                && !gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCanAttackAsThoughHasteEffect.class)) return false;
         if (gameQueryService.hasKeyword(gameData, creature, Keyword.DEFENDER)
                 && !gameQueryService.canAttackDespiteDefender(gameData, creature)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
@@ -758,14 +781,27 @@ public class CombatAttackService {
      */
     private boolean isCantAttackDefenderDueToRestriction(GameData gameData, Permanent attacker, UUID targetId) {
         if (!gameData.playerIds.contains(targetId)) return false;
+        // Restrictions come from static abilities of the attacked player's permanents (Form of the
+        // Dragon) and from player-scoped floating effects (Island Sanctuary's "until your next turn"
+        // shield, which persists independently of its source permanent).
+        List<CardEffect> restrictions = new ArrayList<>();
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(targetId);
-        if (defenderBattlefield == null) return false;
-        for (Permanent perm : defenderBattlefield) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
-                    return true;
+        if (defenderBattlefield != null) {
+            for (Permanent perm : defenderBattlefield) {
+                restrictions.addAll(perm.getCard().getEffects(EffectSlot.STATIC));
+            }
+        }
+        synchronized (gameData.floatingEffects) {
+            for (FloatingContinuousEffect fe : gameData.floatingEffects) {
+                if (targetId.equals(fe.affectedPlayerId())) {
+                    restrictions.add(fe.effect());
                 }
+            }
+        }
+        for (CardEffect effect : restrictions) {
+            if (effect instanceof CreaturesCantAttackControllerUnlessPredicateEffect restriction
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.exemptionPredicate())) {
+                return true;
             }
         }
         return false;
@@ -980,6 +1016,20 @@ public class CombatAttackService {
         }
     }
 
+    private void validateCanOnlyAttackAlone(GameData gameData, List<Permanent> battlefield,
+                                            List<Integer> attackerIndices) {
+        if (attackerIndices.size() <= 1) {
+            return;
+        }
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            if (gameQueryService.hasAuraWithEffect(gameData, attacker,
+                    EnchantedCreatureCanOnlyAttackAloneEffect.class)) {
+                throw new IllegalStateException(attacker.getCard().getName() + " can only attack alone");
+            }
+        }
+    }
+
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
@@ -1014,7 +1064,30 @@ public class CombatAttackService {
                 .anyMatch(CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect.class::isInstance);
     }
 
-    private void payGenericMana(ManaPool pool, int amount) {
+    /**
+     * Orcish Conscripts (CR 508.1a): a creature with "can't attack unless at least N other
+     * creatures also attack" may only be declared as an attacker if at least N other creatures
+     * are declared as attackers in the same combat. Checked only at declaration time.
+     */
+    private void validateCountAlsoAttacks(List<Permanent> battlefield, List<Integer> attackerIndices) {
+        for (int idx : attackerIndices) {
+            Permanent restricted = battlefield.get(idx);
+            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
+                    .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> {
+                        long otherAttackers = attackerIndices.stream().filter(other -> other != idx).count();
+                        if (otherAttackers < effect.otherCount()) {
+                            throw new IllegalStateException(restricted.getCard().getName()
+                                    + " can't attack unless at least " + effect.otherCount()
+                                    + " other creatures attack");
+                        }
+                    });
+        }
+    }
+
+    void payGenericMana(ManaPool pool, int amount) {
         int remaining = amount;
         while (remaining > 0) {
             ManaColor highestColor = null;

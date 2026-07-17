@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  *
  * <p>When {@code replacing} is {@code true}, the target land <em>becomes</em> the chosen basic
  * land type, losing its other land types and mana ability per MTG rule 305.7 (Tideshaper Mystic).
- * Only {@link EffectDuration#UNTIL_END_OF_TURN} is supported for the replacing form.
+ * The replacing form supports {@link EffectDuration#UNTIL_END_OF_TURN} (Tideshaper Mystic) and
+ * {@link EffectDuration#UNTIL_CONTROLLERS_NEXT_UNTAP_STEP} (Orcish Farmer).
  *
  * <p>If {@code fixedSubtype} is {@code null}, the controller is prompted to choose a basic
  * land type; otherwise that specific type is applied without a prompt.

@@ -40,13 +40,26 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  defending player from the stack entry's (non-targeting) {@code targetId}. Checked in
      *  {@code CombatBlockService}. Used by Abyssal Nightstalker. */
     ON_ATTACKS_UNBLOCKED,
+    /** Aura slot: triggers when the creature this aura is attached to attacks and isn't blocked
+     *  ("Whenever enchanted creature attacks and isn't blocked"). Fires during the declare-blockers
+     *  step alongside {@code ON_ATTACKS_UNBLOCKED}; the stack entry bakes the enchanted attacker as
+     *  the (non-targeting) {@code sourcePermanentId} and the defending player as the {@code targetId}.
+     *  Checked in {@code CombatBlockService}. Used by Cloak of Confusion. */
+    ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED,
     DRAW_TRIGGERED,
     EACH_DRAW_TRIGGERED,
+    /** Marker slot: the controller may skip their turn-based draw-step draw. Detected by presence
+     *  (not effect type) in {@code StepTriggerService.handleDrawStep}, which offers the controller a
+     *  may-ability to replace the draw. Used by Island Sanctuary (holds an {@code IslandSanctuaryEffect}). */
+    MAY_SKIP_DRAW_STEP_DRAW,
     END_STEP_TRIGGERED,
     CONTROLLER_END_STEP_TRIGGERED,
     ON_CONTROLLER_DRAWS,
     ON_OPPONENT_DRAWS,
     ON_OPPONENT_DISCARDS,
+    /** Whenever the controller discards a card ("whenever you discard a card"). Fires on the discarding
+     *  player's own battlefield in {@code TriggerCollectionService.checkDiscardTriggers}. Used by Necropotence. */
+    ON_CONTROLLER_DISCARDS,
     ON_SELF_DISCARDED_BY_OPPONENT,
     ON_ANY_PLAYER_TAPS_LAND,
     ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
@@ -361,5 +374,25 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  player-directed effect (e.g. {@code DiscardEffect(1, TARGET_PLAYER)}) acts on "that player".
      *  Checked in {@code TriggerCollectionService.checkPermanentReturnedToHandTriggers}, driven from
      *  the single {@code PermanentRemovalService.removePermanentToHand} choke point. Used by Warped Devotion. */
-    ON_ANY_PERMANENT_RETURNED_TO_HAND
+    ON_ANY_PERMANENT_RETURNED_TO_HAND,
+    /** Global watcher: triggers whenever any source (creature or spell) deals damage, regardless of
+     *  who controls it or what it damages. Holds a {@code ReflectSourceDamageToItsControllerEffect}
+     *  carrying the color the watcher reacts to. Fires on every permanent with this slot across all
+     *  battlefields. All damage a single source deals simultaneously is summed into one trigger
+     *  (CR ruling), so it is driven from the batched damage-event boundaries: combat damage steps
+     *  ({@code CombatDamageService}, per source via {@code state.combatDamageDealt}) and the end of a
+     *  non-combat stack-entry resolution ({@code DamageSupport} accumulates,
+     *  {@code EffectResolutionService} flushes). Queued via
+     *  {@code TriggerCollectionService.queueSourceDealsDamageReflections}. Used by Justice. */
+    ON_ANY_SOURCE_DEALS_DAMAGE,
+    /** Triggers whenever this permanent's controller is dealt damage (combat or non-combat, from any
+     *  source — creatures, spells, abilities). Unlike {@link #ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU}
+     *  (which reacts to the damage <em>source</em> and only fires for permanent sources), this fires
+     *  once per damage event carrying only the amount, which is snapshotted onto the queued triggered
+     *  ability's {@code eventValue} (read by an {@code EventValue} amount, e.g. "put that many
+     *  counters"). Per the CR ruling, damage from multiple simultaneous sources triggers separately
+     *  once for each source. Fired from the two player-damage choke points
+     *  ({@code CombatDamageService} per source, {@code DamageSupport} for non-combat) via
+     *  {@code TriggerCollectionService.checkControllerDealtDamageTriggers}. Used by Living Artifact. */
+    ON_CONTROLLER_DEALT_DAMAGE
 }

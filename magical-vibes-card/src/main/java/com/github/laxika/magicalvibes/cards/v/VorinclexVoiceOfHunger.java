@@ -11,7 +11,7 @@ public class VorinclexVoiceOfHunger extends Card {
 
     public VorinclexVoiceOfHunger() {
         // Trample is auto-loaded from Scryfall
-        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddOneOfEachManaTypeProducedByLandEffect());
+        addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new AddOneOfEachManaTypeProducedByLandEffect(true));
         addEffect(EffectSlot.ON_ANY_PLAYER_TAPS_LAND, new OpponentTappedLandDoesntUntapEffect());
     }
 }

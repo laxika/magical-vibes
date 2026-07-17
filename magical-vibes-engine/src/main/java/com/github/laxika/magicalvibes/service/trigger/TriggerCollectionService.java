@@ -387,6 +387,19 @@ public class TriggerCollectionService {
             }
         });
 
+        // "Whenever you discard a card" — scan the discarding player's own battlefield (e.g. Necropotence).
+        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(discardingPlayerId);
+        if (ownBattlefield != null) {
+            for (Permanent perm : List.copyOf(ownBattlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DISCARDS)) {
+                    var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, effect);
+                    if (registry.dispatch(match, EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx)) {
+                        anyTriggered[0] = true;
+                    }
+                }
+            }
+        }
+
         if (anyTriggered[0]) {
             gameOutcomeService.checkWinCondition(gameData);
         }
@@ -446,6 +459,52 @@ public class TriggerCollectionService {
                 }
             }
         }
+    }
+
+    // ── Controller-dealt-damage triggers (Living Artifact) ─────────────
+
+    /**
+     * Handles {@link EffectSlot#ON_CONTROLLER_DEALT_DAMAGE} — "Whenever you're dealt damage, ...".
+     * Fires once per damage source (per the CR ruling that simultaneous sources trigger separately),
+     * carrying only the amount so an {@code EventValue} amount ("put that many counters") can read it.
+     * Scans the damaged player's own battlefield.
+     */
+    public void checkControllerDealtDamageTriggers(GameData gameData, UUID damagedPlayerId, int amount) {
+        if (amount <= 0) return;
+
+        List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
+        if (damagedPlayerBattlefield == null) return;
+
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount);
+
+        for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)) {
+                var match = new TriggerMatchContext(gameData, perm, damagedPlayerId, effect);
+                registry.dispatch(match, EffectSlot.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+            }
+        }
+    }
+
+    // ── Any-source-deals-damage triggers (Justice) ─────────────────────
+
+    /**
+     * Handles {@link EffectSlot#ON_ANY_SOURCE_DEALS_DAMAGE} — "Whenever a [color] creature or spell
+     * deals damage, ...". Scans every battlefield for permanents with this slot and dispatches the
+     * batched damage event (already summed across simultaneous targets) so each watcher can react
+     * once. Callers pass the single summed total per source per damage event.
+     */
+    public void queueSourceDealsDamageReflections(GameData gameData, Card sourceCard, UUID sourceControllerId, int totalDamage) {
+        if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
+
+        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, totalDamage);
+        gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
+            for (Permanent perm : List.copyOf(battlefield)) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)) {
+                    var match = new TriggerMatchContext(gameData, perm, watcherPlayerId, effect);
+                    registry.dispatch(match, EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
+                }
+            }
+        });
     }
 
     // ── Land-tap triggers ──────────────────────────────────────────────
@@ -1678,8 +1737,8 @@ public class TriggerCollectionService {
         });
     }
 
-    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent) {
-        var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPermanent);
+    public void checkEnchantedPermanentLTBTriggers(GameData gameData, Permanent leavingPermanent, UUID leavingControllerId) {
+        var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPermanent, leavingControllerId);
 
         gameData.forEachPermanent((playerId, perm) -> {
             if (!leavingPermanent.getId().equals(perm.getAttachedTo())) return;

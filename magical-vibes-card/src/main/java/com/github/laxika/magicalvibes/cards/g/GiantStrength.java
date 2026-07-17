@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "181")
+@CardRegistration(set = "5ED", collectorNumber = "233")
 public class GiantStrength extends Card {
 
     public GiantStrength() {

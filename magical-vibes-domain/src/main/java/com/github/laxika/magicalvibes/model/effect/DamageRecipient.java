@@ -12,6 +12,8 @@ public enum DamageRecipient {
     CONTROLLER,
     /** The enchanted player of a curse ({@code entry.getTargetId()} baked at trigger time; not chosen). */
     ENCHANTED_PLAYER,
+    /** The controller of the permanent an Aura is attached to ({@code entry.getTargetId()} baked at trigger time; e.g. Feedback). */
+    ENCHANTED_PERMANENT_CONTROLLER,
     /** The controller of the targeted permanent ("… and N damage to that creature's controller"). */
     TARGET_PERMANENT_CONTROLLER,
     /** The controller of the permanent that caused the trigger ({@code entry.getTargetId()} baked at trigger time). */

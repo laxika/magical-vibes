@@ -43,6 +43,7 @@ public class EffectResolutionService {
     private final EffectHandlerRegistry registry;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
     /**
      * Resolves all effects on the given stack entry from the beginning.
@@ -195,6 +196,9 @@ public class EffectResolutionService {
         }
         destroyPendingLethalDamageCreatures(gameData);
         permanentRemovalService.removeOrphanedAuras(gameData);
+        // Now that the whole resolution's damage is dealt, queue any "whenever a [color] source deals
+        // damage" reflections (Justice) once per source with the summed total (CR ruling).
+        damageSupport.flushSourceDamageReflections(gameData);
     }
 
     /**

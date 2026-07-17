@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "299")
+@CardRegistration(set = "5ED", collectorNumber = "375")
 public class GrapeshotCatapult extends Card {
 
     public GrapeshotCatapult() {

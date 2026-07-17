@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "9ED", collectorNumber = "160")
 @CardRegistration(set = "8ED", collectorNumber = "160")
 @CardRegistration(set = "7ED", collectorNumber = "161")
+@CardRegistration(set = "5ED", collectorNumber = "192")
 public class ScatheZombies extends Card {
 }

@@ -62,6 +62,28 @@ public class CreatureControlService {
     }
 
     /**
+     * Hook for the tap/untap machinery: when a permanent becomes untapped, any
+     * {@code WHILE_SOURCE_TAPPED} effect it is the source of ends (CR 611.2b). Non-control buffs
+     * (Tawnos's Weaponry's +1/+1) are dropped outright; control effects (Seasinger) are dropped by
+     * the control reconciliation, which also reverts the held permanent immediately. No-op when the
+     * untapped permanent holds no such effect, so it is cheap to call on every untap.
+     */
+    public void onSourceUntapped(GameData gameData, Permanent permanent) {
+        gameData.expireTappedSourceFloatingEffects(permanent.getId());
+
+        boolean holdsTappedControl;
+        synchronized (gameData.floatingEffects) {
+            holdsTappedControl = gameData.floatingEffects.stream().anyMatch(fe ->
+                    fe.isControlEffect()
+                            && fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                            && permanent.getId().equals(fe.sourcePermanentId()));
+        }
+        if (holdsTappedControl) {
+            reconcileControl(gameData);
+        }
+    }
+
+    /**
      * Recomputes who controls the permanent from the active control effects and physically
      * moves it between battlefield lists if the derived controller differs from the current
      * one. Maintains the {@link GameData#stolenCreatures} ownership record (first move away
@@ -183,6 +205,8 @@ public class CreatureControlService {
      *       bypass them).</li>
      *   <li>{@code WHILE_SOURCE_ON_BATTLEFIELD} — the source left, or its creator no longer
      *       controls it (Olivia Voldaren's "for as long as you control Olivia Voldaren").</li>
+     *   <li>{@code WHILE_SOURCE_TAPPED} — the source left, its creator no longer controls it,
+     *       or it is no longer tapped (Seasinger).</li>
      *   <li>{@link GainControlOfEnchantedTargetEffect} — the affected permanent is no longer
      *       enchanted (Rootwater Matriarch).</li>
      * </ul>
@@ -200,6 +224,14 @@ public class CreatureControlService {
                 UUID sourceController = fe.sourcePermanentId() == null ? null
                         : gameData.findControllerOf(fe.sourcePermanentId());
                 stale = sourceController == null || !sourceController.equals(fe.controllerId());
+            } else if (fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED) {
+                // Seasinger: control also ends the moment the source becomes untapped.
+                Permanent source = fe.sourcePermanentId() == null ? null
+                        : gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                UUID sourceController = fe.sourcePermanentId() == null ? null
+                        : gameData.findControllerOf(fe.sourcePermanentId());
+                stale = source == null || !source.isTapped()
+                        || sourceController == null || !sourceController.equals(fe.controllerId());
             }
             if (!stale && fe.effect() instanceof GainControlOfEnchantedTargetEffect) {
                 Permanent affected = gameQueryService.findPermanentById(gameData, fe.affectedPermanentId());

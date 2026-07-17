@@ -26,6 +26,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentIsLandPredicate` | `()` | lands |
 | `PermanentIsEnchantmentPredicate` | `()` | enchantments |
 | `PermanentIsEnchantedPredicate` | `()` | permanents that have at least one Aura attached (i.e. are enchanted), regardless of who controls the Aura — needs game data. Used by Greater Auramancy ("Enchanted creatures you control have shroud") |
+| `PermanentIsAuraAttachedToCreaturePredicate` | `()` | an Aura permanent currently attached to a creature (checks `card.isAura()`, `isAttached()`, and that the host permanent is a creature — needs game data). Used to filter the Aura target of Crown of the Ages ("target Aura attached to a creature") |
 | `PermanentIsPlaneswalkerPredicate` | `()` | planeswalkers |
 | `PermanentIsTappedPredicate` | `()` | tapped permanents |
 | `PermanentIsAttackingPredicate` | `()` | attacking creatures |
@@ -81,6 +82,8 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 |-----------|-------------|---------|---------------------|
 | `PermanentIsSourceCardPredicate` | `()` | the source card itself | `sourceCardId` |
 | `PermanentControlledBySourceControllerPredicate` | `()` | permanents controlled by source's controller | `gameData` + `sourceControllerId` |
+| `PermanentOwnedBySourceControllerPredicate` | `()` | permanents OWNED by source's controller (ownership via `stolenCreatures`). Pair inside `ControlledPermanentPredicateTargetFilter` for "you both own and control" (Obelisk of Undoing) | `gameData` + `sourceControllerId` |
+| `PermanentControllerControlsPermanentPredicate` | `(PermanentPredicate filter)` | permanents whose OWN controller controls at least one permanent matching `filter` (Seasinger — "target creature whose controller controls an Island" with `PermanentHasSubtypePredicate(ISLAND)`) | `gameData` |
 | `PermanentAttachedToSourceControllerPredicate` | `()` | permanents attached to source's controller | `sourceControllerId` |
 
 ### Composition predicates

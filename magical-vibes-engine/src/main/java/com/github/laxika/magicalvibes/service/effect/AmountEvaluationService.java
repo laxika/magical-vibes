@@ -11,11 +11,13 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
+import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsInHand;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -26,6 +28,7 @@ import com.github.laxika.magicalvibes.model.amount.DamageDealtToOpponentsThisTur
 import com.github.laxika.magicalvibes.model.amount.CardsDiscardedByTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.DuringControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -39,6 +42,7 @@ import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
+import com.github.laxika.magicalvibes.model.amount.Min;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.OtherAttackersSharingCreatureTypeWithTarget;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -47,6 +51,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -101,6 +106,11 @@ public class AmountEvaluationService {
                     evaluate(gameData, d.amount(), ctx) / d.divisor();
             case Sum s ->
                     s.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).sum();
+            case Min m ->
+                    m.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).min().orElse(0);
+            case DuringControllerTurn d ->
+                    ctx.controllerId() != null && ctx.controllerId().equals(gameData.activePlayerId)
+                            ? evaluate(gameData, d.amount(), ctx) : 0;
             case PermanentCount c ->
                     countPermanents(gameData, c, ctx);
             case BasicLandTypesAmongControlledLands ignored ->
@@ -132,6 +142,8 @@ public class AmountEvaluationService {
                             : gameData.playerLifeTotals.getOrDefault(ctx.targetPermanentId(), 0);
             case HalvedRoundedUp h ->
                     Math.floorDiv(evaluate(gameData, h.amount(), ctx) + 1, 2);
+            case HalfControllerLifeRoundedUp ignored ->
+                    (gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0) + 1) / 2;
             case GreatestPowerAmongControlled ignored ->
                     greatestPowerAmongControlled(gameData, ctx);
             case AttachmentsOnSource a ->
@@ -168,8 +180,12 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TargetPower ignored ->
                     targetEffectivePower(gameData, ctx);
+            case TargetManaValue ignored ->
+                    targetManaValue(gameData, ctx);
             case ChosenPermanentPower ignored ->
                     chosenPermanentEffectivePower(gameData, ctx);
+            case ChosenNumberOnSource ignored ->
+                    ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getChosenNumber();
         };
     }
 
@@ -211,6 +227,13 @@ public class AmountEvaluationService {
         return target == null ? 0 : Math.max(0, gameQueryService.getEffectivePower(gameData, target));
     }
 
+    private int targetManaValue(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) return 0;
+        Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
+        // No legal target at resolution -> 0, matching the fizzle behaviour of the targeted handlers.
+        return target == null ? 0 : target.getCard().getManaValue();
+    }
+
     /**
      * Whether the amount (recursively) reads the stack entry's snapshotted x value —
      * used by trigger collectors to decide if an entry needs {@code xValue} populated.
@@ -223,6 +246,7 @@ public class AmountEvaluationService {
             case Divided d -> referencesXValue(d.amount());
             case HalvedRoundedUp h -> referencesXValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesXValue);
+            case Min m -> m.amounts().stream().anyMatch(this::referencesXValue);
             default -> false;
         };
     }
@@ -239,6 +263,7 @@ public class AmountEvaluationService {
             case Divided d -> referencesEventValue(d.amount());
             case HalvedRoundedUp h -> referencesEventValue(h.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesEventValue);
+            case Min m -> m.amounts().stream().anyMatch(this::referencesEventValue);
             default -> false;
         };
     }

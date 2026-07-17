@@ -46,7 +46,7 @@ magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigge
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/LandTapTriggerCollectorService.java=4
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/SpellCastTriggerCollectorService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/trigger/TriggerCollectionService.java=15
-magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/StepTriggerService.java=18
+magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/StepTriggerService.java=19
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/TurnCleanupService.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/TurnProgressionService.java=1
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/turn/UntapStepService.java=8

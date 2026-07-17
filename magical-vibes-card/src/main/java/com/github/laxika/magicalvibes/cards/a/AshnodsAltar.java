@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "274")
+@CardRegistration(set = "5ED", collectorNumber = "349")
 public class AshnodsAltar extends Card {
 
     public AshnodsAltar() {

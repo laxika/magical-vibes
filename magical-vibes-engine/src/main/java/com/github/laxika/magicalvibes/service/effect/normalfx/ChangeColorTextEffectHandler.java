@@ -34,9 +34,10 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID targetId = entry.getTargetId();
+        boolean colorWordsAllowed = !(effect instanceof ChangeColorTextEffect e) || e.colorWordsAllowed();
         boolean landTypesAllowed = effect instanceof ChangeColorTextEffect e && e.landTypesAllowed();
 
-        // Target may be a permanent (Mind Bend) or, for Glamerdye, a spell still on the stack.
+        // Target may be a permanent (Mind Bend) or, for Glamerdye/Magical Hack, a spell still on the stack.
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null && gameQueryService.findStackEntryByCardId(gameData, targetId) == null) {
             return;
@@ -45,13 +46,22 @@ public class ChangeColorTextEffectHandler implements NormalEffectHandlerBean {
         ChoiceContext.TextChangeFromWord choiceContext = new ChoiceContext.TextChangeFromWord(targetId);
 
         List<String> options = new ArrayList<>();
-        options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
+        if (colorWordsAllowed) {
+            options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
+        }
         if (landTypesAllowed) {
             options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
         }
+        String prompt;
+        if (colorWordsAllowed && landTypesAllowed) {
+            prompt = "Choose a color word or basic land type to replace.";
+        } else if (landTypesAllowed) {
+            prompt = "Choose a basic land type to replace.";
+        } else {
+            prompt = "Choose a color word to replace.";
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                entry.getControllerId(), null, null, choiceContext, options,
-                landTypesAllowed ? "Choose a color word or basic land type to replace." : "Choose a color word to replace."));
+                entry.getControllerId(), null, null, choiceContext, options, prompt));
 
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         log.info("Game {} - Awaiting {} to choose a color word or basic land type for text change", gameData.id, playerName);

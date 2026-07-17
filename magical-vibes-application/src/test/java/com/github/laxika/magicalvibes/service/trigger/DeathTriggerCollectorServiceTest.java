@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -582,7 +583,7 @@ class DeathTriggerCollectorServiceTest {
             Card creature = createCreature("Leaving", 2, 2);
             Permanent leavingPerm = new Permanent(creature);
             Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
+            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
 
             when(predicateEvaluationService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
 
@@ -600,7 +601,7 @@ class DeathTriggerCollectorServiceTest {
             Card artifact = createArtifact("Leaving Artifact");
             Permanent leavingPerm = new Permanent(artifact);
             Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
+            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
 
             when(predicateEvaluationService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
 
@@ -615,7 +616,7 @@ class DeathTriggerCollectorServiceTest {
             var conditional = new EnchantedPermanentLeavesConditionalEffect(null, List.of(new DrawCardEffect(1)));
             Permanent leavingPerm = new Permanent(createCreature("Any", 2, 2));
             Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
+            var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm, PLAYER1_ID);
 
             assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -632,12 +633,36 @@ class DeathTriggerCollectorServiceTest {
             Card aura = createEnchantment("LTB Aura");
             var effect = new DrawCardEffect(1);
             Permanent auraPerm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentLeaves(new Permanent(createCreature("Leaving", 2, 2)));
+            var ctx = new TriggerContext.EnchantedPermanentLeaves(new Permanent(createCreature("Leaving", 2, 2)), PLAYER1_ID);
 
             svc.handleEnchantedPermanentLeavesDefault(match(auraPerm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("enchanted permanent left the battlefield")));
+        }
+    }
+
+    @Nested
+    @DisplayName("handleEnchantedControllerSacrificesCreatureOnLeave")
+    class EnchantedControllerSacrificesCreatureOnLeave {
+
+        @Test
+        @DisplayName("Bakes the leaving creature's controller, not the Aura controller")
+        void bakesLeavingControllerNotAuraController() {
+            Card aura = createEnchantment("Funeral March");
+            var effect = new EnchantedControllerSacrificesCreatureOnLeaveEffect();
+            Permanent auraPerm = new Permanent(aura);
+            // Aura controlled by PLAYER1, but the enchanted creature was controlled by PLAYER2.
+            var ctx = new TriggerContext.EnchantedPermanentLeaves(
+                    new Permanent(createCreature("Leaving", 2, 2)), PLAYER2_ID);
+
+            assertThat(svc.handleEnchantedControllerSacrificesCreatureOnLeave(
+                    match(auraPerm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+
+            assertThat(gd.stack).hasSize(1);
+            var resolved = (EnchantedControllerSacrificesCreatureOnLeaveEffect)
+                    gd.stack.get(0).getEffectsToResolve().get(0);
+            assertThat(resolved.enchantedControllerId()).isEqualTo(PLAYER2_ID);
         }
     }
 

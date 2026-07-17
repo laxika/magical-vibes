@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
+@CardRegistration(set = "5ED", collectorNumber = "139")
 @CardRegistration(set = "8ED", collectorNumber = "117")
 @CardRegistration(set = "7ED", collectorNumber = "116")
 @CardRegistration(set = "6ED", collectorNumber = "110")

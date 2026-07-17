@@ -30,5 +30,22 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
                 assertThat(gd.pendingMayAbilities).hasSize(1);
                 assertThat(gd.pendingMayAbilities.getFirst().manaCost()).isEqualTo("{1}");
                 assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(wrapped);
+                // Default: the ability's controller is the one prompted to pay.
+                assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
             }
+
+    @Test
+    @DisplayName("payerIsEnchantedController prompts the stack entry's targetId, not the controller")
+    void payerIsEnchantedControllerPromptsTargetPlayer() {
+        Card card = createCard("Paralyze");
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        MayPayManaEffect mayPayEffect = new MayPayManaEffect("{4}", wrapped, "Pay {4}?", true);
+        // controller = aura owner (player1), targetId = enchanted creature's controller (player2)
+        StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayPayEffect), player2Id);
+
+        resolveEffect(gd, entry, mayPayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
+    }
 }

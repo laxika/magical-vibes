@@ -27,28 +27,35 @@ public class PreventAllDamageToTargetCreatureEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        boolean combatOnly = ((PreventAllDamageToTargetCreatureEffect) effect).combatOnly();
         // Multi-target: shield each valid creature in this effect's target group (e.g. Redeem's
         // "up to two target creatures"). Falls back to the single target for one-target spells/abilities.
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (!targetIds.isEmpty()) {
             for (UUID targetId : targetIds) {
-                shieldTarget(gameData, targetId);
+                shieldTarget(gameData, targetId, combatOnly);
             }
             return;
         }
 
-        shieldTarget(gameData, entry.getTargetId());
+        shieldTarget(gameData, entry.getTargetId(), combatOnly);
     }
 
-    private void shieldTarget(GameData gameData, UUID targetId) {
+    private void shieldTarget(GameData gameData, UUID targetId, boolean combatOnly) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
 
-        gameData.creaturesWithAllDamagePrevented.add(targetId);
+        String logEntry;
+        if (combatOnly) {
+            gameData.creaturesWithCombatDamagePrevented.add(targetId);
+            logEntry = "All combat damage that would be dealt to " + target.getCard().getName() + " this turn is prevented.";
+        } else {
+            gameData.creaturesWithAllDamagePrevented.add(targetId);
+            logEntry = "All damage that would be dealt to " + target.getCard().getName() + " this turn is prevented.";
+        }
 
-        String logEntry = "All damage that would be dealt to " + target.getCard().getName() + " this turn is prevented.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
     }
 }

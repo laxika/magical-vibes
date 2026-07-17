@@ -27,6 +27,24 @@ public interface BlockingRestrictionEffect extends CardEffect {
     }
 
     /**
+     * Whether the creature carrying this effect can't block attackers whose effective power is equal to
+     * or greater than this creature's own effective toughness (Ironclaw Curse). Self-referential, so the
+     * engine resolves the comparison at block time rather than via a fixed predicate.
+     */
+    default boolean cantBlockCreaturesWithPowerAtLeastOwnToughness() {
+        return false;
+    }
+
+    /**
+     * When non-{@code null}, the creature carrying this effect can't block attackers whose effective
+     * power is equal to or greater than this fixed threshold (Ironclaw Orcs: power 2 or greater). A hard
+     * restriction, resolved against the attacker's effective power at block time.
+     */
+    default Integer cantBlockCreaturesWithPowerAtLeast() {
+        return null;
+    }
+
+    /**
      * When non-{@code null}, the creature carrying this effect can block <em>only</em> attackers
      * matching this predicate. Paired with {@link #canBlockOnlyAttackersDescription()}.
      */

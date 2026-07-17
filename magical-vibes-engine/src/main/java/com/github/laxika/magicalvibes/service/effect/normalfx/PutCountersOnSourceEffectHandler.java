@@ -44,8 +44,11 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         }
 
         String counterLabel = String.format("%+d/%+d", e.powerModifier(), e.toughnessModifier());
+        boolean plusZeroPlusOne = e.powerModifier() == 0 && e.toughnessModifier() > 0;
         if (e.powerModifier() > 0) {
             source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + e.amount());
+        } else if (plusZeroPlusOne) {
+            source.setCounterCount(CounterType.PLUS_ZERO_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE) + e.amount());
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
             source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + e.amount());
@@ -54,7 +57,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {} {} counter(s)", gameData.id, source.getCard().getName(), e.amount(), counterLabel);
 
-        if (e.powerModifier() <= 0) {
+        if (e.powerModifier() <= 0 && !plusZeroPlusOne) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, e.amount());
         }
     }

@@ -94,7 +94,7 @@ public final class EffectResolution {
         if (isAura) {
             if (isEnchantPlayer) {
                 result.add(TargetType.PLAYER);
-            } else {
+            } else if (!enchantsGraveyardCard(spellEffects)) {
                 result.add(TargetType.PERMANENT);
             }
         }
@@ -147,7 +147,7 @@ public final class EffectResolution {
         if (isAura) {
             if (isEnchantPlayer) {
                 result.add(TargetType.PLAYER);
-            } else {
+            } else if (!enchantsGraveyardCard(spellEffects)) {
                 result.add(TargetType.PERMANENT);
             }
         }
@@ -298,6 +298,15 @@ public final class EffectResolution {
 
     public static boolean hasManaSpentToCastDamageEffect(Card card) {
         return hasManaSpentToCastDamageEffect(card.getEffects(EffectSlot.SPELL));
+    }
+
+    /**
+     * Whether an Aura's SPELL effects make it enchant a card in a graveyard rather than a permanent
+     * on the battlefield (a reanimation Aura such as Animate Dead). When true the Aura's cast-time
+     * target is the graveyard card, so the default battlefield-permanent target must not be added.
+     */
+    private static boolean enchantsGraveyardCard(List<CardEffect> spellEffects) {
+        return spellEffects.stream().anyMatch(e -> e.targetSpec().category().isGraveyard());
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {

@@ -37,13 +37,16 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
+import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -84,6 +87,7 @@ import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -1600,10 +1604,10 @@ public class GameQueryService {
             accumulator.setBasePTOverride(basePower, baseToughness);
         }
 
-        // Transient "becomes the basic land type of your choice" override (e.g. Tideshaper Mystic):
-        // replaces the land's subtypes and mana ability until end of turn (rule 305.7).
-        if (target.getTransientLandTypeOverride() != null) {
-            accumulator.addGrantedSubtype(target.getTransientLandTypeOverride());
+        // "Becomes the basic land type" override (Tideshaper Mystic until end of turn, Orcish Farmer
+        // until controller's next untap step): replaces the land's subtypes and mana ability (rule 305.7).
+        if (target.getEffectiveLandTypeOverride() != null) {
+            accumulator.addGrantedSubtype(target.getEffectiveLandTypeOverride());
             accumulator.setSubtypeOverriding(true);
             accumulator.setLandSubtypeOverriding(true);
         }
@@ -1801,6 +1805,22 @@ public class GameQueryService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Prismatic Ward: returns {@code true} if {@code creature} is enchanted by an Aura carrying
+     * {@link PreventColorDamageToEnchantedCreatureEffect} whose chosen colour is among the damage
+     * source's colours. Only prevents damage (not blocking/targeting/enchanting), and only while
+     * damage is currently preventable (respects Leyline of Punishment, etc.).
+     */
+    public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature, Set<CardColor> sourceColors) {
+        if (creature == null || sourceColors == null || sourceColors.isEmpty()) return false;
+        if (!isDamagePreventable(gameData)) return false;
+        return gameData.anyPermanentMatches(aura ->
+                aura.isAttached() && creature.getId().equals(aura.getAttachedTo())
+                        && aura.getChosenColor() != null && sourceColors.contains(aura.getChosenColor())
+                        && aura.getCard().getEffects(EffectSlot.STATIC).stream()
+                                .anyMatch(PreventColorDamageToEnchantedCreatureEffect.class::isInstance));
     }
 
     /**
@@ -2130,6 +2150,19 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the permanent can't be enchanted by other Auras (e.g. Anti-Magic Aura),
+     * from its own static effects or from effects granted by other permanents.
+     */
+    public boolean cantBeEnchantedByOtherAuras(GameData gameData, Permanent target) {
+        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantBeEnchantedByOtherAurasEffect) {
+                return true;
+            }
+        }
+        return hasGrantedEffect(gameData, target, CantBeEnchantedByOtherAurasEffect.class);
+    }
+
+    /**
      * Matches the "can't be the target of spells of [color]" restriction (Karplusan Strider) — spells
      * only, no controller gating — for the given spell color.
      */
@@ -2399,6 +2432,26 @@ public class GameQueryService {
                         .anyMatch(e -> isActiveEffect(gameData, creature, e, effectClass)));
     }
 
+    /**
+     * Returns the total additional generic mana the controller must pay to declare this creature as an
+     * attacker, summed over every {@link EnchantedCreatureCantAttackUnlessPaysEffect} aura attached to it
+     * (e.g. Brainwash — {3}).
+     */
+    public int getEnchantedCreatureAttackTax(GameData gameData, Permanent creature) {
+        int[] total = {0};
+        gameData.forEachPermanent((playerId, aura) -> {
+            if (!aura.isAttached() || !aura.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            for (CardEffect effect : aura.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof EnchantedCreatureCantAttackUnlessPaysEffect tax) {
+                    total[0] += tax.amount();
+                }
+            }
+        });
+        return total[0];
+    }
+
     private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
         if (effectClass.isInstance(effect)) return true;
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
@@ -2447,6 +2500,19 @@ public class GameQueryService {
             return !aTypes.isEmpty();
         }
         return aTypes.stream().anyMatch(bTypes::contains);
+    }
+
+    /**
+     * Returns {@code true} if the two permanents share at least one of the card types artifact,
+     * creature, or land (Gauntlets of Chaos' "shares one of those types with it"). Uses each
+     * permanent's card types.
+     */
+    public boolean sharesArtifactCreatureOrLandType(Permanent a, Permanent b) {
+        Card aCard = a.getCard();
+        Card bCard = b.getCard();
+        return (aCard.hasType(CardType.ARTIFACT) && bCard.hasType(CardType.ARTIFACT))
+                || (aCard.hasType(CardType.CREATURE) && bCard.hasType(CardType.CREATURE))
+                || (aCard.hasType(CardType.LAND) && bCard.hasType(CardType.LAND));
     }
 
     /** Effective creature subtypes of a permanent (named types only; Changeling handled separately). */
@@ -2678,6 +2744,16 @@ public class GameQueryService {
         if (blk.cantBlock()) {
             return BlockDenial.CANT_BLOCK;
         }
+        // Ironclaw Curse: can't block attackers whose power >= this creature's own toughness.
+        if (blk.cantBlockPowerAtLeastOwnToughness()
+                && getEffectivePower(gameData, attacker) >= getEffectiveToughness(gameData, blocker)) {
+            return BlockDenial.CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS;
+        }
+        // Ironclaw Orcs: can't block attackers whose power >= a fixed threshold.
+        if (blk.cantBlockPowerAtLeast() != null
+                && getEffectivePower(gameData, attacker) >= blk.cantBlockPowerAtLeast()) {
+            return BlockDenial.CANT_BLOCK_HIGH_POWER;
+        }
         if (blocker.getCantBlockIds().contains(attacker.getId())) {
             return BlockDenial.CANT_BLOCK_THAT_ATTACKER;
         }
@@ -2746,6 +2822,8 @@ public class GameQueryService {
         StaticBonus bonus = computeStaticBonus(gameData, blocker);
         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions = null;
         boolean cantBlockStatic = false;
+        boolean cantBlockPowerAtLeastOwnToughnessStatic = false;
+        Integer cantBlockPowerAtLeast = null;
         for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction) {
                 if (attackerFilterRestrictions == null) {
@@ -2753,8 +2831,17 @@ public class GameQueryService {
                 }
                 attackerFilterRestrictions.add(restriction);
             }
-            if (effect instanceof BlockingRestrictionEffect restriction && restriction.cantBlock()) {
-                cantBlockStatic = true;
+            if (effect instanceof BlockingRestrictionEffect restriction) {
+                if (restriction.cantBlock()) {
+                    cantBlockStatic = true;
+                }
+                if (restriction.cantBlockCreaturesWithPowerAtLeastOwnToughness()) {
+                    cantBlockPowerAtLeastOwnToughnessStatic = true;
+                }
+                Integer threshold = restriction.cantBlockCreaturesWithPowerAtLeast();
+                if (threshold != null && (cantBlockPowerAtLeast == null || threshold < cantBlockPowerAtLeast)) {
+                    cantBlockPowerAtLeast = threshold;
+                }
             }
         }
         return new BlockLegalityContext.BlockerFacts(
@@ -2765,7 +2852,10 @@ public class GameQueryService {
                 getEffectiveColors(gameData, blocker),
                 attackerFilterRestrictions == null ? List.of() : attackerFilterRestrictions,
                 cantBlockStatic || hasAuraWithEffect(gameData, blocker, CantBlockEffect.class)
-                        || hasGlobalCantAttackOrBlockRestriction(gameData, blocker));
+                        || hasGlobalCantAttackOrBlockRestriction(gameData, blocker),
+                cantBlockPowerAtLeastOwnToughnessStatic || hasAuraWithEffect(gameData, blocker,
+                        CantBlockCreaturesWithPowerGreaterOrEqualToOwnToughnessEffect.class),
+                cantBlockPowerAtLeast);
     }
 
     /** Rebuilds the exact pre-context user-facing message for a failed block-legality check. */
@@ -2785,6 +2875,10 @@ public class GameQueryService {
             case LANDWALK -> attackerName + " can't be blocked (" + denial.detail() + "walk)";
             case CANT_BLOCK_THIS_TURN -> blockerName + " can't block this turn";
             case CANT_BLOCK -> blockerName + " can't block";
+            case CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS ->
+                    blockerName + " can't block " + attackerName + " (power too high)";
+            case CANT_BLOCK_HIGH_POWER ->
+                    blockerName + " can't block " + attackerName + " (power too high)";
             case CANT_BLOCK_THAT_ATTACKER -> blockerName + " can't block " + attackerName + " this turn";
             case PROTECTION -> blockerName + " cannot block " + attackerName + " (protection)";
         };

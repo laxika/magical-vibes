@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "7ED", collectorNumber = "295")
+@CardRegistration(set = "5ED", collectorNumber = "370")
 public class FerozsBan extends Card {
 
     public FerozsBan() {

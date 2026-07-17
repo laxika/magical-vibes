@@ -29,7 +29,9 @@ public class SacrificeAtEndOfCombatEffectHandler implements NormalEffectHandlerB
         
                 Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 if (self != null) {
-                    gameData.queueDelayedAction(new SacrificeAtEndOfCombat(self.getId()));
+                    int damageToController = ((SacrificeAtEndOfCombatEffect) effect).damageToController();
+                    gameData.queueDelayedAction(new SacrificeAtEndOfCombat(
+                            self.getId(), entry.getControllerId(), self.getCard(), damageToController));
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
                             .card(entry.getCard())
                             .text(" will be sacrificed at end of combat.")

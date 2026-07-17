@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "250")
+@CardRegistration(set = "5ED", collectorNumber = "296")
 public class Fungusaur extends Card {
 
     public Fungusaur() {

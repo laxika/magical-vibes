@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "6ED", collectorNumber = "84")
+@CardRegistration(set = "5ED", collectorNumber = "107")
 public class PhantasmalTerrain extends Card {
 
     public PhantasmalTerrain() {

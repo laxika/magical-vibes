@@ -478,6 +478,7 @@ public class LayerSystemService {
         h = hashEnums(h, p.getGrantedCardTypes());
         h = hashEnums(h, p.getPersistentGrantedCardTypes());
         h = mix(h, enumOrdinal(p.getTransientLandTypeOverride()));
+        h = mix(h, enumOrdinal(p.getUntilNextTurnLandTypeOverride()));
         h = mix(h, enumOrdinal(p.getTransientCreatureTypeOverride()));
 
         for (TextReplacement replacement : p.getTextReplacements()) {
@@ -635,7 +636,7 @@ public class LayerSystemService {
         // (Amoeboid Changeling) strips creature types absolutely.
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
-            CardSubtype transientOverride = permanent.getTransientLandTypeOverride();
+            CardSubtype transientOverride = permanent.getEffectiveLandTypeOverride();
             if (transientOverride != null) {
                 setLandType(states.get(permanent.getId()), permanent.getId(),
                         transientOverride, board.landTypeOverrides());

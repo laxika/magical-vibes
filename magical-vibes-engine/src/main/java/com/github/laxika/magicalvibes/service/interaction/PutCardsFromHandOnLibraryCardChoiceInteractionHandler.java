@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +33,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     private final CardViewFactory cardViewFactory;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TurnProgressionService turnProgressionService;
+    private final GameBroadcastService gameBroadcastService;
 
     @Override
     public Class<PendingInteraction.PutCardsFromHandOnLibraryCardChoice> handledType() {
@@ -45,9 +49,10 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
     public void prompt(GameData gameData, PendingInteraction.PutCardsFromHandOnLibraryCardChoice interaction,
                        UUID recipientId) {
         List<CardView> cardViews = interaction.cards().stream().map(cardViewFactory::create).toList();
+        String destination = interaction.topOnly() ? "top of" : "top or bottom of";
         sessionManager.sendToPlayer(recipientId, new ChooseMultipleCardsMessage(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
-                "Choose " + interaction.maxCount() + " card(s) to put on top or bottom of your library."));
+                "Choose " + interaction.maxCount() + " card(s) to put on " + destination + " your library."));
     }
 
     @Override
@@ -77,7 +82,36 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             return;
         }
 
+        if (interaction.topOnly()) {
+            putOnTopOfLibrary(gameData, player, validated);
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
         interactionHandlerRegistry.begin(gameData,
                 new PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice(player.getId(), validated));
+    }
+
+    /** Moves the chosen hand cards onto the top of the library, first chosen ending nearest the top. */
+    private void putOnTopOfLibrary(GameData gameData, Player player, List<UUID> chosenCardIds) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        List<Card> deck = gameData.playerDecks.get(playerId);
+
+        List<Card> moving = new ArrayList<>();
+        for (UUID id : chosenCardIds) {
+            Card found = hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null);
+            if (found != null) {
+                hand.remove(found);
+                moving.add(found);
+            }
+        }
+        for (int i = moving.size() - 1; i >= 0; i--) {
+            deck.add(0, moving.get(i));
+        }
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(player.getUsername() + " puts "
+                + moving.size() + " card(s) on top of their library."));
+        log.info("Game {} - {} put {} card(s) on top of library", gameData.id, player.getUsername(), moving.size());
     }
 }

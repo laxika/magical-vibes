@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilityCostIncreasingEffect;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -152,6 +153,30 @@ public class CastingCostService {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+        return tax;
+    }
+
+    /**
+     * Extra generic mana required to activate an activated ability of {@code sourcePermanent},
+     * summed over every {@link ActivatedAbilityCostIncreasingEffect} on any battlefield whose
+     * predicate matches the source (e.g. Gloom taxes white enchantments' abilities {3} more).
+     * Symmetric — applies regardless of who controls the source or the taxing permanent.
+     */
+    public int getActivatedAbilityActivationTax(GameData gameData, Permanent sourcePermanent) {
+        int tax = 0;
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilityCostIncreasingEffect taxEffect
+                            && predicateEvaluationService.matchesPermanentPredicate(
+                                    gameData, sourcePermanent, taxEffect.affectedPermanents())) {
+                        tax += taxEffect.additionalGenericCost();
                     }
                 }
             }

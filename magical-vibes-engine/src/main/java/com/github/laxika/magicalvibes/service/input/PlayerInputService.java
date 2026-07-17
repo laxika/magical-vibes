@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -288,6 +289,20 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
+    }
+
+    public void beginNumberChoice(GameData gameData, UUID playerId, UUID permanentId, int min, int max) {
+        ChoiceContext.NumberChoice choiceContext = new ChoiceContext.NumberChoice(permanentId);
+
+        List<String> options = java.util.stream.IntStream.rangeClosed(min, max)
+                .mapToObj(Integer::toString)
+                .toList();
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options,
+                "Choose a number between " + min + " and " + max + "."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose a number between {} and {}", gameData.id, playerName, min, max);
     }
 
     public void beginPrimalClayFormChoice(GameData gameData, UUID playerId, UUID permanentId) {

@@ -52,74 +52,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         }
 
         Card sourceCard = targetPermanent.getCard();
-        boolean hasPTOverride = e.powerOverride() != null || e.toughnessOverride() != null;
 
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, entry.getControllerId());
         for (int copy = 0; copy < tokenMultiplier; copy++) {
-            Card tokenCard = new Card();
-            tokenCard.setName(sourceCard.getName());
-            tokenCard.setType(sourceCard.getType());
-            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
-            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
-            tokenCard.setToken(true);
-            tokenCard.setColor(sourceCard.getColor());
-            tokenCard.setSupertypes(sourceCard.getSupertypes());
-            tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : sourceCard.getPower());
-            tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : sourceCard.getToughness());
-            tokenCard.setCardText(sourceCard.getCardText());
-            tokenCard.setSetCode(sourceCard.getSetCode());
-            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
-
-            List<CardSubtype> subtypes = new ArrayList<>();
-            if (sourceCard.getSubtypes() != null) {
-                subtypes.addAll(sourceCard.getSubtypes());
-            }
-            if (e.additionalSubtypes() != null) {
-                for (CardSubtype subtype : e.additionalSubtypes()) {
-                    if (!subtypes.contains(subtype)) {
-                        subtypes.add(subtype);
-                    }
-                }
-            }
-            tokenCard.setSubtypes(subtypes);
-
-            if (e.additionalTypes() != null && !e.additionalTypes().isEmpty()) {
-                Set<CardType> merged = EnumSet.noneOf(CardType.class);
-                merged.addAll(tokenCard.getAdditionalTypes());
-                for (CardType additionalType : e.additionalTypes()) {
-                    if (additionalType != tokenCard.getType() && !merged.contains(additionalType)) {
-                        merged.add(additionalType);
-                    }
-                }
-                tokenCard.setAdditionalTypes(merged);
-            }
-
-            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
-            if (sourceCard.getKeywords() != null) {
-                keywords.addAll(sourceCard.getKeywords());
-            }
-            if (e.grantHaste()) {
-                keywords.add(Keyword.HASTE);
-            }
-            if (!keywords.isEmpty()) {
-                tokenCard.setKeywords(keywords);
-            }
-
-            for (EffectSlot slot : EffectSlot.values()) {
-                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
-                    // CR 707.9d: when a copy effect provides specific P/T values,
-                    // characteristic-defining abilities that define P/T are not copied
-                    if (hasPTOverride && reg.effect().isPowerToughnessDefining()) {
-                        continue;
-                    }
-                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
-                }
-            }
-            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
-                tokenCard.addActivatedAbility(ability);
-            }
-            tokenCard.copyTargetingFrom(sourceCard);
-
+            Card tokenCard = buildTokenCopyCard(sourceCard, e);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
 
@@ -149,5 +85,81 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 }
             }
         }
+    }
+
+    /**
+     * Builds an unfrozen token {@link Card} that copies {@code sourceCard}'s copiable characteristics
+     * (CR 707.2), applying the effect's optional overrides (P/T, additional subtypes/types, haste).
+     * Shared with {@code CreateTokenCopyAndLinkToSourceEffectHandler}, which builds the same copy and
+     * then attaches its own leaves-battlefield trigger before wrapping the card in a Permanent.
+     */
+    static Card buildTokenCopyCard(Card sourceCard, CreateTokenCopyOfTargetPermanentEffect e) {
+        boolean hasPTOverride = e.powerOverride() != null || e.toughnessOverride() != null;
+
+        Card tokenCard = new Card();
+        tokenCard.setName(sourceCard.getName());
+        tokenCard.setType(sourceCard.getType());
+        tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+        tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+        tokenCard.setToken(true);
+        tokenCard.setColor(sourceCard.getColor());
+        tokenCard.setSupertypes(sourceCard.getSupertypes());
+        tokenCard.setPower(e.powerOverride() != null ? e.powerOverride() : sourceCard.getPower());
+        tokenCard.setToughness(e.toughnessOverride() != null ? e.toughnessOverride() : sourceCard.getToughness());
+        tokenCard.setCardText(sourceCard.getCardText());
+        tokenCard.setSetCode(sourceCard.getSetCode());
+        tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+
+        List<CardSubtype> subtypes = new ArrayList<>();
+        if (sourceCard.getSubtypes() != null) {
+            subtypes.addAll(sourceCard.getSubtypes());
+        }
+        if (e.additionalSubtypes() != null) {
+            for (CardSubtype subtype : e.additionalSubtypes()) {
+                if (!subtypes.contains(subtype)) {
+                    subtypes.add(subtype);
+                }
+            }
+        }
+        tokenCard.setSubtypes(subtypes);
+
+        if (e.additionalTypes() != null && !e.additionalTypes().isEmpty()) {
+            Set<CardType> merged = EnumSet.noneOf(CardType.class);
+            merged.addAll(tokenCard.getAdditionalTypes());
+            for (CardType additionalType : e.additionalTypes()) {
+                if (additionalType != tokenCard.getType() && !merged.contains(additionalType)) {
+                    merged.add(additionalType);
+                }
+            }
+            tokenCard.setAdditionalTypes(merged);
+        }
+
+        Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+        if (sourceCard.getKeywords() != null) {
+            keywords.addAll(sourceCard.getKeywords());
+        }
+        if (e.grantHaste()) {
+            keywords.add(Keyword.HASTE);
+        }
+        if (!keywords.isEmpty()) {
+            tokenCard.setKeywords(keywords);
+        }
+
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                // CR 707.9d: when a copy effect provides specific P/T values,
+                // characteristic-defining abilities that define P/T are not copied
+                if (hasPTOverride && reg.effect().isPowerToughnessDefining()) {
+                    continue;
+                }
+                tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+            }
+        }
+        for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+            tokenCard.addActivatedAbility(ability);
+        }
+        tokenCard.copyTargetingFrom(sourceCard);
+
+        return tokenCard;
     }
 }

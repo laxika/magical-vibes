@@ -470,6 +470,20 @@ public class SpellCastingService {
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds,
+                fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds,
+                exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, discardHandCardIndex, null);
+    }
+
+    /**
+     * Cast entry point that threads a modal spell's real {@code {X}} value separately from the mode
+     * selection (which rides in {@code xValue}). Only modal {X} spells (e.g. Alabaster Potion) supply
+     * {@code modalXValue}; everything else passes {@code null} and behaves exactly as before.
+     */
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, Integer modalXValue) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
@@ -477,7 +491,7 @@ public class SpellCastingService {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
                     convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
-                    discardHandCardIndex, false, List.of());
+                    discardHandCardIndex, false, List.of(), modalXValue);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
             // some validations run (e.g. target-based cost reduction) — if the failed cast left the
@@ -503,7 +517,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, true, List.of());
+                    null, null, false, null, true, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -525,7 +539,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, true, List.of());
+                    null, null, false, null, true, List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -549,7 +563,7 @@ public class SpellCastingService {
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
                     targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
-                    null, null, false, null, false, conspireCreatureIds != null ? conspireCreatureIds : List.of());
+                    null, null, false, null, false, conspireCreatureIds != null ? conspireCreatureIds : List.of(), null);
         } catch (IllegalArgumentException | IllegalStateException e) {
             if (attempted != null && !hand.contains(attempted)
                     && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
@@ -563,7 +577,7 @@ public class SpellCastingService {
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, boolean forceAlternateCost,
-                  List<UUID> conspireCreatureIds) {
+                  List<UUID> conspireCreatureIds, Integer modalXValue) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -657,6 +671,12 @@ public class SpellCastingService {
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
         effectiveXValue = unwrapChooseOneEffect(card, filteredSpellEffects, effectiveXValue);
+        // The mode selection is carried by xValue (consumed above). For a modal spell that also has an
+        // {X} cost (e.g. Alabaster Potion), the real X paid is threaded separately via modalXValue so it
+        // drives mana payment / XValue resolution — while non-{X} modal spells keep X = 0 as before.
+        if (wasModal && modalXValue != null) {
+            effectiveXValue = modalXValue;
+        }
 
         // For modal spells, derive targeting from the chosen mode's unwrapped effect;
         // for non-modal spells, use the card's declared targeting (which accounts for auras, ETB effects, etc.)
@@ -1097,7 +1117,16 @@ public class SpellCastingService {
             payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, 0);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
             StackEntry entry;
-            if (!targetIds.isEmpty() && card.isAura()) {
+            if (card.isAura() && needsSingleGraveyardTargeting) {
+                // Reanimation Aura (e.g. Animate Dead): the target is a creature card in a graveyard.
+                // Mark the stack entry's target zone as GRAVEYARD so resolution reanimates the enchanted
+                // card and attaches the Aura to it (StackResolutionService.resolveEnchantmentSpell), and
+                // so on-resolution fizzle checks look in the graveyard rather than on the battlefield.
+                entry = new StackEntry(
+                        cardTypeToStackEntryType(card.getType()), card, playerId, card.getName(),
+                        List.of(), stackX, targetId, null, Map.of(), Zone.GRAVEYARD, List.of(), List.of()
+                );
+            } else if (!targetIds.isEmpty() && card.isAura()) {
                 // Aura with ETB targeting (e.g. New Horizons): first target is the aura attachment,
                 // remaining targets are for ETB effects
                 UUID auraTarget = targetIds.getFirst();

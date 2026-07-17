@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "68")
 @CardRegistration(set = "8ED", collectorNumber = "80")
 @CardRegistration(set = "7ED", collectorNumber = "75")
+@CardRegistration(set = "5ED", collectorNumber = "86")
 public class Flight extends Card {
 
     public Flight() {

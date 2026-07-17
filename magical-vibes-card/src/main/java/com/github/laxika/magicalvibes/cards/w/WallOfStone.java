@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature with Defender (loaded from Scryfall metadata). No card-specific engine logic.
  */
 @CardRegistration(set = "8ED", collectorNumber = "232")
+@CardRegistration(set = "5ED", collectorNumber = "274")
 public class WallOfStone extends Card {
 
     public WallOfStone() {

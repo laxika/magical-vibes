@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -23,6 +24,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -357,6 +359,47 @@ class DiscardTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(GameLogEntry.class));
+        }
+    }
+
+    // ===== ON_CONTROLLER_DISCARDS — ExileDiscardedCardFromGraveyardEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_DISCARDS — ExileDiscardedCardFromGraveyardEffect")
+    class ControllerDiscardExile {
+
+        @Test
+        @DisplayName("exiles the discarded card from the controller's graveyard and returns true")
+        void exilesDiscardedCard() {
+            Permanent necro = createPermanent("Necropotence");
+            var effect = new ExileDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Grizzly Bears");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).add(discarded);
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(necro, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            verify(permanentRemovalService).removeCardFromGraveyardById(gd, discarded.getId());
+            assertThat(gd.getPlayerExiledCards(player1Id)).anyMatch(c -> c.getId().equals(discarded.getId()));
+        }
+
+        @Test
+        @DisplayName("no-op when the discarded card is not in the graveyard")
+        void noOpWhenNotInGraveyard() {
+            Permanent necro = createPermanent("Necropotence");
+            var effect = new ExileDiscardedCardFromGraveyardEffect();
+            Card discarded = createCard("Grizzly Bears");
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(necro, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isFalse();
+            assertThat(gd.getPlayerExiledCards(player1Id)).isEmpty();
         }
     }
 }

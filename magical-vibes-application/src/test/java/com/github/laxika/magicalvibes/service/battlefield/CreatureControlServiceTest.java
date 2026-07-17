@@ -93,6 +93,7 @@ class CreatureControlServiceTest {
         ControlDuration controlDuration = switch (duration) {
             case UNTIL_END_OF_TURN -> ControlDuration.END_OF_TURN;
             case WHILE_SOURCE_ON_BATTLEFIELD -> ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+            case WHILE_SOURCE_TAPPED -> ControlDuration.WHILE_SOURCE_TAPPED;
             default -> ControlDuration.PERMANENT;
         };
         creatureControlService.applyControlEffect(gd, newControllerId, target,
@@ -332,6 +333,82 @@ class CreatureControlServiceTest {
             creatureControlService.reconcileControl(gd);
 
             assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
+        }
+    }
+
+    @Nested
+    @DisplayName("WHILE_SOURCE_TAPPED control (Seasinger)")
+    class WhileSourceTapped {
+
+        @Test
+        @DisplayName("Control is retained while the source stays tapped")
+        void retainedWhileTapped() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent seasinger = addCreature(player1Id, "Seasinger");
+            seasinger.tap();
+            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
+
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
+        }
+
+        @Test
+        @DisplayName("onSourceUntapped reverts the creature the moment the source untaps")
+        void revertsWhenSourceUntaps() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent seasinger = addCreature(player1Id, "Seasinger");
+            seasinger.tap();
+            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+
+            seasinger.untap();
+            creatureControlService.onSourceUntapped(gd, seasinger);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
+            assertThat(gd.floatingEffects).noneMatch(fe -> fe.isControlEffect());
+        }
+
+        @Test
+        @DisplayName("reconcileControl expires the effect when the source is untapped")
+        void reconcileExpiresWhenUntapped() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent seasinger = addCreature(player1Id, "Seasinger");
+            seasinger.tap();
+            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+
+            seasinger.untap();
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
+        }
+
+        @Test
+        @DisplayName("Source leaving the battlefield ends the steal")
+        void revertsWhenSourceLeaves() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent seasinger = addCreature(player1Id, "Seasinger");
+            seasinger.tap();
+            applySteal(player1Id, bear, EffectDuration.WHILE_SOURCE_TAPPED, seasinger.getId());
+
+            gd.playerBattlefields.get(player1Id).remove(seasinger);
+            gd.expireFloatingEffectsForDepartedSource(seasinger.getId());
+            creatureControlService.reconcileControl(gd);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(bear);
+        }
+
+        @Test
+        @DisplayName("onSourceUntapped ignores permanents that hold no tapped-control effect")
+        void ignoresUnrelatedUntap() {
+            Permanent bear = addCreature(player2Id, "Grizzly Bears");
+            Permanent other = addCreature(player1Id, "Air Elemental");
+            applySteal(player1Id, bear, EffectDuration.PERMANENT, null);
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
+
+            creatureControlService.onSourceUntapped(gd, other);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).contains(bear);
         }
     }
 

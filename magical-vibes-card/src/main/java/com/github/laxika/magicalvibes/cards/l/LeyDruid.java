@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "251")
+@CardRegistration(set = "5ED", collectorNumber = "308")
 public class LeyDruid extends Card {
 
     public LeyDruid() {

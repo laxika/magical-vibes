@@ -23,6 +23,9 @@ public class AnimateNoncreatureArtifactsEffectHandler implements StaticEffectHan
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         if (gameQueryService.isArtifact(context.target())) {
             accumulator.setAnimatedCreature(true);
+            if (((AnimateNoncreatureArtifactsEffect) effect).losesAllAbilities()) {
+                accumulator.setLosesAllAbilities(true);
+            }
         }
     }
 }

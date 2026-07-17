@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "5ED", collectorNumber = "161")
 @CardRegistration(set = "8ED", collectorNumber = "133")
 @CardRegistration(set = "7ED", collectorNumber = "134")
 @CardRegistration(set = "6ED", collectorNumber = "127")

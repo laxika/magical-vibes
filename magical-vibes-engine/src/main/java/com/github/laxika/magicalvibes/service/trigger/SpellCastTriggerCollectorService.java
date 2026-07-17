@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -676,6 +677,30 @@ public class SpellCastTriggerCollectorService {
                 new ArrayList<>(List.of(trigger))
         );
         entry.setTargetId(sc.castingPlayerId());
+        match.gameData().stack.add(entry);
+        return true;
+    }
+
+    @CollectsTrigger(value = DamageUnlessPaysEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    private boolean handleDamageUnlessPays(TriggerMatchContext match,
+            DamageUnlessPaysEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+        if (trigger.spellFilter() != null
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                        match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+        // "that player" = the casting opponent (target of the damage / decision maker). Carry the source
+        // permanent so the damage resolves with the correct source (prevention keys off it).
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                sc.castingPlayerId(),
+                match.permanent().getId()
+        );
         match.gameData().stack.add(entry);
         return true;
     }

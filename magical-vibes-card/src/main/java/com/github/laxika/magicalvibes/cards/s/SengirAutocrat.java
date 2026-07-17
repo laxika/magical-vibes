@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "155")
+@CardRegistration(set = "5ED", collectorNumber = "193")
 public class SengirAutocrat extends Card {
 
     public SengirAutocrat() {

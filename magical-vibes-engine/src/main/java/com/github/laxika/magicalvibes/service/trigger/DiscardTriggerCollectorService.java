@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import java.util.List;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,6 +81,32 @@ public class DiscardTriggerCollectorService {
             }
         }
 
+        return true;
+    }
+
+    @CollectsTrigger(value = ExileDiscardedCardFromGraveyardEffect.class, slot = EffectSlot.ON_CONTROLLER_DISCARDS)
+    private boolean handleExileDiscardedFromGraveyard(TriggerMatchContext match,
+            ExileDiscardedCardFromGraveyardEffect trigger, TriggerContext ctx) {
+        TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
+        var gameData = match.gameData();
+        Card discarded = dc.discardedCard();
+        if (discarded == null) return false;
+
+        UUID ownerId = dc.discardingPlayerId();
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        // "exile that card from your graveyard" — only if it's actually there (a replacement effect may
+        // have sent it elsewhere).
+        if (graveyard == null || graveyard.stream().noneMatch(c -> c.getId().equals(discarded.getId()))) {
+            return false;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, discarded.getId());
+        gameData.addToExile(ownerId, discarded);
+
+        String cardName = match.permanent().getCard().getName();
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " exiles "
+                + discarded.getName() + " from " + gameData.playerIdToName.get(ownerId) + "'s graveyard."));
+        log.info("Game {} - {} exiles discarded card {} from graveyard", gameData.id, cardName, discarded.getName());
         return true;
     }
 

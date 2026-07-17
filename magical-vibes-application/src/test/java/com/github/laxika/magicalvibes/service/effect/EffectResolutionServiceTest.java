@@ -70,6 +70,9 @@ class EffectResolutionServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+
     private EffectResolutionService effectResolutionService;
 
     private GameData gd;
@@ -80,7 +83,7 @@ class EffectResolutionServiceTest {
     void setUp() {
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                registry, gameBroadcastService, permanentRemovalService);
+                registry, gameBroadcastService, permanentRemovalService, damageSupport);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

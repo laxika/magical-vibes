@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "293")
+@CardRegistration(set = "5ED", collectorNumber = "381")
 public class JadeMonolith extends Card {
 
     public JadeMonolith() {

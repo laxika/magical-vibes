@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
+import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
@@ -125,6 +126,8 @@ public class DamagePreventionService {
         if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
         // Wellgabber Apothecary: prevent all damage to specific target creatures this turn
         if (gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithAllDamagePrevented.contains(permanent.getId())) return 0;
+        // Foxfire: prevent all combat damage that would be dealt to specific target creatures this turn
+        if (isCombatDamage && gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithCombatDamagePrevented.contains(permanent.getId())) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -177,6 +180,17 @@ public class DamagePreventionService {
                     permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + damage);
                 }
                 return 0;
+            }
+            // Sacred Boon: "Prevent the next N damage... At the beginning of the next end step, put a
+            // +0/+1 counter on that creature for each 1 damage prevented this way." Prevented damage is
+            // accumulated into a delayed +0/+1 counter trigger drained at the next end step.
+            int boonShield = permanent.getDamageToCounterPreventionShield();
+            if (boonShield > 0 && damage > 0) {
+                int boonPrevented = Math.min(boonShield, damage);
+                permanent.setDamageToCounterPreventionShield(boonShield - boonPrevented);
+                gameData.addDelayedPlusZeroPlusOneCounters(permanent.getId(), boonPrevented);
+                damage -= boonPrevented;
+                if (damage <= 0) return 0;
             }
             damage = applyGlobalPreventionShield(gameData, damage);
             int shield = permanent.getDamagePreventionShield();
@@ -347,6 +361,33 @@ public class DamagePreventionService {
         }
         // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
         return gameData.sourceNextDamageToAnyTargetShields.remove(sourcePermanentId) ? 0 : damage;
+    }
+
+    /**
+     * Applies one-shot Eye for an Eye reflection shields: if a shield matches this (player, source),
+     * the shield is consumed and an equal reflected damage event is scheduled back at the source's
+     * controller in {@link GameData#pendingEyeForAnEyeReflections}. This is a reflection (replacement)
+     * effect that does NOT reduce the damage dealt to the protected player, so it applies even when
+     * damage can't be prevented; the caller keeps dealing the original damage unchanged.
+     */
+    public void applyEyeForAnEyeReflection(GameData gameData, UUID playerId, UUID sourcePermanentId, int damage) {
+        if (damage <= 0 || playerId == null || sourcePermanentId == null
+                || gameData.eyeForAnEyeShields.isEmpty()) {
+            return;
+        }
+        var it = gameData.eyeForAnEyeShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (shield.protectedPlayerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
+                it.remove();
+                UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
+                if (sourceControllerId != null) {
+                    gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
+                            sourceControllerId, damage, shield.eyeCard(), shield.eyeControllerId()));
+                }
+                return;
+            }
+        }
     }
 
     /**

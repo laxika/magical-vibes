@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link GainControlOfTargetEffect} for all three {@code ControlDuration}s. Each
+ * Resolves {@link GainControlOfTargetEffect} for every {@code ControlDuration}. Each
  * resolution creates a floating layer-2 control effect (CR 613.2/613.7) whose duration maps via
  * {@code ControlDuration.toEffectDuration()}; expiry and fallback to the next most recent
  * still-active control effect are handled by {@code CreatureControlService}.
@@ -39,7 +39,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         switch (e.duration()) {
             case PERMANENT -> resolvePermanent(gameData, entry, e);
             case END_OF_TURN -> resolveEndOfTurn(gameData, entry, e);
-            case WHILE_SOURCE_ON_BATTLEFIELD -> resolveWhileSource(gameData, entry, e);
+            case WHILE_SOURCE_ON_BATTLEFIELD, WHILE_SOURCE_TAPPED -> resolveWhileSource(gameData, entry, e);
         }
     }
 
@@ -69,6 +69,12 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
 
         creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                 e, e.duration().toEffectDuration(), null, entry.getCard().getName());
+
+        // Magus of the Unseen: "When you lose control of the artifact, tap it." The stolen
+        // permanent is tapped when this until-end-of-turn control effect expires (cleanup step).
+        if (e.tapWhenControlLost()) {
+            gameData.permanentsToTapWhenControlLost.add(target.getId());
+        }
     }
 
     private void resolveWhileSource(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {

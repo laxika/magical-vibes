@@ -510,6 +510,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new SelfDealtDamageToOpponentThisTurn(), wrapped)` | - | yes | yes (end step) | source dealt (combat) damage to an opponent of its *current* controller this turn (Whirling Dervish) — reads `combatDamageToPlayersThisTurn` |
 | `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new Enchanted(), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
@@ -521,12 +522,16 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
 | `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |
 | `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new CameUnderControlThisTurn(), wrapped)` | yes | yes | - | source is still summoning sick (came under your control this turn); usually wrapped in `NotCondition` |
+| `ConditionalEffect(new AllOf(List.of(a, b, ...)), wrapped)` | yes | yes | yes (end step) | compound intervening-if — met only when every inner condition holds (Erg Raiders: `DidntAttack` + `NotCondition(CameUnderControlThisTurn)`) |
 | `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
 | `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new CardsAboveSelfInGraveyard(threshold, filter), wrapped)` | - | yes | yes (graveyard upkeep) | source's controller graveyard is ordered; counts filter-matching cards positioned *above* self (higher index). Nether Shadow: `(3, new CardTypePredicate(CardType.CREATURE))` |
 | `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
 | `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new SourceIsTapped(), wrapped)` | - | yes | - | intervening-if "if this permanent is tapped" — reads `source.isTapped()`. Mana Vault's `DRAW_TRIGGERED` deals 1 damage to controller only while tapped |
 | `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
 | `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
 | `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |

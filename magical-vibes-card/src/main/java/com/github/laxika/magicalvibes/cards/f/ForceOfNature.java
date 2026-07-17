@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "242")
+@CardRegistration(set = "5ED", collectorNumber = "294")
 public class ForceOfNature extends Card {
 
     public ForceOfNature() {

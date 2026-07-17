@@ -9,6 +9,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "9ED", collectorNumber = "301")
+@CardRegistration(set = "5ED", collectorNumber = "385")
 public class JestersCap extends Card {
 
     public JestersCap() {

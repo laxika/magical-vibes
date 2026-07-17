@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySubtypeCombatOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
@@ -78,6 +79,14 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                             // If subtype doesn't match, skip this effect
+                        } else if (effect instanceof CombatOpponentReferencingEffect) {
+                            // "blocks or becomes blocked by a [filter] creature, ... that creature"
+                            // (e.g. Venom). Auto-target the combat opponent; the effect's handler
+                            // re-checks the filter at resolution.
+                            if (combatOpponent != null) {
+                                effectsForStack.add(effect);
+                                autoTargetOpponent = true;
+                            }
                         } else if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
                             effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), finalCreatureControllerId));
                         } else {
@@ -175,6 +184,10 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                                 // If subtype doesn't match, skip this effect for this blocker
+                            } else if (effect instanceof CombatOpponentReferencingEffect) {
+                                // Auto-target this blocker; the handler re-checks the filter (Venom).
+                                transformedEffects.add(effect);
+                                autoTargetBlocker = true;
                             } else {
                                 transformedEffects.add(effect);
                             }

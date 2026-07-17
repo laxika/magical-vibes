@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardsInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -120,6 +121,39 @@ public class GraveyardService {
      */
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card) {
         return addCardToGraveyard(gameData, ownerId, card, null);
+    }
+
+    /**
+     * Moves a discarded card to its owner's graveyard, applying Library of Leng's replacement first:
+     * if the owner controls a permanent with {@link DiscardToTopOfLibraryInsteadEffect}, the card is
+     * put on top of their library instead. Returns true if the card actually entered the graveyard,
+     * false if the library-top replacement was applied (callers should skip graveyard-entry triggers,
+     * but discard triggers still fire — the card was still discarded). Tokens cease to exist and never
+     * see the replacement (they still go through the normal path).
+     */
+    public boolean discardCard(GameData gameData, UUID ownerId, Card card) {
+        if (!card.isToken() && ownerHasDiscardToLibraryReplacement(gameData, ownerId)) {
+            gameData.playerDecks.get(ownerId).add(0, card);
+            String topLog = card.getName() + " is put on top of its owner's library instead of into the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(topLog));
+            log.info("Game {} - {} discard replacement: put on top of library instead of graveyard", gameData.id, card.getName());
+            return false;
+        }
+        return addCardToGraveyard(gameData, ownerId, card);
+    }
+
+    private boolean ownerHasDiscardToLibraryReplacement(GameData gameData, UUID ownerId) {
+        List<Permanent> bf = gameData.playerBattlefields.get(ownerId);
+        if (bf == null) {
+            return false;
+        }
+        for (Permanent p : bf) {
+            if (p.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .anyMatch(DiscardToTopOfLibraryInsteadEffect.class::isInstance)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean addCardToGraveyard(GameData gameData, UUID ownerId, Card card, Zone sourceZone) {
@@ -467,7 +501,7 @@ public class GraveyardService {
                     resolvedEffect = new GainLifeEffect(dyingCreatureCard.getToughness());
                 }
 
-                gameData.stack.add(new StackEntry(
+                StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
                         controllerId,
@@ -475,7 +509,11 @@ public class GraveyardService {
                         new ArrayList<>(List.of(resolvedEffect)),
                         null,
                         sourcePermanentId
-                ));
+                );
+                // The dying creature's card id as last-known information, for effects that act on it
+                // (e.g. Seraph returns "that card" at the next end step).
+                triggerEntry.setTriggeringCardId(dyingCreatureCardId);
+                gameData.stack.add(triggerEntry);
                 String triggerLog = source.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(triggerLog));
                 log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, source.getCard().getName());

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSou
 import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "159")
+@CardRegistration(set = "5ED", collectorNumber = "269")
 public class StoneGiant extends Card {
 
     public StoneGiant() {

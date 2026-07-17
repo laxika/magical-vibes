@@ -260,6 +260,8 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId));
             }
         }
+
+        validateMultiTargetConstraint(gameData, ability.getMultiTargetConstraint(), targetIds);
     }
 
     public void validateActivatedAbilityTargeting(GameData gameData,
@@ -514,7 +516,7 @@ public class TargetLegalityService {
      * per-position filters. Currently only "share no creature types" (Rivals' Duel).
      */
     private void validateMultiTargetConstraint(GameData gameData, MultiTargetConstraint constraint, List<UUID> targetIds) {
-        if (constraint != MultiTargetConstraint.SHARE_NO_CREATURE_TYPES) {
+        if (constraint == null) {
             return;
         }
         List<Permanent> targets = targetIds.stream()
@@ -523,8 +525,20 @@ public class TargetLegalityService {
                 .toList();
         for (int i = 0; i < targets.size(); i++) {
             for (int j = i + 1; j < targets.size(); j++) {
-                if (gameQueryService.shareCreatureType(gameData, targets.get(i), targets.get(j))) {
-                    throw new IllegalStateException("Chosen creatures must share no creature types");
+                Permanent a = targets.get(i);
+                Permanent b = targets.get(j);
+                switch (constraint) {
+                    case SHARE_NO_CREATURE_TYPES -> {
+                        if (gameQueryService.shareCreatureType(gameData, a, b)) {
+                            throw new IllegalStateException("Chosen creatures must share no creature types");
+                        }
+                    }
+                    case SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE -> {
+                        if (!gameQueryService.sharesArtifactCreatureOrLandType(a, b)) {
+                            throw new IllegalStateException(
+                                    "Chosen permanents must share an artifact, creature, or land type");
+                        }
+                    }
                 }
             }
         }
@@ -823,6 +837,9 @@ public class TargetLegalityService {
         }
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card)) {
             return nonColorSourceRestrictionMessage(target);
+        }
+        if (card.isAura() && gameQueryService.cantBeEnchantedByOtherAuras(gameData, target)) {
+            return target.getCard().getName() + " can't be enchanted by other Auras";
         }
         if (sourcePlayerId != null) {
             String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);

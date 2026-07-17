@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 
 import java.util.List;
 
+@CardRegistration(set = "5ED", collectorNumber = "382")
 @CardRegistration(set = "6ED", collectorNumber = "294")
 @CardRegistration(set = "7ED", collectorNumber = "303")
 public class JalumTome extends Card {

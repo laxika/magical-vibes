@@ -49,7 +49,25 @@ public class TurnCleanupService {
      */
     public void applyCleanupResets(GameData gameData) {
         resetEndOfTurnModifiers(gameData);
+        tapPermanentsReturningToOwner(gameData);
         creatureControlService.reconcileControl(gameData);
+    }
+
+    /**
+     * Taps permanents carrying a "tap it when you lose control" rider (Magus of the Unseen) as
+     * their until-end-of-turn control effect expires this cleanup and they revert to their owner.
+     */
+    private void tapPermanentsReturningToOwner(GameData gameData) {
+        if (gameData.permanentsToTapWhenControlLost.isEmpty()) {
+            return;
+        }
+        for (UUID permanentId : gameData.permanentsToTapWhenControlLost) {
+            Permanent permanent = findPermanent(gameData, permanentId);
+            if (permanent != null) {
+                permanent.tap();
+            }
+        }
+        gameData.permanentsToTapWhenControlLost.clear();
     }
 
     /**
@@ -79,7 +97,8 @@ public class TurnCleanupService {
             p.setMarkedDamage(0);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || !p.getRemovedKeywords().isEmpty()
-                    || p.getDamagePreventionShield() != 0 || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
+                    || p.getDamagePreventionShield() != 0 || p.getDamageToCounterPreventionShield() != 0
+                    || p.getRegenerationShield() != 0 || p.isCantBeBlocked()
                     || p.isAnimatedUntilEndOfTurn() || p.isAnimatedUntilEndOfCombat() || p.isCantRegenerateThisTurn()
                     || p.isExileInsteadOfDieThisTurn() || !p.getGrantedCardTypes().isEmpty()
                     || p.isMustAttackThisTurn() || p.isMustBeBlockedByAllThisTurn()
@@ -89,9 +108,11 @@ public class TurnCleanupService {
                     || p.isLosesAllAbilitiesUntilEndOfTurn()
                     || p.isColorOverridden() || !p.getTransientColors().isEmpty()
                     || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
-                    || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()) {
+                    || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()
+                    || !p.getBlockRestrictionsUntilEndOfTurn().isEmpty()) {
                 p.resetModifiers();
                 p.setDamagePreventionShield(0);
+                p.setDamageToCounterPreventionShield(0);
                 p.setRegenerationShield(0);
             }
         });
@@ -112,11 +133,15 @@ public class TurnCleanupService {
         gameData.playerSourceDamagePreventionIds.clear();
         gameData.playerSourceNextDamageShields.clear();
         gameData.sourceNextDamageToAnyTargetShields.clear();
+        gameData.eyeForAnEyeShields.clear();
+        gameData.pendingEyeForAnEyeReflections.clear();
+        gameData.pendingSourceDamageForReflection.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.playersWithDamageFromAttackersPrevented.clear();
         gameData.playersGatheringSpecimensThisTurn.clear();
         gameData.creaturesWithAllDamagePrevented.clear();
+        gameData.creaturesWithCombatDamagePrevented.clear();
         gameData.creaturesPreventedFromDealingCombatDamage.clear();
         gameData.damageCantBePreventedThisTurn = false;
         gameData.drawReplacementTargetToController.clear();

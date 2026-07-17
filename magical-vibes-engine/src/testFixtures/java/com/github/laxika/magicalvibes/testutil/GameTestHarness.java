@@ -472,6 +472,15 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    /**
+     * Cast a modal instant that also has an {@code {X}} cost: choose {@code modeIndex} and pay
+     * {@code xValue} for X (e.g. Alabaster Potion).
+     */
+    public void castModalInstantForX(Player player, int cardIndex, int modeIndex, int xValue, UUID targetId) {
+        ensurePriority(player);
+        gameService.playModalXCard(gameData, player, cardIndex, modeIndex, xValue, targetId);
+    }
+
     /** Cast a modal instant, choosing the mode at {@code modeIndex} and passing multiple targets. */
     public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
         ensurePriority(player);

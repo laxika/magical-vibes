@@ -53,6 +53,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -119,6 +120,9 @@ class StepTriggerServiceTest {
     @Mock
     private ParadigmService paradigmService;
 
+    @Mock
+    private CreatureControlService creatureControlService;
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -146,7 +150,8 @@ class StepTriggerServiceTest {
                 triggerCollectionService,
                 triggerTargetCollector,
                 paradigmService,
-                validTargetService);
+                validTargetService,
+                creatureControlService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -709,6 +714,29 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).isNotEmpty();
             assertThat(gd.stack.getFirst().getDescription()).contains("Numbing Dose");
+        }
+
+        @Test
+        @DisplayName("ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED bakes the enchanted permanent's controller as the stack target")
+        void enchantedPermanentControllerUpkeepBakesControllerAsTarget() {
+            gd.turnNumber = 2;
+            Card targetCard = createCardWithName("Enchanted Enchantment");
+            Permanent targetPerm = new Permanent(targetCard);
+            gd.playerBattlefields.get(player1Id).add(targetPerm);
+
+            Card auraCard = createCardWithName("Feedback");
+            auraCard.addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+                    new DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER));
+            Permanent auraPerm = new Permanent(auraCard);
+            auraPerm.setAttachedTo(targetPerm.getId());
+            gd.playerBattlefields.get(player2Id).add(auraPerm);
+
+            when(gameQueryService.findPermanentController(gd, targetPerm.getId())).thenReturn(player1Id);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
         }
 
         @Test

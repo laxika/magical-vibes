@@ -60,6 +60,12 @@ public class StackEntry {
      * amount so an effect can scale to that creature's power as the ability resolves (Impelled Giant).
      */
     @Setter private UUID chosenPermanentId;
+    /**
+     * Last-known card id of the event that produced this triggered ability, when an effect needs to
+     * act on "that card" rather than a chosen target — e.g. the creature that died for Seraph's
+     * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
+     */
+    @Setter private UUID triggeringCardId;
     private final List<UUID> targetIds;
     /**
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
@@ -268,6 +274,7 @@ public class StackEntry {
         this.eventValue = source.eventValue;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.chosenPermanentId = source.chosenPermanentId;
+        this.triggeringCardId = source.triggeringCardId;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 

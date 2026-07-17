@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerMayDrawCardEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "98")
+@CardRegistration(set = "5ED", collectorNumber = "123")
 public class SibilantSpirit extends Card {
 
     public SibilantSpirit() {

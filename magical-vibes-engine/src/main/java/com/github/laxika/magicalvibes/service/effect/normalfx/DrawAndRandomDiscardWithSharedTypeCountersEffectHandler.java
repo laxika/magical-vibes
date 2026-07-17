@@ -60,7 +60,7 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
             int randomIndex = ThreadLocalRandom.current().nextInt(hand.size());
             Card discarded = hand.remove(randomIndex);
             discardedCards.add(discarded);
-            graveyardService.addCardToGraveyard(gameData, controllerId, discarded);
+            graveyardService.discardCard(gameData, controllerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);

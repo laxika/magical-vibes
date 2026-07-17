@@ -24,8 +24,9 @@ public class DestroySourcePermanentEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (source != null) {
-                    destructionSupport.tryDestroyAndLog(gameData, source, entry.getCard().getName());
-                }
+        if (source != null) {
+            boolean cannotRegenerate = ((DestroySourcePermanentEffect) effect).cannotBeRegenerated();
+            destructionSupport.tryDestroyAndLog(gameData, source, entry.getCard().getName(), cannotRegenerate);
+        }
     }
 }

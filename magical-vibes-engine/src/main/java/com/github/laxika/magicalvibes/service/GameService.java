@@ -250,6 +250,19 @@ public class GameService {
         }
     }
 
+    /**
+     * Casts a modal spell that also has an {@code {X}} cost: {@code xValue} selects the mode while
+     * {@code modalXValue} carries the real X paid (e.g. Alabaster Potion).
+     */
+    public void playModalXCard(GameData gameData, Player player, int cardIndex, int modeIndex, int modalXValue, UUID targetId) {
+        synchronized (gameData) {
+            player = resolveActingPlayer(gameData, player);
+            requirePriority(gameData, player);
+            spellCastingService.playCard(gameData, player, cardIndex, modeIndex, targetId, null, List.of(), List.of(),
+                    false, null, null, List.of(), null, null, false, null, modalXValue);
+        }
+    }
+
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments, List<UUID> targetIds, List<UUID> convokeCreatureIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);

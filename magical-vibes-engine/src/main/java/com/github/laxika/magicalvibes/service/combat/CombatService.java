@@ -3,7 +3,10 @@ import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEn
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -13,13 +16,20 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +63,13 @@ public class CombatService {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
+    private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final DamageSupport damageSupport;
+
+    /** Layer-2 control effect wrapping each end-of-combat control gain (drives layer classification). */
+    private static final GainControlOfTargetEffect CONTROL_OPPONENT_EFFECT =
+            new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD);
 
 
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
@@ -144,20 +160,29 @@ public class CombatService {
      * Sacrifices all permanents marked for end-of-combat sacrifice.
      */
     public void processEndOfCombatSacrifices(GameData gameData) {
-        Set<UUID> toSacrificeIds = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class).stream()
-                .map(SacrificeAtEndOfCombat::permanentId)
-                .collect(Collectors.toSet());
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            List<Permanent> toSacrifice = battlefield.stream()
-                    .filter(p -> toSacrificeIds.contains(p.getId()))
-                    .toList();
-            for (Permanent perm : toSacrifice) {
+        List<SacrificeAtEndOfCombat> actions = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class);
+        for (SacrificeAtEndOfCombat action : actions) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            // "sacrifice it and it deals N damage to you" (Time Elemental): the damage is a delayed
+            // triggered ability that fires even if the creature already left the battlefield (last-known
+            // information). Deal it before the sacrifice so source-based prevention still sees the source.
+            if (action.damageToController() > 0 && action.controllerId() != null) {
+                Card source = perm != null ? perm.getCard() : action.sourceCard();
+                if (source != null) {
+                    StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source,
+                            action.controllerId(), source.getName(), List.<CardEffect>of(),
+                            (UUID) null, action.permanentId());
+                    damageSupport.dealDamageToPlayer(gameData, damageEntry, action.controllerId(),
+                            action.damageToController());
+                }
+            }
+            if (perm != null) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
                 String logEntry = perm.getCard().getName() + " is sacrificed.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
-        });
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -265,6 +290,83 @@ public class CombatService {
             log.info("Game {} - {} gets {} -1/-1 counter(s) at end of combat",
                     gameData.id, perm.getCard().getName(), action.amount());
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, perm, action.amount());
+        }
+    }
+
+    /**
+     * Puts the scheduled counters on all permanents marked for end-of-combat counter placement on a
+     * combat opponent (e.g. Greater Werewolf's "put a -0/-2 counter on each creature blocking or
+     * blocked by this creature"). Respects {@code cantHaveCounters}.
+     */
+    public void processEndOfCombatOpponentCounters(GameData gameData) {
+        List<PutCounterOnPermanentAtEndOfCombat> toCounter =
+                gameData.drainDelayedActions(PutCounterOnPermanentAtEndOfCombat.class);
+        for (PutCounterOnPermanentAtEndOfCombat action : toCounter) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (perm == null || action.amount() <= 0) {
+                continue;
+            }
+            if (gameQueryService.cantHaveCounters(gameData, perm)) {
+                continue;
+            }
+            perm.setCounterCount(action.counterType(),
+                    perm.getCounterCount(action.counterType()) + action.amount());
+            String logEntry = perm.getCard().getName() + " gets " + action.amount() + " counter(s).";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} gets {} {} counter(s) at end of combat",
+                    gameData.id, perm.getCard().getName(), action.amount(), action.counterType());
+        }
+    }
+
+    /**
+     * Removes the scheduled counters from all permanents marked for end-of-combat counter removal
+     * (e.g. Clockwork Beast's "At end of combat, if this creature attacked or blocked this combat,
+     * remove a +1/+0 counter from it"). Clamped at zero — a permanent with none is unaffected.
+     */
+    public void processEndOfCombatCounterRemovals(GameData gameData) {
+        List<RemoveCounterFromSourceAtEndOfCombat> toRemove =
+                gameData.drainDelayedActions(RemoveCounterFromSourceAtEndOfCombat.class);
+        for (RemoveCounterFromSourceAtEndOfCombat action : toRemove) {
+            Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (perm == null || action.amount() <= 0) {
+                continue;
+            }
+            int current = perm.getCounterCount(action.counterType());
+            if (current <= 0) {
+                continue;
+            }
+            int removed = Math.min(action.amount(), current);
+            perm.setCounterCount(action.counterType(), current - removed);
+            String logEntry = perm.getCard().getName() + " loses " + removed + " counter(s).";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} loses {} {} counter(s) at end of combat",
+                    gameData.id, perm.getCard().getName(), removed, action.counterType());
+        }
+    }
+
+    /**
+     * Gains control of all permanents scheduled for end-of-combat control change (e.g. The Wretched's
+     * "At end of combat, gain control of all creatures blocking this creature for as long as you
+     * control this creature"). Control is applied with {@code WHILE_SOURCE_ON_BATTLEFIELD} keyed to
+     * the source, so it ends when the source leaves the battlefield or its controller loses it.
+     */
+    public void processEndOfCombatControlGains(GameData gameData) {
+        List<GainControlOfPermanentAtEndOfCombat> toControl =
+                gameData.drainDelayedActions(GainControlOfPermanentAtEndOfCombat.class);
+        for (GainControlOfPermanentAtEndOfCombat action : toControl) {
+            Permanent target = gameQueryService.findPermanentById(gameData, action.permanentId());
+            if (target == null) {
+                continue;
+            }
+            // Source must still be on the battlefield and controlled by the gaining player.
+            Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
+            if (source == null
+                    || !action.newControllerId().equals(gameData.findControllerOf(action.sourcePermanentId()))) {
+                continue;
+            }
+            creatureControlService.applyControlEffect(gameData, action.newControllerId(), target,
+                    CONTROL_OPPONENT_EFFECT, ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD.toEffectDuration(),
+                    action.sourcePermanentId(), action.sourceCardName());
         }
     }
 

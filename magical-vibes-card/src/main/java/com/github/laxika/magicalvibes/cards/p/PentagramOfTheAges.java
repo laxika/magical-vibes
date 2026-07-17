@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromChosenSo
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "306")
+@CardRegistration(set = "5ED", collectorNumber = "394")
 public class PentagramOfTheAges extends Card {
 
     public PentagramOfTheAges() {

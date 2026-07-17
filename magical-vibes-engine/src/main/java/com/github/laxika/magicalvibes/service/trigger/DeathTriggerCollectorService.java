@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForEachDyingSourceCou
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerDiscardsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedControllerSacrificesCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -36,6 +37,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyin
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToDyingPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureUnderYourControlEffect;
@@ -476,6 +479,24 @@ public class DeathTriggerCollectorService {
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(conditional.resolvedEffects())
+        ));
+        logEnchantedPermanentLTB(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = EnchantedControllerSacrificesCreatureOnLeaveEffect.class, slot = EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)
+    boolean handleEnchantedControllerSacrificesCreatureOnLeave(TriggerMatchContext match,
+            EnchantedControllerSacrificesCreatureOnLeaveEffect effect, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
+        // Bake in the player who controlled the leaving creature (its controller sacrifices — not the
+        // Aura controller, which differs when the Aura enchants an opponent's creature).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(
+                        new EnchantedControllerSacrificesCreatureOnLeaveEffect(epl.leavingControllerId())))
         ));
         logEnchantedPermanentLTB(match);
         return true;
@@ -999,6 +1020,51 @@ public class DeathTriggerCollectorService {
                 sl.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new TargetPlayerLosesGameEffect(sl.controllerId())))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = RemoveLinkedPermanentEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleRemoveLinkedPermanent(TriggerMatchContext match,
+            RemoveLinkedPermanentEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        // The partner id is stored on the leaving permanent; if the bond was never forged (no token was
+        // created) or was already broken, the trigger simply does nothing (CR 603.4-style no-op).
+        UUID linkedId = match.permanent().getChosenPermanentId();
+        if (linkedId == null) {
+            return false;
+        }
+        // Bake the linked id into the effect (not the stack entry's targetId, which resolution would
+        // validate against the source card's spell target filter and fizzle — Dance of Many's ETB filter
+        // is "nontoken creature", which the token itself fails).
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new RemoveLinkedPermanentEffect(effect.mode(), linkedId)))
+        ));
+        logSelfLeaves(match);
+        return true;
+    }
+
+    @CollectsTrigger(value = SacrificeEnchantedCreatureOnLeaveEffect.class, slot = EffectSlot.ON_SELF_LEAVES_BATTLEFIELD)
+    boolean handleSacrificeEnchantedCreatureOnLeave(TriggerMatchContext match,
+            SacrificeEnchantedCreatureOnLeaveEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfLeaves sl = (TriggerContext.SelfLeaves) ctx;
+        // Capture the enchanted creature's permanent id before the Aura is gone; if the Aura wasn't
+        // attached (never resolved onto a creature) the trigger simply does nothing (CR 603.4 no-op).
+        UUID enchantedId = match.permanent().getAttachedTo();
+        if (enchantedId == null) {
+            return false;
+        }
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                sl.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new SacrificeEnchantedCreatureOnLeaveEffect(enchantedId)))
         ));
         logSelfLeaves(match);
         return true;

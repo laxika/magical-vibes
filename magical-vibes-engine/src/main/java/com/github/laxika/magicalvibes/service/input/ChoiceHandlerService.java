@@ -154,6 +154,14 @@ public class ChoiceHandlerService {
             handleManaValueParityChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.NumberChoice ctx) {
+            handleNumberChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.RemoveCountersForManaChoice ctx) {
+            handleRemoveCountersForManaChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.PrimalClayFormChoice ctx) {
             handlePrimalClayFormChoice(gameData, player, colorName, ctx);
             return;
@@ -940,6 +948,61 @@ public class ChoiceHandlerService {
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleNumberChoice(GameData gameData, Player player, String numberName, ChoiceContext.NumberChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenNumber(chosen);
+
+            String logEntry = player.getUsername() + " chooses " + chosen + " for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} chooses number {} for {}", gameData.id, player.getUsername(), chosen, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        // Resumes the paused upkeep may-ability resolution when present; otherwise auto-passes
+        // (the "as this enters" ETB choice, which has no pending stack-effect resolution).
+        resumeAndAutoPass(gameData);
+    }
+
+    private void handleRemoveCountersForManaChoice(GameData gameData, Player player, String numberName,
+                                                   ChoiceContext.RemoveCountersForManaChoice ctx) {
+        int chosen = Integer.parseInt(numberName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null && chosen > 0) {
+            // Storage land: remove the chosen counters (the ability's cost) and add that much mana
+            // of the given color (times the Mana Reflection multiplier).
+            int available = perm.getCounterCount(ctx.counterType());
+            int removed = Math.min(chosen, available);
+            perm.setCounterCount(ctx.counterType(), available - removed);
+
+            int mana = removed * ctx.manaMultiplier();
+            ManaPool pool = gameData.playerManaPools.get(ctx.playerId());
+            pool.add(ctx.color(), mana);
+            if (ctx.fromCreature()) {
+                pool.addCreatureMana(ctx.color(), mana);
+            }
+
+            String logEntry = player.getUsername() + " removes " + removed + " "
+                    + ctx.counterType().name().toLowerCase() + " counter(s) from " + perm.getCard().getName()
+                    + " and adds " + mana + " " + ctx.color().getCode() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} removes {} {} counters and adds {} {} mana", gameData.id,
+                    player.getUsername(), removed, ctx.counterType(), mana, ctx.color());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
     }
 
     private void handlePrimalClayFormChoice(GameData gameData, Player player, String formName, ChoiceContext.PrimalClayFormChoice ctx) {

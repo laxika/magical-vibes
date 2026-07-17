@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
@@ -70,6 +73,7 @@ public class MayPenaltyChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.StealDyingOpponentPermanentUnlessPaysLifeEffectHandler stealDyingOpponentPermanentUnlessPaysLifeEffectHandler;
     private final CounterSupport counterSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler dealDamageToPlayersEffectHandler;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
@@ -396,6 +400,46 @@ public class MayPenaltyChoiceHandlerService {
                 log.info("Game {} - {} loses {} life (declined to pay, {})", gameData.id, player.getUsername(), effect.lifeLoss(), ability.sourceCard().getName());
             }
         }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    public void handleDamageUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        DamageUnlessPaysEffect effect = ability.effects().stream()
+                .filter(e -> e instanceof DamageUnlessPaysEffect)
+                .map(e -> (DamageUnlessPaysEffect) e)
+                .findFirst().orElseThrow();
+
+        UUID targetPlayerId = ability.controllerId();
+
+        if (accepted) {
+            ManaCost cost = new ManaCost("{" + effect.payAmount() + "}");
+            ManaPool pool = gameData.playerManaPools.get(targetPlayerId);
+            if (cost.canPay(pool)) {
+                cost.pay(pool);
+                String logEntry = player.getUsername() + " pays {" + effect.payAmount() + "}. (" + ability.sourceCard().getName() + ")";
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+                log.info("Game {} - {} pays {} to avoid damage ({})", gameData.id, player.getUsername(), effect.payAmount(), ability.sourceCard().getName());
+                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+            // Accepted but can't actually pay — fall through to the damage.
+        }
+
+        // Declined (or unable to pay) — deal the damage through the normal damage path.
+        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, ability.sourcePermanentId());
+        if (sourceControllerId == null) {
+            // Source left the battlefield — the damage source's controller is the non-target player.
+            sourceControllerId = gameData.orderedPlayerIds.stream()
+                    .filter(pid -> !pid.equals(targetPlayerId))
+                    .findFirst().orElse(targetPlayerId);
+        }
+        DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
+        StackEntry damageEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
+                targetPlayerId, ability.sourcePermanentId());
+        dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

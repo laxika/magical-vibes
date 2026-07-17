@@ -180,6 +180,23 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears until-end-of-turn block restrictions on permanents")
+        void clearsBlockRestrictionsUntilEndOfTurn() {
+            Card card = createCardWithName("Grizzly Bears");
+            Permanent perm = new Permanent(card);
+            perm.getBlockRestrictionsUntilEndOfTurn().add(
+                    new com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect(
+                            new com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate(
+                                    com.github.laxika.magicalvibes.model.CardSubtype.WALL),
+                            "Walls"));
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(perm.getBlockRestrictionsUntilEndOfTurn()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears animatedUntilEndOfTurn flag on permanents")
         void clearsAnimatedUntilEndOfTurn() {
             Card card = createCardWithName("Mutavault");

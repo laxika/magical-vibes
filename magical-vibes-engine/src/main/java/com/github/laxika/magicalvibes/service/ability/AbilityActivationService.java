@@ -58,10 +58,12 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateTapAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.RevealTwoCardsSharingColorCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -105,6 +107,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Handles activation and cost payment for activated abilities and tap/sacrifice abilities on permanents.
@@ -177,6 +180,10 @@ public class AbilityActivationService {
         }
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+        }
+        // Serra Bestiary: tapping for mana is a {T} ability, so it is locked too.
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+            throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated (Serra Bestiary)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent);
 
@@ -1063,6 +1070,9 @@ public class AbilityActivationService {
         // Compute targeting tax from effects like Kopala, Warden of Waves (feeds the mana affordability check)
         int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
 
+        // Add any static ability-activation tax on this source (e.g. Gloom: white enchantments' abilities cost {3} more)
+        targetingTax += castingCostService.getActivatedAbilityActivationTax(gameData, permanent);
+
         // Apply per-counter generic cost reduction (e.g. Diary of Dreams: costs {1} less per page counter).
         // Threaded through the additional-generic-cost path as a negative value, floored so the generic
         // portion of the cost never drops below zero; feeds both the affordability check and payment.
@@ -1320,6 +1330,11 @@ public class AbilityActivationService {
         // Pay discard-your-hand cost
         if (discardHandCost) {
             payDiscardHandCost(gameData, player);
+        }
+
+        // Pay discard-a-card-at-random cost
+        if (abilityEffects.stream().anyMatch(e -> e instanceof DiscardRandomCardCost)) {
+            payRandomDiscardCost(gameData, player);
         }
 
         // Pay reveal-two-color-sharing-cards cost: reveal a qualifying pair (cards stay in hand)
@@ -1633,6 +1648,10 @@ public class AbilityActivationService {
 
         // Tap requirement
         if (ability.isRequiresTap()) {
+            // Serra Bestiary: only activated abilities with {T} in their costs are locked.
+            if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateTapAbilitiesEffect.class)) {
+                throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated (Serra Bestiary)");
+            }
             if (permanent.isTapped()) {
                 throw new IllegalStateException("Permanent is already tapped");
             }
@@ -1737,6 +1756,14 @@ public class AbilityActivationService {
                 && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost, xValue).isEmpty()) {
             String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
             throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+        }
+
+        // Random-discard cost needs at least one card in hand
+        if (abilityEffects.stream().anyMatch(e -> e instanceof DiscardRandomCardCost)) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            if (hand == null || hand.isEmpty()) {
+                throw new IllegalStateException("Must have a card to discard at random to activate ability");
+            }
         }
 
         // Reveal-two-color-sharing-cards cost needs a qualifying pair in hand
@@ -1934,6 +1961,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("This ability can only be activated during your upkeep");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP) {
+                if (gameData.currentStep != TurnStep.UPKEEP) {
+                    throw new IllegalStateException("This ability can only be activated during an upkeep step");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.POWER_4_OR_GREATER) {
                 int effectivePower = gameQueryService.getEffectivePower(gameData, permanent);
                 if (effectivePower < 4) {
@@ -1996,6 +2028,11 @@ public class AbilityActivationService {
         if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
             if (!playerId.equals(gameData.activePlayerId) || gameData.currentStep != TurnStep.UPKEEP) {
                 throw new IllegalStateException("This ability can only be activated during your upkeep");
+            }
+        }
+        if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP) {
+            if (gameData.currentStep != TurnStep.UPKEEP) {
+                throw new IllegalStateException("This ability can only be activated during an upkeep step");
             }
         }
     }
@@ -2219,6 +2256,23 @@ public class AbilityActivationService {
                 + " card" + (discarded.size() != 1 ? "s" : "") + ") as an activation cost.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} discards hand of {} cards as activation cost", gameData.id, player.getUsername(), discarded.size());
+    }
+
+    private void payRandomDiscardCost(GameData gameData, Player player) {
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        if (hand == null || hand.isEmpty()) {
+            return;
+        }
+
+        Card discarded = hand.remove(ThreadLocalRandom.current().nextInt(hand.size()));
+        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+        gameData.discardCausedByOpponent = false;
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
+
+        String logEntry = player.getUsername() + " discards " + discarded.getName() + " at random as an activation cost.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} discards {} at random as activation cost", gameData.id, player.getUsername(), discarded.getName());
     }
 
     private List<Integer> collectGraveyardIndicesForType(List<Card> graveyard, CardType requiredType, CardSubtype requiredSubtype) {

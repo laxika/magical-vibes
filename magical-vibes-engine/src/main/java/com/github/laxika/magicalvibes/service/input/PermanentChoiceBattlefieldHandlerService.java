@@ -636,27 +636,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    public void handlePreventNextDamageFromColoredSourceChoice(GameData gameData, UUID permanentId,
-                                                               PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice ctx) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (chosenPermanent == null) {
-            throw new IllegalStateException("Chosen permanent no longer exists");
-        }
-
-        UUID controllerId = ctx.controllerId();
-        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenPermanent.getCard().getName();
-        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
-                + " this turn, it is prevented.";
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
-        log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
-
-        stateBasedActionService.performStateBasedActions(gameData);
-        turnProgressionService.resolveAutoPass(gameData);
-    }
-
     public void handlePreventNextDamageFromSourceChoice(GameData gameData, UUID permanentId,
                                                         PermanentChoiceContext.PreventNextDamageFromSourceChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
@@ -674,6 +653,28 @@ public class PermanentChoiceBattlefieldHandlerService {
                 + " this turn, it is prevented" + (gainLife ? " and " + playerName + " gains that much life." : ".");
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleEyeForAnEyeSourceChoice(GameData gameData, UUID permanentId,
+                                              PermanentChoiceContext.EyeForAnEyeSourceChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.eyeForAnEyeShields.add(new com.github.laxika.magicalvibes.model.EyeForAnEyeShield(
+                controllerId, permanentId, ctx.eyeCard(), controllerId));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
+                + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} chose {} as Eye for an Eye reflection source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);

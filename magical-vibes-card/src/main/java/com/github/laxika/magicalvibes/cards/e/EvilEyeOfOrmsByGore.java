@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "6ED", collectorNumber = "126")
+@CardRegistration(set = "5ED", collectorNumber = "159")
 public class EvilEyeOfOrmsByGore extends Card {
 
     public EvilEyeOfOrmsByGore() {

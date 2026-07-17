@@ -187,8 +187,15 @@ public final class LayerClassifier {
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LoseAllCreatureTypesEffect.class, fixed(Layer.L4_TYPE));
         // Animate-and-set-P/T: the type change applies in layer 4, the MV-based base P/T in
-        // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines).
-        map.put(AnimateNoncreatureArtifactsEffect.class, fixed(Layer.L4_TYPE, Layer.L7B_SET_PT));
+        // sublayer 7b, both with ONE timestamp (CR 613.4, March of the Machines). Titania's Song
+        // (losesAllAbilities) additionally strips the artifacts' abilities in layer 6.
+        map.put(AnimateNoncreatureArtifactsEffect.class,
+                new Entry(Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT), (effect, fromOwnStaticSlot) ->
+                        new LayerClassification(
+                                ((AnimateNoncreatureArtifactsEffect) effect).losesAllAbilities()
+                                        ? Set.of(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT)
+                                        : Set.of(Layer.L4_TYPE, Layer.L7B_SET_PT),
+                                false, false)));
 
         // Layer 5 — color-changing effects. colorSetting distinguishes "becomes [color]"
         // (replaces, CR 105.3) from "in addition to its other colors" (adds).

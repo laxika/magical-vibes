@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamag
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "154")
+@CardRegistration(set = "5ED", collectorNumber = "174")
 public class LordOfThePit extends Card {
 
     public LordOfThePit() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "143")
+@CardRegistration(set = "5ED", collectorNumber = "177")
 public class MindWarp extends Card {
 
     public MindWarp() {

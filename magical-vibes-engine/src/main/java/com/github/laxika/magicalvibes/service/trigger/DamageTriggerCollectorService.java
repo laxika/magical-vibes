@@ -11,11 +11,17 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -263,6 +269,76 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
+    }
+
+    // ── ON_CONTROLLER_DEALT_DAMAGE (Living Artifact) ───────────────────
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_DEALT_DAMAGE)
+    private boolean handleControllerDealtDamagePutCounters(TriggerMatchContext match,
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        TriggerContext.DamageToControllerAmount dc = (TriggerContext.DamageToControllerAmount) ctx;
+        GameData gameData = match.gameData();
+        Permanent perm = match.permanent();
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                perm.getId());
+        // Snapshot the damage dealt so the effect's EventValue amount ("put that many counters")
+        // reads it back at resolution.
+        entry.setEventValue(dc.amount());
+        gameData.enqueueTrigger(entry);
+
+        String logEntry = perm.getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+        log.info("Game {} - {} ON_CONTROLLER_DEALT_DAMAGE trigger fires ({} damage)",
+                gameData.id, perm.getCard().getName(), dc.amount());
+        return true;
+    }
+
+    // ── ON_ANY_SOURCE_DEALS_DAMAGE (Justice) ───────────────────────────
+
+    @CollectsTrigger(value = ReflectSourceDamageToItsControllerEffect.class, slot = EffectSlot.ON_ANY_SOURCE_DEALS_DAMAGE)
+    private boolean handleReflectSourceDamage(TriggerMatchContext match,
+            ReflectSourceDamageToItsControllerEffect trigger, TriggerContext ctx) {
+        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
+        if (sd.totalDamage() <= 0) return false;
+        if (!sourceHasColor(sd.sourceCard(), trigger.color())) return false;
+
+        GameData gameData = match.gameData();
+        UUID recipientId = sd.sourceControllerId();
+        if (recipientId == null || !gameData.playerIds.contains(recipientId)) return false;
+
+        Permanent watcher = match.permanent();
+        // The watcher deals the summed damage to the red source's controller. Reuse the standard
+        // TARGET_PLAYER damage effect with the recipient set as the (non-chosen) target.
+        StackEntry se = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                match.controllerId(),
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(new DealDamageToPlayersEffect(sd.totalDamage(), DamageRecipient.TARGET_PLAYER))),
+                recipientId,
+                watcher.getId());
+        se.setNonTargeting(true);
+        gameData.stack.add(se);
+
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(watcher.getCard().getName()
+                + "'s ability triggers — it deals " + sd.totalDamage() + " damage to "
+                + gameData.playerIdToName.get(recipientId) + "."));
+        log.info("Game {} - {} reflects {} damage to {}", gameData.id, watcher.getCard().getName(),
+                sd.totalDamage(), gameData.playerIdToName.get(recipientId));
+        return true;
+    }
+
+    private boolean sourceHasColor(Card card, CardColor color) {
+        if (card == null || color == null) return false;
+        if (card.getColor() == color) return true;
+        return card.getColors().contains(color);
     }
 
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_DEALT_DAMAGE)

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "10E", collectorNumber = "349")
 @CardRegistration(set = "9ED", collectorNumber = "319")
 @CardRegistration(set = "7ED", collectorNumber = "326")
+@CardRegistration(set = "5ED", collectorNumber = "412")
 public class Brushland extends Card {
 
     public Brushland() {

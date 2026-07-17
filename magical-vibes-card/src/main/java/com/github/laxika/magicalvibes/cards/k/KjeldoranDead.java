@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "140")
+@CardRegistration(set = "5ED", collectorNumber = "170")
 public class KjeldoranDead extends Card {
 
     public KjeldoranDead() {

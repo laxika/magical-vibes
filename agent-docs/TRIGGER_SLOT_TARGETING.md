@@ -311,6 +311,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | "At the beginning of each upkeep, ..." | `EACH_UPKEEP_TRIGGERED` | Every player's upkeep | — |
 | "When enchanted creature dies, ..." | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted creature goes to graveyard | Necrotic Plague (return effect) |
 | "Whenever enchanted creature is dealt damage, ..." | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Enchanted creature is dealt damage (combat or non-combat) | Spiteful Shadows |
+| "Whenever enchanted creature attacks and isn't blocked, ..." | `ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED` | Enchanted attacker ends up unblocked (declare-blockers step). Non-targeting: `sourcePermanentId`=enchanted attacker, `targetId`=defending player | Cloak of Confusion |
 | "Whenever a creature is dealt damage, ..." (any creature) | `ON_ANY_CREATURE_DEALT_DAMAGE` | Any creature is dealt damage (combat or non-combat). Queued entry targets the damaged creature | Death Pits of Rath |
 
 **Key distinction**: "your upkeep" on an aura means the **aura controller's** upkeep → use `UPKEEP_TRIGGERED`. "Enchanted creature's controller's upkeep" means the **enchanted permanent's controller's** upkeep → use `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED`. These are different when the aura enchants an opponent's creature.

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
 
 @CardRegistration(set = "6ED", collectorNumber = "308")
+@CardRegistration(set = "5ED", collectorNumber = "395")
 public class PrimalClay extends Card {
 
     public PrimalClay() {

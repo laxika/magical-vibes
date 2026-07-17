@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "213")
+@CardRegistration(set = "5ED", collectorNumber = "242")
 public class Incinerate extends Card {
 
     public Incinerate() {

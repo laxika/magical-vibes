@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 
+@CardRegistration(set = "5ED", collectorNumber = "138")
 @CardRegistration(set = "9ED", collectorNumber = "114")
 @CardRegistration(set = "8ED", collectorNumber = "116")
 @CardRegistration(set = "6ED", collectorNumber = "108")

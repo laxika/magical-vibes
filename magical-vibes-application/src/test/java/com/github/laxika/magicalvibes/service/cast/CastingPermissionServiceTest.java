@@ -201,6 +201,40 @@ class CastingPermissionServiceTest {
         }
 
         @Test
+        @DisplayName("Controller-only restriction on an opponent's permanent does not restrict this player")
+        void controllerOnlyRestrictionIsNotSymmetric() {
+            Card restrictor = new Card();
+            restrictor.setName("Steel Golem");
+            restrictor.setType(CardType.ARTIFACT);
+            restrictor.addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE)));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(restrictor));
+
+            Card creature = new Card();
+            creature.setName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Symmetric restriction on an opponent's permanent restricts this player too")
+        void symmetricRestrictionAppliesToAllPlayers() {
+            Card restrictor = new Card();
+            restrictor.setName("Aether Storm");
+            restrictor.setType(CardType.ENCHANTMENT);
+            restrictor.addEffect(EffectSlot.STATIC, new CantCastSpellTypeEffect(Set.of(CardType.CREATURE), true));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(restrictor));
+
+            Card creature = new Card();
+            creature.setName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}");
+
+            assertThat(svc.isSpellCastingAllowed(gd, player1Id, creature)).isFalse();
+        }
+
+        @Test
         @DisplayName("Rejects spell with a forbidden chosen name")
         void rejectsForbiddenCardName() {
             Card namer = new Card();

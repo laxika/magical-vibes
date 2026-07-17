@@ -54,7 +54,7 @@ public class DiscardOwnHandThenDrawThatManyEffectHandler implements NormalEffect
         gameData.discardCausedByOpponent = false;
 
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            graveyardService.discardCard(gameData, controllerId, card);
             triggerCollectionService.checkDiscardTriggers(gameData, controllerId, card);
         }
 

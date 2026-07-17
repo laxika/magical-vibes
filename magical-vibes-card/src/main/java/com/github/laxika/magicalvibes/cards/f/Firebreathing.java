@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M10", collectorNumber = "137")
 @CardRegistration(set = "9ED", collectorNumber = "181")
 @CardRegistration(set = "6ED", collectorNumber = "177")
+@CardRegistration(set = "5ED", collectorNumber = "228")
 public class Firebreathing extends Card {
 
     public Firebreathing() {

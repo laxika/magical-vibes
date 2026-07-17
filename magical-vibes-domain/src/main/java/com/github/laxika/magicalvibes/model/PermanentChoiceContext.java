@@ -95,8 +95,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) implements PermanentChoiceContext {}
 
-    record PreventNextDamageFromColoredSourceChoice(UUID controllerId, CardColor color) implements PermanentChoiceContext {}
-
     /** "The next time a source of your choice would deal damage to you this turn, prevent that damage."
      *  Any-color source. When {@code gainLife} is true the controller also gains life equal to the
      *  damage prevented (Reverse Damage); when false there is no life gain (Pentagram of the Ages). */
@@ -105,6 +103,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** "The next time a source of your choice would deal damage to any target this turn, prevent that
      *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. */
     record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** "The next time a source of your choice would deal damage to you this turn, instead that source
+     *  deals that much damage to you and Eye for an Eye deals that much damage to that source's
+     *  controller." (Eye for an Eye). */
+    record EyeForAnEyeSourceChoice(UUID controllerId, Card eyeCard) implements PermanentChoiceContext {}
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 

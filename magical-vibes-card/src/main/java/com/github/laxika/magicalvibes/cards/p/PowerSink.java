@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "87")
+@CardRegistration(set = "5ED", collectorNumber = "111")
 public class PowerSink extends Card {
 
     public PowerSink() {

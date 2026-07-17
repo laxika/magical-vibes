@@ -2,5 +2,6 @@ package com.github.laxika.magicalvibes.model;
 
 public enum DrawReplacementKind {
     ABUNDANCE,
-    ZURS_WEIRDING
+    ZURS_WEIRDING,
+    ISLAND_SANCTUARY
 }

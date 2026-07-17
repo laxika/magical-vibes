@@ -311,6 +311,7 @@ public class DrawService {
 
         // Track cards drawn this turn (for Molten Psyche, etc.)
         gameData.cardsDrawnThisTurn.merge(playerId, 1, Integer::sum);
+        gameData.cardsDrawnThisTurnIds.computeIfAbsent(playerId, k -> new ArrayList<>()).add(drawn.getId());
 
         String logEntry = gameData.playerIdToName.get(playerId) + " draws a card.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));

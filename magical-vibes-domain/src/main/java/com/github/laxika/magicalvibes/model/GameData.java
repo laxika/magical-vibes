@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.function.Predicate;
 
 import com.github.laxika.magicalvibes.model.action.DelayedAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusZeroPlusOneCounters;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
@@ -141,6 +143,10 @@ public class GameData {
     public final Set<UUID> creaturesReturnedToBattlefieldOnDeathThisTurn = ConcurrentHashMap.newKeySet();
     /** Delayed trigger: creature card ID → token registrations to resolve if it dies this turn (Skeletonize). */
     public final Map<UUID, List<DelayedTokenOnDeath>> creatureCreatingTokenOnDeathThisTurn = new ConcurrentHashMap<>();
+    /** Seraph: source Seraph permanent id → permanent ids of the creatures it returned under a player's control. */
+    public final Map<UUID, Set<UUID>> seraphReturnedCreatures = new ConcurrentHashMap<>();
+    /** Seraph: source Seraph permanent id → the player who last controlled it, watched for control-loss sacrifices. */
+    public final Map<UUID, UUID> seraphControlWatch = new ConcurrentHashMap<>();
     /** Unified exile zone: every exiled card with its owner and optional source permanent. */
     public final List<ExiledCardEntry> exiledCards = Collections.synchronizedList(new ArrayList<>());
     /** Maps exiled card UUID → egg counter count (for Darigaaz Reincarnated-style effects). */
@@ -258,6 +264,17 @@ public class GameData {
     /** One-shot shields (Sanctum Guardian): prevent the next damage event from a chosen source to ANY target
      *  (player, planeswalker, or creature). Each entry is a chosen source permanent ID, consumed on first use. */
     public final List<UUID> sourceNextDamageToAnyTargetShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot reflection shields (Eye for an Eye): the next damage the chosen source deals to the
+     *  protected player is also dealt back at that source's controller by Eye for an Eye. */
+    public final List<EyeForAnEyeShield> eyeForAnEyeShields = Collections.synchronizedList(new ArrayList<>());
+    /** Pending Eye for an Eye reflected damage to deal after a shield matches (populated by
+     *  DamagePreventionService, consumed by the damage-dealing services). */
+    public final List<EyeForAnEyeReflection> pendingEyeForAnEyeReflections = Collections.synchronizedList(new ArrayList<>());
+    /** Per-source damage accumulated during one non-combat damage event (a single stack-entry
+     *  resolution), keyed by the damage source card's id. Flushed after the resolution completes so a
+     *  global "whenever a [color] source deals damage" watcher (Justice) reflects the summed total
+     *  once per source (CR ruling). Combat damage batches separately via {@code combatDamageDealt}. */
+    public final Map<UUID, PendingSourceDamage> pendingSourceDamageForReflection = new LinkedHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
@@ -267,6 +284,8 @@ public class GameData {
     public final Set<UUID> playersGatheringSpecimensThisTurn = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose damage is fully prevented this turn (Wellgabber Apothecary). */
     public final Set<UUID> creaturesWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
+    /** Specific creatures whose combat damage dealt to them is prevented this turn (Foxfire). */
+    public final Set<UUID> creaturesWithCombatDamagePrevented = ConcurrentHashMap.newKeySet();
     /** Specific creatures whose combat damage is prevented this turn (Resistance Fighter). */
     public final Set<UUID> creaturesPreventedFromDealingCombatDamage = ConcurrentHashMap.newKeySet();
     /** When true, damage can't be prevented this turn (Impractical Joke). Cleared at turn cleanup. */
@@ -411,6 +430,10 @@ public class GameData {
 
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
+
+    /** Tracks the card ids each player has drawn this turn, in draw order. Used by effects that must
+     *  identify the specific cards "drawn this turn" (e.g. Sylvan Library). Cleared each turn. */
+    public final Map<UUID, List<UUID>> cardsDrawnThisTurnIds = new ConcurrentHashMap<>();
 
     /** Tracks how many cards each player has discarded this turn (any discard, any source). Used by
      *  "cards discarded this turn" effects, e.g. Dream Salvage. Cleared at the start of each turn. */
@@ -586,6 +609,11 @@ public class GameData {
      *  of the controller's next turn. */
     public final List<FloatingContinuousEffect> floatingEffects = Collections.synchronizedList(new ArrayList<>());
 
+    /** Permanents whose temporary control effect carries a "tap it when you lose control" rider
+     *  (Magus of the Unseen). Tapped and cleared during the cleanup step, when the until-end-of-turn
+     *  control effect expires and the permanent reverts to its owner. */
+    public final Set<UUID> permanentsToTapWhenControlLost = ConcurrentHashMap.newKeySet();
+
     /**
      * Opaque slot for the engine's memoized CR 613 layered board
      * ({@code LayerSystemService.BoardCache} — the engine owns the type, this module cannot
@@ -613,14 +641,28 @@ public class GameData {
 
     /**
      * Removes and returns all floating effects that depended on the given source permanent still
-     * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD} and {@code WHILE_ATTACHED}).
+     * being on the battlefield ({@code WHILE_SOURCE_ON_BATTLEFIELD}, {@code WHILE_SOURCE_TAPPED},
+     * and {@code WHILE_ATTACHED}).
      * Called whenever a permanent leaves any battlefield.
      */
     public List<FloatingContinuousEffect> expireFloatingEffectsForDepartedSource(UUID sourcePermanentId) {
         return expireFloatingEffects(fe ->
                 (fe.duration() == EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD
+                        || fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
                         || fe.duration() == EffectDuration.WHILE_ATTACHED)
                         && sourcePermanentId.equals(fe.sourcePermanentId()));
+    }
+
+    /**
+     * Removes and returns all NON-control {@code WHILE_SOURCE_TAPPED} floating effects sourced from
+     * the given permanent. Called when that permanent becomes untapped (CR 611.2b — such effects end
+     * and do not resume). Control {@code WHILE_SOURCE_TAPPED} effects are handled separately by the
+     * control reconciliation in {@code CreatureControlService}. Tawnos's Weaponry's +1/+1 buff.
+     */
+    public List<FloatingContinuousEffect> expireTappedSourceFloatingEffects(UUID sourcePermanentId) {
+        return expireFloatingEffects(fe -> fe.duration() == EffectDuration.WHILE_SOURCE_TAPPED
+                && !fe.isControlEffect()
+                && sourcePermanentId.equals(fe.sourcePermanentId()));
     }
 
     /**
@@ -969,6 +1011,24 @@ public class GameData {
             }
         }
         delayedActions.add(new DelayedPlusOneCounters(permanentId, total));
+    }
+
+    /**
+     * Accumulates {@code delta} pending +0/+1 counters for {@code permanentId} at the next end step
+     * (Sacred Boon), preserving keyed-map semantics (at most one {@link DelayedPlusZeroPlusOneCounters}
+     * per permanent, holding the running total).
+     */
+    public void addDelayedPlusZeroPlusOneCounters(UUID permanentId, int delta) {
+        int total = delta;
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (action instanceof DelayedPlusZeroPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+                total += existing.totalCounters();
+                it.remove();
+            }
+        }
+        delayedActions.add(new DelayedPlusZeroPlusOneCounters(permanentId, total));
     }
 
     /**
@@ -1384,6 +1444,7 @@ public class GameData {
         copy.playersWithDamageFromAttackersPrevented.addAll(this.playersWithDamageFromAttackersPrevented);
         copy.playersGatheringSpecimensThisTurn.addAll(this.playersGatheringSpecimensThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
+        copy.creaturesWithCombatDamagePrevented.addAll(this.creaturesWithCombatDamagePrevented);
         copy.creaturesPreventedFromDealingCombatDamage.addAll(this.creaturesPreventedFromDealingCombatDamage);
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
@@ -1392,6 +1453,9 @@ public class GameData {
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
         copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
         copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
+        copy.eyeForAnEyeShields.addAll(this.eyeForAnEyeShields);
+        copy.pendingEyeForAnEyeReflections.addAll(this.pendingEyeForAnEyeReflections);
+        copy.pendingSourceDamageForReflection.putAll(this.pendingSourceDamageForReflection);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---
@@ -1419,6 +1483,7 @@ public class GameData {
         copy.stolenCreatures.putAll(this.stolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
+        this.cardsDrawnThisTurnIds.forEach((k, v) -> copy.cardsDrawnThisTurnIds.put(k, new ArrayList<>(v)));
         copy.cardsDiscardedThisTurn.putAll(this.cardsDiscardedThisTurn);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
@@ -1476,6 +1541,9 @@ public class GameData {
         copy.creaturesReturnedToBattlefieldOnDeathThisTurn.addAll(this.creaturesReturnedToBattlefieldOnDeathThisTurn);
         this.creatureCreatingTokenOnDeathThisTurn.forEach((k, v) ->
                 copy.creatureCreatingTokenOnDeathThisTurn.put(k, new ArrayList<>(v)));
+        this.seraphReturnedCreatures.forEach((k, v) ->
+                copy.seraphReturnedCreatures.put(k, new HashSet<>(v)));
+        copy.seraphControlWatch.putAll(this.seraphControlWatch);
 
         // --- Map<UUID, Map<CardColor, Integer>> ---
         this.playerColorDamagePreventionCount.forEach((k, v) ->

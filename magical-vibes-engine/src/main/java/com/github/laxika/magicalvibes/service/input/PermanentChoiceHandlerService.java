@@ -99,12 +99,12 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleRedirectCreatureDamageSourceChoice(gameData, permanentId, redirectCreatureSource);
         } else if (context instanceof PermanentChoiceContext.PreventDamageToTargetFromSourceChoice preventTargetSource) {
             battlefieldHandler.handlePreventDamageToTargetFromSourceChoice(gameData, permanentId, preventTargetSource);
-        } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice preventNextColored) {
-            battlefieldHandler.handlePreventNextDamageFromColoredSourceChoice(gameData, permanentId, preventNextColored);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceChoice preventNextSource) {
             battlefieldHandler.handlePreventNextDamageFromSourceChoice(gameData, permanentId, preventNextSource);
         } else if (context instanceof PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice preventNextAnyTarget) {
             battlefieldHandler.handlePreventNextDamageFromSourceToAnyTargetChoice(gameData, permanentId, preventNextAnyTarget);
+        } else if (context instanceof PermanentChoiceContext.EyeForAnEyeSourceChoice eyeForAnEye) {
+            battlefieldHandler.handleEyeForAnEyeSourceChoice(gameData, permanentId, eyeForAnEye);
         } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
             triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
         } else if (context instanceof PermanentChoiceContext.SacrificePermanentThen spt) {

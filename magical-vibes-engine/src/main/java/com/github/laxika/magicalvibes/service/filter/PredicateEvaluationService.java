@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -70,6 +72,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPred
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
@@ -323,6 +326,13 @@ public class PredicateEvaluationService {
             }
             case PermanentIsEnchantedPredicate ignored ->
                     gameData != null && gameQueryService.isEnchanted(gameData, permanent);
+            case PermanentIsAuraAttachedToCreaturePredicate ignored -> {
+                if (gameData == null || !permanent.getCard().isAura() || !permanent.isAttached()) {
+                    yield false;
+                }
+                Permanent host = gameQueryService.findPermanentById(gameData, permanent.getAttachedTo());
+                yield host != null && gameQueryService.isCreature(gameData, host);
+            }
             case PermanentIsEnchantmentPredicate ignored -> {
                 if (gameData == null) {
                     yield gameQueryService.isEnchantment(permanent);
@@ -449,6 +459,31 @@ public class PredicateEvaluationService {
                 }
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
                 yield controllerBattlefield != null && controllerBattlefield.contains(permanent);
+            }
+            case PermanentOwnedBySourceControllerPredicate ignored -> {
+                if (sourceControllerId == null || gameData == null) {
+                    yield false;
+                }
+                boolean ownedByController = false;
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                    if (battlefield != null && battlefield.contains(permanent)) {
+                        UUID ownerId = gameData.stolenCreatures.getOrDefault(permanent.getId(), playerId);
+                        ownedByController = ownerId.equals(sourceControllerId);
+                        break;
+                    }
+                }
+                yield ownedByController;
+            }
+            case PermanentControllerControlsPermanentPredicate controllerControlsPredicate -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID targetController = gameData.findControllerOf(permanent.getId());
+                List<Permanent> targetBattlefield = targetController == null ? null
+                        : gameData.playerBattlefields.get(targetController);
+                yield targetBattlefield != null && targetBattlefield.stream().anyMatch(p ->
+                        matchesPermanentPredicate(p, controllerControlsPredicate.filter(), filterContext));
             }
             case PermanentAttachedToSourceControllerPredicate ignored ->
                     sourceControllerId != null && permanent.isAttached()

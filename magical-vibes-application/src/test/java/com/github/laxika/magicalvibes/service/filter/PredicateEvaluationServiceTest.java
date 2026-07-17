@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -730,6 +732,57 @@ class PredicateEvaluationServiceTest {
             FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
 
             assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentControlledBySourceControllerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentOwnedBySourceControllerPredicate matches a permanent the source controller owns")
+        void ownedBySourceControllerMatches() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentOwnedBySourceControllerPredicate(), ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentOwnedBySourceControllerPredicate rejects a permanent owned by another player")
+        void ownedBySourceControllerRejectsOpponent() {
+            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentOwnedBySourceControllerPredicate(), ctx)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentOwnedBySourceControllerPredicate matches a permanent the source controller owns but does not control")
+        void ownedBySourceControllerMatchesStolenFromController() {
+            Permanent perm = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.stolenCreatures.put(perm.getId(), player1Id);
+            FilterContext ctx = FilterContext.of(gd).withSourceControllerId(player1Id);
+
+            assertThat(evaluator.matchesPermanentPredicate(perm, new PermanentOwnedBySourceControllerPredicate(), ctx)).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentControllerControlsPermanentPredicate matches when the target's controller controls a matching permanent")
+        void controllerControlsPermanentMatches() {
+            Permanent bear = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            addPermanent(player2Id, createCreatureWithSubtypes("Island", 0, 0, CardColor.BLUE, List.of(CardSubtype.ISLAND)));
+
+            assertThat(evaluator.matchesPermanentPredicate(bear,
+                    new PermanentControllerControlsPermanentPredicate(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
+                    FilterContext.of(gd))).isTrue();
+        }
+
+        @Test
+        @DisplayName("PermanentControllerControlsPermanentPredicate rejects when only another player controls the matching permanent")
+        void controllerControlsPermanentRejects() {
+            Permanent bear = addPermanent(player2Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            // The Island belongs to player1, but the target creature is controlled by player2.
+            addPermanent(player1Id, createCreatureWithSubtypes("Island", 0, 0, CardColor.BLUE, List.of(CardSubtype.ISLAND)));
+
+            assertThat(evaluator.matchesPermanentPredicate(bear,
+                    new PermanentControllerControlsPermanentPredicate(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
+                    FilterContext.of(gd))).isFalse();
         }
 
         @Test

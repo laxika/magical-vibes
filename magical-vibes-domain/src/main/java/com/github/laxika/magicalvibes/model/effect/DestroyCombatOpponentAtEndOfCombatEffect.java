@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record DestroyCombatOpponentAtEndOfCombatEffect(
         PermanentPredicate filter,
         boolean cannotBeRegenerated
-) implements CardEffect {
+) implements CardEffect, CombatOpponentReferencingEffect {
 
     @Override
     public TargetSpec targetSpec() {

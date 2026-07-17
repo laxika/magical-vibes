@@ -16,7 +16,10 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -25,6 +28,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -64,6 +68,7 @@ public class MultiPermanentChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService battlefieldEntryService;
     private final DestructionSupport destructionSupport;
+    private final CreatureControlService creatureControlService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final LifeSupport lifeSupport;
@@ -114,6 +119,8 @@ public class MultiPermanentChoiceHandlerService {
             handleSacrificeDamagedPlayerControlsPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.GainControlOfLandAndAssignNoCombatDamage ctx) {
+            handleGainControlOfLandAndAssignNoCombatDamage(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
             handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
@@ -182,7 +189,7 @@ public class MultiPermanentChoiceHandlerService {
                     UUID chosenPermId = permanentIds.getFirst();
                     Permanent target = gameQueryService.findPermanentById(gameData, chosenPermId);
                     if (target != null) {
-                        if (permanentRemovalService.tryDestroyPermanent(gameData, target)) {
+                        if (permanentRemovalService.tryDestroyPermanent(gameData, target, context.cannotBeRegenerated())) {
                             String destroyLog = target.getCard().getName() + " is destroyed.";
                             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(destroyLog));
                             log.info("Game {} - {} destroyed by sacrifice trigger", gameData.id, target.getCard().getName());
@@ -194,6 +201,38 @@ public class MultiPermanentChoiceHandlerService {
             } else {
                 String logEntry = "Source creature no longer exists — sacrifice trigger fizzles.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleGainControlOfLandAndAssignNoCombatDamage(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                                                MultiPermanentChoiceContext.GainControlOfLandAndAssignNoCombatDamage context) {
+        UUID sourcePermId = context.sourcePermanentId();
+
+        if (permanentIds.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    GameLog.text(gameData.playerIdToName.get(playerId) + " chooses not to gain control of a land."));
+        } else {
+            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
+            UUID sourceController = source != null ? gameQueryService.findPermanentController(gameData, sourcePermId) : null;
+            Permanent land = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
+
+            // Per ruling: only take control if you still control the source when this resolves;
+            // the "assigns no combat damage" rider applies only when a land is actually taken.
+            if (source != null && land != null && playerId.equals(sourceController)) {
+                creatureControlService.applyControlEffect(gameData, playerId, land,
+                        new GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD),
+                        EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD, sourcePermId, source.getCard().getName());
+                gameData.creaturesPreventedFromDealingCombatDamage.add(sourcePermId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.text(source.getCard().getName() + " assigns no combat damage this turn."));
+                log.info("Game {} - {} gains control of {} and assigns no combat damage",
+                        gameData.id, gameData.playerIdToName.get(playerId), land.getCard().getName());
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        GameLog.text("The ability has no effect (source no longer controlled)."));
             }
         }
 

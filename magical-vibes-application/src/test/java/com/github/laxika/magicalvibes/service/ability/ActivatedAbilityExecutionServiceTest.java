@@ -656,6 +656,26 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
+        @DisplayName("Aura's self-sacrifice RegenerateEffect targets the enchanted creature")
+        void auraSacrificeRegenerateTargetsEnchantedCreature() {
+            Permanent creature = addReadyPermanent(player2Id, createCreature("Enchanted Creature"));
+            Card aura = createCard("Test Aura", CardType.ENCHANTMENT);
+            aura.setSubtypes(List.of(CardSubtype.AURA));
+            Permanent auraPerm = addReadyPermanent(player1Id, aura);
+            auraPerm.setAttachedTo(creature.getId());
+
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new RegenerateEffect());
+            ActivatedAbility ability = new ActivatedAbility(false, null, effects,
+                    "Sacrifice this Aura: Regenerate enchanted creature.");
+
+            service.completeActivationAfterCosts(gameData, player1, auraPerm, ability, effects, 0, null, null, false);
+
+            // Enchanted creature must be captured before the sacrifice cost removes the Aura's link.
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getTargetId()).isEqualTo(creature.getId());
+        }
+
+        @Test
         @DisplayName("SacrificeSelfCost passes the correct permanent to removal service")
         void sacrificePassesCorrectPermanent() {
             Card card = createCard("Neurok Replica", CardType.ARTIFACT);

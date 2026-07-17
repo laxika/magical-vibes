@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.Set;
 
 @CardRegistration(set = "6ED", collectorNumber = "13")
+@CardRegistration(set = "5ED", collectorNumber = "22")
 public class Crusade extends Card {
 
     public Crusade() {

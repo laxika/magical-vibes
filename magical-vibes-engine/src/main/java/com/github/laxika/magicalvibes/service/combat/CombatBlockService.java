@@ -7,17 +7,20 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggerMode;
+import com.github.laxika.magicalvibes.model.effect.BlockCostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -202,6 +206,7 @@ public class CombatBlockService {
         BlockLegalityContext blockContext = gameQueryService.createBlockLegalityContext(gameData, defenderBattlefield);
 
         // Validate assignments
+        int blockTaxTotal = 0;
         Map<Integer, Integer> blockerUsageCount = new HashMap<>();
         Set<String> blockerAttackerPairs = new HashSet<>();
         Map<Integer, Integer> blockersPerAttacker = new HashMap<>();
@@ -228,6 +233,9 @@ public class CombatBlockService {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
             gameQueryService.getBlockingIllegalityReason(blockContext, blocker, attacker)
                     .ifPresent(reason -> { throw new IllegalStateException(reason); });
+
+            // Additional cost to declare this block (e.g. Hipparion — {1} to block power 3+).
+            blockTaxTotal += blockTaxFor(gameData, blocker, attacker);
 
             blockersPerAttacker.merge(attackerIdx, 1, Integer::sum);
         }
@@ -277,6 +285,9 @@ public class CombatBlockService {
         // Okk: "can't block unless a creature with greater power also blocks"
         validateGreaterPowerAlsoBlocks(gameData, defenderBattlefield, blockerAssignments);
 
+        // Orcish Conscripts: "can't block unless at least N other creatures also block"
+        validateCountAlsoBlocks(defenderBattlefield, blockerAssignments);
+
         validateMaximumBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
         validatePerCreatureMustBlockRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
@@ -284,7 +295,20 @@ public class CombatBlockService {
         validateMustBeBlockedIfAbleRequirements(gameData, blockContext, attackerBattlefield, defenderBattlefield, blockable,
                 blockerAssignments);
 
+        // Block tax (e.g. Hipparion): the block is legal only if its additional cost can be paid.
+        if (blockTaxTotal > 0) {
+            ManaPool pool = gameData.playerManaPools.get(defenderId);
+            if (pool.getTotal() < blockTaxTotal) {
+                throw new IllegalStateException("Not enough mana to pay block cost (" + blockTaxTotal + " required)");
+            }
+        }
+
         gameData.interaction.clearAwaitingInput();
+
+        // Pay the block tax now that all validation has passed.
+        if (blockTaxTotal > 0) {
+            combatAttackService.payGenericMana(gameData.playerManaPools.get(defenderId), blockTaxTotal);
+        }
 
         // Mark creatures as blocking
         for (BlockerAssignment assignment : blockerAssignments) {
@@ -351,6 +375,7 @@ public class CombatBlockService {
                                 || (e instanceof SkipNextUntapEffect s && s.scope() == TapUntapScope.TARGET)
                                 || e instanceof DealDamageToTargetCreatureEffect
                                 || e instanceof DestroyCombatOpponentAtEndOfCombatEffect
+                                || e instanceof PutCounterOnCombatOpponentAtEndOfCombatEffect
                                 || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect
                                 || (e instanceof GrantKeywordEffect gk && gk.scope() == GrantScope.TARGET));
                 StackEntry blockTrigger = new StackEntry(
@@ -601,30 +626,68 @@ public class CombatBlockService {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         int pushed = 0;
         for (Permanent attacker : attackerBattlefield) {
-            if (!attacker.isAttacking()) {
+            if (!attacker.isAttacking() || isBlocked(defenderBattlefield, attacker)) {
                 continue;
             }
             List<CardEffect> effects = attacker.getCard().getEffects(EffectSlot.ON_ATTACKS_UNBLOCKED);
-            if (effects.isEmpty() || isBlocked(defenderBattlefield, attacker)) {
-                continue;
+            if (!effects.isEmpty()) {
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        attacker.getCard(),
+                        activeId,
+                        attacker.getCard().getName() + "'s unblocked-attack trigger",
+                        new ArrayList<>(effects),
+                        defenderId,
+                        attacker.getId());
+                // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+                trigger.setNonTargeting(true);
+                gameData.stack.add(trigger);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attacker.getCard().getName()
+                        + "'s unblocked-attack ability triggers."));
+                log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+                pushed++;
+            }
+            // "Whenever enchanted creature attacks and isn't blocked" (aura) triggers on this attacker.
+            pushed += collectEnchantedCreatureUnblockedTriggers(gameData, defenderId, attacker);
+        }
+        return pushed;
+    }
+
+    /**
+     * Collects "whenever enchanted creature attacks and isn't blocked"
+     * ({@link EffectSlot#ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED}) triggers for every aura attached to
+     * the given unblocked attacker. Like the attacker's own {@code ON_ATTACKS_UNBLOCKED} triggers, the
+     * enchanted attacker is baked in as the non-targeting {@code sourcePermanentId} and the defending
+     * player as the {@code targetId}; the trigger is the aura's controller's. Used by Cloak of Confusion.
+     */
+    private int collectEnchantedCreatureUnblockedTriggers(GameData gameData, UUID defenderId, Permanent attacker) {
+        int[] pushed = {0};
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            if (!perm.isAttached() || !attacker.getId().equals(perm.getAttachedTo())) {
+                return;
+            }
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED);
+            if (effects.isEmpty()) {
+                return;
             }
             StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
-                    attacker.getCard(),
-                    activeId,
-                    attacker.getCard().getName() + "'s unblocked-attack trigger",
+                    perm.getCard(),
+                    auraOwnerId,
+                    perm.getCard().getName() + "'s unblocked-attack trigger",
                     new ArrayList<>(effects),
                     defenderId,
                     attacker.getId());
-            // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+            // Enchanted attacker and defending player are determined by the combat — the trigger can't fizzle.
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(attacker.getCard().getName()
-                    + "'s unblocked-attack ability triggers."));
-            log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-            pushed++;
-        }
-        return pushed;
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(perm.getCard().getName()
+                    + "'s ability triggers."));
+            log.info("Game {} - {} enchanted-creature unblocked-attack trigger pushed onto stack (enchanted {})",
+                    gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+            pushed[0]++;
+        });
+        return pushed[0];
     }
 
     /**
@@ -947,6 +1010,22 @@ public class CombatBlockService {
         }
     }
 
+    /**
+     * Additional generic mana the blocker's controller must pay to declare this block, summed over every
+     * {@link BlockCostEffect} the blocker carries against the attacker's effective power (e.g. Hipparion —
+     * {1} to block a creature with power 3 or greater).
+     */
+    private int blockTaxFor(GameData gameData, Permanent blocker, Permanent attacker) {
+        int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
+        int tax = 0;
+        for (CardEffect effect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof BlockCostEffect blockCost) {
+                tax += blockCost.blockCost(attackerPower);
+            }
+        }
+        return tax;
+    }
+
     private boolean hasCantAttackOrBlockAlone(Permanent creature) {
         return creature.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
@@ -979,6 +1058,34 @@ public class CombatBlockService {
                 throw new IllegalStateException(restricted.getCard().getName()
                         + " can't block unless a creature with greater power also blocks");
             }
+        }
+    }
+
+    /**
+     * Orcish Conscripts (CR 509.1b): a creature with "can't block unless at least N other creatures
+     * also block" may only be declared as a blocker if at least N other creatures are declared as
+     * blockers in the same combat. Checked only at declaration time.
+     */
+    private void validateCountAlsoBlocks(List<Permanent> defenderBattlefield,
+                                         List<BlockerAssignment> blockerAssignments) {
+        Set<Integer> uniqueBlockerIndices = new HashSet<>();
+        for (BlockerAssignment assignment : blockerAssignments) {
+            uniqueBlockerIndices.add(assignment.blockerIndex());
+        }
+        for (int idx : uniqueBlockerIndices) {
+            Permanent restricted = defenderBattlefield.get(idx);
+            restricted.getCard().getEffects(EffectSlot.STATIC).stream()
+                    .filter(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::isInstance)
+                    .map(CantAttackOrBlockUnlessCountAlsoDoesEffect.class::cast)
+                    .findFirst()
+                    .ifPresent(effect -> {
+                        long otherBlockers = uniqueBlockerIndices.stream().filter(other -> other != idx).count();
+                        if (otherBlockers < effect.otherCount()) {
+                            throw new IllegalStateException(restricted.getCard().getName()
+                                    + " can't block unless at least " + effect.otherCount()
+                                    + " other creatures block");
+                        }
+                    });
         }
     }
 

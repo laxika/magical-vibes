@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "192")
+@CardRegistration(set = "5ED", collectorNumber = "246")
 public class Jokulhaups extends Card {
 
     public Jokulhaups() {

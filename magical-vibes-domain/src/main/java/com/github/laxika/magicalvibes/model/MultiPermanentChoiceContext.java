@@ -26,7 +26,15 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** "You may sacrifice [source]. If you do, destroy target creature that player controls." */
-    record SacrificeSelfToDestroy(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
+    record SacrificeSelfToDestroy(UUID sourcePermanentId, boolean cannotBeRegenerated) implements MultiPermanentChoiceContext {
+    }
+
+    /**
+     * "Gain control of the chosen land the defending player controls for as long as you control
+     * [source]. If you do, [source] assigns no combat damage this turn." (Orcish Squatters.)
+     * {@code sourcePermanentId} is the attacking source creature.
+     */
+    record GainControlOfLandAndAssignNoCombatDamage(UUID sourcePermanentId) implements MultiPermanentChoiceContext {
     }
 
     /** Transform [source] and attach it to a creature the damaged player controls. */

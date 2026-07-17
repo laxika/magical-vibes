@@ -67,6 +67,7 @@ public class StateBasedActionService {
             }
 
             anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
+            anyPerformed |= sacrificeCreaturesOnSeraphControlLoss(gameData);
             anyPerformed |= cancelCounters(gameData);
 
             // CR 704.5n / 704.5q — illegally attached auras die, illegal equipment unattaches
@@ -154,6 +155,60 @@ public class StateBasedActionService {
             log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
         }
         return !sagasToSacrifice.isEmpty();
+    }
+
+    /**
+     * Seraph: "Sacrifice the creature when you lose control of this creature." Each creature Seraph
+     * returned is linked to that Seraph. When a Seraph that is still on the battlefield changes
+     * controllers, the player who lost control sacrifices the linked creatures they still control.
+     * A Seraph that leaves the battlefield never triggers this — its linkage is simply dropped, so
+     * the returned creatures stay for good. Modeled as an SBA-timed check (the engine has no
+     * control-change triggered-ability slot); rare enough that the loss of stack interaction is
+     * acceptable.
+     */
+    private boolean sacrificeCreaturesOnSeraphControlLoss(GameData gameData) {
+        if (gameData.seraphReturnedCreatures.isEmpty()) return false;
+
+        List<Permanent> toSacrifice = new ArrayList<>();
+        for (UUID seraphId : new ArrayList<>(gameData.seraphReturnedCreatures.keySet())) {
+            if (gameQueryService.findPermanentById(gameData, seraphId) == null) {
+                // Seraph left the battlefield: no sacrifice ever; stop tracking.
+                gameData.seraphReturnedCreatures.remove(seraphId);
+                gameData.seraphControlWatch.remove(seraphId);
+                continue;
+            }
+            java.util.Set<UUID> linked = gameData.seraphReturnedCreatures.get(seraphId);
+            linked.removeIf(id -> gameQueryService.findPermanentById(gameData, id) == null);
+
+            UUID currentController = gameData.findControllerOf(seraphId);
+            UUID prevController = gameData.seraphControlWatch.get(seraphId);
+            if (prevController != null && !prevController.equals(currentController)) {
+                for (UUID creatureId : new ArrayList<>(linked)) {
+                    Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+                    if (creature != null && prevController.equals(gameData.findControllerOf(creatureId))) {
+                        toSacrifice.add(creature);
+                        linked.remove(creatureId);
+                    }
+                }
+            }
+            gameData.seraphControlWatch.put(seraphId, currentController);
+            if (linked.isEmpty()) {
+                gameData.seraphReturnedCreatures.remove(seraphId);
+                gameData.seraphControlWatch.remove(seraphId);
+            }
+        }
+
+        for (Permanent creature : toSacrifice) {
+            if (permanentRemovalService.removePermanentToGraveyard(gameData, creature)) {
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(
+                        creature.getCard().getName() + " is sacrificed (its controller lost control of Seraph)."));
+                log.info("Game {} - {} sacrificed (lost control of Seraph)", gameData.id, creature.getCard().getName());
+            }
+        }
+        if (!toSacrifice.isEmpty()) {
+            permanentRemovalService.removeOrphanedAuras(gameData);
+        }
+        return !toSacrifice.isEmpty();
     }
 
     // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out

@@ -8,5 +8,11 @@ package com.github.laxika.magicalvibes.model;
  */
 public enum MultiTargetConstraint {
     /** The chosen creatures must share no creature types (e.g. Rivals' Duel). */
-    SHARE_NO_CREATURE_TYPES
+    SHARE_NO_CREATURE_TYPES,
+    /**
+     * The chosen permanents must share at least one of the card types artifact, creature, or land
+     * (e.g. Gauntlets of Chaos: the opponent's permanent must share one of those types with your
+     * artifact/creature/land).
+     */
+    SHARE_ARTIFACT_CREATURE_OR_LAND_TYPE
 }

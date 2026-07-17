@@ -14,6 +14,7 @@ public enum CardSubtype {
     SWAMP("Swamp"),
     ANGEL("Angel"),
     ANTELOPE("Antelope"),
+    AUROCHS("Aurochs"),
     APE("Ape"),
     ARCHER("Archer"),
     ARTIFICER("Artificer"),
@@ -154,6 +155,7 @@ public enum CardSubtype {
     LESSON("Lesson"),
     CITIZEN("Citizen"),
     SCARECROW("Scarecrow"),
+    CARIBOU("Caribou"),
     SERF("Serf");
 
     @Getter

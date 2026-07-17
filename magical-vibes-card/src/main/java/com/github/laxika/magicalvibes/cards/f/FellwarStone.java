@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "9ED", collectorNumber = "297")
+@CardRegistration(set = "5ED", collectorNumber = "369")
 public class FellwarStone extends Card {
 
     public FellwarStone() {

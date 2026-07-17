@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEn
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.GainControlOfPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.PutCounterOnPermanentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.RemoveCounterFromSourceAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.PutMinusOneCounterAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
@@ -54,12 +57,18 @@ public class TurnProgressionService {
                     || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(PutMinusOneCounterAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(PutCounterOnPermanentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(RemoveCounterFromSourceAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(GainControlOfPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
             combatService.processEndOfCombatDestructions(gameData);
             combatService.processEndOfCombatSourceCounters(gameData);
+            combatService.processEndOfCombatOpponentCounters(gameData);
+            combatService.processEndOfCombatCounterRemovals(gameData);
+            combatService.processEndOfCombatControlGains(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
             return;
@@ -215,6 +224,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
+        gameData.cardsDrawnThisTurnIds.clear();
         gameData.cardsDiscardedThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
         gameData.lifeLostThisTurn.clear();
@@ -318,9 +328,11 @@ public class TurnProgressionService {
     }
 
     /**
-     * Resumes the paused untap step after the active player picks up to two permanents to untap
-     * under a Static Orb restriction. Only the chosen permanents untap; the remaining untap-step
-     * bookkeeping and turn advance then proceed exactly as {@link #advanceTurn} would have.
+     * Resumes the paused untap step after the active player picks which capped permanents untap
+     * under an untap-cap restriction (Static Orb / Smoke). Only the chosen permanents untap among
+     * those matching {@code capFilter}; permanents outside the cap filter untap normally. The
+     * remaining untap-step bookkeeping and turn advance then proceed exactly as {@link #advanceTurn}
+     * would have.
      */
     public void resumeStaticOrbUntap(GameData gameData, UUID activePlayerId,
                                      java.util.Set<UUID> chosenUntapIds,

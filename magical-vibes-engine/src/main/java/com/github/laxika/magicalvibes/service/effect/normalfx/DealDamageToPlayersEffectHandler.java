@@ -41,7 +41,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         var e = (DealDamageToPlayersEffect) effect;
 
         switch (e.recipient()) {
-            case TARGET_PLAYER, ENCHANTED_PLAYER, TRIGGERING_PERMANENT_CONTROLLER ->
+            case TARGET_PLAYER, ENCHANTED_PLAYER, ENCHANTED_PERMANENT_CONTROLLER, TRIGGERING_PERMANENT_CONTROLLER ->
                     resolveSingleTargetPlayer(gameData, entry, e);
             case CONTROLLER -> resolveController(gameData, entry, e);
             case EACH_OPPONENT -> resolveEachPlayer(gameData, entry, e, true);
@@ -52,7 +52,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         gameOutcomeService.checkWinCondition(gameData);
     }
 
-    /** TARGET_PLAYER / ENCHANTED_PLAYER / TRIGGERING_PERMANENT_CONTROLLER: victim = the stack entry's target player. */
+    /** TARGET_PLAYER / ENCHANTED_PLAYER / ENCHANTED_PERMANENT_CONTROLLER / TRIGGERING_PERMANENT_CONTROLLER: victim = the stack entry's target player. */
     private void resolveSingleTargetPlayer(GameData gameData, StackEntry entry, DealDamageToPlayersEffect e) {
         UUID targetId = entry.getTargetId();
         if (!gameData.playerIds.contains(targetId)) return;

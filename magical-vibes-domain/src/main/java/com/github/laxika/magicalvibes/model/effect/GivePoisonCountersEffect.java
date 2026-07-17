@@ -24,7 +24,8 @@ import java.util.UUID;
  * @param affectedPlayerId enchanted permanent's controller, baked in at trigger time
  */
 public record GivePoisonCountersEffect(int amount, PoisonRecipient recipient,
-        CardPredicate spellFilter, UUID affectedPlayerId) implements CardEffect {
+        CardPredicate spellFilter, UUID affectedPlayerId)
+        implements CardEffect, CombatDamageTriggerContextEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
         this(amount, recipient, null, null);
@@ -40,5 +41,12 @@ public record GivePoisonCountersEffect(int amount, PoisonRecipient recipient,
         return recipient == PoisonRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetCategory.PLAYER)
                 : TargetSpec.NONE;
+    }
+
+    @Override
+    public TriggerContext combatDamageTriggerContext() {
+        // On an ON_COMBAT_DAMAGE_TO_PLAYER trigger (Pit Scorpion) the TARGET_PLAYER recipient must
+        // bind to the damaged player so the poison counter lands on them.
+        return recipient == PoisonRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

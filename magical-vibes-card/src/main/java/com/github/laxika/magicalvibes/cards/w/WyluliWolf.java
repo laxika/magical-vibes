@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "270")
+@CardRegistration(set = "5ED", collectorNumber = "345")
 public class WyluliWolf extends Card {
 
     public WyluliWolf() {

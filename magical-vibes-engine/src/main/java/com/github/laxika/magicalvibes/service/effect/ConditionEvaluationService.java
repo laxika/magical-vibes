@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentHandEmpty;
 import com.github.laxika.magicalvibes.model.condition.AnyLibraryAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
@@ -15,8 +16,10 @@ import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
+import com.github.laxika.magicalvibes.model.condition.CardsAboveSelfInGraveyard;
 import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
@@ -65,13 +68,16 @@ import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourContr
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AttackedWithCreaturesThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.condition.TargetSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.WonClash;
@@ -83,6 +89,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -113,6 +120,12 @@ public class ConditionEvaluationService {
                     c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx));
             case CreatureAttackingController ignored ->
                     ctx.controllerId() != null && creatureAttackingPlayer(gameData, ctx.controllerId());
+            case AllOf c ->
+                    c.conditions().stream().allMatch(inner -> isMet(gameData, inner, ctx));
+            case CameUnderControlThisTurn ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isSummoningSick();
+            }
             case Metalcraft ignored ->
                     isMetalcraftMet(gameData, ctx);
             case Morbid ignored ->
@@ -170,6 +183,8 @@ public class ConditionEvaluationService {
                             && gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 20) <= c.threshold();
             case GraveyardCardThreshold c ->
                     countMatchingGraveyardCards(gameData, ctx, c) >= c.threshold();
+            case CardsAboveSelfInGraveyard c ->
+                    countCardsAboveSelfInGraveyard(gameData, ctx, c) >= c.threshold();
             case CardsInLibraryAtLeast c ->
                     countCardsInLibrary(gameData, ctx.controllerId()) >= c.threshold();
             case AnyLibraryAtMost c ->
@@ -208,6 +223,8 @@ public class ConditionEvaluationService {
                     isAnyOpponentPoisoned(gameData, ctx.controllerId());
             case OpponentDealtDamageThisTurn c ->
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
+            case SelfDealtDamageToOpponentThisTurn ignored ->
+                    sourceDealtDamageToOpponentThisTurn(gameData, ctx);
             case OpponentLostLifeThisTurn c ->
                     didAnyOpponentLoseLifeThisTurn(gameData, ctx.controllerId(), c.minimumAmount());
             case ActivationCount c ->
@@ -236,6 +253,14 @@ public class ConditionEvaluationService {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
                 yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
             }
+            case TargetSpellMatches c -> {
+                com.github.laxika.magicalvibes.model.StackEntry targetSpell = ctx.targetId() == null ? null
+                        : gameData.stack.stream()
+                                .filter(se -> se.getCard().getId().equals(ctx.targetId()))
+                                .findFirst().orElse(null);
+                yield targetSpell != null
+                        && predicateEvaluationService.matchesStackEntryPredicate(targetSpell, c.filter(), null);
+            }
             case SourceHasSubtype c ->
                     sourceHasSubtype(gameData, ctx, c.subtype());
             case SelfHasKeyword c -> {
@@ -249,6 +274,10 @@ public class ConditionEvaluationService {
             case SourceUntapped ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && !source.isTapped();
+            }
+            case SourceIsTapped ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && source.isTapped();
             }
             case TopCardOfLibraryColor c ->
                     isTopCardOfLibraryColor(gameData, ctx.controllerId(), c);
@@ -493,6 +522,35 @@ public class ConditionEvaluationService {
         return count;
     }
 
+    /**
+     * Counts cards matching the condition's filter positioned above the source card in its
+     * controller's (ordered) graveyard. The graveyard is a list where later indices are higher
+     * on the pile; "above" therefore means a strictly greater index than the source card.
+     */
+    private int countCardsAboveSelfInGraveyard(GameData gameData, ConditionContext ctx, CardsAboveSelfInGraveyard c) {
+        if (ctx.controllerId() == null || ctx.sourceCard() == null) return 0;
+        List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
+        if (graveyard == null) return 0;
+        int selfIndex = -1;
+        for (int i = 0; i < graveyard.size(); i++) {
+            if (graveyard.get(i).getId().equals(ctx.sourceCard().getId())) {
+                selfIndex = i;
+                break;
+            }
+        }
+        if (selfIndex < 0) return 0;
+        int count = 0;
+        for (int i = selfIndex + 1; i < graveyard.size(); i++) {
+            Card above = graveyard.get(i);
+            if (above.isToken()) continue;
+            if (c.filter() == null
+                    || predicateEvaluationService.matchesCardPredicate(above, c.filter(), null, gameData, ctx.controllerId())) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private boolean sourceDidntAttackThisTurn(GameData gameData, ConditionContext ctx) {
         if (ctx.sourcePermanentId() == null) return true;
         Permanent source = sourcePermanent(gameData, ctx);
@@ -588,6 +646,18 @@ public class ConditionEvaluationService {
             }
         }
         return false;
+    }
+
+    /**
+     * True if the source permanent dealt combat damage to an opponent of its current controller this
+     * turn (Whirling Dervish). Reads the per-source combat-damage-to-players tracking and treats any
+     * damaged player other than the source's current controller as an opponent.
+     */
+    private boolean sourceDealtDamageToOpponentThisTurn(GameData gameData, ConditionContext ctx) {
+        if (ctx.sourcePermanentId() == null || ctx.controllerId() == null) return false;
+        Set<UUID> damagedPlayers = gameData.combatDamageToPlayersThisTurn.get(ctx.sourcePermanentId());
+        if (damagedPlayers == null) return false;
+        return damagedPlayers.stream().anyMatch(playerId -> !playerId.equals(ctx.controllerId()));
     }
 
     private boolean didAnyOpponentLoseLifeThisTurn(GameData gameData, UUID controllerId, int minimumAmount) {

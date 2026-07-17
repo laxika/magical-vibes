@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "136")
+@CardRegistration(set = "5ED", collectorNumber = "167")
 public class Hecatomb extends Card {
 
     public Hecatomb() {

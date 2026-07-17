@@ -103,6 +103,24 @@ public sealed interface ChoiceContext {
     /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
     record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
 
+    /**
+     * Choosing a number in an inclusive range for {@code permanentId} (e.g. Shapeshifter's "choose a
+     * number between 0 and 7", both as it enters and at each upkeep). The answer is stored on the
+     * permanent via {@code Permanent.setChosenNumber(int)}.
+     */
+    record NumberChoice(UUID permanentId) implements ChoiceContext {}
+
+    /**
+     * Choosing how many {@code counterType} counters to remove from {@code permanentId} as a
+     * storage land's mana ability resolves (0..the count present). On resume the chosen number of
+     * counters is removed and that much mana of {@code color} is added to {@code playerId}'s pool
+     * (times {@code manaMultiplier} for Mana Reflection; {@code fromCreature} marks creature mana).
+     * Used by the storage-land cycle via {@code RemoveCountersForManaEffect}.
+     */
+    record RemoveCountersForManaChoice(UUID playerId, UUID permanentId, ManaColor color,
+                                       CounterType counterType, boolean fromCreature,
+                                       int manaMultiplier) implements ChoiceContext {}
+
     /** Choosing one of Primal Clay's three shapes "as this creature enters". */
     record PrimalClayFormChoice(UUID permanentId) implements ChoiceContext {}
 

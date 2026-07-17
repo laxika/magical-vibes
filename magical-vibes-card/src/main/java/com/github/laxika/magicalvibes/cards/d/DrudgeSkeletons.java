@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "5ED", collectorNumber = "157")
 @CardRegistration(set = "10E", collectorNumber = "139")
 @CardRegistration(set = "9ED", collectorNumber = "126")
 @CardRegistration(set = "M10", collectorNumber = "95")

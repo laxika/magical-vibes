@@ -13,11 +13,14 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -27,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePrimalClayFormOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -69,6 +73,7 @@ public class StackResolutionService {
     private final StateTriggerService stateTriggerService;
     private final ExileService exileService;
     private final ParadigmService paradigmService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
                                   CloneService cloneService,
@@ -84,6 +89,7 @@ public class StackResolutionService {
                                   CreatureControlService creatureControlService,
                                   StateTriggerService stateTriggerService,
                                   ExileService exileService,
+                                  GraveyardReturnSupport graveyardReturnSupport,
                                   @Lazy ParadigmService paradigmService) {
         this.battlefieldEntryService = battlefieldEntryService;
         this.cloneService = cloneService;
@@ -99,6 +105,7 @@ public class StackResolutionService {
         this.creatureControlService = creatureControlService;
         this.stateTriggerService = stateTriggerService;
         this.exileService = exileService;
+        this.graveyardReturnSupport = graveyardReturnSupport;
         this.paradigmService = paradigmService;
     }
 
@@ -269,9 +276,56 @@ public class StackResolutionService {
                         && wrapped.type() == type));
     }
 
+    /**
+     * Resolves a reanimation Aura (e.g. Animate Dead): reanimate the enchanted creature card from a
+     * graveyard under the Aura's controller and attach the Aura to it. If the enchanted card is no
+     * longer a creature card in a graveyard, or is blocked from entering (e.g. Grafdigger's Cage),
+     * the Aura is put into its owner's graveyard with nothing to enchant.
+     */
+    private void resolveReanimationAura(GameData gameData, StackEntry entry, Card card, UUID controllerId) {
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (graveyardCard == null || !graveyardCard.hasType(CardType.CREATURE)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                    .card(card)
+                    .text(" fizzles (enchanted creature card no longer in a graveyard).")
+                    .build());
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            log.info("Game {} - {} fizzles, reanimation target {} not in graveyard", gameData.id, card.getName(), entry.getTargetId());
+            return;
+        }
+
+        Permanent creature = graveyardReturnSupport.reanimateTargetedCard(gameData, controllerId, graveyardCard);
+        if (creature == null) {
+            // Blocked from entering (e.g. Grafdigger's Cage): the Aura has nothing to enchant.
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            log.info("Game {} - {} put into graveyard, reanimated creature could not enter", gameData.id, card.getName());
+            return;
+        }
+
+        Permanent auraPerm = new Permanent(card);
+        auraPerm.setAttachedTo(creature.getId());
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, auraPerm);
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData, GameLog.builder()
+                .card(card)
+                .text(" enters the battlefield attached to ")
+                .card(creature.getCard())
+                .text(" under " + playerName + "'s control.")
+                .build());
+        log.info("Game {} - {} reanimates {} for {}", gameData.id, card.getName(), creature.getCard().getName(), playerName);
+    }
+
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
+
+        // Reanimation Aura that enchants a creature card in a graveyard (e.g. Animate Dead): return
+        // the enchanted card to the battlefield under the Aura's controller and attach the Aura to it.
+        if (card.isAura() && entry.getTargetZone() == Zone.GRAVEYARD && entry.getTargetId() != null) {
+            resolveReanimationAura(gameData, entry, card, controllerId);
+            return;
+        }
 
         // Aura that enchants a player (e.g. Curses)
         if (card.isAura() && card.isEnchantPlayer() && entry.getTargetId() != null) {
@@ -338,6 +392,15 @@ public class StackResolutionService {
                     List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                     Permanent justEntered = bf.get(bf.size() - 1);
                     playerInputService.beginBasicLandTypeChoice(gameData, controllerId, justEntered.getId());
+                }
+
+                // Check if aura has "as enters, choose a color" (e.g. Prismatic Ward)
+                boolean needsAuraColorChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(e -> e instanceof ChooseColorEffect);
+                if (needsAuraColorChoice) {
+                    List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                    Permanent justEntered = bf.get(bf.size() - 1);
+                    playerInputService.beginColorChoice(gameData, controllerId, justEntered.getId(), null);
                 }
 
                 // Process aura ETB effects (e.g., Volition Reins)
@@ -485,6 +548,18 @@ public class StackResolutionService {
             List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
             Permanent justEntered = bf.get(bf.size() - 1);
             playerInputService.beginPrimalClayFormChoice(gameData, controllerId, justEntered.getId());
+        }
+
+        // Check if artifact has "as this enters, choose a number between X and Y" (Shapeshifter)
+        NumberChoiceEffect numberChoice = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .filter(e -> e instanceof NumberChoiceEffect)
+                .map(e -> (NumberChoiceEffect) e)
+                .findFirst().orElse(null);
+        if (numberChoice != null) {
+            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEntered = bf.get(bf.size() - 1);
+            playerInputService.beginNumberChoice(gameData, controllerId, justEntered.getId(),
+                    numberChoice.minNumber(), numberChoice.maxNumber());
         }
 
         // Process ETB effects for all artifacts (creature and non-creature)

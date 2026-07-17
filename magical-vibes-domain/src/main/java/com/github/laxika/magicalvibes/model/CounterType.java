@@ -13,14 +13,20 @@ public enum CounterType {
     LOYALTY,
     MANNEQUIN,
     MINUS_ONE_MINUS_ONE,
+    MINUS_ZERO_MINUS_TWO,
     PHYLACTERY,
     PLUS_ONE_PLUS_ONE,
+    PLUS_ONE_PLUS_ZERO,
+    PLUS_ZERO_PLUS_ONE,
     SLIME,
+    STORAGE,
     STUDY,
     STUN,
     WISH,
     LORE,
     SILVER,
     PAGE,
-    TOWER
+    TOWER,
+    TIME,
+    VITALITY
 }

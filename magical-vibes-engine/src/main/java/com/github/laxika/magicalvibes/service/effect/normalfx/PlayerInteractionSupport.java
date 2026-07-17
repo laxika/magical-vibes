@@ -166,7 +166,7 @@ public class PlayerInteractionSupport {
             if (currentHand.isEmpty()) break;
             int randomIndex = ThreadLocalRandom.current().nextInt(currentHand.size());
             Card discarded = currentHand.remove(randomIndex);
-            graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+            graveyardService.discardCard(gameData, playerId, discarded);
             String logEntry = playerName + " discards " + discarded.getName() + " at random.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
@@ -212,7 +212,7 @@ public class PlayerInteractionSupport {
 
         int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
         Card discarded = hand.remove(chosen);
-        graveyardService.addCardToGraveyard(gameData, playerId, discarded);
+        graveyardService.discardCard(gameData, playerId, discarded);
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(playerName + " discards " + discarded.getName() + " at random."));
         log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, discarded);
@@ -481,10 +481,14 @@ public class PlayerInteractionSupport {
     }
     public void startNextEachPlayerDiscard(GameData gameData, DiscardFollowUp followUp) {
 
-        int amount = followUp.eachPlayerAmount();
         List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerDiscards());
+        // When present, eachPlayerAmounts holds a per-chooser amount parallel to the remaining
+        // choosers (Pox); otherwise every chooser discards the shared eachPlayerAmount.
+        List<Integer> amounts = new ArrayList<>(followUp.eachPlayerAmounts());
+        boolean variableAmounts = !amounts.isEmpty();
         while (!remaining.isEmpty()) {
             UUID nextPlayerId = remaining.remove(0);
+            int amount = variableAmounts ? amounts.remove(0) : followUp.eachPlayerAmount();
             gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
@@ -493,7 +497,7 @@ public class PlayerInteractionSupport {
                 continue;
             }
             playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount,
-                    followUp.withRemainingEachPlayerDiscards(remaining));
+                    followUp.withRemainingEachPlayer(remaining, amounts));
             return;
         }
 

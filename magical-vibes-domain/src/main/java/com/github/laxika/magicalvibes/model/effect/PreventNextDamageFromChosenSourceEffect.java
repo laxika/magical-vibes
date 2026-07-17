@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * The source is chosen on resolution (any permanent, regardless of color). One-shot: only the next
  * damage event from that source is prevented, then the shield is consumed.
  *
- * <p>Like {@link PreventNextDamageFromChosenColoredSourceEffect} but with no color restriction. When
+ * <p>Like {@link PreventNextDamageFromChosenSourceMatchingEffect} but with no source restriction. When
  * {@code gainLife} is true the controller also gains life equal to the damage prevented this way
  * (Reverse Damage); when false there is no life gain (Pentagram of the Ages).
  *

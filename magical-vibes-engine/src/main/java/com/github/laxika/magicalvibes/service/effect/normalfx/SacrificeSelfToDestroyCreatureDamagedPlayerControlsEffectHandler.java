@@ -32,6 +32,8 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        boolean cannotBeRegenerated =
+                ((SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) effect).cannotBeRegenerated();
         UUID defenderId = entry.getTargetId();
                 UUID sourcePermanentId = entry.getSourcePermanentId();
                 UUID controllerId = entry.getControllerId();
@@ -68,7 +70,7 @@ public class SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler im
 
                 // Present multi-permanent choice with max 1 to select destruction target
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId, validCreatureIds, 1,
-                        new MultiPermanentChoiceContext.SacrificeSelfToDestroy(sourcePermanentId),
+                        new MultiPermanentChoiceContext.SacrificeSelfToDestroy(sourcePermanentId, cannotBeRegenerated),
                         entry.getCard().getName() + "'s ability — Choose a creature "
                                 + gameData.playerIdToName.get(defenderId) + " controls to destroy.");
     }

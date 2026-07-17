@@ -6,5 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "203")
 @CardRegistration(set = "7ED", collectorNumber = "215")
 @CardRegistration(set = "8ED", collectorNumber = "217")
+@CardRegistration(set = "5ED", collectorNumber = "264")
 public class SabretoothTiger extends Card {
 }

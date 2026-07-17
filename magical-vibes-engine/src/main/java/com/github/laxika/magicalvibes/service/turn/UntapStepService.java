@@ -183,7 +183,7 @@ public class UntapStepService {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
                     p.setSkipUntapCount(p.getSkipUntapCount() - 1);
                 } else if (blockedByStorageMatrix || blockedByStaticOrb) {
-                    // Storage Matrix / Static Orb: not selected to untap — stays tapped this step
+                    // Storage Matrix / untap cap: not selected to untap — stays tapped this step
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);

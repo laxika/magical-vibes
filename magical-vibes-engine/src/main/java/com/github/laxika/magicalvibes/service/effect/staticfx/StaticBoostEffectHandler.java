@@ -22,8 +22,11 @@ public class StaticBoostEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
         if (support.matchesCreatureScope(context, boost.scope(), boost.filter())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
+            int multiplier = boost.scalingCounter() == null
+                    ? 1
+                    : context.source().getCounterCount(boost.scalingCounter());
+            accumulator.addPower(boost.powerBoost() * multiplier);
+            accumulator.addToughness(boost.toughnessBoost() * multiplier);
             accumulator.addKeywords(boost.grantedKeywords());
         }
     }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndExileFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -50,6 +52,14 @@ public class DamageSupport {
     private final LifeSupport lifeSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final PermanentCounterSupport permanentCounterSupport;
+
+    /** Colours of a non-permanent damage source (spell/ability card), for colour-based prevention. */
+    private static Set<CardColor> sourceCardColors(Card card) {
+        if (card == null) return Set.of();
+        Set<CardColor> colors = new HashSet<>(card.getColors());
+        if (card.getColor() != null) colors.add(card.getColor());
+        return colors;
+    }
 
     /**
      * Applies damage to a creature, handling prevention shield, recording, logging,
@@ -98,6 +108,14 @@ public class DamageSupport {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
             return false;
         }
+        // Prismatic Ward: prevent all damage to the enchanted creature from sources of the chosen colour.
+        Set<CardColor> sourceColors = damageSource != null
+                ? gameQueryService.getEffectiveColors(gameData, damageSource)
+                : sourceCardColors(entry.getEffectiveDamageSourceCard());
+        if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
+            return false;
+        }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
         if (damageSource != null) {
@@ -113,6 +131,9 @@ public class DamageSupport {
             UUID sourceControllerId = damageSource != null
                     ? gameQueryService.findPermanentController(gameData, damageSource.getId())
                     : entry.getControllerId();
+            accumulateSourceDamageForReflection(gameData,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    sourceControllerId, damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, sourceControllerId);
 
             // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
@@ -185,6 +206,7 @@ public class DamageSupport {
         }
 
         if (damage > 0) {
+            accumulateSourceDamageForReflection(gameData, entry.getEffectiveDamageSourceCard(), entry.getControllerId(), damage);
             triggerCollectionService.checkDealtDamageToCreatureTriggers(gameData, target, damage, entry.getControllerId());
 
             // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
@@ -344,6 +366,7 @@ public class DamageSupport {
                 // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
                 int loyaltyDamage = Math.max(0, rawDamage);
                 if (loyaltyDamage > 0) {
+                    accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), loyaltyDamage);
                     targetPermanent.setCounterCount(CounterType.LOYALTY,
                             targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + loyaltyDamage
@@ -411,6 +434,9 @@ public class DamageSupport {
             // Apply target+source-specific prevention shields (e.g. Healing Grace)
             if (entry.getSourcePermanentId() != null) {
                 rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                // Eye for an Eye: reflect the next damage this source deals to the player back at the
+                // source's controller. Does not reduce the damage dealt here; schedules a reflection.
+                damagePreventionService.applyEyeForAnEyeReflection(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
                 rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
                 // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
@@ -497,11 +523,36 @@ public class DamageSupport {
             }
 
             if (effectiveDamage > 0) {
+                accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(), effectiveDamage);
                 gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
+                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, effectiveDamage);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
             }
+        }
+        processEyeForAnEyeReflections(gameData);
+    }
+
+    /**
+     * Processes pending Eye for an Eye reflected damage: deals the reflected amount to the chosen
+     * source's controller as a fresh damage event dealt by Eye for an Eye.
+     */
+    public void processEyeForAnEyeReflections(GameData gameData) {
+        if (gameData.pendingEyeForAnEyeReflections.isEmpty()) return;
+
+        List<com.github.laxika.magicalvibes.model.EyeForAnEyeReflection> toProcess =
+                new ArrayList<>(gameData.pendingEyeForAnEyeReflections);
+        gameData.pendingEyeForAnEyeReflections.clear();
+
+        for (var reflection : toProcess) {
+            StackEntry tempEntry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    reflection.eyeCard(),
+                    reflection.eyeControllerId(),
+                    reflection.eyeCard().getName() + "'s reflection",
+                    List.of());
+            dealDamageToPlayer(gameData, tempEntry, reflection.targetPlayerId(), reflection.amount());
         }
     }
 
@@ -658,6 +709,39 @@ public class DamageSupport {
 
         destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
+        flushSourceDamageReflections(gameData);
+    }
+
+    /**
+     * Records that {@code sourceCard} (controlled by {@code sourceControllerId}) dealt {@code damage}
+     * during the current damage event, batching per source so a global "whenever a [color] source
+     * deals damage" watcher (Justice) reflects the summed total once (CR ruling). Consumed by
+     * {@link #flushSourceDamageReflections} at the end of the resolution.
+     */
+    public void accumulateSourceDamageForReflection(GameData gameData, Card sourceCard, UUID sourceControllerId, int damage) {
+        if (damage <= 0 || sourceCard == null || sourceControllerId == null) return;
+        PendingSourceDamage batch = gameData.pendingSourceDamageForReflection.get(sourceCard.getId());
+        if (batch == null) {
+            gameData.pendingSourceDamageForReflection.put(sourceCard.getId(),
+                    new PendingSourceDamage(sourceCard, sourceControllerId, damage));
+        } else {
+            batch.add(damage);
+        }
+    }
+
+    /**
+     * Queues the {@code ON_ANY_SOURCE_DEALS_DAMAGE} reflection triggers (Justice) for every source
+     * that dealt non-combat damage during the just-finished resolution, then clears the accumulator.
+     * Combat damage batches separately in {@code CombatDamageService}.
+     */
+    public void flushSourceDamageReflections(GameData gameData) {
+        if (gameData.pendingSourceDamageForReflection.isEmpty()) return;
+        List<PendingSourceDamage> batches = new ArrayList<>(gameData.pendingSourceDamageForReflection.values());
+        gameData.pendingSourceDamageForReflection.clear();
+        for (PendingSourceDamage batch : batches) {
+            triggerCollectionService.queueSourceDealsDamageReflections(gameData,
+                    batch.getSourceCard(), batch.getControllerId(), batch.getAmount());
+        }
     }
 
 

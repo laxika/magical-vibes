@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "259")
+@CardRegistration(set = "5ED", collectorNumber = "309")
 public class Lhurgoyf extends Card {
 
     public Lhurgoyf() {

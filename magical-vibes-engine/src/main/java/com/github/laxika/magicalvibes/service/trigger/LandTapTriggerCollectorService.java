@@ -192,8 +192,8 @@ public class LandTapTriggerCollectorService {
     private boolean handleAddOneOfEachManaType(TriggerMatchContext match,
             AddOneOfEachManaTypeProducedByLandEffect trigger, TriggerContext ctx) {
         TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        // Only triggers for the controller's own lands
-        if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
+        // Vorinclex fires only for the controller's own lands; Mana Flare is symmetric.
+        if (trigger.controllerOnly() && !match.controllerId().equals(lt.tappingPlayerId())) return false;
 
         Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
         if (tappedLand == null) return false;

@@ -85,6 +85,26 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
+        if (context instanceof ChoiceContext.NumberChoice) {
+            // Options are the numbers in range as strings; pick the middle option — a balanced pick
+            // for Shapeshifter-style "power = N, toughness = max − N" cards (avoids a 0-toughness body).
+            List<String> options = interaction.options();
+            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() / 2);
+            log.info("AI: Choosing number {} in game {}", chosenNumber, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenNumber));
+            return;
+        }
+
+        if (context instanceof ChoiceContext.RemoveCountersForManaChoice) {
+            // Storage land mana ability: options are 0..N storage counters. Remove them all for the
+            // most mana (the AI only activates the ability when it wants the mana).
+            List<String> options = interaction.options();
+            String chosenNumber = options.isEmpty() ? "0" : options.get(options.size() - 1);
+            log.info("AI: Removing {} counters for mana in game {}", chosenNumber, gameId);
+            ctx.gameActions().handleListChoice(ctx.selfConnection(), new ChosenFromListRequest(null, chosenNumber));
+            return;
+        }
+
         if (context instanceof ChoiceContext.PrimalClayFormChoice) {
             String chosenForm = "THREE_THREE";
             log.info("AI: Choosing Primal Clay shape {} in game {}", chosenForm, gameId);

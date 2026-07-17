@@ -40,6 +40,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryCardChoice,
         PendingInteraction.PutCardsFromHandOnLibraryDestinationChoice,
+        PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
@@ -841,12 +842,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /**
      * Choose up to {@code maxCount} cards from your own hand to put on the top or bottom of your
-     * library. {@code validCardIds}/{@code cards} are the current hand snapshot; the top/bottom
-     * destination is picked in the follow-up {@link PutCardsFromHandOnLibraryDestinationChoice}.
-     * Dream Cache (after drawing three, choose two).
+     * library. {@code validCardIds}/{@code cards} are the current hand snapshot; when {@code topOnly}
+     * is {@code false} the top/bottom destination is picked in the follow-up
+     * {@link PutCardsFromHandOnLibraryDestinationChoice} (Dream Cache); when {@code topOnly} is
+     * {@code true} the chosen cards are placed on top immediately (Brainstorm).
      */
     record PutCardsFromHandOnLibraryCardChoice(UUID playerId, java.util.List<UUID> validCardIds,
-                                               java.util.List<Card> cards, int maxCount)
+                                               java.util.List<Card> cards, int maxCount, boolean topOnly)
             implements PendingInteraction {
 
         @Override
@@ -879,6 +881,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.ListPick(OPTIONS);
+        }
+    }
+
+    /**
+     * Sylvan Library's "choose two cards drawn this turn; for each pay 4 life or put it on top of
+     * your library" decision, collapsed into a single multi-select. {@code drawnThisTurnCardIds}
+     * are the cards still in the player's hand that were drawn this turn (card views re-derived
+     * from the hand at prompt time); {@code resolveCount} is how many of them must be resolved
+     * ({@code min(2, drawnThisTurnCardIds.size())}). The player selects up to {@code resolveCount}
+     * of those cards to put on top of their library; for each of the remaining resolved cards they
+     * pay 4 life (forced to top a card instead when they cannot afford it).
+     */
+    record SylvanLibraryChoice(UUID playerId, java.util.List<UUID> drawnThisTurnCardIds, int resolveCount)
+            implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(drawnThisTurnCardIds, 0, resolveCount);
         }
     }
 

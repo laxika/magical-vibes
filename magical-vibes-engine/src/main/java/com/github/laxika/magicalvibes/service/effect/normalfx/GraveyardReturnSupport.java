@@ -578,7 +578,7 @@ public class GraveyardReturnSupport {
      * Puts a card from a graveyard onto the battlefield, optionally with one counter of
      * {@code enterWithCounter} on it as it enters (e.g. Pyrrhic Revival's -1/-1 counter).
      */
-    public void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
+    public Permanent putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
                                          CardColor grantColor, CardSubtype grantSubtype,
                                          boolean enterTapped, boolean enterAttacking,
                                          CounterType enterWithCounter) {
@@ -590,7 +590,7 @@ public class GraveyardReturnSupport {
                     + " onto the battlefield from a graveyard; it stays in the graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(blockedLog));
             log.info("Game {} - {} blocked from entering the battlefield from a graveyard", gameData.id, card.getName());
-            return;
+            return null;
         }
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
@@ -617,6 +617,18 @@ public class GraveyardReturnSupport {
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        return permanent;
+    }
+
+    /**
+     * Reanimates a targeted graveyard {@code card} under {@code controllerId}: removes it from
+     * whichever graveyard it is in and puts it onto the battlefield. Returns the created permanent,
+     * or {@code null} if it was blocked from entering (e.g. Grafdigger's Cage). Used by reanimation
+     * Auras (Animate Dead) that must attach themselves to the returned creature.
+     */
+    public Permanent reanimateTargetedCard(GameData gameData, UUID controllerId, Card card) {
+        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+        return putCardOntoBattlefield(gameData, controllerId, card, null, null, false, false, null);
     }
 
     /**

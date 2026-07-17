@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "10E", collectorNumber = "229")
 @CardRegistration(set = "6ED", collectorNumber = "205")
+@CardRegistration(set = "5ED", collectorNumber = "266")
 public class Shatterstorm extends Card {
 
     public Shatterstorm() {

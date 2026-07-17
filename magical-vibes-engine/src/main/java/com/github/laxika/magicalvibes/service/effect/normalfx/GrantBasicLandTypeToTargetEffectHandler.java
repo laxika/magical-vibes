@@ -60,9 +60,15 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
      */
     public static void applyBasicLandType(Permanent targetLand, CardSubtype subtype, EffectDuration duration, boolean replacing) {
         if (replacing) {
-            // Type-replacing "becomes" (Tideshaper Mystic): the transient override is read by the
-            // static-bonus system (subtypes/mana) and cleared at end of turn by resetModifiers().
-            targetLand.setTransientLandTypeOverride(subtype);
+            // Type-replacing "becomes" (rule 305.7): the override is read by the static-bonus system
+            // (subtypes/mana). Until end of turn (Tideshaper Mystic) it is cleared by resetModifiers();
+            // until the controller's next untap step (Orcish Farmer) it survives end-of-turn cleanup
+            // and is cleared at that controller's next turn by clearUntilNextTurnEffects().
+            if (duration == EffectDuration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP) {
+                targetLand.setUntilNextTurnLandTypeOverride(subtype);
+            } else {
+                targetLand.setTransientLandTypeOverride(subtype);
+            }
             return;
         }
 
@@ -91,7 +97,11 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
     /** Log line describing a basic land type change, shared with the choice-resolution path. */
     public static String describeBasicLandTypeChange(Permanent targetLand, CardSubtype subtype,
                                                      EffectDuration duration, boolean replacing) {
-        String durationText = duration == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
+        String durationText = switch (duration) {
+            case UNTIL_END_OF_TURN -> " until end of turn";
+            case UNTIL_CONTROLLERS_NEXT_UNTAP_STEP -> " until its controller's next untap step";
+            default -> "";
+        };
         String suffix = replacing ? "" : " in addition to its other types";
         return targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName() + suffix + durationText + ".";
     }

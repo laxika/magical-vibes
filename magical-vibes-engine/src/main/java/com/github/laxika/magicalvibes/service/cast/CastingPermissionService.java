@@ -143,12 +143,17 @@ public class CastingPermissionService {
         if (gameData.playersCantCastCreatureSpellsThisTurn.contains(playerId)) {
             restricted.add(CardType.CREATURE);
         }
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return restricted;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof CantCastSpellTypeEffect cantCast) {
-                    restricted.addAll(cantCast.restrictedTypes());
+        // Controller-only restrictions (Steel Golem) come from the player's own permanents;
+        // symmetric restrictions (Aether Storm) apply no matter whose battlefield they sit on.
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof CantCastSpellTypeEffect cantCast
+                            && (cantCast.appliesToAllPlayers() || pid.equals(playerId))) {
+                        restricted.addAll(cantCast.restrictedTypes());
+                    }
                 }
             }
         }
@@ -347,6 +352,9 @@ public class CastingPermissionService {
             case YOUR_END_STEP ->
                     gameData.currentStep == TurnStep.END_STEP
                             && playerId.equals(gameData.activePlayerId);
+            case COMBAT_BEFORE_BLOCKERS ->
+                    gameData.currentStep.isCombatPhase()
+                            && gameData.currentStep.ordinal() < TurnStep.DECLARE_BLOCKERS.ordinal();
         };
     }
 

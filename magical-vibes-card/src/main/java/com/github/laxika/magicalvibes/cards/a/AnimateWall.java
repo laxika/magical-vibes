@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "6ED", collectorNumber = "1")
+@CardRegistration(set = "5ED", collectorNumber = "5")
 public class AnimateWall extends Card {
 
     public AnimateWall() {

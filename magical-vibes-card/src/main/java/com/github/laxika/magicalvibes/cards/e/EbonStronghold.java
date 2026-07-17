@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "6ED", collectorNumber = "324")
+@CardRegistration(set = "5ED", collectorNumber = "416")
 public class EbonStronghold extends Card {
 
     public EbonStronghold() {

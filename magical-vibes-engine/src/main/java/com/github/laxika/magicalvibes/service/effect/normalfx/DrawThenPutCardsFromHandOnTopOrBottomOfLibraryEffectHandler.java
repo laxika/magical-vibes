@@ -46,9 +46,10 @@ public class DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffectHandler impleme
         List<UUID> validCardIds = handSnapshot.stream().map(Card::getId).toList();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PutCardsFromHandOnLibraryCardChoice(
-                controllerId, validCardIds, handSnapshot, maxCount));
+                controllerId, validCardIds, handSnapshot, maxCount, e.topOnly()));
 
-        log.info("Game {} - {} choosing {} card(s) from hand to put on top/bottom of library",
-                gameData.id, gameData.playerIdToName.get(controllerId), maxCount);
+        log.info("Game {} - {} choosing {} card(s) from hand to put on {} of library",
+                gameData.id, gameData.playerIdToName.get(controllerId), maxCount,
+                e.topOnly() ? "top" : "top/bottom");
     }
 }

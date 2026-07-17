@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "256")
+@CardRegistration(set = "5ED", collectorNumber = "331")
 public class ThicketBasilisk extends Card {
 
     public ThicketBasilisk() {

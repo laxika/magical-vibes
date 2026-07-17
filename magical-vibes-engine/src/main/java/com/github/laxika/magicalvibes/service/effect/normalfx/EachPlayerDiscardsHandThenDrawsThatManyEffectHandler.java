@@ -67,7 +67,7 @@ public class EachPlayerDiscardsHandThenDrawsThatManyEffectHandler implements Nor
         gameData.discardCausedByOpponent = false;
 
         for (Card card : discarded) {
-            graveyardService.addCardToGraveyard(gameData, playerId, card);
+            graveyardService.discardCard(gameData, playerId, card);
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
         }
 

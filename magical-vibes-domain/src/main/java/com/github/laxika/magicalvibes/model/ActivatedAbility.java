@@ -39,6 +39,8 @@ public class ActivatedAbility {
     private int requiredControlledPermanentCount;
     /** Human-readable description of the predicate-count restriction, used in the activation error message. */
     private String requiredControlledPermanentDescription;
+    /** Cross-target restriction on the whole chosen set for a multi-target ability (CR 601.2c), beyond the per-position filters (e.g. Gauntlets of Chaos). Null = no such restriction. Set via {@link #withMultiTargetConstraint}. */
+    private MultiTargetConstraint multiTargetConstraint;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -140,7 +142,18 @@ public class ActivatedAbility {
         copy.requiredControlledPermanentPredicate = this.requiredControlledPermanentPredicate;
         copy.requiredControlledPermanentCount = this.requiredControlledPermanentCount;
         copy.requiredControlledPermanentDescription = this.requiredControlledPermanentDescription;
+        copy.multiTargetConstraint = this.multiTargetConstraint;
         return copy;
+    }
+
+    /**
+     * Fluent setter for a cross-target restriction imposed on the whole set of chosen targets of a
+     * multi-target ability (CR 601.2c), beyond the per-position filters (e.g. Gauntlets of Chaos'
+     * "shares one of those types with it"). Returns this ability for chaining in card constructors.
+     */
+    public ActivatedAbility withMultiTargetConstraint(MultiTargetConstraint constraint) {
+        this.multiTargetConstraint = constraint;
+        return this;
     }
 
     /**

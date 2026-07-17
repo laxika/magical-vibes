@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "M10", collectorNumber = "121")
+@CardRegistration(set = "5ED", collectorNumber = "205")
 public class Weakness extends Card {
 
     public Weakness() {

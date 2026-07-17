@@ -15,5 +15,12 @@ public enum SpellCastTimingRestriction {
     /**
      * "Cast this spell only during your end step." Necrologia.
      */
-    YOUR_END_STEP
+    YOUR_END_STEP,
+
+    /**
+     * "Cast this spell only during combat before blockers are declared." Panic. Legal during the
+     * beginning-of-combat and declare-attackers steps (any player's combat), not once the
+     * declare-blockers step has begun.
+     */
+    COMBAT_BEFORE_BLOCKERS
 }

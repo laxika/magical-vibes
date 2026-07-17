@@ -11,7 +11,13 @@ import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
@@ -24,6 +30,7 @@ import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -53,6 +60,7 @@ public class MayMiscHandlerService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
+    private final CreatureControlService creatureControlService;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -105,6 +113,8 @@ public class MayMiscHandlerService {
 
         if (accepted && sourcePermanent != null) {
             sourcePermanent.untap();
+            // A "for as long as this stays tapped" control effect (Seasinger) ends on untap.
+            creatureControlService.onSourceUntapped(gameData, sourcePermanent);
             String logEntry = player.getUsername() + " untaps " + sourceCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} untaps {} (may-not-untap choice)", gameData.id, player.getUsername(), sourceCard.getName());
@@ -207,6 +217,37 @@ public class MayMiscHandlerService {
                 log.info("Game {} - {}'s revealed {} put into graveyard by {}",
                         gameData.id, playerName, top.getName(), ability.sourceCard().getName());
             }
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.ISLAND_SANCTUARY) {
+            // The draw is skipped (the accept branch never draws). Until the drawing player's next turn
+            // they can't be attacked except by creatures with flying and/or islandwalk — stamped as a
+            // player-scoped floating effect so it persists even if Island Sanctuary leaves.
+            gameData.addFloatingEffect(new FloatingContinuousEffect(
+                    UUID.randomUUID(),
+                    ability.sourceCard().getName(),
+                    null,
+                    drawingPlayerId,
+                    new CreaturesCantAttackControllerUnlessPredicateEffect(new PermanentAnyOfPredicate(List.of(
+                            new PermanentHasKeywordPredicate(Keyword.FLYING),
+                            new PermanentHasKeywordPredicate(Keyword.ISLANDWALK)))),
+                    null,
+                    drawingPlayerId,
+                    null,
+                    EffectDuration.UNTIL_YOUR_NEXT_TURN,
+                    0L));
+
+            String logEntry = playerName + " skips their draw with " + ability.sourceCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
+            log.info("Game {} - {} skips draw for Island Sanctuary shield", gameData.id, playerName);
 
             playerInputService.processNextMayAbility(gameData);
             if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {

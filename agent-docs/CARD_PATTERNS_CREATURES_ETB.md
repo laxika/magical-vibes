@@ -64,11 +64,13 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB copy with P/T override | `q/QuicksilverGargantuan.java` | CopyPermanentOnEnterEffect(filter, typeLabel, 7, 7) — "copy except it's 7/7" |
 | ETB copy with type override | `p/PhyrexianMetamorph.java` | CopyPermanentOnEnterEffect(AnyOfPredicate, typeLabel, null, null, Set.of(ARTIFACT)) — "copy except it's also an artifact" |
 | ETB copy with extra ability | `e/EvilTwin.java` | CopyPermanentOnEnterEffect with additionalActivatedAbilities — "copy except it has {U}{B},{T}: Destroy target creature with the same name" |
+| ETB token copy bonded to the source (enchantment) | `d/DanceOfMany.java` | target(nontoken creature) + ON_ENTER_BATTLEFIELD CreateTokenCopyAndLinkToSourceEffect + ON_SELF_LEAVES_BATTLEFIELD RemoveLinkedPermanentEffect(EXILE) + UPKEEP_TRIGGERED ForcedCostOrElseEffect(PayManaCost("{U}{U}"), List.of(SacrificeSelfEffect()), true) — creates a token copy and forges a two-way `chosenPermanentId` bond; the token carries a RemoveLinkedPermanentEffect(SACRIFICE) leaves-trigger. Enchantment leaves → exile token; token leaves → sacrifice enchantment |
 | ETB choose color | `v/VoiceOfAll.java` | ProtectionFromChosenColorEffect |
 | ETB choose name | `p/PithingNeedle.java` | ChooseCardNameOnEnterEffect + static lock |
 | ETB choose nonland name | `p/PhyrexianRevoker.java` | ChooseCardNameOnEnterEffect(List.of(LAND)) + static lock — artifact creature variant |
 | As-enters choose creature + sacrifice grant | `d/DauntlessBodyguard.java` | ChooseAnotherCreatureOnEnterEffect + SacrificeSelfCost + GrantKeywordToChosenCreatureUntilEndOfTurnEffect — choose another creature on entry (replacement effect, not Torpor Orb-able), sacrifice to grant chosen creature indestructible |
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
+| Upkeep control-to-most-life | `g/GhazbNOgre.java` | UPKEEP_TRIGGERED PlayerWithMostLifeGainsControlOfSourceCreatureEffect — player with strictly the most life gains control; no-op on a tie |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (discard at random) | `p/PillagingHorde.java` | SacrificeUnlessDiscardCardTypeEffect(null, true) — sacrifice unless you discard a card at random |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |

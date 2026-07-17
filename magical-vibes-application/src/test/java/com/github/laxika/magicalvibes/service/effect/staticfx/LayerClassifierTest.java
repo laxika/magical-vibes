@@ -93,6 +93,16 @@ class LayerClassifierTest {
 
             assertThat(classification.layers()).containsExactlyInAnyOrder(Layer.L4_TYPE, Layer.L7B_SET_PT);
         }
+
+        @Test
+        @DisplayName("Animate-noncreature-artifacts with ability loss also spans layer 6 (Titania's Song)")
+        void animateArtifactsWithAbilityLossSpansLayer6() {
+            LayerClassification classification = LayerClassifier.classify(
+                    new AnimateNoncreatureArtifactsEffect(true), false);
+
+            assertThat(classification.layers())
+                    .containsExactlyInAnyOrder(Layer.L4_TYPE, Layer.L6_ABILITIES, Layer.L7B_SET_PT);
+        }
     }
 
     @Nested
@@ -192,7 +202,7 @@ class LayerClassifierTest {
                     .layers()).containsExactly(Layer.L2_CONTROL);
             assertThat(LayerClassifier.classify(new ControlEnchantedCreatureEffect(), false).layers())
                     .containsExactly(Layer.L2_CONTROL);
-            assertThat(LayerClassifier.classify(new ChangeColorTextEffect(true, false), false).layers())
+            assertThat(LayerClassifier.classify(new ChangeColorTextEffect(true, true, false), false).layers())
                     .containsExactly(Layer.L3_TEXT);
             assertThat(LayerClassifier.classify(new LoseAllCreatureTypesEffect(), false).layers())
                     .containsExactly(Layer.L4_TYPE);

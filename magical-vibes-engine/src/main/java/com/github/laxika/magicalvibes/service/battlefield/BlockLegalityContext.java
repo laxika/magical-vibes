@@ -74,7 +74,9 @@ public final class BlockLegalityContext {
                         boolean artifact,
                         Set<CardColor> colors,
                         List<CanBlockOnlyIfAttackerMatchesPredicateEffect> attackerFilterRestrictions,
-                        boolean cantBlock) {
+                        boolean cantBlock,
+                        boolean cantBlockPowerAtLeastOwnToughness,
+                        Integer cantBlockPowerAtLeast) {
     }
 
     /**
@@ -98,6 +100,8 @@ public final class BlockLegalityContext {
             LANDWALK,
             CANT_BLOCK_THIS_TURN,
             CANT_BLOCK,
+            CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS,
+            CANT_BLOCK_HIGH_POWER,
             CANT_BLOCK_THAT_ATTACKER,
             PROTECTION
         }
@@ -110,6 +114,10 @@ public final class BlockLegalityContext {
         static final BlockDenial CANT_BE_BLOCKED_BY_MATCHING = new BlockDenial(Reason.CANT_BE_BLOCKED_BY_MATCHING, null);
         static final BlockDenial CANT_BLOCK_THIS_TURN = new BlockDenial(Reason.CANT_BLOCK_THIS_TURN, null);
         static final BlockDenial CANT_BLOCK = new BlockDenial(Reason.CANT_BLOCK, null);
+        static final BlockDenial CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS =
+                new BlockDenial(Reason.CANT_BLOCK_POWER_AT_LEAST_OWN_TOUGHNESS, null);
+        static final BlockDenial CANT_BLOCK_HIGH_POWER =
+                new BlockDenial(Reason.CANT_BLOCK_HIGH_POWER, null);
         static final BlockDenial CANT_BLOCK_THAT_ATTACKER = new BlockDenial(Reason.CANT_BLOCK_THAT_ATTACKER, null);
         static final BlockDenial PROTECTION = new BlockDenial(Reason.PROTECTION, null);
     }

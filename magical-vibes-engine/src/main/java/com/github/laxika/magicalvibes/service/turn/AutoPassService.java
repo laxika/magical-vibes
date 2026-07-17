@@ -346,7 +346,8 @@ public class AutoPassService {
             for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
                 // Skip sorcery-speed and upkeep-only abilities
                 if (ability.getTimingRestriction() == ActivationTimingRestriction.SORCERY_SPEED
-                        || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP) {
+                        || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP
+                        || ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_DURING_ANY_UPKEEP) {
                     continue;
                 }
 

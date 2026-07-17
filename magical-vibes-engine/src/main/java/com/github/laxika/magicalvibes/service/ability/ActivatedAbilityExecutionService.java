@@ -47,9 +47,12 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -173,9 +176,13 @@ public class ActivatedAbilityExecutionService {
 
         UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null) {
-            boolean needsSelfTarget = abilityEffects.stream().anyMatch(e ->
-                    e.targetSpec().selfTargeting() && !(e instanceof RegenerateEffect && permanent.getCard().isAura()));
-            if (needsSelfTarget) {
+            boolean auraSelfRegenerate = permanent.getCard().isAura() && abilityEffects.stream()
+                    .anyMatch(e -> e instanceof RegenerateEffect && e.targetSpec().selfTargeting());
+            if (auraSelfRegenerate) {
+                // "Sacrifice this Aura: Regenerate enchanted creature." Capture the enchanted
+                // creature now, before a sacrifice cost removes the Aura and its attachedTo link.
+                effectiveTargetId = permanent.getAttachedTo();
+            } else if (abilityEffects.stream().anyMatch(e -> e.targetSpec().selfTargeting())) {
                 effectiveTargetId = permanent.getId();
             }
         }
@@ -418,6 +425,26 @@ public class ActivatedAbilityExecutionService {
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
                     }
                 }
+            } else if (effect instanceof RemoveCountersForManaEffect rc) {
+                // Storage land: "Remove any number of [type] counters: Add [color] for each removed."
+                // Prompt the controller for how many counters (0..present) to remove; the resume
+                // handler removes them and adds that much mana. With no counters there is nothing to
+                // choose, so the activation just taps the land and produces no mana.
+                int available = permanent.getCounterCount(rc.counterType());
+                if (available > 0) {
+                    ChoiceContext.RemoveCountersForManaChoice choiceContext =
+                            new ChoiceContext.RemoveCountersForManaChoice(playerId, permanent.getId(),
+                                    rc.color(), rc.counterType(), isCreatureSource, manaMultiplier);
+                    List<String> options = java.util.stream.IntStream.rangeClosed(0, available)
+                            .mapToObj(Integer::toString)
+                            .toList();
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, options,
+                            "Choose how many " + rc.counterType().name().toLowerCase()
+                                    + " counters to remove."));
+                    log.info("Game {} - Awaiting {} to choose how many {} counters to remove (0-{})",
+                            gameData.id, player.getUsername(), rc.counterType(), available);
+                }
             } else if (effect instanceof AwardManaToChosenPlayerEffect chosen) {
                 // "Choose a player. That player adds mana." Not targeting (CR 605.1a); the recipient
                 // is picked via an inline player choice and the mana is routed into their pool.
@@ -631,6 +658,9 @@ public class ActivatedAbilityExecutionService {
                     if (opponentId.equals(playerId)) continue;
                     dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, damage);
                 }
+            } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
+                // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
+                gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard()));
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);

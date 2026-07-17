@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "267")
+@CardRegistration(set = "5ED", collectorNumber = "323")
 public class ScavengerFolk extends Card {
 
     public ScavengerFolk() {
