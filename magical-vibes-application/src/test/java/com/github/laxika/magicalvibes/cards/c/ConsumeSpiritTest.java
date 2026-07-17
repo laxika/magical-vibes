@@ -73,6 +73,27 @@ class ConsumeSpiritTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
+    // ===== Fizzle =====
+
+    @Test
+    @DisplayName("Consume Spirit fizzles when target creature is removed before resolution — no life gain")
+    void fizzlesWhenTargetCreatureRemoved() {
+        Permanent bear = new Permanent(new GrizzlyBears());
+        gd.playerBattlefields.get(player2.getId()).add(bear);
+
+        harness.setHand(player1, List.of(new ConsumeSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 15);
+
+        harness.castSorcery(player1, 0, 2, bear.getId());
+        // Remove the target before resolution
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        // Spell fizzles — no damage and no life gain
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
+    }
+
     // ===== Mana restriction: spend only black on X =====
 
     @Test

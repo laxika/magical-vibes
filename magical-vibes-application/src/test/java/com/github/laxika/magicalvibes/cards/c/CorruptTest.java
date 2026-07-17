@@ -129,6 +129,30 @@ class CorruptTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Corrupt fizzles when target creature is removed before resolution — no life gain")
+    void fizzlesWhenTargetCreatureRemoved() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Corrupt()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, targetId);
+
+        // Remove the target before resolution
+        harness.getGameData().playerBattlefields.get(player2.getId())
+                .removeIf(p -> p.getCard().getName().equals("Grizzly Bears"));
+
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        // Spell fizzles — no damage to the opponent and no life gain despite controlling 2 Swamps
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
     @DisplayName("Corrupt does not count non-Swamp lands")
     void doesNotCountNonSwampLands() {
         harness.addToBattlefield(player1, new Swamp());

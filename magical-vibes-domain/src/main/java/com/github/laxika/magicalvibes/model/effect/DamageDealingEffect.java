@@ -12,10 +12,9 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * score. All methods must be answerable from those components.
  *
  * <p>Scope note: this covers the "deal a {@link DynamicAmount} to a single target category"
- * shape. Damage effects that split a total among many targets ({@code DealDividedDamageEffect}),
- * hit every creature/player at once ({@code MassDamageEffect}), or carry no amount component
- * ({@code DealXDamageToAnyTargetAndGainXLifeEffect}) do not fit that shape and deliberately do
- * not implement this interface.
+ * shape. Damage effects that split a total among many targets ({@code DealDividedDamageEffect})
+ * or hit every creature/player at once ({@code MassDamageEffect}) do not fit that shape and
+ * deliberately do not implement this interface.
  */
 public interface DamageDealingEffect extends CardEffect {
 

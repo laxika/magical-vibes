@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
@@ -576,14 +575,6 @@ public class SpellEvaluator {
                 && divided.mode() == DivisionMode.CHOSEN && !divided.etbAssignments()
                 && !divided.canTargetPlayers() && divided.totalDamage() instanceof Fixed fixedTotal) {
             return evaluateDamageToCreature(gameData, fixedTotal.value(), oppBattlefield, opponentId, aiPlayerId);
-        }
-
-        // X-damage effects
-        if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
-                    + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
 
         return 0;
