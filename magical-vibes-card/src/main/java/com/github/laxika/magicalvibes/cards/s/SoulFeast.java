@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "10E", collectorNumber = "179")
 @CardRegistration(set = "9ED", collectorNumber = "164")
@@ -12,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 public class SoulFeast extends Card {
 
     public SoulFeast() {
-        addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeAndControllerGainsLifeEffect(4, 4));
+        // Target player loses 4 life and you gain 4 life.
+        addEffect(EffectSlot.SPELL, new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
+        addEffect(EffectSlot.SPELL, new GainLifeEffect(4));
     }
 }

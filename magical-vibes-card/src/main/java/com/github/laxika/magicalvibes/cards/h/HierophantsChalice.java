@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -15,7 +18,8 @@ public class HierophantsChalice extends Card {
 
     public HierophantsChalice() {
         // When Hierophant's Chalice enters the battlefield, target opponent loses 1 life and you gain 1 life.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TargetPlayerLosesLifeAndControllerGainsLifeEffect(1, 1));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(1)));
 
         // {T}: Add {C}.
         addActivatedAbility(new ActivatedAbility(

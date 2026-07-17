@@ -921,3 +921,78 @@ skipped the bounce. ONE `ConditionalEffect` wrapping ONE `SequenceEffect` keeps 
 ### Traps hit
 - None. Single-entry atomicity held: `gd.stack` size 1 on the fire tests, intervening-if re-checked once, both
   steps spliced and resolved in order.
+
+---
+
+## Batch 3 Session 4 — drain composite part 1: nine unwrapped users migrated
+
+Migrated the **nine unwrapped card users** of `TargetPlayerLosesLifeAndControllerGainsLifeEffect(lifeLoss,
+lifeGain)` onto the decomposed pair `LoseLifeEffect(N, TARGET_PLAYER)` + `GainLifeEffect(N)`. **The record,
+its handler, its `@ValidatesTarget` entry in `LifeTargetValidators`, the two wrapper-blocked users
+(`BleakCovenVampires`, `ArnynDeathbloomBotanist`) and the dynamic construction site in
+`SpellCastTriggerCollectorService` were NOT touched** — deletion is the next session's job (this is part 1 of 2).
+Nothing deleted; no agent-docs edited (the record still exists).
+
+### Semantics verified before touching any card (STEP 0)
+Read `TargetPlayerLosesLifeAndControllerGainsLifeEffectHandler`: it does exactly (a) target loses `lifeLoss`
+applied **inline** via the same `loseTargetPlayerLife` body as `LoseLifeEffectHandler`'s `TARGET_PLAYER` branch —
+respects `canPlayerLifeChange`, **does NOT fire "loses life" triggers** (known pre-existing quirk, preserved); and
+(b) `if (lifeGain > 0) lifeSupport.applyGainLife(controllerId, lifeGain)`. No contingency, no "if you do", no extra
+triggers/logs. The decomposition reproduces this: `LoseLifeEffect(N, TARGET_PLAYER)` hits the identical loss body;
+`GainLifeEffect(N)` gains the nominal fixed amount (independent of actual loss); the gain is **omitted entirely**
+when `lifeGain == 0` (matches the handler's `>0` guard). `SequenceEffect.targetSpec()` delegates to its first
+targeting step → `LoseLifeEffect(TARGET_PLAYER).targetSpec()` = `TargetSpec.benign(PLAYER)` = the composite's own
+`targetSpec()`, so trigger-slot targeting is byte-preserved and **no trigger collector needed changing**.
+
+### One discovered nuance (recorded, NOT a stop — unobservable today, strictly more rules-correct where it applies)
+The composite gains via `lifeSupport.applyGainLife(gd, controllerId, lifeGain)` (3-arg overload → passes
+`sourceCard=null, sourceEntryType=null` to `checkLifeGainTriggers`). The decomposed `GainLifeEffectHandler` gains
+via the 6-arg overload, threading `entry.getCard()` + `entry.getEntryType()` into the life-gain trigger context.
+The **only** consumer of those fields is `MiscTriggerCollectorService.handleLifeGainDealDamageOnSpell`
+(`DealDamageOnSpellLifeGainEffect`, the spell-lifelink "deal N when you gain life from a [color] instant/sorcery"
+trigger). So for the three **spell** users (Syphon Life, Soul Feast, Morsel Theft) the decomposition *could* fire
+that trigger where the composite would not. In practice it cannot with the current pool: the sole
+`DealDamageOnSpellLifeGainEffect` card is **Firesong and Sunspeaker** (`triggeringColor = WHITE`) and all three
+drain spells are **black**, so the color check fails either way → identical behavior. The six ability/trigger users
+pass a non-spell `sourceEntryType`, so `handleLifeGainDealDamageOnSpell` short-circuits identically to null. Where
+this could ever manifest (a hypothetical black-triggering card) the decomposition is *more* rules-correct — a drain
+spell's life gain genuinely IS "life gained from a [black] spell." Consistent with the Session 2/3 "more-correct
+consistency change, verified green, proceed" precedent. The loss side is byte-identical.
+
+### Per-card shape chosen (each card's exact x/y preserved)
+FLAT PAIR (spell/ability list — one stack entry, flat effects; Drain Life / Ajani Vengeant −2 precedent):
+1. `s/SyphonLife` (2,2) — SPELL, no explicit `target(...)`: `addEffect(SPELL, LoseLifeEffect(2, TARGET_PLAYER))` +
+   `addEffect(SPELL, GainLifeEffect(2))`. Retrace casting option left untouched.
+2. `s/SoulFeast` (4,4) — SPELL: same flat pair with 4/4.
+3. `m/MorselTheft` (3,3) — SPELL with explicit `target(PlayerRelation.ANY)` chain: the `LoseLifeEffect(3,
+   TARGET_PLAYER)` stays bound to that target group (`.addEffect` on the `target(...)` builder); `GainLifeEffect(3)`
+   added as a plain (`TargetSpec.NONE`) SPELL effect. Prowl `AlternateHandCast` and the `ConditionalEffect(
+   CastForProwlCost, DrawCardEffect)` draw left untouched.
+4. `b/BlightKeeper` (4,4) — activated ability `List.of(...)`: `SacrificeSelfCost()`, `LoseLifeEffect(4,
+   TARGET_PLAYER)`, `GainLifeEffect(4)`.
+5. `n/NecrogenCenser` (2,0) — activated ability: `LoseLifeEffect(2, TARGET_PLAYER)` **ONLY**, no `GainLifeEffect`
+   (lifeGain == 0 → handler skipped the gain). `RemoveChargeCountersFromSourceCost` kept.
+
+SEQUENCEEFFECT (trigger slots — one atomic entry per slot; `SequenceEffect.of(lose, gain)`):
+6. `f/FalkenrathNoble` (1,1) — `SequenceEffect.of(LoseLifeEffect(1, TARGET_PLAYER), GainLifeEffect(1))` on **BOTH**
+   `ON_DEATH` and `ON_ANY_CREATURE_DIES`.
+7. `h/HighwayRobber` (2,2) — `ON_ENTER_BATTLEFIELD` SequenceEffect.
+8. `h/HierophantsChalice` (1,1) — `ON_ENTER_BATTLEFIELD` SequenceEffect. `{T}: Add {C}` ability left untouched.
+9. `p/PollutedBonds` (2,2) — `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` SequenceEffect (targetId auto-set by the
+   collector to the land's controller; `SequenceEffect.targetSpec()` = benign(PLAYER) as before).
+
+### Tests run (each via `.\scripts\run-card-test.ps1`, all PASS)
+`SyphonLifeTest` (4), `SoulFeastTest` (5), `MorselTheftTest` (3), `BlightKeeperTest` (5), `NecrogenCenserTest` (6),
+`FalkenrathNobleTest` (4 — confirms SequenceEffect-on-trigger-slot still prompts/auto-selects the target correctly),
+`HighwayRobberTest` (6), `HierophantsChaliceTest` (6), `PollutedBondsTest` (2). Full suite not run (per CLAUDE.md).
+
+### Whole-repo grep (build/ excluded)
+`new TargetPlayerLosesLifeAndControllerGainsLifeEffect` now appears ONLY in `SpellCastTriggerCollectorService.java`,
+`BleakCovenVampires.java`, `ArnynDeathbloomBotanist.java` (plus this progress doc) — every unwrapped user migrated.
+The record, handler, `LifeTargetValidators` entry, and `SpellCastLifeDrainEffect` reference remain in place for the
+next session to delete once the two wrapper-blocked users and the dynamic site are folded.
+
+### Traps hit
+- None. The gain-trigger-context nuance above was investigated to ground (traced `checkLifeGainTriggers` →
+  `TriggerContext.LifeGain` → sole `DealDamageOnSpellLifeGainEffect` consumer = Firesong/WHITE) and found
+  unobservable + more-correct, so not a stop-condition. Loss side byte-identical; no collector changed.
