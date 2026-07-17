@@ -16,11 +16,19 @@ import java.util.List;
  *
  * <p><b>When to use.</b> Only when a single-effect wrapper must gate several steps as one unit
  * (e.g. {@code MayEffect(SequenceEffect.of(a, b))}, {@code ConditionalEffect(cond, SequenceEffect.of(a, b))},
- * {@code FlipCoinWinEffect(SequenceEffect.of(a, b))}), or when several steps must stay a single atomic
- * triggered ability on one trigger slot (trigger collectors push one stack entry per slot effect, so
- * a multi-step bundle on a trigger slot must be one effect). For a plain spell or ability effect list,
- * prefer flat {@code addEffect(...)} calls (the Act of Treason / Drain Life pattern) — do NOT wrap
- * them in a sequence.</p>
+ * {@code ClashEffect(SequenceEffect.of(a, b))}, {@code FlipCoinWinEffect(SequenceEffect.of(a, b))}), or when
+ * several steps must stay a single atomic triggered ability on one trigger slot (trigger collectors push one
+ * stack entry per slot effect, so a multi-step bundle on a trigger slot must be one effect). For a plain spell
+ * or ability effect list, prefer flat {@code addEffect(...)} calls (the Act of Treason / Drain Life pattern) —
+ * do NOT wrap them in a sequence.</p>
+ *
+ * <p><b>Two dispatch paths.</b> Most wrappers ({@code MayEffect}, {@code ConditionalEffect}, trigger slots)
+ * route their child back through {@code EffectResolutionService}'s loop, so the splice above applies and steps
+ * may pause/resume for async player input. {@code ClashEffect} and {@code FlipCoinWinEffect} instead dispatch
+ * their win/branch reward <em>synchronously</em> (via each step's own handler, not the loop), so a
+ * {@code SequenceEffect} used there must contain only synchronous steps (no async player-input pause between
+ * steps). Sentry Oak's {@code ClashEffect(SequenceEffect.of(BoostSelfEffect, RemoveKeywordEffect))} is the
+ * canonical example — both steps resolve without interaction.</p>
  *
  * <p><b>Targeting.</b> {@link #targetSpec()} returns the first step's non-{@link TargetSpec#NONE}
  * spec, so at cast time the entry selects a single target for the sequence exactly as multiple flat

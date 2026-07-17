@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -46,12 +47,26 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(branch);
+        dispatch(gameData, entry, branch);
+    }
+
+    private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {
+        // SequenceEffect has no handler of its own — expand it here so a multi-step branch resolves
+        // each step in order against the same entry. Dispatch is synchronous, so sequence steps must
+        // be synchronous (no async player-input pauses).
+        if (effect instanceof SequenceEffect sequence) {
+            for (CardEffect step : sequence.steps()) {
+                dispatch(gameData, entry, step);
+            }
+            return;
+        }
+
+        EffectHandler handler = effectHandlerRegistry.getHandler(effect);
         if (handler != null) {
-            handler.resolve(gameData, entry, branch);
+            handler.resolve(gameData, entry, effect);
         } else {
             log.warn("No handler for branch effect in FlipCoinWinEffect: {}",
-                    branch.getClass().getSimpleName());
+                    effect.getClass().getSimpleName());
         }
     }
 }

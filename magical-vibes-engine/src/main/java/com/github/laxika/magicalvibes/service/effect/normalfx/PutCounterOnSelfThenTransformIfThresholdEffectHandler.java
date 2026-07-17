@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersAndTransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -89,7 +91,10 @@ public class PutCounterOnSelfThenTransformIfThresholdEffectHandler implements No
                         entry.getCard(),
                         entry.getControllerId(),
                         new MayEffect(
-                                new RemoveCountersAndTransformSelfEffect(e.counterType()),
+                                SequenceEffect.of(
+                                        new RemoveAllCountersFromSelfEffect(e.counterType()),
+                                        new TransformSelfEffect()
+                                ),
                                 "Remove counters and transform?"
                         ),
                         null,

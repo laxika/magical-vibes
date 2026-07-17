@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -54,6 +55,18 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {
+        // SequenceEffect has no handler of its own — expand it here so a multi-step win reward
+        // (e.g. Sentry Oak's "+2/+0 and loses defender") resolves each step in order against the
+        // same entry. ClashEffect dispatches synchronously, so sequence steps must be synchronous
+        // (no async player-input pauses); the ordinary resolution-loop splice covers wrappers that
+        // can pause.
+        if (effect instanceof SequenceEffect sequence) {
+            for (CardEffect step : sequence.steps()) {
+                dispatch(gameData, entry, step);
+            }
+            return;
+        }
+
         EffectHandler handler = effectHandlerRegistry.getHandler(effect);
         if (handler != null) {
             handler.resolve(gameData, entry, effect);

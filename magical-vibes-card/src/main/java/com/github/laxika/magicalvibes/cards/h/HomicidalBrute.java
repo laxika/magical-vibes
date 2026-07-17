@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapAndTransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 /**
  * Homicidal Brute — back face of Civilized Scholar.
@@ -18,6 +21,8 @@ public class HomicidalBrute extends Card {
         // At the beginning of your end step, if this creature didn't attack this turn,
         // tap it, then transform it.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new ConditionalEffect(new DidntAttack(), new TapAndTransformSelfEffect()));
+                new ConditionalEffect(new DidntAttack(), SequenceEffect.of(
+                        new TapPermanentsEffect(TapUntapScope.SELF),
+                        new TransformSelfEffect())));
     }
 }

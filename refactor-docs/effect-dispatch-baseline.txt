@@ -6,7 +6,7 @@ magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/EasyAiDecisionE
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/HardAiDecisionEngine.java=3
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/InstantCategoryClassifier.java=2
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/RaceEvaluator.java=2
-magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/SpellEvaluator.java=15
+magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/SpellEvaluator.java=16
 magical-vibes-ai/src/main/java/com/github/laxika/magicalvibes/ai/simulation/GameSimulator.java=2
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DamagePreventionService.java=13
 magical-vibes-engine/src/main/java/com/github/laxika/magicalvibes/service/DrawService.java=10

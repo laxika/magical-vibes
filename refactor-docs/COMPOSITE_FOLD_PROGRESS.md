@@ -1239,3 +1239,166 @@ post-deletion whole-module compile gate), `CatalogTest` (1), `JalumTomeTest` (2)
 - `EFFECT_COUPLING_MATRIX.md` left as-is (script-generated baseline, refreshed separately).
 - **Batch 3 loot fold complete:** `DrawAndDiscardCardEffect` fully deleted across parts 1–2 (11 flat users +
   6 wrapped users + 1 engine site migrated; record + handler + handler test removed).
+
+---
+
+## Batch 3 closeout — SequenceEffect shipped, four composites deleted
+
+Docs + verification session (no production/test changes; nothing committed). Confirms the batch is fully
+landed, refreshes the coupling metrics, and scopes Batch 4. The batch built the generic `SequenceEffect`
+primitive (`e43246913`, resolution-time splicing in `EffectResolutionService`) and used it to retire four
+composite records:
+
+| # | Deleted record | Commit(s) | Users migrated | Replacement shape |
+|---|----------------|-----------|----------------|-------------------|
+| 1 | `GainControlUntapAndHasteTargetEffect` | `cf5c15b45` | 1 card | `MayEffect(SequenceEffect.of(gain-control, untap, haste))` |
+| 2 | `ReturnSelfToHandAndCreateTokensEffect` | `1f6ed32fd` | 1 card | `ConditionalEffect(SequenceEffect.of(return-self, create-tokens))` |
+| 3 | `TargetPlayerLosesLifeAndControllerGainsLifeEffect` | `fd6ac6145`, `408b9e47c` | 11 cards + `SpellCastLifeDrainEffect` (12 users) | flat pair `LoseLifeEffect` + `GainLifeEffect` |
+| 4 | `DrawAndDiscardCardEffect` | `a587a6edb`, `9f802d9df` | 11 unwrapped + 6 wrapped cards + 1 combat engine site (18 sites) | `DrawCardEffect` + `DiscardEffect` (flat pair, or `SequenceEffect`-bundled under a wrapper/trigger slot) |
+
+**Records 1–2** genuinely needed the new primitive (their steps sit under a `MayEffect`/`ConditionalEffect`
+wrapper that can hold only one child — the Dominus shape). **Records 3–4** are unconditional multi-step bundles
+that decompose to flat effect-list pairs where no wrapper blocks them, and only reach for `SequenceEffect` when a
+single-child slot (a trigger `ON_ENTER_BATTLEFIELD` collector, a `MayEffect`) forces one entry. Total: **~31
+card users** (+1 combat engine site, +1 internal `SpellCastLifeDrainEffect`) migrated across the four folds.
+
+### Step 1 — deletion verification (CLEAN)
+- Whole-repo `*.java` grep (build/ excluded) for all four names → **zero hits**.
+- `agent-docs/` grep for all four names → **zero hits** (loot/drain rows already rewritten to the compose
+  pattern in the Session-6/7 doc passes; nothing presents a deleted record as available).
+- Every surviving mention of the four names is in `refactor-docs/*.md` history only
+  (`COMPOSITE_FOLD_PROGRESS.md`, `TARGETSPEC_PROGRESS.md`, `PROGRESS.md`). The stale `EFFECT_COUPLING_MATRIX.md`
+  hit was cleared by the Step-3 regen (re-grepped the fresh matrix → clean). **No stragglers to fix.**
+
+### Step 2 — compile check (BUILD SUCCESSFUL)
+`.\gradlew.bat :magical-vibes-domain:compileJava :magical-vibes-engine:compileJava :magical-vibes-card:compileJava :magical-vibes-ai:compileJava --console=plain`
+→ **BUILD SUCCESSFUL** (all four modules `UP-TO-DATE`, config cache reused).
+
+### Step 3 — coupling metrics refreshed
+`python scripts/effect-coupling-audit.py` regenerated `EFFECT_COUPLING_MATRIX.md` + `effect-dispatch-baseline.txt`:
+
+| Metric | Prev baseline (batch-1 closeout) | Now | Δ |
+|--------|----------------------------------|-----|---|
+| effect types | 1098 | **1095** | **−3** |
+| total violations | 482 | **483** | **+1** |
+
+- **Types −3** = exactly as predicted: −4 for the four deleted records, +1 for the new `SequenceEffect` record
+  (net −3). (Interfaces 35, wrappers 10 in the fresh run.)
+- **Violations +1** (as-measured): the refreshed matrix attributes exactly **one** new reference —
+  `SequenceEffect` in `SpellEvaluator.java` (AI scoring), matrix line 347. The four deleted records were
+  registry-dispatched handlers the audit did not count as dispatch violations, so their removal did not lower
+  the count; the net move is the single new AI reference. (Audit also reports: 52 exempt-zone hits,
+  245 structural/interface hits, 234 validator-gap types.)
+
+### Step 4 — composite record count
+Case-**sensitive** `And[A-Z]|Then[A-Z]` over `magical-vibes-domain/.../model/effect/*.java` (flat dir, no
+subpackages; `-cmatch` so Land/Hand/Random don't inflate): **133** (was 137). **−4**, exactly the four deleted
+composites (all matched `And[A-Z]`: `AndHaste`, `AndCreate`, `AndController`, `AndDiscard`). ≈123 genuine
+composites remain (was ≈127).
+
+### Batch 4 candidates
+a. **`SequenceEffect` is available and proven.** Unconditional, in-order, no data flow between steps.
+   Exercised and green under `MayEffect`, `ConditionalEffect`, `TriggeringPermanentConditionalEffect`, and
+   directly on trigger slots (and — Session 7 — `ConditionalReplacementEffect` via Muse Seeker). This is the
+   established recipe for the "Dominus shape": an unconditional bundle that only stayed a bespoke record because
+   a single-child wrapper couldn't hold two effects.
+
+b. **STILL BLOCKED — do NOT attempt with plain `SequenceEffect`.** Every "if you do" composite where a
+   **failable** step gates the later steps needs a success signal `SequenceEffect` deliberately does not carry
+   (it has no inter-step data flow / no abort-on-failure). Leave these for a dedicated engine-design session that
+   introduces a success-signal design (e.g. a step reporting "actually happened" that aborts the remainder):
+   - `DiscardCardAndUntapSelfEffect`
+   - `SacrificeSelfAndDrawCardsEffect`
+   - `SacrificeSelfAndTargetPlayerDiscardsEffect`
+   - `SacrificeSelfThenDealDamageToTargetPlayerEffect` (Booby Trap)
+   - `DiscardAndDrawCardEffect` (rummage — discard gates the draw)
+   - `RemoveCounterFromSourceAndGainLifeEffect`
+
+c. **NEXT SURVEY TASK (run as its own session).** Re-scan the remaining ~123 `And`/`Then` composite records for
+   bundles that are **unconditional but wrapper-blocked** (the Dominus shape from (a)) — those now fold with the
+   established recipe; this batch's Sessions 2–7 are the template. Produce a candidate list **ranked by user
+   count** (most-used composites first) so the highest-leverage folds go first, and screen out anything matching
+   the failable-gate pattern in (b).
+
+### Verification artifacts
+- Metrics regenerated: `refactor-docs/EFFECT_COUPLING_MATRIX.md`, `refactor-docs/effect-dispatch-baseline.txt`
+  (script-owned; the only files this session changed besides this log). Nothing committed.
+
+---
+
+## Batch 4 — three self-only Dominus folds shipped (survey Tier 1)
+
+Implemented the three high-confidence Tier-1 candidates from `BATCH4_FOLD_SURVEY.md`: unconditional, self-only
+step bundles wrapped in a single-child wrapper/slot. Deleted three records + three handlers; no handler unit
+tests existed for any of them, and no white-box card tests referenced them. Nothing committed.
+
+| Deleted record | User | Replacement | Wrapper |
+|----------------|------|-------------|---------|
+| `BoostSelfAndLoseKeywordEffect` | Sentry Oak | `SequenceEffect.of(new BoostSelfEffect(2,0), new RemoveKeywordEffect(DEFENDER, GrantScope.SELF))` | `ClashEffect` (clash win reward) |
+| `RemoveCountersAndTransformSelfEffect` | Primal Amulet (via `PutCounterOnSelfThenTransformIfThresholdEffect` handler, ~line 92) | `SequenceEffect.of(new RemoveAllCountersFromSelfEffect(type), new TransformSelfEffect())` | `MayEffect` (queued threshold-transform may) |
+| `TapAndTransformSelfEffect` | Homicidal Brute | `SequenceEffect.of(new TapPermanentsEffect(TapUntapScope.SELF), new TransformSelfEffect())` | `ConditionalEffect(new DidntAttack(), …)` |
+
+### Engine change required — ClashEffect/FlipCoinWinEffect were NOT splice-capable (survey correction)
+The survey (and Batch-3 closeout §a) assumed `SequenceEffect` works under any single-child wrapper. **It does
+not.** `SequenceEffect` has no handler — it is expanded only by `EffectResolutionService.resolveEffectsLoop`'s
+splice branch. `MayEffect`/`ConditionalEffect`/trigger slots route their child back through that loop, so they
+work. But **`ClashEffectHandler` and `FlipCoinWinEffectHandler` dispatch their win/branch reward directly via
+`effectHandlerRegistry.getHandler(...)`** (synchronous, mirrors each other) — and `getHandler(SequenceEffect)`
+returns `null`, so a `SequenceEffect` reward would be **silently dropped** (logged "No handler…"). The survey
+mis-graded `BoostSelfAndLoseKeywordEffect` as a purely mechanical fold; it actually needed an engine change.
+
+Fix (minimal, behavior-preserving): both handlers now expand a `SequenceEffect` in their `dispatch` helper by
+dispatching each step in order via the registry — byte-for-byte what the old `BoostSelfAndLoseKeywordEffectHandler`
+did (BoostSelf then RemoveKeyword). This expansion is **synchronous**, so a `SequenceEffect` used under
+`ClashEffect`/`FlipCoinWinEffect` must contain only synchronous steps (no async player-input pause between steps)
+— the same constraint those wrappers already impose on any reward (the doc already forbids an interactive
+`MayEffect` reward: it re-clashes). Both siblings updated for consistency; `SequenceEffect`'s javadoc now
+documents the two dispatch paths.
+
+### Behavior-parity notes (all folds resolve identically or more rules-correctly)
+- **Boost/lose-keyword:** old handler delegated to exactly `BoostSelfEffect` + `RemoveKeywordEffect(SELF)`
+  handlers → identical.
+- **Remove-counters/transform:** old `removeCountersAndTransform` support method removed all counters then
+  transformed *without* an `isTransformPrevented` check. The composed `TransformSelfEffect` **does** check
+  prevention — strictly more rules-correct ("remove counters" still happens; a prevented transform is skipped).
+  Both `RemoveAllCountersFromSelfEffect` (source-or-target self-id) and `TransformSelfEffect` (source self-id)
+  resolve against the amulet because the queued may entry carries it as `sourcePermanentId`. The non-optional
+  branch (Treasure Map etc.) still uses `removeCountersAndTransform` and was left untouched.
+- **Tap/transform:** old handler skipped the tap when transform was prevented; the composed pair taps
+  unconditionally (`TapPermanentsEffect(SELF)`, which also fires becomes-tapped triggers) then transforms if
+  able — matches CR ("tap it, then transform it": the tap is not contingent on the transform). More
+  rules-correct; no test asserted the old skip-tap behavior.
+
+### Tests (all PASS, via scripts/run-card-test.ps1; full suite NOT run per CLAUDE.md)
+- `SentryOakTest` (5) — end-to-end coverage of the new `ClashEffect(SequenceEffect)` path (won/lost/declined/
+  wears-off/opponent-combat).
+- `PrimalAmuletTest` (16), `CivilizedScholarTest` (4, Homicidal Brute back face).
+- `FlipCoinWinEffectHandlerTest` (2) — **added** `sequenceBranchResolvesEachStep`: sets both win and lost
+  branches to one `SequenceEffect` (coin flip is `ThreadLocalRandom`, uncontrollable) and verifies each step is
+  dispatched. Covers the new expansion deterministically. (No `ClashEffectHandlerTest` exists; SentryOak covers
+  that path.)
+
+### Trap checklist
+- Whole-repo `*.java` grep for all three record names → **zero** (only `refactor-docs/*.md` history +
+  updated `agent-docs`).
+- `agent-docs`: `EFFECTS_INDEX.md` three rows rewritten to `_compose, no dedicated effect_`; the
+  `PreventTransformEffect` transform-path list and the `ConditionalEffect(DidntAttack)` row de-referenced the
+  deleted record; `EFFECTS_QUICK_REFERENCE.md` ClashEffect entry (Sentry Oak example + SequenceEffect note).
+- AI module: **zero** references (records were never AI-scored). Validators (`@ValidatesTarget`): none.
+- Handler auto-registration is Spring `getBeansOfType` → `registry.register(bean.handledEffect())`; deleting a
+  handler bean is self-cleaning, no central list.
+
+### Metrics
+| Metric | Batch-3 close | Now | Δ |
+|--------|---------------|-----|---|
+| effect types | 1095 | **1092** | **−3** |
+| total violations | 483 | **483** | **0** (the two new `instanceof SequenceEffect` land in the exempt structural zone: exempt hits 52 → 54) |
+| composite records (`-cmatch And[A-Z]|Then[A-Z]`) | 133 | **130** | **−3** |
+
+### Batch 4 status vs survey
+Tier 1 done (3/3). **Tier 2** (`DrawThenPutCardsFromHandOnTopOrBottomOfLibraryEffect`,
+`DiscardOwnHandThenDrawEffect`, `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect`) still each need a
+missing primitive / targetSpec work — not attempted. **Tier 3** (fold `DestroyTarget…AndController…` into the
+`DestroyTargetPermanentThenEffect` generic) is a separate batch. Key lesson recorded for future sessions:
+**verify a wrapper actually re-enters `resolveEffectsLoop` before assuming `SequenceEffect` works under it** —
+direct-dispatch wrappers (`ClashEffect`, `FlipCoinWinEffect`) need the local synchronous expansion added here.
