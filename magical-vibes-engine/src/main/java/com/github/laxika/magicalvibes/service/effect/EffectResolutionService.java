@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -46,6 +48,9 @@ public class EffectResolutionService {
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final GameOutcomeService gameOutcomeService;
+    // ObjectProvider breaks the construction-time cycle StateBasedActionService -> LegendRuleService
+    // -> PlayerInputService -> (interaction handlers) -> EffectResolutionService.
+    private final ObjectProvider<StateBasedActionService> stateBasedActionService;
 
     /**
      * Resolves all effects on the given stack entry from the beginning.
@@ -85,7 +90,18 @@ public class EffectResolutionService {
             // suppression survives until the resumed resolution drains and completes here.
             if (gameData.effectResolutionDepth == 0 && gameData.pendingEffectResolutionEntry == null) {
                 gameData.deferPlayerLossCheck = false;
-                gameOutcomeService.checkWinCondition(gameData);
+                if (gameData.currentlyResolvingControllerId == null) {
+                    // Async-resumed resolution: the interaction handler that re-entered here ran the
+                    // state-based check *before* resuming, so damage/counters dealt by the resumed
+                    // effects (e.g. Flameblast Dragon's X, Roar of the Crowd's counted damage) have
+                    // not yet been checked. Run the single-kill-site SBA now (it also covers the
+                    // deferred player-loss check). Synchronous stack resolution instead runs SBA
+                    // itself in StackResolutionService right after the effect list finishes, so only
+                    // the player-loss check is needed here.
+                    stateBasedActionService.getObject().performStateBasedActions(gameData);
+                } else {
+                    gameOutcomeService.checkWinCondition(gameData);
+                }
             }
         }
     }

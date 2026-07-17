@@ -110,6 +110,11 @@ class PalaceGuardTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        // CR 510.1d — Palace Guard blocks 3 attackers, so its controller divides its 1 combat
+        // damage; put it on the first attacker.
+        harness.handleCombatDamageAssigned(player2, 0, java.util.Map.of(
+                gd.playerBattlefields.get(player1.getId()).get(0).getId(), 1));
+
         // Palace Guard takes 3 damage total (3x 1/1) — survives as 1/4
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Palace Guard"));
@@ -145,6 +150,11 @@ class PalaceGuardTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities();
+
+        // CR 510.1d — Palace Guard blocks 4 attackers, so its controller divides its 1 combat
+        // damage; put it on the first attacker.
+        harness.handleCombatDamageAssigned(player2, 0, java.util.Map.of(
+                gd.playerBattlefields.get(player1.getId()).get(0).getId(), 1));
 
         // Palace Guard takes 4 damage (4x 1/1) — dies (toughness 4)
         assertThat(gd.playerGraveyards.get(player2.getId()))

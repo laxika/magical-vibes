@@ -187,6 +187,12 @@ class SpikeTailedCeratopsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        // CR 510.1d — Ceratops blocks 2 attackers, so its controller divides its 4 combat damage:
+        // 2 to each 2/2 kills both.
+        harness.handleCombatDamageAssigned(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(ceratopsPerm),
+                java.util.Map.of(atkPerm1.getId(), 2, atkPerm2.getId(), 2));
+
         // 4/4 deals 4 damage: kills first 2/2, 2 remaining kills second 2/2
         // Both 2/2 deal 2+2=4 damage to ceratops — ceratops dies
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);

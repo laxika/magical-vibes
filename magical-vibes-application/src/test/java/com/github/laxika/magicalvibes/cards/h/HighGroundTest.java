@@ -260,6 +260,12 @@ class HighGroundTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
+        // CR 510.1d — the 4/4 blocks 2 attackers, so its controller divides its 4 combat damage:
+        // 2 to each 2/2 kills both.
+        harness.handleCombatDamageAssigned(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm),
+                java.util.Map.of(atkPerm1.getId(), 2, atkPerm2.getId(), 2));
+
         // 4/4 blocker deals 4 damage to first attacker (kills 2/2), remaining to second (kills 2/2)
         // Both 2/2 attackers deal 2+2=4 damage to blocker → 4/4 blocker dies
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -304,6 +310,12 @@ class HighGroundTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.passBothPriorities();
+
+        // CR 510.1d — the 5/5 blocks 2 attackers, so its controller divides its 5 combat damage;
+        // 1 to each 1/1 is lethal (the surplus can pile on either attacker).
+        harness.handleCombatDamageAssigned(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(blockerPerm),
+                java.util.Map.of(atkPerm1.getId(), 4, atkPerm2.getId(), 1));
 
         // Both 1/1 attackers should be dead
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);

@@ -17,13 +17,12 @@ class HissingIguanarTest extends BaseCardTest {
     // "Whenever another creature dies, you may have this creature deal 1 damage to
     //  target player or planeswalker."
 
-    /** Player1 shocks the named creature; resolve Shock, its death, then the death trigger. */
+    /** Player1 shocks the named creature; resolve Shock and its death. */
     private void killWithShock(UUID targetId) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities(); // resolve Shock -> creature dies -> death trigger onto stack
-        harness.passBothPriorities(); // resolve the death trigger (MayEffect prompt)
+        harness.passBothPriorities(); // resolve Shock -> creature dies -> death trigger
     }
 
     @Test
@@ -35,8 +34,11 @@ class HissingIguanarTest extends BaseCardTest {
         int p2LifeBefore = gd.getLife(player2.getId());
 
         killWithShock(harness.getPermanentId(player1, "Grizzly Bears"));
-        harness.handleMayAbilityChosen(player1, true);
+        // CR 603.3d: a targeted "may" ability chooses its target as it is put on the stack; the
+        // "may" decision is made when it resolves.
         harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities(); // resolve the death trigger -> "may" prompt
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2LifeBefore - 1);
     }
@@ -50,6 +52,8 @@ class HissingIguanarTest extends BaseCardTest {
         int p2LifeBefore = gd.getLife(player2.getId());
 
         killWithShock(harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities(); // resolve the death trigger -> "may" prompt
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(p2LifeBefore);

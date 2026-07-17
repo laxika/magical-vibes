@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -76,12 +77,23 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         // Two triggers (one per Tatyova)
         assertThat(gd.stack).hasSize(2);
 
-        harness.passBothPriorities(); // Resolve first trigger
-        harness.passBothPriorities(); // Resolve second trigger
+        // Resolve the first landfall trigger. The two legendary Tatyovas then break the legend rule
+        // (CR 704.5j, a state-based action): the controller keeps one and the other is put into the
+        // graveyard. Both landfall triggers still resolve — they triggered before one Tatyova left.
+        harness.passBothPriorities();
+        UUID keptTatyova = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Tatyova, Benthic Druid"))
+                .findFirst().orElseThrow().getId();
+        harness.handlePermanentChosen(player1, keptTatyova);
+        harness.passBothPriorities(); // Resolve the second trigger
 
         harness.assertLife(player1, 22);
         // Hand: setHand(1) -> play land(0) -> draw 1 + draw 1 = 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        // The legend rule leaves exactly one Tatyova on the battlefield.
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Tatyova, Benthic Druid")).count())
+                .isEqualTo(1);
     }
 
     // ===== Triggers on each land separately =====

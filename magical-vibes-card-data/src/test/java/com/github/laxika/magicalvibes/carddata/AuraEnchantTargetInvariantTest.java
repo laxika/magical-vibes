@@ -85,6 +85,13 @@ class AuraEnchantTargetInvariantTest {
                     }
                     continue;
                 }
+                // Reanimation Auras ("Enchant creature card in a graveyard", e.g. Animate Dead) target a
+                // card in a graveyard through a graveyard-targeting SPELL effect, not a battlefield
+                // permanent. The "attach to any permanent" hazard — and the battlefield target(...)
+                // filter that guards it — simply does not apply to them.
+                if (enchantType.toLowerCase().contains("graveyard")) {
+                    continue;
+                }
                 if (card.getTargetFilter() == null) {
                     violations.add(label + ": 'Enchant " + enchantType + "' but the class declares no"
                             + " target(...) filter — every validation path would let it attach to any"

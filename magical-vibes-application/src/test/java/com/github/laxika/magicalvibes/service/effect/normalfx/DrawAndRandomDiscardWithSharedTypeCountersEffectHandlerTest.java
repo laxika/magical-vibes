@@ -29,7 +29,7 @@ class DrawAndRandomDiscardWithSharedTypeCountersEffectHandlerTest extends Abstra
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
-                verify(graveyardService, times(2)).addCardToGraveyard(eq(gd), eq(player1Id), any());
+                verify(graveyardService, times(2)).discardCard(eq(gd), eq(player1Id), any());
             }
 
             @Test

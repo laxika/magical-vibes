@@ -12,7 +12,11 @@ import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,6 +65,18 @@ class CombatServiceTest {
     @Mock
     private BattlefieldEntryService battlefieldEntryService;
 
+    @Mock
+    private GameQueryService gameQueryService;
+
+    @Mock
+    private CreatureControlService creatureControlService;
+
+    @Mock
+    private PermanentCounterSupport permanentCounterSupport;
+
+    @Mock
+    private DamageSupport damageSupport;
+
     @InjectMocks
     private CombatService combatService;
 
@@ -82,6 +99,20 @@ class CombatServiceTest {
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        // CombatService.processEndOfCombatSacrifices looks the marked permanent up by id; mimic the
+        // real lookup over the battlefields (lenient: the no-sacrifice tests never call it).
+        lenient().when(gameQueryService.findPermanentById(any(), any())).thenAnswer(inv -> {
+            UUID id = inv.getArgument(1);
+            for (List<Permanent> battlefield : gd.playerBattlefields.values()) {
+                for (Permanent p : battlefield) {
+                    if (p.getId().equals(id)) {
+                        return p;
+                    }
+                }
+            }
+            return null;
+        });
     }
 
     // ===== Helper methods =====

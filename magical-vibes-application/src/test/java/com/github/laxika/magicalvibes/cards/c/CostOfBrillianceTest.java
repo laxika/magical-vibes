@@ -110,6 +110,8 @@ class CostOfBrillianceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CostOfBrilliance()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, targetPlayerId);
+        // Cost of Brilliance has two target groups (required player + optional creature); cast via the
+        // multi-target path with only the player named so the optional creature group stays empty.
+        harness.castSorcery(player1, 0, List.of(targetPlayerId));
     }
 }

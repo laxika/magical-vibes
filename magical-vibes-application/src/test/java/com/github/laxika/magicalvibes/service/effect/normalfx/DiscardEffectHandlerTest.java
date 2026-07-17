@@ -245,7 +245,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
-            verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), any());
+            verify(graveyardService).discardCard(eq(gd), eq(player2Id), any());
         }
 
         @Test
@@ -289,7 +289,7 @@ class DiscardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
-            verify(graveyardService, times(2)).addCardToGraveyard(eq(gd), any(), any());
+            verify(graveyardService, times(2)).discardCard(eq(gd), any(), any());
         }
     }
 }

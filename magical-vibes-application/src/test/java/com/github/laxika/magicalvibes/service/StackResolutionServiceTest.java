@@ -57,6 +57,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -106,6 +107,13 @@ class StackResolutionServiceTest {
         gd.playerDecks.put(PLAYER2_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER1_ID, new ArrayList<>());
         gd.playerHands.put(PLAYER2_ID, new ArrayList<>());
+
+        // Permanents entering the battlefield resolve their effective controller through this call
+        // (CR: control-changing gathers such as Gather Specimens); with a bare mock it returns null
+        // and blanks out controllerId. Default it to the passed-in controller. Lenient: spells that
+        // never reach battlefield entry (countered, fizzled) don't call it.
+        lenient().when(battlefieldEntryService.resolveEnteringController(any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(1));
     }
 
     private Card createCreature(String name) {
@@ -198,7 +206,10 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             assertThat(gd.stack).isEmpty();
-            verifyNoInteractions(battlefieldEntryService, graveyardService,
+            // battlefieldEntryService carries a lenient setUp stub, so verify it via never() rather
+            // than verifyNoInteractions (which would trip on the stubbing).
+            verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(any(), any(), any());
+            verifyNoInteractions(graveyardService,
                     effectResolutionService, stateBasedActionService,
                     gameBroadcastService, stateTriggerService);
         }

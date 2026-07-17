@@ -44,6 +44,6 @@ class TargetPlayerRandomDiscardOrControllerDrawsEffectHandlerTest extends Abstra
                 assertThat(gd.discardCausedByOpponent).isTrue();
                 // Random discard removes from hand and sends to graveyard
                 assertThat(gd.playerHands.get(player2Id)).isEmpty();
-                verify(graveyardService).addCardToGraveyard(eq(gd), eq(player2Id), any());
+                verify(graveyardService).discardCard(eq(gd), eq(player2Id), any());
             }
 }

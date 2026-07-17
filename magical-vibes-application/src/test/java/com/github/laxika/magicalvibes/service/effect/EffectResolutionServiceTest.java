@@ -76,6 +76,12 @@ class EffectResolutionServiceTest {
     @Mock
     private com.github.laxika.magicalvibes.service.GameOutcomeService gameOutcomeService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
+
+    @Mock
+    private org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.state.StateBasedActionService> stateBasedActionServiceProvider;
+
     private EffectResolutionService effectResolutionService;
 
     private GameData gd;
@@ -84,9 +90,11 @@ class EffectResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(stateBasedActionServiceProvider.getObject()).thenReturn(stateBasedActionService);
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                registry, gameBroadcastService, permanentRemovalService, damageSupport, gameOutcomeService);
+                registry, gameBroadcastService, permanentRemovalService, damageSupport, gameOutcomeService,
+                stateBasedActionServiceProvider);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -548,6 +556,9 @@ class EffectResolutionServiceTest {
             CardEffect second = new DrawCardEffect(1);
             StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
                     List.of(first, second));
+            // Synchronous stack resolution: StackResolutionService marks the resolving controller,
+            // so the finalize block runs the narrow player-loss check (SBA runs there separately).
+            gd.currentlyResolvingControllerId = player1Id;
 
             EffectHandler firstHandler = stubHandler(first);
             stubHandler(second);
@@ -571,6 +582,7 @@ class EffectResolutionServiceTest {
             CardEffect second = new DrawCardEffect(1);
             StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
                     List.of(first, second));
+            gd.currentlyResolvingControllerId = player1Id;
 
             EffectHandler firstHandler = stubHandler(first);
             stubHandler(second);
@@ -600,6 +612,42 @@ class EffectResolutionServiceTest {
         }
 
         @Test
+        @DisplayName("An async-resumed drain runs the full state-based check, not the bare loss check")
+        void asyncResumedDrainRunsStateBasedActions() {
+            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect second = new DrawCardEffect(1);
+            StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
+                    List.of(first, second));
+
+            EffectHandler firstHandler = stubHandler(first);
+            stubHandler(second);
+            doAnswer(inv -> {
+                gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        createCard("May source"), player1Id, List.of(), "may ability"));
+                return null;
+            }).when(firstHandler).resolve(gd, entry, first);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            // Paused: no state-based check yet.
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+            verify(stateBasedActionService, never()).performStateBasedActions(gd);
+
+            // Input handlers resume outside StackResolutionService's resolve block, so
+            // currentlyResolvingControllerId is null. The drain must run the single-kill-site SBA
+            // (which itself covers the player-loss check) so that damage dealt by the resumed
+            // effects is checked — StackResolutionService's own post-resolution SBA already ran
+            // before the pause.
+            gd.pendingMayAbilities.clear();
+            effectResolutionService.resolveEffectsFrom(gd, entry, gd.pendingEffectResolutionIndex);
+
+            assertThat(gd.deferPlayerLossCheck).isFalse();
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+            verify(stateBasedActionService, times(1)).performStateBasedActions(gd);
+            verify(gameOutcomeService, never()).checkWinCondition(gd);
+        }
+
+        @Test
         @DisplayName("A nested sub-resolution does not re-enable the loss check for the outer entry")
         void nestedResolutionDoesNotFinalizeOuter() {
             CardEffect outerFirst = new DealDamageToAnyTargetEffect(3);
@@ -610,6 +658,7 @@ class EffectResolutionServiceTest {
             CardEffect innerEffect = new DrawCardEffect(2);
             StackEntry inner = createEntry(createCard("Inner rider"), player1Id, List.of(innerEffect));
             stubHandler(innerEffect);
+            gd.currentlyResolvingControllerId = player1Id;
 
             EffectHandler outerFirstHandler = stubHandler(outerFirst);
             stubHandler(outerSecond);

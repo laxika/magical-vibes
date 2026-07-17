@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -52,7 +53,11 @@ class AbbeyGargoylesTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Goblin Raider", 2, 1, CardColor.RED));
+        // Abbey Gargoyles has flying, so give the red blocker flying too; then protection from red
+        // — not flying — is what stops the block.
+        Card raider = createCreature("Goblin Raider", 2, 1, CardColor.RED);
+        raider.setKeywords(java.util.EnumSet.of(Keyword.FLYING));
+        Permanent blocker = new Permanent(raider);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 
@@ -74,7 +79,10 @@ class AbbeyGargoylesTest extends BaseCardTest {
         attacker.setAttacking(true);
         gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
+        // A non-red flyer (green) can legally block the flying Abbey Gargoyles: no protection applies.
+        Card greenFlyer = createCreature("Cloud Elemental", 2, 2, CardColor.GREEN);
+        greenFlyer.setKeywords(java.util.EnumSet.of(Keyword.FLYING));
+        Permanent blocker = new Permanent(greenFlyer);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
 

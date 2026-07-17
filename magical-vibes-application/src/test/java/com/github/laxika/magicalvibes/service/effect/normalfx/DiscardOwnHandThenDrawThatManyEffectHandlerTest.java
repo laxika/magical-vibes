@@ -28,8 +28,8 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
                 resolveEffect(gd, entry, new DiscardOwnHandThenDrawThatManyEffect());
 
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard1);
-                verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard2);
+                verify(graveyardService).discardCard(gd, player1Id, handCard1);
+                verify(graveyardService).discardCard(gd, player1Id, handCard2);
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("draws 2 cards")));
@@ -43,7 +43,7 @@ class DiscardOwnHandThenDrawThatManyEffectHandlerTest extends AbstractPlayerInte
 
                 resolveEffect(gd, entry, new DiscardOwnHandThenDrawThatManyEffect());
 
-                verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+                verify(graveyardService, never()).discardCard(any(), any(), any());
                 verify(drawService, never()).resolveDrawCard(any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat((GameLogEntry logEntry) ->
                         logEntry.plainText().contains("no cards to discard")));
