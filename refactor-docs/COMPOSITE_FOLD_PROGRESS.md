@@ -461,3 +461,143 @@ et al.); if so, the composite is load-bearing.
   `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md` still reference all three records — correct, they
   still exist).
 - Nothing deleted. Full suite not run (per CLAUDE.md — user runs it).
+
+---
+
+## Session 5 — three sacrifice-self riders + one drain record: ALL FOUR DEFERRED (no folds)
+
+Same outcome as Session 4, same root cause: every one of these composites is bundled inside a
+*single-effect wrapper* the card must use (`MayEffect` / `FlipCoinWinEffect` / `ConditionalEffect` /
+`TriggeringPermanentConditionalEffect`) and/or encodes an **"if you do" contingency** that two flat
+`addEffect`s cannot reproduce. The Session-4 rule fired on all four: *before folding a `FooAndBar`
+composite, check whether the user card wraps it in a one-effect wrapper or registers it on a per-effect
+trigger slot; if so, it is load-bearing.* **No card, record, handler, validator, agent-doc, or test was
+changed. Working tree left clean.** Evidence below so future sessions don't re-attempt these.
+
+### Record 1 — SacrificeSelfAndDrawCardsEffect → DEFER
+
+- Handler (`SacrificeSelfAndDrawCardsEffectHandler`): `sourcePermanentId == null` → return; source **not on
+  battlefield** → log "…fizzles — source no longer on the battlefield." and **return WITHOUT drawing**;
+  else `removePermanentToGraveyard` + log "…is sacrificed." + `applyDrawCards(controllerId, amount)`. So the
+  draw is contingent on the source still being present ("if you do").
+- **Both users wrap it in a one-effect wrapper** (verified `MayEffect(CardEffect, String)` and
+  `FlipCoinWinEffect(CardEffect wrapped[, CardEffect lost])` each hold exactly one `CardEffect`; no list
+  variant):
+  - `i/ImpalerShrike` — `addEffect(ON_COMBAT_DAMAGE_TO_PLAYER, new MayEffect(new SacrificeSelfAndDrawCardsEffect(3),
+    "You may sacrifice it. If you do, draw three cards."))`. Oracle *"you **may** sacrifice it. **If you do**,
+    draw three cards."*
+  - `s/SorcerersStrongbox` — `List.of(new FlipCoinWinEffect(new SacrificeSelfAndDrawCardsEffect(3)))` in a
+    `{2},{T}` activated ability. Oracle *"Flip a coin. **If you win the flip**, sacrifice … **and** draw three
+    cards."*
+- **Blockers:** (a) the expected decomposition `SacrificeSelfEffect` + `DrawCardEffect(3)` can't sit inside one
+  `MayEffect`/`FlipCoinWinEffect` → mirroring Act of Treason (flat effects, no wrapper) drops the "may"/"win the
+  flip" gate = mandatory sac+draw every time = rules-wrong; wrapping only the sac in the gate leaves an
+  unconditional draw. (b) even ignoring the wrapper, two flat effects draw **unconditionally**, but the composite
+  does **not** draw when the source is already gone — an observable "if you do" difference (source can be
+  removed in response to the ability). No generic "do-all-of" bundle exists for the wrapper to gate (Session-4
+  search still holds). **Left untouched.**
+- LKI note gathered (for a future engine-enabled session): `SacrificeSelfEffect`'s own handler is a clean no-op
+  when the source is missing and fires `checkAllyPermanentSacrificedTriggers` + `removeOrphanedAuras` on success;
+  `DrawCardEffect(int)` exists. The pieces exist — only the wrapper/contingency blocks the fold.
+
+### Record 2 — SacrificeSelfAndTargetPlayerDiscardsEffect → DEFER
+
+- Handler (`SacrificeSelfAndTargetPlayerDiscardsEffectHandler`): `targetId`/`sourcePermanentId` null → return;
+  source gone → fizzle log + **return without discard**; else sacrifice + `resolveDiscardCards(targetPlayerId,
+  amount)`. Discard contingent on successful sacrifice ("if you do").
+- **User `m/MindstabThrull` wraps it in a one-effect `MayEffect`:**
+  `addEffect(ON_ATTACKS_UNBLOCKED, new MayEffect(new SacrificeSelfAndTargetPlayerDiscardsEffect(3),
+  "You may sacrifice it. If you do, defending player discards three cards."))`. Oracle *"…you **may** sacrifice
+  it. **If you do**, defending player discards three cards."*
+- **Blockers:** same one-effect-`MayEffect` wrapper as Record 1 (the given `DiscardEffect(3, TARGET_PLAYER)` +
+  `SacrificeSelfEffect` split can't be gated by one may → makes the sac mandatory) plus the "if you do"
+  empty-sacrifice contingency. The async-resume machinery for the discard interaction is fine (Session-4
+  verdict), but that was never the blocker. **Left untouched.**
+
+### Record 3 — SacrificeSelfThenDealDamageToTargetPlayerEffect → DEFER
+
+- **Not wrapped in `MayEffect`** — but it is built inside the engine, not on a card:
+  `DrawService.checkBoobyTraps` pushes a single-effect `StackEntry` `List.of(new
+  SacrificeSelfThenDealDamageToTargetPlayerEffect(10))` with `targetId = drawingPlayer`,
+  `sourcePermanentId = the Booby Trap`. (`b/BoobyTrap` itself only carries `ChooseCardNameOnEnterEffect` +
+  `BoobyTrapEffect`.)
+- Rules (Booby Trap, 9ED): *"…sacrifice Booby Trap. **If you do**, Booby Trap deals 10 damage to that player."*
+  Handler encodes this exactly: `self == null || !removePermanentToGraveyard(...)` → **return, no damage**; on
+  success it fires `checkAllyPermanentSacrificedTriggers`, logs the sacrifice, `removeOrphanedAuras`, then (if the
+  target is still a player and the source isn't prevented) `dealDamageToPlayer` + `checkWinCondition`.
+- **Blocker — the "if you do" contingency is inexpressible as two flat effects.** The expected split
+  `SacrificeSelfEffect` + `DealDamageToPlayersEffect(10, TARGET_PLAYER)` would run the damage **unconditionally**:
+  `SacrificeSelfEffect` is a silent no-op when the source is already gone (Booby Trap can be destroyed/sacrificed
+  in response to the draw trigger), so the damage half would still deal 10 to the drawer — rules-wrong (CR "if you
+  do" is unsatisfied when nothing was sacrificed). A `ConditionalEffect` can't rescue it either: any condition
+  would evaluate **after** `SacrificeSelfEffect` has run, when the source is gone in *both* the "I just
+  sacrificed it" and the "it was already gone" cases — indistinguishable. Only the composite, which branches on
+  `removePermanentToGraveyard`'s boolean return, can tell them apart.
+- LKI traps checked and found **non-blocking** (so this is purely the contingency): `SacrificeSelfEffectHandler`
+  already fires the identical `checkAllyPermanentSacrificedTriggers` + `removeOrphanedAuras`; and
+  `DealDamageToPlayersEffect` already has a `TARGET_PLAYER` recipient and its damage keys off the source's
+  live-or-snapshot LKI + prevention. Every *piece* exists — only the sacrifice-succeeded gate is missing.
+  **Left untouched.**
+
+### Record 4 — TargetPlayerLosesLifeAndControllerGainsLifeEffect (drain) → DEFER
+
+The task framed this as a one-card (Syphon Life) one-liner. It is **not**: the record has **11 card users
+across five wiring shapes + a dynamic engine construction site**, and two of those users make it **undeletable**.
+
+- `controllerGainsLifeLost` check done first, per the task: the `LoseLifeEffect` handler honors the drain flag
+  **only** on the `EACH_PLAYER`/`EACH_OPPONENT` branches (`eachPlayerLosesLife`). The `TARGET_PLAYER` branch
+  (`loseTargetPlayerLife`) applies the loss inline (no drain, and — matching the old composite — **without firing
+  "loses life" triggers**). So the one-line `LoseLifeEffect(N, TARGET_PLAYER, true)` fold is unavailable; the
+  correct fold would be the **decompose** path `LoseLifeEffect(N, TARGET_PLAYER)` + `GainLifeEffect(N)` (nominal
+  gain, gated `>0` — the old handler gains the fixed `lifeGain` independent of actual loss, and skips the gain
+  when `lifeGain == 0`).
+- **Hard blocker — two users wrap the drain in a one-effect conditional wrapper** (verified `ConditionalEffect(
+  Condition, CardEffect wrapped)` and `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect
+  wrapped)` each hold exactly one `CardEffect`):
+  - `b/BleakCovenVampires` — `addEffect(ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Metalcraft(),
+    new TargetPlayerLosesLifeAndControllerGainsLifeEffect(4, 4)))`.
+  - `a/ArnynDeathbloomBotanist` — `TriggeringPermanentConditionalEffect(powerOrToughness≤1, DRAIN(2,2))` on
+    `ON_ALLY_CREATURE_DIES` + `ON_DEATH`.
+  The decomposed `LoseLifeEffect` + `GainLifeEffect` pair cannot be placed inside one such wrapper without a
+  generic "do-all-of" bundle effect (engine change, out of scope). **Because these two can't migrate, the record
+  + handler + its `@ValidatesTarget` cannot be deleted** — so folding the other nine users would leave the
+  composite alive (zero cleanup payoff) **and** introduce two ways to express the same drain (a net regression
+  for a program whose goal is deletion). All-or-nothing → DEFER the whole record.
+- Secondary friction confirming the defer even if the wrappers didn't exist:
+  - **`(2,0)` special case** — `n/NecrogenCenser` (`{T}`, remove charge: *"target player loses 2 life"*, **no
+    gain**). Its decomposition must **omit** `GainLifeEffect` entirely (the old handler's `lifeGain>0` guard),
+    so the fold isn't a uniform two-effect substitution.
+  - **Per-effect trigger-slot splitting risk** — `f/FalkenrathNoble` (`ON_DEATH` + `ON_ANY_CREATURE_DIES`),
+    `h/HighwayRobber` & `h/HierophantsChalice` (`ON_ENTER_BATTLEFIELD`), `p/PollutedBonds`
+    (`ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`) each register the **targeted** drain on a trigger slot. Splitting it
+    into two slot effects risks the Session-4 Record-3 trap (collector emitting one stack entry per effect →
+    the targeted loss and the gain become two abilities → the gain no longer fizzles with an illegal target,
+    breaking CR atomicity). Would need per-slot verification the collector bundles them into one targeted entry.
+  - **Dynamic construction** — `SpellCastTriggerCollectorService` (~line 724) builds `new
+    TargetPlayerLosesLifeAndControllerGainsLifeEffect(trigger.lifeLoss(), trigger.lifeGain())` for every
+    `SpellCastLifeDrainEffect` trigger; that site would also need to push the decomposed pair.
+  - The remaining plain users (`s/SyphonLife`+Retrace, `s/SoulFeast`, `m/MorselTheft` `SPELL`; `b/BlightKeeper`
+    activated ability) *would* fold cleanly in isolation, but that doesn't help while the record must survive.
+- **Full-fold requires an engine change** (a generic sequential bundle effect that
+  `ConditionalEffect`/`TriggeringPermanentConditionalEffect` can wrap, plus trigger-collector batching of
+  same-slot targeted effects). Out of scope for a decompose-onto-card fold. **Left untouched.**
+
+### Common theme (reinforces Session 4)
+All four are load-bearing for the same structural reason: a wrapper the card *must* use accepts exactly one
+`CardEffect` (`MayEffect`, `FlipCoinWinEffect`, `ConditionalEffect`, `TriggeringPermanentConditionalEffect`),
+and/or the composite encodes an **"if you do" contingency** (draw/discard/damage only when the self-sacrifice
+actually happened) that a post-sacrifice `ConditionalEffect` can't recover (the source is gone either way).
+The wrapper set to check before any future fold is now: `MayEffect`, `FlipCoinWinEffect`, `ConditionalEffect`,
+`TriggeringPermanentConditionalEffect`, and per-effect trigger-slot registration.
+
+### Tests run
+- **None.** No production or test code changed (working tree clean), so there was nothing to verify — every
+  defer rests on a code-read blocker (the four wrapper records literally hold a single `CardEffect`; the "if you
+  do" handlers branch on `removePermanentToGraveyard`'s boolean / a `source == null` fizzle). Unlike Session 4's
+  Thopter Assembly (subtle LIFO trigger-split needing empirical proof), no temporary decomposition was needed.
+
+### Notes
+- No agent-docs touched — `EFFECTS_INDEX.md`, `EFFECTS_QUICK_REFERENCE.md`, `ORACLE_TEXT_EFFECT_MAP.md`,
+  `CARD_PATTERNS_CREATURES_TRIGGERED.md`, `CARD_PATTERNS_PERMANENTS_ARTIFACTS.md`, `CARD_PATTERNS_CREATURES_ETB.md`
+  still reference all four records, correctly (they all still exist).
+- Nothing deleted. Full suite not run (per CLAUDE.md — user runs it).
