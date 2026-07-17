@@ -205,6 +205,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record BrilliantUltimatumPlayChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
+        }
     }
 
     /**
@@ -1046,6 +1056,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the resolution. Answered via the shared may-ability accept/decline wire payload.
      */
     record AdNauseamRepeatChoice(UUID playerId, String sourceName) implements PendingInteraction {
+
+        @Override
+        public UUID decidingPlayerId() {
+            return playerId;
+        }
+
+        @Override
+        public InteractionOptions legalOptions() {
+            return InteractionOptions.ACCEPT_DECLINE;
+        }
     }
 
     /**

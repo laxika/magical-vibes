@@ -42,11 +42,6 @@ public class BrilliantUltimatumPlayChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.BrilliantUltimatumPlayChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.BrilliantUltimatumPlayChoice interaction,
                        UUID recipientId) {
         List<CardView> cardViews = new ArrayList<>();

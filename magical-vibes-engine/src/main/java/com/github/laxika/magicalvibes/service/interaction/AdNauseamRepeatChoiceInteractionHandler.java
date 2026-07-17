@@ -44,11 +44,6 @@ public class AdNauseamRepeatChoiceInteractionHandler
     }
 
     @Override
-    public UUID decidingPlayerId(PendingInteraction.AdNauseamRepeatChoice interaction) {
-        return interaction.playerId();
-    }
-
-    @Override
     public void prompt(GameData gameData, PendingInteraction.AdNauseamRepeatChoice interaction, UUID recipientId) {
         sessionManager.sendToPlayer(recipientId, new MayAbilityMessage(
                 "Reveal the next card and lose life equal to its mana value? (" + interaction.sourceName() + ")",
