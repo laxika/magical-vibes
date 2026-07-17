@@ -69,7 +69,6 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
         }
 
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
-        List<Permanent> destroyed = new ArrayList<>();
         for (Permanent creature : new ArrayList<>(candidates)) {
             if (!predicateEvaluationService.matchesPermanentPredicate(creature, e.predicate(), ctx)) continue;
             if (!gameQueryService.isCreature(gameData, creature)) continue;
@@ -78,12 +77,9 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + creature.getCard().getName() + " is prevented."));
                 continue;
             }
-            if (damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage)) {
-                destroyed.add(creature);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
         }
 
-        damageSupport.destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
     }
 }

@@ -194,25 +194,11 @@ public class EffectResolutionService {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
             gameData.clearSpellCastColorsSpent(entry.getCard().getId());
         }
-        destroyPendingLethalDamageCreatures(gameData);
+        // Lethally-damaged creatures die at the state-based action check that follows this
+        // resolution (CR 704.5g/704.5h) — damage handlers only record marked damage.
         permanentRemovalService.removeOrphanedAuras(gameData);
         // Now that the whole resolution's damage is dealt, queue any "whenever a [color] source deals
         // damage" reflections (Justice) once per source with the summed total (CR ruling).
         damageSupport.flushSourceDamageReflections(gameData);
-    }
-
-    /**
-     * Destroys all creatures that took lethal damage during effect resolution.
-     * Deferred to this point so that all effects on a stack entry see the full battlefield
-     * before any lethally-damaged creature is removed (matching MTG state-based action timing).
-     */
-    private void destroyPendingLethalDamageCreatures(GameData gameData) {
-        if (gameData.pendingLethalDamageDestructions.isEmpty()) return;
-        for (Permanent target : gameData.pendingLethalDamageDestructions) {
-            permanentRemovalService.removePermanentToGraveyard(gameData, target);
-            gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is destroyed."));
-            log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
-        }
-        gameData.pendingLethalDamageDestructions.clear();
     }
 }

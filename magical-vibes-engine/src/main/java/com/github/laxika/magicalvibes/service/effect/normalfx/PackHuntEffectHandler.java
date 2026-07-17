@@ -66,9 +66,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
             if (!(gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, hunter.getCard()))) {
                 int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
-                if (damageSupport.dealCreatureDamage(gameData, entry, target, damage, hunter)) {
-                    gameData.pendingLethalDamageDestructions.add(target);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, target, damage, hunter);
             } else {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented."));
             }
@@ -88,9 +86,7 @@ public class PackHuntEffectHandler implements NormalEffectHandlerBean {
                     if (!(gameQueryService.isDamagePreventable(gameData)
                             && gameQueryService.hasProtectionFromSource(gameData, hunter, target.getCard()))) {
                         int actualDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
-                        if (damageSupport.dealCreatureDamage(gameData, entry, hunter, actualDamage, target)) {
-                            gameData.pendingLethalDamageDestructions.add(hunter);
-                        }
+                        damageSupport.dealCreatureDamage(gameData, entry, hunter, actualDamage, target);
                     } else {
                         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + hunter.getCard().getName() + " is prevented."));
                     }

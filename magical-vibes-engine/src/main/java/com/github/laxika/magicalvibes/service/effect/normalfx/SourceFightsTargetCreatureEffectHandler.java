@@ -54,9 +54,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         // Source deals damage equal to its power to target
         if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
             int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
-            if (damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage)) {
-                gameData.pendingLethalDamageDestructions.add(target);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, target, sourceDamage);
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + "."));
         } else {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
@@ -67,9 +65,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
             int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
             if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
                 int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
-                if (damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
-                    gameData.pendingLethalDamageDestructions.add(source);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, source, targetDamage, target);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + "."));
             } else {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + "'s damage to " + cardName + " is prevented."));

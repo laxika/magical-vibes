@@ -173,8 +173,6 @@ public class GameData {
     public final List<UUID> tariffRemainingPlayers = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
-    /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
-    public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /** CR 603.5 — set when a MayEffect is encountered during stack resolution, cleared after player responds. */

@@ -59,17 +59,13 @@ public class DealDamageDividedEvenlyAmongCreaturesTargetControlsEffectHandler im
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, perCreature, entry);
         String cardName = entry.getCard().getName();
 
-        List<Permanent> destroyed = new ArrayList<>();
         for (Permanent creature : creatures) {
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, creature, entry.getCard())) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + creature.getCard().getName() + " is prevented."));
                 continue;
             }
-            if (damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage)) {
-                destroyed.add(creature);
-            }
+            damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
         }
-        damageSupport.destroyAllLethal(gameData, destroyed);
 
         gameOutcomeService.checkWinCondition(gameData);
     }

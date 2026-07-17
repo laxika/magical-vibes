@@ -55,12 +55,9 @@ public class DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffectHandle
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + permanent.getCard().getName() + " is prevented."));
                     continue;
                 }
-                if (damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage)) {
-                    destroyed.add(permanent);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);
             }
         }
-        damageSupport.destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
     
     }

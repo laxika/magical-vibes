@@ -64,8 +64,6 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        List<Permanent> destroyed = new ArrayList<>();
-
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId());
@@ -88,16 +86,13 @@ public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerB
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
             } else {
                 if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, entry.getCard()))) {
-                    if (damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage)) {
-                        destroyed.add(targetPermanent);
-                    }
+                    damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
                 } else {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPermanent.getCard().getName() + " is prevented."));
                 }
             }
         }
 
-        damageSupport.destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
 
     }

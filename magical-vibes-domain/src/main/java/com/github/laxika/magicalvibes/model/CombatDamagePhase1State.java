@@ -18,6 +18,7 @@ public class CombatDamagePhase1State {
     public final Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures;
     public final int damageToDefendingPlayer;
     public final int damageRedirectedToGuard;
+    public final boolean deathtouchDamageRedirectedToGuard;
     public final Map<UUID, Integer> damageToPlaneswalkers;
     public final Map<Integer, List<Integer>> blockerMap;
     public final boolean anyFirstStrike;
@@ -36,6 +37,7 @@ public class CombatDamagePhase1State {
             Map<UUID, Map<UUID, Integer>> combatDamageAmountsToCreatures,
             int damageToDefendingPlayer,
             int damageRedirectedToGuard,
+            boolean deathtouchDamageRedirectedToGuard,
             Map<UUID, Integer> damageToPlaneswalkers,
             Map<Integer, List<Integer>> blockerMap,
             boolean anyFirstStrike,
@@ -52,6 +54,7 @@ public class CombatDamagePhase1State {
         this.combatDamageAmountsToCreatures = combatDamageAmountsToCreatures;
         this.damageToDefendingPlayer = damageToDefendingPlayer;
         this.damageRedirectedToGuard = damageRedirectedToGuard;
+        this.deathtouchDamageRedirectedToGuard = deathtouchDamageRedirectedToGuard;
         this.damageToPlaneswalkers = damageToPlaneswalkers;
         this.blockerMap = blockerMap;
         this.anyFirstStrike = anyFirstStrike;

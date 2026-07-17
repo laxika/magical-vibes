@@ -100,6 +100,7 @@ public class CombatDamageService {
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService;
 
     /**
      * Resolves combat damage for the current combat phase.
@@ -219,13 +220,47 @@ public class CombatDamageService {
         // Collect ON_DEALT_DAMAGE trigger data before dead creatures are removed from battlefield
         List<DealtDamageTriggerData> dealtDamageTriggerData = collectDealtDamageTriggerData(gameData, state);
 
-        // Update markedDamage on creatures that took combat damage (CR 704.5g)
+        // All combat damage of this step is applied as one simultaneous recording (CR 510.4):
+        // marked damage + deathtouch flags on creatures, life loss on the player, loyalty on
+        // planeswalkers. Nothing dies here — the state-based action check below is the single
+        // place combat casualties are determined (CR 704.5f/5g/5h/5i).
         updateMarkedDamageFromCombat(gameData, atkBf, defBf, state);
-
-        List<String> deadCreatureNames = removeDeadCreatures(gameData, state, atkBf, defBf, activeId, defenderId);
-
         applyPlayerDamage(gameData, state, defenderId);
         applyPlaneswalkerDamage(gameData, state);
+
+        // Snapshot attacker IDs so blocking state can be cleaned up for attackers that die.
+        Set<UUID> attackerIdsBefore = new HashSet<>();
+        for (Permanent p : atkBf) {
+            attackerIdsBefore.add(p.getId());
+        }
+        Map<UUID, String> namesBefore = new LinkedHashMap<>();
+        for (Permanent p : atkBf) {
+            namesBefore.put(p.getId(), gameData.playerIdToName.get(activeId) + "'s " + p.getCard().getName());
+        }
+        for (Permanent p : defBf) {
+            namesBefore.put(p.getId(), gameData.playerIdToName.get(defenderId) + "'s " + p.getCard().getName());
+        }
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
+            return CombatResult.DONE;
+        }
+
+        // Diff the battlefields to report casualties and clear orphaned blocking state.
+        Set<UUID> survivingIds = new HashSet<>();
+        gameData.forEachPermanent((pid, p) -> survivingIds.add(p.getId()));
+        List<String> deadCreatureNames = new ArrayList<>();
+        Set<UUID> deadAttackerIds = new HashSet<>();
+        for (var nameEntry : namesBefore.entrySet()) {
+            if (!survivingIds.contains(nameEntry.getKey())) {
+                deadCreatureNames.add(nameEntry.getValue());
+                if (attackerIdsBefore.contains(nameEntry.getKey())) {
+                    deadAttackerIds.add(nameEntry.getKey());
+                }
+            }
+        }
+        clearOrphanedBlockingState(defBf, deadAttackerIds);
 
         if (!deadCreatureNames.isEmpty()) {
             String logEntry = String.join(", ", deadCreatureNames) + " died in combat.";
@@ -233,12 +268,7 @@ public class CombatDamageService {
         }
 
         log.info("Game {} - Combat damage resolved: {} damage to defender, {} creatures died",
-                gameData.id, state.damageToDefendingPlayer, state.deadAttackerIndices.size() + state.deadDefenderIndices.size());
-
-        // Check win condition
-        if (gameOutcomeService.checkWinCondition(gameData)) {
-            return CombatResult.DONE;
-        }
+                gameData.id, state.damageToDefendingPlayer, deadCreatureNames.size());
 
         int stackSizeBeforeDamageTriggers = gameData.stack.size();
         processCombatDamageToCreatureTriggers(gameData, state.combatDamageDealtToCreatures, state.combatDamageDealerControllers);
@@ -563,9 +593,6 @@ public class CombatDamageService {
             }
         }
 
-        determineCasualties(gameData, attackingIndices, atkBf, state.atkDamageTaken,
-                state.deathtouchDamagedAttackerIndices, state.deadAttackerIndices, !isFirstStrikePhase);
-        determineBlockerCasualties(gameData, blockerMap, defBf, state, !isFirstStrikePhase);
     }
 
     /**
@@ -730,24 +757,19 @@ public class CombatDamageService {
             }
         }
 
-        if (redirectTarget != null && (state.damageRedirectedToGuard > 0 || (state.infectDamageRedirectedToGuard > 0 && gameQueryService.getEffectiveToughness(gameData, redirectTarget) <= 0))) {
+        if (redirectTarget != null && state.damageRedirectedToGuard > 0) {
             state.damageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.damageRedirectedToGuard, true);
             if (state.damageRedirectedToGuard > 0) {
+                // Redirected combat damage is still damage dealt to the guard (CR 120.3d): record
+                // it as marked damage plus the CR 704.5h deathtouch memory — the state-based
+                // action check at the end of the damage step performs any destruction.
+                redirectTarget.setMarkedDamage(redirectTarget.getMarkedDamage() + state.damageRedirectedToGuard);
+                gameData.permanentsDealtDamageThisTurn.add(redirectTarget.getId());
+                if (state.deathtouchDamageRedirectedToGuard) {
+                    redirectTarget.setDamagedByDeathtouch(true);
+                }
                 String redirectLog = redirectTarget.getCard().getName() + " absorbs " + state.damageRedirectedToGuard + " redirected combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(redirectLog));
-            }
-
-            int guardToughness = gameQueryService.getEffectiveToughness(gameData, redirectTarget);
-            if (guardToughness <= 0) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
-                String deathLog = redirectTarget.getCard().getName() + " dies from 0 toughness.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(deathLog));
-            } else if (gameQueryService.isLethalDamage(state.damageRedirectedToGuard, guardToughness, false)
-                    && !gameQueryService.hasKeyword(gameData, redirectTarget, Keyword.INDESTRUCTIBLE)
-                    && !graveyardService.tryRegenerate(gameData, redirectTarget)) {
-                permanentRemovalService.removePermanentToGraveyard(gameData, redirectTarget);
-                String deathLog = redirectTarget.getCard().getName() + " is destroyed by redirected combat damage.";
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(deathLog));
             }
         }
     }
@@ -1444,54 +1466,32 @@ public class CombatDamageService {
      */
     private void updateMarkedDamageFromCombat(GameData gameData, List<Permanent> atkBf, List<Permanent> defBf,
                                                CombatDamageState state) {
-        for (var entry : state.atkDamageTaken.entrySet()) {
-            int idx = entry.getKey();
-            int dmg = entry.getValue();
-            if (dmg > 0 && idx < atkBf.size()) {
-                Permanent atk = atkBf.get(idx);
-                atk.setMarkedDamage(atk.getMarkedDamage() + dmg);
-                gameData.permanentsDealtDamageThisTurn.add(atk.getId());
-            }
-        }
-        for (var entry : state.defDamageTaken.entrySet()) {
-            int idx = entry.getKey();
-            int dmg = entry.getValue();
-            if (dmg > 0 && idx < defBf.size()) {
-                Permanent def = defBf.get(idx);
-                def.setMarkedDamage(def.getMarkedDamage() + dmg);
-                gameData.permanentsDealtDamageThisTurn.add(def.getId());
-            }
-        }
+        applyStepDamageToPermanents(gameData, atkBf, state.atkDamageTaken, state.deathtouchDamagedAttackerIndices);
+        applyStepDamageToPermanents(gameData, defBf, state.defDamageTaken, state.deathtouchDamagedDefenderIndices);
     }
 
-    private List<String> removeDeadCreatures(GameData gameData, CombatDamageState state,
-                                              List<Permanent> atkBf, List<Permanent> defBf,
-                                              UUID activeId, UUID defenderId) {
-        List<String> deadCreatureNames = new ArrayList<>();
-        // Collect dead attacker references and IDs before removal
-        Set<UUID> deadAttackerIds = new HashSet<>();
-        List<Permanent> deadAttackers = new ArrayList<>();
-        for (int idx : state.deadAttackerIndices) {
-            Permanent dead = atkBf.get(idx);
-            deadAttackerIds.add(dead.getId());
-            deadAttackers.add(dead);
+    /**
+     * Applies one damage step's accumulated combat damage to the permanents as marked damage
+     * (CR 704.5g) plus the CR 704.5h deathtouch memory. Prevention shields consume the step's
+     * total per creature as a single event (all damage in the step is simultaneous, CR 510.4).
+     */
+    private void applyStepDamageToPermanents(GameData gameData, List<Permanent> battlefield,
+                                              Map<Integer, Integer> damageTaken, Set<Integer> deathtouchIndices) {
+        for (var entry : damageTaken.entrySet()) {
+            int idx = entry.getKey();
+            if (idx >= battlefield.size()) continue;
+            Permanent perm = battlefield.get(idx);
+            int dmg = damagePreventionService.applyCreaturePreventionShield(gameData, perm, entry.getValue(), true);
+            if (dmg > 0) {
+                perm.setMarkedDamage(perm.getMarkedDamage() + dmg);
+                gameData.permanentsDealtDamageThisTurn.add(perm.getId());
+                // CR 702.2b — the deathtouch memory only sticks when damage was actually dealt,
+                // not when a prevention shield consumed the whole step's damage.
+                if (deathtouchIndices.contains(idx)) {
+                    perm.setDamagedByDeathtouch(true);
+                }
+            }
         }
-        List<Permanent> deadDefenders = new ArrayList<>();
-        for (int idx : state.deadDefenderIndices) {
-            deadDefenders.add(defBf.get(idx));
-        }
-        for (Permanent dead : deadAttackers) {
-            deadCreatureNames.add(gameData.playerIdToName.get(activeId) + "'s " + dead.getCard().getName());
-            permanentRemovalService.removePermanentToGraveyard(gameData, dead);
-        }
-        for (Permanent dead : deadDefenders) {
-            deadCreatureNames.add(gameData.playerIdToName.get(defenderId) + "'s " + dead.getCard().getName());
-            permanentRemovalService.removePermanentToGraveyard(gameData, dead);
-        }
-        // Clear blocking state for surviving blockers whose blocked attacker died
-        clearOrphanedBlockingState(defBf, deadAttackerIds);
-        permanentRemovalService.removeOrphanedAuras(gameData);
-        return deadCreatureNames;
     }
 
     /**
@@ -1660,13 +1660,10 @@ public class CombatDamageService {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage, true);
                 if (effectiveDamage > 0) {
+                    // Record only — the state-based action check (CR 704.5g) performs any
+                    // destruction once the current damage event finishes.
                     targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
-                    int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
-                    if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
-                            && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {
-                        permanentRemovalService.removePermanentToGraveyard(gameData, targetPerm);
-                    }
                 }
             }
         }
@@ -1702,40 +1699,6 @@ public class CombatDamageService {
                 gameData.recordDamageToPlayer(targetId, effective);
             }
         }
-    }
-
-    private void determineCasualties(GameData gameData, List<Integer> indices,
-                                      List<Permanent> battlefield, Map<Integer, Integer> damageTaken,
-                                      Set<Integer> deathtouchSet, Set<Integer> deadSet,
-                                      boolean skipAlreadyDead) {
-        for (int idx : indices) {
-            if (skipAlreadyDead && deadSet.contains(idx)) continue;
-            int dmg = damageTaken.getOrDefault(idx, 0);
-            dmg = damagePreventionService.applyCreaturePreventionShield(gameData, battlefield.get(idx), dmg, true);
-            damageTaken.put(idx, dmg);
-            int effToughness = gameQueryService.getEffectiveToughness(gameData, battlefield.get(idx));
-            if (effToughness <= 0) {
-                deadSet.add(idx);
-            } else if (gameQueryService.isLethalDamage(battlefield.get(idx).getMarkedDamage() + dmg, effToughness, deathtouchSet.contains(idx))
-                    && !gameQueryService.hasKeyword(gameData, battlefield.get(idx), Keyword.INDESTRUCTIBLE)
-                    && !graveyardService.tryRegenerate(gameData, battlefield.get(idx))) {
-                deadSet.add(idx);
-            }
-        }
-    }
-
-    private void determineBlockerCasualties(GameData gameData, Map<Integer, List<Integer>> blockerMap,
-                                             List<Permanent> defBf, CombatDamageState state,
-                                             boolean skipAlreadyDead) {
-        Set<Integer> seen = new LinkedHashSet<>();
-        for (List<Integer> blkIndices : blockerMap.values()) {
-            seen.addAll(blkIndices);
-        }
-        // Include any defending creature that took assigned combat damage without blocking
-        // (e.g. an unblocked Cunning Giant redirecting its damage to a defending creature).
-        seen.addAll(state.defDamageTaken.keySet());
-        determineCasualties(gameData, new ArrayList<>(seen), defBf, state.defDamageTaken,
-                state.deathtouchDamagedDefenderIndices, state.deadDefenderIndices, skipAlreadyDead);
     }
 
     private void accumulatePlayerDamage(GameData gameData, Permanent atk, CombatantStats atkStats,
@@ -1774,6 +1737,9 @@ public class CombatDamageService {
                 state.infectDamageRedirectedToGuard += damage;
             } else {
                 state.damageRedirectedToGuard += damage;
+                if (damage > 0 && atkStats.deathtouch()) {
+                    state.deathtouchDamageRedirectedToGuard = true;
+                }
             }
         } else if (damagePreventionService.isSourceDamagePreventedForPlayer(gameData, defenderId, atk.getId())) {
             // Source-specific damage prevention — skip this damage
@@ -1881,11 +1847,17 @@ public class CombatDamageService {
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + afterShield);
             }
+            // Counter damage is still damage dealt (CR 702.90e), so a deathtouch source marks
+            // the creature for the CR 704.5h destruction check directly — it never reaches the
+            // marked-damage accumulation that normally applies the flag.
+            if (afterShield > 0 && sourceStats.deathtouch()) {
+                target.setDamagedByDeathtouch(true);
+            }
         } else {
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
-        }
-        if (damage > 0 && sourceStats.deathtouch()) {
-            deathtouchDamagedSet.add(targetIdx);
+            if (damage > 0 && sourceStats.deathtouch()) {
+                deathtouchDamagedSet.add(targetIdx);
+            }
         }
     }
 
@@ -1987,6 +1959,7 @@ public class CombatDamageService {
         state.defDamageTaken.putAll(p1.defDamageTaken);
         state.damageToDefendingPlayer = p1.damageToDefendingPlayer;
         state.damageRedirectedToGuard = p1.damageRedirectedToGuard;
+        state.deathtouchDamageRedirectedToGuard = p1.deathtouchDamageRedirectedToGuard;
         if (p1.damageToPlaneswalkers != null) {
             state.damageToPlaneswalkers.putAll(p1.damageToPlaneswalkers);
         }
@@ -2043,6 +2016,7 @@ public class CombatDamageService {
                 dealtByUUID, dealtToPlayerByUUID, dealtToCreaturesByUUID, dealerControllersByUUID,
                 damageAmountsByUUID,
                 state.damageToDefendingPlayer, state.damageRedirectedToGuard,
+                state.deathtouchDamageRedirectedToGuard,
                 new HashMap<>(state.damageToPlaneswalkers),
                 new LinkedHashMap<>(blockerMap), anyFirstStrike,
                 new HashSet<>(state.deathtouchDamagedAttackerIndices), new HashSet<>(state.deathtouchDamagedDefenderIndices));

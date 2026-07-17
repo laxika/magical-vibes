@@ -64,7 +64,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                     continue;
                 }
                 int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
-                damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, other, damage, target);
+                damageSupport.dealCreatureDamage(gameData, entry, other, damage, target);
             }
         }
 
@@ -84,7 +84,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
                 continue;
             }
             int damage = gameQueryService.applyDamageMultiplier(gameData, otherPower, entry);
-            damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, target, damage, other);
+            damageSupport.dealCreatureDamage(gameData, entry, target, damage, other);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

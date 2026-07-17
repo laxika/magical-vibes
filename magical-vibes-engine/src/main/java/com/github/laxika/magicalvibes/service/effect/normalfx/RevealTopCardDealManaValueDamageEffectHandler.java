@@ -62,7 +62,7 @@ public class RevealTopCardDealManaValueDamageEffectHandler implements NormalEffe
                 List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
                 if (battlefield != null) {
                     Predicate<Permanent> creatureFilter = p -> gameQueryService.isCreature(gameData, p);
-                    damageSupport.destroyAllLethal(gameData, damageSupport.damageFilteredCreatures(gameData, entry, damage, battlefield, creatureFilter));
+                    damageSupport.damageFilteredCreatures(gameData, entry, damage, battlefield, creatureFilter);
                 }
             }
 

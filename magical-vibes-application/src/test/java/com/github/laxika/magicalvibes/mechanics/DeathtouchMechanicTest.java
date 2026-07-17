@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -246,6 +247,49 @@ class DeathtouchMechanicTest extends BaseCardTest {
         // 1/1 deathtouch attacker dies (took 2 damage from blocker)
         harness.assertNotOnBattlefield(player1, dtCard.getName());
         // 2/2 blocker survives (deathtouch damage was fully prevented)
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    // ===== 7. Noncombat deathtouch damage =====
+
+    @Test
+    @DisplayName("Deathtouch ping destroys a creature it damages")
+    void noncombatDeathtouchPingDestroys() {
+        Card dtPinger = withDeathtouch(new ProdigalSorcerer()); // T: 1 damage to any target
+        harness.addToBattlefield(player1, dtPinger);
+        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+
+        Permanent pinger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        pinger.setSummoningSick(false);
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        // 1 damage from a deathtouch source is lethal to the 2/2
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Fully prevented deathtouch ping does not destroy a previously damaged creature")
+    void preventedDeathtouchPingDoesNotKillPreviouslyDamagedCreature() {
+        Card dtPinger = withDeathtouch(new ProdigalSorcerer());
+        harness.addToBattlefield(player1, dtPinger);
+        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+
+        Permanent pinger = gd.playerBattlefields.get(player1.getId()).getFirst();
+        pinger.setSummoningSick(false);
+        Permanent bears = gd.playerBattlefields.get(player2.getId()).getFirst();
+        // Damage marked earlier this turn by a non-deathtouch source
+        bears.setMarkedDamage(1);
+        // Shield prevents the whole deathtouch ping
+        bears.setDamagePreventionShield(1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        // CR 702.2b — the deathtouch source dealt no damage, so the 1 marked damage
+        // from earlier must not become lethal.
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

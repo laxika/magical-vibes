@@ -93,15 +93,23 @@ public class StateBasedActionService {
             if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
             } else if (gameQueryService.isCreature(gameData, p)
-                    && p.getMarkedDamage() >= gameQueryService.getEffectiveToughness(gameData, p)
+                    && (p.getMarkedDamage() >= gameQueryService.getEffectiveToughness(gameData, p)
+                            || p.isDamagedByDeathtouch())
                     && !gameQueryService.hasKeyword(gameData, p, Keyword.INDESTRUCTIBLE)
                     && !graveyardService.tryRegenerate(gameData, p)) {
-                // CR 704.5g — creature with damage >= toughness is destroyed (regeneration can replace this)
+                // CR 704.5g — creature with damage >= toughness is destroyed, and
+                // CR 704.5h — creature dealt damage by a deathtouch source since the last check
+                // is destroyed (regeneration can replace either)
                 toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
             } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
             }
         });
+
+        // CR 704.5h spans "since the last state-based check" and this pass is that check:
+        // consume the deathtouch memory so survivors (indestructible, regenerated) aren't
+        // re-destroyed by a later pass or a later check.
+        gameData.forEachPermanent((playerId, p) -> p.setDamagedByDeathtouch(false));
 
         for (DeathEntry entry : toDie) {
             processedIds.add(entry.permanent().getId());

@@ -15,6 +15,7 @@ class CombatDamageState {
     int poisonDamageToDefendingPlayer;
     int damageRedirectedToGuard;
     int infectDamageRedirectedToGuard;
+    boolean deathtouchDamageRedirectedToGuard;
 
     // Death tracking (reverse order for safe index-based removal)
     final Set<Integer> deadAttackerIndices = new TreeSet<>(Collections.reverseOrder());

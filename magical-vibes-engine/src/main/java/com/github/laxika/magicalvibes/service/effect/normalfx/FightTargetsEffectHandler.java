@@ -50,7 +50,7 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(second.getCard().getName() + " has protection — damage from " + first.getCard().getName() + " prevented."));
         } else {
             int damage = gameQueryService.applyDamageMultiplier(gameData, firstPower, entry);
-            damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, second, damage, first);
+            damageSupport.dealCreatureDamage(gameData, entry, second, damage, first);
         }
 
         // Second creature deals damage equal to its power to first creature
@@ -61,7 +61,7 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(first.getCard().getName() + " has protection — damage from " + second.getCard().getName() + " prevented."));
         } else {
             int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
-            damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
+            damageSupport.dealCreatureDamage(gameData, entry, first, damage, second);
         }
     }
 }

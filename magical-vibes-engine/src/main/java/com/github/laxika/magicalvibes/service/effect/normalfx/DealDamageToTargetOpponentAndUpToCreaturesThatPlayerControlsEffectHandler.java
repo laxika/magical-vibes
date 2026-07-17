@@ -55,7 +55,7 @@ public class DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffectH
                     && gameQueryService.isCreature(gameData, creature)
                     && !damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
                 int creatureDamage = gameQueryService.applyDamageMultiplier(gameData, e.creatureDamage(), entry);
-                damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, creature, creatureDamage);
+                damageSupport.dealCreatureDamage(gameData, entry, creature, creatureDamage);
             }
         }
 

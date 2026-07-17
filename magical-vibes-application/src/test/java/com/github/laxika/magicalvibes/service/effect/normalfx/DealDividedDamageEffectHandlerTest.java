@@ -65,16 +65,12 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
             stubNoKeywordsOnSource(entry);
-            stubLethalDamage(true);
-            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
-            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
             handler.resolve(gd, entry, effect);
 
+            // Lethal marked damage — the SBA check after resolution performs the destruction.
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
-            verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, elves, 1, player1Id);
         }
@@ -93,9 +89,6 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             stubCreatureDamageCore(bears, 2);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             stubNoKeywordsOnSource(entry);
-            stubLethalDamage(true);
-            when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-            when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
             stubPlayerDamageCore(player2Id);
 
             handler.resolve(gd, entry, effect);
@@ -130,9 +123,6 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
             stubNoKeywordsOnSource(entry);
-            stubLethalDamage(true);
-            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
-            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
             handler.resolve(gd, entry, effect);
 
@@ -163,9 +153,6 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
             stubNoKeywordsOnSource(entry);
-            stubLethalDamage(true);
-            when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
-            when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
             handler.resolve(gd, entry, effect);
 

@@ -51,6 +51,6 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
         int power = gameQueryService.getPowerBasedDamage(gameData, target);
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
-        damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, target);
+        damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage, target);
     }
 }

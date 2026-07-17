@@ -68,8 +68,8 @@ public class DamageSupport {
      * Caller is responsible for removal (use {@link #destroyPermanent} for single-target,
      * or batch-collect for multi-target effects).
      */
-    public boolean dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
-        return dealCreatureDamage(gameData, entry, target, rawDamage, null);
+    public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+        dealCreatureDamage(gameData, entry, target, rawDamage, null);
     }
 
     /**
@@ -77,7 +77,7 @@ public class DamageSupport {
      * When {@code damageSource} is non-null, its ID is used for recording, its name for logging,
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
-    public boolean dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+    public void dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         rawDamage = Math.max(0, rawDamage);
@@ -106,7 +106,7 @@ public class DamageSupport {
                 : entry.getControllerId();
         if (damagePreventionService.applySwansSourceControllerDraw(gameData, target, rawDamage, swansSourceControllerId)) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
-            return false;
+            return;
         }
         // Prismatic Ward: prevent all damage to the enchanted creature from sources of the chosen colour.
         Set<CardColor> sourceColors = damageSource != null
@@ -114,7 +114,7 @@ public class DamageSupport {
                 : sourceCardColors(entry.getEffectiveDamageSourceCard());
         if (gameQueryService.isColorDamageToEnchantedCreaturePrevented(gameData, target, sourceColors)) {
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text("Damage to " + target.getCard().getName() + " is prevented."));
-            return false;
+            return;
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
@@ -154,6 +154,29 @@ public class DamageSupport {
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
 
+        // CR 120.3c — damage dealt to a planeswalker removes that many loyalty counters
+        // (the SBA check reaps it at 0 loyalty). A permanent that is also a creature
+        // additionally gets the damage marked below (CR 120.3e).
+        if (target.getCard().hasType(CardType.PLANESWALKER)) {
+            if (damage > 0) {
+                target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) - damage);
+                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " deals " + damage
+                        + " damage to " + target.getCard().getName() + " ("
+                        + target.getCounterCount(CounterType.LOYALTY) + " loyalty remaining)."));
+            }
+            if (!gameQueryService.isCreature(gameData, target)) {
+                if (damage > 0) {
+                    checkSpellLifelink(gameData, entry, damage);
+                }
+                return;
+            }
+        }
+
+        // CR 702.2b — deathtouch applies only to damage this source actually dealt, so a hit
+        // that was fully prevented must not mark the creature for a deathtouch kill.
+        boolean sourceHasDeathtouch = damage > 0
+                && gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
+
         // Infect and wither both deal creature damage as -1/-1 counters (CR 702.90 / 702.80).
         boolean dealsCounterDamage = gameQueryService.sourceDealsCounterDamageToCreatures(gameData, entry, damageSource);
 
@@ -165,12 +188,20 @@ public class DamageSupport {
                 log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, damage, target.getCard().getName());
                 permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, target, damage);
             }
-            // CR 704.5f: 0 toughness from -1/-1 counters — dies regardless of indestructible
-            return gameQueryService.getEffectiveToughness(gameData, target) <= 0;
+            // Counter damage is still damage dealt, so a deathtouch+wither/infect source
+            // marks the creature for the CR 704.5h destruction check as well.
+            if (sourceHasDeathtouch) {
+                target.setDamagedByDeathtouch(true);
+            }
+            return;
         }
 
-        // Accumulate damage on creature (CR 704.5g — lethal when total marked damage >= toughness)
+        // Record only — the state-based action check (CR 704.5g/704.5h) is the single place
+        // creatures die from damage; it runs after the current resolution completes.
         target.setMarkedDamage(target.getMarkedDamage() + damage);
+        if (sourceHasDeathtouch) {
+            target.setDamagedByDeathtouch(true);
+        }
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " deals " + damage + " damage to " + target.getCard().getName() + "."));
         log.info("Game {} - {} deals {} damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
@@ -178,24 +209,13 @@ public class DamageSupport {
         if (damage > 0) {
             checkSpellLifelink(gameData, entry, damage);
         }
-
-        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, damageSource, Keyword.DEATHTOUCH);
-        boolean isLethal = gameQueryService.isLethalDamage(target.getMarkedDamage(), gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
-        if (isLethal) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is indestructible and survives."));
-                return false;
-            }
-            return !graveyardService.tryRegenerate(gameData, target);
-        }
-        return false;
     }
 
     /**
      * Deals damage to a creature bypassing all prevention effects (shields, protection, global prevention).
      * Used for effects where "the damage can't be prevented" (e.g. Combust).
      */
-    public boolean dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+    public void dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
         // Defense in depth: a creature can never deal negative damage. Guards against any upstream
         // computation (e.g. future power-based effects) that might produce a negative value.
         // Skip applyCreaturePreventionShield — damage is unpreventable
@@ -228,23 +248,19 @@ public class DamageSupport {
 
         String sourceName = entry.getCard().getName();
 
+        // Record only (CR 704.5g — unpreventable damage still accumulates as marked damage);
+        // the state-based action check performs any resulting destruction.
+        target.setMarkedDamage(target.getMarkedDamage() + damage);
+        if (damage > 0 && gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH)) {
+            target.setDamagedByDeathtouch(true);
+        }
+
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceName + " deals " + damage + " damage to " + target.getCard().getName() + ". (damage can't be prevented)"));
         log.info("Game {} - {} deals {} unpreventable damage to {}", gameData.id, sourceName, damage, target.getCard().getName());
 
         if (damage > 0) {
             checkSpellLifelink(gameData, entry, damage);
         }
-
-        boolean sourceHasDeathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
-        boolean isLethal = gameQueryService.isLethalDamage(damage, gameQueryService.getEffectiveToughness(gameData, target), sourceHasDeathtouch);
-        if (isLethal) {
-            if (gameQueryService.hasKeyword(gameData, target, Keyword.INDESTRUCTIBLE)) {
-                gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is indestructible and survives."));
-                return false;
-            }
-            return !graveyardService.tryRegenerate(gameData, target);
-        }
-        return false;
     }
 
     /**
@@ -257,38 +273,6 @@ public class DamageSupport {
         if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
                 "spell lifelink", entry.getCard(), entry.getEntryType());
-    }
-
-    public void destroyPermanent(GameData gameData, Permanent target) {
-        permanentRemovalService.removePermanentToGraveyard(gameData, target);
-        gameBroadcastService.logAndBroadcast(gameData, GameLog.text(target.getCard().getName() + " is destroyed."));
-        log.info("Game {} - {} is destroyed", gameData.id, target.getCard().getName());
-    }
-
-    public void destroyAllLethal(GameData gameData, List<Permanent> destroyed) {
-        for (Permanent target : destroyed) {
-            destroyPermanent(gameData, target);
-        }
-        if (!destroyed.isEmpty()) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
-    }
-
-    public void dealDamageAndDestroyIfLethal(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
-        dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, null);
-    }
-
-    public void dealDamageAndDestroyIfLethal(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
-        if (dealCreatureDamage(gameData, entry, target, rawDamage, damageSource)) {
-            gameData.pendingLethalDamageDestructions.add(target);
-        }
-    }
-
-    public void dealDamageAndDestroyIfLethalUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
-        if (dealCreatureDamageUnpreventable(gameData, entry, target, rawDamage)) {
-            destroyPermanent(gameData, target);
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
     }
 
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
@@ -305,7 +289,7 @@ public class DamageSupport {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) return;
         if (isDamagePreventedForCreature(gameData, entry, target)) return;
-        dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
+        dealCreatureDamage(gameData, entry, target, damage);
     }
 
     /**
@@ -378,28 +362,22 @@ public class DamageSupport {
             if (cantRegenerate) {
                 targetPermanent.setCantRegenerateThisTurn(true);
             }
-            dealDamageAndDestroyIfLethal(gameData, entry, targetPermanent, rawDamage);
+            dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
         }
     }
 
     public void damageAllCreaturesOnBattlefield(GameData gameData, StackEntry entry, int damage, Predicate<Permanent> filter) {
-        List<Permanent> destroyed = new ArrayList<>();
         gameData.forEachBattlefield((playerId, battlefield) ->
-                destroyed.addAll(damageFilteredCreatures(gameData, entry, damage, battlefield, filter))
+                damageFilteredCreatures(gameData, entry, damage, battlefield, filter)
         );
-        destroyAllLethal(gameData, destroyed);
     }
 
-    public List<Permanent> damageFilteredCreatures(GameData gameData, StackEntry entry, int damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
-        List<Permanent> destroyed = new ArrayList<>();
+    public void damageFilteredCreatures(GameData gameData, StackEntry entry, int damage, Collection<Permanent> permanents, Predicate<Permanent> filter) {
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, p, entry.getCard())) continue;
-            if (dealCreatureDamage(gameData, entry, p, damage)) {
-                destroyed.add(p);
-            }
+            dealCreatureDamage(gameData, entry, p, damage);
         }
-        return destroyed;
     }
 
     public void dealDamageToPlayer(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
@@ -628,13 +606,10 @@ public class DamageSupport {
 
                 int effectiveDamage = damagePreventionService.applyCreaturePreventionShield(gameData, targetPerm, damage);
                 if (effectiveDamage > 0) {
+                    // Record only — the state-based action check (CR 704.5g) performs any
+                    // destruction once the current damage event finishes.
                     targetPerm.setMarkedDamage(targetPerm.getMarkedDamage() + effectiveDamage);
                     gameData.permanentsDealtDamageThisTurn.add(targetPerm.getId());
-                    int effToughness = gameQueryService.getEffectiveToughness(gameData, targetPerm);
-                    if (gameQueryService.isLethalDamage(targetPerm.getMarkedDamage(), effToughness, false)
-                            && !gameQueryService.hasKeyword(gameData, targetPerm, Keyword.INDESTRUCTIBLE)) {
-                        permanentRemovalService.removePermanentToGraveyard(gameData, targetPerm);
-                    }
                 }
             }
         }
@@ -675,8 +650,6 @@ public class DamageSupport {
 
         if (isDamageSourcePreventedWithLog(gameData, tempEntry)) return;
 
-        List<Permanent> destroyed = new ArrayList<>();
-
         for (Map.Entry<UUID, Integer> assignment : assignments.entrySet()) {
             UUID targetId = assignment.getKey();
             int rawDamage = gameQueryService.applyDamageMultiplier(gameData, assignment.getValue(), tempEntry);
@@ -698,16 +671,13 @@ public class DamageSupport {
                 dealDamageToPlayer(gameData, tempEntry, targetId, rawDamage);
             } else {
                 if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPermanent, sourceCard))) {
-                    if (dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage)) {
-                        destroyed.add(targetPermanent);
-                    }
+                    dealCreatureDamage(gameData, tempEntry, targetPermanent, rawDamage);
                 } else {
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(sourceCard.getName() + "'s damage to " + targetPermanent.getCard().getName() + " is prevented."));
                 }
             }
         }
 
-        destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
         flushSourceDamageReflections(gameData);
     }

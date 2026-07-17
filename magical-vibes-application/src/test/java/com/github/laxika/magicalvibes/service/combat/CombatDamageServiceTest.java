@@ -89,13 +89,21 @@ class CombatDamageServiceTest {
                 sessionManager,
                 org.mockito.Mockito.mock(CombatService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.TurnProgressionService.class)));
+        // Real SBA service wired from the same mocks: combat deaths are decided by the
+        // state-based action check now, so the unit tests exercise the real lethality logic.
+        com.github.laxika.magicalvibes.service.state.StateBasedActionService stateBasedActionService =
+                new com.github.laxika.magicalvibes.service.state.StateBasedActionService(
+                        gameOutcomeService, gameQueryService, gameBroadcastService,
+                        permanentRemovalService, graveyardService,
+                        new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameBroadcastService));
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
                 gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService,
                 permanentRemovalService, playerInputService, registry, triggerCollectionService,
                 lifeSupport, combatAttackService, combatTriggerService,
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport.class),
+                stateBasedActionService);
 
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();
@@ -153,6 +161,10 @@ class CombatDamageServiceTest {
                 });
         when(gameQueryService.isPreventedFromDealingDamage(eq(gameData), any(Permanent.class), anyBoolean()))
                 .thenReturn(false);
+        // The state-based action check (which now performs all combat casualties) asks whether
+        // each permanent is a creature; every test permanent with a toughness is one.
+        lenient().when(gameQueryService.isCreature(eq(gameData), any(Permanent.class)))
+                .thenAnswer(inv -> ((Permanent) inv.getArgument(1)).getCard().getToughness() != null);
     }
 
     /**
@@ -160,7 +172,9 @@ class CombatDamageServiceTest {
      * controller lookups, redirect, and win condition. Requires stubCombatSetup().
      */
     private void stubDamageResolution() {
-        when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean()))
+        // Lenient: lethality moved into the state-based action check (marked damage vs.
+        // toughness); only assignment-time validation still consults isLethalDamage.
+        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> {
                     int damage = inv.getArgument(0);
                     int toughness = inv.getArgument(1);
@@ -171,9 +185,17 @@ class CombatDamageServiceTest {
                 .thenAnswer(inv -> (int) inv.getArgument(1));
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))
                 .thenReturn(1);
-        when(damagePreventionService.applyCreaturePreventionShield(
+        // Lenient: only consulted for creatures that actually took damage this step.
+        lenient().when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));
+        // The SBA check decides deaths from the live battlefield, so the removal mock must
+        // actually remove — otherwise the casualty diff and the SBA repeat passes see ghosts.
+        lenient().doAnswer(inv -> {
+            Permanent dead = inv.getArgument(1);
+            gameData.playerBattlefields.values().forEach(bf -> bf.remove(dead));
+            return null;
+        }).when(permanentRemovalService).removePermanentToGraveyard(eq(gameData), any(Permanent.class));
         lenient().when(damagePreventionService.applyTargetSourcePreventionShield(
                 eq(gameData), any(UUID.class), any(UUID.class), anyInt()))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -313,7 +335,7 @@ class CombatDamageServiceTest {
                 Set.of(), Set.of(),
                 Map.of(), Map.of(),
                 Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
-                0, 0, Map.of(),
+                0, 0, false, Map.of(),
                 blockerMap, false,
                 Set.of(), Set.of()
         );

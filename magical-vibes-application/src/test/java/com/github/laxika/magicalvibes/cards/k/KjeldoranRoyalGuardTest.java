@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -158,6 +160,72 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         // Player still takes no damage (redirected)
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         // Guard is destroyed (6 >= 5)
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+    }
+
+    @Test
+    @DisplayName("Redirected first-strike damage persists as marked damage into the regular damage step")
+    void redirectedFirstStrikeDamagePersistsAcrossSteps() {
+        addGuardReady(player2); // 2/5
+        addUnblockedAttacker(player1, Keyword.FIRST_STRIKE); // 2/2 first strike
+        addUnblockedAttacker(player1); // 2/2
+        addUnblockedAttacker(player1); // 2/2
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        // Player takes no damage; the 2 first-strike damage stays marked on the Guard
+        // (CR 120.3d), so the regular step's 4 more redirected damage is lethal (2 + 4 >= 5).
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+    }
+
+    @Test
+    @DisplayName("Guard dies when redirected damage plus earlier marked damage is lethal")
+    void guardDiesFromRedirectedDamagePlusEarlierDamage() {
+        Permanent guard = addGuardReady(player2);
+        // 4 damage marked earlier this turn (e.g. a burn spell); Guard is 2/5
+        guard.setMarkedDamage(4);
+        addUnblockedAttacker(player1); // 2/2 — 2 redirected damage
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        // Player takes no damage, and 4 + 2 >= 5 destroys the Guard (CR 704.5g)
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Kjeldoran Royal Guard"));
+    }
+
+    @Test
+    @DisplayName("Redirected damage from a deathtouch attacker destroys the Guard")
+    void deathtouchRedirectedDamageDestroysGuard() {
+        addGuardReady(player2);
+        addUnblockedAttacker(player1, Keyword.DEATHTOUCH); // 2/2 deathtouch
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        // 2 redirected deathtouch damage < 5 toughness, but deathtouch makes it lethal (CR 702.2b)
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Kjeldoran Royal Guard"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -318,8 +386,11 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         return perm;
     }
 
-    private Permanent addUnblockedAttacker(Player player) {
+    private Permanent addUnblockedAttacker(Player player, Keyword... keywords) {
         GrizzlyBears bear = new GrizzlyBears();
+        if (keywords.length > 0) {
+            bear.setKeywords(Set.of(keywords)); // before wrapping — cards freeze once on a Permanent
+        }
         Permanent perm = new Permanent(bear);
         perm.setSummoningSick(false);
         perm.setAttacking(true);

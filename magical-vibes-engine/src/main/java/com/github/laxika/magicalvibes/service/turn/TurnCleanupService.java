@@ -95,6 +95,7 @@ public class TurnCleanupService {
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
             p.setMarkedDamage(0);
+            p.setDamagedByDeathtouch(false);
             if (p.getPowerModifier() != 0 || p.getToughnessModifier() != 0 || !p.getGrantedKeywords().isEmpty()
                     || !p.getRemovedKeywords().isEmpty()
                     || p.getDamagePreventionShield() != 0 || p.getDamageToCounterPreventionShield() != 0

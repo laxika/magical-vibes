@@ -55,9 +55,9 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) continue;
                 if (e.unpreventable()) {
-                    damageSupport.dealDamageAndDestroyIfLethalUnpreventable(gameData, entry, target, damage);
+                    damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
                 } else if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                    damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
+                    damageSupport.dealCreatureDamage(gameData, entry, target, damage);
                 }
             }
             return;
@@ -85,7 +85,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         if (e.unpreventable()) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null) return;
-            damageSupport.dealDamageAndDestroyIfLethalUnpreventable(gameData, entry, target, damage);
+            damageSupport.dealCreatureDamageUnpreventable(gameData, entry, target, damage);
         } else {
             damageSupport.resolveCreatureTargetDamage(gameData, entry, damage);
         }

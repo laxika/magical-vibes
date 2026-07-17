@@ -115,7 +115,9 @@ abstract class AbstractDamageHandlerTest {
         lenient().when(gameQueryService.isCreature(gd, target)).thenReturn(true);
         lenient().when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         when(damagePreventionService.applyCreaturePreventionShield(eq(gd), eq(target), anyInt())).thenAnswer(inv -> inv.getArgument(2));
-        when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
+        // Lenient: record-only damage no longer reads toughness — destruction happens at the
+        // SBA check, outside these handler unit tests. Excess-damage paths still read it.
+        lenient().when(gameQueryService.getEffectiveToughness(gd, target)).thenReturn(toughness);
     }
 
     protected void stubCreatureSourceRedirects() {
@@ -126,17 +128,19 @@ abstract class AbstractDamageHandlerTest {
     }
 
     protected void stubLethalDamage(boolean isLethal) {
-        when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
+        // Lenient: destruction moved to the SBA check, so most handlers no longer consult this.
+        lenient().when(gameQueryService.isLethalDamage(anyInt(), anyInt(), anyBoolean())).thenReturn(isLethal);
     }
 
     protected void stubNoKeywordsOnSource(StackEntry entry) {
         // The infect/wither decision goes through sourceDealsCounterDamageToCreatures now,
         // whose mock default (false) is the wanted answer — only deathtouch needs a stub.
-        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+        // Lenient: the deathtouch check is skipped when the damage was fully prevented (CR 702.2b).
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), isNull(), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
     protected void stubNoKeywordsOnSourceWithDamageSource(StackEntry entry, Permanent damageSource) {
-        when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
+        lenient().when(gameQueryService.sourceHasKeyword(eq(gd), eq(entry), eq(damageSource), eq(Keyword.DEATHTOUCH))).thenReturn(false);
     }
 
     protected void stubNoInfectOnSource(StackEntry entry) {

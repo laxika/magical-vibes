@@ -44,7 +44,6 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, target);
-        when(gameQueryService.isLethalDamage(3, 5, false)).thenReturn(false);
 
         handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect());
 
@@ -54,7 +53,7 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
     }
 
     @Test
-    @DisplayName("Kills target when its power is lethal to itself")
+    @DisplayName("Marks lethal damage when its power is lethal to itself")
     void killsTargetWhenPowerIsLethal() {
         Card spell = createCard("Wrack with Madness");
         spell.setColor(CardColor.RED);
@@ -71,12 +70,10 @@ class TargetCreatureDealsPowerDamageToSelfEffectHandlerTest extends AbstractDama
         when(gameQueryService.hasProtectionFromSource(eq(gd), eq(target), eq(target))).thenReturn(false);
         when(gameQueryService.findPermanentController(eq(gd), eq(target.getId()))).thenReturn(player2Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, target);
-        when(gameQueryService.isLethalDamage(2, 2, false)).thenReturn(true);
-        when(gameQueryService.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-        when(graveyardService.tryRegenerate(gd, target)).thenReturn(false);
 
         handler.resolve(gd, entry, new TargetCreatureDealsPowerDamageToSelfEffect());
 
+        // Lethal marked damage — the SBA check after resolution performs the destruction.
         assertThat(target.getMarkedDamage()).isEqualTo(2);
         verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, target, 2, player2Id);
     }

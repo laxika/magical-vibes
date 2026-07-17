@@ -111,6 +111,71 @@ class StateBasedActionServiceTest {
     }
 
     @Nested
+    @DisplayName("Deathtouch damage — CR 704.5h")
+    class DeathtouchDamage {
+
+        @Test
+        @DisplayName("Creature dealt deathtouch damage is destroyed even below lethal marked damage")
+        void deathtouchDamagedCreatureIsDestroyed() {
+            Card card = createCreatureCard("Serra Angel");
+            Permanent perm = new Permanent(card);
+            perm.setMarkedDamage(1);
+            perm.setDamagedByDeathtouch(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(4);
+            when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, perm);
+        }
+
+        @Test
+        @DisplayName("Indestructible creature survives deathtouch damage and the memory is consumed")
+        void indestructibleSurvivesDeathtouchAndFlagIsConsumed() {
+            Card card = createCreatureCard("Darksteel Myr");
+            Permanent perm = new Permanent(card);
+            perm.setMarkedDamage(1);
+            perm.setDamagedByDeathtouch(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(1);
+            when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(true);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            // CR 704.5h only spans "since the last state-based check" — the check consumes it,
+            // so losing indestructible later must not retroactively kill the creature.
+            assertThat(perm.isDamagedByDeathtouch()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Regeneration replaces the deathtouch destruction")
+        void regenerationReplacesDeathtouchDestruction() {
+            Card card = createCreatureCard("Drudge Skeletons");
+            Permanent perm = new Permanent(card);
+            perm.setMarkedDamage(1);
+            perm.setDamagedByDeathtouch(true);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(1);
+            when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(true);
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+            assertThat(perm.isDamagedByDeathtouch()).isFalse();
+        }
+    }
+
+    @Nested
     @DisplayName("Creature zero toughness — CR 704.5f")
     class CreatureZeroToughness {
 

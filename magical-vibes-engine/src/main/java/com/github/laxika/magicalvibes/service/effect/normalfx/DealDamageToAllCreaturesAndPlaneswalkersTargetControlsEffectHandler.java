@@ -44,7 +44,6 @@ public class DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffectHandler
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield != null) {
-            List<Permanent> destroyed = new ArrayList<>();
             for (Permanent permanent : new ArrayList<>(battlefield)) {
                 boolean isCreature = gameQueryService.isCreature(gameData, permanent);
                 boolean isPlaneswalker = permanent.getCard().hasType(CardType.PLANESWALKER);
@@ -53,11 +52,8 @@ public class DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffectHandler
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + permanent.getCard().getName() + " is prevented."));
                     continue;
                 }
-                if (damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage)) {
-                    destroyed.add(permanent);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, permanent, rawDamage);
             }
-            damageSupport.destroyAllLethal(gameData, destroyed);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

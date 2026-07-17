@@ -168,6 +168,9 @@ public class Permanent {
     @Setter private int skipUntapCount;
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
     @Setter private int markedDamage;
+    /** Dealt damage by a source with deathtouch since the last state-based action check (CR 704.5h).
+     *  Consumed by each SBA check; also cleared by regeneration and during the cleanup step. */
+    @Setter private boolean damagedByDeathtouch;
     /** Colors permanently granted by one-shot effects (e.g. Rise from the Grave "in addition to its other colors").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
      *  For transient color grants from static effects, see {@link #transientColors}. */
@@ -355,6 +358,7 @@ public class Permanent {
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.skipUntapCount = source.skipUntapCount;
         this.markedDamage = source.markedDamage;
+        this.damagedByDeathtouch = source.damagedByDeathtouch;
         this.grantedColors.addAll(source.grantedColors);
         this.grantedSubtypes.addAll(source.grantedSubtypes);
         this.basePowerOverriddenPermanently = source.basePowerOverriddenPermanently;

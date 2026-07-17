@@ -38,15 +38,12 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 stubNoDamageMultiplier();
                 stubCreatureDamageCore(bears, 2);
                 stubNoKeywordsOnSource(entry);
-                stubLethalDamage(true);
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
-                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
+                // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
-                assertThat(gd.pendingLethalDamageDestructions).contains(bears);
                 verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
             }
 
@@ -120,15 +117,12 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 stubNoDamageMultiplier();
                 stubCreatureDamageCore(bears, 2);
                 stubNoKeywordsOnSource(entry);
-                stubLethalDamage(true);
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
-                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
+                // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                assertThat(gd.pendingLethalDamageDestructions).contains(bears);
                 verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
             }
 
@@ -166,10 +160,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 stubNoDamageMultiplier();
                 stubCreatureDamageCore(bears, 2);
                 stubNoKeywordsOnSource(entry);
-                stubLethalDamage(true);
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
-                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 

@@ -348,6 +348,7 @@ public class GraveyardService {
         perm.getBlockingTargets().clear();
         // CR 701.15a — regeneration removes all damage marked on the permanent
         perm.setMarkedDamage(0);
+        perm.setDamagedByDeathtouch(false);
 
         String logEntry = perm.getCard().getName() + " regenerates.";
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));

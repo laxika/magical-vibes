@@ -32,7 +32,7 @@ public class DealDamageToBlockedAttackersOnDeathEffectHandler implements NormalE
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) continue;
             if (!damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
+                damageSupport.dealCreatureDamage(gameData, entry, target, damage);
             }
         }
     

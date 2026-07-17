@@ -343,7 +343,7 @@ class CombatServiceTest {
         void clearsCombatDamagePhase1State() {
             gd.combatDamagePhase1State = new CombatDamagePhase1State(
                     Set.of(), Set.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(),
-                    0, 0, Map.of(), Map.of(), false, Set.of(), Set.of());
+                    0, 0, false, Map.of(), Map.of(), false, Set.of(), Set.of());
 
             combatService.clearCombatState(gd);
 

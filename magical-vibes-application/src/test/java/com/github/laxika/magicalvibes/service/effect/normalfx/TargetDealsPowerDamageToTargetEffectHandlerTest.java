@@ -45,7 +45,6 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         // Stub controller for the biting creature (used for trigger sourceControllerId)
         when(gameQueryService.findPermanentController(eq(gd), eq(bears.getId()))).thenReturn(player1Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, bears);
-        when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
         targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect());
 
@@ -55,7 +54,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
     }
 
     @Test
-    @DisplayName("Kills target when source power >= target toughness")
+    @DisplayName("Marks lethal damage when source power >= target toughness")
     void killsTargetWhenPowerIsLethal() {
         Card wingCard = createCard("Wing Puncture");
         wingCard.setColor(CardColor.GREEN);
@@ -75,12 +74,10 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         // Stub controller for the biting creature (used for trigger sourceControllerId)
         when(gameQueryService.findPermanentController(eq(gd), eq(myAngel.getId()))).thenReturn(player1Id);
         stubNoKeywordsOnSourceWithDamageSource(entry, myAngel);
-        when(gameQueryService.isLethalDamage(4, 4, false)).thenReturn(true);
-        when(gameQueryService.hasKeyword(gd, theirAngel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-        when(graveyardService.tryRegenerate(gd, theirAngel)).thenReturn(false);
 
         targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect());
 
+        // Lethal marked damage — the SBA check after resolution performs the destruction.
         assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
         verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, theirAngel, 4, player1Id);
     }

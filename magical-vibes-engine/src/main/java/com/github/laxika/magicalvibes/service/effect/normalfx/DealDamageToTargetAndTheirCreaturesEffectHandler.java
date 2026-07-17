@@ -57,16 +57,13 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, targetPw, entry.getCard())) {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + targetPw.getCard().getName() + " is prevented."));
             } else {
-                if (damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage)) {
-                    damageSupport.destroyPermanent(gameData, targetPw);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, targetPw, rawDamage);
             }
         }
 
         // Deal damage to each creature the affected player controls
         List<Permanent> battlefield = gameData.playerBattlefields.get(affectedPlayerId);
         if (battlefield != null) {
-            List<Permanent> destroyed = new ArrayList<>();
             for (Permanent creature : new ArrayList<>(battlefield)) {
                 if (!gameQueryService.isCreature(gameData, creature)) continue;
                 // Skip the planeswalker target (already dealt damage above)
@@ -75,11 +72,8 @@ public class DealDamageToTargetAndTheirCreaturesEffectHandler implements NormalE
                     gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + creature.getCard().getName() + " is prevented."));
                     continue;
                 }
-                if (damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage)) {
-                    destroyed.add(creature);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, creature, rawDamage);
             }
-            damageSupport.destroyAllLethal(gameData, destroyed);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

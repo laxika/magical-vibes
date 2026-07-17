@@ -41,6 +41,6 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
         }
 
         gameBroadcastService.logAndBroadcast(gameData, GameLog.text(entry.getCard().getName() + " deals " + e.damage() + " damage to " + attacker.getCard().getName() + "."));
-        damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, attacker, e.damage());
+        damageSupport.dealCreatureDamage(gameData, entry, attacker, e.damage());
     }
 }

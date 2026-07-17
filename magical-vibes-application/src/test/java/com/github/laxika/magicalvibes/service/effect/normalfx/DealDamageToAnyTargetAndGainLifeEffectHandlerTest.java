@@ -61,14 +61,12 @@ class DealDamageToAnyTargetAndGainLifeEffectHandlerTest extends AbstractDamageHa
                 stubNoDamageMultiplier();
                 stubCreatureDamageCore(bears, 2);
                 stubNoKeywordsOnSource(entry);
-                stubLethalDamage(true);
                 when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
-                when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
-                when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
                 dealDamageToAnyTargetAndGainLifeHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.pendingLethalDamageDestructions).contains(bears);
+                // Lethal marked damage — the SBA check after resolution performs the destruction.
+                assertThat(bears.getMarkedDamage()).isEqualTo(3);
                 verify(lifeSupport).applyGainLife(gd, player1Id, 3);
                 verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
             }

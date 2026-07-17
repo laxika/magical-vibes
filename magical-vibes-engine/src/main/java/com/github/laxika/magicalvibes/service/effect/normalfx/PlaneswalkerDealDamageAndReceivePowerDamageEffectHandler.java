@@ -47,9 +47,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
         if (rawDamage > 0) {
             if (!(gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
-                if (damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage)) {
-                    gameData.pendingLethalDamageDestructions.add(target);
-                }
+                damageSupport.dealCreatureDamage(gameData, entry, target, rawDamage);
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + " deals " + rawDamage + " damage to " + target.getCard().getName() + "."));
             } else {
                 gameBroadcastService.logAndBroadcast(gameData, GameLog.text(cardName + "'s damage to " + target.getCard().getName() + " is prevented."));
