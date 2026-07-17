@@ -17,7 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
 
@@ -39,17 +41,38 @@ public class StateBasedActionService {
 
     private record DeathEntry(Permanent permanent, DeathReason reason) {}
 
+    /**
+     * Safety bound on CR 704.3 repetition. Every productive pass removes at least one permanent
+     * or zeroes out a counter pair, so a legal game converges long before this; the cap only
+     * guards against a removal that unexpectedly leaves the permanent on the battlefield.
+     */
+    private static final int MAX_SBA_PASSES = 100;
+
     public void performStateBasedActions(GameData gameData) {
-        destroyLethalCreaturesAndPlaneswalkers(gameData);
+        // CR 704.3-704.4 — all applicable state-based actions are performed as a batch, then the
+        // check repeats until none are performed. One pass is not enough: a death can remove a
+        // static effect (e.g. an anthem) and make another creature's marked damage newly lethal.
+        // Permanents already sent to the graveyard this check are skipped on later passes so a
+        // removal that leaves the permanent in place can't be performed twice.
+        Set<UUID> processedIds = new HashSet<>();
+        boolean anyPerformed;
+        int passes = 0;
+        do {
+            anyPerformed = destroyLethalCreaturesAndPlaneswalkers(gameData, processedIds);
 
-        // CR 704.5a — player with 0 or less life loses the game
-        // CR 704.5c — player with ten or more poison counters loses the game
-        if (gameOutcomeService.checkWinCondition(gameData)) {
-            return;
+            // CR 704.5a — player with 0 or less life loses the game
+            // CR 704.5c — player with ten or more poison counters loses the game
+            if (gameOutcomeService.checkWinCondition(gameData)) {
+                return;
+            }
+
+            anyPerformed |= sacrificeCompletedSagas(gameData, processedIds);
+            anyPerformed |= cancelCounters(gameData);
+        } while (anyPerformed && ++passes < MAX_SBA_PASSES);
+
+        if (passes >= MAX_SBA_PASSES) {
+            log.warn("Game {} - state-based actions did not converge after {} passes", gameData.id, passes);
         }
-
-        sacrificeCompletedSagas(gameData);
-        cancelCounters(gameData);
 
         // CR 603.8 — check state-triggered abilities after SBAs
         stateTriggerService.checkStateTriggers(gameData);
@@ -57,9 +80,12 @@ public class StateBasedActionService {
         checkEmptyLibraryLoss(gameData);
     }
 
-    private void destroyLethalCreaturesAndPlaneswalkers(GameData gameData) {
+    private boolean destroyLethalCreaturesAndPlaneswalkers(GameData gameData, Set<UUID> processedIds) {
         List<DeathEntry> toDie = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
+            if (processedIds.contains(p.getId())) {
+                return;
+            }
             if (gameQueryService.isCreature(gameData, p) && gameQueryService.getEffectiveToughness(gameData, p) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_TOUGHNESS));
             } else if (gameQueryService.isCreature(gameData, p)
@@ -74,6 +100,7 @@ public class StateBasedActionService {
         });
 
         for (DeathEntry entry : toDie) {
+            processedIds.add(entry.permanent().getId());
             permanentRemovalService.removePermanentToGraveyard(gameData, entry.permanent());
             String name = entry.permanent().getCard().getName();
             switch (entry.reason()) {
@@ -95,13 +122,15 @@ public class StateBasedActionService {
         if (!toDie.isEmpty()) {
             permanentRemovalService.removeOrphanedAuras(gameData);
         }
+        return !toDie.isEmpty();
     }
 
     // CR 714.4 — Saga with lore counters >= final chapter is sacrificed
     // (unless it has a chapter ability still on the stack)
-    private void sacrificeCompletedSagas(GameData gameData) {
+    private boolean sacrificeCompletedSagas(GameData gameData, Set<UUID> processedIds) {
         List<Permanent> sagasToSacrifice = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
+            if (processedIds.contains(p.getId())) return;
             if (!p.getCard().isSaga()) return;
             int finalChapter = p.getCard().getSagaFinalChapter();
             if (finalChapter <= 0 || p.getCounterCount(CounterType.LORE) < finalChapter) return;
@@ -115,19 +144,23 @@ public class StateBasedActionService {
         });
 
         for (Permanent saga : sagasToSacrifice) {
+            processedIds.add(saga.getId());
             permanentRemovalService.removePermanentToGraveyard(gameData, saga);
             String logEntry = saga.getCard().getName() + " is sacrificed (final chapter reached).";
             gameBroadcastService.logAndBroadcast(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} sacrificed (lore counters >= final chapter)", gameData.id, saga.getCard().getName());
         }
+        return !sagasToSacrifice.isEmpty();
     }
 
     // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out
-    private void cancelCounters(GameData gameData) {
+    private boolean cancelCounters(GameData gameData) {
+        boolean[] anyCancelled = {false};
         gameData.forEachPermanent((pid, p) -> {
             int plus = p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
             int minus = p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
             if (plus > 0 && minus > 0) {
+                anyCancelled[0] = true;
                 int cancelled = Math.min(plus, minus);
                 p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, plus - cancelled);
                 p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minus - cancelled);
@@ -139,6 +172,7 @@ public class StateBasedActionService {
                 }
             }
         });
+        return anyCancelled[0];
     }
 
     // CR 704.5b — player who attempted to draw from an empty library loses the game

@@ -35,7 +35,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -751,6 +753,65 @@ class StateBasedActionServiceTest {
             verify(gameOutcomeService).declareWinner(gd, player2Id);
             verify(gameOutcomeService).declareWinner(gd, player1Id);
             assertThat(gd.playersAttemptedDrawFromEmptyLibrary).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Fixpoint repetition — CR 704.3/704.4")
+    class FixpointRepetition {
+
+        @Test
+        @DisplayName("Creature whose damage becomes lethal after an anthem source dies is destroyed in the same check")
+        void reChecksLethalDamageAfterAnthemSourceDies() {
+            Card lordCard = createCreatureCard("Lord");
+            Permanent lord = new Permanent(lordCard);
+            lord.setMarkedDamage(2);
+            Card bearCard = createCreatureCard("Bear");
+            Permanent bear = new Permanent(bearCard);
+            bear.setMarkedDamage(2);
+            List<Permanent> battlefield = gd.playerBattlefields.get(player1Id);
+            battlefield.add(lord);
+            battlefield.add(bear);
+
+            when(gameQueryService.isCreature(gd, lord)).thenReturn(true);
+            when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, lord)).thenReturn(2);
+            // The bear is 2/3 while the lord's anthem applies, 2/2 once the lord is gone
+            when(gameQueryService.getEffectiveToughness(gd, bear))
+                    .thenAnswer(inv -> battlefield.contains(lord) ? 3 : 2);
+            when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
+            when(graveyardService.tryRegenerate(eq(gd), any())).thenReturn(false);
+            doAnswer(inv -> {
+                battlefield.remove((Permanent) inv.getArgument(1));
+                return null;
+            }).when(permanentRemovalService).removePermanentToGraveyard(eq(gd), any());
+
+            sut.performStateBasedActions(gd);
+
+            // First pass: bear survives (2 damage < 3 toughness), lord dies. Second pass: the
+            // bear's marked damage is now lethal (2 >= 2) and it must die before anything else.
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, lord);
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, bear);
+        }
+
+        @Test
+        @DisplayName("Permanent that stays on the battlefield after removal is not processed twice")
+        void deadPermanentNotProcessedTwice() {
+            Card card = createCreatureCard("Stubborn Creature");
+            Permanent perm = new Permanent(card);
+            perm.setMarkedDamage(5);
+            gd.playerBattlefields.get(player1Id).add(perm);
+
+            when(gameQueryService.isCreature(gd, perm)).thenReturn(true);
+            when(gameQueryService.getEffectiveToughness(gd, perm)).thenReturn(2);
+            when(gameQueryService.hasKeyword(gd, perm, Keyword.INDESTRUCTIBLE)).thenReturn(false);
+            when(graveyardService.tryRegenerate(gd, perm)).thenReturn(false);
+            // The mocked removal leaves the permanent on the battlefield; the repeat loop
+            // must not pick it up again.
+
+            sut.performStateBasedActions(gd);
+
+            verify(permanentRemovalService, times(1)).removePermanentToGraveyard(gd, perm);
         }
     }
 
