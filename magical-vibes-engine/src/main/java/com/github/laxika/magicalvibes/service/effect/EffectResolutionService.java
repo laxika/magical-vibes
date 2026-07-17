@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class EffectResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
+    private final GameOutcomeService gameOutcomeService;
 
     /**
      * Resolves all effects on the given stack entry from the beginning.
@@ -68,6 +70,27 @@ public class EffectResolutionService {
      * @param startIndex the zero-based index of the first effect to resolve
      */
     public void resolveEffectsFrom(GameData gameData, StackEntry entry, int startIndex) {
+        // CR 704.3 / 104.3b — defer the player-loss state-based action until this whole resolution
+        // ends (see GameData.deferPlayerLossCheck). The depth counter keeps the suppression in place
+        // across nested sub-resolutions (e.g. Kinship, counter riders) so that a nested completion
+        // does not re-enable the loss check for the enclosing spell/ability mid-resolution.
+        gameData.effectResolutionDepth++;
+        gameData.deferPlayerLossCheck = true;
+        try {
+            resolveEffectsLoop(gameData, entry, startIndex);
+        } finally {
+            gameData.effectResolutionDepth--;
+            // Finalize only when unwinding the outermost frame AND the resolution is not paused for
+            // player input (pendingEffectResolutionEntry set). On a pause the flag stays set so the
+            // suppression survives until the resumed resolution drains and completes here.
+            if (gameData.effectResolutionDepth == 0 && gameData.pendingEffectResolutionEntry == null) {
+                gameData.deferPlayerLossCheck = false;
+                gameOutcomeService.checkWinCondition(gameData);
+            }
+        }
+    }
+
+    private void resolveEffectsLoop(GameData gameData, StackEntry entry, int startIndex) {
         List<CardEffect> effects = entry.getEffectsToResolve();
         for (int i = startIndex; i < effects.size(); i++) {
             CardEffect effect = effects.get(i);

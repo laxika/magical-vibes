@@ -62,6 +62,14 @@ public class GameOutcomeService {
     }
 
     public boolean checkWinCondition(GameData gameData) {
+        // CR 704.3 / 104.3b — state-based actions (including loss from life <= 0) are only checked
+        // when a player would receive priority, i.e. after a spell or ability finishes resolving.
+        // While a stack entry's effect list is mid-resolution, defer: a controller momentarily at
+        // 0 life between two effects of the same spell survives if a later effect restores them.
+        // EffectResolutionService clears this and re-invokes this method once the resolution ends.
+        if (gameData.deferPlayerLossCheck) {
+            return false;
+        }
         for (UUID playerId : gameData.orderedPlayerIds) {
             int life = gameData.getLife(playerId);
             int poison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);

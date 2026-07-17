@@ -195,6 +195,23 @@ public class GameData {
      * completion is not itself an X-value choice (e.g. the each-player discard-then-draw of Flux).
      */
     public boolean rerunCurrentEffectAfterInteraction;
+    /**
+     * CR 704.3 / 104.3b — while a stack entry's effect list is being resolved (including across an
+     * async pause/resume and any nested sub-resolutions), the player-loss state-based action is not
+     * checked. {@link com.github.laxika.magicalvibes.service.GameOutcomeService#checkWinCondition}
+     * returns early while this is set, so a controller who is momentarily at 0 or less life between
+     * two effects of the same spell (e.g. "deal N damage to yourself, then gain N life") survives
+     * if a later effect restores them. Cleared and checked once when the outermost effect resolution
+     * finishes. Managed only by {@code EffectResolutionService}.
+     */
+    public boolean deferPlayerLossCheck;
+    /**
+     * Reentrancy depth of {@code EffectResolutionService.resolveEffectsFrom}. Some handlers resolve
+     * a nested effect list synchronously (e.g. Kinship, counter riders); only unwinding the
+     * outermost frame (depth 0) finalizes {@link #deferPlayerLossCheck}, so a nested completion
+     * does not prematurely re-enable the loss check for the enclosing resolution.
+     */
+    public int effectResolutionDepth;
     /** Progress state for Flux's "each player discards any number, then draws that many" flow. */
     public final EachPlayerRummageState eachPlayerRummage = new EachPlayerRummageState();
     /** Progress state for Plague of Vermin's "each player may pay any amount of life" flow. */
@@ -1408,6 +1425,8 @@ public class GameData {
         copy.chosenXValue = this.chosenXValue;
         copy.chosenSpellSubtype = this.chosenSpellSubtype;
         copy.rerunCurrentEffectAfterInteraction = this.rerunCurrentEffectAfterInteraction;
+        copy.deferPlayerLossCheck = this.deferPlayerLossCheck;
+        copy.effectResolutionDepth = this.effectResolutionDepth;
         copy.eachPlayerRummage.active = this.eachPlayerRummage.active;
         copy.eachPlayerRummage.currentPlayerId = this.eachPlayerRummage.currentPlayerId;
         copy.eachPlayerRummage.pendingDraw = this.eachPlayerRummage.pendingDraw;

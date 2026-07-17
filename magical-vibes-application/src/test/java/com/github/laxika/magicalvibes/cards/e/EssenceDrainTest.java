@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -90,6 +91,25 @@ class EssenceDrainTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Air Elemental"));
         // Controller still gains 3 life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    // ===== Self-target at low life (CR 704.3 loss deferral) =====
+
+    @Test
+    @DisplayName("Targeting yourself at 3 life: 3 damage then +3 life, you survive at 3")
+    void selfTargetAtThreeLifeSurvives() {
+        harness.setHand(player1, List.of(new EssenceDrain()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        // 3 damage drops you to 0 mid-resolution, but the +3 life in the same resolution restores
+        // you before the loss state-based action is checked (CR 704.3 / 104.3b).
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
     // ===== Fizzle =====

@@ -73,6 +73,9 @@ class EffectResolutionServiceTest {
     @Mock
     private com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.GameOutcomeService gameOutcomeService;
+
     private EffectResolutionService effectResolutionService;
 
     private GameData gd;
@@ -83,7 +86,7 @@ class EffectResolutionServiceTest {
     void setUp() {
         effectResolutionService = new EffectResolutionService(
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
-                registry, gameBroadcastService, permanentRemovalService, damageSupport);
+                registry, gameBroadcastService, permanentRemovalService, damageSupport, gameOutcomeService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -525,6 +528,106 @@ class EffectResolutionServiceTest {
 
             assertThat(gd.pendingEffectResolutionEntry).isNull();
             assertThat(gd.pendingEffectResolutionIndex).isZero();
+        }
+    }
+
+    // =========================================================================
+    // Player-loss deferral (CR 704.3 / 104.3b)
+    // A controller who drops to <= 0 life between two effects of the same spell must not lose
+    // mid-resolution; the loss SBA is deferred until the whole resolution finishes.
+    // =========================================================================
+
+    @Nested
+    @DisplayName("playerLossDeferral")
+    class PlayerLossDeferral {
+
+        @Test
+        @DisplayName("Suppresses checkWinCondition mid-resolution and fires it once at the end")
+        void suppressesMidResolutionAndChecksOnce() {
+            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect second = new DrawCardEffect(1);
+            StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
+                    List.of(first, second));
+
+            EffectHandler firstHandler = stubHandler(first);
+            stubHandler(second);
+            // While the first effect resolves, the loss check must be deferred.
+            doAnswer(inv -> {
+                assertThat(gd.deferPlayerLossCheck).isTrue();
+                return null;
+            }).when(firstHandler).resolve(gd, entry, first);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            assertThat(gd.deferPlayerLossCheck).isFalse();
+            assertThat(gd.effectResolutionDepth).isZero();
+            verify(gameOutcomeService, times(1)).checkWinCondition(gd);
+        }
+
+        @Test
+        @DisplayName("Keeps suppression across an async pause and finalizes only on resume")
+        void keepsSuppressionAcrossPauseAndFinalizesOnResume() {
+            CardEffect first = new DealDamageToAnyTargetEffect(3);
+            CardEffect second = new DrawCardEffect(1);
+            StackEntry entry = createEntry(createCard("Two-effect spell"), player1Id,
+                    List.of(first, second));
+
+            EffectHandler firstHandler = stubHandler(first);
+            stubHandler(second);
+            // The first effect pauses for player input (a queued "may" ability), storing resumption
+            // state and returning before the second effect resolves.
+            doAnswer(inv -> {
+                gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        createCard("May source"), player1Id, List.of(), "may ability"));
+                return null;
+            }).when(firstHandler).resolve(gd, entry, first);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            // Paused: suppression persists, no loss check yet.
+            assertThat(gd.deferPlayerLossCheck).isTrue();
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+            assertThat(gd.effectResolutionDepth).isZero();
+            verify(gameOutcomeService, never()).checkWinCondition(gd);
+
+            // Player input completes; drain the rest of the effect list.
+            gd.pendingMayAbilities.clear();
+            effectResolutionService.resolveEffectsFrom(gd, entry, gd.pendingEffectResolutionIndex);
+
+            assertThat(gd.deferPlayerLossCheck).isFalse();
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+            verify(gameOutcomeService, times(1)).checkWinCondition(gd);
+        }
+
+        @Test
+        @DisplayName("A nested sub-resolution does not re-enable the loss check for the outer entry")
+        void nestedResolutionDoesNotFinalizeOuter() {
+            CardEffect outerFirst = new DealDamageToAnyTargetEffect(3);
+            CardEffect outerSecond = new DrawCardEffect(1);
+            StackEntry outer = createEntry(createCard("Outer spell"), player1Id,
+                    List.of(outerFirst, outerSecond));
+
+            CardEffect innerEffect = new DrawCardEffect(2);
+            StackEntry inner = createEntry(createCard("Inner rider"), player1Id, List.of(innerEffect));
+            stubHandler(innerEffect);
+
+            EffectHandler outerFirstHandler = stubHandler(outerFirst);
+            stubHandler(outerSecond);
+            // The first outer effect synchronously resolves a nested effect list (e.g. a rider).
+            doAnswer(inv -> {
+                effectResolutionService.resolveEffects(gd, inner);
+                // Nested resolution completed, but the outer entry is still resolving.
+                assertThat(gd.deferPlayerLossCheck).isTrue();
+                return null;
+            }).when(outerFirstHandler).resolve(gd, outer, outerFirst);
+
+            effectResolutionService.resolveEffects(gd, outer);
+
+            assertThat(gd.deferPlayerLossCheck).isFalse();
+            assertThat(gd.effectResolutionDepth).isZero();
+            // The nested completion is a non-outermost frame and does not finalize; only the outer
+            // completion re-enables and runs the loss check, exactly once.
+            verify(gameOutcomeService, times(1)).checkWinCondition(gd);
         }
     }
 

@@ -32,7 +32,7 @@ All paths relative to `cards/`.
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER) |
 | Uncounterable + unpreventable burn | `c/Combust.java` | STATIC CantBeCounteredEffect + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |
-| Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
+| Burn + fixed life gain | `e/EssenceDrain.java` | DealDamageToAnyTargetEffect(3) + GainLifeEffect(3) — two effects on SPELL (also `d/DarkNourishment.java`, `a/AjaniVengeant.java` −2). Targeting auto-derives from the damage effect; the fixed life is gained whenever the spell resolves (independent of damage dealt), and the whole spell fizzles with no life if its single target becomes illegal |
 | Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
 | X drain all opponents | `e/Exsanguinate.java` | SPELL LoseLifeEffect(new XValue(), EACH_OPPONENT, true) — no target, X life loss from each opponent + controller gains total lost |
 | Multi-target damage | `c/ConeOfFlame.java` | DealDividedDamageEffect.ordered(List.of(1,2,3)) — fixed amounts by target order |
