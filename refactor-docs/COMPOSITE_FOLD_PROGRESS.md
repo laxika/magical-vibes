@@ -857,3 +857,67 @@ contingency) is exactly right.
 ### Traps hit
 - None. `MayAbilityHandlerService` known risk did not materialize (targeting via explicit `target(...)`, not the
   inner-effect self-target inference).
+
+---
+
+## Batch 3 Session 3 — ReturnSelfToHandAndCreateTokensEffect folded (trigger-slot atomicity via ConditionalEffect(SequenceEffect) proven)
+
+Deleted the composite record `ReturnSelfToHandAndCreateTokensEffect` and its handler by decomposing Thopter
+Assembly onto two existing primitives wrapped in a `SequenceEffect`, kept inside the card's unchanged
+`ConditionalEffect` on the `UPKEEP_TRIGGERED` slot.
+
+### Why a plain (non-contingent) sequence is rules-correct
+Thopter Assembly oracle: "At the beginning of your upkeep, if you control no other Thopters, return Thopter
+Assembly to its owner's hand AND create five 1/1 colorless Thopter artifact creature tokens with flying."
+Verified ruling: the tokens are NOT contingent on the return — if the Assembly already left the battlefield you
+STILL get the five Thopters. Both steps are unconditional (the only gate is the shared intervening-if "no other
+Thopters"), so a plain `SequenceEffect` (no data-flow, no "if you do") is exactly right. This mirrors the deleted
+handler, which bounced-or-skipped then unconditionally created tokens.
+
+### Why this needed SequenceEffect (not two ConditionalEffect slot effects)
+Recorded in Session 4 of the earlier batch: decomposing into TWO `ConditionalEffect(NoOtherPermanent(THOPTER), ...)`
+slot effects failed 4/7 cases. The upkeep-trigger collector pushes one stack entry PER slot effect; the stack
+resolves LIFO, so the token entry resolved first and the bounce entry's intervening-if then saw 5 Thopters and
+skipped the bounce. ONE `ConditionalEffect` wrapping ONE `SequenceEffect` keeps it a single atomic stack entry
+(what CR 603 requires), condition checked once, both steps spliced in oracle order.
+
+### What changed
+- **`ThopterAssembly.java`** — same `EffectSlot.UPKEEP_TRIGGERED` + same
+  `ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(THOPTER)), ...)`; the wrapped effect is
+  now `SequenceEffect.of(ReturnToHandEffect.self(), new CreateTokenEffect(5, "Thopter", 1, 1, null,
+  List.of(THOPTER), Set.of(FLYING), Set.of(ARTIFACT)))`. Bounce step first (oracle order). The `CreateTokenEffect`
+  is byte-identical to the one the deleted record wrapped; imports updated (added `CreateTokenEffect`,
+  `ReturnToHandEffect`, `SequenceEffect`; dropped `ReturnSelfToHandAndCreateTokensEffect`).
+- **Behavior-preservation check**: the deleted handler bounced via `permanentRemovalService.removePermanentToHand`
+  (skipping silently if the source was gone) then `applyCreateToken(controllerId, tokenEffect, setCode)`.
+  `ReturnToHandEffect.self()` → `BounceSupport.applyReturnSelfToHand` is that exact bounce (logs "no longer on the
+  battlefield" and returns when the source is gone — a returning handler cannot stop later spliced steps anyway,
+  since they are independent list entries). `CreateTokenEffectHandler` calls the identical
+  `applyCreateToken(controllerId, e, amount=Fixed(5), setCode)` (plus a benign `entry.getCreatedPermanentIds()`
+  add). Token output identical.
+- **Deleted** `magical-vibes-domain/.../model/effect/ReturnSelfToHandAndCreateTokensEffect.java` and
+  `magical-vibes-engine/.../service/effect/normalfx/ReturnSelfToHandAndCreateTokensEffectHandler.java`.
+
+### Greps run (whole-repo *.java, build/ excluded)
+- `ReturnSelfToHandAndCreateTokensEffect` in `*.java` → zero (all references gone).
+- `magical-vibes-engine/**/validate/` → no `@ValidatesTarget` for the record (nothing to delete).
+- `magical-vibes-ai` → zero (no bespoke scoring; the `SpellEvaluator` `SequenceEffect` sum branch covers the parts).
+- `ReturnSelfToHandAndCreateTokensEffectHandlerTest` → does not exist (nothing to port/delete).
+- `ThopterAssemblyTest` → no white-box `instanceof`/reflective references to the record; all 7 tests are behavioral.
+- Remaining `.md` hits: `agent-docs/` rewritten (below); `refactor-docs/` history untouched.
+
+### Docs
+- `agent-docs/EFFECTS_INDEX.md` — deleted the `ReturnSelfToHandAndCreateTokensEffect` row.
+- `agent-docs/CARD_PATTERNS_CREATURES_TRIGGERED.md` — Thopter Assembly row rewritten to
+  `ConditionalEffect(NoOtherPermanent(...), SequenceEffect.of(ReturnToHandEffect.self(), CreateTokenEffect(...)))`,
+  noting the trigger-slot atomicity requirement and the "tokens still created if source gone" ruling.
+
+### Tests
+- `ThopterAssemblyTest` — PASS (7 tests; baseline green before the change, still green after). Confirmed the two
+  gotcha cases: `stillCreatesTokensIfDestroyedBeforeResolution` (tokens created, no bounce) and the trigger tests
+  asserting one stack entry + the Assembly returning to hand.
+- Full suite not run (per CLAUDE.md — user runs it).
+
+### Traps hit
+- None. Single-entry atomicity held: `gd.stack` size 1 on the fire tests, intervening-if re-checked once, both
+  steps spliced and resolved in order.

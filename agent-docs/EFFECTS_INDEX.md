@@ -752,7 +752,6 @@ per-derivation effect record.
 | `ReturnSelfToHandOnCoinFlipLossEffect` | `()` | return self to hand if coin flip is lost |
 | `ReturnPermanentsOnCombatDamageToPlayerEffect` | `()` or `(PermanentPredicate filter)` | return permanents when combat damage dealt to player (Ninja-style). Optional filter restricts which permanents can be chosen (e.g. `PermanentIsCreaturePredicate` for creatures only) |
 | `BounceCreatureOnUpkeepEffect` | `(Scope scope, Set<TargetFilter> filters, String prompt)` | at upkeep, return a creature matching filters. Scope: `SOURCE_CONTROLLER`, `TRIGGER_TARGET_PLAYER` |
-| `ReturnSelfToHandAndCreateTokensEffect` | `(CreateTokenEffect tokenEffect)` | return source to hand then create tokens (compound upkeep effect, e.g. Thopter Assembly) |
 | `SacrificeEnchantedCreatureAndCreateTokenEffect` | `(CreateTokenEffect tokenEffect)` | sacrifice the enchanted creature, then create a token for the aura's controller (compound upkeep effect, e.g. Parasitic Implant) |
 | `SacrificeEnchantedCreatureEffect` | `()` | sacrifice the enchanted creature without additional effects. Use with `ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED` for "at the beginning of your upkeep, sacrifice this creature" (e.g. Necrotic Plague) |
 | `ExileEnchantedCreatureEffect` | `()` | exile the creature the source Aura is attached to (exile variant of `SacrificeEnchantedCreatureEffect`; resolves via the stack entry's `sourcePermanentId`). Use in an Aura's activated ability, e.g. Weight of Conscience "...: Exile enchanted creature." |
