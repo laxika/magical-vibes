@@ -724,3 +724,76 @@ unlock the wrapper-blocked Session 4/5 records and the loot/rummage records — 
 - Docs-only session. No production/test code touched; working tree change is limited to this file plus the
   audit script's regenerated `EFFECT_COUPLING_MATRIX.md` / `effect-dispatch-baseline.txt`.
 - Full suite not run (per CLAUDE.md — user runs it before committing).
+
+## Batch 3 Session 1 — SequenceEffect primitive
+
+Built the keystone primitive the batch-2 closeout flagged as the unlock for the wrapper-blocked Session 4/5
+records and the loot/rummage records: a generic **do-all-of** bundle that lets a single-effect wrapper
+(`MayEffect`, `ConditionalEffect`, `TriggeringPermanentConditionalEffect`, `FlipCoinWinEffect`) gate several
+steps, and lets a trigger slot carry a multi-step atomic ability (collectors push one stack entry per slot
+effect, so a multi-step bundle previously could not live on a trigger slot). **No card was changed this
+session** — this is primitive + engine support + tests only.
+
+### What was added
+- **`SequenceEffect(List<CardEffect> steps)`** (`magical-vibes-domain/.../model/effect/SequenceEffect.java`) —
+  record; compact constructor `List.copyOf(steps)` + throws `IllegalArgumentException` on `< 2` steps; static
+  `of(CardEffect...)` factory. `targetSpec()` returns the FIRST step's non-`NONE` spec (the entry's single
+  target is shared by every targeting step, exactly like multiple flat targeting effects on one spell slot).
+  Javadoc spells out: (a) strict-order, NO "if you do" data flow between steps — a no-op step does not stop
+  later steps; (b) use ONLY to gate steps under a single-effect wrapper or to keep steps one atomic trigger-slot
+  ability — prefer flat `addEffect(...)` for plain spell/ability lists (Act of Treason / Drain Life pattern);
+  (c) multi-target groups inside a sequence are unsupported (spliced steps aren't in the card's
+  effect→target-group table, so every targeting step reads the shared `targetId`).
+- **`StackEntry`** — dropped `final` from `effectsToResolve` and added
+  `insertEffectsToResolve(int index, List<CardEffect> steps)` (copies into a fresh `ArrayList`, splices, and
+  reassigns the field; never mutates the caller's list — safe against `List.of(...)`-backed entries). Deep-copy
+  constructor already did `new ArrayList<>(source.effectsToResolve)`, untouched.
+- **`EffectResolutionService.resolveEffectsLoop`** — new inline branch AFTER the `MayPayTapPermanentsEffect`
+  re-entry block and BEFORE the "Multi-target support" comment: when `effectToResolve instanceof SequenceEffect`,
+  splice `sequence.steps()` at `i + 1`, reassign the local `effects = entry.getEffectsToResolve()`, and
+  `continue`. No handler class — like `ConditionalEffect` it is engine-inline and must never reach
+  `registry.getHandler`.
+- **`SpellEvaluator.evaluateSingleEffect`** (AI) — new branch after the `ChooseOneEffect` case: a
+  `SequenceEffect` scores as the SUM of recursively scoring each step. Nothing else changed.
+
+### Splice design (why it's correct)
+The splice persists **on the entry**, so the standard pause/resume machinery carries it for free: async pause
+stores `pendingEffectResolutionEntry` + `pendingEffectResolutionIndex` (indices into the entry's live list) and
+every resume re-enters `resolveEffectsFrom` which re-reads `entry.getEffectsToResolve()`. An interaction raised
+by step 1 therefore resumes into step 2 with no special handling. Nested sequences splice depth-first when
+reached (the inner sequence is itself a spliced step, re-detected on its own iteration). `MayEffect(SequenceEffect)`
+works because the may re-entry sets `effectToResolve = may.wrapped()` before the sequence branch runs. The for-loop's
+`i < effects.size()` re-reads the reassigned local each iteration; `continue` advances `i` onto the first spliced
+step (inserted at `i + 1`), so the sequence entry itself is not re-processed.
+
+Deliberately **NOT** touched: `TargetValidationService.checkEffectTargets` / `@ValidatesTarget` machinery — class-keyed
+validators run unconditionally for registered classes, and making them see effects nested inside sequences would fire
+validators in contexts where they never ran before (recurring trap in refactor-docs). Validation left exactly as-is.
+
+### Tests
+`EffectResolutionServiceTest` → new `@Nested class SequenceEffects` (mirrors the file's handler-registry-mock style;
+uses distinct `DrawCardEffect(1..4)` steps so identity-keyed handler stubs stay distinct):
+- `resolvesBothStepsInOrder` — two-step sequence resolves both in order; asserts the sequence never reaches
+  `registry.getHandler`.
+- `conditionalUnmetResolvesNoStep` / `conditionalMetResolvesBothSteps` — `ConditionalEffect(Metalcraft, sequence)`:
+  unmet resolves no step; met resolves both in order.
+- `pauseInFirstStepResumesIntoSecondStep` — first step's handler queues a `PendingMayAbility` (async pause); asserts
+  the resumption index points at the spliced second step, then `resolveEffectsFrom` at that index resolves it.
+- `nestedSequenceResolvesLeavesDepthFirst` — `SequenceEffect.of(a, inner, d)` with `inner = of(b, c)` resolves leaves
+  a, b, c, d depth-first.
+- `effectAfterSequenceResolvesLast` — an effect following the sequence in the original list resolves after all
+  spliced steps.
+
+### Verification
+- `:magical-vibes-domain :magical-vibes-engine :magical-vibes-ai :magical-vibes-application` compile green
+  (`compileJava` / `compileTestJava`).
+- `EffectResolutionServiceTest` — PASS. `SpellEvaluatorTest` (`magical-vibes-ai`) — PASS (no calibrated-AI flip).
+- Full suite not run (per CLAUDE.md — user runs it before committing).
+
+### Notes / next
+- No card folded yet: the next batch-3 sessions can now decompose the wrapper-blocked Session 4/5 records and the
+  loot/rummage records (`DrawAndDiscardCardEffect`, `DiscardAndDrawCardEffect`, `RemoveCounterFromSourceAndGainLifeEffect`,
+  …) by wrapping their steps in `SequenceEffect` inside the existing `MayEffect`/`ConditionalEffect` gate.
+- Reminder for those sessions: `SequenceEffect` is do-all-of with NO if-you-do contingency. Records whose second step
+  is conditional on the first *actually happening* ("draw only if you discarded") still need their own primitive or a
+  count-carried rider — a sequence alone does not express that.

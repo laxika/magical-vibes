@@ -154,6 +154,7 @@ a code change. Interfaces are auto-exempt from `EffectDispatchRatchetTest`.
 ## Wrapper / modifier effects
 
 Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
+- `SequenceEffect.of(step1, step2, …)` (>=2 steps) — resolve the steps strictly in order, as one effect (engine splices them into the entry's live effect list; NO "if you do" contingency, a no-op step doesn't stop later steps). Use ONLY to gate several steps under a single-effect wrapper (`MayEffect(SequenceEffect.of(a, b))`, `ConditionalEffect(cond, SequenceEffect.of(a, b))`, `FlipCoinWinEffect(SequenceEffect.of(a, b))`) or to keep several steps one atomic triggered ability on a trigger slot. Do NOT wrap a plain spell/ability effect list — use flat `addEffect(...)` calls instead (Act of Treason / Drain Life pattern). Single target is shared by every targeting step; multi-target groups inside a sequence are unsupported
 - `MayEffect(CardEffect, String prompt)` — "you may"
 - `MayPayManaEffect(String manaCost, CardEffect, String prompt)` — "you may pay {X}"
 - `MayPayTapPermanentsEffect(TapMultiplePermanentsCost, CardEffect, String prompt)` — "you may tap N permanents"

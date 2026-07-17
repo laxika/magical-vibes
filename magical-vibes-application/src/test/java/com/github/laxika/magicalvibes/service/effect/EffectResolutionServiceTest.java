@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -967,6 +968,153 @@ class EffectResolutionServiceTest {
 
             verify(handler).resolve(gd, entry, base);
             verify(predicateEvaluationService, never()).matchesPermanentPredicate(eq(gd), any(), any());
+        }
+    }
+
+    // =========================================================================
+    // SequenceEffect
+    // Splices its steps into the entry's live effect list so they resolve strictly in order
+    // through the same loop (pause/resume and nested wrappers work unchanged). The sequence
+    // itself is engine-inline and never reaches handler dispatch.
+    // =========================================================================
+
+    @Nested
+    @DisplayName("sequenceEffects")
+    class SequenceEffects {
+
+        @Test
+        @DisplayName("Resolves both steps of a sequence in order")
+        void resolvesBothStepsInOrder() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect sequence = SequenceEffect.of(stepA, stepB);
+            StackEntry entry = createEntry(createCard("Two-step sequence"), player1Id, List.of(sequence));
+
+            EffectHandler handlerA = stubHandler(stepA);
+            EffectHandler handlerB = stubHandler(stepB);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            InOrder inOrder = inOrder(handlerA, handlerB);
+            inOrder.verify(handlerA).resolve(gd, entry, stepA);
+            inOrder.verify(handlerB).resolve(gd, entry, stepB);
+            // The sequence itself is engine-inline: it never reaches handler dispatch.
+            verify(registry, never()).getHandler(sequence);
+        }
+
+        @Test
+        @DisplayName("A conditional gating a sequence resolves no step when the condition is unmet")
+        void conditionalUnmetResolvesNoStep() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), SequenceEffect.of(stepA, stepB));
+            StackEntry entry = createEntry(createCard("Gated sequence"), player1Id, List.of(conditional));
+
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(registry, never()).getHandler(stepA);
+            verify(registry, never()).getHandler(stepB);
+        }
+
+        @Test
+        @DisplayName("A conditional gating a sequence resolves both steps when the condition is met")
+        void conditionalMetResolvesBothSteps() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), SequenceEffect.of(stepA, stepB));
+            StackEntry entry = createEntry(createCard("Gated sequence"), player1Id, List.of(conditional));
+
+            when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
+            EffectHandler handlerA = stubHandler(stepA);
+            EffectHandler handlerB = stubHandler(stepB);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            InOrder inOrder = inOrder(handlerA, handlerB);
+            inOrder.verify(handlerA).resolve(gd, entry, stepA);
+            inOrder.verify(handlerB).resolve(gd, entry, stepB);
+        }
+
+        @Test
+        @DisplayName("An async pause in the first step resumes into the spliced second step")
+        void pauseInFirstStepResumesIntoSecondStep() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect sequence = SequenceEffect.of(stepA, stepB);
+            StackEntry entry = createEntry(createCard("Pausing sequence"), player1Id, List.of(sequence));
+
+            EffectHandler handlerA = stubHandler(stepA);
+            EffectHandler handlerB = stubHandler(stepB);
+            // The first spliced step pauses for player input (a queued may ability), storing
+            // resumption state and returning before the second step resolves.
+            doAnswer(inv -> {
+                gd.pendingMayAbilities.add(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                        createCard("May source"), player1Id, List.of(), "may ability"));
+                return null;
+            }).when(handlerA).resolve(gd, entry, stepA);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            // Paused after the first spliced step; the resumption index points at the second
+            // spliced step because the splice persists on the entry.
+            assertThat(gd.pendingEffectResolutionEntry).isSameAs(entry);
+            assertThat(entry.getEffectsToResolve().get(gd.pendingEffectResolutionIndex)).isEqualTo(stepB);
+            verify(handlerB, never()).resolve(gd, entry, stepB);
+
+            // Player input completes; resume drains the second step.
+            gd.pendingMayAbilities.clear();
+            effectResolutionService.resolveEffectsFrom(gd, entry, gd.pendingEffectResolutionIndex);
+
+            verify(handlerB).resolve(gd, entry, stepB);
+            assertThat(gd.pendingEffectResolutionEntry).isNull();
+        }
+
+        @Test
+        @DisplayName("A nested sequence resolves all leaf steps in depth-first order")
+        void nestedSequenceResolvesLeavesDepthFirst() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect stepC = new DrawCardEffect(3);
+            CardEffect stepD = new DrawCardEffect(4);
+            CardEffect inner = SequenceEffect.of(stepB, stepC);
+            CardEffect outer = SequenceEffect.of(stepA, inner, stepD);
+            StackEntry entry = createEntry(createCard("Nested sequence"), player1Id, List.of(outer));
+
+            EffectHandler handlerA = stubHandler(stepA);
+            EffectHandler handlerB = stubHandler(stepB);
+            EffectHandler handlerC = stubHandler(stepC);
+            EffectHandler handlerD = stubHandler(stepD);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            InOrder inOrder = inOrder(handlerA, handlerB, handlerC, handlerD);
+            inOrder.verify(handlerA).resolve(gd, entry, stepA);
+            inOrder.verify(handlerB).resolve(gd, entry, stepB);
+            inOrder.verify(handlerC).resolve(gd, entry, stepC);
+            inOrder.verify(handlerD).resolve(gd, entry, stepD);
+        }
+
+        @Test
+        @DisplayName("An effect after the sequence resolves after all spliced steps")
+        void effectAfterSequenceResolvesLast() {
+            CardEffect stepA = new DrawCardEffect(1);
+            CardEffect stepB = new DrawCardEffect(2);
+            CardEffect after = new DrawCardEffect(3);
+            CardEffect sequence = SequenceEffect.of(stepA, stepB);
+            StackEntry entry = createEntry(createCard("Sequence then effect"), player1Id, List.of(sequence, after));
+
+            EffectHandler handlerA = stubHandler(stepA);
+            EffectHandler handlerB = stubHandler(stepB);
+            EffectHandler afterHandler = stubHandler(after);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            InOrder inOrder = inOrder(handlerA, handlerB, afterHandler);
+            inOrder.verify(handlerA).resolve(gd, entry, stepA);
+            inOrder.verify(handlerB).resolve(gd, entry, stepB);
+            inOrder.verify(afterHandler).resolve(gd, entry, after);
         }
     }
 }

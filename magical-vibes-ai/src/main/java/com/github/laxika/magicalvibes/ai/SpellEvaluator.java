@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -428,6 +429,16 @@ public class SpellEvaluator {
                 bestValue = Math.max(bestValue, optionValue);
             }
             return bestValue;
+        }
+
+        // Sequence: steps resolve in order as one effect — score as the sum of the steps.
+        if (effect instanceof SequenceEffect sequence) {
+            double total = 0;
+            for (CardEffect step : sequence.steps()) {
+                total += evaluateSingleEffect(gameData, card, step,
+                        aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
+            }
+            return total;
         }
 
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors

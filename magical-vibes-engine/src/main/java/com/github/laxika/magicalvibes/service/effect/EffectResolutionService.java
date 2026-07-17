@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -185,6 +186,14 @@ public class EffectResolutionService {
                             gameData.id, entry.getCard().getName());
                     continue;
                 }
+            }
+
+            // Sequence expansion: splice the steps into this entry's effect list so they resolve
+            // in order through this same loop (pause/resume and nested wrappers work unchanged).
+            if (effectToResolve instanceof SequenceEffect sequence) {
+                entry.insertEffectsToResolve(i + 1, sequence.steps());
+                effects = entry.getEffectsToResolve();
+                continue;
             }
 
             // Multi-target support: set entry.targetId to this effect's group target based on

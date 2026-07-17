@@ -18,7 +18,7 @@ public class StackEntry {
     private final Card card;
     private final UUID controllerId;
     private final String description;
-    private final List<CardEffect> effectsToResolve;
+    private List<CardEffect> effectsToResolve;
     private final int xValue;
     @Setter private UUID targetId;
     private final UUID sourcePermanentId;
@@ -310,6 +310,13 @@ public class StackEntry {
         this.targetCardIds = List.of();
         this.targetFilter = null;
         this.targetIds = targetIds != null ? targetIds : List.of();
+    }
+
+    /** Splices a SequenceEffect's steps into the effect list after the given position (resolution-time expansion). */
+    public void insertEffectsToResolve(int index, List<CardEffect> steps) {
+        List<CardEffect> updated = new ArrayList<>(effectsToResolve);
+        updated.addAll(index, steps);
+        effectsToResolve = updated;
     }
 
     /**
