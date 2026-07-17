@@ -112,10 +112,20 @@ export class DamageChoiceService {
     return this.combatDamageTotalDamage - assigned;
   }
 
+  get combatDamageAssignedToOverflow(): number {
+    let assigned = 0;
+    for (const target of this.combatDamageTargets) {
+      if (target.isPlayer) assigned += this.combatDamageAssignments.get(target.id) ?? 0;
+    }
+    return assigned;
+  }
+
   get isCombatDamageAssignmentValid(): boolean {
     if (this.combatDamageRemaining !== 0) return false;
     if (!this.combatDamageIsTrample) return true;
-    // Trample: each blocker must receive at least lethal damage
+    // Trample (CR 510.1c): lethal damage to each blocker is required only when damage is
+    // assigned to the player or planeswalker the creature is attacking.
+    if (this.combatDamageAssignedToOverflow === 0) return true;
     for (const target of this.combatDamageTargets) {
       if (this.isTargetMissingLethalDamage(target)) return false;
     }
@@ -131,6 +141,7 @@ export class DamageChoiceService {
 
   isTargetMissingLethalDamage(target: CombatDamageTargetView): boolean {
     if (!this.combatDamageIsTrample || target.isPlayer) return false;
+    if (this.combatDamageAssignedToOverflow === 0) return false;
     const lethal = this.getLethalRequiredForTarget(target);
     const assigned = this.combatDamageAssignments.get(target.id) ?? 0;
     return assigned < lethal;

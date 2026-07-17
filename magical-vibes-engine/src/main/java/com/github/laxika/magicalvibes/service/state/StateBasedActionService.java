@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.state;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -34,6 +35,7 @@ public class StateBasedActionService {
     private final PermanentRemovalService permanentRemovalService;
     private final GraveyardService graveyardService;
     private final StateTriggerService stateTriggerService;
+    private final LegendRuleService legendRuleService;
 
     private enum DeathReason {
         ZERO_TOUGHNESS, LETHAL_DAMAGE, ZERO_LOYALTY
@@ -76,6 +78,22 @@ public class StateBasedActionService {
 
         if (passes >= MAX_SBA_PASSES) {
             log.warn("Game {} - state-based actions did not converge after {} passes", gameData.id, passes);
+        }
+
+        // CR 704.5j — the legend rule is a state-based action, but performing it needs a player
+        // choice, so it can't run synchronously inside the pass loop. Prompt only when no other
+        // input flow is active or queued (a second begin would clobber it); a deferred violation
+        // is simply re-detected on the next check. After the player chooses,
+        // PermanentChoiceBattlefieldHandlerService.handleLegendRule re-runs this service so any
+        // remaining state-based actions (and further violations) are processed.
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.pendingInteractions.isEmpty()
+                && gameData.pendingMayAbilities.isEmpty()) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (legendRuleService.checkLegendRule(gameData, playerId)) {
+                    return;
+                }
+            }
         }
 
         // CR 603.8 — check state-triggered abilities after SBAs

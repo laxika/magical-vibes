@@ -151,6 +151,9 @@ public class CombatService {
                 battlefield.forEach(Permanent::clearCombatState));
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
+        gameData.combatDamageBlockerAssignments.clear();
+        gameData.combatDamagePendingBlockerIndices.clear();
+        gameData.combatDamageFirstStrikeAssignmentPhase = false;
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;

@@ -199,6 +199,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.paidSearchTaxPermanentIds.clear();
         gameData.combatDamagePlayerAssignments.clear();
         gameData.combatDamagePendingIndices.clear();
+        gameData.combatDamageBlockerAssignments.clear();
+        gameData.combatDamagePendingBlockerIndices.clear();
         gameData.playersAttemptedDrawFromEmptyLibrary.clear();
         gameData.preventDamageFromColors.clear();
 
@@ -224,6 +226,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.mindControllerPlayerId = null;
         gameData.pendingSearchContext = null;
         gameData.pendingETBDamageAssignments = Map.of();
+        gameData.combatDamageFirstStrikeAssignmentPhase = false;
         gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;

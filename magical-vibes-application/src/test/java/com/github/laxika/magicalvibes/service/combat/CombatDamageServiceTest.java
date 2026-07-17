@@ -95,7 +95,8 @@ class CombatDamageServiceTest {
                 new com.github.laxika.magicalvibes.service.state.StateBasedActionService(
                         gameOutcomeService, gameQueryService, gameBroadcastService,
                         permanentRemovalService, graveyardService,
-                        new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameBroadcastService));
+                        new com.github.laxika.magicalvibes.service.state.StateTriggerService(gameBroadcastService),
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battlefield.LegendRuleService.class));
         combatDamageService = new CombatDamageService(gameQueryService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
@@ -431,13 +432,14 @@ class CombatDamageServiceTest {
         }
 
         @Test
-        @DisplayName("Multi-blocker lethal assignment uses pre-damage toughness, not mid-step infect counters")
+        @DisplayName("Multi-blocker division uses pre-damage toughness, not mid-step infect counters")
         void multiBlockerLethalAssignmentUsesPreDamageToughness() {
             // Attacker A (0/4) is blocked by an infect blocker and by a 5-power blocker that
-            // also blocks attacker C (2/2). The infect blocker's -1/-1 counters land on A
-            // during the same damage step, but all combat damage is assigned and dealt
-            // simultaneously (CR 510.4): the multi-blocker must assign lethal to A based on
-            // A's pre-damage toughness (4), leaving only 1 damage for C — not 3.
+            // also blocks attacker C (2/2). The defending player divides the multi-blocker's
+            // damage (CR 510.1d): 4 to A (lethal against A's pre-damage toughness) and 1 to C.
+            // The infect blocker's -1/-1 counters land on A during the same damage step, but
+            // all combat damage is assigned and dealt simultaneously (CR 510.4): the division
+            // made against pre-damage stats stands, so C takes only 1 — not 3.
             Permanent attackerA = addAttacker("Wall", 0, 4);
             Permanent attackerC = addAttacker("Bear", 2, 2);
             addBlocker("Infector", 2, 2, 0, Keyword.INFECT);
@@ -445,11 +447,17 @@ class CombatDamageServiceTest {
             multiBlocker.addBlockingTarget(1);
             multiBlocker.addBlockingTargetId(attackerC.getId());
 
+            // First call pauses for the defending player's division of the Giant's 5 damage.
+            combatDamageService.resolveCombatDamage(gameData);
+            assertThat(gameData.combatDamagePendingBlockerIndices).containsExactly(1);
+
+            combatDamageService.handleCombatDamageAssigned(gameData, player2, 1,
+                    Map.of(attackerA.getId(), 4, attackerC.getId(), 1));
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(attackerA.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, attackerA);
-            // C took only the multi-blocker's leftover damage (5 - 4 lethal to A = 1) and survives
+            // C took only the division's leftover damage (5 - 4 lethal to A = 1) and survives
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, attackerC);
             assertThat(attackerC.getMarkedDamage()).isEqualTo(1);
         }

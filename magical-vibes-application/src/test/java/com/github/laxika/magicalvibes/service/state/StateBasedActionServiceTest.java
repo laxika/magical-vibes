@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,8 @@ class StateBasedActionServiceTest {
     private GraveyardService graveyardService;
     @Mock
     private StateTriggerService stateTriggerService;
+    @Mock
+    private LegendRuleService legendRuleService;
 
     @InjectMocks
     private StateBasedActionService sut;
@@ -959,6 +962,53 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, perm);
+        }
+    }
+
+    @Nested
+    @DisplayName("Legend rule — CR 704.5j")
+    class LegendRule {
+
+        @Test
+        @DisplayName("Checks the legend rule for every player once other actions settle")
+        void checksLegendRuleForEveryPlayer() {
+            sut.performStateBasedActions(gd);
+
+            verify(legendRuleService).checkLegendRule(gd, player1Id);
+            verify(legendRuleService).checkLegendRule(gd, player2Id);
+        }
+
+        @Test
+        @DisplayName("Stops before state triggers when a legend-rule choice is prompted")
+        void stopsWhenLegendRulePrompts() {
+            when(legendRuleService.checkLegendRule(gd, player1Id)).thenReturn(true);
+
+            sut.performStateBasedActions(gd);
+
+            verify(legendRuleService, never()).checkLegendRule(gd, player2Id);
+            verify(stateTriggerService, never()).checkStateTriggers(gd);
+        }
+
+        @Test
+        @DisplayName("Defers the legend-rule check while another interaction is active")
+        void defersWhileInteractionActive() {
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice(
+                    player1Id, List.of(), List.of(), null, "unrelated choice"));
+
+            sut.performStateBasedActions(gd);
+
+            verify(legendRuleService, never()).checkLegendRule(any(), any());
+        }
+
+        @Test
+        @DisplayName("Defers the legend-rule check while other interactions are queued")
+        void defersWhileInteractionsQueued() {
+            gd.queueInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice(
+                    player1Id, List.of(), List.of(), null, "queued choice"));
+
+            sut.performStateBasedActions(gd);
+
+            verify(legendRuleService, never()).checkLegendRule(any(), any());
         }
     }
 }

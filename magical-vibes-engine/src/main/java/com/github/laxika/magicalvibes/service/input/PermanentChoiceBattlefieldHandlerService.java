@@ -254,6 +254,13 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
+        // The removals can cascade (a lost anthem making marked damage lethal) and another legend
+        // violation may still exist — re-run the CR 704.3 check, which repeats until settled.
+        stateBasedActionService.performStateBasedActions(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 

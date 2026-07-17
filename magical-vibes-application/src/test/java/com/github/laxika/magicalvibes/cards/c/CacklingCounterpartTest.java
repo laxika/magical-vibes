@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
 import com.github.laxika.magicalvibes.cards.b.BurningSunsAvatar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HomaridExplorer;
+import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -408,6 +411,64 @@ class CacklingCounterpartTest extends BaseCardTest {
         // max=2 reached → no more prompts, ETB pushed with both targets.
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyInAnyOrder(bears.get(0), bears.get(1));
+    }
+
+    // ===== Legend rule on token copies (CR 704.5j) =====
+
+    @Test
+    @DisplayName("Token copy of a legendary creature triggers the legend rule; keeping the original removes the token")
+    void tokenCopyOfLegendaryTriggersLegendRule() {
+        harness.addToBattlefield(player1, new MirriCatWarrior());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID mirriId = harness.getPermanentId(player1, "Mirri, Cat Warrior");
+        harness.castInstant(player1, 0, mirriId);
+        harness.passBothPriorities();
+
+        // The state-based legend rule check prompts for which Mirri to keep.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.LegendRule.class);
+
+        harness.handlePermanentChosen(player1, mirriId);
+
+        List<Permanent> mirris = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mirri, Cat Warrior"))
+                .toList();
+        assertThat(mirris).hasSize(1);
+        assertThat(mirris.getFirst().getId()).isEqualTo(mirriId);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Legend rule on token copy: keeping the token puts the original into the graveyard")
+    void tokenCopyOfLegendaryKeepingTokenKillsOriginal() {
+        harness.addToBattlefield(player1, new MirriCatWarrior());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID mirriId = harness.getPermanentId(player1, "Mirri, Cat Warrior");
+        harness.castInstant(player1, 0, mirriId);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.LegendRule.class);
+        UUID tokenId = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mirri, Cat Warrior") && p.getCard().isToken())
+                .findFirst().orElseThrow().getId();
+
+        harness.handlePermanentChosen(player1, tokenId);
+
+        List<Permanent> mirris = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mirri, Cat Warrior"))
+                .toList();
+        assertThat(mirris).hasSize(1);
+        assertThat(mirris.getFirst().getId()).isEqualTo(tokenId);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Mirri, Cat Warrior"));
     }
 
     @Test

@@ -527,6 +527,13 @@ public class GameData {
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
+    /** CR 510.1d — the defending player's damage division for creatures blocking 2+ attackers
+     *  (defending-battlefield index → attacker permanent id → damage). */
+    public final Map<Integer, Map<UUID, Integer>> combatDamageBlockerAssignments = new HashMap<>();
+    public final List<Integer> combatDamagePendingBlockerIndices = new ArrayList<>();
+    /** True while damage assignments for the first-strike combat damage step are being collected
+     *  (the regular step uses {@link #combatDamagePhase1Complete} instead). */
+    public boolean combatDamageFirstStrikeAssignmentPhase = false;
     public boolean combatDamageFirstStrikeStepComplete = false;
     public boolean combatDamagePhase1Complete = false;
     public CombatDamagePhase1State combatDamagePhase1State;
@@ -1428,6 +1435,7 @@ public class GameData {
         copy.timestampCounter = this.timestampCounter;
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
+        copy.combatDamageFirstStrikeAssignmentPhase = this.combatDamageFirstStrikeAssignmentPhase;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
         copy.pendingEachPlayerDrawUpToQueue.addAll(this.pendingEachPlayerDrawUpToQueue);
 
@@ -1604,6 +1612,9 @@ public class GameData {
         this.combatDamagePlayerAssignments.forEach((k, v) ->
                 copy.combatDamagePlayerAssignments.put(k, new HashMap<>(v)));
         copy.combatDamagePendingIndices.addAll(this.combatDamagePendingIndices);
+        this.combatDamageBlockerAssignments.forEach((k, v) ->
+                copy.combatDamageBlockerAssignments.put(k, new HashMap<>(v)));
+        copy.combatDamagePendingBlockerIndices.addAll(this.combatDamagePendingBlockerIndices);
         copy.combatDamagePhase1State = this.combatDamagePhase1State; // read-only snapshot from phase 1
 
         // --- Emblems (records are immutable) ---

@@ -118,8 +118,11 @@ public class CombatDamageService {
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
 
-        // Re-entry: if pending damage assignments remain, send next assignment request
-        if (gameData.combatDamagePhase1Complete && !gameData.combatDamagePendingIndices.isEmpty()) {
+        // Re-entry: if pending damage assignments remain (for either damage step), send the next
+        // assignment request. Attacker assignments are collected before blocker divisions (CR 510.1).
+        if ((gameData.combatDamagePhase1Complete || gameData.combatDamageFirstStrikeAssignmentPhase)
+                && (!gameData.combatDamagePendingIndices.isEmpty()
+                        || !gameData.combatDamagePendingBlockerIndices.isEmpty())) {
             sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
             return CombatResult.DONE;
         }
@@ -156,43 +159,35 @@ public class CombatDamageService {
         if (!gameData.combatDamageFirstStrikeStepComplete
                 && !gameData.combatDamagePhase1Complete
                 && anyFirstStrike) {
+            // CR 510.1c-d: damage assignment choices exist in this step too. Collect them before
+            // dealing first-strike damage; the collected assignments are consumed by this step
+            // only — a double striker assigns its regular-step damage anew.
+            if (!gameData.combatDamageFirstStrikeAssignmentPhase
+                    && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, defenderId, true)) {
+                gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
+                gameData.combatDamageFirstStrikeAssignmentPhase = true;
+                sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
+                return CombatResult.DONE;
+            }
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
                     attackingIndices, activeId, defenderId, redirectTarget, true);
             CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf,
                     activeId, defenderId, redirectTarget);
+            gameData.combatDamageFirstStrikeAssignmentPhase = false;
+            gameData.combatDamagePlayerAssignments.clear();
+            gameData.combatDamageBlockerAssignments.clear();
+            gameData.combatDamagePhase1State = null;
             gameData.combatDamageFirstStrikeStepComplete = true;
             return result == CombatResult.ADVANCE_AND_AUTO_PASS ? CombatResult.AUTO_PASS_ONLY : result;
         }
 
-        // Check if any phase 2 attackers need manual damage assignment
-        if (!gameData.combatDamagePhase1Complete) {
-            List<Integer> needsManual = gameQueryService.withQueryScope(gameData, () -> {
-                List<Integer> result = new ArrayList<>();
-                for (var bEntry : blockerMap.entrySet()) {
-                    int bAtkIdx = bEntry.getKey();
-                    if (state.deadAttackerIndices.contains(bAtkIdx)) continue;
-                    Permanent bAtk = atkBf.get(bAtkIdx);
-                    boolean bAtkSkipPhase2 = gameQueryService.hasKeyword(gameData, bAtk, Keyword.FIRST_STRIKE)
-                            && !gameQueryService.hasKeyword(gameData, bAtk, Keyword.DOUBLE_STRIKE);
-                    if (bAtkSkipPhase2) continue;
-                    if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk, true)) continue;
-                    List<Integer> livingBlockers = new ArrayList<>();
-                    for (int i : bEntry.getValue()) {
-                        if (!state.deadDefenderIndices.contains(i)) livingBlockers.add(i);
-                    }
-                    if (needsManualDamageAssignment(gameData, bAtk, livingBlockers, defenderId, defBf)) {
-                        result.add(bAtkIdx);
-                    }
-                }
-                return result;
-            });
-            if (!needsManual.isEmpty()) {
-                gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
-                gameData.combatDamagePhase1Complete = true;
-                gameData.combatDamagePendingIndices.addAll(needsManual);
-                sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
-                return CombatResult.DONE;
-            }
+        // Check if any regular-step attackers or multi-blocking creatures need manual damage assignment
+        if (!gameData.combatDamagePhase1Complete
+                && collectManualAssignments(gameData, state, blockerMap, atkBf, defBf, defenderId, false)) {
+            gameData.combatDamagePhase1State = savePhase1State(state, blockerMap, anyFirstStrike);
+            gameData.combatDamagePhase1Complete = true;
+            sendNextCombatDamageAssignment(gameData, atkBf, defBf, activeId, defenderId);
+            return CombatResult.DONE;
         }
 
         resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
@@ -336,18 +331,26 @@ public class CombatDamageService {
      * Processes a player's combat damage assignment for a single attacker.
      */
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
-        if (!gameData.combatDamagePhase1Complete) {
+        if (!gameData.combatDamagePhase1Complete && !gameData.combatDamageFirstStrikeAssignmentPhase) {
             throw new IllegalStateException("Not in combat damage assignment phase");
-        }
-        if (!gameData.combatDamagePendingIndices.contains(attackerIndex)) {
-            throw new IllegalStateException("Attacker index " + attackerIndex + " is not pending assignment");
         }
 
         UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+
+        // CR 510.1d — the defending player's answer is a multi-blocking creature's damage
+        // division; the carried index is the blocker's defending-battlefield index.
+        if (player.getId().equals(defenderId)) {
+            handleBlockerCombatDamageAssigned(gameData, attackerIndex, assignments, activeId, defenderId);
+            return;
+        }
+
+        if (!gameData.combatDamagePendingIndices.contains(attackerIndex)) {
+            throw new IllegalStateException("Attacker index " + attackerIndex + " is not pending assignment");
+        }
         if (!player.getId().equals(activeId)) {
             throw new IllegalStateException("Only the active player can assign combat damage");
         }
-        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
         List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
         List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
         Permanent atk = atkBf.get(attackerIndex);
@@ -416,42 +419,24 @@ public class CombatDamageService {
             }
         }
 
-        // Validate trample: each blocker must receive at least lethal damage
-        if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) {
+        // Validate trample (CR 510.1c): lethal damage to each blocker is required only as a
+        // precondition for assigning damage to the player or planeswalker the creature is
+        // attacking. Among the blockers themselves, damage may be divided freely.
+        if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)
+                && assignments.getOrDefault(overflowTargetId, 0) > 0) {
             boolean atkHasDeathtouchForValidation = gameQueryService.hasKeyword(gameData, atk, Keyword.DEATHTOUCH);
-
-            // Compute total lethal needed across all blockers
-            int totalLethalNeeded = 0;
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
                 int alreadyTaken = blk.getMarkedDamage() + p1.defDamageTaken.getOrDefault(blkIdx, 0);
                 int lethal = atkHasDeathtouchForValidation
                         ? Math.max(0, 1 - alreadyTaken)
                         : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
-                totalLethalNeeded += lethal;
-            }
-
-            if (totalDamage >= totalLethalNeeded) {
-                // Enough damage to deal lethal to all blockers: enforce per-blocker minimums
-                for (int blkIdx : livingBlockers) {
-                    Permanent blk = defBf.get(blkIdx);
-                    int alreadyTaken = blk.getMarkedDamage() + p1.defDamageTaken.getOrDefault(blkIdx, 0);
-                    int lethal = atkHasDeathtouchForValidation
-                            ? Math.max(0, 1 - alreadyTaken)
-                            : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
-                    int assigned = assignments.getOrDefault(blk.getId(), 0);
-                    if (assigned < lethal) {
-                        throw new IllegalStateException("Trample: must assign at least " + lethal
-                                + " damage to " + blk.getCard().getName());
-                    }
-                }
-            } else {
-                // Not enough damage to deal lethal to all blockers:
-                // all damage must go to blockers, none can trample over
-                if (assignments.containsKey(overflowTargetId)) {
-                    throw new IllegalStateException(
-                            "Trample: not enough damage to deal lethal to all blockers, "
-                                    + "all damage must be assigned to blockers");
+                int assigned = assignments.getOrDefault(blk.getId(), 0);
+                if (assigned < lethal) {
+                    throw new IllegalStateException("Trample: must assign at least " + lethal
+                            + " damage to " + blk.getCard().getName()
+                            + " before assigning damage to the "
+                            + (gameData.playerIds.contains(overflowTargetId) ? "defending player" : "planeswalker"));
                 }
             }
         }
@@ -488,6 +473,69 @@ public class CombatDamageService {
         }
         log.info("Game {} - Combat damage assigned for [{}]: {} -> {}", gameData.id, attackerIndex,
                 atk.getCard().getName(), String.join(", ", parts));
+    }
+
+    /**
+     * Processes the defending player's damage division for one creature blocking multiple
+     * attackers (CR 510.1d). The division is free — the current rules impose no lethal-damage
+     * ordering among the attackers — but must total the blocker's combat damage and only name
+     * attackers the creature is blocking.
+     */
+    private void handleBlockerCombatDamageAssigned(GameData gameData, int blockerIndex,
+                                                   Map<UUID, Integer> assignments,
+                                                   UUID activeId, UUID defenderId) {
+        if (!gameData.combatDamagePendingIndices.isEmpty()) {
+            throw new IllegalStateException("Attacker damage assignments must be completed first");
+        }
+        if (!gameData.combatDamagePendingBlockerIndices.contains(blockerIndex)) {
+            throw new IllegalStateException("Blocker index " + blockerIndex + " is not pending assignment");
+        }
+
+        List<Permanent> atkBf = gameData.playerBattlefields.get(activeId);
+        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
+        Permanent blk = defBf.get(blockerIndex);
+        int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, blk);
+
+        int totalAssigned = 0;
+        for (int assigned : assignments.values()) {
+            totalAssigned += assigned;
+        }
+        if (totalAssigned != totalDamage) {
+            throw new IllegalStateException("Total assigned damage (" + totalAssigned
+                    + ") must equal blocker's combat damage (" + totalDamage + ")");
+        }
+
+        CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
+        Set<UUID> validTargetIds = new HashSet<>();
+        for (var bEntry : p1.blockerMap.entrySet()) {
+            if (p1.deadAttackerIndices.contains(bEntry.getKey())) continue;
+            if (bEntry.getValue().contains(blockerIndex)) {
+                validTargetIds.add(atkBf.get(bEntry.getKey()).getId());
+            }
+        }
+        for (UUID targetId : assignments.keySet()) {
+            if (!validTargetIds.contains(targetId)) {
+                throw new IllegalStateException("Invalid damage target: " + targetId);
+            }
+        }
+
+        gameData.combatDamageBlockerAssignments.put(blockerIndex, assignments);
+        gameData.combatDamagePendingBlockerIndices.remove(Integer.valueOf(blockerIndex));
+        gameData.interaction.clearAwaitingInput();
+
+        List<String> parts = new ArrayList<>();
+        for (var entry : assignments.entrySet()) {
+            Permanent target = null;
+            for (Permanent p : atkBf) {
+                if (p.getId().equals(entry.getKey())) {
+                    target = p;
+                    break;
+                }
+            }
+            parts.add(entry.getValue() + " to " + (target != null ? target.getCard().getName() : entry.getKey()));
+        }
+        log.info("Game {} - Blocker damage divided for [{}]: {} -> {}", gameData.id, blockerIndex,
+                blk.getCard().getName(), String.join(", ", parts));
     }
 
     private Map<Integer, List<Integer>> buildBlockerMap(List<Permanent> atkBf, List<Permanent> defBf,
@@ -529,6 +577,16 @@ public class CombatDamageService {
         // Track remaining damage for multi-blocking creatures (CR 510.1c-d)
         Map<Integer, Integer> blockerRemainingDamage = new HashMap<>(blockerDamage);
 
+        // Living blocked-attacker count per blocker: a blocker whose blocked attackers are down
+        // to one has no division to make and assigns all its combat damage to the survivor.
+        Map<Integer, Integer> livingAttackersPerBlocker = new HashMap<>();
+        for (var countEntry : blockerMap.entrySet()) {
+            if (!isFirstStrikePhase && state.deadAttackerIndices.contains(countEntry.getKey())) continue;
+            for (int blkIdx : countEntry.getValue()) {
+                livingAttackersPerBlocker.merge(blkIdx, 1, Integer::sum);
+            }
+        }
+
         for (var entry : blockerMap.entrySet()) {
             int atkIdx = entry.getKey();
             List<Integer> blkIndices = entry.getValue();
@@ -539,8 +597,7 @@ public class CombatDamageService {
             CombatantStats atkStats = snap.attackerStats().get(atkIdx);
             boolean atkParticipates = atkStats.participatesInDamagePhase(isFirstStrikePhase);
 
-            Map<UUID, Integer> playerAssignment = isFirstStrikePhase ? null
-                    : gameData.combatDamagePlayerAssignments.get(atkIdx);
+            Map<UUID, Integer> playerAssignment = gameData.combatDamagePlayerAssignments.get(atkIdx);
 
             boolean assignAsUnblocked = !blkIndices.isEmpty() && assignsCombatDamageAsThoughUnblocked(atk);
 
@@ -569,19 +626,30 @@ public class CombatDamageService {
                     boolean blkParticipates = blkStats.participatesInDamagePhase(isFirstStrikePhase);
                     if (blkParticipates && !blkStats.preventedFromDealingCombatDamage()
                             && !(snap.damagePreventable() && snap.isAttackerProtectedFromBlocker(atkIdx, blkIdx))) {
-                        // For multi-blocking creatures, distribute damage per CR 510.1c-d:
-                        // assign lethal to each attacker in order before moving on
                         int blkTargetCount = blk.getBlockingTargets().size();
+                        Map<UUID, Integer> blockerAssignment = gameData.combatDamageBlockerAssignments.get(blkIdx);
                         int assignedDmg;
-                        if (blkTargetCount <= 1) {
+                        if (blockerAssignment != null) {
+                            // CR 510.1d — the defending player's collected division for this
+                            // multi-blocking creature.
+                            assignedDmg = blockerAssignment.getOrDefault(atk.getId(), 0);
+                        } else if (blkTargetCount <= 1) {
                             assignedDmg = blockerDamage.getOrDefault(blkIdx, 0);
                         } else {
                             int blkRemaining = blockerRemainingDamage.getOrDefault(blkIdx, 0);
-                            int atkDamageSoFar = atk.getMarkedDamage() + state.atkDamageTaken.getOrDefault(atkIdx, 0);
-                            int lethalNeeded = blkStats.deathtouch()
-                                    ? Math.max(0, 1 - atkDamageSoFar)
-                                    : Math.max(0, atkStats.toughness() - atkDamageSoFar);
-                            assignedDmg = Math.min(blkRemaining, lethalNeeded);
+                            if (livingAttackersPerBlocker.getOrDefault(blkIdx, 0) <= 1) {
+                                // Only one blocked attacker remains in combat: all the blocker's
+                                // damage is assigned to it — there is no division to make.
+                                assignedDmg = blkRemaining;
+                            } else {
+                                // No collected division (e.g. AI shortcut path): fall back to
+                                // lethal-in-order, a legal default division.
+                                int atkDamageSoFar = atk.getMarkedDamage() + state.atkDamageTaken.getOrDefault(atkIdx, 0);
+                                int lethalNeeded = blkStats.deathtouch()
+                                        ? Math.max(0, 1 - atkDamageSoFar)
+                                        : Math.max(0, atkStats.toughness() - atkDamageSoFar);
+                                assignedDmg = Math.min(blkRemaining, lethalNeeded);
+                            }
                             blockerRemainingDamage.put(blkIdx, blkRemaining - assignedDmg);
                         }
                         int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, assignedDmg, blk, atk);
@@ -1934,6 +2002,69 @@ public class CombatDamageService {
         return false;
     }
 
+    /**
+     * Collects the damage-assignment prompts the given damage step needs (CR 510.1c-d):
+     * attackers whose damage division involves a choice (multiple blockers, trample or
+     * assign-as-unblocked overflow, unblocked redirect) and defending creatures blocking two or
+     * more attackers, whose division belongs to the defending player. Fills the pending-index
+     * lists on {@link GameData} and reports whether any prompt is needed.
+     */
+    private boolean collectManualAssignments(GameData gameData, CombatDamageState state,
+                                             Map<Integer, List<Integer>> blockerMap,
+                                             List<Permanent> atkBf, List<Permanent> defBf,
+                                             UUID defenderId, boolean isFirstStrikePhase) {
+        record Collected(List<Integer> attackerIndices, List<Integer> blockerIndices) {}
+        Collected collected = gameQueryService.withQueryScope(gameData, () -> {
+            List<Integer> attackers = new ArrayList<>();
+            Map<Integer, Integer> livingAttackersPerBlocker = new LinkedHashMap<>();
+            for (var bEntry : blockerMap.entrySet()) {
+                int bAtkIdx = bEntry.getKey();
+                if (!isFirstStrikePhase && state.deadAttackerIndices.contains(bAtkIdx)) continue;
+                Permanent bAtk = atkBf.get(bAtkIdx);
+                for (int blkIdx : bEntry.getValue()) {
+                    livingAttackersPerBlocker.merge(blkIdx, 1, Integer::sum);
+                }
+                boolean atkFirstStrike = gameQueryService.hasKeyword(gameData, bAtk, Keyword.FIRST_STRIKE);
+                boolean atkDoubleStrike = gameQueryService.hasKeyword(gameData, bAtk, Keyword.DOUBLE_STRIKE);
+                boolean participates = isFirstStrikePhase
+                        ? (atkFirstStrike || atkDoubleStrike)
+                        : (!atkFirstStrike || atkDoubleStrike);
+                if (!participates) continue;
+                if (gameQueryService.isPreventedFromDealingDamage(gameData, bAtk, true)) continue;
+                List<Integer> livingBlockers = new ArrayList<>();
+                for (int i : bEntry.getValue()) {
+                    if (!state.deadDefenderIndices.contains(i)) livingBlockers.add(i);
+                }
+                if (needsManualDamageAssignment(gameData, bAtk, livingBlockers, defenderId, defBf)) {
+                    attackers.add(bAtkIdx);
+                }
+            }
+
+            // CR 510.1d — a creature blocking 2+ attackers has its combat damage divided by the
+            // defending player.
+            List<Integer> blockers = new ArrayList<>();
+            for (var countEntry : livingAttackersPerBlocker.entrySet()) {
+                if (countEntry.getValue() < 2) continue;
+                int blkIdx = countEntry.getKey();
+                if (state.deadDefenderIndices.contains(blkIdx)) continue;
+                Permanent blk = defBf.get(blkIdx);
+                boolean blkFirstStrike = gameQueryService.hasKeyword(gameData, blk, Keyword.FIRST_STRIKE);
+                boolean blkDoubleStrike = gameQueryService.hasKeyword(gameData, blk, Keyword.DOUBLE_STRIKE);
+                boolean participates = isFirstStrikePhase
+                        ? (blkFirstStrike || blkDoubleStrike)
+                        : (!blkFirstStrike || blkDoubleStrike);
+                if (!participates) continue;
+                if (gameQueryService.isPreventedFromDealingDamage(gameData, blk, true)) continue;
+                if (gameQueryService.getEffectiveCombatDamage(gameData, blk) <= 0) continue;
+                blockers.add(blkIdx);
+            }
+            return new Collected(attackers, blockers);
+        });
+        gameData.combatDamagePendingIndices.addAll(collected.attackerIndices());
+        gameData.combatDamagePendingBlockerIndices.addAll(collected.blockerIndices());
+        return !collected.attackerIndices().isEmpty() || !collected.blockerIndices().isEmpty();
+    }
+
     private boolean needsManualDamageAssignment(GameData gameData, Permanent atk,
                                                 List<Integer> livingBlockerIndices,
                                                 UUID defenderId, List<Permanent> defBf) {
@@ -2024,6 +2155,11 @@ public class CombatDamageService {
 
     private void sendNextCombatDamageAssignment(GameData gameData, List<Permanent> atkBf,
                                                  List<Permanent> defBf, UUID activeId, UUID defenderId) {
+        // Attacker assignments first (CR 510.1c before 510.1d); blocker divisions after.
+        if (gameData.combatDamagePendingIndices.isEmpty()) {
+            sendNextBlockerDamageAssignment(gameData, atkBf, defBf, defenderId);
+            return;
+        }
         int atkIdx = gameData.combatDamagePendingIndices.get(0);
         Permanent atk = atkBf.get(atkIdx);
         CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
@@ -2086,5 +2222,41 @@ public class CombatDamageService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
                 activeId, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
                 domainTargets, isTrample, isDeathtouch, unblockedRedirect));
+    }
+
+    /**
+     * Prompts the defending player to divide a multi-blocking creature's combat damage among the
+     * attackers it blocks (CR 510.1d). Reuses the {@code CombatDamageAssignment} interaction; the
+     * index carried by the record/answer is the blocker's defending-battlefield index, and
+     * {@link #handleCombatDamageAssigned} routes the answer by the answering player.
+     */
+    private void sendNextBlockerDamageAssignment(GameData gameData, List<Permanent> atkBf,
+                                                  List<Permanent> defBf, UUID defenderId) {
+        int blkIdx = gameData.combatDamagePendingBlockerIndices.get(0);
+        Permanent blk = defBf.get(blkIdx);
+        CombatDamagePhase1State p1 = gameData.combatDamagePhase1State;
+
+        List<CombatDamageTarget> domainTargets = new ArrayList<>();
+        for (var bEntry : p1.blockerMap.entrySet()) {
+            int atkIdx = bEntry.getKey();
+            if (p1.deadAttackerIndices.contains(atkIdx)) continue;
+            if (!bEntry.getValue().contains(blkIdx)) continue;
+            Permanent atk = atkBf.get(atkIdx);
+            domainTargets.add(new CombatDamageTarget(
+                    atk.getId(), atk.getCard().getName(),
+                    gameQueryService.getEffectiveToughness(gameData, atk),
+                    atk.getMarkedDamage() + p1.atkDamageTaken.getOrDefault(atkIdx, 0), false));
+        }
+
+        int totalDamage = gameQueryService.getEffectiveCombatDamage(gameData, blk);
+        boolean isDeathtouch = gameQueryService.hasKeyword(gameData, blk, Keyword.DEATHTOUCH);
+
+        log.info("Game {} - Requesting blocker damage division for [{}]: {} (damage={}, attackers={})",
+                gameData.id, blkIdx, blk.getCard().getName(), totalDamage,
+                domainTargets.stream().map(CombatDamageTarget::name).toList());
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
+                defenderId, blkIdx, blk.getId(), blk.getCard().getName(), totalDamage,
+                domainTargets, false, isDeathtouch, false));
     }
 }
