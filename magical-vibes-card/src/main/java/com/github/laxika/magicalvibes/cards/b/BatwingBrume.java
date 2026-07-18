@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "81")
 public class BatwingBrume extends Card {
@@ -16,7 +16,7 @@ public class BatwingBrume extends Card {
         // Prevent all combat damage that would be dealt this turn if {W} was spent to cast this spell.
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.WHITE),
-                new PreventAllCombatDamageEffect()));
+                PreventDamageEffect.allCombat()));
 
         // Each player loses 1 life for each attacking creature they control if {B} was spent to cast this spell.
         addEffect(EffectSlot.SPELL, new ConditionalEffect(

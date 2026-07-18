@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -21,8 +20,8 @@ public class Foxfire extends Card {
                 new PermanentIsAttackingPredicate(),
                 "Target must be an attacking creature"
         )).addEffect(EffectSlot.SPELL, new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.SPELL, new PreventAllDamageToTargetCreatureEffect(true))
-                .addEffect(EffectSlot.SPELL, new PreventAllDamageByTargetCreatureEffect(true));
+                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures())
+                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
 
         // "Draw a card at the beginning of the next turn's upkeep."
         addEffect(EffectSlot.SPELL, new RegisterDrawCardsAtNextUpkeepEffect());

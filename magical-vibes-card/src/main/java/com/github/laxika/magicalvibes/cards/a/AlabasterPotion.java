@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class AlabasterPotion extends Card {
                         new TargetPlayerGainsLifeEffect(new XValue())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Prevent the next X damage that would be dealt to any target this turn",
-                        new PreventDamageToTargetEffect(new XValue()))
+                        PreventDamageEffect.nextToTarget(new XValue()))
         )));
     }
 }

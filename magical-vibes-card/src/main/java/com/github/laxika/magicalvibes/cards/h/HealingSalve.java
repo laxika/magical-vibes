@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class HealingSalve extends Card {
                         new TargetPlayerGainsLifeEffect(3)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Prevent the next 3 damage that would be dealt to any target this turn",
-                        new PreventDamageToTargetEffect(3))
+                        PreventDamageEffect.nextToTarget(3))
         )));
     }
 }

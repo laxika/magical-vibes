@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Godtoucher extends Card {
 
     public Godtoucher() {
-        addActivatedAbility(new ActivatedAbility(true, "{1}{W}", List.of(new PreventAllDamageToTargetCreatureEffect()),
+        addActivatedAbility(new ActivatedAbility(true, "{1}{W}", List.of(PreventDamageEffect.allToTargetCreatures()),
                 "{1}{W}, {T}: Prevent all damage that would be dealt to target creature with power 5 or greater this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

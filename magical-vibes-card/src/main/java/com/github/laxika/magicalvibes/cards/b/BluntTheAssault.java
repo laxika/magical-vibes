@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "113")
 public class BluntTheAssault extends Card {
 
     public BluntTheAssault() {
         addEffect(EffectSlot.SPELL, new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
-        addEffect(EffectSlot.SPELL, new PreventAllCombatDamageEffect());
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombat());
     }
 }

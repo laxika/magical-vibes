@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public class MasterHealer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PreventDamageToTargetEffect(4)),
+                List.of(PreventDamageEffect.nextToTarget(4)),
                 "{T}: Prevent the next 4 damage that would be dealt to any target this turn."
         ));
     }

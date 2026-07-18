@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class Dawnfluke extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}"))));
 
         // When this creature enters, prevent the next 3 damage that would be dealt to any target this turn.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PreventDamageToTargetEffect(3));
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, PreventDamageEffect.nextToTarget(3));
 
         // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect());

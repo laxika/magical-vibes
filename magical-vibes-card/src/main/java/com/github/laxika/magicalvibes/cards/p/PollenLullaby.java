@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -15,7 +15,7 @@ public class PollenLullaby extends Card {
 
     public PollenLullaby() {
         // Prevent all combat damage that would be dealt this turn.
-        addEffect(EffectSlot.SPELL, new PreventAllCombatDamageEffect());
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombat());
 
         // Clash with an opponent. If you win, creatures that player controls don't untap during
         // the player's next untap step. (2-player: the clash opponent is the single opponent, so

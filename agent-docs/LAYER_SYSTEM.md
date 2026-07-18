@@ -327,7 +327,7 @@ suppression still checks the original), so unmanaged outputs (7c boosts behind t
 filters, self CDAs counting a text-changed land word) follow the rewritten text too.
 Chosen-as-enters colors stay handled by the resolution-time `chosenColor` update. **Known gaps**
 (effect types with color/basic-land-type words that are continuously read but NOT yet rewritten;
-extend the transformer's visitor when a card needs them): `PreventDamageFromColorsEffect`,
+extend the transformer's visitor when a card needs them): `PreventDamageEffect.fromColors(...)`,
 `TargetingRestrictionEffect`, `GrantControllerCreaturesCantBeTargetedByColorsEffect`,
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,

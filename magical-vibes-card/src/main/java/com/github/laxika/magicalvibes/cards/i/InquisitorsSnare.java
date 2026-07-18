@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageByTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -38,7 +38,7 @@ public class InquisitorsSnare extends Card {
                 )),
                 "Target must be an attacking or blocking creature."
         ))
-                .addEffect(EffectSlot.SPELL, new PreventAllDamageByTargetCreatureEffect())
+                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allByTargetCreatures())
                 .addEffect(EffectSlot.SPELL, new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.RED))),
                         new DestroyTargetPermanentEffect()

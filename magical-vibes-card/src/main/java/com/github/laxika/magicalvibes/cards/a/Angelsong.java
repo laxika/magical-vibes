@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ public class Angelsong extends Card {
 
     public Angelsong() {
         // Prevent all combat damage that would be dealt this turn.
-        addEffect(EffectSlot.SPELL, new PreventAllCombatDamageEffect());
+        addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombat());
 
         // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addHandActivatedAbility(new ActivatedAbility(false, "{2}",
